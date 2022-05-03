@@ -9,6 +9,8 @@
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 600px;
+  width: 800px;
 }
 
 code {

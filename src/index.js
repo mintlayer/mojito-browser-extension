@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 import App from './App'
 import SetAccountName from './pages/set-account-name'
@@ -12,12 +12,12 @@ import './assets/index.css'
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
+    <MemoryRouter>
       <Routes>
         <Route path="/set-account-name" element={<SetAccountName />} />
         <Route exact path="/" element={<App appHasAccounts={appHasAccounts()} />} />
       </Routes>
-    </BrowserRouter>
+    </MemoryRouter>
   </React.StrictMode>
 )
 
