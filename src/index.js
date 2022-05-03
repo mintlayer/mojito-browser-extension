@@ -6,8 +6,8 @@ import App from './App'
 import SetAccountName from './pages/set-account-name'
 
 import { appHasAccounts } from './utils/appInfo'
-import reportWebVitals from './reportWebVitals'
-import './index.css'
+import reportWebVitals from './utils/reportWebVitals'
+import './assets/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
