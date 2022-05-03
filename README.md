@@ -32,6 +32,10 @@ It correctly bundles React in production mode and optimizes the build for the be
 
 The build is minified and the filenames include the hashes.
 
+## After Build
+
+The build process generates a `ext.zip` file in the project's root directory. It can be imported in the browser as a developer extension on Mozilla Firefox. To test in Chomium-based browsers, you can point the `build` directory as the `unpacked extension`.
+
 ## How to Contribute
 
 Follow this for each task:
