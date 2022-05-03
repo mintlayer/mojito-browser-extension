@@ -21,9 +21,25 @@
   },
   "eslintConfig": {
     "extends": [
+      "eslint:recommended",
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "semi": ["error", "never"],
+      "quotes": ["error", "single"],
+      "no-const-assign": "error",
+      "no-unused-vars": "error",
+      "prefer-const": "error",
+      "no-new-object": "error",
+      "quote-props": ["error", "as-needed"],
+      "no-array-constructor": "error",
+      "no-eval": "error",
+      "max-params": ["error", 3],
+      "max-depth": ["error", 3],
+      "indent": ["error", 2],
+      "eol-last": ["error", "always"]
+    }
   },
   "browserslist": {
     "production": [
