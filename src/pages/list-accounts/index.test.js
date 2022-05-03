@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import ListAccounts from './index'
 
-test('renders learn react link', () => {
+test('Renders List Accounts page', () => {
   render(<ListAccounts />)
-  const linkElement = screen.getByText(/list/i)
-  expect(linkElement).toBeInTheDocument()
+  const listAccountsComponent = screen.getByTestId('list-accounts')
+
+  expect(listAccountsComponent).toBeInTheDocument()
 })
