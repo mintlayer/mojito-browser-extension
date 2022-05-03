@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^13.5.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
+    "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
@@ -26,19 +27,40 @@
       "react-app/jest"
     ],
     "rules": {
-      "semi": ["error", "never"],
-      "quotes": ["error", "single"],
+      "semi": [
+        "error",
+        "never"
+      ],
+      "quotes": [
+        "error",
+        "single"
+      ],
       "no-const-assign": "error",
       "no-unused-vars": "error",
       "prefer-const": "error",
       "no-new-object": "error",
-      "quote-props": ["error", "as-needed"],
+      "quote-props": [
+        "error",
+        "as-needed"
+      ],
       "no-array-constructor": "error",
       "no-eval": "error",
-      "max-params": ["error", 3],
-      "max-depth": ["error", 3],
-      "indent": ["error", 2],
-      "eol-last": ["error", "always"]
+      "max-params": [
+        "error",
+        3
+      ],
+      "max-depth": [
+        "error",
+        3
+      ],
+      "indent": [
+        "error",
+        2
+      ],
+      "eol-last": [
+        "error",
+        "always"
+      ]
     }
   },
   "browserslist": {

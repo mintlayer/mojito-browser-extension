@@ -1,8 +1,10 @@
+import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
 import CreateRestore from './index'
 
-test('renders learn react link', () => {
-  render(<CreateRestore />)
-  const linkElement = screen.getByText(/create/i)
-  expect(linkElement).toBeInTheDocument()
+test('Renders Create/Restore page', () => {
+  render(<CreateRestore />, {wrapper: MemoryRouter})
+  const createRestoreComponent = screen.getByTestId('create-restore')
+
+  expect(createRestoreComponent).toBeInTheDocument()
 })

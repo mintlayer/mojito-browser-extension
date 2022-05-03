@@ -1,8 +1,10 @@
+import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
+
 import App from './App'
 
 test('Renders react app with no accounts', () => {
-  render(<App />)
+  render(<App />, { wrapper: MemoryRouter })
   const createRestoreComponent = screen.getByTestId('create-restore')
 
   expect(createRestoreComponent).toBeInTheDocument()
