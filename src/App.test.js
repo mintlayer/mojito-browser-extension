@@ -1,8 +1,16 @@
 import { render, screen } from '@testing-library/react'
 import App from './App'
 
-test('renders learn react link', () => {
+test('Renders react app with no accounts', () => {
   render(<App />)
-  const linkElement = screen.getByText(/app/i)
-  expect(linkElement).toBeInTheDocument()
+  const createRestoreComponent = screen.getByTestId('create-restore')
+
+  expect(createRestoreComponent).toBeInTheDocument()
+})
+
+test('Renders react app with accounts', () => {
+  render(<App appHasAccounts={true}/>)
+  const listAccountsComponent = screen.getByTestId('list-accounts')
+
+  expect(listAccountsComponent).toBeInTheDocument()
 })

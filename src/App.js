@@ -1,9 +1,14 @@
-import './App.css'
+import CreateRestore from './pages/create-restore'
+import ListAccounts from './pages/list-accounts'
 
-const App = () => (
-  <div className="App">
-    <h1>App</h1>
-  </div>
-)
+const App = ({appHasAccounts}) => {
+  const Home = appHasAccounts ? ListAccounts : CreateRestore
+  
+  return (
+    <main className="App">
+      <Home />
+    </main>
+  )
+}
 
 export default App
