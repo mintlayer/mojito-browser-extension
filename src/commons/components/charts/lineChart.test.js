@@ -8,7 +8,6 @@ const WIDTHSAMPLE = '400px'
 const PROPORTIONALHEIGHTSAMPLE = '1100px'
 
 test('Render LineChart', () => {
-
   render(<LineChart points={POINTSSAMPLE} width={WIDTHSAMPLE} />)
   const lineChartComponent = screen.getByTestId('svg-container')
   const lineComponent = screen.getByTestId('path-container')
@@ -17,6 +16,18 @@ test('Render LineChart', () => {
   expect(lineChartComponent.nodeName.toLocaleLowerCase()).toBe('svg')
   expect(lineChartComponent.getAttribute('width')).toBe(WIDTHSAMPLE)
   expect(lineChartComponent.getAttribute('height')).toBe(PROPORTIONALHEIGHTSAMPLE)
+  expect(lineChartComponent).toContainElement(lineComponent)
+})
+
+test('Render LineChart no width', () => {
+  render(<LineChart points={POINTSSAMPLE} />)
+  const lineChartComponent = screen.getByTestId('svg-container')
+  const lineComponent = screen.getByTestId('path-container')
+
+  expect(lineChartComponent).toBeInTheDocument()
+  expect(lineChartComponent.nodeName.toLocaleLowerCase()).toBe('svg')
+  expect(lineChartComponent.getAttribute('width')).toBe('100px')
+  expect(lineChartComponent.getAttribute('height')).toBe('275px')
   expect(lineChartComponent).toContainElement(lineComponent)
 })
 

@@ -15,7 +15,7 @@ const CreateRestore = () => {
   useEffect(() => {
     setPoints(generateData())
   }, [])
-  
+
   return (
     <div data-testid="create-restore">
       <h1 className="center-text">Create or Restore Account</h1>

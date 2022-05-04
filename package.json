@@ -46,6 +46,7 @@
       ],
       "no-array-constructor": "error",
       "no-eval": "error",
+      "no-trailing-spaces": "error",
       "max-params": [
         "error",
         3
@@ -65,7 +66,16 @@
     }
   },
   "jest": {
-    "transformIgnorePatterns": ["/node_modules/(?!d3|d3-array|internmap|delaunator|robust-predicates)"]
+    "transformIgnorePatterns": ["/node_modules/(?!d3|d3-array|internmap|delaunator|robust-predicates)"],
+    "coveragePathIgnorePatterns": ["./src/index.js", "./src/commons/utils/reportWebVitals.js"],
+    "coverageThreshold": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
+    }
   },
   "browserslist": {
     "production": [

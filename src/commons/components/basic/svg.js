@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react'
 
-const Svg = ({ children, sizeH, sizeW, size = 100, width = 100, height = 100 }) => {
+const Svg = ({
+  children,
+  sizeH,
+  sizeW,
+  size = 100,
+  width = '100px',
+  height = '100px'
+}) => {
   const [viewboxWidth, setViewBoxWidth] = useState(size)
   const [viewboxHeight, setViewBoxHeight] = useState(size)
 

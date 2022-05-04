@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import Svg from '../vector/svg'
-import Line from '../vector/line'
+import Svg from '../basic/svg'
+import Line from '../basic/line'
 
 const POINTSSAMPLE = [[0,10], [3,2], [6,50], [9,30], [12,2], [15,50]]
 
@@ -25,7 +25,12 @@ const getProportionalHeight = (size, width) => {
   return `${Math.round(proportion * parseInt(width))}px`
 }
 
-const LineChart = ({ lineColor, points = POINTSSAMPLE, height, width = '100px' }) => {
+const LineChart = ({
+  lineColor,
+  points = POINTSSAMPLE,
+  height,
+  width = '100px'
+}) => {
   const [size, setSize] = useState({w: 0, h:0})
   const [proportionalHeight, setProportionalHeight] = useState()
 
