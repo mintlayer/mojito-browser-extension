@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-
 import Svg from './svg'
 
 test('Render SVG component', () => {
