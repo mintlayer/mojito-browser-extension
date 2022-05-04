@@ -1,6 +1,6 @@
 import CreateRestore from './pages/create-restore'
 import ListAccounts from './pages/list-accounts'
-import logo from './assets/img/logo512.png'
+import logo from './commons/assets/img/logo512.png'
 import './app.css'
 
 const App = ({appHasAccounts}) => {

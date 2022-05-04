@@ -5,9 +5,9 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import App from './App'
 import SetAccountName from './pages/set-account-name'
 
-import { appHasAccounts } from './utils/appInfo'
-import reportWebVitals from './utils/reportWebVitals'
-import './assets/css/index.css'
+import { appHasAccounts } from './commons/utils/appInfo'
+import reportWebVitals from './commons/utils/reportWebVitals'
+import './commons/assets/css/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
