@@ -19,8 +19,8 @@
   },
   "applications": {
     "gecko": {
-      "id": "webextension@mintlayer.org",
-      "strict_min_version": "0.1.0"
+      "id": "browserextension@mintlayer.org",
+      "strict_min_version": "42.0"
     }
   }
 }
