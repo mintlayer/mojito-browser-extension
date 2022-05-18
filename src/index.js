@@ -7,6 +7,8 @@ import SetAccountName from './pages/set-account-name'
 
 import { appHasAccounts } from './commons/utils/appInfo'
 import reportWebVitals from './commons/utils/reportWebVitals'
+
+import './constants.css'
 import './commons/assets/css/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))

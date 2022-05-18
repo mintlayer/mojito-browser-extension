@@ -1,6 +1,12 @@
+.App {
+    padding: 40px;
+}
+
 .logo {
-    border-radius: 10px;
+    background-color: var(--color-green);
+    border-radius: var(--round-size);
     display: block;
-    margin: 20px auto;
+    margin: 0 auto;
     width: 128px;
 }
+  
