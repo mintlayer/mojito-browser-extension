@@ -1,0 +1,18 @@
+.btn {
+  background-color: var(--color-green);
+  border: none;
+  border-radius: var(--round-size);
+  color: var(--color-white);
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  opacity: 1;
+  padding: 2.1875em 0;
+  transition: opacity 0.25s ease-in-out;
+  width: 100%;
+}
+
+.btn:hover,
+.btn:focus {
+  opacity: 0.8;
+}
