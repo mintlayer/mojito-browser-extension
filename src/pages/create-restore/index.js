@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import LineChart from '../../commons/components/charts/lineChart'
 import ArcChart from '../../commons/components/charts/arcChart'
 import Button from '../../commons/components/basic/button'
+import VerticalGroup from '../../commons/components/group/verticalGroup'
 
 const generateLineData = () => (
   [...Array(50)]
@@ -29,9 +30,12 @@ const CreateRestore = () => {
   return (
     <div data-testid="create-restore">
       <h1 className="center-text">Create or Restore Account</h1>
-      <Button>
-        Create
-      </Button>
+
+      <VerticalGroup>
+        <Button>Create</Button>
+        <Button alternate>Restore</Button>
+      </VerticalGroup>
+
       <Link to="/set-account-name">Create an account</Link>
       <LineChart width="200px" points={points}/>
       <ArcChart data={arcRegions}/>
