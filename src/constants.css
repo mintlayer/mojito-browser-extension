@@ -1,7 +1,10 @@
 :root {
-  --color-green: #11967f;
-  --color-black: #0C2722;
-  --color-white: #ffffff;
+  --color-green: 17, 150, 127;
+  --color-black: 12, 39, 34;
+  --color-white: 255, 255, 255;
+  --nearly-opaque-alpha: 0.8;
+  --medium-alpha: 0.5;
+  --nearly-transparent-alpha: 0.2;
   --round-size: 10px;
   --default-font-size: 16px;
 }

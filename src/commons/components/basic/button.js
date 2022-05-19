@@ -5,10 +5,14 @@ import './button.css'
 
 const Button = ({
   children,
+  alternate = false,
   onClickHandle = () => {},
   extraStyleClasses = []
 }) => {
-  const styleClasses = useStyleClasses(['btn', ...extraStyleClasses])
+  const classesList = ['btn', ...extraStyleClasses]
+  alternate && classesList.push('alternate')
+
+  const styleClasses = useStyleClasses(classesList)
 
   return (
     <>

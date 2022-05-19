@@ -3,7 +3,7 @@
 }
 
 .logo {
-    background-color: var(--color-green);
+    background-color: rgb(var(--color-green));
     border-radius: var(--round-size);
     display: block;
     margin: 0 auto;

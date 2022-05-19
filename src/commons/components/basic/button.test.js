@@ -10,6 +10,15 @@ test('Button component', () => {
   expect(buttonComponent).toHaveClass('btn')
 })
 
+test('Button component with alternate style', () => {
+  render(<Button alternate/>)
+  const buttonComponent = screen.getByTestId('button')
+
+  expect(buttonComponent).toBeInTheDocument()
+  expect(buttonComponent).toHaveClass('btn')
+  expect(buttonComponent).toHaveClass('alternate')
+})
+
 test('Button component with extra classes', () => {
   render(<Button extraStyleClasses={['testClass', 'otherTestClass']} />)
   const buttonComponent = screen.getByTestId('button')
@@ -40,4 +49,5 @@ test('Button component with children', () => {
 
   expect(buttonComponent).toBeInTheDocument()
   expect(buttonComponent).toHaveClass('btn')
+  expect(buttonComponent).not.toBeEmptyDOMElement()
 })
