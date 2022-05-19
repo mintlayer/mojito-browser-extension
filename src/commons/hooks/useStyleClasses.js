@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 
-const useStyleClasses = (styleClasses) => {
-  const [formattedStyleClasses, setFormattedStyleClasses] = useState([])
+const useStyleClasses = (classesList) => {
+  const [styleClasses, setStyleClasses] = useState([])
 
   useEffect(() => {
-    setFormattedStyleClasses(styleClasses.join(' '))
-  }, [styleClasses])
+    setStyleClasses(classesList.join(' '))
+  }, [classesList])
 
-  return formattedStyleClasses
+  return styleClasses
 }
 
 export default useStyleClasses
