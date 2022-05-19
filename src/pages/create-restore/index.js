@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import LineChart from '../../commons/components/charts/lineChart'
 import ArcChart from '../../commons/components/charts/arcChart'
 import Button from '../../commons/components/basic/button'
@@ -21,22 +21,25 @@ const ArcData = [
 const CreateRestore = () => {
   const [points, setPoints] = useState()
   const [arcRegions, setArcRegions] = useState()
+  const navigate = useNavigate()
 
   useEffect(() => {
     setPoints(generateLineData())
     setArcRegions(ArcData)
   }, [])
 
+  const goToSetAccountNamePage = () => navigate('/set-account-name')
+
   return (
     <div data-testid="create-restore">
       <h1 className="center-text">Create or Restore Account</h1>
 
       <VerticalGroup>
-        <Button>Create</Button>
+        <Button
+          onClickHandle={goToSetAccountNamePage}>Create</Button>
         <Button alternate>Restore</Button>
       </VerticalGroup>
 
-      <Link to="/set-account-name">Create an account</Link>
       <LineChart width="200px" points={points}/>
       <ArcChart data={arcRegions}/>
     </div>
