@@ -21,6 +21,10 @@
 
 .input.invalid {
   border-bottom: 2px solid rgb(var(--color-red));
+  color: rgb(var(--color-red));
+}
+.input.invalid::placeholder {
+  color: rgb(var(--color-red));
 }
 
 .input.valid {

@@ -1,0 +1,78 @@
+import { Meta } from '@storybook/addon-docs';
+
+import './constants.css'
+import './commons/assets/css/index_stories.css'
+
+<Meta title="Styles" />
+
+<style>
+  {`
+  dd li {
+    list-style:none;
+  }
+  dd li span {
+    display: inline-block;
+    height: 15px;
+    width: 15px;
+    border-radius: 3px;
+    margin-right: 5px;
+  }
+  dd li strong {
+    font-weight: normal;
+    margin-left: 10px;
+  }
+  .green { background-color: rgb(var(--color-green)); }
+  .red { background-color: rgb(var(--color-red)); }
+  .white { background-color: rgb(var(--color-white)); border: 1px dotted #333; }
+  .light-gray { background-color: rgb(var(--color-light-gray)); }
+  .dark-gray { background-color: rgb(var(--color-dark-gray)); }
+  .black { background-color: rgb(var(--color-black)); }
+  `}
+</style>
+
+# Base styles
+
+<dl>
+  <dt>Font face: </dt>
+  <dd>'Montserrat', sans-serif (importing from Google Fonts)</dd>
+
+  <dt>Base Font Size: </dt>
+  <dd>16px</dd>
+
+  <dt>Default unit for font sizes, paddings and margins: </dt>
+  <dd>rem</dd>
+
+  <dt>Default border radius: </dt>
+  <dd>10px (CSS variable: --round-size)</dd>
+
+  <dt>Colors: </dt>
+  <dd>
+    <ul>
+      <li>
+        <span class="green"></span>
+        <strong>Green (RGB: 17, 150, 127) <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(CSS variable: --color-green)</strong>
+      </li>
+      <li>
+        <span class="red"></span>
+        <strong>Red (RGB: 196, 75, 79) <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (CSS variable: --color-red)</strong>
+      </li>
+      <li>
+        <span class="white"></span>
+        <strong>White (RGB: 255, 255, 255) <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (CSS variable: --color-white)</strong>
+      </li>
+      <li>
+        <span class="black"></span>
+        <strong>Black (RGB: 12, 39, 34) <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (CSS variable: --color-black)</strong>
+      </li>
+      <li>
+        <span class="dark-gray"></span>
+        <strong>Dark Gray (RGB: 84, 103, 100) <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (CSS variable: --color-dark-gray)</strong>
+      </li>
+      <li>
+        <span class="light-gray"></span>
+        <strong>Light Gray (RGB: 201, 204, 203) <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (CSS variable: --color-light-gray)</strong>
+      </li>
+    </ul>
+  </dd>
+
+</dl>
