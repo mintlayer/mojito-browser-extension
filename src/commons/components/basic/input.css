@@ -1,0 +1,27 @@
+.input {
+  border: 1px solid rgb(var(--color-light-gray));
+  border-radius: var(--round-size);
+  color: rgb(var(--color-dark-gray));
+  font-size: 1.5rem;
+  outline: none;
+  padding: 1.812rem 1.6875rem;
+  transition: border 0.25s ease-in-out;
+}
+
+.input:hover,
+.input:focus {
+  border: 1px solid rgb(var(--color-dark-gray));
+}
+
+.input::placeholder {
+  color: rgb(var(--color-dark-gray));
+  font-size: 1.5rem;
+}
+
+.input.invalid {
+  border-bottom: 2px solid rgb(var(--color-red));
+}
+
+.input.valid {
+  border-bottom: 2px solid rgb(var(--color-green));
+}
