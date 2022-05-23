@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import ProgressTracker from '../../commons/components/advanced/progressTracker'
 import Header from '../../commons/components/advanced/header'
 import Button from '../../commons/components/basic/button'
-import TextField from '../../commons/components/form/textField'
+import TextField from '../../commons/components/basic/textField'
 import CenteredLayout from '../../commons/components/group/centeredLayout'
 import VerticalGroup from '../../commons/components/group/verticalGroup'
 

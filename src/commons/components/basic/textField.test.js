@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
+
 import TextField from './textField'
 
 test('Render TextField component', () => {
@@ -13,15 +14,40 @@ test('Render TextField component', () => {
   expect(inputComponent).toBeInTheDocument()
 })
 
-
-test('Render TextField component - alternate layout', () => {
-  render(<TextField alternate/>)
+test('Render TextField component - label', () => {
+  render(<TextField label="testLabel"/>)
   const textFieldComponent = screen.getByTestId('vertical-group-container')
   const labelComponent = screen.getByTestId('label')
 
   expect(textFieldComponent).toBeInTheDocument()
 
-  expect(labelComponent).toHaveClass('alternate')
+  expect(labelComponent).toHaveTextContent('testLabel')
+})
+
+test('Render TextField component - placeholder', () => {
+  render(<TextField placeHolder="PH"/>)
+  const textFieldComponent = screen.getByTestId('vertical-group-container')
+  const inputComponent = screen.getByTestId('input')
+
+  expect(textFieldComponent).toBeInTheDocument()
+
+  expect(inputComponent).toHaveAttribute('placeholder', 'PH')
+})
+
+test('Render TextField component - alternate layout', async () => {
+  const { rerender } =  render(<TextField />)
+  const textFieldComponent = screen.getByTestId('vertical-group-container')
+  let labelComponent = screen.getByTestId('label')
+
+  expect(textFieldComponent).toBeInTheDocument()
+
+  expect(labelComponent).not.toHaveClass('alternate')
+
+  rerender(<TextField alternate />)
+  labelComponent = screen.getByTestId('label')
+  await waitFor(() => {
+    expect(labelComponent).toHaveClass('alternate')
+  })
 })
 
 test('Render TextField component - password', async () => {
