@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import useStyleClasses from '../../hooks/useStyleClasses'
 
 import './button.css'
 
 const Button = ({
-  children,
+  children = 'Label',
   alternate = false,
   onClickHandle = () => {},
   extraStyleClasses = []
@@ -12,7 +12,13 @@ const Button = ({
   const classesList = ['btn', ...extraStyleClasses]
   alternate && classesList.push('alternate')
 
-  const { styleClasses } = useStyleClasses(classesList)
+  const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses(classesList)
+
+  useEffect(() => {
+    alternate ?
+      addStyleClass('alternate') :
+      removeStyleClass('alternate')
+  }, [alternate, addStyleClass, removeStyleClass])
 
   return (
     <>

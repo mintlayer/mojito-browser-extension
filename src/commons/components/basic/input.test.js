@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import Input from './input'
 
 test('Input component', () => {
@@ -64,4 +64,36 @@ test('Input component with blur, focus, and change function', () => {
   expect(mockHandleFocusFn).toBeCalledTimes(2)
   expect(mockHandleChangeFn).toBeCalledTimes(2)
   expect(val).toBe('test2')
+})
+
+test('Input component with validity', async () => {
+  const { rerender } = render(<Input />)
+  let inputComponent = screen.getByTestId('input')
+
+  expect(inputComponent).not.toHaveClass('valid')
+  expect(inputComponent).not.toHaveClass('invalid')
+
+  rerender(<Input validity='invalid' />)
+  inputComponent = screen.getByTestId('input')
+  await waitFor(() => {
+    expect(inputComponent).toHaveClass('invalid')
+  })
+  expect(inputComponent).not.toHaveClass('valid')
+
+  rerender(<Input validity='valid' />)
+  inputComponent = screen.getByTestId('input')
+  await waitFor(() => {
+    expect(inputComponent).toHaveClass('valid')
+  })
+  expect(inputComponent).not.toHaveClass('invalid')
+
+  rerender(<Input validity='anythingElse' />)
+  inputComponent = screen.getByTestId('input')
+  await waitFor(()=>{
+    expect(inputComponent).not.toHaveClass('anythingElse')
+  })
+
+  expect(inputComponent).not.toHaveClass('valid')
+  expect(inputComponent).not.toHaveClass('invalid')
+
 })

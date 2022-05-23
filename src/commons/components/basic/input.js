@@ -10,15 +10,32 @@ const Input = ({
   onBlurHandle = () => {},
   onFocusHandle = () => {},
   onChangeHandle = () => {},
+  validity = ''
 }) => {
   const classesList = ['input', ...extraStyleClasses]
 
-  const { styleClasses } = useStyleClasses(classesList)
+  const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses(classesList)
   const [val, setVal] = useState(value)
 
   useEffect(() => {
     setVal(value)
   }, [value])
+
+  useEffect(() => {
+    switch(validity) {
+    case 'valid':
+      removeStyleClass('invalid')
+      addStyleClass('valid')
+      break
+    case 'invalid':
+      removeStyleClass('valid')
+      addStyleClass('invalid')
+      break
+    default:
+      removeStyleClass(['valid', 'invalid'])
+      break
+    }
+  }, [validity, addStyleClass, removeStyleClass])
 
   const onChangeDefaultHandler = ev => {
     setVal(ev.target.value)
