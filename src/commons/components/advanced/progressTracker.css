@@ -1,0 +1,22 @@
+.progressTracker {
+  display: flex;
+  flex-direction: row;
+  gap: 0.25rem;
+  justify-content: space-between;
+  margin: 2rem 0;
+}
+
+.step {
+  border-top: 4px solid rgb(var(--color-light-gray));
+  flex-grow: 1;
+  font-size: 0.75rem;
+  font-weight: bold;
+  list-style: none;
+  padding: 0.5rem 0 0;
+  text-align: center;
+}
+
+.step.active {
+  border-top: 4px solid rgb(var(--color-green));
+  color: rgb(var(--color-green));
+}
