@@ -1,0 +1,11 @@
+.inputs-list {	
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  overflow-y: auto;
+}
+
+.list-item {
+  position: relative;
+  margin-bottom: 9px;
+}

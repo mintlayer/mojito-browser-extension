@@ -1,0 +1,38 @@
+.number {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  background: rgb(var(--color-light-green));
+  color: rgb(var(--color-balck));
+  border-radius: 50%;
+}
+
+.number-active {
+  background: rgb(var(--color-green));
+  color: rgb(var(--color-white));
+}
+
+.number-finished {
+  background: rgb(var(--color-black));
+  color: rgb(var(--color-white));
+}
+
+.number-invalid {
+  background: rgb(var(--color-red));
+  color: rgb(var(--color-white));
+}
+
+/* .list-item:hover .number {
+  background: rgb(var(--color-green));
+} */
+
+input:focus ~ .number {
+  color: rgb(var(--color-white));
+  background: rgb(var(--color-green));
+}

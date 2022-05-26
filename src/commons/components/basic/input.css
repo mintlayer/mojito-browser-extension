@@ -25,3 +25,26 @@
 .input.valid {
   border-bottom: 2px solid rgb(var(--color-green));
 }
+
+.words-list-input {
+  max-width: 230px;
+  padding: 0.85rem;
+  text-align: center;
+  background: rgb(var(--color-light-green));
+  border: 2px solid rgb(var(--color-light-green));
+}
+
+.words-list-input-restore {
+  padding: 1.2rem 1rem 1.2rem  3.4rem;
+  background: transparent;
+  border: 2px solid rgb(var(--color-light-gray));
+}
+
+.words-list-input:hover,
+.words-list-input:focus {
+  border: 2px solid rgb(var(--color-dark-gray));
+}
+
+.words-list-input-finished {
+  background: red;
+}
