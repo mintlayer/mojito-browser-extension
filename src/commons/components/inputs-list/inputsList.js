@@ -2,11 +2,7 @@ import React, { useEffect, useState } from 'react'
 import InputListItem from '../inputs-list-item/inputsListItem'
 import './inputsList.css'
 
-const wordsList = [
-  'car', 'phone', 'lighter'
-]
-
-const InputsList = ({restoreMode, amount}) => {
+const InputsList = ({restoreMode, amount, wordsList}) => {
   const [ fields, setFields ] = useState([])
   const [ words ] = useState(wordsList)
 
