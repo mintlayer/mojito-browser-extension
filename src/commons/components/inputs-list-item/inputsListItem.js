@@ -1,8 +1,7 @@
 import Input from '../basic/input'
 import './inputsListItem.css'
 
-/* istanbul ignore next */
-export const genNumberClasslist = (value, validity, restoreMode) => {
+const genNumberClasslist = (value, validity, restoreMode) => {
   if (value?.length > 0 && validity === 'valid' && restoreMode) {
     return 'number number-finished'
   } else if (validity === 'invalid' && value?.length > 0 && restoreMode) {
@@ -27,4 +26,5 @@ const InputListItem = ({number, value, validity, onChangeHandle, restoreMode}) =
   )
 }
 
+export { genNumberClasslist } // export for testing
 export default InputListItem

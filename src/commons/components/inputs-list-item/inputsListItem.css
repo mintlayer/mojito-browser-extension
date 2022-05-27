@@ -28,10 +28,6 @@
   color: rgb(var(--color-white));
 }
 
-/* .list-item:hover .number {
-  background: rgb(var(--color-green));
-} */
-
 input:focus ~ .number {
   color: rgb(var(--color-white));
   background: rgb(var(--color-green));
