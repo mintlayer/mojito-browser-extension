@@ -95,5 +95,24 @@ test('Input component with validity', async () => {
 
   expect(inputComponent).not.toHaveClass('valid')
   expect(inputComponent).not.toHaveClass('invalid')
+})
 
+test('Input component - password', async () => {
+  const { rerender } = render(<Input />)
+  let inputComponent = screen.getByTestId('input')
+
+  expect(inputComponent).toHaveAttribute('type', 'text')
+
+  rerender(<Input password />)
+  inputComponent = screen.getByTestId('input')
+  await waitFor(() => {
+    expect(inputComponent).toHaveAttribute('type', 'password')
+  })
+})
+
+test('Input component - id', async () => {
+  render(<Input id="testId" />)
+  const inputComponent = screen.getByTestId('input')
+
+  expect(inputComponent).toHaveAttribute('id', 'testId')
 })
