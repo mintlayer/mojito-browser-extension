@@ -6,8 +6,8 @@ import './setAccountName.css'
 
 const SetAccountName = () => {
   const steps = [
-    { name: 'Account Name' },
-    { name: 'Setting Password', active: true  },
+    { name: 'Account Name', active: true },
+    { name: 'Setting Password'  },
     { name: 'Restoring Information' },
   ]
 
