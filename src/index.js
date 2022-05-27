@@ -14,12 +14,14 @@ import './commons/assets/css/index.css'
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
   <React.StrictMode>
-    <MemoryRouter>
-      <Routes>
-        <Route path="/set-account-name" element={<SetAccountName />} />
-        <Route exact path="/" element={<App appHasAccounts={appHasAccounts()} />} />
-      </Routes>
-    </MemoryRouter>
+    <main className="App">
+      <MemoryRouter>
+        <Routes>
+          <Route path="/set-account-name" element={<SetAccountName />} />
+          <Route exact path="/" element={<App appHasAccounts={appHasAccounts()} />} />
+        </Routes>
+      </MemoryRouter>
+    </main>
   </React.StrictMode>
 )
 

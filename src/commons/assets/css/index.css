@@ -1,5 +1,6 @@
 * {
   box-sizing: border-box;
+  color: var(--color-black);
   font-family: 'Montserrat', sans-serif;
   font-size: var(--default-font-size);
   margin: 0;
@@ -12,6 +13,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
   height: 600px;
   width: 800px;
+}
+
+.App {
+  padding: 2rem 2.875rem;
 }
 
 .center-text {

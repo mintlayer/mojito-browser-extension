@@ -8,10 +8,10 @@ const App = ({appHasAccounts}) => {
   const Home = appHasAccounts ? ListAccounts : CreateRestore
 
   return (
-    <main className="App">
+    <>
       <img className="logo" src={logo} alt="Mojito logo" />
       <Home />
-    </main>
+    </>
   )
 }
 
