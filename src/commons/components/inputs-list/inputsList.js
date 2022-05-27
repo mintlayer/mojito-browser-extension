@@ -7,9 +7,12 @@ const isInputValid = (input, words) => {
   return (value.length > 0 && words.includes(value))
 }
 
-const InputsList = ({restoreMode, amount, wordsList}) => {
+const InputsList = ({
+  restoreMode,
+  amount,
+  wordsList = []
+}) => {
   const [ fields, setFields ] = useState([])
-  const [ words ] = useState(wordsList)
 
   useEffect(() => {
     const newFields = [...Array(amount)].map((_, index) => ({ order: index, validity: false, value: '' }))
@@ -18,14 +21,16 @@ const InputsList = ({restoreMode, amount, wordsList}) => {
 
   const getFieldByIndex = index => fields[index]
 
-  const setFieldValidity = (index, validity) => ({ ...getFieldByIndex(index), validity })
+  const setFieldValidity = (field, validity) => ({ ...field, validity })
 
-  /* istanbul ignore next */
   const onChangeHandler = ({target}, index) => {
-    const validatedField = setFieldValidity(index, isInputValid(target, words))
-    validatedField.value = target.value
+    const originalField = getFieldByIndex(index)
+    originalField.value = target.value
+
+    const validatedField = setFieldValidity(originalField, isInputValid(originalField, wordsList))
     const newFields = [...fields]
     newFields[index] = validatedField
+
     setFields(newFields)
   }
 
