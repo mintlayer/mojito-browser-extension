@@ -1,8 +1,18 @@
-.logo {
-    background-color: rgb(var(--color-green));
-    border-radius: var(--round-size);
-    display: block;
+.homeLogoContainer {
+    display: flex;
+    justify-content: space-between;
+    line-height: 96px;
     margin: 0 auto;
-    width: 128px;
-}
+    padding: 0 0 20px;
+    width: 340px;
+  }
   
+    .logoCohomeLogoContainerntainer .logo {
+        margin: 0;
+        width: 100px;
+    }
+  
+    .homeLogoContainer .mojitoLettering {
+        color: rgb(var(--color-black));
+        font-size: 4rem;
+    }

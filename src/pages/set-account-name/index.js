@@ -1,22 +1,22 @@
-import { Link } from 'react-router-dom'
 import ProgressTracker from '../../commons/components/advanced/progressTracker'
+import Header from '../../commons/components/advanced/header'
 import Input from '../../commons/components/basic/input'
 
 import './setAccountName.css'
 
 const SetAccountName = () => {
   const steps = [
-    { name: 'Account Name' },
-    { name: 'Setting Password', active: true  },
+    { name: 'Account Name', active: true },
+    { name: 'Setting Password'  },
     { name: 'Restoring Information' },
   ]
 
   return (
     <div data-testid="set-account-name">
+      <Header />
       <h1 className="center-text">Set Account Name</h1>
       <ProgressTracker steps={steps}/>
       <Input />
-      <Link to="/" className="back-button"> &lsaquo; </Link>
     </div>
   )
 }
