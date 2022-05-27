@@ -36,12 +36,12 @@ test('Renders Set Account Name page, and navigate to Create Account second step'
   const buttons = screen.getAllByTestId('button')
 
   expect(setAccountNameComponent).toBeInTheDocument()
-  expect(buttons).toHaveLength(1)
+  expect(buttons).toHaveLength(2)
 
   expect(location.pathname).toBe('/')
 
   act(()=>{
-    buttons[0].click()
+    buttons[1].click()
   })
 
   expect(location.pathname).toBe('/set-account-password')
