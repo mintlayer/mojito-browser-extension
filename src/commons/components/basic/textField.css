@@ -1,0 +1,13 @@
+.inputLabel {
+  color: rgb(var(--color-black));
+  display: block;
+}
+
+.inputLabel.alternate {
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.inputLabel.alternate strong {
+  font-size: 1.5rem;
+}

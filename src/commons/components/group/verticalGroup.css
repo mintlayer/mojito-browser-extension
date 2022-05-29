@@ -3,3 +3,7 @@
   flex-direction: column;
   gap: 1.5em;
 }
+
+.v-group.bigGap {
+  gap: 2.75em;
+}

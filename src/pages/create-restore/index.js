@@ -4,6 +4,7 @@ import LineChart from '../../commons/components/charts/lineChart'
 import ArcChart from '../../commons/components/charts/arcChart'
 import Button from '../../commons/components/basic/button'
 import VerticalGroup from '../../commons/components/group/verticalGroup'
+import CenteredLayout from '../../commons/components/group/centeredLayout'
 
 const generateLineData = () => (
   [...Array(50)]
@@ -34,12 +35,13 @@ const CreateRestore = () => {
     <div data-testid="create-restore">
       <h1 className="center-text">Create or Restore Account</h1>
 
-      <VerticalGroup>
-        <Button
-          onClickHandle={goToSetAccountNamePage}>Create</Button>
-        <Button alternate>Restore</Button>
-      </VerticalGroup>
-
+      <CenteredLayout>
+        <VerticalGroup>
+          <Button
+            onClickHandle={goToSetAccountNamePage}>Create</Button>
+          <Button alternate>Restore</Button>
+        </VerticalGroup>
+      </CenteredLayout>
       <LineChart width="200px" points={points}/>
       <ArcChart data={arcRegions}/>
     </div>

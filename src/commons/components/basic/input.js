@@ -10,12 +10,15 @@ const Input = ({
   onBlurHandle = () => {},
   onFocusHandle = () => {},
   onChangeHandle = () => {},
-  validity = ''
+  validity = '',
+  id = '',
+  password = false
 }) => {
   const classesList = ['input', ...extraStyleClasses]
 
   const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses(classesList)
   const [val, setVal] = useState(value)
+  const [type, setType] = useState(password ? 'password': 'text')
 
   useEffect(() => {
     setVal(value)
@@ -37,6 +40,10 @@ const Input = ({
     }
   }, [validity, addStyleClass, removeStyleClass])
 
+  useEffect(() => {
+    setType(password ? 'password': 'text')
+  }, [password])
+
   const onChangeDefaultHandler = ev => {
     setVal(ev.target.value)
     onChangeHandle(ev)
@@ -44,7 +51,8 @@ const Input = ({
 
   return (
     <input
-      type="text"
+      type={type}
+      id={id}
       placeholder={placeholder}
       value={val}
       className={styleClasses}
