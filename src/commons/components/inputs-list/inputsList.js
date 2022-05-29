@@ -1,23 +1,28 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import InputListItem from '../inputs-list-item/inputsListItem'
 import './inputsList.css'
 
 const isInputValid = (input, words) => {
-  const value = input.value
-  return (value.length > 0 && words.includes(value))
+  if (words?.length > 0) {
+    const value = input.value.toLowerCase()
+    return words.includes(value)
+  } else {
+    return true
+  }
 }
 
 const InputsList = ({
+  fields,
+  setFields,
   restoreMode,
   amount,
   wordsList = []
 }) => {
-  const [ fields, setFields ] = useState([])
 
   useEffect(() => {
     const newFields = [...Array(amount)].map((_, index) => ({ order: index, validity: false, value: '' }))
     setFields(newFields)
-  }, [amount])
+  }, [amount, setFields])
 
   const getFieldByIndex = index => fields[index]
 
@@ -36,7 +41,7 @@ const InputsList = ({
 
   return (
     <ul className="inputs-list" data-testid="inputs-list">
-      {fields.map((field) =>
+      {fields && fields.map((field) =>
         <InputListItem
           data-testid="inputs-list-item"
           key={`word-${field.order}`}
@@ -51,5 +56,5 @@ const InputsList = ({
   )
 }
 
-export {isInputValid} // export for testing
+export {isInputValid}
 export default InputsList

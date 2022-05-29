@@ -52,5 +52,3 @@ test('genNumberClasslist function invalid', () => {
   const generator = genNumberClasslist(VALUESAMPLE, VALID, RESTOREMODESAMPLE)
   expect(generator).toBe('number number-invalid')
 })
-
-

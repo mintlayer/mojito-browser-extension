@@ -5,12 +5,17 @@ import { isInputValid } from './inputsList'
 
 const AMOUNTSAMPLE = 1
 const RESTOREMODESAMPLE = true
-const words = ['car', 'house', 'cat']
+const WORDS = ['car', 'house', 'cat']
+const setValue = jest.fn()
+const FIELDSSAMPLEINVALID = [{ order: 0, validity: false, value: '' }]
+const FIELDSSAMPLEVALID = [{ order: 0, validity: true, value: '' }]
 
 test('Render Inputs list item', () => {
   render(<InputsList
     amount={AMOUNTSAMPLE}
     restoreMode={RESTOREMODESAMPLE}
+    fields = {FIELDSSAMPLEINVALID}
+    setFields={setValue}
     wordsList
   />)
   const inputListComponent = screen.getByTestId('inputs-list')
@@ -25,6 +30,8 @@ test('should call onChange prop', () => {
   const { rerender } = render(<InputsList
     amount={AMOUNTSAMPLE}
     restoreMode={RESTOREMODESAMPLE}
+    fields = {FIELDSSAMPLEINVALID}
+    setFields={setValue}
   />)
 
   let inputs = screen.getAllByTestId('input')
@@ -41,7 +48,9 @@ test('should call onChange prop', () => {
   rerender(<InputsList
     amount={AMOUNTSAMPLE}
     restoreMode={RESTOREMODESAMPLE}
-    wordsList={words}
+    wordsList={WORDS}
+    fields = {FIELDSSAMPLEVALID}
+    setFields={setValue}
   />)
   inputs = screen.getAllByTestId('input')
   eventData = {
@@ -56,6 +65,18 @@ test('should call onChange prop', () => {
 
 test('genNumberClasslist function valid', () => {
   const input = {value: 'car'}
-  const validator = isInputValid(input, words)
+  const validator = isInputValid(input, WORDS)
+  expect(validator).toBe(true)
+})
+
+test('genNumberClasslist function invalid', () => {
+  const input = {value: 'tree'}
+  const validator = isInputValid(input, WORDS)
+  expect(validator).toBe(false)
+})
+
+test('genNumberClasslist function without words array', () => {
+  const input = {value: 'tree'}
+  const validator = isInputValid(input)
   expect(validator).toBe(true)
 })

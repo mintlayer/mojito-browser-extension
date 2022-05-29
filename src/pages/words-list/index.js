@@ -1,20 +1,16 @@
 
+import React, {useState} from 'react'
 import InputsList from '../../commons/components/inputs-list/inputsList'
 import  './words-list.css'
 import Button from '../../commons/components/basic/button'
 
-const wordsList = [
-  'car', 'phone', 'lighter'
-]
+const WORDS = ['car', 'house', 'cat']
 
 const Words = () => {
-  // const submitHandler = (e) => {
-  //   e.preventDefault()
-  // }
-
+  const [ fields, setFields ] = useState(false)
   return (
     <form className="form" method='POST' data-testid="words-list-form">
-      <InputsList amount={12} restoreMode wordsList={wordsList}/>
+      <InputsList amount={12} wordsList={WORDS} fields={fields} setFields={setFields} />
       <div className="button-wrapper">
         <Button>
           Submit
