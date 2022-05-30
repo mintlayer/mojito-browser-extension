@@ -26,12 +26,12 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - name: Intall Deps
-       run: npm ci
-     - name: ESLint
-       run: npm run lint
-     - name: Clear Test Cache
-       run: npm test -- --clearCache
-     - name: Test
-       run: npm test -- --no-cache
-     - name: Build
-       run: npm run build --if-present
+      run: npm ci
+    - name: ESLint
+      run: npm run lint
+    - name: Clear Test Cache
+      run: npm test -- --clearCache
+    - name: Test
+      run: npm test -- --no-cache
+    - name: Build
+      run: npm run build --if-present
