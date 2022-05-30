@@ -55,3 +55,7 @@
   color: rgb(var(--color-white));
   background: rgb(var(--color-green));
 }
+
+.words-list-input::placeholder {
+  color: rgb(var(--color-dark-gray));
+}

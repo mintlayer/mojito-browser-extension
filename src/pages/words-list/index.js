@@ -13,7 +13,7 @@ const Words = () => {
       <InputsList amount={12} wordsList={WORDS} fields={fields} setFields={setFields} />
       <div className="button-wrapper">
         <Button>
-          Submit
+          Save
         </Button>
       </div>
     </form>
