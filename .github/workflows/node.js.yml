@@ -25,14 +25,13 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
     - name: Intall Deps
-      run: npm i
-    - name: ESLint
-      run: npm run lint
-    - name: Test Debug
-      run: lsb_release -a && uname -a && npm run test a -- --listTests --expand
-    - name: Test and Coverage
-      run: npm test a -- --coverage --no-cache --expand --no-watchman
-    - name: Build
-      run: npm run build --if-present
+       run: npm ci
+     - name: ESLint
+       run: npm run lint
+     - name: Clear Test Cache
+       run: npm test -- --clearCache
+     - name: Test
+       run: npm test -- --no-cache
+     - name: Build
+       run: npm run build --if-present
