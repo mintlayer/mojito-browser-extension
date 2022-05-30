@@ -25,7 +25,11 @@ root.render(
           />
           <Route path="/set-account-name" element={<SetAccountName />} />
           <Route path="/words-list" element={<WordsList />} />
-          <Route exact path="/" element={<App appHasAccounts={appHasAccounts()} />} />
+          <Route
+            exact
+            path="/"
+            element={<App appHasAccounts={appHasAccounts()} />}
+          />
           <Route
             exact
             path="/"

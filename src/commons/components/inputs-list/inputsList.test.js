@@ -11,13 +11,15 @@ const FIELDSSAMPLEINVALID = [{ order: 0, validity: false, value: '' }]
 const FIELDSSAMPLEVALID = [{ order: 0, validity: true, value: '' }]
 
 test('Render Inputs list item', () => {
-  render(<InputsList
-    amount={AMOUNTSAMPLE}
-    restoreMode={RESTOREMODESAMPLE}
-    fields = {FIELDSSAMPLEINVALID}
-    setFields={setValue}
-    wordsList
-  />)
+  render(
+    <InputsList
+      amount={AMOUNTSAMPLE}
+      restoreMode={RESTOREMODESAMPLE}
+      fields={FIELDSSAMPLEINVALID}
+      setFields={setValue}
+      wordsList
+    />,
+  )
   const inputListComponent = screen.getByTestId('inputs-list')
   const inputListItem = screen.getByTestId('inputs-list-item')
 
@@ -27,56 +29,60 @@ test('Render Inputs list item', () => {
 })
 
 test('should call onChange prop', () => {
-  const { rerender } = render(<InputsList
-    amount={AMOUNTSAMPLE}
-    restoreMode={RESTOREMODESAMPLE}
-    fields = {FIELDSSAMPLEINVALID}
-    setFields={setValue}
-  />)
+  const { rerender } = render(
+    <InputsList
+      amount={AMOUNTSAMPLE}
+      restoreMode={RESTOREMODESAMPLE}
+      fields={FIELDSSAMPLEINVALID}
+      setFields={setValue}
+    />,
+  )
 
   let inputs = screen.getAllByTestId('input')
   let eventData = {
-    target: { value: 'car' }
+    target: { value: 'car' },
   }
 
-  fireEvent.change(inputs[0],  eventData)
+  fireEvent.change(inputs[0], eventData)
 
   expect(inputs[0].value).toBe(eventData.target.value)
   expect(inputs[0]).not.toHaveClass('valid')
   expect(inputs[0]).toHaveClass('invalid')
 
-  rerender(<InputsList
-    amount={AMOUNTSAMPLE}
-    restoreMode={RESTOREMODESAMPLE}
-    wordsList={WORDS}
-    fields = {FIELDSSAMPLEVALID}
-    setFields={setValue}
-  />)
+  rerender(
+    <InputsList
+      amount={AMOUNTSAMPLE}
+      restoreMode={RESTOREMODESAMPLE}
+      wordsList={WORDS}
+      fields={FIELDSSAMPLEVALID}
+      setFields={setValue}
+    />,
+  )
   inputs = screen.getAllByTestId('input')
   eventData = {
-    target: { value: 'house' }
+    target: { value: 'house' },
   }
 
-  fireEvent.change(inputs[0],  eventData)
+  fireEvent.change(inputs[0], eventData)
   expect(inputs[0].value).toBe(eventData.target.value)
   expect(inputs[0]).toHaveClass('valid')
   expect(inputs[0]).not.toHaveClass('invalid')
 })
 
 test('genNumberClasslist function valid', () => {
-  const input = {value: 'car'}
+  const input = { value: 'car' }
   const validator = isInputValid(input, WORDS)
   expect(validator).toBe(true)
 })
 
 test('genNumberClasslist function invalid', () => {
-  const input = {value: 'tree'}
+  const input = { value: 'tree' }
   const validator = isInputValid(input, WORDS)
   expect(validator).toBe(false)
 })
 
 test('genNumberClasslist function without words array', () => {
-  const input = {value: 'tree'}
+  const input = { value: 'tree' }
   const validator = isInputValid(input)
   expect(validator).toBe(true)
 })

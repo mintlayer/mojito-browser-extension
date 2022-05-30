@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import InputsListItem from './inputsListItem'
-import {genNumberClasslist} from './inputsListItem'
+import { genNumberClasslist } from './inputsListItem'
 
 const NUMBERSAMPLE = 1
 const VALUESAMPLE = 'WORD'
@@ -12,11 +12,12 @@ test('Render Inputs list item', () => {
   render(
     <InputsListItem
       number={NUMBERSAMPLE}
-      validity = {VALIDITYSAMPLE}
+      validity={VALIDITYSAMPLE}
       value={VALUESAMPLE}
       onChangeHandle={ONCHANGEHANDLESAMPLE}
       restoreMode={false}
-    />)
+    />,
+  )
   const inputComponent = screen.getByTestId('inputs-list-item')
   expect(screen.queryByText(1)).toBeNull()
 
@@ -28,11 +29,12 @@ test('Render Inputs list item in restore mode', () => {
   render(
     <InputsListItem
       number={NUMBERSAMPLE}
-      validity = {VALIDITYSAMPLE}
+      validity={VALIDITYSAMPLE}
       value={VALUESAMPLE}
       onChangeHandle={ONCHANGEHANDLESAMPLE}
       restoreMode={RESTOREMODESAMPLE}
-    />)
+    />,
+  )
   const inputComponent = screen.getByTestId('inputs-list-item')
   const inputNumber = screen.getByTestId('inputs-list-item-number')
 
@@ -43,7 +45,11 @@ test('Render Inputs list item in restore mode', () => {
 })
 
 test('genNumberClasslist function valid', () => {
-  const generator = genNumberClasslist(VALUESAMPLE, VALIDITYSAMPLE, RESTOREMODESAMPLE)
+  const generator = genNumberClasslist(
+    VALUESAMPLE,
+    VALIDITYSAMPLE,
+    RESTOREMODESAMPLE,
+  )
   expect(generator).toBe('number number-finished')
 })
 
