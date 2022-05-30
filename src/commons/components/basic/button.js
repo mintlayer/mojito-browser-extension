@@ -7,7 +7,7 @@ const Button = ({
   children = 'Label',
   alternate = false,
   onClickHandle = () => {},
-  extraStyleClasses = []
+  extraStyleClasses = [],
 }) => {
   const classesList = ['btn', ...extraStyleClasses]
   alternate && classesList.push('alternate')

@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 import App from './App'
 import SetAccountName from './pages/set-account-name'
+import WordsList from './pages/words-list'
 import SetAccountPassword from './pages/set-account-password'
 
 import { appHasAccounts } from './commons/utils/appInfo'
@@ -20,6 +21,7 @@ root.render(
         <Routes>
           <Route path="/set-account-password" element={<SetAccountPassword />} />
           <Route path="/set-account-name" element={<SetAccountName />} />
+          <Route path="/words-list" element={<WordsList />} />
           <Route exact path="/" element={<App appHasAccounts={appHasAccounts()} />} />
         </Routes>
       </MemoryRouter>

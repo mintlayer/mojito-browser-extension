@@ -69,6 +69,9 @@
     "transformIgnorePatterns": [
       "/node_modules/(?!d3|d3-array|internmap|delaunator|robust-predicates)"
     ],
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
     "coveragePathIgnorePatterns": [
       "./src/index.js",
       "./src/commons/utils/reportWebVitals.js"

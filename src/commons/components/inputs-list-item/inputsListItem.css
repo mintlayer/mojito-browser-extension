@@ -1,0 +1,61 @@
+.number {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  background: rgb(var(--color-light-green));
+  color: rgb(var(--color-balck));
+  border-radius: 50%;
+}
+
+.number-active {
+  background: rgb(var(--color-green));
+  color: rgb(var(--color-white));
+}
+
+.number-finished {
+  background: rgb(var(--color-black));
+  color: rgb(var(--color-white));
+}
+
+.number-invalid {
+  background: rgb(var(--color-red));
+  color: rgb(var(--color-white));
+}
+
+.words-list-input {
+  max-width: 230px;
+  padding: 0.85rem;
+  text-align: center;
+  background: rgb(var(--color-light-green));
+  border: 2px solid rgb(var(--color-light-green));
+}
+
+.words-list-input-restore {
+  padding: 1.2rem 1rem 1.2rem  3.4rem;
+  background: transparent;
+  border: 2px solid rgb(var(--color-light-gray));
+}
+
+.words-list-input:hover,
+.words-list-input:focus {
+  border: 2px solid rgb(var(--color-dark-gray));
+}
+
+.words-list-input-finished {
+  background: red;
+}
+
+.words-list-input:focus ~ .number {
+  color: rgb(var(--color-white));
+  background: rgb(var(--color-green));
+}
+
+.words-list-input::placeholder {
+  color: rgb(var(--color-dark-gray));
+}
