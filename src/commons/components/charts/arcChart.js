@@ -4,20 +4,16 @@ import {
   createArcGenerator,
   createPieGenerator,
   createTooltip,
-  buildArc
+  buildArc,
 } from '../basic/arc'
 import './arcChart.css'
 
 const DATASAMPLE = [
-  { value: 35, asset: 'ASSET 1', color: 'orange'},
-  { value: 65, asset: 'ASSET 2', color: 'lightblue'},
+  { value: 35, asset: 'ASSET 1', color: 'orange' },
+  { value: 65, asset: 'ASSET 2', color: 'lightblue' },
 ]
 
-const ArcChart = ({
-  data = DATASAMPLE,
-  width = '200px',
-  height = '100px',
-}) => {
+const ArcChart = ({ data = DATASAMPLE, width = '200px', height = '100px' }) => {
   const container = useRef(null)
   const [tooltip] = useState(createTooltip)
   const [pieGenerator] = useState(createPieGenerator)
@@ -30,7 +26,7 @@ const ArcChart = ({
       pathData,
       arcGenerator,
       tooltip,
-      container: container.current
+      container: container.current,
     })
   }, [data, pieGenerator, arcGenerator, tooltip])
 
@@ -39,13 +35,13 @@ const ArcChart = ({
       width={width}
       height={height}
       sizeH={parseInt(height)}
-      sizeW={parseInt(width)+2}>
-
+      sizeW={parseInt(width) + 2}
+    >
       <g
         transform="translate(102, 100)"
         ref={container}
-        data-testid="arc-container"/>
-
+        data-testid="arc-container"
+      />
     </Svg>
   )
 }

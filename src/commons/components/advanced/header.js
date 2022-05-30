@@ -13,22 +13,17 @@ const Header = () => {
   const goBack = () => navigate(-1)
 
   return (
-    <header
-      data-testid="header-container">
+    <header data-testid="header-container">
       <Button
         alternate
         extraStyleClasses={['backButton']}
-        onClickHandle={goBack}>
+        onClickHandle={goBack}
+      >
         <BackImg />
       </Button>
-      <div
-        className="logoContainer">
-        <img
-          src={Logo}
-          alt="Mojito Logo"
-          className="logo" />
-        <h1
-          className="mojitoLettering">Mojito</h1>
+      <div className="logoContainer">
+        <img src={Logo} alt="Mojito Logo" className="logo" />
+        <h1 className="mojitoLettering">Mojito</h1>
       </div>
     </header>
   )

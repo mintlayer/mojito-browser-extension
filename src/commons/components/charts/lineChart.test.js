@@ -1,9 +1,21 @@
 import { render, screen } from '@testing-library/react'
-import LineChart, { maxWidthPoint, maxHeightPoint, getProportionalHeight, EXTRABOUNDARIES } from './lineChart'
+import LineChart, {
+  maxWidthPoint,
+  maxHeightPoint,
+  getProportionalHeight,
+  EXTRABOUNDARIES,
+} from './lineChart'
 
 const MAXY = 50
 const MAXX = 15
-const POINTSSAMPLE = [[0,10], [3,2], [6,MAXY], [9,30], [12,2], [MAXX,40]]
+const POINTSSAMPLE = [
+  [0, 10],
+  [3, 2],
+  [6, MAXY],
+  [9, 30],
+  [12, 2],
+  [MAXX, 40],
+]
 const WIDTHSAMPLE = '400px'
 const PROPORTIONALHEIGHTSAMPLE = '1100px'
 
@@ -15,7 +27,9 @@ test('Render LineChart', () => {
   expect(lineChartComponent).toBeInTheDocument()
   expect(lineChartComponent.nodeName.toLocaleLowerCase()).toBe('svg')
   expect(lineChartComponent.getAttribute('width')).toBe(WIDTHSAMPLE)
-  expect(lineChartComponent.getAttribute('height')).toBe(PROPORTIONALHEIGHTSAMPLE)
+  expect(lineChartComponent.getAttribute('height')).toBe(
+    PROPORTIONALHEIGHTSAMPLE,
+  )
   expect(lineChartComponent).toContainElement(lineComponent)
 })
 
@@ -40,5 +54,10 @@ test('Get max y point of line chart', () => {
 })
 
 test('Get proportional height', () => {
-  expect(getProportionalHeight({ w: MAXX+EXTRABOUNDARIES, h: MAXY+EXTRABOUNDARIES }, WIDTHSAMPLE)).toBe(PROPORTIONALHEIGHTSAMPLE)
+  expect(
+    getProportionalHeight(
+      { w: MAXX + EXTRABOUNDARIES, h: MAXY + EXTRABOUNDARIES },
+      WIDTHSAMPLE,
+    ),
+  ).toBe(PROPORTIONALHEIGHTSAMPLE)
 })

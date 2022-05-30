@@ -2,11 +2,9 @@ import React from 'react'
 
 import './centeredLayout.css'
 
-const CenteredLayout = ({children}) => {
+const CenteredLayout = ({ children }) => {
   return (
-    <div
-      className='centeredLayout'
-      data-testid="centered-layout-container">
+    <div className="centeredLayout" data-testid="centered-layout-container">
       {children}
     </div>
   )

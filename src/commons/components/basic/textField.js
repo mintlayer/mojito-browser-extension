@@ -9,30 +9,22 @@ const TextField = ({
   label = 'Label',
   placeHolder = 'Placeholder',
   alternate = false,
-  password = false
+  password = false,
 }) => {
   const inputId = useId()
-  const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses('inputLabel')
+  const { styleClasses, addStyleClass, removeStyleClass } =
+    useStyleClasses('inputLabel')
 
   useEffect(() => {
-    alternate ?
-      addStyleClass('alternate') :
-      removeStyleClass('alternate')
+    alternate ? addStyleClass('alternate') : removeStyleClass('alternate')
   }, [alternate, addStyleClass, removeStyleClass])
 
   return (
-    <VerticalGroup
-      bigGap>
-      <label
-        htmlFor={inputId}
-        className={styleClasses}
-        data-testid="label">
+    <VerticalGroup bigGap>
+      <label htmlFor={inputId} className={styleClasses} data-testid="label">
         {label}
       </label>
-      <Input
-        id={inputId}
-        placeholder={placeHolder}
-        password={password}/>
+      <Input id={inputId} placeholder={placeHolder} password={password} />
     </VerticalGroup>
   )
 }

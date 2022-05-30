@@ -5,7 +5,7 @@ import CreateRestore from './index'
 import SetAccountName from '../set-account-name/index'
 
 test('Renders Create/Restore page', () => {
-  render(<CreateRestore />, {wrapper: MemoryRouter})
+  render(<CreateRestore />, { wrapper: MemoryRouter })
   const createRestoreComponent = screen.getByTestId('create-restore')
 
   expect(createRestoreComponent).toBeInTheDocument()
@@ -16,12 +16,12 @@ test('Renders Create/Restore page, and navigate to Create Account first step', a
 
   const ProxyRestore = () => {
     location = useLocation()
-    return (<CreateRestore />)
+    return <CreateRestore />
   }
 
   const MockPage = () => {
     location = useLocation()
-    return (<SetAccountName />)
+    return <SetAccountName />
   }
 
   render(
@@ -30,7 +30,8 @@ test('Renders Create/Restore page, and navigate to Create Account first step', a
         <Route path="/set-account-name" element={<MockPage />} />
         <Route exact path="/" element={<ProxyRestore />} />
       </Routes>
-    </MemoryRouter>)
+    </MemoryRouter>,
+  )
 
   const createRestoreComponent = screen.getByTestId('create-restore')
   const buttons = screen.getAllByTestId('button')
@@ -40,7 +41,7 @@ test('Renders Create/Restore page, and navigate to Create Account first step', a
 
   expect(location.pathname).toBe('/')
 
-  act(()=>{
+  act(() => {
     buttons[0].click()
   })
 

@@ -1,6 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import { act } from 'react-dom/test-utils'
-import { Link, MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
+import {
+  Link,
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom'
 import Header from './header'
 
 test('Header component, renders a page before, navigate to Header and go back', async () => {
@@ -31,13 +37,14 @@ test('Header component, renders a page before, navigate to Header and go back', 
         <Route path="/next-page" element={<NextPage />} />
         <Route exact path="/" element={<PreviousPage />} />
       </Routes>
-    </MemoryRouter>)
+    </MemoryRouter>,
+  )
 
   const nextPageLinkComponent = screen.getByTestId('next-page-link')
 
   expect(location.pathname).toBe('/')
 
-  act(()=>{
+  act(() => {
     nextPageLinkComponent.click()
   })
 
@@ -47,7 +54,7 @@ test('Header component, renders a page before, navigate to Header and go back', 
   expect(location.pathname).toBe('/next-page')
   expect(nextPageComponent).toBeInTheDocument()
 
-  act(()=>{
+  act(() => {
     backButton.click()
   })
 

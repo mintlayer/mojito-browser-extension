@@ -4,19 +4,14 @@ import Logo from './commons/assets/img/logo96.png'
 
 import './app.css'
 
-const App = ({appHasAccounts}) => {
+const App = ({ appHasAccounts }) => {
   const Home = appHasAccounts ? ListAccounts : CreateRestore
 
   return (
     <>
-      <div
-        className="homeLogoContainer">
-        <img
-          src={Logo}
-          alt="Mojito Logo"
-          className="logo" />
-        <h1
-          className="mojitoLettering">Mojito</h1>
+      <div className="homeLogoContainer">
+        <img src={Logo} alt="Mojito Logo" className="logo" />
+        <h1 className="mojitoLettering">Mojito</h1>
       </div>
       <Home />
     </>

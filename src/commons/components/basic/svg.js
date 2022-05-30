@@ -6,7 +6,7 @@ const Svg = ({
   sizeW,
   size = 100,
   width = '100px',
-  height = '100px'
+  height = '100px',
 }) => {
   const [viewboxWidth, setViewBoxWidth] = useState(size)
   const [viewboxHeight, setViewBoxHeight] = useState(size)
@@ -21,7 +21,8 @@ const Svg = ({
       width={width}
       height={height}
       viewBox={`0 0 ${viewboxWidth} ${viewboxHeight}`}
-      data-testid="svg-container">
+      data-testid="svg-container"
+    >
       {children}
     </svg>
   )

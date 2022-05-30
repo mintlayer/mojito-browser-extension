@@ -12,7 +12,7 @@ import './setAccountName.css'
 
 const steps = [
   { name: 'Account Name', active: true },
-  { name: 'Setting Password'  },
+  { name: 'Setting Password' },
   { name: 'Restoring Information' },
 ]
 
@@ -25,18 +25,16 @@ const SetAccountName = () => {
     <div data-testid="set-account-name">
       <Header />
       <h1 className="center-text">Set Account Name</h1>
-      <ProgressTracker steps={steps}/>
+      <ProgressTracker steps={steps} />
       <CenteredLayout>
         <VerticalGroup>
           <TextField
             alternate
             placeHolder="Account Name"
-            label="Create a name to your account"/>
+            label="Create a name to your account"
+          />
 
-          <Button
-            onClickHandle={goToSetAccountPasswordPage}>
-            Continue
-          </Button>
+          <Button onClickHandle={goToSetAccountPasswordPage}>Continue</Button>
         </VerticalGroup>
       </CenteredLayout>
     </div>

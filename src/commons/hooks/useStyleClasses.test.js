@@ -1,6 +1,11 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 
-import useStyleClasses, { ensureClassesAreArray, formatClasses, mergeLists, removeItemsFromList } from './useStyleClasses'
+import useStyleClasses, {
+  ensureClassesAreArray,
+  formatClasses,
+  mergeLists,
+  removeItemsFromList,
+} from './useStyleClasses'
 
 test('UseStyleClasses hook > ensureClassesAreArray, with array', () => {
   const classList = ['testClass']
@@ -43,13 +48,19 @@ test('UseStyleClasses hook > mergeLists, no params', () => {
 test('UseStyleClasses hook > mergeLists, with string', () => {
   const oldList = 'item1 item2 item3'
   const newList = 'item4 item5'
-  expect(mergeLists(oldList, newList)).toStrictEqual([...oldList.split(' '), ...newList.split(' ')])
+  expect(mergeLists(oldList, newList)).toStrictEqual([
+    ...oldList.split(' '),
+    ...newList.split(' '),
+  ])
 })
 
 test('UseStyleClasses hook > mergeLists, with string and already existent item', () => {
   const oldList = 'item1 item2 item3'
   const newList = 'item1'
-  expect(mergeLists(oldList, newList)).toStrictEqual([...oldList.split(' '), ...newList.split(' ')])
+  expect(mergeLists(oldList, newList)).toStrictEqual([
+    ...oldList.split(' '),
+    ...newList.split(' '),
+  ])
 })
 
 test('UseStyleClasses hook > mergeLists, with empty string', () => {
@@ -61,7 +72,10 @@ test('UseStyleClasses hook > mergeLists, with empty string', () => {
 test('UseStyleClasses hook > mergeLists, with array', () => {
   const oldList = 'item1 item2 item3'
   const newList = ['item4', 'item5']
-  expect(mergeLists(oldList, newList)).toStrictEqual([...oldList.split(' '), ...newList])
+  expect(mergeLists(oldList, newList)).toStrictEqual([
+    ...oldList.split(' '),
+    ...newList,
+  ])
 })
 
 test('UseStyleClasses hook > mergeLists, with empty array', () => {
@@ -89,17 +103,21 @@ test('UseStyleClasses hook > removeItemsFromList, with array', () => {
 test('UseStyleClasses hook > removeItemsFromList, empty string', () => {
   const oldList = 'item1 item2 item3'
   const toRemoveList = ''
-  expect(removeItemsFromList(oldList, toRemoveList)).toStrictEqual([...oldList.split(' ')])
+  expect(removeItemsFromList(oldList, toRemoveList)).toStrictEqual([
+    ...oldList.split(' '),
+  ])
 })
 
 test('UseStyleClasses hook > removeItemsFromList, empty array', () => {
   const oldList = 'item1 item2 item3'
   const toRemoveList = []
-  expect(removeItemsFromList(oldList, toRemoveList)).toStrictEqual([...oldList.split(' ')])
+  expect(removeItemsFromList(oldList, toRemoveList)).toStrictEqual([
+    ...oldList.split(' '),
+  ])
 })
 
 test('UseStyleClasses hook, no params', async () => {
-  const { result } =  renderHook(() => useStyleClasses())
+  const { result } = renderHook(() => useStyleClasses())
   const { styleClasses } = result.current
 
   expect(styleClasses).toBe('')
@@ -109,7 +127,9 @@ test('UseStyleClasses hook, rerender (should not update classes)', async () => {
   const firstClassName = 'testClass'
   const secondClassName = 'anotherClass'
 
-  const { result, rerender } =  renderHook((classes = firstClassName) => useStyleClasses(classes))
+  const { result, rerender } = renderHook((classes = firstClassName) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses } = result.current
 
@@ -117,7 +137,7 @@ test('UseStyleClasses hook, rerender (should not update classes)', async () => {
 
   rerender(secondClassName)
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current[0]
   })
 
@@ -128,7 +148,9 @@ test('UseStyleClasses hook, rerender (should not update classes)', async () => {
 test('UseStyleClasses hook, updating with setStyleClasses and no params', async () => {
   const firstClassName = 'testClass'
 
-  const { result } =  renderHook((classes = firstClassName) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassName) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, setStyleClasses } = result.current
 
@@ -138,7 +160,7 @@ test('UseStyleClasses hook, updating with setStyleClasses and no params', async 
     setStyleClasses()
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     setStyleClasses = result.current.setStyleClasses
   })
@@ -150,7 +172,9 @@ test('UseStyleClasses hook, 1 class as a string, updating with setStyleClasses',
   const firstClassName = 'testClass'
   const secondClassName = 'anotherClass'
 
-  const { result } =  renderHook((classes = firstClassName) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassName) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, setStyleClasses } = result.current
 
@@ -160,7 +184,7 @@ test('UseStyleClasses hook, 1 class as a string, updating with setStyleClasses',
     setStyleClasses(secondClassName)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     setStyleClasses = result.current.setStyleClasses
   })
@@ -172,7 +196,9 @@ test('UseStyleClasses hook, 2 classes as a string, updating with setStyleClasses
   const firstClassName = 'testClass1 testClass2'
   const secondClassName = 'anotherClass1 anotherClass2'
 
-  const { result } =  renderHook((classes = firstClassName) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassName) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, setStyleClasses } = result.current
 
@@ -182,7 +208,7 @@ test('UseStyleClasses hook, 2 classes as a string, updating with setStyleClasses
     setStyleClasses(secondClassName)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     setStyleClasses = result.current.setStyleClasses
   })
@@ -194,7 +220,9 @@ test('UseStyleClasses hook, 1 classe as an array, updating with setStyleClasses'
   const firstClassesList = ['testClass']
   const secondClassesList = ['anotherClass']
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, setStyleClasses } = result.current
 
@@ -204,7 +232,7 @@ test('UseStyleClasses hook, 1 classe as an array, updating with setStyleClasses'
     setStyleClasses(secondClassesList)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     setStyleClasses = result.current.setStyleClasses
   })
@@ -216,7 +244,9 @@ test('UseStyleClasses hook, 2 classes as an array, updating with setStyleClasses
   const firstClassesList = ['testClass1', 'testClass2']
   const secondClassesList = ['anotherClass1', 'anotherClass2']
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, setStyleClasses } = result.current
 
@@ -226,7 +256,7 @@ test('UseStyleClasses hook, 2 classes as an array, updating with setStyleClasses
     setStyleClasses(secondClassesList)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     setStyleClasses = result.current.setStyleClasses
   })
@@ -237,7 +267,9 @@ test('UseStyleClasses hook, 2 classes as an array, updating with setStyleClasses
 test('UseStyleClasses hook, updatign with addStyleClass and no params', async () => {
   const firstClassesList = ['testClass1', 'testClass2']
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, addStyleClass } = result.current
 
@@ -247,7 +279,7 @@ test('UseStyleClasses hook, updatign with addStyleClass and no params', async ()
     addStyleClass()
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     addStyleClass = result.current.addStyleClass
   })
@@ -259,7 +291,9 @@ test('UseStyleClasses hook, adding 1 class as a string with addStyleClass', asyn
   const firstClassesList = ['testClass1', 'testClass2']
   const addedClass = 'anotherClass'
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, addStyleClass } = result.current
 
@@ -269,7 +303,7 @@ test('UseStyleClasses hook, adding 1 class as a string with addStyleClass', asyn
     addStyleClass(addedClass)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     addStyleClass = result.current.addStyleClass
   })
@@ -281,7 +315,9 @@ test('UseStyleClasses hook, adding 2 classes as a string with addStyleClass', as
   const firstClassesList = ['testClass1', 'testClass2']
   const addedClasses = 'anotherClass1 anotherClass2'
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, addStyleClass } = result.current
 
@@ -291,7 +327,7 @@ test('UseStyleClasses hook, adding 2 classes as a string with addStyleClass', as
     addStyleClass(addedClasses)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     addStyleClass = result.current.addStyleClass
   })
@@ -303,7 +339,9 @@ test('UseStyleClasses hook, adding 1 class as an array with addStyleClass', asyn
   const firstClassesList = ['testClass1', 'testClass2']
   const addedClass = ['anotherClass']
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, addStyleClass } = result.current
 
@@ -313,7 +351,7 @@ test('UseStyleClasses hook, adding 1 class as an array with addStyleClass', asyn
     addStyleClass(addedClass)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     addStyleClass = result.current.addStyleClass
   })
@@ -325,7 +363,9 @@ test('UseStyleClasses hook, adding 2 classes as a array with addStyleClass', asy
   const firstClassesList = ['testClass1', 'testClass2']
   const addedClasses = ['anotherClass1', 'anotherClass2']
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, addStyleClass } = result.current
 
@@ -335,19 +375,23 @@ test('UseStyleClasses hook, adding 2 classes as a array with addStyleClass', asy
     addStyleClass(addedClasses)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     addStyleClass = result.current.addStyleClass
   })
 
-  expect(styleClasses).toBe(`${firstClassesList.join(' ')} ${addedClasses.join(' ')}`)
+  expect(styleClasses).toBe(
+    `${firstClassesList.join(' ')} ${addedClasses.join(' ')}`,
+  )
 })
 
 test('UseStyleClasses hook, adding 2 same named classes with addStyleClass', async () => {
   const firstClassesList = ['testClass1', 'testClass2']
   const addedClasses = ['anotherClass1', 'anotherClass1']
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, addStyleClass } = result.current
 
@@ -357,7 +401,7 @@ test('UseStyleClasses hook, adding 2 same named classes with addStyleClass', asy
     addStyleClass(addedClasses)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     addStyleClass = result.current.addStyleClass
   })
@@ -367,7 +411,9 @@ test('UseStyleClasses hook, adding 2 same named classes with addStyleClass', asy
 
 test('UseStyleClasses hook, updating with removeStyleClass and no param', async () => {
   const firstClassesList = ['testClass1', 'testClass2']
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, removeStyleClass } = result.current
 
@@ -377,7 +423,7 @@ test('UseStyleClasses hook, updating with removeStyleClass and no param', async 
     removeStyleClass()
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     removeStyleClass = result.current.removeStyleClass
   })
@@ -389,7 +435,9 @@ test('UseStyleClasses hook, removing 1 class as a string with removeStyleClass',
   const firstClassesList = ['testClass1', 'testClass2']
   const toBeRemovedClass = 'testClass1'
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, removeStyleClass } = result.current
 
@@ -399,7 +447,7 @@ test('UseStyleClasses hook, removing 1 class as a string with removeStyleClass',
     removeStyleClass(toBeRemovedClass)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     removeStyleClass = result.current.removeStyleClass
   })
@@ -411,7 +459,9 @@ test('UseStyleClasses hook, removing 1 class as an array with removeStyleClass',
   const firstClassesList = ['testClass1', 'testClass2']
   const toBeRemovedClass = ['testClass1']
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, removeStyleClass } = result.current
 
@@ -421,7 +471,7 @@ test('UseStyleClasses hook, removing 1 class as an array with removeStyleClass',
     removeStyleClass(toBeRemovedClass)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     removeStyleClass = result.current.removeStyleClass
   })
@@ -433,7 +483,9 @@ test('UseStyleClasses hook, removing 2 classes as a string with removeStyleClass
   const firstClassesList = ['testClass1', 'testClass2']
   const toBeRemovedClasses = 'testClass1 testClass2'
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, removeStyleClass } = result.current
 
@@ -443,7 +495,7 @@ test('UseStyleClasses hook, removing 2 classes as a string with removeStyleClass
     removeStyleClass(toBeRemovedClasses)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     removeStyleClass = result.current.removeStyleClass
   })
@@ -455,7 +507,9 @@ test('UseStyleClasses hook, removing 2 classes as an Array with removeStyleClass
   const firstClassesList = ['testClass1', 'testClass2']
   const toBeRemovedClasses = ['testClass1', 'testClass2']
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, removeStyleClass } = result.current
 
@@ -465,7 +519,7 @@ test('UseStyleClasses hook, removing 2 classes as an Array with removeStyleClass
     removeStyleClass(toBeRemovedClasses)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     removeStyleClass = result.current.removeStyleClass
   })
@@ -477,7 +531,9 @@ test('UseStyleClasses hook, removing 2 classes with same name with removeStyleCl
   const firstClassesList = ['testClass1', 'testClass2']
   const toBeRemovedClasses = ['testClass1', 'testClass1']
 
-  const { result } =  renderHook((classes = firstClassesList) => useStyleClasses(classes))
+  const { result } = renderHook((classes = firstClassesList) =>
+    useStyleClasses(classes),
+  )
 
   let { styleClasses, removeStyleClass } = result.current
 
@@ -487,11 +543,10 @@ test('UseStyleClasses hook, removing 2 classes with same name with removeStyleCl
     removeStyleClass(toBeRemovedClasses)
   })
 
-  await waitFor(()=>{
+  await waitFor(() => {
     styleClasses = result.current.styleClasses
     removeStyleClass = result.current.removeStyleClass
   })
 
   expect(styleClasses).toBe(firstClassesList[1])
 })
-

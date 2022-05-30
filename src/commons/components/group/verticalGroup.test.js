@@ -18,7 +18,7 @@ test('Render VerticalGroup component with children', () => {
 })
 
 test('Render VerticalGroup component - bigGap', async () => {
-  const { rerender } = render(<VerticalGroup/>)
+  const { rerender } = render(<VerticalGroup />)
   let vGroupComponent = screen.getByTestId('vertical-group-container')
 
   expect(vGroupComponent).toBeInTheDocument()

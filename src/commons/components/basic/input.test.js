@@ -7,7 +7,7 @@ test('Input component', () => {
 
   inputComponent.focus()
   inputComponent.blur()
-  fireEvent.change(inputComponent,  {target: {value: 'test'}})
+  fireEvent.change(inputComponent, { target: { value: 'test' } })
 
   expect(inputComponent).toBeInTheDocument()
   expect(inputComponent).toHaveClass('input')
@@ -15,7 +15,7 @@ test('Input component', () => {
 })
 
 test('Input component with placeholder', () => {
-  render(<Input placeholder='inputfield' />)
+  render(<Input placeholder="inputfield" />)
   const inputComponent = screen.getByTestId('input')
 
   expect(inputComponent).toBeInTheDocument()
@@ -36,18 +36,21 @@ test('Input component with blur, focus, and change function', () => {
   let val
   const mockHandleBlurFn = jest.fn()
   const mockHandleFocusFn = jest.fn()
-  const mockHandleChangeFn = jest.fn(ev => {
+  const mockHandleChangeFn = jest.fn((ev) => {
     val = ev.target.value
   })
 
-  render(<Input
-    onBlurHandle={mockHandleBlurFn}
-    onFocusHandle={mockHandleFocusFn}
-    onChangeHandle={mockHandleChangeFn}/>)
+  render(
+    <Input
+      onBlurHandle={mockHandleBlurFn}
+      onFocusHandle={mockHandleFocusFn}
+      onChangeHandle={mockHandleChangeFn}
+    />,
+  )
   const inputComponent = screen.getByTestId('input')
 
   inputComponent.focus()
-  fireEvent.change(inputComponent,  {target: {value: 'test'}})
+  fireEvent.change(inputComponent, { target: { value: 'test' } })
   inputComponent.blur()
 
   expect(inputComponent).toBeInTheDocument()
@@ -57,7 +60,7 @@ test('Input component with blur, focus, and change function', () => {
   expect(val).toBe('test')
 
   inputComponent.focus()
-  fireEvent.change(inputComponent,  {target: {value: 'test2'}})
+  fireEvent.change(inputComponent, { target: { value: 'test2' } })
   inputComponent.blur()
 
   expect(mockHandleBlurFn).toBeCalledTimes(2)
@@ -73,23 +76,23 @@ test('Input component with validity', async () => {
   expect(inputComponent).not.toHaveClass('valid')
   expect(inputComponent).not.toHaveClass('invalid')
 
-  rerender(<Input validity='invalid' />)
+  rerender(<Input validity="invalid" />)
   inputComponent = screen.getByTestId('input')
   await waitFor(() => {
     expect(inputComponent).toHaveClass('invalid')
   })
   expect(inputComponent).not.toHaveClass('valid')
 
-  rerender(<Input validity='valid' />)
+  rerender(<Input validity="valid" />)
   inputComponent = screen.getByTestId('input')
   await waitFor(() => {
     expect(inputComponent).toHaveClass('valid')
   })
   expect(inputComponent).not.toHaveClass('invalid')
 
-  rerender(<Input validity='anythingElse' />)
+  rerender(<Input validity="anythingElse" />)
   inputComponent = screen.getByTestId('input')
-  await waitFor(()=>{
+  await waitFor(() => {
     expect(inputComponent).not.toHaveClass('anythingElse')
   })
 

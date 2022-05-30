@@ -12,12 +12,11 @@ const Button = ({
   const classesList = ['btn', ...extraStyleClasses]
   alternate && classesList.push('alternate')
 
-  const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses(classesList)
+  const { styleClasses, addStyleClass, removeStyleClass } =
+    useStyleClasses(classesList)
 
   useEffect(() => {
-    alternate ?
-      addStyleClass('alternate') :
-      removeStyleClass('alternate')
+    alternate ? addStyleClass('alternate') : removeStyleClass('alternate')
   }, [alternate, addStyleClass, removeStyleClass])
 
   return (
@@ -25,7 +24,8 @@ const Button = ({
       <button
         className={styleClasses}
         onClick={onClickHandle}
-        data-testid="button">
+        data-testid="button"
+      >
         {children}
       </button>
     </>

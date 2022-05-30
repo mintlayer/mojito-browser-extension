@@ -1,10 +1,21 @@
 import { render, screen } from '@testing-library/react'
 import Line from './line'
 
-const POINTSSAMPLE = [[0,10], [3,2], [6,50], [9,30], [12,2], [15,50]]
+const POINTSSAMPLE = [
+  [0, 10],
+  [3, 2],
+  [6, 50],
+  [9, 30],
+  [12, 2],
+  [15, 50],
+]
 
 test('Render Line component', () => {
-  render(<svg><Line points={POINTSSAMPLE}/></svg>)
+  render(
+    <svg>
+      <Line points={POINTSSAMPLE} />
+    </svg>,
+  )
   const lineContainerComponent = screen.getByTestId('path-container')
 
   expect(lineContainerComponent).toBeInTheDocument()

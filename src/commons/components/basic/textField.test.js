@@ -15,7 +15,7 @@ test('Render TextField component', () => {
 })
 
 test('Render TextField component - label', () => {
-  render(<TextField label="testLabel"/>)
+  render(<TextField label="testLabel" />)
   const textFieldComponent = screen.getByTestId('vertical-group-container')
   const labelComponent = screen.getByTestId('label')
 
@@ -25,7 +25,7 @@ test('Render TextField component - label', () => {
 })
 
 test('Render TextField component - placeholder', () => {
-  render(<TextField placeHolder="PH"/>)
+  render(<TextField placeHolder="PH" />)
   const textFieldComponent = screen.getByTestId('vertical-group-container')
   const inputComponent = screen.getByTestId('input')
 
@@ -35,7 +35,7 @@ test('Render TextField component - placeholder', () => {
 })
 
 test('Render TextField component - alternate layout', async () => {
-  const { rerender } =  render(<TextField />)
+  const { rerender } = render(<TextField />)
   const textFieldComponent = screen.getByTestId('vertical-group-container')
   let labelComponent = screen.getByTestId('label')
 
@@ -51,7 +51,7 @@ test('Render TextField component - alternate layout', async () => {
 })
 
 test('Render TextField component - password', async () => {
-  const { rerender } =  render(<TextField />)
+  const { rerender } = render(<TextField />)
   const textFieldComponent = screen.getByTestId('vertical-group-container')
   let inputComponent = screen.getByTestId('input')
 
