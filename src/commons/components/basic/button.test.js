@@ -11,7 +11,7 @@ test('Button component', () => {
 })
 
 test('Button component with alternate style', () => {
-  render(<Button alternate/>)
+  render(<Button alternate />)
   const buttonComponent = screen.getByTestId('button')
 
   expect(buttonComponent).toBeInTheDocument()
@@ -31,7 +31,7 @@ test('Button component with extra classes', () => {
 
 test('Button component with click function', () => {
   const mockHandleClickFn = jest.fn()
-  render(<Button onClickHandle={mockHandleClickFn}/>)
+  render(<Button onClickHandle={mockHandleClickFn} />)
   const buttonComponent = screen.getByTestId('button')
 
   buttonComponent.click()

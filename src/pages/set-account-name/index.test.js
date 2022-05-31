@@ -16,21 +16,29 @@ test('Renders Set Account Name page, and navigate to Create Account second step'
 
   const ProxyAccountName = () => {
     location = useLocation()
-    return (<SetAccountName />)
+    return <SetAccountName />
   }
 
   const MockPage = () => {
     location = useLocation()
-    return (<SetAccountPassword />)
+    return <SetAccountPassword />
   }
 
   render(
     <MemoryRouter initialEntries={['/']}>
       <Routes>
-        <Route path="/set-account-password" element={<MockPage />} />
-        <Route exact path="/" element={<ProxyAccountName />} />
+        <Route
+          path="/set-account-password"
+          element={<MockPage />}
+        />
+        <Route
+          exact
+          path="/"
+          element={<ProxyAccountName />}
+        />
       </Routes>
-    </MemoryRouter>)
+    </MemoryRouter>,
+  )
 
   const setAccountNameComponent = screen.getByTestId('set-account-name')
   const buttons = screen.getAllByTestId('button')
@@ -40,7 +48,7 @@ test('Renders Set Account Name page, and navigate to Create Account second step'
 
   expect(location.pathname).toBe('/')
 
-  act(()=>{
+  act(() => {
     buttons[1].click()
   })
 

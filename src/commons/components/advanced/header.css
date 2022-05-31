@@ -15,12 +15,12 @@
   width: 205px;
 }
 
-  .logoContainer .logo {
-    width: 64px;
-    margin: 0;
-  }
+.logoContainer .logo {
+  width: 64px;
+  margin: 0;
+}
 
-  .logoContainer .mojitoLettering {
-    font-size: 2.5rem;
-    color: rgb(var(--color-black));
-  }
+.logoContainer .mojitoLettering {
+  font-size: 2.5rem;
+  color: rgb(var(--color-black));
+}

@@ -11,7 +11,7 @@ test('Renders react app with no accounts', () => {
 })
 
 test('Renders react app with accounts', () => {
-  render(<App appHasAccounts={true}/>)
+  render(<App appHasAccounts={true} />)
   const listAccountsComponent = screen.getByTestId('list-accounts')
 
   expect(listAccountsComponent).toBeInTheDocument()

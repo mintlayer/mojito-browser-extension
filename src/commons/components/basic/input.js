@@ -12,39 +12,40 @@ const Input = ({
   onChangeHandle = () => {},
   validity = '',
   id = '',
-  password = false
+  password = false,
 }) => {
   const classesList = ['input', ...extraStyleClasses]
 
-  const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses(classesList)
+  const { styleClasses, addStyleClass, removeStyleClass } =
+    useStyleClasses(classesList)
   const [val, setVal] = useState(value)
-  const [type, setType] = useState(password ? 'password': 'text')
+  const [type, setType] = useState(password ? 'password' : 'text')
 
   useEffect(() => {
     setVal(value)
   }, [value])
 
   useEffect(() => {
-    switch(validity) {
-    case 'valid':
-      removeStyleClass('invalid')
-      addStyleClass('valid')
-      break
-    case 'invalid':
-      removeStyleClass('valid')
-      addStyleClass('invalid')
-      break
-    default:
-      removeStyleClass(['valid', 'invalid'])
-      break
+    switch (validity) {
+      case 'valid':
+        removeStyleClass('invalid')
+        addStyleClass('valid')
+        break
+      case 'invalid':
+        removeStyleClass('valid')
+        addStyleClass('invalid')
+        break
+      default:
+        removeStyleClass(['valid', 'invalid'])
+        break
     }
   }, [validity, addStyleClass, removeStyleClass])
 
   useEffect(() => {
-    setType(password ? 'password': 'text')
+    setType(password ? 'password' : 'text')
   }, [password])
 
-  const onChangeDefaultHandler = ev => {
+  const onChangeDefaultHandler = (ev) => {
     setVal(ev.target.value)
     onChangeHandle(ev)
   }
@@ -59,7 +60,8 @@ const Input = ({
       onBlur={onBlurHandle}
       onFocus={onFocusHandle}
       onChange={onChangeDefaultHandler}
-      data-testid="input"/>
+      data-testid="input"
+    />
   )
 }
 

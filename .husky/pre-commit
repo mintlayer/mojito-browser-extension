@@ -1,4 +1,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npm run lint && npm test a -- --watchAll=false --coverage
+npm run pretty-quick --staged && npm run lint && npm test a -- --watchAll=false --coverage

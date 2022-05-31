@@ -6,17 +6,13 @@ import Button from '../../commons/components/basic/button'
 import VerticalGroup from '../../commons/components/group/verticalGroup'
 import CenteredLayout from '../../commons/components/group/centeredLayout'
 
-const generateLineData = () => (
-  [...Array(50)]
-    .map((_, index) => (
-      [ index * 3, Math.random() * 100 ]
-    ))
-)
+const generateLineData = () =>
+  [...Array(50)].map((_, index) => [index * 3, Math.random() * 100])
 
 const ArcData = [
-  { value: 10, asset: 'BTC', color: 'orange'},
-  { value: 40, asset: 'MLT', color: 'blue'},
-  { value: 20, asset: 'ETH', color: 'red'}
+  { value: 10, asset: 'BTC', color: 'orange' },
+  { value: 40, asset: 'MLT', color: 'blue' },
+  { value: 20, asset: 'ETH', color: 'red' },
 ]
 
 const CreateRestore = () => {
@@ -37,13 +33,15 @@ const CreateRestore = () => {
 
       <CenteredLayout>
         <VerticalGroup>
-          <Button
-            onClickHandle={goToSetAccountNamePage}>Create</Button>
+          <Button onClickHandle={goToSetAccountNamePage}>Create</Button>
           <Button alternate>Restore</Button>
         </VerticalGroup>
       </CenteredLayout>
-      <LineChart width="200px" points={points}/>
-      <ArcChart data={arcRegions}/>
+      <LineChart
+        width="200px"
+        points={points}
+      />
+      <ArcChart data={arcRegions} />
     </div>
   )
 }

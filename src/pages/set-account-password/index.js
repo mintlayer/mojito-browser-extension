@@ -7,9 +7,10 @@ import VerticalGroup from '../../commons/components/group/verticalGroup'
 import './setAccountPassword.css'
 
 const SetAccountPassword = () => {
-
   const Label = () => (
-    <>Create a password to your <strong>Account</strong></>
+    <>
+      Create a password to your <strong>Account</strong>
+    </>
   )
 
   return (
@@ -21,14 +22,19 @@ const SetAccountPassword = () => {
             alternate
             password
             placeHolder="Password"
-            label={<Label/>}/>
+            label={<Label />}
+          />
 
-          <Button>
-            Continue
-          </Button>
+          <Button>Continue</Button>
         </VerticalGroup>
       </CenteredLayout>
-      <Link to="/set-account-name" className="back-button"> &lsaquo; </Link>
+      <Link
+        to="/set-account-name"
+        className="back-button"
+      >
+        {' '}
+        &lsaquo;{' '}
+      </Link>
     </div>
   )
 }

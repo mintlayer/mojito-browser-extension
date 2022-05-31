@@ -1,33 +1,24 @@
 import * as d3 from 'd3'
 
-const createArcGenerator = () => (
-  d3
-    .arc()
-    .innerRadius(85)
-    .outerRadius(100)
-)
+const createArcGenerator = () => d3.arc().innerRadius(85).outerRadius(100)
 
-const createPieGenerator = () => (
+const createPieGenerator = () =>
   d3
     .pie()
     .startAngle(-0.5 * Math.PI)
     .endAngle(0.5 * Math.PI)
-    .value(item => item.value)
-)
+    .value((item) => item.value)
 
-const createTooltip = () => (
+const createTooltip = () =>
   d3
     .select('body')
     .append('div')
     .attr('class', 'tooltip')
     .attr('data-testid', 'tooltip-container')
     .style('opacity', 0)
-)
 
 const mouseMoveHandle = (tooltip, ev) => {
-  tooltip
-    .style('left', `${ev.pageX}px`)
-    .style('top', `${ev.pageY - 35}px`)
+  tooltip.style('left', `${ev.pageX}px`).style('top', `${ev.pageY - 35}px`)
 }
 
 const mouseOverHandle = (tooltip, _, item) => {
@@ -35,10 +26,9 @@ const mouseOverHandle = (tooltip, _, item) => {
     .attr('data-show', 'true')
     .transition()
     .duration(200)
-    .style('opacity', .9)
+    .style('opacity', 0.9)
 
-  tooltip
-    .html(`${item.data.asset} <br /> ${item.data.value}`)
+  tooltip.html(`${item.data.asset} <br /> ${item.data.value}`)
 }
 
 const mouseOutHandle = (tooltip) => {
@@ -57,7 +47,7 @@ const buildArc = ({
   tooltip,
   mouseMoveFn = mouseMoveHandle,
   mouseOverFn = mouseOverHandle,
-  mouseOutFn = mouseOutHandle
+  mouseOutFn = mouseOutHandle,
 }) => {
   const mouseMoveHandleBinded = mouseMoveFn.bind(null, tooltip)
   const mouseOverHandleBinded = mouseOverFn.bind(null, tooltip)
@@ -69,8 +59,8 @@ const buildArc = ({
     .join('path')
     .attr('d', arcGenerator)
     .attr('stroke', '#fff')
-    .attr('fill', item => item.data.color)
-    .attr('data-testid', item => `arc-${item.data.asset}-container`)
+    .attr('fill', (item) => item.data.color)
+    .attr('data-testid', (item) => `arc-${item.data.asset}-container`)
     .on('mouseover', mouseMoveHandleBinded)
     .on('mousemove', mouseOverHandleBinded)
     .on('mouseout', mouseOutHandleBinded)
@@ -83,5 +73,5 @@ export {
   buildArc,
   mouseMoveHandle,
   mouseOverHandle,
-  mouseOutHandle
+  mouseOutHandle,
 }

@@ -8,13 +8,13 @@ import {
   buildArc,
   mouseMoveHandle,
   mouseOverHandle,
-  mouseOutHandle
+  mouseOutHandle,
 } from './arc'
 
 const ArcData = [
-  { value: 10, asset: 'BTC', color: 'orange'},
-  { value: 40, asset: 'MLT', color: 'blue'},
-  { value: 20, asset: 'ETH', color: 'red'}
+  { value: 10, asset: 'BTC', color: 'orange' },
+  { value: 40, asset: 'MLT', color: 'blue' },
+  { value: 20, asset: 'ETH', color: 'red' },
 ]
 
 test('CreateArcGenerator function', () => {
@@ -51,10 +51,7 @@ test('mouseMoveHandle function', () => {
 
   const tooltipContainer = screen.getByTestId('mousemove-tooltip-container')
 
-  mouseMoveHandle(
-    d3Tooltip,
-    { pageX: 0, pageY: 0 }
-  )
+  mouseMoveHandle(d3Tooltip, { pageX: 0, pageY: 0 })
 
   expect(tooltipContainer).toHaveAttribute('style', 'left: 0px; top: -35px;')
 })
@@ -65,13 +62,15 @@ test('mouseOverHandle function', () => {
     .append('div')
     .attr('data-testid', 'mouseover-tooltip-container')
 
-  const item = { data: { value: 10, asset: 'BTC' }}
+  const item = { data: { value: 10, asset: 'BTC' } }
 
   const tooltipContainer = screen.getByTestId('mouseover-tooltip-container')
 
   mouseOverHandle(d3Tooltip, null, item, 0)
 
-  expect(tooltipContainer).toHaveTextContent(`${item.data.asset} ${item.data.value}`)
+  expect(tooltipContainer).toHaveTextContent(
+    `${item.data.asset} ${item.data.value}`,
+  )
   expect(tooltipContainer).toHaveAttribute('data-show', 'true')
 })
 
@@ -88,9 +87,15 @@ test('mouseOutHandle function', () => {
   expect(tooltipContainer).toHaveAttribute('data-show', 'false')
 })
 
-
 test('Render Arc', () => {
-  render(<div><span data-testid='tooltip-container'></span><svg><g data-testid='arc-container'></g></svg></div>)
+  render(
+    <div>
+      <span data-testid="tooltip-container"></span>
+      <svg>
+        <g data-testid="arc-container"></g>
+      </svg>
+    </div>,
+  )
 
   const arcContainer = screen.getByTestId('arc-container')
   const tooltipContainer = screen.getAllByTestId('tooltip-container')
@@ -99,10 +104,10 @@ test('Render Arc', () => {
     container: arcContainer,
     pathData: d3.pie()(ArcData),
     arcGenerator: d3.arc(),
-    tooltip: tooltipContainer
+    tooltip: tooltipContainer,
   })
 
-  ArcData.forEach(item => {
+  ArcData.forEach((item) => {
     const arcItemContainer = screen.getByTestId(`arc-${item.asset}-container`)
     expect(arcItemContainer).toBeInTheDocument()
   })

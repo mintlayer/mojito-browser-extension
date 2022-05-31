@@ -16,23 +16,29 @@ const InputsList = ({
   setFields,
   restoreMode,
   amount,
-  wordsList = []
+  wordsList = [],
 }) => {
-
   useEffect(() => {
-    const newFields = [...Array(amount)].map((_, index) => ({ order: index, validity: false, value: '' }))
+    const newFields = [...Array(amount)].map((_, index) => ({
+      order: index,
+      validity: false,
+      value: '',
+    }))
     setFields(newFields)
   }, [amount, setFields])
 
-  const getFieldByIndex = index => fields[index]
+  const getFieldByIndex = (index) => fields[index]
 
   const setFieldValidity = (field, validity) => ({ ...field, validity })
 
-  const onChangeHandler = ({target}, index) => {
+  const onChangeHandler = ({ target }, index) => {
     const originalField = getFieldByIndex(index)
     originalField.value = target.value
 
-    const validatedField = setFieldValidity(originalField, isInputValid(originalField, wordsList))
+    const validatedField = setFieldValidity(
+      originalField,
+      isInputValid(originalField, wordsList),
+    )
     const newFields = [...fields]
     newFields[index] = validatedField
 
@@ -40,21 +46,25 @@ const InputsList = ({
   }
 
   return (
-    <ul className="inputs-list" data-testid="inputs-list">
-      {fields && fields.map((field) =>
-        <InputListItem
-          data-testid="inputs-list-item"
-          key={`word-${field.order}`}
-          number={field.order + 1}
-          validity = {field.validity ? 'valid' : 'invalid'}
-          value={field.value}
-          onChangeHandle={event => onChangeHandler(event, field.order)}
-          restoreMode={restoreMode}
-        />
-      )}
+    <ul
+      className="inputs-list"
+      data-testid="inputs-list"
+    >
+      {fields &&
+        fields.map((field) => (
+          <InputListItem
+            data-testid="inputs-list-item"
+            key={`word-${field.order}`}
+            number={field.order + 1}
+            validity={field.validity ? 'valid' : 'invalid'}
+            value={field.value}
+            onChangeHandle={(event) => onChangeHandler(event, field.order)}
+            restoreMode={restoreMode}
+          />
+        ))}
     </ul>
   )
 }
 
-export {isInputValid}
+export { isInputValid }
 export default InputsList

@@ -2,16 +2,22 @@ import { render, screen } from '@testing-library/react'
 import ArcChart from './arcChart'
 
 const ArcData = [
-  { value: 10, asset: 'BTC', color: 'orange'},
-  { value: 40, asset: 'MLT', color: 'blue'},
-  { value: 20, asset: 'ETH', color: 'red'}
+  { value: 10, asset: 'BTC', color: 'orange' },
+  { value: 40, asset: 'MLT', color: 'blue' },
+  { value: 20, asset: 'ETH', color: 'red' },
 ]
 
 const WIDTHSAMPLE = '300px'
 const HEIGHTSAMPLE = '150px'
 
 test('Render ArcChart', () => {
-  render(<ArcChart data={ArcData} width={WIDTHSAMPLE} height={HEIGHTSAMPLE} />)
+  render(
+    <ArcChart
+      data={ArcData}
+      width={WIDTHSAMPLE}
+      height={HEIGHTSAMPLE}
+    />,
+  )
   const arcChartComponent = screen.getByTestId('svg-container')
   const arcComponent = screen.getByTestId('arc-container')
 
