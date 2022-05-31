@@ -6,5 +6,6 @@
   "trailingComma": "all",
   "semi": false,
   "endOfLine": "auto",
-  "arrowParens": "always"
+  "arrowParens": "always",
+  "singleAttributePerLine": true
 }

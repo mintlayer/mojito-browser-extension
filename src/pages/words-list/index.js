@@ -8,7 +8,11 @@ const WORDS = ['car', 'house', 'cat']
 const Words = () => {
   const [fields, setFields] = useState(false)
   return (
-    <form className="form" method="POST" data-testid="words-list-form">
+    <form
+      className="form"
+      method="POST"
+      data-testid="words-list-form"
+    >
       <InputsList
         amount={12}
         wordsList={WORDS}

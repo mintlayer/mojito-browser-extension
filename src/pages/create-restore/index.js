@@ -37,7 +37,10 @@ const CreateRestore = () => {
           <Button alternate>Restore</Button>
         </VerticalGroup>
       </CenteredLayout>
-      <LineChart width="200px" points={points} />
+      <LineChart
+        width="200px"
+        points={points}
+      />
       <ArcChart data={arcRegions} />
     </div>
   )

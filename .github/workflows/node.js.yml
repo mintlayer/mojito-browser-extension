@@ -30,7 +30,7 @@ jobs:
     - name: ESLint
       run: npm run lint
     - name: Prettier
-      run: npm run pretty-quick-check
+      run: npm run pretty-quick-check-branch
     - name: Clear Test Cache
       run: npm test -- --clearCache
     - name: Test

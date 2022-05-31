@@ -10,7 +10,10 @@ const defaultSteps = [
 
 const ProgressTracker = ({ steps = defaultSteps }) => {
   return (
-    <ol className="progressTracker" data-testid="progress-tracker-container">
+    <ol
+      className="progressTracker"
+      data-testid="progress-tracker-container"
+    >
       {steps.map((step, index) => (
         <li
           key={`${step.name}-${index}`}

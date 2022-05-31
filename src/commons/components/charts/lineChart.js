@@ -57,7 +57,10 @@ const LineChart = ({
       sizeH={size.h}
       sizeW={size.w}
     >
-      <Line points={points} stroke={lineColor} />
+      <Line
+        points={points}
+        stroke={lineColor}
+      />
     </Svg>
   )
 }

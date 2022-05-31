@@ -22,7 +22,11 @@ const Header = () => {
         <BackImg />
       </Button>
       <div className="logoContainer">
-        <img src={Logo} alt="Mojito Logo" className="logo" />
+        <img
+          src={Logo}
+          alt="Mojito Logo"
+          className="logo"
+        />
         <h1 className="mojitoLettering">Mojito</h1>
       </div>
     </header>

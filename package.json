@@ -22,6 +22,7 @@
     "prettier": "pretty-quick --staged",
     "pretty-quick": "pretty-quick",
     "pretty-quick-check": "pretty-quick --check",
+    "pretty-quick-check-branch": "pretty-quick --check --branch",
     "prepare": "husky install"
   },
   "eslintConfig": {

@@ -16,7 +16,10 @@ test('Header component, renders a page before, navigate to Header and go back', 
     location = useLocation()
     return (
       <div data-testid="prev-page">
-        <Link to="/next-page" data-testid="next-page-link"></Link>
+        <Link
+          to="/next-page"
+          data-testid="next-page-link"
+        ></Link>
       </div>
     )
   }
@@ -34,8 +37,15 @@ test('Header component, renders a page before, navigate to Header and go back', 
   render(
     <MemoryRouter initialEntries={['/']}>
       <Routes>
-        <Route path="/next-page" element={<NextPage />} />
-        <Route exact path="/" element={<PreviousPage />} />
+        <Route
+          path="/next-page"
+          element={<NextPage />}
+        />
+        <Route
+          exact
+          path="/"
+          element={<PreviousPage />}
+        />
       </Routes>
     </MemoryRouter>,
   )

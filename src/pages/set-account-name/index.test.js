@@ -27,8 +27,15 @@ test('Renders Set Account Name page, and navigate to Create Account second step'
   render(
     <MemoryRouter initialEntries={['/']}>
       <Routes>
-        <Route path="/set-account-password" element={<MockPage />} />
-        <Route exact path="/" element={<ProxyAccountName />} />
+        <Route
+          path="/set-account-password"
+          element={<MockPage />}
+        />
+        <Route
+          exact
+          path="/"
+          element={<ProxyAccountName />}
+        />
       </Routes>
     </MemoryRouter>,
   )

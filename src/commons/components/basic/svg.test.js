@@ -5,7 +5,13 @@ test('Render SVG component', () => {
   const [size, width] = [200, '400px']
   const children = <circle r="40" />
 
-  render(<Svg size={size} width={width} children={children} />)
+  render(
+    <Svg
+      size={size}
+      width={width}
+      children={children}
+    />,
+  )
   const svgContainerComponent = screen.getByTestId('svg-container')
 
   expect(svgContainerComponent).toBeInTheDocument()

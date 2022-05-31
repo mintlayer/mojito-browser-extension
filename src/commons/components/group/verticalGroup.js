@@ -14,7 +14,10 @@ const VerticalGroup = ({ children, bigGap = false }) => {
   }, [bigGap, addStyleClass, removeStyleClass])
 
   return (
-    <div className={styleClasses} data-testid="vertical-group-container">
+    <div
+      className={styleClasses}
+      data-testid="vertical-group-container"
+    >
       {children}
     </div>
   )

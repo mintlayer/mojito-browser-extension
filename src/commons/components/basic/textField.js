@@ -21,10 +21,18 @@ const TextField = ({
 
   return (
     <VerticalGroup bigGap>
-      <label htmlFor={inputId} className={styleClasses} data-testid="label">
+      <label
+        htmlFor={inputId}
+        className={styleClasses}
+        data-testid="label"
+      >
         {label}
       </label>
-      <Input id={inputId} placeholder={placeHolder} password={password} />
+      <Input
+        id={inputId}
+        placeholder={placeHolder}
+        password={password}
+      />
     </VerticalGroup>
   )
 }

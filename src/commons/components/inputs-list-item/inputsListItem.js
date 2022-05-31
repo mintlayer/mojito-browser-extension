@@ -23,7 +23,10 @@ const InputListItem = ({
   restoreMode && inputExtraClasses.push('words-list-input-restore')
 
   return (
-    <li className="list-item" data-testid="inputs-list-item">
+    <li
+      className="list-item"
+      data-testid="inputs-list-item"
+    >
       <Input
         validity={validity}
         value={value}

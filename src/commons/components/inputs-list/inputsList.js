@@ -46,7 +46,10 @@ const InputsList = ({
   }
 
   return (
-    <ul className="inputs-list" data-testid="inputs-list">
+    <ul
+      className="inputs-list"
+      data-testid="inputs-list"
+    >
       {fields &&
         fields.map((field) => (
           <InputListItem

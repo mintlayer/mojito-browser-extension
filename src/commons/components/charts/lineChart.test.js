@@ -20,7 +20,12 @@ const WIDTHSAMPLE = '400px'
 const PROPORTIONALHEIGHTSAMPLE = '1100px'
 
 test('Render LineChart', () => {
-  render(<LineChart points={POINTSSAMPLE} width={WIDTHSAMPLE} />)
+  render(
+    <LineChart
+      points={POINTSSAMPLE}
+      width={WIDTHSAMPLE}
+    />,
+  )
   const lineChartComponent = screen.getByTestId('svg-container')
   const lineComponent = screen.getByTestId('path-container')
 

@@ -23,8 +23,14 @@ root.render(
             path="/set-account-password"
             element={<SetAccountPassword />}
           />
-          <Route path="/set-account-name" element={<SetAccountName />} />
-          <Route path="/words-list" element={<WordsList />} />
+          <Route
+            path="/set-account-name"
+            element={<SetAccountName />}
+          />
+          <Route
+            path="/words-list"
+            element={<WordsList />}
+          />
           <Route
             exact
             path="/"

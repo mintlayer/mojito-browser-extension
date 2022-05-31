@@ -28,7 +28,10 @@ const SetAccountPassword = () => {
           <Button>Continue</Button>
         </VerticalGroup>
       </CenteredLayout>
-      <Link to="/set-account-name" className="back-button">
+      <Link
+        to="/set-account-name"
+        className="back-button"
+      >
         {' '}
         &lsaquo;{' '}
       </Link>
