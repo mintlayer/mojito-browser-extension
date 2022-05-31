@@ -21,6 +21,7 @@
     "lint": "eslint src/**/*.js",
     "prettier": "pretty-quick --staged",
     "pretty-quick": "pretty-quick",
+    "pretty-quick-check": "pretty-quick --check",
     "prepare": "husky install"
   },
   "eslintConfig": {
