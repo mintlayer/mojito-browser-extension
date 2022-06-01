@@ -21,12 +21,12 @@ const CreateRestore = () => {
         </VerticalGroup>
       </CenteredLayout>
       <div className="footnote-wrapper">
-        <p
+        <span
           className="center-text footnote-name"
           data-testid="footnote-name"
         >
           ©Mojito Wallet, 2022
-        </p>
+        </span>
         <a
           className="center-text footnote-link"
           href="http://mojito-wallet.com"
