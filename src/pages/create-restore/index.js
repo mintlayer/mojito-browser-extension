@@ -31,7 +31,6 @@ const CreateRestore = () => {
           className="center-text footnote-link"
           href="http://mojito-wallet.com"
           target="_blank"
-          rel="noopener noreferrer"
           data-testid="footnote-link"
         >
           mojito-wallet.com
