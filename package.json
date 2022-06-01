@@ -36,6 +36,7 @@
         "error",
         "never"
       ],
+      "react/jsx-no-target-blank": "off",
       "quotes": [
         "error",
         "single"

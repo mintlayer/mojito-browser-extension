@@ -1,7 +1,7 @@
 .v-group {
   display: flex;
   flex-direction: column;
-  gap: 1.5em;
+  gap: 0.7rem;
 }
 
 .v-group.bigGap {

@@ -66,3 +66,13 @@ test('Get proportional height', () => {
     ),
   ).toBe(PROPORTIONALHEIGHTSAMPLE)
 })
+
+test('Render LineChart no points', () => {
+  render(<LineChart />)
+  const lineChartComponent = screen.getByTestId('svg-container')
+  const lineComponent = screen.getByTestId('path-container')
+
+  expect(lineChartComponent).toBeInTheDocument()
+  expect(lineChartComponent.nodeName.toLocaleLowerCase()).toBe('svg')
+  expect(lineChartComponent).toContainElement(lineComponent)
+})
