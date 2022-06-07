@@ -3,9 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 import App from './App'
-import SetAccountName from './pages/set-account-name'
-import WordsList from './pages/words-list'
-import SetAccountPassword from './pages/set-account-password'
+import SetAccount from './pages/set-account'
 
 import { appHasAccounts } from './commons/utils/appInfo'
 import reportWebVitals from './commons/utils/reportWebVitals'
@@ -20,16 +18,8 @@ root.render(
       <MemoryRouter>
         <Routes>
           <Route
-            path="/set-account-password"
-            element={<SetAccountPassword />}
-          />
-          <Route
-            path="/set-account-name"
-            element={<SetAccountName />}
-          />
-          <Route
-            path="/words-list"
-            element={<WordsList />}
+            path="/set-account"
+            element={<SetAccount />}
           />
           <Route
             exact

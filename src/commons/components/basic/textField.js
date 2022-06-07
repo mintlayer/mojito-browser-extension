@@ -2,14 +2,17 @@ import React, { useId, useEffect } from 'react'
 import useStyleClasses from '../../hooks/useStyleClasses'
 import Input from '../basic/input'
 import VerticalGroup from '../group/verticalGroup'
-
 import './textField.css'
 
 const TextField = ({
-  label = 'Label',
+  label,
   placeHolder = 'Placeholder',
   alternate = false,
   password = false,
+  value,
+  onChangeHandle,
+  validity,
+  pattern,
 }) => {
   const inputId = useId()
   const { styleClasses, addStyleClass, removeStyleClass } =
@@ -21,17 +24,23 @@ const TextField = ({
 
   return (
     <VerticalGroup bigGap>
-      <label
-        htmlFor={inputId}
-        className={styleClasses}
-        data-testid="label"
-      >
-        {label}
-      </label>
+      {label && (
+        <label
+          htmlFor={inputId}
+          className={styleClasses}
+          data-testid="label"
+        >
+          {label}
+        </label>
+      )}
       <Input
         id={inputId}
         placeholder={placeHolder}
         password={password}
+        value={value}
+        onChangeHandle={(e) => onChangeHandle(e.target.value)}
+        validity={validity}
+        pattern={pattern}
       />
     </VerticalGroup>
   )

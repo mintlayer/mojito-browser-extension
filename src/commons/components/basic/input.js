@@ -13,6 +13,7 @@ const Input = ({
   validity = '',
   id = '',
   password = false,
+  pattern,
 }) => {
   const classesList = ['input', ...extraStyleClasses]
 
@@ -61,6 +62,7 @@ const Input = ({
       onFocus={onFocusHandle}
       onChange={onChangeDefaultHandler}
       data-testid="input"
+      pattern={pattern}
     />
   )
 }

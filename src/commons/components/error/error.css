@@ -1,0 +1,7 @@
+.error {
+  position: absolute;
+  bottom: 0;
+  padding: 5px;
+  color: rgb(var(--color-black));
+  background-color: rgb(var(--color-light-green));
+}

@@ -7,7 +7,7 @@ import CenteredLayout from '../../commons/components/group/centeredLayout'
 const CreateRestore = () => {
   const navigate = useNavigate()
 
-  const goToSetAccountNamePage = () => navigate('/set-account-name')
+  const goToSetAccountPage = () => navigate('/set-account')
 
   return (
     <div data-testid="create-restore">
@@ -16,7 +16,7 @@ const CreateRestore = () => {
       </h1>
       <CenteredLayout>
         <VerticalGroup>
-          <Button onClickHandle={goToSetAccountNamePage}>Create</Button>
+          <Button onClickHandle={goToSetAccountPage}>Create</Button>
           <Button alternate>Restore</Button>
         </VerticalGroup>
       </CenteredLayout>

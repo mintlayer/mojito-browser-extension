@@ -2,7 +2,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { render, screen, act } from '@testing-library/react'
 
 import CreateRestore from './index'
-import SetAccountName from '../set-account-name/index'
+import SetAccoun from '../set-account/index'
 
 test('Renders Create/Restore page', () => {
   render(<CreateRestore />, { wrapper: MemoryRouter })
@@ -25,14 +25,14 @@ test('Renders Create/Restore page, and navigate to Create Account first step', a
 
   const MockPage = () => {
     location = useLocation()
-    return <SetAccountName />
+    return <SetAccoun />
   }
 
   render(
     <MemoryRouter initialEntries={['/']}>
       <Routes>
         <Route
-          path="/set-account-name"
+          path="/set-account"
           element={<MockPage />}
         />
         <Route
@@ -56,5 +56,5 @@ test('Renders Create/Restore page, and navigate to Create Account first step', a
     buttons[0].click()
   })
 
-  expect(location.pathname).toBe('/set-account-name')
+  expect(location.pathname).toBe('/set-account')
 })
