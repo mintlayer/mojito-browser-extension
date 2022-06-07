@@ -13,6 +13,7 @@ const TextField = ({
   onChangeHandle,
   validity,
   pattern,
+  extraStyleClasses,
 }) => {
   const inputId = useId()
   const { styleClasses, addStyleClass, removeStyleClass } =
@@ -21,7 +22,7 @@ const TextField = ({
   useEffect(() => {
     alternate ? addStyleClass('alternate') : removeStyleClass('alternate')
   }, [alternate, addStyleClass, removeStyleClass])
-
+  const fieldValid = validity ? 'valid' : 'invalid'
   return (
     <VerticalGroup bigGap>
       {label && (
@@ -39,8 +40,9 @@ const TextField = ({
         password={password}
         value={value}
         onChangeHandle={(e) => onChangeHandle(e.target.value)}
-        validity={validity}
+        validity={fieldValid}
         pattern={pattern}
+        extraStyleClasses={extraStyleClasses}
       />
     </VerticalGroup>
   )

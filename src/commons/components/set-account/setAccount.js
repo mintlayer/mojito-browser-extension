@@ -6,12 +6,13 @@ import Button from '../basic/button'
 import CenteredLayout from '../group/centeredLayout'
 import VerticalGroup from '../group/verticalGroup'
 import InputsList from '../inputs-list/inputsList'
-import SetAccountField from '../set-account-field/seAccountField'
+import TextField from '../basic/textField'
 import WordsDescription from '../words-list-description/wordsListDescription'
 
 import './setAccount.css'
 
 const SetAccount = ({ step, setStep, words = [] }) => {
+  const inputExtraclasses = ['set-account-input']
   const passwordPattern =
     /^(?=.*?[A-Z])*(?=(.*[a-z]){1,})*(?=(.*[\d]){1,})(?=(.*[\W]){1,})(?!.*\s).{8,}$/
   const [wordsFields, setWordsFields] = useState([])
@@ -99,30 +100,40 @@ const SetAccount = ({ step, setStep, words = [] }) => {
       <Header />
       <ProgressTracker steps={steps} />
       <form
+        className={`set-account-form ${step === 4 && 'set-account-form-words'}`}
         method="POST"
         data-testid="set-account-form"
         onSubmit={handleSubmit}
       >
-        <VerticalGroup data-step={step}>
+        <VerticalGroup
+          data-step={step}
+          bigGap
+        >
           {step === 1 && (
-            <SetAccountField
-              value={accountNameValue}
-              onChangeHandle={accountNameChangeHandler}
-              validity={accountNameValid}
-              placeHolder={'Account Name'}
-              title={'Create a name to your account'}
-            />
+            <CenteredLayout>
+              <TextField
+                value={accountNameValue}
+                onChangeHandle={accountNameChangeHandler}
+                validity={accountNameValid}
+                placeHolder={'Account Name'}
+                label={'Create a name to your account'}
+                extraStyleClasses={inputExtraclasses}
+              />
+            </CenteredLayout>
           )}
           {step === 2 && (
-            <SetAccountField
-              value={accountPasswordValue}
-              onChangeHandle={accountPasswordChangeHandler}
-              validity={accountPasswordValid}
-              pattern={passwordPattern}
-              password
-              title={'Create a password to your account'}
-              placeHolder={'Password'}
-            />
+            <CenteredLayout>
+              <TextField
+                value={accountPasswordValue}
+                onChangeHandle={accountPasswordChangeHandler}
+                validity={accountPasswordValid}
+                pattern={passwordPattern}
+                password
+                label={'Create a password to your account'}
+                placeHolder={'Password'}
+                extraStyleClasses={inputExtraclasses}
+              />
+            </CenteredLayout>
           )}
           {step === 3 && <WordsDescription />}
           {step === 4 && (
