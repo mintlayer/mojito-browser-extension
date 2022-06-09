@@ -1,25 +1,27 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '../../commons/components/basic/button'
 import VerticalGroup from '../../commons/components/group/verticalGroup'
 import CenteredLayout from '../../commons/components/group/centeredLayout'
-import { getLastBlockHash } from '../../commons/api/electrum'
-import { generateAddr } from '../../commons/crypto/btc'
+import { generateAddr, generateMnemonic, generateKeysFromMnemonic } from '../../commons/crypto/btc'
+import { BTC_NETWORK } from '../../environmentVars'
 
 const CreateRestore = () => {
   const navigate = useNavigate()
 
   const goToSetAccountPage = () => navigate('/set-account')
 
-  useEffect(()=>{
-    const fetchData = async () => {
-      const data = await getLastBlockHash()
-      console.log(data)
-      const addr = await generateAddr()
-      console.log(addr)
-    }
-    fetchData()
-  }, [])
+  const mnemonic = generateMnemonic()
+  const keys = generateKeysFromMnemonic(mnemonic)
+  const address = generateAddr(mnemonic)
+
+  console.log(`
+    Generated BTC wallet (${BTC_NETWORK}):
+
+    Address: ${address}
+    Mnemonic: ${mnemonic} 
+    WIF: ${keys[1]}
+  `)
 
   return (
     <div data-testid="create-restore">

@@ -17,11 +17,11 @@
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
     "stream-browserify": "^3.0.0",
-    "tiny-secp256k1": "^2.2.1",
+    "tiny-secp256k1": "^1.1.6",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-app-rewired start",
+    "start": "react-app-rewired start --env production",
     "build": "INLINE_RUNTIME_CHUNK=false react-scripts build && rm -f package.zip && (cd build && zip -r ../ext.zip ./*)",
     "test": "react-scripts test",
     "coverage": "react-scripts test a --coverage",
@@ -110,6 +110,7 @@
     ]
   },
   "devDependencies": {
+    "dotenv-webpack": "^7.1.0",
     "husky": "^7.0.4",
     "prettier": "^2.6.2",
     "pretty-quick": "^3.1.3",

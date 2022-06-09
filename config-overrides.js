@@ -1,4 +1,5 @@
 const webpack = require('webpack')
+const Dotenv = require('dotenv-webpack')
 
 module.exports = function override(config) {
   const fallback = config.resolve.fallback || {}
@@ -11,9 +12,12 @@ module.exports = function override(config) {
       process: 'process/browser',
       Buffer: ['buffer', 'Buffer'],
     }),
+    new Dotenv({
+      path: `./.env${process.env.NODE_ENV === 'production'?'.production':''}`,
+      systemvars: true,
+      silent: true
+    })
   ])
-  config.experiments = {
-    asyncWebAssembly: true
-  }
+
   return config
 }
