@@ -2,7 +2,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { render, screen, act } from '@testing-library/react'
 
 import CreateRestore from './index'
-import SetAccoun from '../set-account/index'
+import SetAccount from '../set-account/index'
 
 test('Renders Create/Restore page', () => {
   render(<CreateRestore />, { wrapper: MemoryRouter })
@@ -25,7 +25,7 @@ test('Renders Create/Restore page, and navigate to Create Account first step', a
 
   const MockPage = () => {
     location = useLocation()
-    return <SetAccoun />
+    return <SetAccount />
   }
 
   render(

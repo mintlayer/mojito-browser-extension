@@ -1,6 +1,5 @@
 .inputLabel {
   color: rgb(var(--color-dark-gray));
-  font-size: var(--font-size-medium);
   display: block;
   text-align: center;
 }

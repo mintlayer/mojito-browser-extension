@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import Expressions from '../../utils/expressions'
 
 import ProgressTracker from '../advanced/progressTracker'
 import Header from '../advanced/header'
@@ -13,38 +14,43 @@ import './setAccount.css'
 
 const SetAccount = ({ step, setStep, words = [] }) => {
   const inputExtraclasses = ['set-account-input']
-  const passwordPattern =
-    /^(?=.*?[A-Z])*(?=(.*[a-z]){1,})*(?=(.*[\d]){1,})(?=(.*[\W]){1,})(?!.*\s).{8,}$/
+  const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
   const [accountNameValue, setAccountNameValue] = useState('')
   const [accountPasswordValue, setAccountPasswordValue] = useState('')
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
-  const [accountWordsValid, setAccountAccountWordsValid] = useState(false)
+  const [accountWordsValid, setAccountWordsValid] = useState(false)
+
+  const goToNextStep = () => setStep(step + 1)
 
   const steps = [
-    { name: 'Account Name', active: step === 1 ? true : false },
-    { name: 'Account Password', active: step === 2 ? true : false },
+    { name: 'Account Name', active: step === 1 },
+    { name: 'Account Password', active: step === 2 },
     {
       name: 'Restoring Information',
-      active: step === 3 || step === 4 ? true : false,
+      active: step === 3 || step === 4,
     },
   ]
 
+  const stepsValidations = {
+    1: accountNameValid,
+    2: accountPasswordValid,
+    3: true,
+    4: accountWordsValid,
+  }
+
+  const titles = {
+    3: 'I understand',
+    4: 'Save',
+  }
+
   const nameFieldValidity = (value) => {
-    if (value.length > 3) {
-      setAccountNameValid(true)
-    } else {
-      setAccountNameValid(false)
-    }
+    setAccountNameValid(value.length > 3)
   }
 
   const passwordFieldValidity = (value) => {
-    if (value.length > 8 && value.match(passwordPattern)) {
-      setAccountPasswordValid(true)
-    } else {
-      setAccountPasswordValid(false)
-    }
+    setAccountPasswordValid(value.match(passwordPattern))
   }
 
   const accountNameChangeHandler = (value) => {
@@ -57,42 +63,18 @@ const SetAccount = ({ step, setStep, words = [] }) => {
     setAccountPasswordValue(value)
   }
 
-  const getButtonTitle = (currentStep) => {
-    if (currentStep === 3) {
-      return 'I understand'
-    } else if (currentStep === 4) {
-      return 'Save'
-    } else {
-      return 'Continue'
-    }
-  }
+  const genButtonTitle = (currentStep) => titles[currentStep] || 'Continue'
 
   useEffect(() => {
     const wordsValidity = wordsFields.every((word) => word.validity)
-    if (wordsValidity) {
-      setAccountAccountWordsValid(true)
-    } else {
-      setAccountAccountWordsValid(false)
-    }
+    setAccountWordsValid(wordsValidity)
   }, [wordsFields, step])
 
   const handleSubmit = (e) => {
-    if (step === 1 && accountNameValid) {
-      e.preventDefault()
-      setStep(2)
-    } else if (step === 2 && accountPasswordValid) {
-      e.preventDefault()
-      setStep(3)
-    } else if (step === 3) {
-      e.preventDefault()
-      setStep(4)
-    } else if (step === 4 && accountWordsValid) {
-      e.preventDefault()
-      console.log(accountNameValue)
-    } else {
-      e.preventDefault()
-      console.log('something went wrong') // todo: add error component
-    }
+    e.preventDefault()
+    stepsValidations[step]
+      ? goToNextStep()
+      : console.log('something went wrong')
   }
 
   return (
@@ -118,6 +100,7 @@ const SetAccount = ({ step, setStep, words = [] }) => {
                 placeHolder={'Account Name'}
                 label={'Create a name to your account'}
                 extraStyleClasses={inputExtraclasses}
+                alternate
               />
             </CenteredLayout>
           )}
@@ -132,6 +115,7 @@ const SetAccount = ({ step, setStep, words = [] }) => {
                 label={'Create a password to your account'}
                 placeHolder={'Password'}
                 extraStyleClasses={inputExtraclasses}
+                alternate
               />
             </CenteredLayout>
           )}
@@ -145,7 +129,7 @@ const SetAccount = ({ step, setStep, words = [] }) => {
             />
           )}
           <CenteredLayout>
-            <Button onClickHandle={handleSubmit}>{getButtonTitle(step)}</Button>
+            <Button onClickHandle={handleSubmit}>{genButtonTitle(step)}</Button>
           </CenteredLayout>
         </VerticalGroup>
       </form>

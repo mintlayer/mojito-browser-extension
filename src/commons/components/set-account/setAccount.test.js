@@ -2,9 +2,7 @@ import * as React from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import SetAccount from './setAccount'
-
-// const NAMEVALUESAMPLE = 'test'
-// const NAMESETVALIDITY = jest.fn()
+import Expressions from '../../utils/expressions'
 
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
@@ -48,6 +46,7 @@ test('Renders set account page with step 1', () => {
 })
 
 test('Renders set account page with step 2', () => {
+  const passwordPattern = Expressions.PASSWORD
   render(
     <SetAccount
       step={2}
@@ -67,6 +66,7 @@ test('Renders set account page with step 2', () => {
   expect(setAccountForm).toHaveAttribute('method', 'POST')
   expect(inputComponent).toHaveAttribute('type', 'password')
   expect(inputComponent).toHaveAttribute('placeholder', 'Password')
+  expect(inputComponent).toHaveAttribute('pattern', passwordPattern.toString())
   fireEvent.change(inputComponent, { target: { value: '1' } })
   expect(inputComponent).toHaveClass('invalid')
 
