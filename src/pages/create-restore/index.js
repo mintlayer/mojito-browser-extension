@@ -3,25 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../../commons/components/basic/button'
 import VerticalGroup from '../../commons/components/group/verticalGroup'
 import CenteredLayout from '../../commons/components/group/centeredLayout'
-import { generateAddr, generateMnemonic, generateKeysFromMnemonic } from '../../commons/crypto/btc'
-import { BTC_NETWORK } from '../../environmentVars'
 
 const CreateRestore = () => {
   const navigate = useNavigate()
 
   const goToSetAccountPage = () => navigate('/set-account')
-
-  const mnemonic = generateMnemonic()
-  const keys = generateKeysFromMnemonic(mnemonic)
-  const address = generateAddr(mnemonic)
-
-  console.log(`
-    Generated BTC wallet (${BTC_NETWORK}):
-
-    Address: ${address}
-    Mnemonic: ${mnemonic} 
-    WIF: ${keys[1]}
-  `)
 
   return (
     <div data-testid="create-restore">
