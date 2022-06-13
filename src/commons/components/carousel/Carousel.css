@@ -1,0 +1,82 @@
+.carousel {
+  display: flex;
+  height: 12rem;
+}
+
+.back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 30px;
+}
+.back:hover {
+  border-width: 1px;
+}
+.back:disabled {
+  cursor: not-allowed;
+  opacity: 0.2;
+}
+
+.slides {
+  overflow-x: hidden;
+  height: 100%;
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.wrapper {
+  overflow: initial;
+  height: 100%;
+  display: flex;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 700ms;
+}
+
+.button-account {
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  margin-right: 0.75rem;
+  display: flex;
+  width: 12rem;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.current {
+  border-width: 1px;
+}
+
+.selected {
+  color: rgb(var(--color-white));
+  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+}
+
+.unselected {
+  color: rgb(var(--text-black));
+  background-color: rgb(var(--color-light-green));
+}
+
+/* hover:border disabled:cursor-not-allowed disabled:opacity-20 */
+.next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 25px;
+}
+.next:hover {
+  border-width: 1px;
+}
+.next:disabled {
+  cursor: not-allowed;
+  opacity: 0.2;
+}
