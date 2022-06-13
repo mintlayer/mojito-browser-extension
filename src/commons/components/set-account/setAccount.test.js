@@ -70,6 +70,51 @@ test('Renders set account page with step 2', () => {
   fireEvent.change(inputComponent, { target: { value: '1' } })
   expect(inputComponent).toHaveClass('invalid')
 
+  fireEvent.change(inputComponent, { target: { value: 'qwertyuio!5678' } })
+  expect(inputComponent).toHaveClass('invalid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5678' } })
+  expect(inputComponent).toHaveClass('invalid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5@' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5#' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5$' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5%' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5ˆ' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5&' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5*' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5_' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5+' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5=' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5|' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5"' } })
+  expect(inputComponent).toHaveClass('valid')
+
+  fireEvent.change(inputComponent, { target: { value: 'Qwertyuio5?' } })
+  expect(inputComponent).toHaveClass('valid')
+
   fireEvent.change(inputComponent, { target: { value: 'Qwertyuio!5678' } })
   expect(inputComponent).toHaveClass('valid')
 
