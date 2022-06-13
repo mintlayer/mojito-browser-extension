@@ -38,9 +38,6 @@ test('Button component with click function', () => {
 
   expect(buttonComponent).toBeInTheDocument()
   expect(mockHandleClickFn).toBeCalledTimes(1)
-
-  buttonComponent.click()
-  expect(mockHandleClickFn).toBeCalledTimes(2)
 })
 
 test('Button component with children', () => {

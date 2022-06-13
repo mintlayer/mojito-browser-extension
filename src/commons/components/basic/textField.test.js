@@ -2,15 +2,15 @@ import { render, screen, waitFor } from '@testing-library/react'
 
 import TextField from './textField'
 
+const ONCHANGEHANDLESAMPLE = () => {}
+
 test('Render TextField component', () => {
-  render(<TextField />)
+  render(<TextField onChangeHandle={ONCHANGEHANDLESAMPLE} />)
   const textFieldComponent = screen.getByTestId('vertical-group-container')
-  const labelComponent = screen.getByTestId('label')
   const inputComponent = screen.getByTestId('input')
 
   expect(textFieldComponent).toBeInTheDocument()
 
-  expect(labelComponent).toBeInTheDocument()
   expect(inputComponent).toBeInTheDocument()
 })
 
@@ -35,7 +35,7 @@ test('Render TextField component - placeholder', () => {
 })
 
 test('Render TextField component - alternate layout', async () => {
-  const { rerender } = render(<TextField />)
+  const { rerender } = render(<TextField label="testLabel" />)
   const textFieldComponent = screen.getByTestId('vertical-group-container')
   let labelComponent = screen.getByTestId('label')
 
@@ -43,7 +43,12 @@ test('Render TextField component - alternate layout', async () => {
 
   expect(labelComponent).not.toHaveClass('alternate')
 
-  rerender(<TextField alternate />)
+  rerender(
+    <TextField
+      label="testLabel"
+      alternate
+    />,
+  )
   labelComponent = screen.getByTestId('label')
   await waitFor(() => {
     expect(labelComponent).toHaveClass('alternate')

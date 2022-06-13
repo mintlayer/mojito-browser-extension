@@ -1,0 +1,8 @@
+.error {
+  position: absolute;
+  bottom: 0;
+  padding: 10px;
+  color: rgb(var(--color-black));
+  background-color: rgb(var(--color-light-green));
+  border-radius: 2px;
+}

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import Input from './input'
+import Expressions from '../../utils/expressions'
 
 test('Input component', () => {
   render(<Input />)
@@ -20,6 +21,15 @@ test('Input component with placeholder', () => {
 
   expect(inputComponent).toBeInTheDocument()
   expect(inputComponent).toHaveAttribute('placeholder', 'inputfield')
+})
+
+test('Input component with pattern', () => {
+  const passwordPattern = Expressions.PASSWORD
+  render(<Input pattern={passwordPattern} />)
+  const inputComponent = screen.getByTestId('input')
+
+  expect(inputComponent).toBeInTheDocument()
+  expect(inputComponent).toHaveAttribute('pattern', passwordPattern.toString())
 })
 
 test('Input component with extra classes', () => {

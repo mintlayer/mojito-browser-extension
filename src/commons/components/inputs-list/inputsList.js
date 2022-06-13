@@ -58,7 +58,7 @@ const InputsList = ({
             number={field.order + 1}
             validity={field.validity ? 'valid' : 'invalid'}
             value={field.value}
-            onChangeHandle={(event) => onChangeHandler(event, field.order)}
+            onChangeHandle={(e) => onChangeHandler(e, field.order)}
             restoreMode={restoreMode}
           />
         ))}

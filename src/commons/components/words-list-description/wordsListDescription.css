@@ -1,0 +1,12 @@
+.words-list-description {
+  font-size: 1.5rem;
+  color: rgb(var(--color-dark-gray));
+  margin-bottom: 20px;
+}
+
+.words-list-description:nth-child(2) {
+  font-size: 1.5rem;
+  color: rgb(var(--color-black));
+  font-weight: 600;
+  margin: 0;
+}
