@@ -1,10 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import './Carousel.css'
-
-/**
-Create component, that will receive a list of accounts (name and id) and generate clickable components in a carousel list. The click function should also be a prop of the list, so it can be controlled by the page that uses it.
-Use CSS for the animation.
-*/
+import next from '../../assets/img/next.svg'
+import './carousel.css'
 
 export default function Carousel({
   accounts = [],
@@ -16,17 +12,18 @@ export default function Carousel({
   const [selected, setSelected] = useState(undefined)
   const carouselRef = useRef()
 
-  useEffect(() => {
-    const translate = -1 * currentSlide * (12 + 0.75) // rem => mx-3 + w-48
-    carouselRef.current.style.transform = `translateX(${translate}rem)`
-  }, [currentSlide])
+  function calculateNextTranslateValue(currentSlide) {
+    const buttonSize = 12
+    const marginRight = 0.75
+    return -1 * (buttonSize + marginRight) * currentSlide
+  }
 
   const translateHandleClick = (direction) => {
-    const next = currentSlide + direction
-    if (next >= 0 && next < accounts.length) {
-      setCurrentSlide(next)
-      direction < 0 ? onPrevious && onPrevious() : onNext && onNext()
-    }
+    const nextSlide = currentSlide + direction
+    setCurrentSlide(nextSlide)
+    direction < 0
+      ? onPrevious && onPrevious(nextSlide)
+      : onNext && onNext(nextSlide)
   }
 
   const handleClick = (index) => {
@@ -35,15 +32,25 @@ export default function Carousel({
     onClick && onClick(accounts[index])
   }
 
+  useEffect(() => {
+    const newTranslateValue = calculateNextTranslateValue(currentSlide)
+    carouselRef.current.style.transform = `translateX(${newTranslateValue}rem)`
+  }, [currentSlide])
+
   return (
     <div className="carousel">
       <button
+        name="back"
         type="button"
         className="back"
         onClick={() => translateHandleClick(-1)}
         disabled={currentSlide <= 0}
       >
-        &lt;
+        <img
+          className="back-icon"
+          src={next}
+          alt="back"
+        />
       </button>
       <div className="slides">
         <div
@@ -52,6 +59,7 @@ export default function Carousel({
         >
           {accounts.map((account, index) => (
             <button
+              name="account"
               key={account.id}
               className={`button-account 
                 ${index === currentSlide ? 'current' : ''}
@@ -60,18 +68,22 @@ export default function Carousel({
               onClick={() => handleClick(index)}
             >
               {account.name}
-              {/* <div className="bg-gray-100">{account.id}</div> */}
             </button>
           ))}
         </div>
       </div>
       <button
+        name="next"
         type="button"
         className="next"
         onClick={() => translateHandleClick(1)}
         disabled={currentSlide >= accounts.length - 1}
       >
-        &gt;
+        <img
+          className="next-icon"
+          src={next}
+          alt="next"
+        />
       </button>
     </div>
   )
