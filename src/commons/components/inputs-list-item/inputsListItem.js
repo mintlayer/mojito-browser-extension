@@ -1,3 +1,4 @@
+// import React, { useEffect } from 'react'
 import Input from '../basic/input'
 import './inputsListItem.css'
 
@@ -21,6 +22,9 @@ const InputListItem = ({
   const inputExtraClasses = ['words-list-input']
 
   restoreMode && inputExtraClasses.push('words-list-input-restore')
+  if (validity === 'valid' && restoreMode) {
+    inputExtraClasses.push('input-restore-finished')
+  }
 
   return (
     <li
