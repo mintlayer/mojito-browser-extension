@@ -15,6 +15,7 @@ const Input = ({
   password = false,
   pattern,
 }) => {
+  // eslint-disable-next-line
   const classesList = ['input', ...extraStyleClasses]
 
   const { styleClasses, addStyleClass, removeStyleClass, setStyleClasses } =
