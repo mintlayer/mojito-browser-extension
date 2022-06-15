@@ -46,7 +46,7 @@ const RestoreAccountPage = () => {
               type="submit"
               onClickHandle={handleSubmit}
             >
-              Restore
+              Confirm
             </Button>
           </CenteredLayout>
         </VerticalGroup>
