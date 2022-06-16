@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import useStyleClasses from '../../hooks/useStyleClasses'
 
 import './input.css'
@@ -15,8 +15,10 @@ const Input = ({
   password = false,
   pattern,
 }) => {
-  // eslint-disable-next-line
-  const classesList = ['input', ...extraStyleClasses]
+  const classesList = useMemo(
+    () => ['input', ...extraStyleClasses],
+    [extraStyleClasses],
+  )
 
   const { styleClasses, addStyleClass, removeStyleClass, setStyleClasses } =
     useStyleClasses(classesList)

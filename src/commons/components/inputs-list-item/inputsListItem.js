@@ -1,4 +1,3 @@
-// import React, { useEffect } from 'react'
 import Input from '../basic/input'
 import './inputsListItem.css'
 
