@@ -9,6 +9,8 @@ const ITERATIONAMOUNT = 20
 const KEYSIZE = 16
 const IVSIZE = 12
 
+const hexToBytes = (hexString) => Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)))
+
 const generateSalt = async (bytesAmount, random = forgeRandom, util = forgeUtil) => {
   const bytes = await random.getBytes(bytesAmount)
   return util.bytesToHex(bytes)
@@ -28,27 +30,26 @@ const generateIV = async (random = forgeRandom) => await random.getBytes(IVSIZE)
 const encryptAES = async ({data, key, cipherFn = forgeCipher, util = forgeUtil}) => {
   const IV = await generateIV()
   const cipher = cipherFn.createCipher('AES-GCM', key)
+  const hex = util.bytesToHex(data)
 
   cipher.start({ iv: IV })
-  cipher.update(util.createBuffer(data))
+  cipher.update(util.createBuffer(hex))
   cipher.finish()
-
   return {
-    encryptedData: cipher.output.toHex(),
+    encryptedData: cipher.output.getBytes(),
     iv: IV,
     tag: cipher.mode.tag.getBytes()
   }
 }
 
-const decryptAES = async ({hexdata, key, iv, tag, cipherFn = forgeCipher, util = forgeUtil}) => {
+const decryptAES = async ({data, key, iv, tag, cipherFn = forgeCipher, util = forgeUtil}) => {
   const decipher = cipherFn.createDecipher('AES-GCM', key)
-  const data = util.hexToBytes(hexdata)
 
   decipher.start({ iv, tag })
   decipher.update(util.createBuffer(data))
   decipher.finish()
 
-  return decipher.output
+  return hexToBytes(decipher.output.data)
 }
 
 export {

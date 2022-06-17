@@ -30,7 +30,7 @@ const createTransaction = async (openedDb, onError) => {
   })
 }
 
-const loadAccounts = async(onError, DB = IDB) => {
+const loadAccounts = async (onError, DB = IDB) => {
   try {
     const db = await openDatabase(DB)
     const transaction = await createTransaction(db, onError)
@@ -41,6 +41,21 @@ const loadAccounts = async(onError, DB = IDB) => {
   }
 }
 
+const save = (store, entity) => {
+  return new Promise((resolve, reject) => {
+    const dbOperation = store.add(entity)
+    dbOperation.onsuccess = ({target: {result}}) => resolve(result)
+    dbOperation.onerror = (error) => reject(error)
+  })
+}
+
+const get = (store, index) => {
+  return new Promise((resolve, reject) => {
+    const dbOperation = store.get(index)
+    dbOperation.onsuccess = ({target: {result}}) => resolve(result)
+  })
+}
+
 export {
   DATABASENAME,
   ACCOUNTSSTORENAME,
@@ -48,5 +63,7 @@ export {
   createOrUpdateDatabase,
   openDatabase,
   createTransaction,
-  loadAccounts
+  loadAccounts,
+  save,
+  get
 }
