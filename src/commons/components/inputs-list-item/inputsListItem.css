@@ -37,7 +37,7 @@
 }
 
 .words-list-input-restore {
-  padding: 1.2rem 1rem 1.2rem 3.4rem;
+  padding: 1rem 1rem 1rem 3.4rem;
   background: transparent;
   border: 2px solid rgb(var(--color-light-gray));
   border-style: dashed;

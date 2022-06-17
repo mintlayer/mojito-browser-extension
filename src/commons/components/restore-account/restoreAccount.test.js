@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { render, screen, fireEvent, act } from '@testing-library/react'
-import SetAccount from './setAccount'
+import SetAccount from './restoreAccount'
 import Expressions from '../../utils/expressions'
 
 const SETSTEPSAMPLE = jest.fn()
@@ -16,8 +16,8 @@ test('Renders set account page with step 1', () => {
     />,
     { wrapper: MemoryRouter },
   )
-  const setAccountComponent = screen.getByTestId('set-account')
-  const setAccountForm = screen.getByTestId('set-account-form')
+  const setAccountComponent = screen.getByTestId('restore-account')
+  const setAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
@@ -54,8 +54,8 @@ test('Renders set account page with step 2', () => {
     />,
     { wrapper: MemoryRouter },
   )
-  const setAccountComponent = screen.getByTestId('set-account')
-  const setAccountForm = screen.getByTestId('set-account-form')
+  const setAccountComponent = screen.getByTestId('restore-account')
+  const setAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
@@ -131,12 +131,12 @@ test('Renders set account page with step 3', () => {
     />,
     { wrapper: MemoryRouter },
   )
-  const descriptionParagraphs = screen.getAllByTestId('description-paragraph')
-  const setAccountForm = screen.getByTestId('set-account-form')
+  const descriptionParagraph = screen.getAllByTestId('description-paragraph')
+  const setAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
 
   expect(buttons).toHaveLength(2)
-  expect(descriptionParagraphs).toHaveLength(2)
+  expect(descriptionParagraph).toHaveLength(1)
 
   act(() => {
     setAccountForm.submit()
@@ -152,7 +152,7 @@ test('Renders set account page with step 4', () => {
     />,
     { wrapper: MemoryRouter },
   )
-  const setAccountForm = screen.getByTestId('set-account-form')
+  const setAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
   const inputs = screen.getAllByTestId('input')
 
