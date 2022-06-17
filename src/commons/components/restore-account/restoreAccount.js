@@ -12,7 +12,7 @@ import TextField from '../basic/textField'
 import './restoreAccount.css'
 
 const RestoreAccount = ({ step, setStep, words = [] }) => {
-  const inputExtraclasses = ['restore-account-input']
+  const inputExtraclasses = ['account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
   const [accountNameValue, setAccountNameValue] = useState('')
