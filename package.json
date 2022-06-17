@@ -6,17 +6,25 @@
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.1.1",
     "@testing-library/user-event": "^13.5.0",
+    "bip32": "^3.0.1",
+    "bip39": "^3.0.4",
+    "bitcoinjs-lib": "^6.0.1",
+    "buffer": "^6.0.3",
     "d3": "^7.4.4",
+    "process": "^0.11.10",
     "react": "^18.1.0",
+    "react-app-rewired": "^2.2.1",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
+    "stream-browserify": "^3.0.0",
+    "tiny-secp256k1": "^1.1.6",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-app-rewired start --env production",
     "build": "INLINE_RUNTIME_CHUNK=false react-scripts build && rm -f package.zip && (cd build && zip -r ../ext.zip ./*)",
-    "test": "react-scripts test",
-    "coverage": "react-scripts test a --coverage",
+    "test": "react-scripts --openssl-legacy-provider test",
+    "coverage": "react-scripts --openssl-legacy-provider test a --coverage",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js",
     "prettier": "pretty-quick --staged",
@@ -26,6 +34,9 @@
     "prepare": "husky install"
   },
   "eslintConfig": {
+    "ignorePatterns": [
+      "src/commons/utils/main.js"
+    ],
     "extends": [
       "eslint:recommended",
       "react-app",
@@ -75,7 +86,9 @@
     ],
     "coveragePathIgnorePatterns": [
       "./src/index.js",
-      "./src/commons/utils/reportWebVitals.js"
+      "./src/environmentVars.js",
+      "./src/commons/utils/reportWebVitals.js",
+      "./src/commons/workers/*"
     ],
     "coverageThreshold": {
       "global": {
@@ -99,9 +112,12 @@
     ]
   },
   "devDependencies": {
+    "dotenv-webpack": "^7.1.0",
+    "ecpair": "^2.0.1",
     "husky": "^7.0.4",
-    "react-scripts": "5.0.1",
     "prettier": "^2.6.2",
-    "pretty-quick": "^3.1.3"
+    "pretty-quick": "^3.1.3",
+    "react-scripts": "5.0.1",
+    "wallet-address-validator": "^0.2.4"
   }
 }
