@@ -1,19 +1,12 @@
-
 import { get, loadAccounts, save } from '../db/db'
-import {
-  generateNewAccountMnemonic,
-  generateSeed,
-  generateEncryptionKey,
-  encryptSeed,
-  decryptSeed
-} from './account.worker'
+import loadAccountSubRoutines from './loadWorkers'
 
 const saveAccount = async (name, password, mnemonic) => {
+  const {generateSeed, generateEncryptionKey, encryptSeed} = await loadAccountSubRoutines()
+
   const seed = await generateSeed(mnemonic)
-  console.log('Seed generated:')
-  console.log(seed)
   const {key, salt} = await generateEncryptionKey({password})
-  const {encryptedData, iv, tag} = await encryptSeed(seed, key)
+  const {encryptedData, iv, tag} = await encryptSeed({data: seed, key})
 
   const account = {
     name,
@@ -28,12 +21,14 @@ const saveAccount = async (name, password, mnemonic) => {
 }
 
 const unlockAccount = async (id, password) => {
+  const {generateEncryptionKey, decryptSeed} = await loadAccountSubRoutines()
+
   const accounts = await loadAccounts()
   const account = await get(accounts, id)
 
   const {key} = await generateEncryptionKey({password, salt: account.salt})
   const seed = await decryptSeed({
-    seed: account.seed,
+    data: account.seed,
     iv: account.iv,
     tag: account.tag,
     key
@@ -42,7 +37,6 @@ const unlockAccount = async (id, password) => {
 }
 
 export {
-  generateNewAccountMnemonic,
   saveAccount,
   unlockAccount
 }

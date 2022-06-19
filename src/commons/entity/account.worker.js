@@ -45,13 +45,13 @@ const generateEncryptionKey = async (password) => {
   })
 }
 
-const encryptSeed = async(seed, key) => {
+const encryptSeed = async({data, key}) => {
   return new Promise((resolve) => {
     const worker = getCipherWorker()
     worker.postMessage({
       job: CipherWorkerEnum.ENCRYPT_AES,
       data: {
-        data: seed,
+        data,
         key
       }
     })
@@ -62,13 +62,13 @@ const encryptSeed = async(seed, key) => {
   })
 }
 
-const decryptSeed = async ({seed, key, iv, tag}) => {
+const decryptSeed = async ({data, key, iv, tag}) => {
   return new Promise((resolve) => {
     const worker = getCipherWorker()
     worker.postMessage({
       job: CipherWorkerEnum.DECRYPT_AES,
       data: {
-        data: seed,
+        data,
         key,
         iv,
         tag

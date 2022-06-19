@@ -10,9 +10,8 @@ const NETWORK = bitcoin.networks[BTC_NETWORK]
 
 const getBIP32Object = () => BIP32Factory(ecc)
 
-const getSeedFromMnemonic = (mnemonic) => {
-  return Bip39.mnemonicToSeedSync(mnemonic)
-}
+const getSeedFromMnemonic = (mnemonic) => Bip39.mnemonicToSeedSync(mnemonic)
+
 const getKeysFromSeed = (seed) => {
   const root = getBIP32Object().fromSeed(seed, NETWORK)
   const account = root.derivePath(DERIVATION_PATH)

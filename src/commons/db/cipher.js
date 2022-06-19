@@ -30,7 +30,7 @@ const generateIV = async (random = forgeRandom) => await random.getBytes(IVSIZE)
 const encryptAES = async ({data, key, cipherFn = forgeCipher, util = forgeUtil}) => {
   const IV = await generateIV()
   const cipher = cipherFn.createCipher('AES-GCM', key)
-  const hex = util.bytesToHex(data)
+  const hex = Buffer.from(data).toString('hex')
 
   cipher.start({ iv: IV })
   cipher.update(util.createBuffer(hex))
