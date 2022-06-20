@@ -33,4 +33,4 @@ const generateAddr = (mnemonic) => {
   return btcAddress
 }
 
-export { generateAddr, generateMnemonic, generateKeysFromMnemonic, getSeedFromMnemonic }
+export { generateAddr, generateMnemonic, generateKeysFromMnemonic, getSeedFromMnemonic, getKeysFromSeed, getAddressFromPubKey }

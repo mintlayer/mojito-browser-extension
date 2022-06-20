@@ -1,3 +1,4 @@
+import { getAddressFromPubKey, getKeysFromSeed } from '../crypto/btc'
 import { get, loadAccounts, save } from '../db/db'
 import loadAccountSubRoutines from './loadWorkers'
 
@@ -33,7 +34,11 @@ const unlockAccount = async (id, password) => {
     tag: account.tag,
     key
   })
-  return seed
+
+  const [pubKey] = getKeysFromSeed(Buffer.from(seed))
+  const address = getAddressFromPubKey(pubKey)
+
+  return address
 }
 
 export {
