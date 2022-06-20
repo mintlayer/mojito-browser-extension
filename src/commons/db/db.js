@@ -53,6 +53,7 @@ const get = (store, index) => {
   return new Promise((resolve, reject) => {
     const dbOperation = store.get(index)
     dbOperation.onsuccess = ({target: {result}}) => resolve(result)
+    dbOperation.onerror = (error) => reject(error)
   })
 }
 

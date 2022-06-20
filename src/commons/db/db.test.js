@@ -5,12 +5,14 @@ import {
   createOrUpdateDatabase,
   createTransaction,
   loadAccounts,
-  openDatabase
+  openDatabase,
+  save,
+  get,
 } from './db'
 
 const deleteDatabase = () => indexedDB.deleteDatabase(DATABASENAME)
 
-test('IndexedDB basic functions', async () => {
+test('IndexedDB basic functions - loadAccounts', async () => {
   const accountsStore = await loadAccounts()
 
   expect(accountsStore._name).toBe('accounts')
@@ -20,20 +22,20 @@ test('IndexedDB basic functions', async () => {
   deleteDatabase()
 })
 
-test('IndexedDB basic functions - error', async () => {
+test('IndexedDB basic functions - loadAccounts error', async () => {
   const onError = (event) => expect(event).toBeInstanceOf(Error)
   await loadAccounts(onError, null)
 })
 
 test('IndexedDB basic functions - createOrUpdateDatabase', async () => {
   const createIndex = jest.fn((name, keyPath, options) => {
-    expect(name).not.toBeFalsy()
-    expect(keyPath).not.toBeFalsy()
+    expect(name).toBeDefined()
+    expect(keyPath).toBeDefined()
     expect(Object.keys(options).length).toBeGreaterThan(0)
   })
 
   const createObjectStore = jest.fn((storeName, options)=> {
-    expect(storeName).not.toBeFalsy()
+    expect(storeName).toBeDefined()
     expect(Object.keys(options)).toContain('keyPath')
 
     return { createIndex }
@@ -50,7 +52,7 @@ test('IndexedDB basic functions - createOrUpdateDatabase', async () => {
 
 test('IndexedDB basic functions - openDatabase', async () => {
   const db = await openDatabase()
-  expect(db).not.toBeFalsy()
+  expect(db).toBeDefined()
   expect(db.name).toBe(DATABASENAME)
   expect(db.objectStoreNames).toContain(ACCOUNTSSTORENAME)
   expect(db.version).toBe(SCHEMAVERSION)
@@ -72,6 +74,19 @@ test('IndexedDB basic functions - openDatabase error', async () => {
   }).rejects.toBeInstanceOf(Error)
 })
 
+test('IndexedDB basic functions - createTransaction', async ()=> {
+  const openedDB = {
+    transaction: (storeName, mode) => {
+      expect(storeName).toBeDefined()
+      expect(mode).toBeDefined()
+      return {}
+    }
+  }
+
+  const transaction = await createTransaction(openedDB)
+  expect(transaction.onerror).toBeInstanceOf(Function)
+})
+
 test('IndexedDB basic functions - createTransaction error', (done)=> {
   const context = { error: () => context.onerror(new Error()) }
   const errorHandler = (error) => {
@@ -80,8 +95,8 @@ test('IndexedDB basic functions - createTransaction error', (done)=> {
   }
   const openedDB = {
     transaction: (storeName, mode) => {
-      expect(storeName).not.toBeFalsy()
-      expect(mode).not.toBeFalsy()
+      expect(storeName).toBeDefined()
+      expect(mode).toBeDefined()
       setTimeout(context.error, 1)
       return context
     }
@@ -102,12 +117,92 @@ test('IndexedDB basic functions - createTransaction error on console', (done)=> 
 
   const openedDB = {
     transaction: (storeName, mode) => {
-      expect(storeName).not.toBeFalsy()
-      expect(mode).not.toBeFalsy()
+      expect(storeName).toBeDefined()
+      expect(mode).toBeDefined()
       setTimeout(context.error, 1)
       return context
     }
   }
 
   createTransaction(openedDB)
+})
+
+test('IndexedDB basic functions - save', async ()=> {
+  const context = {
+    success: () => context.onsuccess({target: {result: 1}})
+  }
+
+  const store = {
+    add: (obj) => {
+      expect(obj).toBeDefined()
+      setTimeout(context.success, 1)
+      return context
+    }
+  }
+
+  const id = await save(store, {})
+  expect(id).toBe(1)
+})
+
+test('IndexedDB basic functions - save error', async ()=> {
+  const context = {
+    error: () => context.onerror(new Error())
+  }
+
+  const store = {
+    add: (obj) => {
+      expect(obj).toBeDefined()
+      setTimeout(context.error, 1)
+      return context
+    }
+  }
+
+  await expect(async () => {
+    await save(store, {})
+  }).rejects.toThrowError()
+})
+
+test('IndexedDB basic functions - get', async ()=> {
+  const context = {
+    success: () => context.onsuccess({target: {result: {}}})
+  }
+
+  const store = {
+    get: (obj) => {
+      expect(obj).toBeDefined()
+      setTimeout(context.success, 1)
+      return context
+    }
+  }
+
+  const id = await get(store, 1)
+  expect(id).toBeDefined()
+})
+
+test('IndexedDB basic functions - get error', async ()=> {
+  const context = {
+    error: () => context.onerror(new Error())
+  }
+
+  const store = {
+    get: (index) => {
+      expect(index).toBeDefined()
+      setTimeout(context.error, 1)
+      return context
+    }
+  }
+
+  await expect(async () => {
+    await get(store, {})
+  }).rejects.toThrowError()
+})
+
+test('IndexedDB basic functions - save and get real', async ()=> {
+  const accounts = await loadAccounts()
+
+  const id = await save(accounts, {name: 'testing'})
+  expect(id).toBe(1)
+  const account = await get(accounts, id)
+  expect(account.id).toBe(1)
+  deleteDatabase()
 })

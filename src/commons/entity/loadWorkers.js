@@ -1,5 +1,12 @@
 import { USE_WEB_WORKERS } from '../../environmentVars'
 
+/**
+ * This files is needed because Jest cannot run with WebWorkers
+ * or `url.meta.url`
+ * So, for test environment, the actions runs with direct import
+ * instead of running through a WebWorker.
+ */
+
 const loadAccountSubRoutines = async () => {
   let generateNewAccountMnemonic,
       generateSeed,
@@ -7,7 +14,7 @@ const loadAccountSubRoutines = async () => {
       encryptSeed,
       decryptSeed
 
-
+  /* istanbul ignore if */
   if(USE_WEB_WORKERS) {
     const workers = await import('./account.worker')
     generateNewAccountMnemonic = workers.generateNewAccountMnemonic

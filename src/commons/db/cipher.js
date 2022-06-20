@@ -53,9 +53,11 @@ const decryptAES = async ({data, key, iv, tag, cipherFn = forgeCipher, util = fo
 }
 
 export {
+  IVSIZE,
   generateSalt,
   generatePBKDF2Key,
   generateIV,
   encryptAES,
-  decryptAES
+  decryptAES,
+  hexToBytes
 }
