@@ -3,6 +3,7 @@ import { render, screen, act } from '@testing-library/react'
 
 import CreateRestore from './index'
 import SetAccount from '../set-account/index'
+import RestoreAccount from '../restore-account/index'
 
 test('Renders Create/Restore page', () => {
   render(<CreateRestore />, { wrapper: MemoryRouter })
@@ -23,7 +24,7 @@ test('Renders Create/Restore page, and navigate to Create Account first step', a
     return <CreateRestore />
   }
 
-  const MockPage = () => {
+  const MockSetAccountPage = () => {
     location = useLocation()
     return <SetAccount />
   }
@@ -33,7 +34,7 @@ test('Renders Create/Restore page, and navigate to Create Account first step', a
       <Routes>
         <Route
           path="/set-account"
-          element={<MockPage />}
+          element={<MockSetAccountPage />}
         />
         <Route
           exact
@@ -57,4 +58,48 @@ test('Renders Create/Restore page, and navigate to Create Account first step', a
   })
 
   expect(location.pathname).toBe('/set-account')
+})
+
+test('Renders Create/Restore page, and navigate to Recover Account page', async () => {
+  let location
+
+  const ProxyRestore = () => {
+    location = useLocation()
+    return <CreateRestore />
+  }
+
+  const MockRestoreAccountPage = () => {
+    location = useLocation()
+    return <RestoreAccount />
+  }
+
+  render(
+    <MemoryRouter initialEntries={['/']}>
+      <Routes>
+        <Route
+          path="/restore-account"
+          element={<MockRestoreAccountPage />}
+        />
+        <Route
+          exact
+          path="/"
+          element={<ProxyRestore />}
+        />
+      </Routes>
+    </MemoryRouter>,
+  )
+
+  const createRestoreComponent = screen.getByTestId('create-restore')
+  const buttons = screen.getAllByTestId('button')
+
+  expect(createRestoreComponent).toBeInTheDocument()
+  expect(buttons).toHaveLength(2)
+
+  expect(location.pathname).toBe('/')
+
+  act(() => {
+    buttons[1].click()
+  })
+
+  expect(location.pathname).toBe('/restore-account')
 })

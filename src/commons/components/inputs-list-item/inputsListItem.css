@@ -37,9 +37,10 @@
 }
 
 .words-list-input-restore {
-  padding: 1.2rem 1rem 1.2rem 3.4rem;
+  padding: 1rem 1rem 1rem 3.4rem;
   background: transparent;
   border: 2px solid rgb(var(--color-light-gray));
+  border-style: dashed;
 }
 
 .words-list-input:hover,
@@ -47,8 +48,9 @@
   border: 2px solid rgb(var(--color-dark-gray));
 }
 
-.words-list-input-finished {
-  background: red;
+.input-restore-finished {
+  background: rgb(var(--color-light-green));
+  border: 2px solid rgb(var(--color-light-green));
 }
 
 .words-list-input:focus ~ .number {

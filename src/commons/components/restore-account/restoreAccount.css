@@ -1,0 +1,21 @@
+.account-form {
+  margin-top: 122px;
+}
+
+.account-form-words {
+  margin-top: 0;
+}
+
+.account-form-description {
+  margin-top: 204px;
+}
+
+.account-input {
+  padding: 1.2rem 1.7rem;
+}
+
+.words-description {
+  font-size: 1.5rem;
+  color: rgb(var(--color-dark-gray));
+  text-align: center;
+}

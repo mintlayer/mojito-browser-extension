@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import useStyleClasses from '../../hooks/useStyleClasses'
 
 import './input.css'
@@ -15,9 +15,12 @@ const Input = ({
   password = false,
   pattern,
 }) => {
-  const classesList = ['input', ...extraStyleClasses]
+  const classesList = useMemo(
+    () => ['input', ...extraStyleClasses],
+    [extraStyleClasses],
+  )
 
-  const { styleClasses, addStyleClass, removeStyleClass } =
+  const { styleClasses, addStyleClass, removeStyleClass, setStyleClasses } =
     useStyleClasses(classesList)
   const [val, setVal] = useState(value)
   const [type, setType] = useState(password ? 'password' : 'text')
@@ -25,6 +28,10 @@ const Input = ({
   useEffect(() => {
     setVal(value)
   }, [value])
+
+  useEffect(() => {
+    setStyleClasses(classesList)
+  }, [classesList, setStyleClasses])
 
   useEffect(() => {
     switch (validity) {
@@ -40,7 +47,7 @@ const Input = ({
         removeStyleClass(['valid', 'invalid'])
         break
     }
-  }, [validity, addStyleClass, removeStyleClass])
+  }, [validity, classesList, setStyleClasses, addStyleClass, removeStyleClass])
 
   useEffect(() => {
     setType(password ? 'password' : 'text')

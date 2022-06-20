@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 import App from './App'
 import SetAccount from './pages/set-account'
+import RestoreAccount from './pages/restore-account'
 
 import { appHasAccounts } from './commons/utils/appInfo'
 import reportWebVitals from './commons/utils/reportWebVitals'
@@ -20,6 +21,10 @@ root.render(
           <Route
             path="/set-account"
             element={<SetAccount />}
+          />
+          <Route
+            path="/restore-account"
+            element={<RestoreAccount />}
           />
           <Route
             exact

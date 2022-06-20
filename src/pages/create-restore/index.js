@@ -8,6 +8,7 @@ const CreateRestore = () => {
   const navigate = useNavigate()
 
   const goToSetAccountPage = () => navigate('/set-account')
+  const goToRestoreAccountPage = () => navigate('/restore-account')
 
   return (
     <div data-testid="create-restore">
@@ -17,7 +18,12 @@ const CreateRestore = () => {
       <CenteredLayout>
         <VerticalGroup>
           <Button onClickHandle={goToSetAccountPage}>Create</Button>
-          <Button alternate>Restore</Button>
+          <Button
+            onClickHandle={goToRestoreAccountPage}
+            alternate
+          >
+            Restore
+          </Button>
         </VerticalGroup>
       </CenteredLayout>
       <div className="footnote-wrapper">
