@@ -1,11 +1,11 @@
-import CreateRestore from './pages/create-restore'
-import ListAccounts from './pages/list-accounts'
-import Logo from './commons/assets/img/logo96.png'
-
 import './app.css'
+import Logo from './commons/assets/img/logo96.png'
+import CreateRestore from './pages/create-restore'
+import { ListAccountsContainer } from './pages/list-accounts'
 
 const App = ({ appHasAccounts }) => {
-  const Home = appHasAccounts ? ListAccounts : CreateRestore
+  // eslint-disable-next-line no-constant-condition
+  const Home = appHasAccounts ? ListAccountsContainer : CreateRestore
 
   return (
     <>

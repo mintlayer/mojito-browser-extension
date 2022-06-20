@@ -1,6 +1,5 @@
-import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
-
+import { MemoryRouter } from 'react-router-dom'
 import App from './App'
 
 test('Renders react app with no accounts', () => {
@@ -11,7 +10,7 @@ test('Renders react app with no accounts', () => {
 })
 
 test('Renders react app with accounts', () => {
-  render(<App appHasAccounts={true} />)
+  render(<App appHasAccounts={true} />, { wrapper: MemoryRouter })
   const listAccountsComponent = screen.getByTestId('list-accounts')
 
   expect(listAccountsComponent).toBeInTheDocument()
