@@ -12,6 +12,8 @@ button {
 .back {
   margin-right: 1rem;
   width: 5rem;
+  text-align: right;
+  text-align: -webkit-right;
 }
 .back:disabled {
   cursor: not-allowed;
