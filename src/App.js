@@ -10,7 +10,6 @@ import { ListAccountsContainer } from './pages/list-accounts'
 const App = ({ appHasAccounts }) => {
   const navigate = useNavigate()
   const { isAccountUnlocked } = useContext(Context)
-  // eslint-disable-next-line no-constant-condition
   const Home = appHasAccounts ? ListAccountsContainer : CreateRestore
 
   isAccountUnlocked && navigate('/wallet')

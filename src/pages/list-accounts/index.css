@@ -8,12 +8,9 @@
 .subtitle {
   margin-top: 1.5rem;
   margin-bottom: 1rem;
-}
-.subtitle > * {
   font-size: 1.875rem;
   line-height: 2.25rem;
-  --tw-text-opacity: 1;
-  color: hsl(0 0% 50% / var(--tw-text-opacity));
+  color: rgb(var(--color-dark-gray));
   text-transform: capitalize;
 }
 .content {
@@ -43,7 +40,6 @@
 
 .animate-list-accounts {
   overflow: hidden;
-  /* animation: animate-list-accounts 1s ease-in-out; */
   transform: translateX(-200%);
   transition: transform 1s ease-in-out;
 }
