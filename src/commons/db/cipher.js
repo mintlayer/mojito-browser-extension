@@ -5,11 +5,14 @@ import {
   cipher as forgeCipher
 } from 'node-forge'
 
-const ITERATIONAMOUNT = 20
+const ITERATIONAMOUNT = 10_000
 const KEYSIZE = 16
 const IVSIZE = 12
+const SALTSIZE = 16
 
-const hexToBytes = (hexString) => Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)))
+
+const hexToBytes = (hexString) =>
+  Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)))
 
 const generateSalt = async (bytesAmount, random = forgeRandom, util = forgeUtil) => {
   const bytes = await random.getBytes(bytesAmount)
@@ -17,10 +20,11 @@ const generateSalt = async (bytesAmount, random = forgeRandom, util = forgeUtil)
 }
 
 const generatePBKDF2Key = async ({password, salt, derivationFn = pbkdf2Sync}) => {
-  const currentSalt = salt || await generateSalt(16)
+  const currentSalt = salt || await generateSalt(SALTSIZE)
+  const key = [...derivationFn(password, currentSalt, ITERATIONAMOUNT, KEYSIZE, 'sha512')]
 
   return {
-    key: [...derivationFn(password, currentSalt, ITERATIONAMOUNT, KEYSIZE, 'sha512')],
+    key,
     salt: currentSalt
   }
 }
@@ -35,6 +39,7 @@ const encryptAES = async ({data, key, cipherFn = forgeCipher, util = forgeUtil})
   cipher.start({ iv: IV })
   cipher.update(util.createBuffer(hex))
   cipher.finish()
+
   return {
     encryptedData: cipher.output.getBytes(),
     iv: IV,
@@ -42,13 +47,14 @@ const encryptAES = async ({data, key, cipherFn = forgeCipher, util = forgeUtil})
   }
 }
 
-const decryptAES = async ({data, key, iv, tag, cipherFn = forgeCipher, util = forgeUtil}) => {
+const decryptAES = ({data, key, iv, tag, cipherFn = forgeCipher, util = forgeUtil}) => {
   const decipher = cipherFn.createDecipher('AES-GCM', key)
 
   decipher.start({ iv, tag })
   decipher.update(util.createBuffer(data))
-  decipher.finish()
+  const result = decipher.finish()
 
+  if (!result) throw new Error('Wrong password')
   return hexToBytes(decipher.output.data)
 }
 

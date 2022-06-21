@@ -35,6 +35,8 @@ const unlockAccount = async (id, password) => {
     key
   })
 
+  if (seed.error) throw new Error(seed.error)
+
   const [pubKey] = getKeysFromSeed(Buffer.from(seed))
   const address = getAddressFromPubKey(pubKey)
 

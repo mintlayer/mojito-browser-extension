@@ -45,7 +45,7 @@ test('Cipher - generateSalt utils', async () => {
 })
 
 test('Cipher - generatePBKDF2Key', async () => {
-  const password = 'teste'
+  const password = 'test'
 
   const { key: key1, salt: salt1 } = await generatePBKDF2Key({ password })
 
@@ -59,7 +59,7 @@ test('Cipher - generatePBKDF2Key', async () => {
 })
 
 test('Cipher - generatePBKDF2Key derivationFn', async () => {
-  const password = 'teste'
+  const password = 'test'
   const salt = 'salt'
   const derivationFn = () => [12]
 

@@ -21,10 +21,18 @@ const isValidJob = (choosenJob) => {
 self.onmessage = async ({data}) => {
   if (!isValidJob(data.job)) return false
 
-  const jobResult = await CipherWorkerJobs[data.job](data.data)
-  postMessage(jobResult)
+  try {
+    let jobResult
+    data.job === CipherWorkerEnum.DECRYPT_AES
+      ? jobResult = CipherWorkerJobs[data.job](data.data)
+      : jobResult = await CipherWorkerJobs[data.job](data.data)
 
-  return true
+    postMessage(jobResult)
+
+    return true
+  } catch (error) {
+    postMessage({error: error.message})
+  }
 }
 
 export {
