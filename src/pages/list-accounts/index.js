@@ -1,9 +1,42 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Button from '../../commons/components/basic/button'
 import Carousel from '../../commons/components/carousel/carousel'
+import CenteredLayout from '../../commons/components/group/centeredLayout'
 import './index.css'
 
-// Container Component
+export default function ListAccounts({ accounts, onSelect, onCreate }) {
+  const onSelectAccount = (account) => {
+    onSelect && onSelect(account)
+  }
+
+  const onCreateAccount = () => {
+    onCreate && onCreate()
+  }
+
+  return (
+    <div
+      data-testid="list-accounts"
+      className="list-accounts"
+    >
+      <h2 className="subtitle">wallet available</h2>
+
+      <div className="content">
+        <Carousel
+          accounts={accounts}
+          onClick={onSelectAccount}
+        />
+      </div>
+
+      <div className="footer">
+        <CenteredLayout>
+          <Button onClickHandle={onCreateAccount}>Create Wallet</Button>
+        </CenteredLayout>
+      </div>
+    </div>
+  )
+}
+
 export function ListAccountsContainer({
   accounts = [{ id: 1, name: 'ABC' }],
   onSelect,
@@ -21,7 +54,7 @@ export function ListAccountsContainer({
     }
   }, [account])
 
-  function goNext(account) {
+  const goNext = (account) => {
     addAnimate(componentRef.current)
 
     delay > 0
@@ -30,14 +63,14 @@ export function ListAccountsContainer({
     onSelect && onSelect()
   }
 
-  function addAnimate(element) {
+  const addAnimate = (element) => {
     element.classList.add('animate-list-accounts')
   }
-  function removeAnimate(element) {
+  const removeAnimate = (element) => {
     element.classList.remove('animate-list-accounts')
   }
 
-  function goCreate() {
+  const goCreate = () => {
     navigate('/set-account')
     onCreate && onCreate()
   }
@@ -58,39 +91,6 @@ export function ListAccountsContainer({
           onCreate={goCreate}
         />
       )}
-    </div>
-  )
-}
-
-// Presentational Component
-export default function ListAccounts({ accounts, onSelect, onCreate }) {
-  function onSelectAccount(account) {
-    onSelect && onSelect(account)
-  }
-
-  function onCreateAccount() {
-    onCreate && onCreate()
-  }
-
-  return (
-    <div
-      data-testid="list-accounts"
-      className="list-accounts"
-    >
-      <div className="subtitle">
-        <h2>wallet available</h2>
-      </div>
-
-      <div className="content">
-        <Carousel
-          accounts={accounts}
-          onClick={onSelectAccount}
-        />
-      </div>
-
-      <div className="footer">
-        <button onClick={onCreateAccount}>create wallet</button>
-      </div>
     </div>
   )
 }

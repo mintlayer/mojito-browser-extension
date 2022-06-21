@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import {
   fireEvent,
   render,
@@ -26,7 +23,7 @@ test('Renders List Accounts page', () => {
     screen.getByRole('button', { name: 'Account Name' }),
   ).toBeInTheDocument()
   expect(
-    screen.getByRole('button', { name: 'create wallet' }),
+    screen.getByRole('button', { name: 'Create Wallet' }),
   ).toBeInTheDocument()
 })
 
@@ -40,11 +37,10 @@ test('Render Carousel onSelect', () => {
 test('Render button onCreate', () => {
   render(<ListAccounts {...data} />)
 
-  fireEvent.click(screen.getByText('create wallet'))
+  fireEvent.click(screen.getByText('Create Wallet'))
   expect(data.onCreate).toHaveBeenCalled()
 })
 
-// ListAccountsContainer
 test('Render ListAccountsContainer', () => {
   render(<ListAccountsContainer {...data} />, { wrapper: MemoryRouter })
 
@@ -53,7 +49,7 @@ test('Render ListAccountsContainer', () => {
     screen.getByRole('button', { name: 'Account Name' }),
   ).toBeInTheDocument()
   expect(
-    screen.getByRole('button', { name: 'create wallet' }),
+    screen.getByRole('button', { name: 'Create Wallet' }),
   ).toBeInTheDocument()
 })
 
@@ -85,7 +81,7 @@ test('Render ListAccountsContainer onCreate', () => {
     wrapper: MemoryRouter,
   })
 
-  fireEvent.click(screen.getByText('create wallet'))
+  fireEvent.click(screen.getByText('Create Wallet'))
 
   expect(data.onCreate).toHaveBeenCalled()
 })
