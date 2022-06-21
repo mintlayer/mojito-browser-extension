@@ -34,8 +34,9 @@ const loadAccounts = async (onError, DB = IDB) => {
   try {
     const db = await openDatabase(DB)
     const transaction = await createTransaction(db, onError)
-
-    return transaction.objectStore(ACCOUNTSSTORENAME)
+    const store = transaction.objectStore(ACCOUNTSSTORENAME)
+    db.close()
+    return store
   } catch (error) {
     onError(error)
   }

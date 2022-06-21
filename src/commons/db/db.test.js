@@ -58,6 +58,7 @@ test('IndexedDB basic functions - openDatabase', async () => {
   expect(db.version).toBe(SCHEMAVERSION)
 
   deleteDatabase()
+  db.close()
 })
 
 test('IndexedDB basic functions - openDatabase error', async () => {
