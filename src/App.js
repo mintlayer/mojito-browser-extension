@@ -1,11 +1,11 @@
 import CreateRestore from './pages/create-restore'
-import { ListAccountsContainer } from './pages/list-accounts'
+import ListAccountsPage from './pages/list-accounts'
 import Logo from './commons/assets/img/logo96.png'
 
 import './app.css'
 
 const App = ({ appHasAccounts }) => {
-  const Home = appHasAccounts ? ListAccountsContainer : CreateRestore
+  const Home = appHasAccounts ? ListAccountsPage : CreateRestore
 
   return (
     <>

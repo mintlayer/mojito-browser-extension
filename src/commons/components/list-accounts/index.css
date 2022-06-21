@@ -1,0 +1,39 @@
+.list-accounts {
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  display: flex;
+  flex-direction: column;
+}
+.subtitle {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  color: rgb(var(--color-dark-gray));
+  text-transform: capitalize;
+}
+.content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.footer {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  width: 508px;
+}
+.footer button {
+  text-transform: capitalize;
+  background-color: rgb(var(--color-green));
+  border: none;
+  border-radius: var(--round-size);
+  color: rgb(var(--color-white));
+  cursor: pointer;
+  font-size: 1.5rem;
+  font-weight: 400;
+  opacity: 1;
+  padding: 1.8rem 0;
+  transition: opacity 0.25s ease-in-out;
+  width: 100%;
+}

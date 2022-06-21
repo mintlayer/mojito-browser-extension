@@ -1,48 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Button from '../../commons/components/basic/button'
-import Carousel from '../../commons/components/carousel/carousel'
-import CenteredLayout from '../../commons/components/group/centeredLayout'
+import ListAccounts from '../../commons/components/list-accounts'
 import './index.css'
 
-export default function ListAccounts({ accounts, onSelect, onCreate }) {
-  const onSelectAccount = (account) => {
-    onSelect && onSelect(account)
-  }
-
-  const onCreateAccount = () => {
-    onCreate && onCreate()
-  }
-
-  return (
-    <div
-      data-testid="list-accounts"
-      className="list-accounts"
-    >
-      <h2 className="subtitle">wallet available</h2>
-
-      <div className="content">
-        <Carousel
-          accounts={accounts}
-          onClick={onSelectAccount}
-        />
-      </div>
-
-      <div className="footer">
-        <CenteredLayout>
-          <Button onClickHandle={onCreateAccount}>Create Wallet</Button>
-        </CenteredLayout>
-      </div>
-    </div>
-  )
-}
-
-export function ListAccountsContainer({
+const ListAccountsPage = ({
   accounts = [{ id: 1, name: 'ABC' }],
   onSelect,
   onCreate,
   delay = 0,
-}) {
+}) => {
   const navigate = useNavigate()
   const componentRef = useRef(null)
 
@@ -94,3 +60,5 @@ export function ListAccountsContainer({
     </div>
   )
 }
+
+export default ListAccountsPage

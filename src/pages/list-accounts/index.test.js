@@ -6,7 +6,7 @@ import {
   waitForElementToBeRemoved,
 } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import ListAccounts, { ListAccountsContainer } from './index'
+import ListAccountsPage from './index'
 
 const data = {
   accounts: [{ id: '1', name: 'Account Name' }],
@@ -15,8 +15,8 @@ const data = {
   delay: 1000,
 }
 
-test('Renders List Accounts page', () => {
-  render(<ListAccounts {...data} />)
+test('Render ListAccountsPage', () => {
+  render(<ListAccountsPage {...data} />, { wrapper: MemoryRouter })
 
   expect(screen.getByTestId('list-accounts')).toBeInTheDocument()
   expect(
@@ -27,34 +27,8 @@ test('Renders List Accounts page', () => {
   ).toBeInTheDocument()
 })
 
-test('Render Carousel onSelect', () => {
-  render(<ListAccounts {...data} />)
-
-  fireEvent.click(screen.getByText('Account Name'))
-  expect(data.onSelect).toHaveBeenCalled()
-})
-
-test('Render button onCreate', () => {
-  render(<ListAccounts {...data} />)
-
-  fireEvent.click(screen.getByText('Create Wallet'))
-  expect(data.onCreate).toHaveBeenCalled()
-})
-
-test('Render ListAccountsContainer', () => {
-  render(<ListAccountsContainer {...data} />, { wrapper: MemoryRouter })
-
-  expect(screen.getByTestId('list-accounts')).toBeInTheDocument()
-  expect(
-    screen.getByRole('button', { name: 'Account Name' }),
-  ).toBeInTheDocument()
-  expect(
-    screen.getByRole('button', { name: 'Create Wallet' }),
-  ).toBeInTheDocument()
-})
-
-test('Render ListAccountsContainer onSelect', async () => {
-  render(<ListAccountsContainer {...data} />, {
+test('Render ListAccountsPage onSelect', async () => {
+  render(<ListAccountsPage {...data} />, {
     wrapper: MemoryRouter,
   })
 
@@ -76,8 +50,8 @@ test('Render ListAccountsContainer onSelect', async () => {
   )
 })
 
-test('Render ListAccountsContainer onCreate', () => {
-  render(<ListAccountsContainer {...data} />, {
+test('Render ListAccountsPage onCreate', () => {
+  render(<ListAccountsPage {...data} />, {
     wrapper: MemoryRouter,
   })
 
@@ -86,9 +60,9 @@ test('Render ListAccountsContainer onCreate', () => {
   expect(data.onCreate).toHaveBeenCalled()
 })
 
-test('Render ListAccountsContainer delay 0', () => {
+test('Render ListAccountsPage delay 0', () => {
   render(
-    <ListAccountsContainer
+    <ListAccountsPage
       {...data}
       delay={0}
     />,
