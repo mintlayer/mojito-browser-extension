@@ -5,7 +5,7 @@ import {
   encryptAES,
   decryptAES,
   hexToBytes,
-  IVSIZE
+  IVSIZE,
 } from './cipher'
 
 test('Cipher - HEX to Bytes', () => {
@@ -26,7 +26,7 @@ test('Cipher - generateSalt', async () => {
 
 test('Cipher - generateSalt random', async () => {
   const random = {
-    getBytes: jest.fn(() => new Uint8Array([97]))
+    getBytes: jest.fn(() => new Uint8Array([97])),
   }
   const salt1 = await generateSalt(1, random)
 
@@ -36,7 +36,7 @@ test('Cipher - generateSalt random', async () => {
 
 test('Cipher - generateSalt utils', async () => {
   const util = {
-    bytesToHex: jest.fn(() => 61)
+    bytesToHex: jest.fn(() => 61),
   }
   const salt = await generateSalt(1, undefined, util)
 
@@ -51,7 +51,7 @@ test('Cipher - generatePBKDF2Key', async () => {
 
   const { key: key2, salt: salt2 } = await generatePBKDF2Key({
     password,
-    salt: salt1
+    salt: salt1,
   })
 
   expect(key1).toStrictEqual(key2)
@@ -63,7 +63,11 @@ test('Cipher - generatePBKDF2Key derivationFn', async () => {
   const salt = 'salt'
   const derivationFn = () => [12]
 
-  const { key: key1, salt: salt1 } = await generatePBKDF2Key({ password, salt, derivationFn})
+  const { key: key1, salt: salt1 } = await generatePBKDF2Key({
+    password,
+    salt,
+    derivationFn,
+  })
 
   expect(key1).toStrictEqual([12])
   expect(salt1).toStrictEqual(salt)
@@ -77,7 +81,7 @@ test('Cipher - generateIV', async () => {
 test('Cipher - generateIV utils', async () => {
   const bytes = [0]
   const random = {
-    getBytes: jest.fn(() => bytes)
+    getBytes: jest.fn(() => bytes),
   }
 
   const iv = await generateIV(random)
@@ -87,24 +91,67 @@ test('Cipher - generateIV utils', async () => {
 
 test('Cipher - encryptAES', async () => {
   const data = 'data'
-  const key = [97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98]
-  const { encryptedData, iv, tag } = await encryptAES({data, key})
+  const expectedIV = 'aaaaaaaaaaaa'
+  const ivGenerationFn = async () => Promise.resolve(expectedIV)
 
-  expect(encryptedData).toBeDefined()
-  expect(iv).toBeDefined()
-  expect(tag).toBeDefined()
+  const key = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
+  ]
+
+  const expectedEncryptedData = new Uint8Array([
+    194, 137, 41, 21, 195, 133, 195, 144, 123, 78, 18,
+  ])
+
+  const expectedTag = new Uint8Array([
+    194, 131, 32, 95, 194, 170, 195, 147, 68, 195, 159, 194, 147, 194, 189, 117,
+    195, 178, 91, 50, 194, 182, 195, 128, 20,
+  ])
+
+  const { encryptedData, iv, tag } = await encryptAES({
+    data,
+    key,
+    ivGenerationFn,
+  })
+
+  expect(Buffer.from(encryptedData)).toStrictEqual(
+    Buffer.from(expectedEncryptedData),
+  )
+  expect(iv).toBe(expectedIV)
+  expect(Buffer.from(tag)).toStrictEqual(Buffer.from(expectedTag))
 })
 
 test('Cipher - decryptAES', async () => {
   const data = 'data'
-  const key = [97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98]
-  const { encryptedData, iv, tag } = await encryptAES({data, key})
+  const key = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
+  ]
+  const { encryptedData, iv, tag } = await encryptAES({ data, key })
   const decrypted = await decryptAES({
     data: encryptedData,
     iv,
     tag,
-    key
+    key,
   })
 
   expect(Buffer.from(decrypted).toString()).toBe(data)
+})
+
+test('Cipher - decryptAES error', async () => {
+  const data = 'data'
+  const key = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
+  ]
+  const wrongkey = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 97,
+  ]
+  const { encryptedData, iv, tag } = await encryptAES({ data, key })
+
+  expect(
+    decryptAES.bind(null, {
+      data: encryptedData,
+      iv,
+      tag,
+      key: wrongkey,
+    }),
+  ).toThrowError()
 })
