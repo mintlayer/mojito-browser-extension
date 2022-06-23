@@ -125,7 +125,6 @@ const SetAccount = ({ step, setStep, words = [] }) => {
           {step === 3 && <WordsDescription />}
           {step === 4 && (
             <InputsList
-              amount={12}
               wordsList={words}
               fields={wordsFields}
               setFields={setWordsFields}

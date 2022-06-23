@@ -15,17 +15,24 @@ const InputsList = ({
   fields,
   setFields,
   restoreMode,
-  amount,
   wordsList = [],
 }) => {
+
   useEffect(() => {
-    const newFields = [...Array(amount)].map((_, index) => ({
+    if (!wordsList.length) return
+
+    const newFields = wordsList.map((word, index) => ({
       order: index,
       validity: false,
-      value: '',
+      value: word,
     }))
     setFields(newFields)
-  }, [amount, setFields])
+  }, [wordsList, setFields])
+
+  useEffect(() => {
+    if (restoreMode) return
+
+  }, [restoreMode, wordsList])
 
   const getFieldByIndex = (index) => fields[index]
 

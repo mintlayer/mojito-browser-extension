@@ -20,7 +20,10 @@ const InputListItem = ({
 }) => {
   const inputExtraClasses = ['words-list-input']
 
-  restoreMode && inputExtraClasses.push('words-list-input-restore')
+  restoreMode
+    ? inputExtraClasses.push('words-list-input-restore')
+    : inputExtraClasses.push('readonly')
+
   if (validity === 'valid' && restoreMode) {
     inputExtraClasses.push('input-restore-finished')
   }
@@ -36,10 +39,11 @@ const InputListItem = ({
         onChangeHandle={onChangeHandle}
         extraStyleClasses={inputExtraClasses}
         placeholder={'Word'}
+        disabled={!restoreMode}
       />
-      {restoreMode && number && (
+      {number && (
         <div
-          className={genNumberClasslist(value, validity, restoreMode)}
+          className={restoreMode ? genNumberClasslist(value, validity, restoreMode) : 'number'}
           data-testid="inputs-list-item-number"
         >
           {number}
