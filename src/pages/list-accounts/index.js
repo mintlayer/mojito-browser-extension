@@ -17,8 +17,9 @@ const ListAccountsPage = ({
   useEffect(() => {
     if (account) {
       removeAnimate(componentRef.current)
+      navigate('/set-account-password', { state: { account } })
     }
-  }, [account])
+  }, [account, navigate])
 
   const goNext = (account) => {
     addAnimate(componentRef.current)
@@ -41,16 +42,12 @@ const ListAccountsPage = ({
     onCreate && onCreate()
   }
 
-  const SetAccountPassword = () => <div>Set password</div>
-
   return (
     <div
       data-testid="generic"
       ref={componentRef}
     >
-      {account ? (
-        <SetAccountPassword />
-      ) : (
+      {!account && (
         <ListAccounts
           accounts={accounts}
           onSelect={goNext}

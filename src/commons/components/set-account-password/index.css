@@ -1,0 +1,66 @@
+.account-password {
+  margin-top: 2.5rem;
+  justify-content: space-between;
+  align-items: center;
+  align-content: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.content {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.password-for {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  color: rgb(var(--color-black));
+  text-transform: capitalize;
+  text-align: center;
+}
+
+.account-name {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+  text-transform: capitalize;
+  text-align: center;
+}
+
+.password {
+  width: 100%;
+  padding: 1rem;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  margin-top: 2rem;
+  border-width: 2px;
+  border-radius: 0.6rem;
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.password:focus {
+  outline: none;
+  border: 2px solid rgb(var(--color-light-gray));
+}
+
+.footer {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.login {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  padding: 1rem;
+  padding-left: 10rem;
+  padding-right: 10rem;
+  border-radius: 0.75rem;
+  text-transform: capitalize;
+  color: rgb(var(--color-white));
+  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+}
