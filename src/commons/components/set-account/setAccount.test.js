@@ -1,14 +1,19 @@
-import * as React from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import SetAccount from './setAccount'
 import Expressions from '../../utils/expressions'
+import { useState } from 'react'
 
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
 
-test('Renders set account page with step 1', () => {
-  console.log = jest.fn()
+test('Renders set account page with step 1', (done) => {
+  jest.spyOn(console, 'log').mockImplementation((message) => {
+    expect(message).toBe('something went wrong')
+    console.log.mockRestore()
+    done()
+  })
+
   render(
     <SetAccount
       step={1}
@@ -34,8 +39,6 @@ test('Renders set account page with step 1', () => {
   act(() => {
     setAccountForm.submit()
   })
-
-  expect(console.log).toHaveBeenCalledWith('something went wrong')
 
   fireEvent.change(inputComponent, { target: { value: 'more then 4' } })
   expect(inputComponent).toHaveClass('valid')
@@ -169,4 +172,60 @@ test('Renders set account page with step 4', () => {
   act(() => {
     setAccountForm.submit()
   })
+})
+
+test('Checks back button behavior in a internal navigation component - first step', () => {
+  let location
+
+  const SetAccountMock = () => {
+    location = useLocation()
+    const [step, setStep] = useState(2)
+
+    return (
+      <SetAccount
+        step={step}
+        setStep={setStep}
+      />
+    )
+  }
+
+  const PrevPageMock = () => {
+    location = useLocation()
+    return <></>
+  }
+
+  render(
+    <MemoryRouter initialEntries={['/', '/set-account']}>
+      <Routes>
+        <Route
+          path="/set-account"
+          element={<SetAccountMock />}
+        />
+        <Route
+          exact
+          path="/"
+          element={<PrevPageMock />}
+        />
+      </Routes>
+    </MemoryRouter>,
+  )
+
+  const buttons = screen.getAllByTestId('button')
+  let progressSteps = screen.getAllByTestId('progress-step')
+  expect(progressSteps[1]).toHaveClass('active')
+  expect(location.pathname).toBe('/set-account')
+
+  act(() => {
+    buttons[0].click()
+  })
+
+  expect(location.pathname).toBe('/set-account')
+  progressSteps = screen.getAllByTestId('progress-step')
+  expect(progressSteps[0]).toHaveClass('active')
+
+  act(() => {
+    buttons[0].click()
+  })
+
+  expect(location.pathname).toBe('/')
 })

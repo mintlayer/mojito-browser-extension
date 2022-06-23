@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import RestoreAccount from './restoreAccount'
 import Expressions from '../../utils/expressions'
@@ -169,4 +169,60 @@ test('Renders restore account page with step 4', () => {
   act(() => {
     restoreAccountForm.submit()
   })
+})
+
+test('Checks back button behavior in a internal navigation component - first step', () => {
+  let location
+
+  const RestoreAccountMock = () => {
+    location = useLocation()
+    const [step, setStep] = React.useState(2)
+
+    return (
+      <RestoreAccount
+        step={step}
+        setStep={setStep}
+      />
+    )
+  }
+
+  const PrevPageMock = () => {
+    location = useLocation()
+    return <></>
+  }
+
+  render(
+    <MemoryRouter initialEntries={['/', '/set-account']}>
+      <Routes>
+        <Route
+          path="/set-account"
+          element={<RestoreAccountMock />}
+        />
+        <Route
+          exact
+          path="/"
+          element={<PrevPageMock />}
+        />
+      </Routes>
+    </MemoryRouter>,
+  )
+
+  const buttons = screen.getAllByTestId('button')
+  let progressSteps = screen.getAllByTestId('progress-step')
+  expect(progressSteps[1]).toHaveClass('active')
+  expect(location.pathname).toBe('/set-account')
+
+  act(() => {
+    buttons[0].click()
+  })
+
+  expect(location.pathname).toBe('/set-account')
+  progressSteps = screen.getAllByTestId('progress-step')
+  expect(progressSteps[0]).toHaveClass('active')
+
+  act(() => {
+    buttons[0].click()
+  })
+
+  expect(location.pathname).toBe('/')
 })

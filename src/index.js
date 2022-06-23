@@ -33,11 +33,6 @@ root.render(
               path="/"
               element={<App appHasAccounts={appHasAccounts()} />}
             />
-            <Route
-              exact
-              path="/"
-              element={<App appHasAccounts={appHasAccounts()} />}
-            />
           </Routes>
         </MemoryRouter>
       </main>
