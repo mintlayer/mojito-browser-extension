@@ -11,6 +11,7 @@ import TextField from '../basic/textField'
 import WordsDescription from '../words-list-description/wordsListDescription'
 
 import './setAccount.css'
+import { useNavigate } from 'react-router-dom'
 
 const SetAccount = ({ step, setStep, words = [] }) => {
   const inputExtraclasses = ['set-account-input']
@@ -21,8 +22,10 @@ const SetAccount = ({ step, setStep, words = [] }) => {
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
   const [accountWordsValid, setAccountWordsValid] = useState(false)
+  const navigate = useNavigate()
 
   const goToNextStep = () => setStep(step + 1)
+  const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
     { name: 'Account Name', active: step === 1 },
@@ -79,7 +82,7 @@ const SetAccount = ({ step, setStep, words = [] }) => {
 
   return (
     <div data-testid="set-account">
-      <Header />
+      <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
         className={`set-account-form ${step === 4 && 'set-account-form-words'}`}

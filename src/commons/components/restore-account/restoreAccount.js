@@ -10,6 +10,7 @@ import InputsList from '../inputs-list/inputsList'
 import TextField from '../basic/textField'
 
 import './restoreAccount.css'
+import { useNavigate } from 'react-router-dom'
 
 const RestoreAccount = ({ step, setStep, words = [] }) => {
   const inputExtraclasses = ['account-input']
@@ -20,8 +21,10 @@ const RestoreAccount = ({ step, setStep, words = [] }) => {
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
   const [accountWordsValid, setAccountWordsValid] = useState(false)
+  const navigate = useNavigate()
 
   const goToNextStep = () => setStep(step + 1)
+  const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
     { name: 'Account Name', active: step === 1 },
@@ -79,7 +82,7 @@ const RestoreAccount = ({ step, setStep, words = [] }) => {
 
   return (
     <div data-testid="restore-account">
-      <Header />
+      <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
         className={`account-form ${step === 4 && 'account-form-words'} ${

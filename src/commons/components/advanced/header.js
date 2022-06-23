@@ -7,10 +7,10 @@ import Logo from '../../assets/img/logo96.png'
 
 import './header.css'
 
-const Header = () => {
+const Header = ({ customBackAction }) => {
   const navigate = useNavigate()
 
-  const goBack = () => navigate(-1)
+  const goBack = () => (customBackAction ? customBackAction() : navigate(-1))
 
   return (
     <header data-testid="header-container">
