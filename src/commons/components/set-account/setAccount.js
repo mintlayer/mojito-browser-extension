@@ -13,7 +13,7 @@ import WordsDescription from '../words-list-description/wordsListDescription'
 import './setAccount.css'
 import { useNavigate } from 'react-router-dom'
 
-const SetAccount = ({ step, setStep, words = [] }) => {
+const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
   const inputExtraclasses = ['set-account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
@@ -24,7 +24,10 @@ const SetAccount = ({ step, setStep, words = [] }) => {
   const [accountWordsValid, setAccountWordsValid] = useState(false)
   const navigate = useNavigate()
 
-  const goToNextStep = () => setStep(step + 1)
+  const goToNextStep = () =>
+    step < 5
+      ? setStep(step + 1)
+      : onStepsFinished(accountNameValue, accountPasswordValue)
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
@@ -32,7 +35,7 @@ const SetAccount = ({ step, setStep, words = [] }) => {
     { name: 'Account Password', active: step === 2 },
     {
       name: 'Restoring Information',
-      active: step === 3 || step === 4,
+      active: step > 2,
     },
   ]
 
@@ -40,12 +43,14 @@ const SetAccount = ({ step, setStep, words = [] }) => {
     1: accountNameValid,
     2: accountPasswordValid,
     3: true,
-    4: accountWordsValid,
+    4: true,
+    5: accountWordsValid,
   }
 
   const titles = {
     3: 'I understand',
-    4: 'Save',
+    4: 'Backup done!',
+    5: 'Create account',
   }
 
   const nameFieldValidity = (value) => {
@@ -75,6 +80,7 @@ const SetAccount = ({ step, setStep, words = [] }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+
     stepsValidations[step]
       ? goToNextStep()
       : console.log('something went wrong')
@@ -85,14 +91,14 @@ const SetAccount = ({ step, setStep, words = [] }) => {
       <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
-        className={`set-account-form ${step === 4 && 'set-account-form-words'}`}
+        className={`set-account-form ${step > 3 && 'set-account-form-words'}`}
         method="POST"
         data-testid="set-account-form"
         onSubmit={handleSubmit}
       >
         <VerticalGroup
           data-step={step}
-          bigGap
+          bigGap={step < 5}
         >
           {step === 1 && (
             <CenteredLayout>
@@ -128,6 +134,15 @@ const SetAccount = ({ step, setStep, words = [] }) => {
               wordsList={words}
               fields={wordsFields}
               setFields={setWordsFields}
+              restoreMode={false}
+            />
+          )}
+          {step === 5 && (
+            <InputsList
+              wordsList={words}
+              fields={wordsFields}
+              setFields={setWordsFields}
+              restoreMode={true}
             />
           )}
           <CenteredLayout>

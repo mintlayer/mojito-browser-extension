@@ -5,33 +5,35 @@ import './inputsList.css'
 const isInputValid = (input, words) => {
   if (words?.length > 0) {
     const value = input.value.toLowerCase()
-    return words.includes(value)
+    return words[input.order] === value
   } else {
     return true
   }
 }
 
-const InputsList = ({
-  fields,
-  setFields,
-  restoreMode,
-  wordsList = [],
-}) => {
-
+const InputsList = ({ fields, setFields, restoreMode, wordsList = [] }) => {
   useEffect(() => {
     if (!wordsList.length) return
 
     const newFields = wordsList.map((word, index) => ({
       order: index,
       validity: false,
-      value: word,
+      value: restoreMode ? '' : word,
     }))
+
+    // Debug code to not type the whole mnemonic =)
+    //
+    // const newFields = wordsList.map((word, index) => ({
+    //   order: index,
+    //   validity: true,
+    //   value: word,
+    // }))
+
     setFields(newFields)
-  }, [wordsList, setFields])
+  }, [wordsList, setFields, restoreMode])
 
   useEffect(() => {
     if (restoreMode) return
-
   }, [restoreMode, wordsList])
 
   const getFieldByIndex = (index) => fields[index]

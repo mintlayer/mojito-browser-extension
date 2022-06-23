@@ -1,0 +1,9 @@
+.btcAddress {
+  margin: 3em 0 0 0;
+  text-align: center;
+}
+
+.btcAddress strong {
+  font-size: 2em;
+  color: rgb(var(--color-green));
+}

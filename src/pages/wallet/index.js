@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext, useCallback } from 'react'
 import Header from '../../commons/components/advanced/header'
 import Balance from '../../commons/components/balance/balance'
 import TransactionButton from '../../commons/components/transaction-button/transactionButton'
@@ -9,27 +9,30 @@ import {
   calculateBalanceFromUtxoList,
 } from '../../commons/crypto/btc'
 import { getAddressTransactions } from '../../commons/api/electrum'
+import { Context } from '../../ContextProvider'
 import './wallet.css'
 
 const WalletPage = () => {
-  const wallet = '2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom'
+  const { btcAddress } = useContext(Context)
+  console.log(btcAddress)
   const [transactionsList, setTransactionsList] = useState([])
-  const getTransactions = async () => {
-    try {
-      const response = await getAddressTransactions(wallet)
-      const transactions = JSON.parse(response)
-      const parsedTransactions = getParsedTransactions(transactions, wallet)
-      setTransactionsList(parsedTransactions)
-    } catch (error) {
-      console.log(error, 'error')
-    }
-  }
+  const getTransactions = useCallback(async () => {
+      try {
+        const response = await getAddressTransactions(btcAddress)
+        const transactions = JSON.parse(response)
+        const parsedTransactions = getParsedTransactions(transactions, btcAddress)
+        setTransactionsList(parsedTransactions)
+      } catch (error) {
+        console.log(error, 'error')
+      }
+    }, [btcAddress])
 
   const balance = calculateBalanceFromUtxoList(transactionsList)
 
   useEffect(() => {
     getTransactions()
-  }, [setTransactionsList])
+  }, [getTransactions])
+
   return (
     <div data-testid="wallet-page">
       <VerticalGroup bigGap>

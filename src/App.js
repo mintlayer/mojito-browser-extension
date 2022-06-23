@@ -1,3 +1,6 @@
+import React, { useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Context } from './ContextProvider'
 import CreateRestore from './pages/create-restore'
 import ListAccounts from './pages/list-accounts'
 import Logo from './commons/assets/img/logo96.png'
@@ -5,20 +8,26 @@ import Logo from './commons/assets/img/logo96.png'
 import './app.css'
 
 const App = ({ appHasAccounts }) => {
+  const navigate = useNavigate()
+  const { isAccountUnlocked } = useContext(Context)
   const Home = appHasAccounts ? ListAccounts : CreateRestore
 
+  isAccountUnlocked && navigate('/wallet')
+
   return (
-    <>
-      <div className="homeLogoContainer">
-        <img
-          src={Logo}
-          alt="Mojito Logo"
-          className="logo"
-        />
-        <h1 className="mojitoLettering">Mojito</h1>
-      </div>
-      <Home />
-    </>
+    !isAccountUnlocked && (
+      <>
+        <div className="homeLogoContainer">
+          <img
+            src={Logo}
+            alt="Mojito Logo"
+            className="logo"
+          />
+          <h1 className="mojitoLettering">Mojito</h1>
+        </div>
+        <Home />
+      </>
+    )
   )
 }
 
