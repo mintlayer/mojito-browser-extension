@@ -22,7 +22,28 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
   const [accountWordsValid, setAccountWordsValid] = useState(false)
+
+  const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
+  const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] = useState(null)
+
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const message = !accountNameValid
+      ? 'The account name should have at least 4 characteres.'
+      : null
+
+    setAccountNameErrorMessage(message)
+  }, [accountNameValid])
+
+  useEffect(() => {
+    const message = !accountPasswordValid
+      ? ['Your password should have at least 8 characteres.',
+          'Also it should have a lowercase letter, an uppercase letter, a digit, and a special char like: /\\*()&^%$#@-_=+\'"?!:;<>~`']
+      : null
+
+      setAccountPasswordErrorMessage(message)
+  }, [accountPasswordValid])
 
   const goToNextStep = () =>
     step < 5
@@ -78,12 +99,17 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
     setAccountWordsValid(wordsValidity)
   }, [wordsFields, step])
 
+  const handleError = (step) => {
+    if (step < 5) return
+    alert('These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order')
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
 
     stepsValidations[step]
       ? goToNextStep()
-      : console.log('something went wrong')
+      : handleError(step)
   }
 
   return (
@@ -109,6 +135,7 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
                 placeHolder={'Account Name'}
                 label={'Create a name to your account'}
                 extraStyleClasses={inputExtraclasses}
+                errorMessages={accountNameErrorMessage}
                 alternate
               />
             </CenteredLayout>
@@ -124,6 +151,7 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
                 label={'Create a password to your account'}
                 placeHolder={'Password'}
                 extraStyleClasses={inputExtraclasses}
+                errorMessages={accountPasswordErrorMessage}
                 alternate
               />
             </CenteredLayout>
