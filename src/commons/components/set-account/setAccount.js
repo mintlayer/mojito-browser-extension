@@ -17,14 +17,21 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
   const inputExtraclasses = ['set-account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
-  const [accountNameValue, setAccountNameValue] = useState('')
-  const [accountPasswordValue, setAccountPasswordValue] = useState('')
-  const [accountNameValid, setAccountNameValid] = useState(false)
-  const [accountPasswordValid, setAccountPasswordValid] = useState(false)
   const [accountWordsValid, setAccountWordsValid] = useState(false)
 
+  const [accountNameValue, setAccountNameValue] = useState('')
+  const [accountPasswordValue, setAccountPasswordValue] = useState('')
+
+  const [accountNameValid, setAccountNameValid] = useState(false)
+  const [accountPasswordValid, setAccountPasswordValid] = useState(false)
+
   const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
-  const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] = useState(null)
+  const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
+    useState(null)
+
+  const [accountNamePristinity, setAccountNamePristinity] = useState(true)
+  const [accountPasswordPristinity, setAccountPasswordPristinity] =
+    useState(true)
 
   const navigate = useNavigate()
 
@@ -38,11 +45,13 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
 
   useEffect(() => {
     const message = !accountPasswordValid
-      ? ['Your password should have at least 8 characteres.',
-          'Also it should have a lowercase letter, an uppercase letter, a digit, and a special char like: /\\*()&^%$#@-_=+\'"?!:;<>~`']
+      ? [
+          'Your password should have at least 8 characteres.',
+          'Also it should have a lowercase letter, an uppercase letter, a digit, and a special char like: /\\*()&^%$#@-_=+\'"?!:;<>~`',
+        ]
       : null
 
-      setAccountPasswordErrorMessage(message)
+    setAccountPasswordErrorMessage(message)
   }, [accountPasswordValid])
 
   const goToNextStep = () =>
@@ -101,15 +110,18 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
 
   const handleError = (step) => {
     if (step < 5) return
-    alert('These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order')
+    alert(
+      'These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order',
+    )
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    stepsValidations[step]
-      ? goToNextStep()
-      : handleError(step)
+    if (step === 1) setAccountNamePristinity(false)
+    if (step === 2) setAccountPasswordPristinity(false)
+
+    stepsValidations[step] ? goToNextStep() : handleError(step)
   }
 
   return (
@@ -136,6 +148,7 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
                 label={'Create a name to your account'}
                 extraStyleClasses={inputExtraclasses}
                 errorMessages={accountNameErrorMessage}
+                pristinity={accountNamePristinity}
                 alternate
               />
             </CenteredLayout>
@@ -152,6 +165,7 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
                 placeHolder={'Password'}
                 extraStyleClasses={inputExtraclasses}
                 errorMessages={accountPasswordErrorMessage}
+                pristinity={accountPasswordPristinity}
                 alternate
               />
             </CenteredLayout>

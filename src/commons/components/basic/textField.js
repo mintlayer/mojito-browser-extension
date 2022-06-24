@@ -14,7 +14,8 @@ const TextField = ({
   validity,
   pattern,
   extraStyleClasses,
-  errorMessages
+  errorMessages,
+  pristinity = true,
 }) => {
   const inputId = useId()
   const { styleClasses, addStyleClass, removeStyleClass } =
@@ -29,10 +30,12 @@ const TextField = ({
   useEffect(() => {
     if (isPristine) return
 
-    validity
-      ? setFieldValidity('valid')
-      : setFieldValidity('invalid')
+    validity ? setFieldValidity('valid') : setFieldValidity('invalid')
   }, [validity, isPristine])
+
+  useEffect(() => {
+    setIsPristine(pristinity)
+  }, [pristinity])
 
   const setPristineState = (e) => setIsPristine(false)
 
@@ -60,12 +63,13 @@ const TextField = ({
       />
       {errorMessages && !isPristine && (
         <div className="errorMessage">
-          {Array.isArray(errorMessages)
-          ? errorMessages.map((message) => (
-            <p key={message.trim()}>{message}</p>
-          ))
-          : <p key={errorMessages.trim()}>{errorMessages}</p>
-          }
+          {Array.isArray(errorMessages) ? (
+            errorMessages.map((message) => (
+              <p key={message.trim()}>{message}</p>
+            ))
+          ) : (
+            <p key={errorMessages.trim()}>{errorMessages}</p>
+          )}
         </div>
       )}
     </VerticalGroup>
