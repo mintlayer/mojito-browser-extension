@@ -92,6 +92,11 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
   return parsedTransactions
 }
 
+const validateMnemonic = (mnemonic) => Bip39.validateMnemonic(mnemonic)
+
+const getWordList = () => Bip39.wordlists[Bip39.getDefaultWordlist()]
+
+
 export {
   generateAddr,
   generateMnemonic,
@@ -102,4 +107,6 @@ export {
   calculateBalanceFromUtxoList,
   convertSatoshiToBtc,
   getParsedTransactions,
+  validateMnemonic,
+  getWordList
 }

@@ -1,40 +1,41 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
+import { getWordList } from '../../crypto/btc'
 import InputListItem from '../inputs-list-item/inputsListItem'
 import './inputsList.css'
 
+const BIP39DefaultWordList = getWordList()
+
 const isInputValid = (input, words) => {
-  if (words?.length > 0) {
-    const value = input.value.toLowerCase()
-    return words[input.order] === value
-  } else {
-    return true
-  }
+  const value = input.value
+  return words?.length > 0
+    ? words[input.order] === value
+    : BIP39DefaultWordList.includes(input.value)
 }
 
 const InputsList = ({ fields, setFields, restoreMode, wordsList = [] }) => {
+  const effectCalled = useRef(false)
+
   useEffect(() => {
-    if (!wordsList.length) return
+    if (effectCalled.current) return
+    effectCalled.current = true
 
-    const newFields = wordsList.map((word, index) => ({
-      order: index,
-      validity: false,
-      value: restoreMode ? '' : word,
-    }))
-
-    // Debug code to not type the whole mnemonic =)
-    //
-    // const newFields = wordsList.map((word, index) => ({
-    //   order: index,
-    //   validity: true,
-    //   value: word,
-    // }))
+    let newFields
+    if (wordsList.length) {
+      newFields = wordsList.map((word, index) => ({
+        order: index,
+        validity: false,
+        value: restoreMode ? '' : word,
+      }))
+    } else {
+      newFields = [...new Array(12)].map((word, index) => ({
+        order: index,
+        validity: false,
+        value: '',
+      }))
+    }
 
     setFields(newFields)
   }, [wordsList, setFields, restoreMode])
-
-  useEffect(() => {
-    if (restoreMode) return
-  }, [restoreMode, wordsList])
 
   const getFieldByIndex = (index) => fields[index]
 

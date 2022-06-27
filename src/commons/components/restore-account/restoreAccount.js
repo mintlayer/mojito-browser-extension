@@ -11,8 +11,9 @@ import TextField from '../basic/textField'
 
 import './restoreAccount.css'
 import { useNavigate } from 'react-router-dom'
+import { validateMnemonic } from '../../crypto/btc'
 
-const RestoreAccount = ({ step, setStep, words = [] }) => {
+const RestoreAccount = ({ step, setStep, onStepsFinished }) => {
   const inputExtraclasses = ['account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
@@ -53,7 +54,12 @@ const RestoreAccount = ({ step, setStep, words = [] }) => {
     setAccountPasswordErrorMessage(message)
   }, [accountPasswordValid])
 
-  const goToNextStep = () => setStep(step + 1)
+  const getMnemonics = () => wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
+
+  const goToNextStep = () =>
+  step < 4
+    ? setStep(step + 1)
+    : onStepsFinished(accountNameValue, accountPasswordValue, getMnemonics())
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
@@ -69,8 +75,7 @@ const RestoreAccount = ({ step, setStep, words = [] }) => {
     1: accountNameValid,
     2: accountPasswordValid,
     3: true,
-    4: true,
-    5: accountWordsValid,
+    4: accountWordsValid,
   }
 
   const titles = {
@@ -105,10 +110,15 @@ const RestoreAccount = ({ step, setStep, words = [] }) => {
   }, [wordsFields, step])
 
   const handleError = (step) => {
-    if (step < 5) return
+    if (step < 4) return
     alert(
-      'These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order',
+      'These words do not form a valid mnemonic. Check if you had any typos or if you inserted them in a different order',
     )
+  }
+
+  const isMnemonicValid = () => {
+    const inputMnemonic = getMnemonics()
+    return validateMnemonic(inputMnemonic)
   }
 
   const handleSubmit = (e) => {
@@ -117,7 +127,11 @@ const RestoreAccount = ({ step, setStep, words = [] }) => {
     if (step === 1) setAccountNamePristinity(false)
     if (step === 2) setAccountPasswordPristinity(false)
 
-    stepsValidations[step] ? goToNextStep() : handleError(step)
+    let validForm = stepsValidations[step]
+    if (step === 4)
+      validForm = validForm && isMnemonicValid()
+
+    validForm ? goToNextStep() : handleError(step)
   }
 
   return (
@@ -180,7 +194,6 @@ const RestoreAccount = ({ step, setStep, words = [] }) => {
           )}
           {step === 4 && (
             <InputsList
-              wordsList={words}
               fields={wordsFields}
               setFields={setWordsFields}
               restoreMode

@@ -12,6 +12,7 @@ import WordsDescription from '../words-list-description/wordsListDescription'
 
 import './setAccount.css'
 import { useNavigate } from 'react-router-dom'
+import { validateMnemonic } from '../../crypto/btc'
 
 const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
   const inputExtraclasses = ['set-account-input']
@@ -115,13 +116,22 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
     )
   }
 
+  const isMnemonicValid = () => {
+    const inputMnemonic = wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
+    return validateMnemonic(inputMnemonic)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
 
     if (step === 1) setAccountNamePristinity(false)
     if (step === 2) setAccountPasswordPristinity(false)
 
-    stepsValidations[step] ? goToNextStep() : handleError(step)
+    let validForm = stepsValidations[step]
+    if (step === 5)
+      validForm = validForm && isMnemonicValid()
+
+    validForm ? goToNextStep() : handleError(step)
   }
 
   return (
