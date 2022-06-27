@@ -9,7 +9,10 @@ import {
   generateKeysFromMnemonic,
   calculateBalanceFromUtxoList,
   convertSatoshiToBtc,
+  getParsedTransactions,
 } from './btc'
+
+import rawTransactions from './testTransactions.json'
 
 const ECPair = ECPairFactory(ecc)
 const knownAddress = 'msPGWzYgtjeTZKsmF7hUg5qmj76wdVi6qQ'
@@ -124,4 +127,24 @@ test('Satoshi to BTC', () => {
   expect(resultBalance1).toBe(balance1)
   expect(resultBalance2).toBe(balance2)
   expect(resultBalance3).toBe(balance3)
+})
+
+test('Transactions parse', () => {
+  const address = '2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom'
+  const randomIndex = Math.floor(Math.random() * (rawTransactions.length - 1))
+
+  const parsedTransactions = getParsedTransactions(rawTransactions, address)
+
+  const inTransactionsAmount = parsedTransactions.reduce(
+    (acc, item) => (item.direction === 'in' ? acc + 1 : acc),
+    0,
+  )
+
+  expect(parsedTransactions.length).toBe(parsedTransactions.length)
+  expect(inTransactionsAmount).toBe(24)
+
+  expect(typeof parsedTransactions[randomIndex].txid).toBe('string')
+  expect(typeof parsedTransactions[randomIndex].direction).toBe('string')
+  expect(typeof parsedTransactions[randomIndex].value).toBe('number')
+  expect(parsedTransactions[randomIndex].otherPart.length).toBeGreaterThan(0)
 })

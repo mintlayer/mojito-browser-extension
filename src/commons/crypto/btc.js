@@ -39,6 +39,42 @@ const calculateBalanceFromUtxoList = (list) =>
 
 const convertSatoshiToBtc = (satoshiAmount) => satoshiAmount / 100_000_000
 
+const getParsedTransactions = (rawTransactions, baseAddress) => {
+  const parsedTransactions = rawTransactions.map((transaction) => {
+    const direction = transaction.vin.find(
+      (item) => item.prevout.scriptpubkey_address === baseAddress,
+    )
+      ? 'out'
+      : 'in'
+
+    const satoshi =
+      direction === 'in'
+        ? transaction.vout.find(
+            (item) => item.scriptpubkey_address === baseAddress,
+          ).value
+        : transaction.vout
+            .filter((item) => item.scriptpubkey_address !== baseAddress)
+            .reduce((acc, item) => acc + item.value, 0)
+
+    const value = convertSatoshiToBtc(satoshi)
+
+    const otherPart = transaction.vout.reduce((arr, item) => {
+      if (item.scriptpubkey_address !== baseAddress)
+        arr.push(item.scriptpubkey_address)
+      return arr
+    }, [])
+
+    return {
+      txid: transaction.txid,
+      direction,
+      value,
+      otherPart,
+    }
+  })
+
+  return parsedTransactions
+}
+
 export {
   generateAddr,
   generateMnemonic,
@@ -48,4 +84,5 @@ export {
   getAddressFromPubKey,
   calculateBalanceFromUtxoList,
   convertSatoshiToBtc,
+  getParsedTransactions,
 }
