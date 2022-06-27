@@ -15,9 +15,10 @@ const getSeedFromMnemonic = (mnemonic) => Bip39.mnemonicToSeedSync(mnemonic)
 const getKeysFromSeed = (seed) => {
   const root = getBIP32Object().fromSeed(seed, NETWORK)
   const account = root.derivePath(DERIVATION_PATH)
-  return [ account.publicKey, account.toWIF() ]
+  return [account.publicKey, account.toWIF()]
 }
-const getAddressFromPubKey = (pubkey) => bitcoin.payments.p2pkh({ pubkey, network: NETWORK }).address
+const getAddressFromPubKey = (pubkey) =>
+  bitcoin.payments.p2pkh({ pubkey, network: NETWORK }).address
 
 const generateMnemonic = () => Bip39.generateMnemonic()
 
@@ -27,11 +28,16 @@ const generateKeysFromMnemonic = (mnemonic) => {
 }
 
 const generateAddr = (mnemonic) => {
-  const [ pubKey ] = generateKeysFromMnemonic(mnemonic)
+  const [pubKey] = generateKeysFromMnemonic(mnemonic)
   const btcAddress = getAddressFromPubKey(pubKey)
 
   return btcAddress
 }
+
+const calculateBalanceFromUtxoList = (list) =>
+  list.reduce((accumulator, transaction) => accumulator + transaction.value, 0)
+
+const convertSatoshiToBtc = (satoshiAmount) => satoshiAmount / 100_000_000
 
 export {
   generateAddr,
@@ -39,5 +45,7 @@ export {
   generateKeysFromMnemonic,
   getSeedFromMnemonic,
   getKeysFromSeed,
-  getAddressFromPubKey
+  getAddressFromPubKey,
+  calculateBalanceFromUtxoList,
+  convertSatoshiToBtc,
 }

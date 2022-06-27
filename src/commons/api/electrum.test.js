@@ -4,11 +4,10 @@ import {
   getTransactionStatus,
   getAddressTransactions,
   getAddress,
+  getAddressUtxo,
   requestElectrum,
-  ELECTRUM_URL
+  ELECTRUM_URL,
 } from './electrum.js'
-
-
 
 test('Electrum request', async () => {
   const fetchAddr = 'testFetch'
@@ -16,20 +15,24 @@ test('Electrum request', async () => {
     return new Promise((resolve, reject) => {
       resolve({
         ok: true,
-        text: async () => new Promise((resolve) => resolve(addr))
+        text: async () => new Promise((resolve) => resolve(addr)),
       })
     })
   })
 
-  await expect(requestElectrum(fetchAddr, null, mockFetch)).resolves.toMatch(ELECTRUM_URL+fetchAddr)
+  await expect(requestElectrum(fetchAddr, null, mockFetch)).resolves.toMatch(
+    ELECTRUM_URL + fetchAddr,
+  )
 })
 
 test('Electrum resquest - not ok', async () => {
   const fetchAddr = 'testFetch'
   const mockFetch = jest.fn((addr) => {
-    return new Promise((resolve, reject) => resolve({
-      ok: false
-    }))
+    return new Promise((resolve, reject) =>
+      resolve({
+        ok: false,
+      }),
+    )
   })
 
   await expect(async () => {
@@ -38,7 +41,8 @@ test('Electrum resquest - not ok', async () => {
 })
 
 // https://www.blockchain.com/btc-testnet/tx/f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba
-const FIRST_TX_ID = 'f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba'
+const FIRST_TX_ID =
+  'f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba'
 const FIRST_TESTNET_WALLET = 'n3GNqMveyvaPvUbH469vDRadqpJMPc84JA'
 const BLOCK_HASH_LENGTH = 64
 
@@ -68,4 +72,10 @@ test('Electrum request - getTransactionData', async () => {
   const result = await getTransactionData(FIRST_TX_ID)
   const data = JSON.parse(result)
   expect(data.status.block_height).toBe(1)
+})
+
+test('Electrum request - getAdressUtxo', async () => {
+  const result = await getAddressUtxo(FIRST_TESTNET_WALLET)
+  const transactions = JSON.parse(result)
+  expect(transactions.length).toBeGreaterThan(0)
 })
