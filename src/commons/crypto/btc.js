@@ -57,6 +57,7 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
             .reduce((acc, item) => acc + item.value, 0)
 
     const value = convertSatoshiToBtc(satoshi)
+    const date = transaction.status.block_time
 
     const otherPart = transaction.vout.reduce((arr, item) => {
       if (item.scriptpubkey_address !== baseAddress)
@@ -66,6 +67,7 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
 
     return {
       txid: transaction.txid,
+      date,
       direction,
       value,
       otherPart,

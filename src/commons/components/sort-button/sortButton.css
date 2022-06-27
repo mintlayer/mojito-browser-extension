@@ -1,19 +1,18 @@
-.button-sort-down,
+.sort-item span {
+  font-size: 18px;
+}
+
+.button-sort,
 .button-sort-up {
   width: 86px;
   height: 86px;
   min-width: 86px;
   min-height: 86px;
+  margin-bottom: 10px;
 }
 
 .sort-buttons-wrapper {
   display: flex;
-  min-width: max-content;
-}
-
-.balance-sort-wrapper {
-  display: flex;
-  justify-content: space-between;
 }
 
 .sort-item {

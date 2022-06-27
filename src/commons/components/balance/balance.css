@@ -1,0 +1,40 @@
+.balance-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: fit-content;
+  padding: 5px;
+  font-weight: 600;
+}
+
+.balance-wrapper svg {
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  min-height: 72px;
+}
+
+.balance {
+  margin-left: 17px;
+}
+
+.balance-btc {
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin-bottom: 9px;
+}
+
+.balance-btc span {
+  font-weight: 600;
+  font-size: 1.9rem;
+}
+
+.balance-usd {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.balance-usd span {
+  font-weight: 500;
+  font-size: 1.5rem;
+}
