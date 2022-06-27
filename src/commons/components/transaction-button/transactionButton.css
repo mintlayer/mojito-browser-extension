@@ -1,9 +1,9 @@
-.sort-item span {
+.transaction-item span {
   font-size: 18px;
 }
 
-.button-sort,
-.button-sort-up {
+.button-transaction,
+.button-transaction-up {
   width: 86px;
   height: 86px;
   min-width: 86px;
@@ -11,21 +11,21 @@
   margin-bottom: 10px;
 }
 
-.sort-buttons-wrapper {
+.transaction-buttons-wrapper {
   display: flex;
 }
 
-.sort-item {
+.transaction-item {
   display: flex;
   width: fit-content;
   flex-direction: column;
   align-items: center;
 }
 
-.sort-item:nth-child(1) {
+.transaction-item:nth-child(1) {
   margin-right: 45px;
 }
 
-.button-sort-up svg {
+.button-transaction-up svg {
   transform: rotate(180deg);
 }

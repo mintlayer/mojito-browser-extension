@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Header from '../../commons/components/advanced/header'
 import Balance from '../../commons/components/balance/balance'
-import SortButton from '../../commons/components/sort-button/sortButton'
+import TransactionButton from '../../commons/components/transaction-button/transactionButton'
 import VerticalGroup from '../../commons/components/group/verticalGroup'
 import TransactionsList from '../../commons/components/transactions-list/transactionsList'
 import {
@@ -41,11 +41,11 @@ const TransactionsPage = () => {
         <div className="balance-sort-wrapper">
           <Balance balance={balance} />
           <div className="sort-buttons-wrapper">
-            <SortButton
+            <TransactionButton
               title={'Send'}
               up
             />
-            <SortButton title={'Receive'} />
+            <TransactionButton title={'Receive'} />
           </div>
         </div>
         <TransactionsList transactionsList={transactionsList} />
