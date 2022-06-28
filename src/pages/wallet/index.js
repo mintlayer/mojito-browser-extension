@@ -9,16 +9,17 @@ import {
   calculateBalanceFromUtxoList,
 } from '../../commons/crypto/btc'
 import { getAddressTransactions } from '../../commons/api/electrum'
-import './transactions.css'
+import './wallet.css'
 
-const TransactionsPage = () => {
+const WalletPage = () => {
   const [transactionsList, setTransactionsList] = useState([])
+  /* istanbul ignore next */
   const getTransactions = async () => {
     try {
-      const responce = await getAddressTransactions(
+      const response = await getAddressTransactions(
         'n3GNqMveyvaPvUbH469vDRadqpJMPc84JA',
       )
-      const transactions = JSON.parse(responce)
+      const transactions = JSON.parse(response)
       const parsedTransactions = getParsedTransactions(
         transactions,
         'n3GNqMveyvaPvUbH469vDRadqpJMPc84JA',
@@ -35,12 +36,12 @@ const TransactionsPage = () => {
     getTransactions()
   }, [setTransactionsList])
   return (
-    <div data-testid="transactions-page">
+    <div data-testid="wallet-page">
       <VerticalGroup bigGap>
         <Header />
-        <div className="balance-sort-wrapper">
+        <div className="balance-transactions-wrapper">
           <Balance balance={balance} />
-          <div className="sort-buttons-wrapper">
+          <div className="transactions-buttons-wrapper">
             <TransactionButton
               title={'Send'}
               up
@@ -53,4 +54,4 @@ const TransactionsPage = () => {
     </div>
   )
 }
-export default TransactionsPage
+export default WalletPage
