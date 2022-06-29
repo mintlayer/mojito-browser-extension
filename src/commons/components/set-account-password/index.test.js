@@ -24,7 +24,7 @@ const setup = ({ data = _data } = {}) => {
   )
   const title = screen.getByText('Password For')
   const account = screen.getByText(data.account.name)
-  const password = screen.getByLabelText('Password')
+  const password = screen.getByPlaceholderText('Password')
   const login = screen.getByRole('button', { name: 'Log In' })
   return {
     title,
@@ -42,6 +42,16 @@ test('Renders SetAccountPassword page', () => {
   expect(account).toBeInTheDocument()
   expect(password).toBeInTheDocument()
   expect(login).toBeInTheDocument()
+})
+
+test('Renders SetAccountPassword page with invalid password', () => {
+  const { password } = setup()
+
+  fireEvent.change(password, { target: { value: 'Qwertyuio5678' } })
+  expect(password).toHaveClass('invalid')
+
+  fireEvent.change(password, { target: { value: 'Qwertyuio5@' } })
+  expect(password).toHaveClass('valid')
 })
 
 test('Click login button onSubmit', () => {

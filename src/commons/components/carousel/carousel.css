@@ -12,8 +12,6 @@ button {
 .back {
   margin-right: 1rem;
   width: 5rem;
-  text-align: right;
-  text-align: -webkit-right;
 }
 .back:disabled {
   cursor: not-allowed;
@@ -55,6 +53,11 @@ button {
   line-height: 2rem;
   font-weight: 600;
   text-transform: capitalize;
+  transition: all 0.3s ease-in-out;
+}
+.button-account:hover {
+  color: rgb(var(--color-white));
+  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
 }
 
 .current {

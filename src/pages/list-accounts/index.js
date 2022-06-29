@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ListAccounts from '../../commons/components/list-accounts'
+import useStyleClasses from '../../commons/hooks/useStyleClasses'
+
 import './index.css'
 
 const ListAccountsPage = ({
@@ -10,31 +12,25 @@ const ListAccountsPage = ({
   delay = 0,
 }) => {
   const navigate = useNavigate()
-  const componentRef = useRef(null)
 
   const [account, setAccount] = useState(undefined)
 
+  const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses([])
+
   useEffect(() => {
     if (account) {
-      removeAnimate(componentRef.current)
+      removeStyleClass('animate-list-accounts')
       navigate('/set-account-password', { state: { account } })
     }
-  }, [account, navigate])
+  }, [account, removeStyleClass, navigate])
 
   const goNext = (account) => {
-    addAnimate(componentRef.current)
+    addStyleClass('animate-list-accounts')
 
     delay > 0
       ? setTimeout(() => setAccount(account), delay)
       : setAccount(account)
     onSelect && onSelect()
-  }
-
-  const addAnimate = (element) => {
-    element.classList.add('animate-list-accounts')
-  }
-  const removeAnimate = (element) => {
-    element.classList.remove('animate-list-accounts')
   }
 
   const goCreate = () => {
@@ -45,7 +41,7 @@ const ListAccountsPage = ({
   return (
     <div
       data-testid="generic"
-      ref={componentRef}
+      className={styleClasses}
     >
       {!account && (
         <ListAccounts

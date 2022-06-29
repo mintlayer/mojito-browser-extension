@@ -6,13 +6,9 @@ import Carousel from '../carousel/carousel'
 import './index.css'
 
 const ListAccounts = ({ accounts, onSelect, onCreate }) => {
-  const onSelectAccount = (account) => {
-    onSelect && onSelect(account)
-  }
+  const onSelectAccount = (account) => onSelect && onSelect(account)
 
-  const onCreateAccount = () => {
-    onCreate && onCreate()
-  }
+  const onCreateAccount = () => onCreate && onCreate()
 
   return (
     <div
@@ -20,19 +16,18 @@ const ListAccounts = ({ accounts, onSelect, onCreate }) => {
       className="list-accounts"
     >
       <h2 className="subtitle">wallet available</h2>
+      <CenteredLayout>
+        <div className="content">
+          <Carousel
+            accounts={accounts}
+            onClick={onSelectAccount}
+          />
+        </div>
 
-      <div className="content">
-        <Carousel
-          accounts={accounts}
-          onClick={onSelectAccount}
-        />
-      </div>
-
-      <div className="footer">
-        <CenteredLayout>
+        <div className="footer">
           <Button onClickHandle={onCreateAccount}>Create Wallet</Button>
-        </CenteredLayout>
-      </div>
+        </div>
+      </CenteredLayout>
     </div>
   )
 }
