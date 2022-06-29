@@ -7,6 +7,7 @@ import Button from '../basic/button'
 import CenteredLayout from '../group/centeredLayout'
 import TextField from '../basic/textField'
 import Header from '../advanced/header'
+import VerticalGroup from '../group/verticalGroup'
 
 import './index.css'
 
@@ -27,6 +28,12 @@ const SetAccountPaswword = ({ onSubmit }) => {
     setAccountPasswordValue(value)
   }
 
+  const label = () => (
+    <>
+      Password for <strong>{account.name}</strong>
+    </>
+  )
+
   const doLogin = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -36,25 +43,21 @@ const SetAccountPaswword = ({ onSubmit }) => {
   return (
     <div>
       <Header />
-      <div className="account-password">
+      <div className="content">
         <CenteredLayout>
-          <div className="content">
-            <p className="password-for">Password For</p>
-            <h2 className="account-name">{account.name}</h2>
-          </div>
-
-          <TextField
-            value={accountPasswordValue}
-            onChangeHandle={accountPasswordChangeHandler}
-            validity={accountPasswordValid}
-            pattern={passwordPattern}
-            password
-            label={''}
-            placeHolder={'Password'}
-          />
-          <div className="footer">
+          <VerticalGroup bigGap>
+            <TextField
+              value={accountPasswordValue}
+              onChangeHandle={accountPasswordChangeHandler}
+              validity={accountPasswordValid}
+              pattern={passwordPattern}
+              password
+              label={label()}
+              placeHolder={'Password'}
+              alternate
+            />
             <Button onClickHandle={doLogin}>Log In</Button>
-          </div>
+          </VerticalGroup>
         </CenteredLayout>
       </div>
     </div>

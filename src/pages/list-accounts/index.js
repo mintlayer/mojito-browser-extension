@@ -18,10 +18,10 @@ const ListAccountsPage = ({
   const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses([])
 
   useEffect(() => {
-    if (account) {
-      removeStyleClass('animate-list-accounts')
-      navigate('/set-account-password', { state: { account } })
-    }
+    if (!account) return
+
+    removeStyleClass('animate-list-accounts')
+    navigate('/set-account-password', { state: { account } })
   }, [account, removeStyleClass, navigate])
 
   const goNext = (account) => {

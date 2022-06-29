@@ -22,7 +22,7 @@ const setup = ({ data = _data } = {}) => {
       <SetAccountPassword {...data} />
     </MemoryRouter>,
   )
-  const title = screen.getByText('Password For')
+  const title = screen.getByText('Password for')
   const account = screen.getByText(data.account.name)
   const password = screen.getByPlaceholderText('Password')
   const login = screen.getByRole('button', { name: 'Log In' })

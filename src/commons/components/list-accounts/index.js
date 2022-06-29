@@ -1,6 +1,8 @@
 import React from 'react'
 import Button from '../basic/button'
 import CenteredLayout from '../group/centeredLayout'
+import VerticalGroup from '../group/verticalGroup'
+
 import Carousel from '../carousel/carousel'
 
 import './index.css'
@@ -17,16 +19,16 @@ const ListAccounts = ({ accounts, onSelect, onCreate }) => {
     >
       <h2 className="subtitle">wallet available</h2>
       <CenteredLayout>
-        <div className="content">
-          <Carousel
-            accounts={accounts}
-            onClick={onSelectAccount}
-          />
-        </div>
+        <VerticalGroup bigGap>
+          <div className="content">
+            <Carousel
+              accounts={accounts}
+              onClick={onSelectAccount}
+            />
+          </div>
 
-        <div className="footer">
           <Button onClickHandle={onCreateAccount}>Create Wallet</Button>
-        </div>
+        </VerticalGroup>
       </CenteredLayout>
     </div>
   )
