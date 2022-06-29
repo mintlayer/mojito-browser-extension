@@ -25,8 +25,8 @@
   "scripts": {
     "start": "react-app-rewired start --env production",
     "build": "INLINE_RUNTIME_CHUNK=false react-scripts build && rm -f package.zip && (cd build && zip -r ../ext.zip ./*)",
-    "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test",
-    "coverage": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --coverage",
+    "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test --testPathIgnorePatterns=src/pages",
+    "coverage": "NODE_ENV=test react-scripts --openssl-legacy-provider  test --testPathIgnorePatterns=src/pages --coverage",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js",
     "prettier": "pretty-quick --staged",
@@ -83,11 +83,16 @@
     "transformIgnorePatterns": [
       "/node_modules/(?!d3|d3-array|internmap|delaunator|robust-predicates)"
     ],
+    "watchPathIgnorePatterns": [
+      "src/pages"
+    ],
     "collectCoverageFrom": [
-      "src/**/*.js"
+      "src/**/*.js",
+      "!src/pages"
     ],
     "coveragePathIgnorePatterns": [
       "./src/index.js",
+      "./src/pages",
       "./src/ContextProvider.js",
       "./src/environmentVars.js",
       "./src/commons/utils/reportWebVitals.js",
