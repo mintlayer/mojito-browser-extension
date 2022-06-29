@@ -12,18 +12,14 @@ import { getAddressTransactions } from '../../commons/api/electrum'
 import './wallet.css'
 
 const WalletPage = () => {
+  const wallet = 'n3GNqMveyvaPvUbH469vDRadqpJMPc84JA'
   const [transactionsList, setTransactionsList] = useState([])
   /* istanbul ignore next */
   const getTransactions = async () => {
     try {
-      const response = await getAddressTransactions(
-        'n3GNqMveyvaPvUbH469vDRadqpJMPc84JA',
-      )
+      const response = await getAddressTransactions(wallet)
       const transactions = JSON.parse(response)
-      const parsedTransactions = getParsedTransactions(
-        transactions,
-        'n3GNqMveyvaPvUbH469vDRadqpJMPc84JA',
-      )
+      const parsedTransactions = getParsedTransactions(transactions, wallet)
       setTransactionsList(parsedTransactions)
     } catch (error) {
       console.log(error, 'error')
