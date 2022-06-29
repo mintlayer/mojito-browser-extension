@@ -437,6 +437,13 @@
         "scriptpubkey_type": "v0_p2wsh",
         "scriptpubkey_address": "tb1qveqd0pg3ntw9lwrpwme9kzvfn2fz0slr495pqd4juarq6ykm3qxsg6w0re",
         "value": 5450643
+      },
+      {
+        "scriptpubkey": "00206640d785119adc5fb86176f25b09899a9227c3e3a9981036b2e7460d12db880d",
+        "scriptpubkey_asm": "OP_0 OP_PUSHBYTES_32 6640d785119adc5fb86170f25b09899a9227c3e3a9681036b2e7460d12db880d",
+        "scriptpubkey_type": "v0_p2wsh",
+        "scriptpubkey_address": "2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom",
+        "value": 5450643
       }
     ],
     "size": 416,
