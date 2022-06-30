@@ -9,6 +9,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
+
+  animation-name: BackdropAppierance;
+  animation-duration: 0.3s;
+  animation-timing-function: ease;
+}
+
+.backdropClosing {
+  animation-name: BackdropDisappierance;
+  animation-duration: 1.3s;
+  animation-timing-function: ease;
 }
 
 .popup {
@@ -26,7 +36,12 @@
   animation-name: slideUp;
   animation-duration: 0.7s;
   animation-timing-function: ease;
-  visibility: visible;
+}
+
+.popupClosing {
+  animation-name: slideDown;
+  animation-duration: 0.7s;
+  animation-timing-function: ease;
 }
 
 .popupCloseButton {
@@ -44,5 +59,32 @@
   }
   100% {
     transform: translateY(0%);
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes BackdropAppierance {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes BackdropDisappierance {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
