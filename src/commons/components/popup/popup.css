@@ -14,6 +14,9 @@
 .popup {
   position: absolute;
   bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 88.4%;
   height: 94%;
   padding: 40px;
@@ -21,7 +24,7 @@
   border-radius: 15px 15px 0 0;
 
   animation-name: slideUp;
-  animation-duration: 1s;
+  animation-duration: 0.7s;
   animation-timing-function: ease;
   visibility: visible;
 }
