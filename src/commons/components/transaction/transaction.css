@@ -28,6 +28,11 @@
   background: rgb(var(--color-black));
 }
 
+.arrow-icon {
+  width: 30px;
+  height: 36px;
+}
+
 .arrow-icon-out {
   transform: rotate(180deg);
 }
@@ -42,6 +47,7 @@
   font-size: 1.7rem;
   font-weight: 600;
   margin-bottom: 10px;
+  word-break: break-all;
 }
 
 .transaction-date,

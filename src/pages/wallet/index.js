@@ -14,7 +14,6 @@ import './wallet.css'
 const WalletPage = () => {
   const wallet = '2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom'
   const [transactionsList, setTransactionsList] = useState([])
-  /* istanbul ignore next */
   const getTransactions = async () => {
     try {
       const response = await getAddressTransactions(wallet)

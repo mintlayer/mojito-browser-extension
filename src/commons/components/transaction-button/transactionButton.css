@@ -29,3 +29,8 @@
 .button-transaction-up svg {
   transform: rotate(180deg);
 }
+
+.icon-arrow {
+  width: 30px;
+  height: 36px;
+}

@@ -3,7 +3,7 @@ import { ReactComponent as ArrowIcon } from '../../assets/img/icon-arrow.svg'
 import { format } from 'date-fns'
 
 const Transaction = ({ transaction }) => {
-  const date = format(new Date(transaction.date * 1000), 'yyyy-MM-dd')
+  const date = format(new Date(transaction.date * 1000), 'dd/MM/yyyy')
 
   const formatAddress = (address) => {
     const limitSize = 24

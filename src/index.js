@@ -6,6 +6,7 @@ import App from './App'
 import SetAccount from './pages/set-account'
 import RestoreAccount from './pages/restore-account'
 import Wallet from './pages/wallet'
+import { ContextProvider } from './ContextProvider'
 
 import { appHasAccounts } from './commons/utils/appInfo'
 import reportWebVitals from './commons/utils/reportWebVitals'
@@ -16,29 +17,31 @@ import './commons/assets/css/index.css'
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
   <React.StrictMode>
-    <main className="App">
-      <MemoryRouter>
-        <Routes>
-          <Route
-            path="/set-account"
-            element={<SetAccount />}
-          />
-          <Route
-            path="/restore-account"
-            element={<RestoreAccount />}
-          />
-          <Route
-            path="/wallet"
-            element={<Wallet />}
-          />
-          <Route
-            exact
-            path="/"
-            element={<App appHasAccounts={appHasAccounts()} />}
-          />
-        </Routes>
-      </MemoryRouter>
-    </main>
+    <ContextProvider>
+      <main className="App">
+        <MemoryRouter>
+          <Routes>
+            <Route
+              path="/set-account"
+              element={<SetAccount />}
+            />
+            <Route
+              path="/restore-account"
+              element={<RestoreAccount />}
+            />
+            <Route
+              path="/wallet"
+              element={<Wallet />}
+            />
+            <Route
+              exact
+              path="/"
+              element={<App appHasAccounts={appHasAccounts()} />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </main>
+    </ContextProvider>
   </React.StrictMode>,
 )
 

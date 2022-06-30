@@ -2,7 +2,8 @@ import './balance.css'
 import { ReactComponent as BtcLogo } from '../../assets/img/btc-logo.svg'
 
 const Balance = ({ balance }) => {
-  const balanceInUSD = balance * 25000
+  const btcPriceInUSD = 25000
+  const balanceInUSD = balance * btcPriceInUSD
   return (
     <div
       className="balance-wrapper"

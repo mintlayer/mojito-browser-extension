@@ -13,7 +13,7 @@ const transactionButton = ({ title, up }) => {
       <Button
         extraStyleClasses={up ? buttonUpExtraClasses : buttonExtraClasses}
       >
-        <ArrowIcon />
+        <ArrowIcon className="icon-arrow" />
       </Button>
       {title && <span data-testid={'transaction-button-title'}>{title}</span>}
     </div>

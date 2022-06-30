@@ -21,7 +21,7 @@ const TRANSCTIONSAMPLEOUT = {
   ],
 }
 
-const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'yyyy-MM-dd')
+const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'dd/MM/yyyy')
 
 test('Render transaction component', () => {
   render(<Transaction transaction={TRANSCTIONSAMPLE} />)

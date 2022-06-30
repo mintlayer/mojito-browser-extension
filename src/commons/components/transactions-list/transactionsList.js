@@ -8,7 +8,7 @@ const TransactionsList = ({ transactionsList }) => {
       data-testid={'transactions-list'}
     >
       {transactionsList &&
-        transactionsList.length > 0 &&
+        transactionsList.length &&
         transactionsList.map((transaction, index) => (
           <Transaction
             key={index}

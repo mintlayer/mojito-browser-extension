@@ -16,7 +16,3 @@
   color: rgb(var(--color-black));
   font-size: 4rem;
 }
-
-* {
-  word-break: break-all;
-}
