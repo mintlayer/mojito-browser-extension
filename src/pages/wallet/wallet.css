@@ -1,0 +1,9 @@
+.transactions-buttons-wrapper {
+  display: flex;
+  min-width: max-content;
+}
+
+.balance-transactions-wrapper {
+  display: flex;
+  justify-content: space-between;
+}

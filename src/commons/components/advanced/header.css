@@ -1,9 +1,13 @@
+header {
+  position: relative;
+}
+
 .backButton {
   height: 40px;
   width: 40px;
   padding: 0.2rem;
   position: absolute;
-  top: 2.8rem;
+  top: 0.5rem;
   left: 2.875rem;
 }
 

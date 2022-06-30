@@ -13,10 +13,13 @@ module.exports = function override(config) {
       Buffer: ['buffer', 'Buffer'],
     }),
     new Dotenv({
-      path: `./.env${process.env.NODE_ENV === 'production'?'.production':''}`,
+      path: `./.env${
+        process.env.NODE_ENV === 'production' ? '.production' : ''
+      }`,
       systemvars: true,
-      silent: true
-    })
+      silent: true,
+      ignoreStub: true,
+    }),
   ])
 
   return config
