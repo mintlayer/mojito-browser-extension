@@ -1,11 +1,11 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { act } from 'react-dom/test-utils'
 
 import Popup from './popup'
 
 const popupContent = 'example popup content'
 
-test('Render Inputs list item', () => {
+test('Render Inputs list item', async () => {
   const mockSetOpen = jest.fn()
   render(
     <Popup
@@ -28,5 +28,9 @@ test('Render Inputs list item', () => {
 
   act(() => {
     buttonCloseComponent.click()
+  })
+
+  await waitFor(() => {
+    expect(mockSetOpen.mock.calls.length).toBe(1)
   })
 })
