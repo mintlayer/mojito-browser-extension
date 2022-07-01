@@ -19,7 +19,6 @@ test('Render Inputs list item', () => {
     />,
   )
   const inputComponent = screen.getByTestId('inputs-list-item')
-  expect(screen.queryByText(1)).toBeNull()
 
   expect(inputComponent).toBeInTheDocument()
   expect(inputComponent).toHaveClass('list-item')

@@ -13,7 +13,12 @@ import './restoreAccount.css'
 import { useNavigate } from 'react-router-dom'
 import { validateMnemonic } from '../../crypto/btc'
 
-const RestoreAccount = ({ step, setStep, onStepsFinished }) => {
+const RestoreAccount = ({
+  step,
+  setStep,
+  onStepsFinished,
+  validateMnemonicFn = validateMnemonic,
+}) => {
   const inputExtraclasses = ['account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
@@ -54,12 +59,13 @@ const RestoreAccount = ({ step, setStep, onStepsFinished }) => {
     setAccountPasswordErrorMessage(message)
   }, [accountPasswordValid])
 
-  const getMnemonics = () => wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
+  const getMnemonics = () =>
+    wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
 
   const goToNextStep = () =>
-  step < 4
-    ? setStep(step + 1)
-    : onStepsFinished(accountNameValue, accountPasswordValue, getMnemonics())
+    step < 4
+      ? setStep(step + 1)
+      : onStepsFinished(accountNameValue, accountPasswordValue, getMnemonics())
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
@@ -118,7 +124,7 @@ const RestoreAccount = ({ step, setStep, onStepsFinished }) => {
 
   const isMnemonicValid = () => {
     const inputMnemonic = getMnemonics()
-    return validateMnemonic(inputMnemonic)
+    return validateMnemonicFn(inputMnemonic)
   }
 
   const handleSubmit = (e) => {
@@ -128,8 +134,7 @@ const RestoreAccount = ({ step, setStep, onStepsFinished }) => {
     if (step === 2) setAccountPasswordPristinity(false)
 
     let validForm = stepsValidations[step]
-    if (step === 4)
-      validForm = validForm && isMnemonicValid()
+    if (step === 4) validForm = validForm && isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
   }

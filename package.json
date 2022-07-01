@@ -26,8 +26,8 @@
   "scripts": {
     "start": "react-app-rewired start --env production",
     "build": "INLINE_RUNTIME_CHUNK=false react-app-rewired build && rm -f package.zip && (cd build && zip -r ../ext.zip ./*)",
-    "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test --testPathIgnorePatterns=src/pages",
-    "coverage": "NODE_ENV=test react-scripts --openssl-legacy-provider  test --testPathIgnorePatterns=src/pages --coverage",
+    "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --testPathIgnorePatterns='src/pages src/App.*.js'",
+    "coverage": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --testPathIgnorePatterns='src/pages src/App.*.js' --coverage ",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js",
     "prettier": "pretty-quick --staged",
@@ -85,14 +85,17 @@
       "/node_modules/(?!d3|d3-array|internmap|delaunator|robust-predicates)"
     ],
     "watchPathIgnorePatterns": [
-      "src/pages"
+      "src/pages/**/*.js",
+      "src/App.*.js"
     ],
     "collectCoverageFrom": [
       "src/**/*.js",
-      "!src/pages"
+      "!src/pages",
+      "!src/App.*.js"
     ],
     "coveragePathIgnorePatterns": [
       "./src/index.js",
+      "./src/App.*.js",
       "./src/pages",
       "./src/ContextProvider.js",
       "./src/environmentVars.js",

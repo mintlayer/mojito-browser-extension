@@ -14,7 +14,13 @@ import './setAccount.css'
 import { useNavigate } from 'react-router-dom'
 import { validateMnemonic } from '../../crypto/btc'
 
-const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
+const SetAccount = ({
+  step,
+  setStep,
+  words = [],
+  onStepsFinished,
+  validateMnemonicFn = validateMnemonic,
+}) => {
   const inputExtraclasses = ['set-account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
@@ -117,8 +123,10 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
   }
 
   const isMnemonicValid = () => {
-    const inputMnemonic = wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
-    return validateMnemonic(inputMnemonic)
+    const inputMnemonic = wordsFields
+      .reduce((acc, word) => `${acc} ${word.value}`, '')
+      .trim()
+    return validateMnemonicFn(inputMnemonic)
   }
 
   const handleSubmit = (e) => {
@@ -128,8 +136,7 @@ const SetAccount = ({ step, setStep, words = [], onStepsFinished }) => {
     if (step === 2) setAccountPasswordPristinity(false)
 
     let validForm = stepsValidations[step]
-    if (step === 5)
-      validForm = validForm && isMnemonicValid()
+    if (step === 5) validForm = validForm && isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
   }
