@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback } from 'react'
+import { useState, useEffect, useContext, useCallback, useRef } from 'react'
 import Header from '../../commons/components/advanced/header'
 import Balance from '../../commons/components/balance/balance'
 import TransactionButton from '../../commons/components/transaction-button/transactionButton'
@@ -13,9 +13,10 @@ import { Context } from '../../ContextProvider'
 import './wallet.css'
 
 const WalletPage = () => {
+  const effectCalled = useRef(false)
   const { btcAddress } = useContext(Context)
-  console.log(btcAddress)
   const [transactionsList, setTransactionsList] = useState([])
+
   const getTransactions = useCallback(async () => {
       try {
         const response = await getAddressTransactions(btcAddress)
@@ -30,6 +31,9 @@ const WalletPage = () => {
   const balance = calculateBalanceFromUtxoList(transactionsList)
 
   useEffect(() => {
+    if (effectCalled.current) return
+    effectCalled.current = true
+
     getTransactions()
   }, [getTransactions])
 
