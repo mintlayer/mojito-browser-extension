@@ -1,0 +1,90 @@
+.backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgb(var(--color-light-green));
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  animation-name: BackdropAppierance;
+  animation-duration: 0.3s;
+  animation-timing-function: ease;
+}
+
+.backdropClosing {
+  animation-name: BackdropDisappierance;
+  animation-duration: 1.3s;
+  animation-timing-function: ease;
+}
+
+.popup {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 88.4%;
+  height: 94%;
+  padding: 40px;
+  background: rgb(var(--color-white));
+  border-radius: 15px 15px 0 0;
+
+  animation-name: slideUp;
+  animation-duration: 0.7s;
+  animation-timing-function: ease;
+}
+
+.popupClosing {
+  animation-name: slideDown;
+  animation-duration: 0.7s;
+  animation-timing-function: ease;
+}
+
+.popupCloseButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes BackdropAppierance {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes BackdropDisappierance {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
