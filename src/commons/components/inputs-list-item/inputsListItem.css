@@ -53,11 +53,16 @@
   border: 2px solid rgb(var(--color-extra-light-green));
 }
 
-.words-list-input:focus ~ .number {
+.words-list-input:focus ~ .number,
+.words-list-input.readonly ~ .number {
   color: rgb(var(--color-white));
   background: rgb(var(--color-green));
 }
 
 .words-list-input::placeholder {
   color: rgb(var(--color-dark-gray));
+}
+
+.words-list-input.readonly {
+  border: none;
 }

@@ -16,13 +16,13 @@ const Transaction = ({ transaction }) => {
   return (
     <li
       className="transaction"
-      data-testid={'transaction'}
+      data-testid="transaction"
     >
       <div
         className={`transaction-logo-type ${
           transaction.direction === 'out' && 'transaction-logo-out'
         }`}
-        data-testid={'transaction-icon'}
+        data-testid="transaction-icon"
       >
         <ArrowIcon
           className={`arrow-icon ${

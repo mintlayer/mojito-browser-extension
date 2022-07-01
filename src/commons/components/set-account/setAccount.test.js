@@ -7,13 +7,7 @@ import { useState } from 'react'
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
 
-test('Renders set account page with step 1', (done) => {
-  jest.spyOn(console, 'log').mockImplementation((message) => {
-    expect(message).toBe('something went wrong')
-    console.log.mockRestore()
-    done()
-  })
-
+test('Renders set account page with step 1', () => {
   render(
     <SetAccount
       step={1}
@@ -34,7 +28,8 @@ test('Renders set account page with step 1', (done) => {
   expect(inputComponent).toHaveAttribute('type', 'text')
   expect(inputComponent).toHaveAttribute('placeholder', 'Account Name')
   fireEvent.change(inputComponent, { target: { value: '1' } })
-  expect(inputComponent).toHaveClass('invalid')
+  expect(inputComponent).not.toHaveClass('invalid')
+  expect(inputComponent).not.toHaveClass('valid')
 
   act(() => {
     setAccountForm.submit()
@@ -42,10 +37,6 @@ test('Renders set account page with step 1', (done) => {
 
   fireEvent.change(inputComponent, { target: { value: 'more then 4' } })
   expect(inputComponent).toHaveClass('valid')
-
-  act(() => {
-    setAccountForm.submit()
-  })
 })
 
 test('Renders set account page with step 2', () => {
@@ -71,6 +62,7 @@ test('Renders set account page with step 2', () => {
   expect(inputComponent).toHaveAttribute('placeholder', 'Password')
   expect(inputComponent).toHaveAttribute('pattern', passwordPattern.toString())
   fireEvent.change(inputComponent, { target: { value: '1' } })
+  fireEvent.blur(inputComponent)
   expect(inputComponent).toHaveClass('invalid')
 
   fireEvent.change(inputComponent, { target: { value: 'qwertyuio!5678' } })
@@ -155,19 +147,58 @@ test('Renders set account page with step 4', () => {
     />,
     { wrapper: MemoryRouter },
   )
+
+  const buttons = screen.getAllByTestId('button')
+  const inputs = screen.getAllByTestId('input')
+
+  expect(buttons).toHaveLength(2)
+  expect(inputs).toHaveLength(WORDSSAMPLE.length)
+
+  const input = inputs[0]
+
+  expect(input).toHaveAttribute('type', 'text')
+  expect(input).toBeDisabled()
+})
+
+test('Renders set account page with step 5', () => {
+  jest.spyOn(window, 'alert').mockImplementation((message) => {
+    window.alert.mockRestore()
+  })
+
+  const onStepsFinishedFn = jest.fn()
+  const validateMnemonicMock = jest
+    .fn()
+    .mockReturnValueOnce(false)
+    .mockReturnValue(true)
+
+  render(
+    <SetAccount
+      step={5}
+      setStep={SETSTEPSAMPLE}
+      words={WORDSSAMPLE}
+      onStepsFinished={onStepsFinishedFn}
+      validateMnemonicFn={validateMnemonicMock}
+    />,
+    { wrapper: MemoryRouter },
+  )
   const setAccountForm = screen.getByTestId('set-account-form')
   const buttons = screen.getAllByTestId('button')
   const inputs = screen.getAllByTestId('input')
 
   expect(buttons).toHaveLength(2)
-  expect(inputs).toHaveLength(12)
+  expect(inputs).toHaveLength(WORDSSAMPLE.length)
 
-  inputs.forEach((input) => expect(input).toHaveAttribute('type', 'text'))
-  inputs.forEach((input) => expect(input).toHaveClass('invalid'))
-  inputs.forEach((input) =>
-    fireEvent.change(input, { target: { value: WORDSSAMPLE[0] } }),
-  )
-  inputs.forEach((input) => expect(input).toHaveClass('valid'))
+  inputs.forEach((input, index) => {
+    expect(input).toHaveAttribute('type', 'text')
+    expect(input).toHaveClass('invalid')
+    fireEvent.change(input, { target: { value: WORDSSAMPLE[index] } })
+    fireEvent.blur(input)
+    expect(input).toHaveClass('valid')
+  })
+
+  act(() => {
+    setAccountForm.submit()
+  })
 
   act(() => {
     setAccountForm.submit()

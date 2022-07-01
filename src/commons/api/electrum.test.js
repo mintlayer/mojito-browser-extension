@@ -10,6 +10,10 @@ import {
 } from './electrum.js'
 
 test('Electrum request', async () => {
+  jest.spyOn(console, 'dir').mockImplementation((err) => {
+    console.dir.restoreMock()
+  })
+
   const fetchAddr = 'testFetch'
   const mockFetch = jest.fn((addr) => {
     return new Promise((resolve, reject) => {

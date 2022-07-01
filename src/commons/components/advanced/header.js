@@ -7,20 +7,22 @@ import Logo from '../../assets/img/logo96.png'
 
 import './header.css'
 
-const Header = ({ customBackAction }) => {
+const Header = ({ customBackAction, noBackButton = false }) => {
   const navigate = useNavigate()
 
   const goBack = () => (customBackAction ? customBackAction() : navigate(-1))
 
   return (
     <header data-testid="header-container">
-      <Button
-        alternate
-        extraStyleClasses={['backButton']}
-        onClickHandle={goBack}
-      >
-        <BackImg />
-      </Button>
+      {!noBackButton && (
+        <Button
+          alternate
+          extraStyleClasses={['backButton']}
+          onClickHandle={goBack}
+        >
+          <BackImg />
+        </Button>
+      )}
       <div className="logoContainer">
         <img
           src={Logo}

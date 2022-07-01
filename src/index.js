@@ -22,6 +22,10 @@ root.render(
         <MemoryRouter>
           <Routes>
             <Route
+              path="/wallet"
+              element={<Wallet />}
+            />
+            <Route
               path="/set-account"
               element={<SetAccount />}
             />

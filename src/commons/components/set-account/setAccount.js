@@ -12,19 +12,59 @@ import WordsDescription from '../words-list-description/wordsListDescription'
 
 import './setAccount.css'
 import { useNavigate } from 'react-router-dom'
+import { validateMnemonic } from '../../crypto/btc'
 
-const SetAccount = ({ step, setStep, words = [] }) => {
+const SetAccount = ({
+  step,
+  setStep,
+  words = [],
+  onStepsFinished,
+  validateMnemonicFn = validateMnemonic,
+}) => {
   const inputExtraclasses = ['set-account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
+  const [accountWordsValid, setAccountWordsValid] = useState(false)
+
   const [accountNameValue, setAccountNameValue] = useState('')
   const [accountPasswordValue, setAccountPasswordValue] = useState('')
+
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
-  const [accountWordsValid, setAccountWordsValid] = useState(false)
+
+  const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
+  const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
+    useState(null)
+
+  const [accountNamePristinity, setAccountNamePristinity] = useState(true)
+  const [accountPasswordPristinity, setAccountPasswordPristinity] =
+    useState(true)
+
   const navigate = useNavigate()
 
-  const goToNextStep = () => setStep(step + 1)
+  useEffect(() => {
+    const message = !accountNameValid
+      ? 'The account name should have at least 4 characteres.'
+      : null
+
+    setAccountNameErrorMessage(message)
+  }, [accountNameValid])
+
+  useEffect(() => {
+    const message = !accountPasswordValid
+      ? [
+          'Your password should have at least 8 characteres.',
+          'Also it should have a lowercase letter, an uppercase letter, a digit, and a special char like: /\\*()&^%$#@-_=+\'"?!:;<>~`',
+        ]
+      : null
+
+    setAccountPasswordErrorMessage(message)
+  }, [accountPasswordValid])
+
+  const goToNextStep = () =>
+    step < 5
+      ? setStep(step + 1)
+      : onStepsFinished(accountNameValue, accountPasswordValue)
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
@@ -32,7 +72,7 @@ const SetAccount = ({ step, setStep, words = [] }) => {
     { name: 'Account Password', active: step === 2 },
     {
       name: 'Restoring Information',
-      active: step === 3 || step === 4,
+      active: step > 2,
     },
   ]
 
@@ -40,12 +80,14 @@ const SetAccount = ({ step, setStep, words = [] }) => {
     1: accountNameValid,
     2: accountPasswordValid,
     3: true,
-    4: accountWordsValid,
+    4: true,
+    5: accountWordsValid,
   }
 
   const titles = {
     3: 'I understand',
-    4: 'Save',
+    4: 'Backup done!',
+    5: 'Create account',
   }
 
   const nameFieldValidity = (value) => {
@@ -73,11 +115,30 @@ const SetAccount = ({ step, setStep, words = [] }) => {
     setAccountWordsValid(wordsValidity)
   }, [wordsFields, step])
 
+  const handleError = (step) => {
+    if (step < 5) return
+    alert(
+      'These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order',
+    )
+  }
+
+  const isMnemonicValid = () => {
+    const inputMnemonic = wordsFields
+      .reduce((acc, word) => `${acc} ${word.value}`, '')
+      .trim()
+    return validateMnemonicFn(inputMnemonic)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    stepsValidations[step]
-      ? goToNextStep()
-      : console.log('something went wrong')
+
+    if (step === 1) setAccountNamePristinity(false)
+    if (step === 2) setAccountPasswordPristinity(false)
+
+    let validForm = stepsValidations[step]
+    if (step === 5) validForm = validForm && isMnemonicValid()
+
+    validForm ? goToNextStep() : handleError(step)
   }
 
   return (
@@ -85,14 +146,14 @@ const SetAccount = ({ step, setStep, words = [] }) => {
       <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
-        className={`set-account-form ${step === 4 && 'set-account-form-words'}`}
+        className={`set-account-form ${step > 3 && 'set-account-form-words'}`}
         method="POST"
         data-testid="set-account-form"
         onSubmit={handleSubmit}
       >
         <VerticalGroup
           data-step={step}
-          bigGap
+          bigGap={step < 5}
         >
           {step === 1 && (
             <CenteredLayout>
@@ -103,6 +164,8 @@ const SetAccount = ({ step, setStep, words = [] }) => {
                 placeHolder={'Account Name'}
                 label={'Create a name to your account'}
                 extraStyleClasses={inputExtraclasses}
+                errorMessages={accountNameErrorMessage}
+                pristinity={accountNamePristinity}
                 alternate
               />
             </CenteredLayout>
@@ -118,6 +181,8 @@ const SetAccount = ({ step, setStep, words = [] }) => {
                 label={'Create a password to your account'}
                 placeHolder={'Password'}
                 extraStyleClasses={inputExtraclasses}
+                errorMessages={accountPasswordErrorMessage}
+                pristinity={accountPasswordPristinity}
                 alternate
               />
             </CenteredLayout>
@@ -125,10 +190,18 @@ const SetAccount = ({ step, setStep, words = [] }) => {
           {step === 3 && <WordsDescription />}
           {step === 4 && (
             <InputsList
-              amount={12}
               wordsList={words}
               fields={wordsFields}
               setFields={setWordsFields}
+              restoreMode={false}
+            />
+          )}
+          {step === 5 && (
+            <InputsList
+              wordsList={words}
+              fields={wordsFields}
+              setFields={setWordsFields}
+              restoreMode={true}
             />
           )}
           <CenteredLayout>

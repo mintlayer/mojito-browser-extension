@@ -70,7 +70,7 @@ test('should call onChange prop', () => {
 })
 
 test('genNumberClasslist function valid', () => {
-  const input = { value: 'car' }
+  const input = { value: 'car', order: 0 }
   const validator = isInputValid(input, WORDS)
   expect(validator).toBe(true)
 })

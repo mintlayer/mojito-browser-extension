@@ -10,6 +10,7 @@ import {
   calculateBalanceFromUtxoList,
   convertSatoshiToBtc,
   getParsedTransactions,
+  validateMnemonic,
 } from './btc'
 
 import rawTransactions from './testTransactions.json'
@@ -147,4 +148,9 @@ test('Transactions parse', () => {
   expect(typeof parsedTransactions[randomIndex].direction).toBe('string')
   expect(typeof parsedTransactions[randomIndex].value).toBe('number')
   expect(parsedTransactions[randomIndex].otherPart.length).toBeGreaterThan(0)
+})
+
+test('Validate Mnemonic parse', () => {
+  expect(validateMnemonic('aaaa bbbb')).not.toBeTruthy()
+  expect(validateMnemonic(knownMnemonic)).toBeTruthy()
 })

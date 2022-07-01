@@ -40,3 +40,12 @@ test('Render transactions list component', () => {
   expect(transactionsList).toBeInTheDocument()
   expect(transactions).toHaveLength(TRANSACTIONSSAMPLE.length)
 })
+
+test('Render transactions list component - empty', () => {
+  render(<TransactionsList transactionsList={[]} />)
+  const transactionsList = screen.getByTestId('transactions-list')
+  const transactions = screen.getAllByTestId('transaction')
+
+  expect(transactionsList).toBeInTheDocument()
+  expect(transactions).toHaveLength(1)
+})

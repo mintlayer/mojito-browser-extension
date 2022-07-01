@@ -8,7 +8,6 @@ const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
 
 test('Renders restore account page with step 1', () => {
-  console.log = jest.fn()
   render(
     <RestoreAccount
       step={1}
@@ -29,13 +28,12 @@ test('Renders restore account page with step 1', () => {
   expect(inputComponent).toHaveAttribute('type', 'text')
   expect(inputComponent).toHaveAttribute('placeholder', 'Account Name')
   fireEvent.change(inputComponent, { target: { value: '1' } })
-  expect(inputComponent).toHaveClass('invalid')
+  expect(inputComponent).not.toHaveClass('invalid')
+  expect(inputComponent).not.toHaveClass('valid')
 
   act(() => {
     restoreAccountForm.submit()
   })
-
-  expect(console.log).toHaveBeenCalledWith('something went wrong')
 
   fireEvent.change(inputComponent, { target: { value: 'more then 4' } })
   expect(inputComponent).toHaveClass('valid')
@@ -68,6 +66,7 @@ test('Renders restore account page with step 2', () => {
   expect(inputComponent).toHaveAttribute('placeholder', 'Password')
   expect(inputComponent).toHaveAttribute('pattern', passwordPattern.toString())
   fireEvent.change(inputComponent, { target: { value: '1' } })
+  fireEvent.blur(inputComponent)
   expect(inputComponent).toHaveClass('invalid')
 
   fireEvent.change(inputComponent, { target: { value: 'qwertyuio!5678' } })
@@ -144,11 +143,24 @@ test('Renders set account page with step 3', () => {
 })
 
 test('Renders restore account page with step 4', () => {
+  jest.spyOn(window, 'alert').mockImplementation((message) => {
+    expect(typeof message).toBe('string')
+    window.alert.mockRestore()
+  })
+
+  const onStepsFinishedFn = jest.fn()
+  const validateMnemonicMock = jest
+    .fn()
+    .mockReturnValueOnce(false)
+    .mockReturnValue(true)
+
   render(
     <RestoreAccount
       step={4}
       setStep={SETSTEPSAMPLE}
       words={WORDSSAMPLE}
+      onStepsFinished={onStepsFinishedFn}
+      validateMnemonicFn={validateMnemonicMock}
     />,
     { wrapper: MemoryRouter },
   )
@@ -165,6 +177,10 @@ test('Renders restore account page with step 4', () => {
     fireEvent.change(input, { target: { value: WORDSSAMPLE[0] } }),
   )
   inputs.forEach((input) => expect(input).toHaveClass('valid'))
+
+  act(() => {
+    restoreAccountForm.submit()
+  })
 
   act(() => {
     restoreAccountForm.submit()

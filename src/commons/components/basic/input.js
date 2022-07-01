@@ -14,6 +14,7 @@ const Input = ({
   id = '',
   password = false,
   pattern,
+  disabled = false
 }) => {
   const classesList = useMemo(
     () => ['input', ...extraStyleClasses],
@@ -70,6 +71,7 @@ const Input = ({
       onChange={onChangeDefaultHandler}
       data-testid="input"
       pattern={pattern}
+      disabled={disabled?'disabled':''}
     />
   )
 }
