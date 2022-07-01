@@ -19,7 +19,6 @@ const Popup = ({ children, setOpen }) => {
   useOnClickOutside(popupRef, closeButtonClickHandler)
   return (
     <div
-      // className="backdrop"
       className={`backdrop ${popupClosing && 'backdropClosing'}`}
       data-testid={'backdrop'}
     >
