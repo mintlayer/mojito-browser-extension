@@ -11,46 +11,66 @@ import { useOnClickOutside } from './useOnClickOutside'
 
 test('calls handler when click is outside element', async () => {
   const handler = jest.fn()
-  const ref = createRef()
-  render(
-    <div data-testid="wrapper">
-      <div
-        ref={ref}
-        data-testid="element"
-      >
-        Hello
+
+  const Component = () => {
+    const ref = createRef()
+    useOnClickOutside(ref, handler)
+
+    return (
+      <div data-testid="wrapper">
+        <div
+          ref={ref}
+          data-testid="element"
+        >
+          Hello
+        </div>
       </div>
-    </div>,
-  )
+    )
+  }
+
+  render(<Component />)
   const wrapper = screen.getByTestId('wrapper')
   const element = screen.getByTestId('element')
   expect(wrapper).toBeInTheDocument()
   expect(element).toBeInTheDocument()
 
-  renderHook(() => useOnClickOutside(ref, handler)) //do not call handler, why?
-
-  fireEvent.click(wrapper)
+  fireEvent.mouseDown(wrapper)
 
   await waitFor(() => {
-    expect(handler).toBeCalledTimes(0)
+    expect(handler).toBeCalledTimes(1)
   })
 })
 
-test('doesnt calls handler when click is within element', () => {
+test('doesnt calls handler when click is within element', async () => {
   const handler = jest.fn()
-  const ref = createRef()
-  render(
-    <div
-      ref={ref}
-      data-testid="element"
-    ></div>,
-  )
+
+  const Component = () => {
+    const ref = createRef()
+    useOnClickOutside(ref, handler)
+
+    return (
+      <div data-testid="wrapper">
+        <div
+          ref={ref}
+          data-testid="element"
+        >
+          Hello
+        </div>
+      </div>
+    )
+  }
+
+  render(<Component />)
+  const wrapper = screen.getByTestId('wrapper')
   const element = screen.getByTestId('element')
+  expect(wrapper).toBeInTheDocument()
   expect(element).toBeInTheDocument()
 
-  renderHook(() => useOnClickOutside(ref, handler))
-  fireEvent.click(element)
-  expect(handler).not.toBeCalled()
+  fireEvent.mouseDown(element)
+
+  await waitFor(() => {
+    expect(handler).not.toBeCalled()
+  })
 })
 
 test('doesnt calls handler when click is without ref', () => {
