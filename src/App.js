@@ -2,7 +2,7 @@ import { useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Context } from './ContextProvider'
 import CreateRestore from './pages/create-restore'
-import { ListAccountsContainer } from './pages/list-accounts'
+import ListAccountsContainer from './pages/list-accounts'
 import Logo from './commons/assets/img/logo96.png'
 
 import './app.css'

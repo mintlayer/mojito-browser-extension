@@ -11,7 +11,7 @@ import VerticalGroup from '../group/verticalGroup'
 
 import './index.css'
 
-const SetAccountPaswword = ({ onSubmit }) => {
+const SetAccountPaswword = ({ onChangePassword, onSubmit }) => {
   const location = useLocation()
   const account = location.state.account
 
@@ -20,12 +20,13 @@ const SetAccountPaswword = ({ onSubmit }) => {
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
 
   const passwordFieldValidity = (value) => {
-    setAccountPasswordValid(value.match(passwordPattern))
+    setAccountPasswordValid(!!value.match(passwordPattern))
   }
 
   const accountPasswordChangeHandler = (value) => {
     passwordFieldValidity(value)
     setAccountPasswordValue(value)
+    onChangePassword && onChangePassword(value)
   }
 
   const label = () => (

@@ -6,6 +6,7 @@ import SetAccountPassword from './index'
 
 const _data = {
   account: { id: '1', name: 'Account Name' },
+  onChangePassword: jest.fn(),
   onSubmit: jest.fn(),
 }
 
@@ -44,14 +45,11 @@ test('Renders SetAccountPassword page', () => {
   expect(login).toBeInTheDocument()
 })
 
-test('Renders SetAccountPassword page with invalid password', () => {
+test('Renders SetAccountPassword page with change password', async () => {
   const { password } = setup()
 
-  fireEvent.change(password, { target: { value: 'Qwertyuio5678' } })
-  expect(password).toHaveClass('invalid')
-
-  fireEvent.change(password, { target: { value: 'Qwertyuio5@' } })
-  expect(password).toHaveClass('valid')
+  fireEvent.change(password, { target: { value: 'change' } })
+  expect(_data.onChangePassword).toHaveBeenCalled()
 })
 
 test('Click login button onSubmit', () => {
