@@ -39,7 +39,7 @@ test('Renders set account page with step 1', () => {
   expect(inputComponent).toHaveClass('valid')
 })
 
-test('Renders set account page with step 2', () => {
+test('Renders set account page with step 2', async () => {
   const passwordPattern = Expressions.PASSWORD
   render(
     <SetAccount
@@ -63,8 +63,8 @@ test('Renders set account page with step 2', () => {
   expect(inputComponent).toHaveAttribute('pattern', passwordPattern.toString())
   fireEvent.change(inputComponent, { target: { value: '1' } })
   fireEvent.blur(inputComponent)
-  expect(inputComponent).toHaveClass('invalid')
 
+  expect(inputComponent).toHaveClass('invalid')
   fireEvent.change(inputComponent, { target: { value: 'qwertyuio!5678' } })
   expect(inputComponent).toHaveClass('invalid')
 

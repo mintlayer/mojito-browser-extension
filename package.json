@@ -85,11 +85,9 @@
       "/node_modules/(?!d3|d3-array|internmap|delaunator|robust-predicates)"
     ],
     "watchPathIgnorePatterns": [
-      "src/pages/**/*.js",
       "src/App.*.js"
     ],
     "collectCoverageFrom": [
-      "src/**/*.js",
       "!src/pages",
       "!src/App.*.js"
     ],
@@ -101,7 +99,9 @@
       "./src/environmentVars.js",
       "./src/commons/utils/reportWebVitals.js",
       "./src/commons/workers/*",
-      "./src/commons/entity/account.worker.js"
+      "./src/commons/entity/account.worker.js",
+      "./src/commons/assets/img/*",
+      "./src/commons/crypto/testTransactions.json"
     ],
     "coverageThreshold": {
       "global": {

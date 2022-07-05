@@ -1,4 +1,9 @@
-// TODO: implement check to see if there are any accounts stored in the app already
-const appHasAccounts = () => false
+import { getAll, loadAccounts } from '../db/db'
 
-export { appHasAccounts }
+const appAccounts = async () => {
+  const store = await loadAccounts()
+  const accounts = await getAll(store)
+  return accounts
+}
+
+export { appAccounts }

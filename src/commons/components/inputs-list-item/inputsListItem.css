@@ -8,7 +8,7 @@
   align-items: center;
   width: 30px;
   height: 30px;
-  background: rgb(var(--color-extra-light-green));
+  background: rgb(var(--color-extra-light-gray));
   color: rgb(var(--color-balck));
   border-radius: 50%;
 }
@@ -32,8 +32,8 @@
   max-width: 230px;
   padding: 0.85rem;
   text-align: center;
-  background: rgb(var(--color-extra-light-green));
-  border: 2px solid rgb(var(--color-extra-light-green));
+  background: rgb(var(--color-extra-light-gray));
+  border: 2px solid rgb(var(--color-extra-light-gray));
 }
 
 .words-list-input-restore {
@@ -49,8 +49,8 @@
 }
 
 .input-restore-finished {
-  background: rgb(var(--color-extra-light-green));
-  border: 2px solid rgb(var(--color-extra-light-green));
+  background: rgb(var(--color-extra-light-gray));
+  border: 2px solid rgb(var(--color-extra-light-gray));
 }
 
 .words-list-input:focus ~ .number,

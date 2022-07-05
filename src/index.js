@@ -6,10 +6,10 @@ import App from './App'
 import SetAccount from './pages/set-account'
 import RestoreAccount from './pages/restore-account'
 import Wallet from './pages/wallet'
-import { ContextProvider } from './ContextProvider'
-import SetAccountPassword from './commons/components/set-account-password'
+import SetAccountPasswordPage from './pages/list-accounts/set-account-password'
 
-import { appHasAccounts } from './commons/utils/appInfo'
+import { ContextProvider } from './ContextProvider'
+
 import reportWebVitals from './commons/utils/reportWebVitals'
 
 import './constants.css'
@@ -40,12 +40,12 @@ root.render(
             />
             <Route
               path="/set-account-password"
-              element={<SetAccountPassword />}
+              element={<SetAccountPasswordPage />}
             />
             <Route
               exact
               path="/"
-              element={<App appHasAccounts={appHasAccounts()} />}
+              element={<App />}
             />
           </Routes>
         </MemoryRouter>

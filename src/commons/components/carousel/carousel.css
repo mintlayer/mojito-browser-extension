@@ -12,10 +12,25 @@ button {
 .back {
   margin-right: 1rem;
   width: 5rem;
+  cursor: pointer;
+}
+
+.back,
+.next {
+  transform: scale(1);
+  transition: all 0.3s ease-in-out;
+}
+.back:hover,
+.next:hover {
+  transform: scale(1.3);
 }
 .back:disabled {
   cursor: not-allowed;
   opacity: 0.2;
+}
+.back:disabled,
+.next:disabled {
+  transform: scale(1) !important;
 }
 .back-icon {
   -webkit-transform: scaleX(-1);
@@ -29,6 +44,7 @@ button {
   height: 100%;
   display: flex;
   flex-wrap: nowrap;
+  width: 315px;
 }
 
 .wrapper {
@@ -72,12 +88,13 @@ button {
 
 .unselected {
   color: rgb(var(--text-black));
-  background-color: rgb(var(--color-extra-light-green));
+  background-color: rgb(var(--color-extra-light-gray));
 }
 
 .next {
   margin-left: 1rem;
   width: 5rem;
+  cursor: pointer;
 }
 .next:disabled {
   cursor: not-allowed;
