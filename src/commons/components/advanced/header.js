@@ -1,7 +1,6 @@
 import React from 'react'
 import Button from '../basic/button'
 import { useNavigate } from 'react-router-dom'
-
 import { ReactComponent as BackImg } from '../../assets/img/back-button.svg'
 import Logo from '../../assets/img/logo96.png'
 
@@ -23,6 +22,7 @@ const Header = ({ customBackAction, noBackButton = false }) => {
           <BackImg />
         </Button>
       )}
+
       <div className="logoContainer">
         <img
           src={Logo}

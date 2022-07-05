@@ -1,7 +1,57 @@
-const ListAccounts = () => (
-  <div data-testid="list-accounts">
-    <h1 className="center-text">List Accounts</h1>
-  </div>
-)
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import ListAccounts from '../../commons/components/list-accounts'
+import useStyleClasses from '../../commons/hooks/useStyleClasses'
 
-export default ListAccounts
+import './index.css'
+
+const ListAccountsPage = ({
+  accounts = [{ id: 1, name: 'ABC' }],
+  onSelect,
+  onCreate,
+  delay = 0,
+}) => {
+  const navigate = useNavigate()
+
+  const [account, setAccount] = useState(undefined)
+
+  const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses([])
+
+  useEffect(() => {
+    if (!account) return
+
+    removeStyleClass('animate-list-accounts')
+    navigate('/set-account-password', { state: { account } })
+  }, [account, removeStyleClass, navigate])
+
+  const goNext = (account) => {
+    addStyleClass('animate-list-accounts')
+
+    delay > 0
+      ? setTimeout(() => setAccount(account), delay)
+      : setAccount(account)
+    onSelect && onSelect()
+  }
+
+  const goCreate = () => {
+    navigate('/set-account')
+    onCreate && onCreate()
+  }
+
+  return (
+    <div
+      data-testid="generic"
+      className={styleClasses}
+    >
+      {!account && (
+        <ListAccounts
+          accounts={accounts}
+          onSelect={goNext}
+          onCreate={goCreate}
+        />
+      )}
+    </div>
+  )
+}
+
+export default ListAccountsPage

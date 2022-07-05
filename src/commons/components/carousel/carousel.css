@@ -53,6 +53,12 @@ button {
   line-height: 2rem;
   font-weight: 600;
   text-transform: capitalize;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+.button-account:hover {
+  color: rgb(var(--color-white));
+  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
 }
 
 .current {

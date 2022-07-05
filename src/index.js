@@ -7,6 +7,7 @@ import SetAccount from './pages/set-account'
 import RestoreAccount from './pages/restore-account'
 import Wallet from './pages/wallet'
 import { ContextProvider } from './ContextProvider'
+import SetAccountPassword from './commons/components/set-account-password'
 
 import { appHasAccounts } from './commons/utils/appInfo'
 import reportWebVitals from './commons/utils/reportWebVitals'
@@ -36,6 +37,10 @@ root.render(
             <Route
               path="/wallet"
               element={<Wallet />}
+            />
+            <Route
+              path="/set-account-password"
+              element={<SetAccountPassword />}
             />
             <Route
               exact

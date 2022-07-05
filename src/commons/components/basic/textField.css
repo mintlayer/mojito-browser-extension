@@ -11,6 +11,8 @@
 
 .inputLabel.alternate strong {
   font-size: 1.5rem;
+  display: block;
+  color: rgb(var(--color-black));
 }
 
 .errorMessage,
