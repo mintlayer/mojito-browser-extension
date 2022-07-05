@@ -108,7 +108,7 @@ test('Calculate Balance From Utxo List', () => {
       value: 10000,
     },
   ]
-  const balance = 66940771
+  const balance = '66940771'
   const satoshiAmount = calculateBalanceFromUtxoList(utxoListSamples)
   expect(satoshiAmount).toBe(balance)
 })
