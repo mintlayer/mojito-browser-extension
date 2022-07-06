@@ -5,6 +5,7 @@ import VerticalGroup from '../group/verticalGroup'
 import { BTC_NETWORK } from '../../../environmentVars'
 import { useEffect, useState } from 'react'
 import { getConfirmationsAmount } from '../../crypto/btc'
+import Loading from '../advanced/loading'
 
 const TransactionDetailsItem = ({ title, content }) => {
   return (
@@ -13,7 +14,12 @@ const TransactionDetailsItem = ({ title, content }) => {
       data-testid="transaction-details-item"
     >
       <h2 data-testid="transaction-details-item-title">{title}</h2>
-      <p data-testid="transaction-details-item-content">{content}</p>
+      <div
+        className="transactionDeyItemContent"
+        data-testid="transaction-details-item-content"
+      >
+        {content}
+      </div>
     </div>
   )
 }
@@ -66,9 +72,8 @@ const TransactionDetails = ({ transaction }) => {
           title={'Confirmations:'}
           content={
             /* istanbul ignore next */
-            confirmations ? confirmations : 'Loading...'
+            confirmations ? confirmations : <Loading />
           }
-          // Use Loading component here
         />
         <a
           href={externalLink}

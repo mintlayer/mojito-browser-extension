@@ -162,9 +162,7 @@ test('Check confirmations amount - error', async () => {
 
 test('Check confirmations amount - success', async () => {
   const transaction = {
-    status: {
-      block_height: 10_000,
-    },
+    blockHeight: 10_000,
   }
 
   const confirmations = await getConfirmationsAmount(transaction)

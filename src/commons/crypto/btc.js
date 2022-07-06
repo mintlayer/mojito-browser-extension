@@ -52,7 +52,7 @@ const getConfirmationsAmount = async (transaction) => {
     return new Promise.reject('No transaction to check confirmations.')
 
   const lastBlockHeight = await getLastBlockHeight()
-  return lastBlockHeight - transaction.status.block_height
+  return lastBlockHeight - transaction.blockHeight
 }
 
 const getParsedTransactions = (rawTransactions, baseAddress) => {
@@ -93,6 +93,7 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
     const satoshi = getTransactionAmountInSatoshi(direction, transaction)
     const value = convertSatoshiToBtc(satoshi)
     const date = transaction.status.block_time
+    const blockHeight = transaction.status.block_height
 
     const otherPart = getTransactionOtherParts(direction, transaction)
 
@@ -101,6 +102,7 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
       date,
       direction,
       value,
+      blockHeight,
       otherPart,
     }
   })

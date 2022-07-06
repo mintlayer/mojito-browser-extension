@@ -48,7 +48,7 @@ const getAddressUtxo = (address) =>
     ELECTRUM_ENDPOINTS.GET_ADDRESS_UTXO.replace(':address', address),
   )
 
-const getLastBlockHeight = (address) =>
+const getLastBlockHeight = () =>
   requestElectrum(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HEIGHT)
 
 export {
