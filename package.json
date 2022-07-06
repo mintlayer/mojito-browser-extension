@@ -77,7 +77,8 @@
       "eol-last": [
         "error",
         "always"
-      ]
+      ],
+      "testing-library/no-unnecessary-act": "off"
     }
   },
   "jest": {

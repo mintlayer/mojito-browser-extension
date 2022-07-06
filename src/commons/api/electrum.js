@@ -7,6 +7,7 @@ const ELECTRUM_ENDPOINTS = {
   GET_ADDRESS_TRANSACTIONS: '/address/:address/txs',
   GET_ADDRESS: '/address/:address',
   GET_ADDRESS_UTXO: '/address/:address/utxo',
+  GET_LAST_BLOCK_HEIGHT: '/blocks/tip/height',
 }
 
 const requestElectrum = async (endpoint, data = null, request = fetch) => {
@@ -23,24 +24,32 @@ const requestElectrum = async (endpoint, data = null, request = fetch) => {
 
 const getLastBlockHash = () =>
   requestElectrum(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HASH)
+
 const getTransactionData = (txid) =>
   requestElectrum(
     ELECTRUM_ENDPOINTS.GET_TRANSACTION_DATA.replace(':txid', txid),
   )
+
 const getTransactionStatus = (txid) =>
   requestElectrum(
     ELECTRUM_ENDPOINTS.GET_TRANSACTION_STATUS.replace(':txid', txid),
   )
+
 const getAddressTransactions = (address) =>
   requestElectrum(
     ELECTRUM_ENDPOINTS.GET_ADDRESS_TRANSACTIONS.replace(':address', address),
   )
+
 const getAddress = (address) =>
   requestElectrum(ELECTRUM_ENDPOINTS.GET_ADDRESS.replace(':address', address))
+
 const getAddressUtxo = (address) =>
   requestElectrum(
     ELECTRUM_ENDPOINTS.GET_ADDRESS_UTXO.replace(':address', address),
   )
+
+const getLastBlockHeight = () =>
+  requestElectrum(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HEIGHT)
 
 export {
   getLastBlockHash,
@@ -50,6 +59,7 @@ export {
   getAddress,
   getAddressUtxo,
   requestElectrum,
+  getLastBlockHeight,
   ELECTRUM_ENDPOINTS,
   ELECTRUM_URL,
 }

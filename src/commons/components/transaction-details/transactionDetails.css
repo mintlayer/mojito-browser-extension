@@ -1,0 +1,35 @@
+.transaction-details {
+  width: 100%;
+  height: 100%;
+  max-width: 510px;
+  height: 466px;
+  padding: 10px;
+  overflow: auto;
+}
+
+.transaction-details-item {
+  margin-bottom: 0.8rem;
+}
+
+.transaction-details-item h2 {
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.transactionDeyItemContent {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.details-date-amount {
+  display: flex;
+}
+
+.details-date-amount .transaction-details-item:nth-child(1) {
+  margin-right: 3.5rem;
+}
+
+.transaction-details-button {
+  margin-top: 1.3rem;
+}

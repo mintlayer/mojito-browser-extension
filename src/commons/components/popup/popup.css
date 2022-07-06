@@ -1,10 +1,10 @@
 .backdrop {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgb(var(--color-light-green));
+  background: rgb(var(--color-extra-light-green));
   z-index: 9999;
   display: flex;
   justify-content: center;
@@ -13,6 +13,7 @@
   animation-name: BackdropAppierance;
   animation-duration: 0.3s;
   animation-timing-function: ease;
+  cursor: default;
 }
 
 .backdropClosing {
@@ -36,6 +37,7 @@
   animation-name: slideUp;
   animation-duration: 0.7s;
   animation-timing-function: ease;
+  cursor: default;
 }
 
 .popupClosing {

@@ -3,6 +3,7 @@ import * as Bip39 from 'bip39'
 import * as bitcoin from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
 import { BTC_NETWORK } from '../../environmentVars'
+import { getLastBlockHeight } from '../api/electrum'
 
 // eslint-disable-next-line
 const DERIVATION_PATH = "m/44'/0'/0'/0/0"
@@ -42,6 +43,19 @@ const calculateBalanceFromUtxoList = (list) =>
 
 const convertSatoshiToBtc = (satoshiAmount) => satoshiAmount / 100_000_000
 
+const validateMnemonic = (mnemonic) => Bip39.validateMnemonic(mnemonic)
+
+const getWordList = () => Bip39.wordlists[Bip39.getDefaultWordlist()]
+
+const getConfirmationsAmount = async (transaction) => {
+  if (!transaction)
+    return new Promise.reject('No transaction to check confirmations.')
+  if (!transaction.blockHeight) return Promise.resolve(0)
+
+  const lastBlockHeight = await getLastBlockHeight()
+  return lastBlockHeight - transaction.blockHeight
+}
+
 const getParsedTransactions = (rawTransactions, baseAddress) => {
   const getDirection = (transaction) =>
     transaction.vin.find(
@@ -80,6 +94,7 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
     const satoshi = getTransactionAmountInSatoshi(direction, transaction)
     const value = convertSatoshiToBtc(satoshi)
     const date = transaction.status.block_time
+    const blockHeight = transaction.status.block_height
 
     const otherPart = getTransactionOtherParts(direction, transaction)
 
@@ -88,16 +103,13 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
       date,
       direction,
       value,
+      blockHeight,
       otherPart,
     }
   })
 
   return parsedTransactions
 }
-
-const validateMnemonic = (mnemonic) => Bip39.validateMnemonic(mnemonic)
-
-const getWordList = () => Bip39.wordlists[Bip39.getDefaultWordlist()]
 
 export {
   generateAddr,
@@ -108,7 +120,8 @@ export {
   getAddressFromPubKey,
   calculateBalanceFromUtxoList,
   convertSatoshiToBtc,
-  getParsedTransactions,
   validateMnemonic,
   getWordList,
+  getParsedTransactions,
+  getConfirmationsAmount,
 }

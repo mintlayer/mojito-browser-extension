@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import Transaction from './transaction'
 import { format } from 'date-fns'
+import { act } from 'react-dom/test-utils'
 
 const TRANSCTIONSAMPLE = {
   txid: 'txid',
@@ -21,17 +22,9 @@ const TRANSCTIONSAMPLEOUT = {
   ],
 }
 
-const TRANSCTIONSAMPLEUNCONFIRMED = {
-  txid: 'txid',
-  value: 1,
-  direction: 'in',
-  date: null,
-  otherPart: ['2MvTz52JfiHsDgbjRJLEY44hz8aebHGQZyb'],
-}
-
 const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'dd/MM/yyyy HH:mm')
 
-test('Render transaction component', () => {
+test('Render transaction component', async () => {
   render(<Transaction transaction={TRANSCTIONSAMPLE} />)
   const transaction = screen.getByTestId('transaction')
   const transactionOtherPart = screen.getByTestId('transaction-otherPart')
@@ -39,6 +32,7 @@ test('Render transaction component', () => {
   const transactionAmout = screen.getByTestId('transaction-amout')
   const transactionIcon = screen.getByTestId('transaction-icon')
 
+  await act(async () => expect(transaction).toBeInTheDocument())
   expect(transactionOtherPart.textContent.slice(0, 10)).toBe(
     TRANSCTIONSAMPLE.otherPart[0].slice(0, 10),
   )
@@ -47,31 +41,10 @@ test('Render transaction component', () => {
 
   expect(transactionIcon).not.toHaveClass('transaction-logo-out')
 
-  expect(transaction).toBeInTheDocument()
+  await act(async () => fireEvent.click(transaction))
 })
 
-test('Render transaction component - unconfirmed', () => {
-  render(<Transaction transaction={TRANSCTIONSAMPLEUNCONFIRMED} />)
-  const transaction = screen.getByTestId('transaction')
-  const transactionOtherPart = screen.getByTestId('transaction-otherPart')
-  const transactionDate = screen.getByTestId('transaction-date')
-  const transactionAmout = screen.getByTestId('transaction-amout')
-  const transactionIcon = screen.getByTestId('transaction-icon')
-
-  expect(transactionOtherPart.textContent.slice(0, 10)).toBe(
-    TRANSCTIONSAMPLE.otherPart[0].slice(0, 10),
-  )
-  expect(transactionDate.textContent).toBe(
-    'Date: Awaiting for first confirmation',
-  )
-  expect(transactionAmout.textContent).toBe('Amout: ' + TRANSCTIONSAMPLE.value)
-
-  expect(transactionIcon).not.toHaveClass('transaction-logo-out')
-
-  expect(transaction).toBeInTheDocument()
-})
-
-test('Render transaction out component', () => {
+test('Render transaction out component', async () => {
   render(<Transaction transaction={TRANSCTIONSAMPLEOUT} />)
   const transaction = screen.getByTestId('transaction')
   const transactionOtherPart = screen.getByTestId('transaction-otherPart')
@@ -79,6 +52,7 @@ test('Render transaction out component', () => {
   const transactionAmout = screen.getByTestId('transaction-amout')
   const transactionIcon = screen.getByTestId('transaction-icon')
 
+  await act(async () => expect(transaction).toBeInTheDocument())
   expect(transactionOtherPart.textContent.slice(0, 10)).toBe(
     TRANSCTIONSAMPLE.otherPart[0].slice(0, 10),
   )
@@ -87,6 +61,4 @@ test('Render transaction out component', () => {
   expect(transactionAmout.textContent).toBe('Amout: ' + TRANSCTIONSAMPLE.value)
 
   expect(transactionIcon).toHaveClass('transaction-logo-out')
-
-  expect(transaction).toBeInTheDocument()
 })

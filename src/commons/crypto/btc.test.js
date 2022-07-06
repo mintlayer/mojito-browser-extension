@@ -11,6 +11,7 @@ import {
   convertSatoshiToBtc,
   getParsedTransactions,
   validateMnemonic,
+  getConfirmationsAmount,
 } from './btc'
 
 import rawTransactions from './testTransactions.json'
@@ -130,7 +131,7 @@ test('Satoshi to BTC', () => {
   expect(resultBalance3).toBe(balance3)
 })
 
-test('Transactions parse', () => {
+test('Transactions parse', async () => {
   const address = '2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom'
   const randomIndex = Math.floor(Math.random() * (rawTransactions.length - 1))
 
@@ -153,4 +154,17 @@ test('Transactions parse', () => {
 test('Validate Mnemonic parse', () => {
   expect(validateMnemonic('aaaa bbbb')).not.toBeTruthy()
   expect(validateMnemonic(knownMnemonic)).toBeTruthy()
+})
+
+test('Check confirmations amount - error', async () => {
+  await expect(getConfirmationsAmount()).rejects.toThrow()
+})
+
+test('Check confirmations amount - success', async () => {
+  const transaction = {
+    blockHeight: 10_000,
+  }
+
+  const confirmations = await getConfirmationsAmount(transaction)
+  expect(confirmations).toBeGreaterThan(1_000_000)
 })
