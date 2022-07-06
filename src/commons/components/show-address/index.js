@@ -5,7 +5,7 @@ import VerticalGroup from '../group/verticalGroup'
 
 import './index.css'
 
-export default function ShowAddress({ address, onCopy }) {
+const ShowAddress = ({ address, onCopy }) => {
   const copyAddress = () => {
     navigator.clipboard.writeText(address)
     onCopy && onCopy(address)
@@ -38,3 +38,5 @@ export default function ShowAddress({ address, onCopy }) {
     </div>
   )
 }
+
+export default ShowAddress

@@ -57,7 +57,7 @@ const WalletPage = () => {
               onClick={() => setOpenShowAddress(true)}
             />
             {openShowAddress && (
-              <Popup setOpen={() => setOpenShowAddress(false)}>
+              <Popup setOpen={setOpenShowAddress}>
                 <ShowAddress address={btcAddress}></ShowAddress>
               </Popup>
             )}

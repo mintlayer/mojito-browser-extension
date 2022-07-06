@@ -45,15 +45,12 @@ test('Renders ShowAddress qrcode in svg', async () => {
   expect(qrcode.childElementCount).toBe(841)
 
   const { children } = qrcode
-  const linearQr = [].reduce
-    .call(
-      children,
-      function (acc, cur) {
-        acc.push(cur.getAttribute('fill') === '#000000' ? 0 : 1)
-        return acc
-      },
-      [],
-    )
+
+  const linearQr = [...children]
+    .reduce((acc, item) => {
+      acc.push(item.getAttribute('fill') === '#000000' ? 0 : 1)
+      return acc
+    }, [])
     .join('')
 
   expect(linearQr).toEqual(_data.linearQr)
