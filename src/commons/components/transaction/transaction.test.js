@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import Transaction from './transaction'
 import { format } from 'date-fns'
 
@@ -48,6 +48,7 @@ test('Render transaction component', () => {
   expect(transactionIcon).not.toHaveClass('transaction-logo-out')
 
   expect(transaction).toBeInTheDocument()
+  fireEvent.click(transaction)
 })
 
 test('Render transaction component - unconfirmed', () => {

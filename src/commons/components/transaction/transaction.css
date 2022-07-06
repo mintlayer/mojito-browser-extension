@@ -6,6 +6,7 @@
   border-radius: 10px;
   background: rgb(var(--color-extra-light-gray));
   word-break: break-all;
+  cursor: pointer;
 }
 
 .transaction-logo-type {

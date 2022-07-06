@@ -1,14 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 
 export const useOnClickOutside = (ref, handler) => {
-  const effectCalled = useRef(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const isPartOfModalWindow = (event) =>
     !ref.current || ref.current.contains(event.target)
 
   useEffect(() => {
     /* istanbul ignore next */
-    if (effectCalled.current) return
-    effectCalled.current = true
 
     const listener = (event) => {
       if (isPartOfModalWindow(event)) return
@@ -22,5 +20,5 @@ export const useOnClickOutside = (ref, handler) => {
       document.removeEventListener('mousedown', listener)
       document.removeEventListener('touchstart', listener)
     }
-  }, [])
+  }, [ref, handler, isPartOfModalWindow])
 }

@@ -1,8 +1,12 @@
+import React, { useState } from 'react'
 import './transaction.css'
 import { ReactComponent as ArrowIcon } from '../../assets/img/icon-arrow.svg'
 import { format } from 'date-fns'
+import Popup from '../popup/popup'
+import TransactionDetails from '../transaction-details/transactionDetails'
 
 const Transaction = ({ transaction }) => {
+  const [detailPopupOpen, setDetailPopupOpen] = useState(false)
   const date = transaction.date
     ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
     : 'Awaiting for first confirmation'
@@ -19,6 +23,7 @@ const Transaction = ({ transaction }) => {
     <li
       className="transaction"
       data-testid="transaction"
+      onClick={() => setDetailPopupOpen(true)}
     >
       <div
         className={`transaction-logo-type ${
@@ -57,6 +62,11 @@ const Transaction = ({ transaction }) => {
           </p>
         </div>
       </div>
+      {detailPopupOpen && (
+        <Popup setOpen={setDetailPopupOpen}>
+          <TransactionDetails transaction={transaction} />
+        </Popup>
+      )}
     </li>
   )
 }
