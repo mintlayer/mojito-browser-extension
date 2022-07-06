@@ -3,7 +3,9 @@ import { ReactComponent as ArrowIcon } from '../../assets/img/icon-arrow.svg'
 import { format } from 'date-fns'
 
 const Transaction = ({ transaction }) => {
-  const date = format(new Date(transaction.date * 1000), 'dd/MM/yyyy')
+  const date = transaction.date
+    ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
+    : 'Awaiting for first confirmation'
 
   const formatAddress = (address) => {
     const limitSize = 24

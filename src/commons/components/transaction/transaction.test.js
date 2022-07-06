@@ -21,7 +21,15 @@ const TRANSCTIONSAMPLEOUT = {
   ],
 }
 
-const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'dd/MM/yyyy')
+const TRANSCTIONSAMPLEUNCONFIRMED = {
+  txid: 'txid',
+  value: 1,
+  direction: 'in',
+  date: null,
+  otherPart: ['2MvTz52JfiHsDgbjRJLEY44hz8aebHGQZyb'],
+}
+
+const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'dd/MM/yyyy HH:mm')
 
 test('Render transaction component', () => {
   render(<Transaction transaction={TRANSCTIONSAMPLE} />)
@@ -35,6 +43,27 @@ test('Render transaction component', () => {
     TRANSCTIONSAMPLE.otherPart[0].slice(0, 10),
   )
   expect(transactionDate.textContent).toBe('Date: ' + date)
+  expect(transactionAmout.textContent).toBe('Amout: ' + TRANSCTIONSAMPLE.value)
+
+  expect(transactionIcon).not.toHaveClass('transaction-logo-out')
+
+  expect(transaction).toBeInTheDocument()
+})
+
+test('Render transaction component - unconfirmed', () => {
+  render(<Transaction transaction={TRANSCTIONSAMPLEUNCONFIRMED} />)
+  const transaction = screen.getByTestId('transaction')
+  const transactionOtherPart = screen.getByTestId('transaction-otherPart')
+  const transactionDate = screen.getByTestId('transaction-date')
+  const transactionAmout = screen.getByTestId('transaction-amout')
+  const transactionIcon = screen.getByTestId('transaction-icon')
+
+  expect(transactionOtherPart.textContent.slice(0, 10)).toBe(
+    TRANSCTIONSAMPLE.otherPart[0].slice(0, 10),
+  )
+  expect(transactionDate.textContent).toBe(
+    'Date: Awaiting for first confirmation',
+  )
   expect(transactionAmout.textContent).toBe('Amout: ' + TRANSCTIONSAMPLE.value)
 
   expect(transactionIcon).not.toHaveClass('transaction-logo-out')

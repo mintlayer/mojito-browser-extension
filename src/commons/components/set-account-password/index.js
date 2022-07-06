@@ -2,7 +2,6 @@ import { useState } from 'react'
 
 import { useLocation } from 'react-router-dom'
 
-import Expressions from '../../utils/expressions'
 import Button from '../basic/button'
 import CenteredLayout from '../group/centeredLayout'
 import TextField from '../basic/textField'
@@ -10,21 +9,35 @@ import Header from '../advanced/header'
 import VerticalGroup from '../group/verticalGroup'
 
 import './index.css'
+import { unlockAccount } from '../../entity/account'
+import Loading from '../advanced/loading'
 
-const SetAccountPaswword = ({ onChangePassword, onSubmit }) => {
+const SetAccountPassword = ({
+  onChangePassword,
+  onSubmit,
+  checkPassword = unlockAccount,
+}) => {
   const location = useLocation()
   const account = location.state.account
 
-  const passwordPattern = Expressions.PASSWORD
   const [accountPasswordValue, setAccountPasswordValue] = useState('')
-  const [accountPasswordValid, setAccountPasswordValid] = useState(false)
+  const [accountPasswordValid, setAccountPasswordValid] = useState(null)
+  const [accountPasswordPritinity, setaAccountPasswordPritinity] =
+    useState(true)
+  const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
+    useState(null)
+  const [unlockingAccount, setUnlockingAccount] = useState(false)
 
-  const passwordFieldValidity = (value) => {
-    setAccountPasswordValid(!!value.match(passwordPattern))
+  const passwordFieldValidity = async () => {
+    try {
+      const address = await checkPassword(account.id, accountPasswordValue)
+      return address
+    } catch (e) {
+      return false
+    }
   }
 
   const accountPasswordChangeHandler = (value) => {
-    passwordFieldValidity(value)
     setAccountPasswordValue(value)
     onChangePassword && onChangePassword(value)
   }
@@ -38,7 +51,18 @@ const SetAccountPaswword = ({ onChangePassword, onSubmit }) => {
   const doLogin = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    onSubmit && onSubmit(account, accountPasswordValue)
+    setaAccountPasswordPritinity(false)
+    setUnlockingAccount(true)
+
+    passwordFieldValidity().then((address) => {
+      if (!address) {
+        setAccountPasswordValid(false)
+        setUnlockingAccount(false)
+        setAccountPasswordErrorMessage('Wrong password')
+        return
+      }
+      onSubmit(address)
+    })
   }
 
   return (
@@ -47,17 +71,30 @@ const SetAccountPaswword = ({ onChangePassword, onSubmit }) => {
       <div className="content">
         <CenteredLayout>
           <VerticalGroup bigGap>
-            <TextField
-              value={accountPasswordValue}
-              onChangeHandle={accountPasswordChangeHandler}
-              validity={accountPasswordValid}
-              pattern={passwordPattern}
-              password
-              label={label()}
-              placeHolder={'Password'}
-              alternate
-            />
-            <Button onClickHandle={doLogin}>Log In</Button>
+            {!unlockingAccount ? (
+              <>
+                <TextField
+                  value={accountPasswordValue}
+                  onChangeHandle={accountPasswordChangeHandler}
+                  validity={accountPasswordValid}
+                  password
+                  label={label()}
+                  placeHolder={'Password'}
+                  pristinity={accountPasswordPritinity}
+                  errorMessages={accountPasswordErrorMessage}
+                  alternate
+                />
+                <Button onClickHandle={doLogin}>Log In</Button>
+              </>
+            ) : (
+              <>
+                <h1 className="loadingText">
+                  {' '}
+                  Just a sec, we are validating your password...{' '}
+                </h1>
+                <Loading />
+              </>
+            )}
           </VerticalGroup>
         </CenteredLayout>
       </div>
@@ -65,4 +102,4 @@ const SetAccountPaswword = ({ onChangePassword, onSubmit }) => {
   )
 }
 
-export default SetAccountPaswword
+export default SetAccountPassword

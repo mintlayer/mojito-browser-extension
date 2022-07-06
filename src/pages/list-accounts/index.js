@@ -6,7 +6,11 @@ import useStyleClasses from '../../commons/hooks/useStyleClasses'
 import './index.css'
 
 const ListAccountsPage = ({
-  accounts = [{ id: 1, name: 'ABC' }],
+  accounts = [
+    { id: 1, name: 'ABC' },
+    { id: 2, name: 'RRR' },
+    { id: 3, name: 'TTT' },
+  ],
   onSelect,
   onCreate,
   delay = 0,
@@ -45,6 +49,7 @@ const ListAccountsPage = ({
     >
       {!account && (
         <ListAccounts
+          account={account}
           accounts={accounts}
           onSelect={goNext}
           onCreate={goCreate}

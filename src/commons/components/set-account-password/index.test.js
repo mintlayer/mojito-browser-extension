@@ -1,8 +1,12 @@
 import * as React from 'react'
 import { MemoryRouter } from 'react-router-dom'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 import SetAccountPassword from './index'
+
+jest.spyOn(console, 'error').getMockImplementation(() => {
+  console.error.restoreMock()
+})
 
 const _data = {
   account: { id: '1', name: 'Account Name' },
@@ -49,12 +53,68 @@ test('Renders SetAccountPassword page with change password', async () => {
   const { password } = setup()
 
   fireEvent.change(password, { target: { value: 'change' } })
+
   expect(_data.onChangePassword).toHaveBeenCalled()
 })
 
-test('Click login button onSubmit', () => {
-  const { login } = setup()
+test('Click login button onSubmit', async () => {
+  const checkPassword = async () => {
+    return new Promise((resolve) => {
+      resolve('address')
+    })
+  }
+
+  render(
+    <MemoryRouter
+      initialEntries={[
+        {
+          pathname: '/',
+          state: { account: _data.account },
+        },
+      ]}
+    >
+      <SetAccountPassword
+        {..._data}
+        checkPassword={checkPassword}
+      />
+    </MemoryRouter>,
+  )
+
+  const login = screen.getByRole('button', { name: 'Log In' })
+  fireEvent.click(login)
+  await waitFor(() => {
+    expect(_data.onSubmit).toHaveBeenCalled()
+  })
+})
+
+test('Click login button onSubmit - error', async () => {
+  const checkPassword = async () => {
+    return new Promise((_, reject) => {
+      reject()
+    })
+  }
+
+  render(
+    <MemoryRouter
+      initialEntries={[
+        {
+          pathname: '/',
+          state: { account: _data.account },
+        },
+      ]}
+    >
+      <SetAccountPassword
+        {..._data}
+        checkPassword={checkPassword}
+      />
+    </MemoryRouter>,
+  )
+
+  const login = screen.getByRole('button', { name: 'Log In' })
 
   fireEvent.click(login)
-  expect(_data.onSubmit).toHaveBeenCalled()
+
+  await waitFor(() => {
+    expect(_data.onSubmit).not.toHaveBeenCalled()
+  })
 })

@@ -28,8 +28,7 @@ const TextField = ({
   }, [alternate, addStyleClass, removeStyleClass])
 
   useEffect(() => {
-    if (isPristine) return
-
+    if (isPristine || validity === null) return
     validity ? setFieldValidity('valid') : setFieldValidity('invalid')
   }, [validity, isPristine])
 

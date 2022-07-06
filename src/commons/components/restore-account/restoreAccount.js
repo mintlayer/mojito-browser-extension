@@ -95,7 +95,7 @@ const RestoreAccount = ({
   }
 
   const passwordFieldValidity = (value) => {
-    setAccountPasswordValid(value.match(passwordPattern))
+    setAccountPasswordValid(!!value.match(passwordPattern))
   }
 
   const accountNameChangeHandler = (value) => {

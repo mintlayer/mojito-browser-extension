@@ -35,7 +35,10 @@ const generateAddr = (mnemonic) => {
 }
 
 const calculateBalanceFromUtxoList = (list) =>
-  list.reduce((accumulator, transaction) => accumulator + transaction.value, 0)
+  list
+    .reduce((accumulator, transaction) => accumulator + transaction.value, 0)
+    .toFixed(8)
+    .replace(/\.0+$/, '')
 
 const convertSatoshiToBtc = (satoshiAmount) => satoshiAmount / 100_000_000
 
@@ -96,7 +99,6 @@ const validateMnemonic = (mnemonic) => Bip39.validateMnemonic(mnemonic)
 
 const getWordList = () => Bip39.wordlists[Bip39.getDefaultWordlist()]
 
-
 export {
   generateAddr,
   generateMnemonic,
@@ -108,5 +110,5 @@ export {
   convertSatoshiToBtc,
   getParsedTransactions,
   validateMnemonic,
-  getWordList
+  getWordList,
 }

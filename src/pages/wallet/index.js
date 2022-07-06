@@ -18,15 +18,17 @@ const WalletPage = () => {
   const [transactionsList, setTransactionsList] = useState([])
 
   const getTransactions = useCallback(async () => {
-      try {
-        const response = await getAddressTransactions(btcAddress)
-        const transactions = JSON.parse(response)
-        const parsedTransactions = getParsedTransactions(transactions, btcAddress)
-        setTransactionsList(parsedTransactions)
-      } catch (error) {
-        console.log(error, 'error')
-      }
-    }, [btcAddress])
+    if (!btcAddress) return
+    try {
+      console.log(btcAddress)
+      const response = await getAddressTransactions(btcAddress)
+      const transactions = JSON.parse(response)
+      const parsedTransactions = getParsedTransactions(transactions, btcAddress)
+      setTransactionsList(parsedTransactions)
+    } catch (error) {
+      console.log(error, 'error')
+    }
+  }, [btcAddress])
 
   const balance = calculateBalanceFromUtxoList(transactionsList)
 
@@ -40,7 +42,7 @@ const WalletPage = () => {
   return (
     <div data-testid="wallet-page">
       <VerticalGroup bigGap>
-        <Header />
+        <Header noBackButton />
         <div className="balance-transactions-wrapper">
           <Balance balance={balance} />
           <div className="transactions-buttons-wrapper">
