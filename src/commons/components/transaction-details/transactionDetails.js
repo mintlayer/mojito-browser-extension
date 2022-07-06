@@ -24,7 +24,10 @@ const TransactionDetailsItem = ({ title, content }) => {
   )
 }
 
-const TransactionDetails = ({ transaction }) => {
+const TransactionDetails = ({
+  transaction,
+  getConfirmationsFn = getConfirmationsAmount,
+}) => {
   const [confirmations, setConfirmations] = useState(null)
 
   const date = format(new Date(transaction?.date * 1000), 'dd/MM/yyyy')
@@ -32,16 +35,14 @@ const TransactionDetails = ({ transaction }) => {
   const adressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
   const transactionAddress = transaction?.otherPart?.join('; ')
   const externalLink = `https://www.blockchain.com/btc-${BTC_NETWORK}/tx/${transaction?.txid}`
-  /* istanbul ignore next */
-  useEffect(() => {
-    if (!transaction) return
 
+  useEffect(() => {
     const getConfirmations = async () => {
-      const amount = await getConfirmationsAmount(transaction)
+      const amount = await getConfirmationsFn(transaction)
       setConfirmations(amount)
     }
     getConfirmations()
-  }, [transaction])
+  }, [transaction, getConfirmationsFn])
 
   return (
     <div
@@ -70,10 +71,7 @@ const TransactionDetails = ({ transaction }) => {
         />
         <TransactionDetailsItem
           title={'Confirmations:'}
-          content={
-            /* istanbul ignore next */
-            confirmations ? confirmations : <Loading />
-          }
+          content={confirmations ? confirmations : <Loading />}
         />
         <a
           href={externalLink}

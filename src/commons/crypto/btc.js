@@ -50,6 +50,7 @@ const getWordList = () => Bip39.wordlists[Bip39.getDefaultWordlist()]
 const getConfirmationsAmount = async (transaction) => {
   if (!transaction)
     return new Promise.reject('No transaction to check confirmations.')
+  if (!transaction.blockHeight) return Promise.resolve(0)
 
   const lastBlockHeight = await getLastBlockHeight()
   return lastBlockHeight - transaction.blockHeight

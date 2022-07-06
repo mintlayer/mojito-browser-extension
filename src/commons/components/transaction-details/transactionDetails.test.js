@@ -1,4 +1,9 @@
-import { render, screen } from '@testing-library/react'
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from '@testing-library/react'
+import { act } from 'react-dom/test-utils'
 import TransactionDetails from './transactionDetails'
 import { TransactionDetailsItem } from './transactionDetails'
 // import { format } from 'date-fns'
@@ -9,6 +14,7 @@ const TRANSCTIONSAMPLE = {
   direction: 'in',
   date: 1588888888,
   otherPart: ['2MvTz52JfiHsDgbjRJLEY44hz8aebHGQZyb'],
+  blockHeight: 10_000,
 }
 
 const TRANSCTIONSAMPLEOUT = {
@@ -20,8 +26,8 @@ const TRANSCTIONSAMPLEOUT = {
     '2MvTz52JfiHsDgbjRJLEY44hz8aebHGQZyb',
     '2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom',
   ],
+  blockHeight: 10_000,
 }
-
 // const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'dd/MM/yyyy')
 
 const CONTENTSAMPLE = 'content'
@@ -71,8 +77,9 @@ test('Render transaction component', () => {
   transactionDetailsButton.click()
 })
 
-test('Render transaction out component', () => {
+test('Render transaction out component', async () => {
   render(<TransactionDetails transaction={TRANSCTIONSAMPLEOUT} />)
+
   const transactionDetails = screen.getByTestId('transaction-details')
   const transactionDetailsItems = screen.getAllByTestId(
     'transaction-details-item',
@@ -80,10 +87,20 @@ test('Render transaction out component', () => {
   const transactionDetailsTitles = screen.getAllByTestId(
     'transaction-details-item-title',
   )
+  const transactionDetailsContent = screen.getAllByTestId(
+    'transaction-details-item-content',
+  )
+  const confirmationsLoading = screen.getByTestId('loading')
 
-  expect(transactionDetails).toBeInTheDocument()
+  await act(async () => expect(transactionDetails).toBeInTheDocument())
   expect(transactionDetailsItems).toHaveLength(5)
 
   expect(transactionDetailsTitles).toHaveLength(5)
   expect(transactionDetailsTitles[0]).toHaveTextContent('To:')
+
+  // console.log(confirmationsLoading)
+  await waitForElementToBeRemoved(confirmationsLoading)
+  expect(Number(transactionDetailsContent[4].textContent)).toBeGreaterThan(
+    1_000_000,
+  )
 })

@@ -7,6 +7,7 @@ import TransactionDetails from '../transaction-details/transactionDetails'
 
 const Transaction = ({ transaction }) => {
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
+  /* istanbul ignore next */
   const date = transaction.date
     ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
     : 'Awaiting for first confirmation'
