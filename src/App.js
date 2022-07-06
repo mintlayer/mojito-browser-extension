@@ -15,8 +15,8 @@ const App = () => {
 
   const navigate = useNavigate()
   const { isAccountUnlocked } = useContext(Context)
-
-  isAccountUnlocked && navigate('/wallet')
+  const accountUnlocked = isAccountUnlocked()
+  accountUnlocked && navigate('/wallet')
 
   useEffect(() => {
     if (effectCalled.current) return
@@ -41,7 +41,7 @@ const App = () => {
   }
 
   return (
-    !isAccountUnlocked && (
+    !accountUnlocked && (
       <>
         <div className="homeLogoContainer">
           <img
