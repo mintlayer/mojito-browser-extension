@@ -30,7 +30,7 @@ const TransactionDetails = ({
 }) => {
   const [confirmations, setConfirmations] = useState(null)
 
-  const date = format(new Date(transaction?.date * 1000), 'dd/MM/yyyy')
+  const date = format(new Date(transaction?.date * 1000), 'dd/MM/yyyy HH:mm')
   const buttonExtraStyles = ['transaction-details-button']
   const adressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
   const transactionAddress = transaction?.otherPart?.join('; ')

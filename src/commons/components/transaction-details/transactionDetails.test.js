@@ -6,7 +6,6 @@ import {
 import { act } from 'react-dom/test-utils'
 import TransactionDetails from './transactionDetails'
 import { TransactionDetailsItem } from './transactionDetails'
-// import { format } from 'date-fns'
 
 const TRANSCTIONSAMPLE = {
   txid: 'txid',
@@ -28,7 +27,6 @@ const TRANSCTIONSAMPLEOUT = {
   ],
   blockHeight: 10_000,
 }
-// const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'dd/MM/yyyy')
 
 const CONTENTSAMPLE = 'content'
 const TITLESAMPLE = 'title'
@@ -98,7 +96,6 @@ test('Render transaction out component', async () => {
   expect(transactionDetailsTitles).toHaveLength(5)
   expect(transactionDetailsTitles[0]).toHaveTextContent('To:')
 
-  // console.log(confirmationsLoading)
   await waitForElementToBeRemoved(confirmationsLoading)
   expect(Number(transactionDetailsContent[4].textContent)).toBeGreaterThan(
     1_000_000,
