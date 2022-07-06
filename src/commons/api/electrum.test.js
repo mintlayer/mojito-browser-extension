@@ -6,6 +6,7 @@ import {
   getAddress,
   getAddressUtxo,
   requestElectrum,
+  getLastBlockHeight,
   ELECTRUM_URL,
 } from './electrum.js'
 
@@ -52,6 +53,10 @@ const BLOCK_HASH_LENGTH = 64
 
 test('Electrum request - getLastBlockHash', async () => {
   await expect(getLastBlockHash()).resolves.toHaveLength(BLOCK_HASH_LENGTH)
+})
+
+test('Electrum request - getLastBlockHeight', async () => {
+  await expect(getLastBlockHeight()).resolves.not.toBeFalsy()
 })
 
 test('Electrum request - getAdressTransactions', async () => {

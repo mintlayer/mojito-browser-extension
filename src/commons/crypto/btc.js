@@ -3,6 +3,7 @@ import * as Bip39 from 'bip39'
 import * as bitcoin from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
 import { BTC_NETWORK } from '../../environmentVars'
+import { getLastBlockHeight } from '../api/electrum'
 
 // eslint-disable-next-line
 const DERIVATION_PATH = "m/44'/0'/0'/0/0"
@@ -41,6 +42,18 @@ const calculateBalanceFromUtxoList = (list) =>
     .replace(/\.0+$/, '')
 
 const convertSatoshiToBtc = (satoshiAmount) => satoshiAmount / 100_000_000
+
+const validateMnemonic = (mnemonic) => Bip39.validateMnemonic(mnemonic)
+
+const getWordList = () => Bip39.wordlists[Bip39.getDefaultWordlist()]
+
+const getConfirmationsAmount = async (transaction) => {
+  if (!transaction)
+    return new Promise.reject('No transaction to check confirmations.')
+
+  const lastBlockHeight = await getLastBlockHeight()
+  return lastBlockHeight - transaction.status.block_height
+}
 
 const getParsedTransactions = (rawTransactions, baseAddress) => {
   const getDirection = (transaction) =>
@@ -95,10 +108,6 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
   return parsedTransactions
 }
 
-const validateMnemonic = (mnemonic) => Bip39.validateMnemonic(mnemonic)
-
-const getWordList = () => Bip39.wordlists[Bip39.getDefaultWordlist()]
-
 export {
   generateAddr,
   generateMnemonic,
@@ -108,7 +117,8 @@ export {
   getAddressFromPubKey,
   calculateBalanceFromUtxoList,
   convertSatoshiToBtc,
-  getParsedTransactions,
   validateMnemonic,
   getWordList,
+  getParsedTransactions,
+  getConfirmationsAmount,
 }

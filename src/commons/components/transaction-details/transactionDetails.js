@@ -3,6 +3,8 @@ import { format } from 'date-fns'
 import Button from '../basic/button'
 import VerticalGroup from '../group/verticalGroup'
 import { BTC_NETWORK } from '../../../environmentVars'
+import { useEffect, useState } from 'react'
+import { getConfirmationsAmount } from '../../crypto/btc'
 
 const TransactionDetailsItem = ({ title, content }) => {
   return (
@@ -17,11 +19,23 @@ const TransactionDetailsItem = ({ title, content }) => {
 }
 
 const TransactionDetails = ({ transaction }) => {
+  const [confirmations, setConfirmations] = useState(null)
+
   const date = format(new Date(transaction?.date * 1000), 'dd/MM/yyyy')
   const buttonExtraStyles = ['transaction-details-button']
   const adressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
   const transactionAddress = transaction?.otherPart?.join('; ')
   const externalLink = `https://www.blockchain.com/btc-${BTC_NETWORK}/tx/${transaction?.txid}`
+  /* istanbul ignore next */
+  useEffect(() => {
+    if (!transaction) return
+
+    const getConfirmations = async () => {
+      const amount = await getConfirmationsAmount(transaction)
+      setConfirmations(amount)
+    }
+    getConfirmations()
+  }, [transaction])
 
   return (
     <div
@@ -50,7 +64,11 @@ const TransactionDetails = ({ transaction }) => {
         />
         <TransactionDetailsItem
           title={'Confirmations:'}
-          content={'100'}
+          content={
+            /* istanbul ignore next */
+            confirmations ? confirmations : 'Loading...'
+          }
+          // Use Loading component here
         />
         <a
           href={externalLink}
