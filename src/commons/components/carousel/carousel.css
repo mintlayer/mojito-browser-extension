@@ -30,7 +30,7 @@ button {
 }
 .back:disabled,
 .next:disabled {
-  transform: scale(1) !important;
+  transform: scale(1);
 }
 .back-icon {
   -webkit-transform: scaleX(-1);

@@ -36,9 +36,8 @@ const TextField = ({
     setIsPristine(pristinity)
   }, [pristinity])
 
-  const setPristineState = (e) => {
-    setIsPristine(false)
-  }
+  const setPristineState = (e) => setIsPristine(false)
+
   return (
     <VerticalGroup bigGap>
       {label && (
