@@ -1,0 +1,21 @@
+.qrcode {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.address {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  color: rgb(var(--color-dark-gray));
+}
+
+.press {
+  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+}
+
+.press:active {
+  position: relative;
+  top: 1px;
+  background-color: rgb(var(--color-dark-gray));
+}
