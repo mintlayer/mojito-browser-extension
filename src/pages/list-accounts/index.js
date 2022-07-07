@@ -38,7 +38,7 @@ const ListAccountsPage = ({
   }
 
   const goCreate = () => {
-    navigate('/set-account')
+    navigate('/', { state: { fromLogin: true } })
     onCreate && onCreate()
   }
 

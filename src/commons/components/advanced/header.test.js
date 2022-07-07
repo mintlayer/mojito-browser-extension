@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import { ContextProvider } from '../../../ContextProvider'
 import { act } from 'react-dom/test-utils'
 import {
   Link,
@@ -9,8 +10,8 @@ import {
 } from 'react-router-dom'
 import Header from './header'
 
-test('Header component, renders a page before, navigate to Header and go back', async () => {
-  let location
+const setup = async (location) => {
+  const value = { isAccountUnlocked: () => true, logout: jest.fn() }
 
   const PreviousPage = () => {
     location = useLocation()
@@ -34,38 +35,76 @@ test('Header component, renders a page before, navigate to Header and go back', 
     )
   }
 
-  render(
-    <MemoryRouter initialEntries={['/']}>
-      <Routes>
-        <Route
-          path="/next-page"
-          element={<NextPage />}
-        />
-        <Route
-          exact
-          path="/"
-          element={<PreviousPage />}
-        />
-      </Routes>
-    </MemoryRouter>,
+  await render(
+    <ContextProvider value={value}>
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route
+            path="/next-page"
+            element={<NextPage />}
+          />
+          <Route
+            exact
+            path="/"
+            element={<PreviousPage />}
+          />
+        </Routes>
+      </MemoryRouter>
+    </ContextProvider>,
   )
+
+  return { value }
+}
+
+test('Header component, renders a page before, navigate to Header and go back', async () => {
+  await setup()
 
   const nextPageLinkComponent = screen.getByTestId('next-page-link')
 
-  expect(location.pathname).toBe('/')
+  await waitFor(async () => {
+    expect(nextPageLinkComponent).toBeInTheDocument()
+  })
 
   act(() => {
     nextPageLinkComponent.click()
   })
 
   const nextPageComponent = screen.getByTestId('next-page')
-  const backButton = screen.getByTestId('button')
+  const buttons = screen.getAllByTestId('button')
 
-  expect(location.pathname).toBe('/next-page')
   expect(nextPageComponent).toBeInTheDocument()
 
   act(() => {
-    backButton.click()
+    buttons[0].click()
+  })
+
+  const prevPageComponent = screen.getByTestId('prev-page')
+  expect(prevPageComponent).toBeInTheDocument()
+})
+
+test('Header component, renders a page before, navigate to Header and logout', async () => {
+  const { value } = await setup()
+
+  const nextPageLinkComponent = screen.getByTestId('next-page-link')
+
+  await waitFor(async () => {
+    expect(nextPageLinkComponent).toBeInTheDocument()
+  })
+
+  act(() => {
+    nextPageLinkComponent.click()
+  })
+
+  const nextPageComponent = screen.getByTestId('next-page')
+  const buttons = screen.getAllByTestId('button')
+  expect(nextPageComponent).toBeInTheDocument()
+
+  act(() => {
+    buttons[1].click()
+  })
+
+  await waitFor(async () => {
+    expect(value.logout).toBeCalled()
   })
 
   const prevPageComponent = screen.getByTestId('prev-page')

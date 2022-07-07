@@ -3,7 +3,7 @@ import differenceInMinutes from 'date-fns/differenceInMinutes'
 
 export const Context = createContext()
 
-export const ContextProvider = ({ children }) => {
+export const ContextProvider = ({ value: propValue, children }) => {
   const [btcAddress, setBtcAddress] = useState('')
   const accountRegistryName = 'unlockedAccount'
   const loginTimeoutInMinutes = 2
@@ -51,16 +51,21 @@ export const ContextProvider = ({ children }) => {
     localStorage.setItem(accountRegistryName, JSON.stringify(account))
   }
 
+  const logout = () => localStorage.removeItem(accountRegistryName)
+
   const value = {
     btcAddress,
     setBtcAddress: unlockAccountAndSaveParams,
     isAccountUnlocked: checkAccountLockState,
     setLoginTimeoutLimit,
+    logout,
   }
 
   useEffect(() => {
-    window.addEventListener('beforeunload', setLoginTimeoutLimit)
+    window.addEventListener('unload', setLoginTimeoutLimit)
   }, [])
 
-  return <Context.Provider value={value}>{children}</Context.Provider>
+  return (
+    <Context.Provider value={propValue || value}>{children}</Context.Provider>
+  )
 }

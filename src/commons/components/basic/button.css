@@ -8,8 +8,8 @@
   font-weight: 400;
   opacity: 1;
   padding: 1.8rem 0;
-  transition: opacity 0.25s ease-in-out;
   width: 100%;
+  transition: opacity 0.25s ease-in-out;
 }
 
 .btn:hover,

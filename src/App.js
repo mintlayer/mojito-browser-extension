@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Context } from './ContextProvider'
 import { appAccounts } from './commons/utils/appInfo'
 import CreateRestore from './pages/create-restore'
@@ -12,6 +12,7 @@ import Loading from './commons/components/advanced/loading'
 const App = () => {
   const effectCalled = useRef(false)
   const [accounts, setAccounts] = useState(null)
+  const location = useLocation()
 
   const navigate = useNavigate()
   const { isAccountUnlocked } = useContext(Context)
@@ -33,10 +34,10 @@ const App = () => {
 
   const Home = () => {
     if (accounts === null) return <Loading />
-    return accounts.length ? (
-      <ListAccountsContainer accounts={accounts} />
-    ) : (
+    return !accounts.length || location.state?.fromLogin ? (
       <CreateRestore />
+    ) : (
+      <ListAccountsContainer accounts={accounts} />
     )
   }
 

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-
+import { ContextProvider } from '../../../ContextProvider'
 import SetAccountPassword from './index'
 
 jest.spyOn(console, 'error').getMockImplementation(() => {
@@ -16,16 +16,18 @@ const _data = {
 
 const setup = ({ data = _data } = {}) => {
   const utils = render(
-    <MemoryRouter
-      initialEntries={[
-        {
-          pathname: '/',
-          state: { account: data.account },
-        },
-      ]}
-    >
-      <SetAccountPassword {...data} />
-    </MemoryRouter>,
+    <ContextProvider>
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/',
+            state: { account: data.account },
+          },
+        ]}
+      >
+        <SetAccountPassword {...data} />
+      </MemoryRouter>
+    </ContextProvider>,
   )
   const title = screen.getByText('Password for')
   const account = screen.getByText(data.account.name)
@@ -65,19 +67,21 @@ test('Click login button onSubmit', async () => {
   }
 
   render(
-    <MemoryRouter
-      initialEntries={[
-        {
-          pathname: '/',
-          state: { account: _data.account },
-        },
-      ]}
-    >
-      <SetAccountPassword
-        {..._data}
-        checkPassword={checkPassword}
-      />
-    </MemoryRouter>,
+    <ContextProvider>
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/',
+            state: { account: _data.account },
+          },
+        ]}
+      >
+        <SetAccountPassword
+          {..._data}
+          checkPassword={checkPassword}
+        />
+      </MemoryRouter>
+    </ContextProvider>,
   )
 
   const login = screen.getByRole('button', { name: 'Log In' })
@@ -95,19 +99,21 @@ test('Click login button onSubmit - error', async () => {
   }
 
   render(
-    <MemoryRouter
-      initialEntries={[
-        {
-          pathname: '/',
-          state: { account: _data.account },
-        },
-      ]}
-    >
-      <SetAccountPassword
-        {..._data}
-        checkPassword={checkPassword}
-      />
-    </MemoryRouter>,
+    <ContextProvider>
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/',
+            state: { account: _data.account },
+          },
+        ]}
+      >
+        <SetAccountPassword
+          {..._data}
+          checkPassword={checkPassword}
+        />
+      </MemoryRouter>
+    </ContextProvider>,
   )
 
   const login = screen.getByRole('button', { name: 'Log In' })

@@ -33,7 +33,7 @@ const RestoreAccountPage = () => {
         <VerticalGroup bigGap>
           <h1 className="loadingText">
             {' '}
-            Just a sec, we are retoring your account...{' '}
+            Just a sec, we are restoring your account...{' '}
           </h1>
           <Loading />
         </VerticalGroup>
