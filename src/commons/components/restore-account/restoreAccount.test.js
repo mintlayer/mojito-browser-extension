@@ -3,16 +3,19 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import RestoreAccount from './restoreAccount'
 import Expressions from '../../utils/expressions'
+import { ContextProvider } from '../../../ContextProvider'
 
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
 
 test('Renders restore account page with step 1', () => {
   render(
-    <RestoreAccount
-      step={1}
-      setStep={SETSTEPSAMPLE}
-    />,
+    <ContextProvider>
+      <RestoreAccount
+        step={1}
+        setStep={SETSTEPSAMPLE}
+      />
+    </ContextProvider>,
     { wrapper: MemoryRouter },
   )
   const RestoreAccountComponent = screen.getByTestId('restore-account')
@@ -20,7 +23,7 @@ test('Renders restore account page with step 1', () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
 
   expect(RestoreAccountComponent).toBeInTheDocument()
   expect(restoreAccountForm).toBeInTheDocument()
@@ -46,10 +49,12 @@ test('Renders restore account page with step 1', () => {
 test('Renders restore account page with step 2', () => {
   const passwordPattern = Expressions.PASSWORD
   render(
-    <RestoreAccount
-      step={2}
-      setStep={SETSTEPSAMPLE}
-    />,
+    <ContextProvider>
+      <RestoreAccount
+        step={2}
+        setStep={SETSTEPSAMPLE}
+      />
+    </ContextProvider>,
     { wrapper: MemoryRouter },
   )
   const RestoreAccountComponent = screen.getByTestId('restore-account')
@@ -57,7 +62,7 @@ test('Renders restore account page with step 2', () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
 
   expect(RestoreAccountComponent).toBeInTheDocument()
   expect(restoreAccountForm).toBeInTheDocument()
@@ -124,17 +129,19 @@ test('Renders restore account page with step 2', () => {
 
 test('Renders set account page with step 3', () => {
   render(
-    <RestoreAccount
-      step={3}
-      setStep={SETSTEPSAMPLE}
-    />,
+    <ContextProvider>
+      <RestoreAccount
+        step={3}
+        setStep={SETSTEPSAMPLE}
+      />
+    </ContextProvider>,
     { wrapper: MemoryRouter },
   )
   const descriptionParagraph = screen.getAllByTestId('description-paragraph')
   const restoreAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
   expect(descriptionParagraph).toHaveLength(1)
 
   act(() => {
@@ -155,20 +162,22 @@ test('Renders restore account page with step 4', () => {
     .mockReturnValue(true)
 
   render(
-    <RestoreAccount
-      step={4}
-      setStep={SETSTEPSAMPLE}
-      words={WORDSSAMPLE}
-      onStepsFinished={onStepsFinishedFn}
-      validateMnemonicFn={validateMnemonicMock}
-    />,
+    <ContextProvider>
+      <RestoreAccount
+        step={4}
+        setStep={SETSTEPSAMPLE}
+        words={WORDSSAMPLE}
+        onStepsFinished={onStepsFinishedFn}
+        validateMnemonicFn={validateMnemonicMock}
+      />
+    </ContextProvider>,
     { wrapper: MemoryRouter },
   )
   const restoreAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
   const inputs = screen.getAllByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
   expect(inputs).toHaveLength(12)
 
   inputs.forEach((input) => expect(input).toHaveAttribute('type', 'text'))
@@ -208,19 +217,21 @@ test('Checks back button behavior in a internal navigation component - first ste
   }
 
   render(
-    <MemoryRouter initialEntries={['/', '/set-account']}>
-      <Routes>
-        <Route
-          path="/set-account"
-          element={<RestoreAccountMock />}
-        />
-        <Route
-          exact
-          path="/"
-          element={<PrevPageMock />}
-        />
-      </Routes>
-    </MemoryRouter>,
+    <ContextProvider>
+      <MemoryRouter initialEntries={['/', '/set-account']}>
+        <Routes>
+          <Route
+            path="/set-account"
+            element={<RestoreAccountMock />}
+          />
+          <Route
+            exact
+            path="/"
+            element={<PrevPageMock />}
+          />
+        </Routes>
+      </MemoryRouter>
+    </ContextProvider>,
   )
 
   const buttons = screen.getAllByTestId('button')

@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback, useRef } from 'react'
+import { useState, useEffect, useContext, useRef } from 'react'
 import Header from '../../commons/components/advanced/header'
 import Balance from '../../commons/components/balance/balance'
 import TransactionButton from '../../commons/components/transaction-button/transactionButton'
@@ -19,27 +19,28 @@ const WalletPage = () => {
   const { btcAddress } = useContext(Context)
   const [openShowAddress, setOpenShowAddress] = useState(false)
   const [transactionsList, setTransactionsList] = useState([])
-
-  const getTransactions = useCallback(async () => {
-    if (!btcAddress) return
-    try {
-      const response = await getAddressTransactions(btcAddress)
-      const transactions = JSON.parse(response)
-      const parsedTransactions = getParsedTransactions(transactions, btcAddress)
-      setTransactionsList(parsedTransactions)
-    } catch (error) {
-      console.log(error, 'error')
-    }
-  }, [btcAddress])
-
-  const balance = calculateBalanceFromUtxoList(transactionsList)
+  const [balance, setBalance] = useState(0)
 
   useEffect(() => {
     if (effectCalled.current) return
     effectCalled.current = true
 
+    const getTransactions = async () => {
+      try {
+        const response = await getAddressTransactions(btcAddress)
+        const transactions = JSON.parse(response)
+        const parsedTransactions = getParsedTransactions(
+          transactions,
+          btcAddress,
+        )
+        setTransactionsList(parsedTransactions)
+        setBalance(calculateBalanceFromUtxoList(parsedTransactions))
+      } catch (error) {
+        console.log(error, 'error')
+      }
+    }
     getTransactions()
-  }, [getTransactions])
+  }, [btcAddress])
 
   return (
     <div data-testid="wallet-page">

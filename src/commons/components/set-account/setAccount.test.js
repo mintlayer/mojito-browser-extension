@@ -3,16 +3,19 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import SetAccount from './setAccount'
 import Expressions from '../../utils/expressions'
 import { useState } from 'react'
+import { ContextProvider } from '../../../ContextProvider'
 
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
 
 test('Renders set account page with step 1', () => {
   render(
-    <SetAccount
-      step={1}
-      setStep={SETSTEPSAMPLE}
-    />,
+    <ContextProvider>
+      <SetAccount
+        step={1}
+        setStep={SETSTEPSAMPLE}
+      />
+    </ContextProvider>,
     { wrapper: MemoryRouter },
   )
   const setAccountComponent = screen.getByTestId('set-account')
@@ -20,7 +23,7 @@ test('Renders set account page with step 1', () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
 
   expect(setAccountComponent).toBeInTheDocument()
   expect(setAccountForm).toBeInTheDocument()
@@ -42,10 +45,12 @@ test('Renders set account page with step 1', () => {
 test('Renders set account page with step 2', async () => {
   const passwordPattern = Expressions.PASSWORD
   render(
-    <SetAccount
-      step={2}
-      setStep={SETSTEPSAMPLE}
-    />,
+    <ContextProvider>
+      <SetAccount
+        step={2}
+        setStep={SETSTEPSAMPLE}
+      />
+    </ContextProvider>,
     { wrapper: MemoryRouter },
   )
   const setAccountComponent = screen.getByTestId('set-account')
@@ -53,7 +58,7 @@ test('Renders set account page with step 2', async () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
 
   expect(setAccountComponent).toBeInTheDocument()
   expect(setAccountForm).toBeInTheDocument()
@@ -120,17 +125,19 @@ test('Renders set account page with step 2', async () => {
 
 test('Renders set account page with step 3', () => {
   render(
-    <SetAccount
-      step={3}
-      setStep={SETSTEPSAMPLE}
-    />,
+    <ContextProvider>
+      <SetAccount
+        step={3}
+        setStep={SETSTEPSAMPLE}
+      />
+    </ContextProvider>,
     { wrapper: MemoryRouter },
   )
   const descriptionParagraphs = screen.getAllByTestId('description-paragraph')
   const setAccountForm = screen.getByTestId('set-account-form')
   const buttons = screen.getAllByTestId('button')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
   expect(descriptionParagraphs).toHaveLength(2)
 
   act(() => {
@@ -140,18 +147,20 @@ test('Renders set account page with step 3', () => {
 
 test('Renders set account page with step 4', () => {
   render(
-    <SetAccount
-      step={4}
-      setStep={SETSTEPSAMPLE}
-      words={WORDSSAMPLE}
-    />,
+    <ContextProvider>
+      <SetAccount
+        step={4}
+        setStep={SETSTEPSAMPLE}
+        words={WORDSSAMPLE}
+      />
+    </ContextProvider>,
     { wrapper: MemoryRouter },
   )
 
   const buttons = screen.getAllByTestId('button')
   const inputs = screen.getAllByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
   expect(inputs).toHaveLength(WORDSSAMPLE.length)
 
   const input = inputs[0]
@@ -172,20 +181,22 @@ test('Renders set account page with step 5', () => {
     .mockReturnValue(true)
 
   render(
-    <SetAccount
-      step={5}
-      setStep={SETSTEPSAMPLE}
-      words={WORDSSAMPLE}
-      onStepsFinished={onStepsFinishedFn}
-      validateMnemonicFn={validateMnemonicMock}
-    />,
+    <ContextProvider>
+      <SetAccount
+        step={5}
+        setStep={SETSTEPSAMPLE}
+        words={WORDSSAMPLE}
+        onStepsFinished={onStepsFinishedFn}
+        validateMnemonicFn={validateMnemonicMock}
+      />
+    </ContextProvider>,
     { wrapper: MemoryRouter },
   )
   const setAccountForm = screen.getByTestId('set-account-form')
   const buttons = screen.getAllByTestId('button')
   const inputs = screen.getAllByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
   expect(inputs).toHaveLength(WORDSSAMPLE.length)
 
   inputs.forEach((input, index) => {
@@ -226,19 +237,21 @@ test('Checks back button behavior in a internal navigation component - first ste
   }
 
   render(
-    <MemoryRouter initialEntries={['/', '/set-account']}>
-      <Routes>
-        <Route
-          path="/set-account"
-          element={<SetAccountMock />}
-        />
-        <Route
-          exact
-          path="/"
-          element={<PrevPageMock />}
-        />
-      </Routes>
-    </MemoryRouter>,
+    <ContextProvider>
+      <MemoryRouter initialEntries={['/', '/set-account']}>
+        <Routes>
+          <Route
+            path="/set-account"
+            element={<SetAccountMock />}
+          />
+          <Route
+            exact
+            path="/"
+            element={<PrevPageMock />}
+          />
+        </Routes>
+      </MemoryRouter>
+    </ContextProvider>,
   )
 
   const buttons = screen.getAllByTestId('button')

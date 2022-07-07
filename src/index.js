@@ -7,6 +7,7 @@ import SetAccount from './pages/set-account'
 import RestoreAccount from './pages/restore-account'
 import Wallet from './pages/wallet'
 import SetAccountPasswordPage from './pages/list-accounts/set-account-password'
+import CreateRestore from './pages/create-restore'
 
 import { ContextProvider } from './ContextProvider'
 
@@ -41,6 +42,10 @@ root.render(
             <Route
               path="/set-account-password"
               element={<SetAccountPasswordPage />}
+            />
+            <Route
+              path="/create-restore"
+              element={<CreateRestore />}
             />
             <Route
               exact

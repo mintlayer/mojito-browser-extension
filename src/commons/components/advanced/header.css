@@ -11,6 +11,15 @@ header {
   left: 2.875rem;
 }
 
+.logout {
+  height: 40px;
+  width: 40px;
+  padding: 0.2rem;
+  position: absolute;
+  top: 0.5rem;
+  right: 0;
+}
+
 .logoContainer {
   display: flex;
   margin: 0 auto;
