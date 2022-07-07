@@ -6,7 +6,7 @@ export const Context = createContext()
 export const ContextProvider = ({ value: propValue, children }) => {
   const [btcAddress, setBtcAddress] = useState('')
   const accountRegistryName = 'unlockedAccount'
-  const loginTimeoutInMinutes = 2
+  const loginTimeoutInMinutes = 30
 
   const unlockAccount = (address) => {
     const account = { address }
