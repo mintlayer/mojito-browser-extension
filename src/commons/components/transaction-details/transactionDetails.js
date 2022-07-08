@@ -1,7 +1,6 @@
 import './transactionDetails.css'
 import { format } from 'date-fns'
 import Button from '../basic/button'
-import VerticalGroup from '../group/verticalGroup'
 import { BTC_NETWORK } from '../../../environmentVars'
 import { useEffect, useState } from 'react'
 import { getConfirmationsAmount } from '../../crypto/btc'
@@ -49,7 +48,7 @@ const TransactionDetails = ({
       className="transaction-details"
       data-testid="transaction-details"
     >
-      <VerticalGroup>
+      <div className="transaction-details-items-wrapper">
         <TransactionDetailsItem
           title={adressTitle}
           content={transactionAddress}
@@ -73,15 +72,15 @@ const TransactionDetails = ({
           title={'Confirmations:'}
           content={confirmations ? confirmations : <Loading />}
         />
-        <a
-          href={externalLink}
-          target="_blank"
-        >
-          <Button extraStyleClasses={buttonExtraStyles}>
-            Open In Blockchain
-          </Button>
-        </a>
-      </VerticalGroup>
+      </div>
+      <a
+        href={externalLink}
+        target="_blank"
+      >
+        <Button extraStyleClasses={buttonExtraStyles}>
+          Open In Blockchain
+        </Button>
+      </a>
     </div>
   )
 }

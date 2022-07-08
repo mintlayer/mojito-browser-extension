@@ -3,12 +3,17 @@
   height: 100%;
   max-width: 510px;
   height: 466px;
+}
+
+.transaction-details-items-wrapper {
+  height: 336px;
+  width: 100%;
   padding: 10px;
   overflow: auto;
 }
 
 .transaction-details-item {
-  margin-bottom: 0.8rem;
+  margin-bottom: 1.5rem;
 }
 
 .transaction-details-item h2 {
