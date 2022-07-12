@@ -86,24 +86,20 @@
     "transformIgnorePatterns": [
       "/node_modules/(?!d3|d3-array|internmap|delaunator|robust-predicates)"
     ],
-    "watchPathIgnorePatterns": [
-      "src/App.*.js"
-    ],
     "collectCoverageFrom": [
-      "!src/pages",
-      "!src/App.*.js"
+      "!src/pages"
     ],
     "coveragePathIgnorePatterns": [
       "./src/index.js",
-      "./src/App.*.js",
       "./src/pages",
-      "./src/ContextProvider.js",
-      "./src/environmentVars.js",
-      "./src/commons/utils/reportWebVitals.js",
-      "./src/commons/workers/*",
-      "./src/commons/entity/account.worker.js",
-      "./src/commons/assets/img/*",
-      "./src/commons/crypto/testTransactions.json"
+      "./src/contexts/AccountProvider/AccountProvider.js",
+      "./src/utils/Constants/EnvironmentVars.js",
+      "./src/utils/reportWebVitals.js",
+      "./src/services/Crypto/BTC/BTC.worker.js",
+      "./src/services/Crypto/Cipher/Cipher.worker.js",
+      "./src/services/Crypto/BTC/testTransactions.json",
+      "./src/services/Entity/Account/Account.worker.js",
+      "./src/assets/images/*"
     ],
     "coverageThreshold": {
       "global": {

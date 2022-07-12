@@ -2,42 +2,42 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
-import App from './App'
-import SetAccount from './pages/set-account'
-import RestoreAccount from './pages/restore-account'
-import Wallet from './pages/wallet'
-import SetAccountPasswordPage from './pages/list-accounts/set-account-password'
-import CreateRestore from './pages/create-restore'
+import HomePage from './pages/Home/Home'
+import CreateAccountPage from './pages/CreateAccount/CreateAccount'
+import RestoreAccountPage from './pages/RestoreAccount/RestoreAccount'
+import WalletPage from './pages/Wallet/Wallet'
+import SetAccountPasswordPage from './pages/Login/SetAccountPassword'
+import CreateRestorePage from './pages/CreateRestore/CreateRestore'
 
-import { ContextProvider } from './ContextProvider'
+import { AccountProvider } from './contexts/AccountProvider/AccountProvider'
 
-import reportWebVitals from './commons/utils/reportWebVitals'
+import reportWebVitals from './utils/reportWebVitals'
 
-import './constants.css'
-import './commons/assets/css/index.css'
+import './assets/styles/constants.css'
+import './assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
   <React.StrictMode>
-    <ContextProvider>
+    <AccountProvider>
       <main className="App">
         <MemoryRouter>
           <Routes>
             <Route
               path="/wallet"
-              element={<Wallet />}
+              element={<WalletPage />}
             />
             <Route
               path="/set-account"
-              element={<SetAccount />}
+              element={<CreateAccountPage />}
             />
             <Route
               path="/restore-account"
-              element={<RestoreAccount />}
+              element={<RestoreAccountPage />}
             />
             <Route
               path="/wallet"
-              element={<Wallet />}
+              element={<WalletPage />}
             />
             <Route
               path="/set-account-password"
@@ -45,17 +45,17 @@ root.render(
             />
             <Route
               path="/create-restore"
-              element={<CreateRestore />}
+              element={<CreateRestorePage />}
             />
             <Route
               exact
               path="/"
-              element={<App />}
+              element={<HomePage />}
             />
           </Routes>
         </MemoryRouter>
       </main>
-    </ContextProvider>
+    </AccountProvider>
   </React.StrictMode>,
 )
 
