@@ -7,7 +7,7 @@
 .btn {
   display: flex;
   color: rgb(var(--text-black));
-  background-color: rgb(var(--color-extra-light-green));
+  background-color: rgb(var(--color-extra-light-gray));
   font-size: 1.25rem;
   font-weight: lighter;
   justify-content: center;
