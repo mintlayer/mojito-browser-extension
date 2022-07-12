@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 
-import { BTC_NETWORK } from '../../../utils/Constants/EnvironmentVars'
-import { getConfirmationsAmount } from '../../../services/Crypto/BTC/BTC'
-
-import Button from '../../basic/Button/Button'
-import Loading from '../../composed/Loading/Loading'
+import { EnvVars } from '@Constants'
+import { BTC } from '@Cryptos'
+import { Button } from '@BasicComponents'
+import { Loading } from '@ComposedComponents'
 
 import './TransactionDetails.css'
 
@@ -28,7 +27,7 @@ const TransactionDetailsItem = ({ title, content }) => {
 
 const TransactionDetails = ({
   transaction,
-  getConfirmationsFn = getConfirmationsAmount,
+  getConfirmationsFn = BTC.getConfirmationsAmount,
 }) => {
   const [confirmations, setConfirmations] = useState(null)
 
@@ -36,7 +35,7 @@ const TransactionDetails = ({
   const buttonExtraStyles = ['transaction-details-button']
   const adressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
   const transactionAddress = transaction?.otherPart?.join('; ')
-  const externalLink = `https://www.blockchain.com/btc-${BTC_NETWORK}/tx/${transaction?.txid}`
+  const externalLink = `https://www.blockchain.com/btc-${EnvVars.BTC_NETWORK}/tx/${transaction?.txid}`
 
   useEffect(() => {
     const getConfirmations = async () => {

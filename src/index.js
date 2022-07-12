@@ -2,19 +2,21 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
-import HomePage from './pages/Home/Home'
-import CreateAccountPage from './pages/CreateAccount/CreateAccount'
-import RestoreAccountPage from './pages/RestoreAccount/RestoreAccount'
-import WalletPage from './pages/Wallet/Wallet'
-import SetAccountPasswordPage from './pages/Login/SetAccountPassword'
-import CreateRestorePage from './pages/CreateRestore/CreateRestore'
+import {
+  HomePage,
+  CreateAccountPage,
+  RestoreAccountPage,
+  WalletPage,
+  SetAccountPasswordPage,
+  CreateRestorePage,
+} from '@Pages'
 
-import { AccountProvider } from './contexts/AccountProvider/AccountProvider'
+import { AccountProvider } from '@Contexts'
 
 import reportWebVitals from './utils/reportWebVitals'
 
-import './assets/styles/constants.css'
-import './assets/styles/index.css'
+import '@Assets/styles/constants.css'
+import '@Assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
@@ -23,10 +25,6 @@ root.render(
       <main className="App">
         <MemoryRouter>
           <Routes>
-            <Route
-              path="/wallet"
-              element={<WalletPage />}
-            />
             <Route
               path="/set-account"
               element={<CreateAccountPage />}

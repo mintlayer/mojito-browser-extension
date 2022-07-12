@@ -2,7 +2,7 @@ import * as React from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
-import { AccountProvider } from '../../../contexts/AccountProvider/AccountProvider'
+import { AccountProvider } from '@Contexts'
 import SetPassword from './SetPassword'
 
 jest.spyOn(console, 'error').getMockImplementation(() => {

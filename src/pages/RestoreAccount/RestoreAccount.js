@@ -1,18 +1,12 @@
 import React, { useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { AccountContext } from '../../contexts/AccountProvider/AccountProvider'
+import { AccountContext } from '@Contexts'
+import { Account } from '@Entities'
 
-import {
-  saveAccount,
-  unlockAccount,
-} from '../../services/Entity/Account/Account'
-
-import Header from '../../components/composed/Header/Header'
-import Loading from '../../components/composed/Loading/Loading'
-import CenteredLayout from '../../components/layouts/CenteredLayout/CenteredLayout'
-import VerticalGroup from '../../components/layouts/VerticalGroup/VerticalGroup'
-import RestoreAccount from '../../components/containers/RestoreAccount/RestoreAccount'
+import { Header, Loading } from '@ComposedComponents'
+import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
+import { RestoreAccount } from '@ContainerComponents'
 
 import './RestoreAccount.css'
 
@@ -24,8 +18,8 @@ const RestoreAccountPage = () => {
 
   const createAccount = (accountName, accountPassword, mnemonic) => {
     setCreatingWallet(true)
-    saveAccount(accountName, accountPassword, mnemonic)
-      .then((id) => unlockAccount(id, accountPassword))
+    Account.saveAccount(accountName, accountPassword, mnemonic)
+      .then((id) => Account.unlockAccount(id, accountPassword))
       .then((address) => {
         setBtcAddress(address)
         navigate('/wallet')

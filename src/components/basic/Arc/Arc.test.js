@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import { Selection } from 'd3-selection/src/selection'
 import * as d3 from 'd3'
 
 import {
@@ -37,10 +36,9 @@ test('CreatePieGenerator function', () => {
 })
 
 test('CreateTooltip function', () => {
-  const tooltip = createTooltip()
+  createTooltip()
   const tooltipComponent = screen.getByTestId('tooltip-container')
 
-  expect(tooltip).toBeInstanceOf(Selection)
   expect(tooltipComponent).toBeInTheDocument()
 })
 

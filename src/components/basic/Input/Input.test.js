@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { Expressions } from '@Constants'
 import Input from './Input'
-import Expressions from '../../../utils/Constants/Expressions'
 
 test('Input component', () => {
   render(<Input />)

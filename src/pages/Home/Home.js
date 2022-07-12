@@ -1,16 +1,11 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { AccountContext } from '../../contexts/AccountProvider/AccountProvider'
-
-import { appAccounts } from '../../utils/Constants/AppInfo'
-
-import CreateRestore from '../CreateRestore/CreateRestore'
-import ListAccountsContainer from '../Login/Login'
-
-import Loading from '../../components/composed/Loading/Loading'
-
-import Logo from '../../assets/images/logo96.png'
+import { AccountContext } from '@Contexts'
+import { AppInfo } from '@Constants'
+import { Loading } from '@ComposedComponents'
+import { CreateRestorePage, LoginPage } from '@Pages'
+import Logo from '@Assets/images/logo96.png'
 
 import './Home.css'
 
@@ -29,7 +24,7 @@ const HomePage = () => {
     effectCalled.current = true
 
     const verifyAccountsExistence = async () => {
-      const accountsPresent = await appAccounts()
+      const accountsPresent = await AppInfo.appAccounts()
       setAccounts(
         accountsPresent.map((item) => ({ name: item.name, id: item.id })),
       )
@@ -40,9 +35,9 @@ const HomePage = () => {
   const Home = () => {
     if (accounts === null) return <Loading />
     return !accounts.length || location.state?.fromLogin ? (
-      <CreateRestore />
+      <CreateRestorePage />
     ) : (
-      <ListAccountsContainer accounts={accounts} />
+      <LoginPage accounts={accounts} />
     )
   }
 

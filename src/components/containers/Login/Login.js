@@ -1,11 +1,8 @@
 import React from 'react'
 
-import CenteredLayout from '../../layouts/CenteredLayout/CenteredLayout'
-import VerticalGroup from '../../layouts/VerticalGroup/VerticalGroup'
-
-import Button from '../../basic/Button/Button'
-
-import Carousel from '../../composed/Carousel/Carousel'
+import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
+import { Button } from '@BasicComponents'
+import { Carousel } from '@ComposedComponents'
 
 import './Login.css'
 

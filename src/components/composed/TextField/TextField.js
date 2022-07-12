@@ -1,9 +1,8 @@
 import React, { useId, useEffect, useState } from 'react'
 
-import Input from '../../basic/Input/Input'
-import VerticalGroup from '../../layouts/VerticalGroup/VerticalGroup'
-
-import useStyleClasses from '../../../hooks/UseStyleClasses/useStyleClasses'
+import { Input } from '@BasicComponents'
+import { VerticalGroup } from '@LayoutComponents'
+import { useStyleClasses } from '@Hooks'
 
 import './TextField.css'
 

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 
-import useStyleClasses from '../../../hooks/UseStyleClasses/useStyleClasses'
+import { useStyleClasses } from '@Hooks'
 
 import './Button.css'
 

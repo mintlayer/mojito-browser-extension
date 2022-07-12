@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react'
 
-import { getWordList } from '../../../services/Crypto/BTC/BTC'
+import { BTC } from '@Cryptos'
 
 import InputListItem from './InputsListItem'
 
 import './InputsList.css'
 
-const BIP39DefaultWordList = getWordList()
+const BIP39DefaultWordList = BTC.getWordList()
 
 const isInputValid = (input, words) => {
   const value = input.value

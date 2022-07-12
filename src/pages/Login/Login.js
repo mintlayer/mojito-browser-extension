@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Login from '../../components/containers/Login/Login'
-
-import useStyleClasses from '../../hooks/UseStyleClasses/useStyleClasses'
+import { Login } from '@ContainerComponents'
+import { useStyleClasses } from '@Hooks'
 
 import './Login.css'
 
@@ -50,7 +49,7 @@ const LoginPage = ({
       className={styleClasses}
     >
       {!account && (
-        <Login
+        <Login.Login
           account={account}
           accounts={accounts}
           onSelect={goNext}

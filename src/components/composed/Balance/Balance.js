@@ -1,6 +1,7 @@
 import React from 'react'
 
-import { ReactComponent as BtcLogo } from '../../../assets/images/btc-logo.svg'
+import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
+
 import './Balance.css'
 
 const Balance = ({ balance }) => {

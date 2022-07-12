@@ -1,21 +1,18 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
-import { unlockAccount } from '../../../services/Entity/Account/Account'
+import { Account } from '@Entities'
 
-import Button from '../../basic/Button/Button'
-import TextField from '../../composed/TextField/TextField'
-import Header from '../../composed/Header/Header'
-import Loading from '../../composed/Loading/Loading'
-import VerticalGroup from '../../layouts/VerticalGroup/VerticalGroup'
-import CenteredLayout from '../../layouts/CenteredLayout/CenteredLayout'
+import { Button } from '@BasicComponents'
+import { Header, Loading, TextField } from '@ComposedComponents'
+import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 
 import './SetPassword.css'
 
 const SetPassword = ({
   onChangePassword,
   onSubmit,
-  checkPassword = unlockAccount,
+  checkPassword = Account.unlockAccount,
 }) => {
   const location = useLocation()
   const account = location.state.account

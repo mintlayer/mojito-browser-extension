@@ -1,6 +1,6 @@
 import { ReactComponent as ArrowIcon } from '../../../assets/images/icon-arrow.svg'
 
-import Button from '../../basic/Button/Button'
+import { Button } from '@BasicComponents'
 
 import './TransactionButton.css'
 

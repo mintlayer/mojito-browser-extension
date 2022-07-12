@@ -1,8 +1,7 @@
 import QRCode from 'react-qr-code'
 
-import Button from '../../basic/Button/Button'
-import CenteredLayout from '../../layouts/CenteredLayout/CenteredLayout'
-import VerticalGroup from '../../layouts/VerticalGroup/VerticalGroup'
+import { Button } from '@BasicComponents'
+import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 
 import './ShowAddress.css'
 

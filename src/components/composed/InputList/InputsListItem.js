@@ -1,4 +1,6 @@
-import Input from '../../basic/Input/Input'
+import React from 'react'
+
+import { Input } from '@BasicComponents'
 
 import './InputsListItem.css'
 

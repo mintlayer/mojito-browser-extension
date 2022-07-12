@@ -1,5 +1,5 @@
 import { getAddressFromPubKey, getKeysFromSeed } from '../../Crypto/BTC/BTC'
-import { get, loadAccounts, save } from '../../Database/IndexedDB'
+import { IndexedDB } from '@Databases'
 
 import loadAccountSubRoutines from './loadWorkers'
 
@@ -19,15 +19,15 @@ const saveAccount = async (name, password, mnemonic) => {
     seed: encryptedData,
   }
 
-  const accounts = await loadAccounts()
-  return await save(accounts, account)
+  const accounts = await IndexedDB.loadAccounts()
+  return await IndexedDB.save(accounts, account)
 }
 
 const unlockAccount = async (id, password) => {
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
 
-  const accounts = await loadAccounts()
-  const account = await get(accounts, id)
+  const accounts = await IndexedDB.loadAccounts()
+  const account = await IndexedDB.get(accounts, id)
 
   const { key } = await generateEncryptionKey({ password, salt: account.salt })
   const seed = await decryptSeed({

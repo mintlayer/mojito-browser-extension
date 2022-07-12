@@ -3,12 +3,12 @@ import * as Bip39 from 'bip39'
 import * as bitcoin from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
 
-import { BTC_NETWORK } from '../../../utils/Constants/EnvironmentVars'
-import { getLastBlockHeight } from '../../API/Electrum/Electrum'
+import { EnvVars } from '@Constants'
+import { Electrum } from '@APIs'
 
 // eslint-disable-next-line
 const DERIVATION_PATH = "m/44'/0'/0'/0/0"
-const NETWORK = bitcoin.networks[BTC_NETWORK]
+const NETWORK = bitcoin.networks[EnvVars.BTC_NETWORK]
 
 const getBIP32Object = () => BIP32Factory(ecc)
 
@@ -53,7 +53,7 @@ const getConfirmationsAmount = async (transaction) => {
     return new Promise.reject('No transaction to check confirmations.')
   if (!transaction.blockHeight) return Promise.resolve(0)
 
-  const lastBlockHeight = await getLastBlockHeight()
+  const lastBlockHeight = await Electrum.getLastBlockHeight()
   return lastBlockHeight - transaction.blockHeight
 }
 

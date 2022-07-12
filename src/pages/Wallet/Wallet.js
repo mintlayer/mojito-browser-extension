@@ -1,22 +1,12 @@
 import { useState, useEffect, useContext, useRef } from 'react'
 
-import { AccountContext } from '../../contexts/AccountProvider/AccountProvider'
+import { Balance, Header, PopUp } from '@ComposedComponents'
+import { VerticalGroup } from '@LayoutComponents'
+import { Wallet } from '@ContainerComponents'
 
-import Balance from '../../components/composed/Balance/Balance'
-import Header from '../../components/composed/Header/Header'
-import Popup from '../../components/composed/PopUp/Popup'
-
-import ShowAddress from '../../components/containers/Wallet/ShowAddress'
-import TransactionButton from '../../components/containers/Wallet/TransactionButton'
-import TransactionsList from '../../components/containers/Wallet/TransactionsList'
-
-import VerticalGroup from '../../components/layouts/VerticalGroup/VerticalGroup'
-
-import {
-  getParsedTransactions,
-  calculateBalanceFromUtxoList,
-} from '../../services/Crypto/BTC/BTC'
-import { getAddressTransactions } from '../../services/API/Electrum/Electrum'
+import { AccountContext } from '@Contexts'
+import { BTC } from '@Cryptos'
+import { Electrum } from '@APIs'
 
 import './Wallet.css'
 
@@ -33,14 +23,14 @@ const WalletPage = () => {
 
     const getTransactions = async () => {
       try {
-        const response = await getAddressTransactions(btcAddress)
+        const response = await Electrum.getAddressTransactions(btcAddress)
         const transactions = JSON.parse(response)
-        const parsedTransactions = getParsedTransactions(
+        const parsedTransactions = BTC.getParsedTransactions(
           transactions,
           btcAddress,
         )
         setTransactionsList(parsedTransactions)
-        setBalance(calculateBalanceFromUtxoList(parsedTransactions))
+        setBalance(BTC.calculateBalanceFromUtxoList(parsedTransactions))
       } catch (error) {
         console.log(error, 'error')
       }
@@ -55,22 +45,22 @@ const WalletPage = () => {
         <div className="balance-transactions-wrapper">
           <Balance balance={balance} />
           <div className="transactions-buttons-wrapper">
-            <TransactionButton
+            <Wallet.TransactionButton
               title={'Send'}
               up
             />
-            <TransactionButton
+            <Wallet.TransactionButton
               title={'Receive'}
               onClick={() => setOpenShowAddress(true)}
             />
             {openShowAddress && (
-              <Popup setOpen={setOpenShowAddress}>
-                <ShowAddress address={btcAddress}></ShowAddress>
-              </Popup>
+              <PopUp setOpen={setOpenShowAddress}>
+                <Wallet.ShowAddress address={btcAddress}></Wallet.ShowAddress>
+              </PopUp>
             )}
           </div>
         </div>
-        <TransactionsList transactionsList={transactionsList} />
+        <Wallet.TransactionsList transactionsList={transactionsList} />
       </VerticalGroup>
     </div>
   )

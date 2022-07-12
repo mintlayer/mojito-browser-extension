@@ -3,8 +3,8 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 
 import SetAccount from './CreateAccount'
-import Expressions from '../../../utils/Constants/Expressions'
-import { AccountProvider } from '../../../contexts/AccountProvider/AccountProvider'
+import { Expressions } from '@Constants'
+import { AccountProvider } from '@Contexts'
 
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']

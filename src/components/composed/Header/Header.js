@@ -1,13 +1,12 @@
 import React, { useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { ReactComponent as BackImg } from '../../../assets/images/back-button.svg'
-import { ReactComponent as LogoutImg } from '../../../assets/images/logout.svg'
-import Logo from '../../../assets/images/logo96.png'
+import { ReactComponent as BackImg } from '@Assets/images/back-button.svg'
+import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
+import Logo from '@Assets/images/logo96.png'
 
-import Button from '../../basic/Button/Button'
-
-import { AccountContext } from '../../../contexts/AccountProvider/AccountProvider'
+import { Button } from '@BasicComponents'
+import { AccountContext } from '@Contexts'
 
 import './Header.css'
 

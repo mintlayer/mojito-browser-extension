@@ -1,8 +1,8 @@
-import { getAll, loadAccounts } from '../../services/Database/IndexedDB'
+import { IndexedDB } from '@Databases'
 
 const appAccounts = async () => {
-  const store = await loadAccounts()
-  const accounts = await getAll(store)
+  const store = await IndexedDB.loadAccounts()
+  const accounts = await IndexedDB.getAll(store)
   return accounts
 }
 

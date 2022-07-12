@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { format } from 'date-fns'
 
-import { ReactComponent as ArrowIcon } from '../../../assets/images/icon-arrow.svg'
+import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 
-import Popup from '../../composed/PopUp/Popup'
+import { PopUp } from '@ComposedComponents'
+
 import TransactionDetails from './TransactionDetails'
 
 import './Transaction.css'
@@ -63,9 +64,9 @@ const Transaction = ({ transaction }) => {
         </div>
       </div>
       {detailPopupOpen && (
-        <Popup setOpen={setDetailPopupOpen}>
+        <PopUp setOpen={setDetailPopupOpen}>
           <TransactionDetails transaction={transaction} />
-        </Popup>
+        </PopUp>
       )}
     </li>
   )

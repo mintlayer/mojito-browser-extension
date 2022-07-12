@@ -1,8 +1,8 @@
 import { useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import SetAccountPassword from '../../components/containers/Login/SetPassword'
-import { AccountContext } from '../../contexts/AccountProvider/AccountProvider'
+import { Login } from '@ContainerComponents'
+import { AccountContext } from '@Contexts'
 
 const SetAccountPasswordPage = () => {
   const { setBtcAddress } = useContext(AccountContext)
@@ -13,7 +13,7 @@ const SetAccountPasswordPage = () => {
     navigate('/wallet')
   }
 
-  return <SetAccountPassword onSubmit={login} />
+  return <Login.SetAccountPassword onSubmit={login} />
 }
 
 export default SetAccountPasswordPage

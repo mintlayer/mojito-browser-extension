@@ -1,16 +1,13 @@
 import loadAccountSubRoutines from './loadWorkers'
 import { saveAccount, unlockAccount } from './Account'
-import {
-  generateKeysFromMnemonic,
-  getAddressFromPubKey,
-} from '../../Crypto/BTC/BTC'
+import { BTC } from '@Cryptos'
 
 test('Account creation and restoring', async () => {
   const pass = 'pass'
   const { generateNewAccountMnemonic } = await loadAccountSubRoutines()
   const mnemonic = await generateNewAccountMnemonic()
-  const [pubKey] = generateKeysFromMnemonic(mnemonic)
-  const originalAddress = getAddressFromPubKey(pubKey)
+  const [pubKey] = BTC.generateKeysFromMnemonic(mnemonic)
+  const originalAddress = BTC.getAddressFromPubKey(pubKey)
   const id = await saveAccount('Savings', pass, mnemonic)
   const address = await unlockAccount(id, pass)
 

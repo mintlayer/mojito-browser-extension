@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@BasicComponents": ["./src/components/basic/index.js"],
+      "@ComposedComponents": ["./src/components/composed/index.js"],
+      "@LayoutComponents": ["./src/components/layouts/index.js"],
+      "@ContainerComponents": ["./src/components/containers/index.js"],
+      "@Assets/*": ["./src/assets/*"],
+      "@Contexts": ["./src/contexts/index.js"],
+      "@Hooks": ["./src/hooks/index.js"],
+      "@Pages": ["./src/pages/index.js"],
+      "@APIs": ["./src/services/API/index.js"],
+      "@Cryptos": ["./src/services/Crypto/index.js"],
+      "@Databases": ["./src/services/Database/index.js"],
+      "@Entities": ["./src/services/Entity/index.js"],
+      "@Helpers": ["./src/utils/Helpers/index.js"],
+      "@Constants": ["./src/utils/Constants/index.js"]
+    }
+  },
+  "exclude": ["node_modules", "build"]
+}

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 
-import next from '../../../assets/images/next.svg'
+import next from '@Assets/images/next.svg'
+
 import './Carousel.css'
 
 const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {

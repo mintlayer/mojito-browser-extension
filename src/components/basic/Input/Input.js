@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import useStyleClasses from '../../../hooks/UseStyleClasses/useStyleClasses'
+
+import { useStyleClasses } from '@Hooks'
 
 import './Input.css'
 

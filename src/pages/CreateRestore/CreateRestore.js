@@ -1,10 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Button from '../../components/basic/Button/Button'
-
-import VerticalGroup from '../../components/layouts/VerticalGroup/VerticalGroup'
-import CenteredLayout from '../../components/layouts/CenteredLayout/CenteredLayout'
+import { Button } from '@BasicComponents'
+import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 
 const CreateRestorePage = () => {
   const navigate = useNavigate()

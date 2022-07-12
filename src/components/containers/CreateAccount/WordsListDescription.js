@@ -1,4 +1,4 @@
-import CenteredLayout from '../../layouts/CenteredLayout/CenteredLayout'
+import { CenteredLayout } from '@LayoutComponents'
 
 import './WordsListDescription.css'
 

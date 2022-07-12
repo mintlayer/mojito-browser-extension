@@ -1,12 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react'
 
-import Svg from '../../../basic/Svg/Svg'
-import {
-  createArcGenerator,
-  createPieGenerator,
-  createTooltip,
-  buildArc,
-} from '../../../basic/Arc/Arc'
+import { Svg, Arc } from '@BasicComponents'
 
 import './ArcChart.css'
 
@@ -17,14 +11,14 @@ const DATASAMPLE = [
 
 const ArcChart = ({ data = DATASAMPLE, width = '200px', height = '100px' }) => {
   const container = useRef(null)
-  const [tooltip] = useState(createTooltip)
-  const [pieGenerator] = useState(createPieGenerator)
-  const [arcGenerator] = useState(createArcGenerator)
+  const [tooltip] = useState(Arc.createTooltip)
+  const [pieGenerator] = useState(Arc.createPieGenerator)
+  const [arcGenerator] = useState(Arc.createArcGenerator)
 
   useEffect(() => {
     const pathData = pieGenerator(data)
 
-    buildArc({
+    Arc.buildArc({
       pathData,
       arcGenerator,
       tooltip,

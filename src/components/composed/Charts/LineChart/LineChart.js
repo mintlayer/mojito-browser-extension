@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 
-import Svg from '../../../basic/Svg/Svg'
-import Line from '../../../basic/Line/Line'
+import { Svg, Line } from '@BasicComponents'
 
 const POINTSSAMPLE = [
   [0, 10],

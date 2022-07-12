@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Expressions from '../../../utils/Constants/Expressions'
-import { validateMnemonic } from '../../../services/Crypto/BTC/BTC'
+import { Expressions } from '@Constants'
+import { BTC } from '@Cryptos'
 
-import Button from '../../basic/Button/Button'
-import ProgressTracker from '../../composed/ProgressTracker/ProgressTracker'
-import Header from '../../composed/Header/Header'
-import TextField from '../../composed/TextField/TextField'
-import InputsList from '../../composed/InputList/InputsList'
-import CenteredLayout from '../../layouts/CenteredLayout/CenteredLayout'
-import VerticalGroup from '../../layouts/VerticalGroup/VerticalGroup'
+import { Button } from '@BasicComponents'
+import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
+import {
+  ProgressTracker,
+  Header,
+  TextField,
+  InputList,
+} from '@ComposedComponents'
 
 import './RestoreAccount.css'
 
@@ -18,7 +19,7 @@ const RestoreAccount = ({
   step,
   setStep,
   onStepsFinished,
-  validateMnemonicFn = validateMnemonic,
+  validateMnemonicFn = BTC.validateMnemonic,
 }) => {
   const inputExtraclasses = ['account-input']
   const passwordPattern = Expressions.PASSWORD
@@ -199,7 +200,7 @@ const RestoreAccount = ({
             </CenteredLayout>
           )}
           {step === 4 && (
-            <InputsList
+            <InputList
               fields={wordsFields}
               setFields={setWordsFields}
               restoreMode

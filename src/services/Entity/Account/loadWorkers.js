@@ -1,4 +1,4 @@
-import { USE_WEB_WORKERS } from '../../../utils/Constants/EnvironmentVars'
+import { EnvVars } from '@Constants'
 
 /**
  * This files is needed because Jest cannot run with WebWorkers
@@ -15,7 +15,7 @@ const loadAccountSubRoutines = async () => {
     decryptSeed
 
   /* istanbul ignore if */
-  if (USE_WEB_WORKERS) {
+  if (EnvVars.USE_WEB_WORKERS) {
     const workers = await import('./Account.worker')
     generateNewAccountMnemonic = workers.generateNewAccountMnemonic
     generateSeed = workers.generateSeed

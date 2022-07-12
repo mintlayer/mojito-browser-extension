@@ -1,9 +1,8 @@
 import React, { useState, useRef } from 'react'
 
-import Button from '../../basic/Button/Button'
-
-import { ReactComponent as IconClose } from '../../../assets/images/icon-close.svg'
-import { useOnClickOutside } from '../../../hooks/UseOnClickOutside/useOnClickOutside'
+import { Button } from '@BasicComponents'
+import { useOnClickOutside } from '@Hooks'
+import { ReactComponent as IconClose } from '@Assets/images/icon-close.svg'
 
 import './Popup.css'
 

@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Expressions from '../../../utils/Constants/Expressions'
-import { validateMnemonic } from '../../../services/Crypto/BTC/BTC'
+import { Expressions } from '@Constants'
+import { BTC } from '@Cryptos'
 
-import Button from '../../basic/Button/Button'
-import ProgressTracker from '../../composed/ProgressTracker/ProgressTracker'
-import Header from '../../composed/Header/Header'
-import TextField from '../../composed/TextField/TextField'
-import InputsList from '../../composed/InputList/InputsList'
-import CenteredLayout from '../../layouts/CenteredLayout/CenteredLayout'
-import VerticalGroup from '../../layouts/VerticalGroup/VerticalGroup'
+import { Button } from '@BasicComponents'
+import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
+import {
+  Header,
+  InputList,
+  ProgressTracker,
+  TextField,
+} from '@ComposedComponents'
 
 import WordsDescription from './WordsListDescription'
 
@@ -21,7 +22,7 @@ const CreateAccount = ({
   setStep,
   words = [],
   onStepsFinished,
-  validateMnemonicFn = validateMnemonic,
+  validateMnemonicFn = BTC.validateMnemonic,
 }) => {
   const inputExtraclasses = ['set-account-input']
   const passwordPattern = Expressions.PASSWORD
@@ -191,7 +192,7 @@ const CreateAccount = ({
           )}
           {step === 3 && <WordsDescription />}
           {step === 4 && (
-            <InputsList
+            <InputList
               wordsList={words}
               fields={wordsFields}
               setFields={setWordsFields}
@@ -199,7 +200,7 @@ const CreateAccount = ({
             />
           )}
           {step === 5 && (
-            <InputsList
+            <InputList
               wordsList={words}
               fields={wordsFields}
               setFields={setWordsFields}
