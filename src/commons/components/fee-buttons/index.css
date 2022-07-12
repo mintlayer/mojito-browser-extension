@@ -1,0 +1,21 @@
+.fee-buttons {
+  display: flex;
+  width: 18rem;
+  height: 4rem;
+}
+
+.btn {
+  display: flex;
+  color: rgb(var(--text-black));
+  background-color: rgb(var(--color-extra-light-green));
+  font-size: 1.25rem;
+  font-weight: lighter;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn.alternate {
+  font-weight: bold;
+  color: rgb(var(--color-white));
+  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+}
