@@ -1,4 +1,4 @@
-# How to Contribute
+# :godmode: How to Contribute
 
 Follow this for each task:
 
@@ -23,7 +23,7 @@ Follow this for each task:
 - Remove your branch after merging
 - Move your asana task to `Ready do be deployed`
 
-## File Structure
+## :card_index_dividers: File Structure
 
 This part is meant to describe how the project is structured. So if you are creating a new feature or fixing something, you should follow this organization.
 
@@ -48,19 +48,25 @@ Everything should have visual tests in this folder. Unit tests can be done if ne
   - **@Cryptos**
   - **@Entities**
 
-##### Basic (import from @BasicComponents)
+##### :bust_in_silhouette: Basic (import from @BasicComponents)
 
 Only visual components which use **only** simple HTML elements should be here.
 
 Components here should be generic. No specific logic or properties should be in these components.
 
-##### Composed (import from @ComposedComponents)
+##### :busts_in_silhouette: Composed (import from @ComposedComponents)
 
 Visual components which are made of other components, with or without extra HTML elements.
 
 Components here should be generic. No specific logic or properties should be in these components.
 
-##### Containers (import from @ContainerComponents)
+##### :straight_ruler: Layout (import from @LayoutsComponents)
+
+Visual components which are made just for visual structure purposes
+
+Components here should be generic. No specific logic or properties should be in these components.
+
+##### :card_file_box: Containers (import from @ContainerComponents)
 
 Visual components used by a specific `Page`. They could be build out of `Basic` and/or `Composed`, with or without extra HTML elements.
 
@@ -68,7 +74,7 @@ Also, here it is allowed to have specific logic and properties.
 
 ---
 
-#### Hooks (import from @Hooks)
+#### :hook: Hooks (import from @Hooks)
 
 Project's custom hooks.
 
@@ -78,7 +84,7 @@ Everything should have a unit test here.
 
 ---
 
-#### Contexts (import from @Contexts)
+#### :bookmark_tabs: Contexts (import from @Contexts)
 
 Projects custom contexts.
 
@@ -90,11 +96,11 @@ Everything should have a unit test here.
 
 ##### Assets
 
-###### Styles (import from @Assets/styles/{file}.css)
+###### :paintbrush: Styles (import from @Assets/styles/{file}.css)
 
 Common styles and CSS variables that will affect or be used throught the whole app.
 
-###### Images (import from @Assets/images/{image}.{svg|png|jpg})
+###### :framed_picture: Images (import from @Assets/images/{image}.{svg|png|jpg})
 
 Common image that be used throught the whole app.
 
@@ -104,7 +110,7 @@ Common image that be used throught the whole app.
 
 Not visual dependencies should be in this directory.
 
-###### API (import from @APIs)
+###### :inbox_tray: API (import from @APIs)
 
 Connections to external services should be in this directory.
 
@@ -112,7 +118,7 @@ Ex.: Coinlayer.com, Electrum server...
 
 Each external service should be on its own folder with its own test file.
 
-###### Database (import from @Databases)
+###### :file_cabinet: Database (import from @Databases)
 
 Connections to databases should be in this directory.
 
@@ -120,7 +126,7 @@ Ex.: IndexedDB, LocalStorage...
 
 Each database `Service` should be on its own folder with its own test file. If a WebWorker is needed should be in its own folder as well.
 
-###### Crypto (import from @Cryptos)
+###### :old_key: Crypto (import from @Cryptos)
 
 Blockchain token and encryption functions should be in this directory.
 
@@ -128,7 +134,7 @@ Ex.: BTC, MLT, ETH, AES, PBKDF2...
 
 Each crypto `Service` should be on its own folder with its own test file. If a WebWorker is needed it should be in this folder as well.
 
-###### Entity (import from @Entities)
+###### :raising_hand_woman: Entity (import from @Entities)
 
 Entities that are saved in the app should be in this directory.
 
@@ -138,7 +144,7 @@ Each entity `Service` should be on its own folder with its own test file. If a W
 
 ---
 
-##### Pages (import from @Pages)
+##### :page_with_curl: Pages (import from @Pages)
 
 Every page, **related to a route** in `src/index.js`, should be here.
 
