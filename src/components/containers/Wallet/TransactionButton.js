@@ -1,4 +1,4 @@
-import { ReactComponent as ArrowIcon } from '../../../assets/images/icon-arrow.svg'
+import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 
 import { Button } from '@BasicComponents'
 

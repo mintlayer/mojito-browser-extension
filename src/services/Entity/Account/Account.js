@@ -1,4 +1,4 @@
-import { getAddressFromPubKey, getKeysFromSeed } from '../../Crypto/BTC/BTC'
+import { BTC } from '@Cryptos'
 import { IndexedDB } from '@Databases'
 
 import loadAccountSubRoutines from './loadWorkers'
@@ -41,8 +41,8 @@ const unlockAccount = async (id, password) => {
   /* istanbul ignore next */
   if (seed.error) throw new Error(seed.error)
 
-  const [pubKey] = getKeysFromSeed(Buffer.from(seed))
-  const address = getAddressFromPubKey(pubKey)
+  const [pubKey] = BTC.getKeysFromSeed(Buffer.from(seed))
+  const address = BTC.getAddressFromPubKey(pubKey)
 
   return address
 }
