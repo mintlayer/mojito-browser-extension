@@ -27,7 +27,7 @@ Follow this for each task:
 
 This part is meant to describe how the project is structured. So if you are creating a new feature or fixing something, you should follow this organization.
 
-[You can see a visual representation of the file structure here.](./FileStructure.jpg)
+[You can see a visual representation of the file structure here.](./FileStructure.jpg?raw=true)
 
 ### SRC
 
