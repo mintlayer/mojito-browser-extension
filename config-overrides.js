@@ -1,7 +1,11 @@
 const webpack = require('webpack')
 const Dotenv = require('dotenv-webpack')
+const {
+  aliasDangerous,
+  configPaths,
+} = require('react-app-rewire-alias/lib/aliasDangerous')
 
-module.exports = function override(config) {
+module.exports = function overrideConf(config) {
   const fallback = config.resolve.fallback || {}
   Object.assign(fallback, {
     stream: require.resolve('stream-browserify'),
@@ -21,6 +25,10 @@ module.exports = function override(config) {
       ignoreStub: true,
     }),
   ])
+
+  aliasDangerous({
+    ...configPaths('./jsconfig.json'),
+  })(config)
 
   return config
 }

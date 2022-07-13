@@ -1,8 +1,11 @@
 # Mojito Browser Extension
+
 ![branch status](https://github.com/mintlayer/mojito-browser-extension/actions/workflows/node.js.yml/badge.svg)
 
 ## Setup
+
 Just clone the project, install deps and you are good to go:
+
 ```
 git clone git@github.com:mintlayer/mojito-browser-extension.git
 cd mojito-browser-extension
@@ -38,25 +41,4 @@ The build process generates a `ext.zip` file in the project's root directory. It
 
 ## How to Contribute
 
-Follow this for each task:
-
-- Move your Asana task to `In Progress` column on the project board
-- Create a new branch named `A-[id of Asana task]`
-  - E.g.:
-  ```
-  git checkout main
-  git checkout -b A-1202012043191654
-  ```
-- Do as many commits as you need.
-- Push the branch to the remote repo:
-  - E.g.:
-  ```
-  git push origin A-1202012043191654
-  ```
-- Create your PR setting a title like `A-[id of Asana task]: [short description]`:
-  - E.g.: `A-1202012043191654: Update README with branches info`
-- Set some relevant reviewers to your PR
-- Move your Asana task to `On Staging (to be tested)` column on the project board
-- After getting the approval of all of the selected reviewers, merge your branch with `Squash and merge`
-- Remove your branch after merging
-- Move your asana task to `Ready do be deployed`
+[Check here](./CONTRIBUTING.md) what you should do, and the rules you should follow, to contribute to this project.

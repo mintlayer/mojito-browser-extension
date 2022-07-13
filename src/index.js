@@ -2,42 +2,40 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
-import App from './App'
-import SetAccount from './pages/set-account'
-import RestoreAccount from './pages/restore-account'
-import Wallet from './pages/wallet'
-import SetAccountPasswordPage from './pages/list-accounts/set-account-password'
-import CreateRestore from './pages/create-restore'
+import {
+  HomePage,
+  CreateAccountPage,
+  RestoreAccountPage,
+  WalletPage,
+  SetAccountPasswordPage,
+  CreateRestorePage,
+} from '@Pages'
 
-import { ContextProvider } from './ContextProvider'
+import { AccountProvider } from '@Contexts'
 
-import reportWebVitals from './commons/utils/reportWebVitals'
+import reportWebVitals from './utils/reportWebVitals'
 
-import './constants.css'
-import './commons/assets/css/index.css'
+import '@Assets/styles/constants.css'
+import '@Assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
   <React.StrictMode>
-    <ContextProvider>
+    <AccountProvider>
       <main className="App">
         <MemoryRouter>
           <Routes>
             <Route
-              path="/wallet"
-              element={<Wallet />}
-            />
-            <Route
               path="/set-account"
-              element={<SetAccount />}
+              element={<CreateAccountPage />}
             />
             <Route
               path="/restore-account"
-              element={<RestoreAccount />}
+              element={<RestoreAccountPage />}
             />
             <Route
               path="/wallet"
-              element={<Wallet />}
+              element={<WalletPage />}
             />
             <Route
               path="/set-account-password"
@@ -45,17 +43,17 @@ root.render(
             />
             <Route
               path="/create-restore"
-              element={<CreateRestore />}
+              element={<CreateRestorePage />}
             />
             <Route
               exact
               path="/"
-              element={<App />}
+              element={<HomePage />}
             />
           </Routes>
         </MemoryRouter>
       </main>
-    </ContextProvider>
+    </AccountProvider>
   </React.StrictMode>,
 )
 

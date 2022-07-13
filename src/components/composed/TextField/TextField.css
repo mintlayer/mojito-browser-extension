@@ -1,0 +1,23 @@
+.inputLabel {
+  color: rgb(var(--color-dark-gray));
+  display: block;
+  text-align: center;
+}
+
+.inputLabel.alternate {
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.inputLabel.alternate strong {
+  font-size: 1.5rem;
+  display: block;
+  color: rgb(var(--color-black));
+}
+
+.errorMessage,
+.errorMessage * {
+  color: rgb(var(--color-red));
+  text-align: center;
+  font-weight: bold;
+}
