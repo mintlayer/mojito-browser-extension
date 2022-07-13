@@ -60,7 +60,10 @@ const WalletPage = () => {
             )}
           </div>
         </div>
-        <Wallet.TransactionsList transactionsList={transactionsList} />
+        <Wallet.TransactionsList
+          transactionsList={transactionsList}
+          getConfirmations={BTC.getConfirmationsAmount}
+        />
       </VerticalGroup>
     </div>
   )

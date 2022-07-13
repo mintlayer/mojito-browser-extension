@@ -1,19 +1,13 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
-import { Account } from '@Entities'
-
 import { Button } from '@BasicComponents'
 import { Header, Loading, TextField } from '@ComposedComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 
 import './SetPassword.css'
 
-const SetPassword = ({
-  onChangePassword,
-  onSubmit,
-  checkPassword = Account.unlockAccount,
-}) => {
+const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
   const location = useLocation()
   const account = location.state.account
 

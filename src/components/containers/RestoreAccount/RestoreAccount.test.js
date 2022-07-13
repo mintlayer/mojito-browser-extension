@@ -5,6 +5,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import RestoreAccount from './RestoreAccount'
 import { Expressions } from '@Constants'
 import { AccountProvider } from '@Contexts'
+import { BTC } from '@Cryptos'
 
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
@@ -170,6 +171,7 @@ test('Renders restore account page with step 4', () => {
         words={WORDSSAMPLE}
         onStepsFinished={onStepsFinishedFn}
         validateMnemonicFn={validateMnemonicMock}
+        defaultBTCWordList={BTC.getWordList()}
       />
     </AccountProvider>,
     { wrapper: MemoryRouter },

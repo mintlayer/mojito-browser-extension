@@ -5,6 +5,8 @@ import {
 } from '@testing-library/react'
 import { act } from 'react-dom/test-utils'
 
+import { BTC } from '@Cryptos'
+
 import TransactionDetails from './TransactionDetails'
 import { TransactionDetailsItem } from './TransactionDetails'
 
@@ -54,7 +56,12 @@ test('Render transaction detail item component', () => {
 })
 
 test('Render transaction component', () => {
-  render(<TransactionDetails transaction={TRANSCTIONSAMPLE} />)
+  render(
+    <TransactionDetails
+      transaction={TRANSCTIONSAMPLE}
+      getConfirmations={BTC.getConfirmationsAmount}
+    />,
+  )
   const transactionDetails = screen.getByTestId('transaction-details')
   const transactionDetailsItems = screen.getAllByTestId(
     'transaction-details-item',
@@ -77,7 +84,12 @@ test('Render transaction component', () => {
 })
 
 test('Render transaction out component', async () => {
-  render(<TransactionDetails transaction={TRANSCTIONSAMPLEOUT} />)
+  render(
+    <TransactionDetails
+      transaction={TRANSCTIONSAMPLEOUT}
+      getConfirmations={BTC.getConfirmationsAmount}
+    />,
+  )
 
   const transactionDetails = screen.getByTestId('transaction-details')
   const transactionDetailsItems = screen.getAllByTestId(

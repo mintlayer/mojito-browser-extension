@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { AccountContext } from '@Contexts'
 import { Account } from '@Entities'
+import { BTC } from '@Cryptos'
 
 import { Header, Loading } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
@@ -44,6 +45,8 @@ const RestoreAccountPage = () => {
       step={step}
       setStep={setStep}
       onStepsFinished={createAccount}
+      validateMnemonicFn={BTC.validateMnemonic}
+      defaultBTCWordList={BTC.getWordList()}
     />
   )
 }

@@ -3,6 +3,7 @@ import { act } from 'react-dom/test-utils'
 import { format } from 'date-fns'
 
 import Transaction from './Transaction'
+import { BTC } from '@Cryptos'
 
 const TRANSCTIONSAMPLE = {
   txid: 'txid',
@@ -26,7 +27,12 @@ const TRANSCTIONSAMPLEOUT = {
 const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'dd/MM/yyyy HH:mm')
 
 test('Render transaction component', async () => {
-  render(<Transaction transaction={TRANSCTIONSAMPLE} />)
+  render(
+    <Transaction
+      transaction={TRANSCTIONSAMPLE}
+      getConfirmations={BTC.getConfirmationsAmount}
+    />,
+  )
   const transaction = screen.getByTestId('transaction')
   const transactionOtherPart = screen.getByTestId('transaction-otherPart')
   const transactionDate = screen.getByTestId('transaction-date')

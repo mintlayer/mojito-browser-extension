@@ -28,7 +28,7 @@
     "start": "react-app-rewired start --env production",
     "build": "INLINE_RUNTIME_CHUNK=false react-app-rewired build && rm -f package.zip && (cd build && zip -r ../ext.zip ./*)",
     "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --testPathIgnorePatterns='src/pages'",
-    "coverage": "npm test --coverage ",
+    "coverage": "npm test -- --coverage ",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js",
     "prettier": "pretty-quick --staged",

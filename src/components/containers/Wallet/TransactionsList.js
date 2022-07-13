@@ -2,7 +2,7 @@ import Transaction from './Transaction'
 
 import './TransactionsList.css'
 
-const TransactionsList = ({ transactionsList }) => {
+const TransactionsList = ({ transactionsList, getConfirmations }) => {
   return (
     <ul
       className="transaction-list"
@@ -20,6 +20,7 @@ const TransactionsList = ({ transactionsList }) => {
           <Transaction
             key={index}
             transaction={transaction}
+            getConfirmations={getConfirmations}
           />
         ))
       )}

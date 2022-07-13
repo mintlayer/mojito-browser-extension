@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 
 import { EnvVars } from '@Constants'
-import { BTC } from '@Cryptos'
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 
@@ -25,10 +24,7 @@ const TransactionDetailsItem = ({ title, content }) => {
   )
 }
 
-const TransactionDetails = ({
-  transaction,
-  getConfirmationsFn = BTC.getConfirmationsAmount,
-}) => {
+const TransactionDetails = ({ transaction, getConfirmations }) => {
   const [confirmations, setConfirmations] = useState(null)
 
   const date = format(new Date(transaction?.date * 1000), 'dd/MM/yyyy HH:mm')
@@ -38,12 +34,12 @@ const TransactionDetails = ({
   const externalLink = `https://www.blockchain.com/btc-${EnvVars.BTC_NETWORK}/tx/${transaction?.txid}`
 
   useEffect(() => {
-    const getConfirmations = async () => {
-      const amount = await getConfirmationsFn(transaction)
+    const getConfirmationAmount = async () => {
+      const amount = await getConfirmations(transaction)
       setConfirmations(amount)
     }
-    getConfirmations()
-  }, [transaction, getConfirmationsFn])
+    getConfirmationAmount()
+  }, [transaction, getConfirmations])
 
   return (
     <div

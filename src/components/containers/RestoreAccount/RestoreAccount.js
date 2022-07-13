@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Expressions } from '@Constants'
-import { BTC } from '@Cryptos'
 
 import { Button } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
@@ -19,7 +18,8 @@ const RestoreAccount = ({
   step,
   setStep,
   onStepsFinished,
-  validateMnemonicFn = BTC.validateMnemonic,
+  validateMnemonicFn,
+  defaultBTCWordList,
 }) => {
   const inputExtraclasses = ['account-input']
   const passwordPattern = Expressions.PASSWORD
@@ -204,6 +204,7 @@ const RestoreAccount = ({
               fields={wordsFields}
               setFields={setWordsFields}
               restoreMode
+              BIP39DefaultWordList={defaultBTCWordList}
             />
           )}
           <CenteredLayout>

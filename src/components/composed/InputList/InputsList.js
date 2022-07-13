@@ -1,21 +1,23 @@
 import React, { useEffect, useRef } from 'react'
 
-import { BTC } from '@Cryptos'
-
 import InputListItem from './InputsListItem'
 
 import './InputsList.css'
 
-const BIP39DefaultWordList = BTC.getWordList()
-
-const isInputValid = (input, words) => {
+const isInputValid = (input, words, DefaultWordList = []) => {
   const value = input.value
   return words?.length > 0
     ? words[input.order] === value
-    : BIP39DefaultWordList.includes(input.value)
+    : DefaultWordList.includes(input.value)
 }
 
-const InputsList = ({ fields, setFields, restoreMode, wordsList = [] }) => {
+const InputsList = ({
+  fields,
+  setFields,
+  restoreMode,
+  wordsList = [],
+  BIP39DefaultWordList,
+}) => {
   const effectCalled = useRef(false)
 
   useEffect(() => {
@@ -50,7 +52,7 @@ const InputsList = ({ fields, setFields, restoreMode, wordsList = [] }) => {
 
     const validatedField = setFieldValidity(
       originalField,
-      isInputValid(originalField, wordsList),
+      isInputValid(originalField, wordsList, BIP39DefaultWordList),
     )
     const newFields = [...fields]
     newFields[index] = validatedField

@@ -7,6 +7,7 @@ import { CreateAccount } from '@ContainerComponents'
 
 import { Account, loadAccountSubRoutines } from '@Entities'
 import { AccountContext } from '@Contexts'
+import { BTC } from '@Cryptos'
 
 import './CreateAccount.css'
 
@@ -59,6 +60,8 @@ const CreateAccountPage = () => {
       setStep={setStep}
       words={words}
       onStepsFinished={createAccount}
+      validateMnemonicFn={BTC.validateMnemonic}
+      defaultBTCWordList={BTC.getWordList()}
     />
   )
 }

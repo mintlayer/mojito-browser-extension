@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Expressions } from '@Constants'
-import { BTC } from '@Cryptos'
 
 import { Button } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
@@ -22,7 +21,8 @@ const CreateAccount = ({
   setStep,
   words = [],
   onStepsFinished,
-  validateMnemonicFn = BTC.validateMnemonic,
+  validateMnemonicFn,
+  defaultBTCWordList,
 }) => {
   const inputExtraclasses = ['set-account-input']
   const passwordPattern = Expressions.PASSWORD
@@ -197,6 +197,7 @@ const CreateAccount = ({
               fields={wordsFields}
               setFields={setWordsFields}
               restoreMode={false}
+              BIP39DefaultWordList={defaultBTCWordList}
             />
           )}
           {step === 5 && (
@@ -205,6 +206,7 @@ const CreateAccount = ({
               fields={wordsFields}
               setFields={setWordsFields}
               restoreMode={true}
+              BIP39DefaultWordList={defaultBTCWordList}
             />
           )}
           <CenteredLayout>

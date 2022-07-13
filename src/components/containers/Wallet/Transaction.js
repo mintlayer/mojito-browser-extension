@@ -9,7 +9,7 @@ import TransactionDetails from './TransactionDetails'
 
 import './Transaction.css'
 
-const Transaction = ({ transaction }) => {
+const Transaction = ({ transaction, getConfirmations }) => {
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
   const date = format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
   const formatAddress = (address) => {
@@ -65,7 +65,10 @@ const Transaction = ({ transaction }) => {
       </div>
       {detailPopupOpen && (
         <PopUp setOpen={setDetailPopupOpen}>
-          <TransactionDetails transaction={transaction} />
+          <TransactionDetails
+            transaction={transaction}
+            getConfirmations={getConfirmations}
+          />
         </PopUp>
       )}
     </li>

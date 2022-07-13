@@ -1,3 +1,4 @@
+import { BTC } from '@Cryptos'
 import { fireEvent, render, screen } from '@testing-library/react'
 
 import InputsList from './InputsList'
@@ -83,6 +84,6 @@ test('genNumberClasslist function invalid', () => {
 
 test('genNumberClasslist function without words array', () => {
   const input = { value: 'tree' }
-  const validator = isInputValid(input)
+  const validator = isInputValid(input, [], BTC.getWordList())
   expect(validator).toBe(true)
 })
