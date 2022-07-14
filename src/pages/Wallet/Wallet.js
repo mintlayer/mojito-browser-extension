@@ -7,6 +7,7 @@ import { Wallet } from '@ContainerComponents'
 
 import { AccountContext } from '@Contexts'
 import { BTC } from '@Cryptos'
+import { BTC as BTCHelper } from '@Helpers'
 import { Electrum } from '@APIs'
 
 import './Wallet.css'
@@ -32,7 +33,14 @@ const WalletPage = () => {
           btcAddress,
         )
         setTransactionsList(parsedTransactions)
-        setBalance(BTC.calculateBalanceFromUtxoList(parsedTransactions))
+
+        const utxos = await Electrum.getAddressUtxo(btcAddress)
+        const satoshiBalance = BTC.calculateBalanceFromUtxoList(
+          JSON.parse(utxos),
+        )
+        setBalance(
+          BTCHelper.formatBTCValue(BTC.convertSatoshiToBtc(satoshiBalance)),
+        )
       } catch (error) {
         console.log(error, 'error')
       }
