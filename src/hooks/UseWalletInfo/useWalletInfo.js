@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 
 import { Electrum } from '@APIs'
-import { BTC } from '@Cryptos'
-import { BTC as BTCHelper } from '@Helpers'
+import { BTC } from '@Helpers'
 
 const useWalletInfo = (address) => {
   const effectCalled = useRef(false)
@@ -28,9 +27,7 @@ const useWalletInfo = (address) => {
       const utxos = await Electrum.getAddressUtxo(address)
       const satoshiBalance = BTC.calculateBalanceFromUtxoList(JSON.parse(utxos))
 
-      setBalance(
-        BTCHelper.formatBTCValue(BTC.convertSatoshiToBtc(satoshiBalance)),
-      )
+      setBalance(BTC.formatBTCValue(BTC.convertSatoshiToBtc(satoshiBalance)))
     } catch (error) {
       console.error(error)
     }

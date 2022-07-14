@@ -5,7 +5,7 @@ import {
 } from '@testing-library/react'
 import { act } from 'react-dom/test-utils'
 
-import { BTC } from '@Cryptos'
+import { BTC } from '@Helpers'
 
 import TransactionDetails from './TransactionDetails'
 import { TransactionDetailsItem } from './TransactionDetails'

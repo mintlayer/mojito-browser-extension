@@ -3,7 +3,7 @@ import { act } from 'react-dom/test-utils'
 import { format } from 'date-fns'
 
 import Transaction from './Transaction'
-import { BTC } from '@Cryptos'
+import { BTC } from '@Helpers'
 
 const TRANSCTIONSAMPLE = {
   txid: 'txid',

@@ -7,7 +7,7 @@ import { Wallet } from '@ContainerComponents'
 
 import { useWalletInfo } from '@Hooks'
 import { AccountContext } from '@Contexts'
-import { BTC } from '@Cryptos'
+import { BTC } from '@Helpers'
 
 import './Wallet.css'
 
