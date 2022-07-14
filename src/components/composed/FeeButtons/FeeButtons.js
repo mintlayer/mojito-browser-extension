@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 
-import Button from '../basic/button'
+import { Button } from '@BasicComponents'
 
-import './index.css'
+import './FeeButtons.css'
 
-const Buttons = ({ onSelect, clear = false }) => {
+const FeeButtons = ({ onSelect, clear }) => {
   const types = [
     { name: 'Low', value: 'low' },
     { name: 'Norm', value: 'norm' },
@@ -19,10 +19,10 @@ const Buttons = ({ onSelect, clear = false }) => {
   }
 
   useEffect(() => {
-    if (fee && clear) {
+    if (fee && !!clear) {
       setFee(undefined)
     }
-  }, [clear, fee])
+  }, [clear])
 
   return (
     <div>
@@ -41,4 +41,4 @@ const Buttons = ({ onSelect, clear = false }) => {
   )
 }
 
-export default Buttons
+export default FeeButtons

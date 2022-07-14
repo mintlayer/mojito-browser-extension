@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
-import FeeButtons from './index'
+import FeeButtons from './FeeButtons'
 
 const _data = {
   onSelect: jest.fn(),
