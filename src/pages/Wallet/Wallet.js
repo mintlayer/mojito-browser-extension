@@ -1,52 +1,22 @@
-import { useState, useEffect, useContext, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useNavigate } from 'react-router-dom'
+import { useState, useContext } from 'react'
 
 import { Balance, Header, PopUp } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 
+import { useWalletInfo } from '@Hooks'
 import { AccountContext } from '@Contexts'
 import { BTC } from '@Cryptos'
-import { BTC as BTCHelper } from '@Helpers'
-import { Electrum } from '@APIs'
 
 import './Wallet.css'
 
 const WalletPage = () => {
-  const effectCalled = useRef(false)
+  const navigate = useNavigate()
   const { btcAddress } = useContext(AccountContext)
   const [openShowAddress, setOpenShowAddress] = useState(false)
-  const [transactionsList, setTransactionsList] = useState([])
-  const [balance, setBalance] = useState(0)
-  const navigate = useNavigate()
 
-  useEffect(() => {
-    if (effectCalled.current) return
-    effectCalled.current = true
-
-    const getTransactions = async () => {
-      try {
-        const response = await Electrum.getAddressTransactions(btcAddress)
-        const transactions = JSON.parse(response)
-        const parsedTransactions = BTC.getParsedTransactions(
-          transactions,
-          btcAddress,
-        )
-        setTransactionsList(parsedTransactions)
-
-        const utxos = await Electrum.getAddressUtxo(btcAddress)
-        const satoshiBalance = BTC.calculateBalanceFromUtxoList(
-          JSON.parse(utxos),
-        )
-        setBalance(
-          BTCHelper.formatBTCValue(BTC.convertSatoshiToBtc(satoshiBalance)),
-        )
-      } catch (error) {
-        console.log(error, 'error')
-      }
-    }
-    getTransactions()
-  }, [btcAddress])
+  const { transactionsList, balance } = useWalletInfo(btcAddress)
 
   const setOpenTransactionForm = () => navigate('/send-transaction')
 
@@ -81,4 +51,5 @@ const WalletPage = () => {
     </div>
   )
 }
+
 export default WalletPage

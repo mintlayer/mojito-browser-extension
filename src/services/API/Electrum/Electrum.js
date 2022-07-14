@@ -20,7 +20,7 @@ const requestElectrum = async (endpoint, data = null, request = fetch) => {
     const content = await result.text()
     return Promise.resolve(content)
   } catch (error) {
-    console.dir(error)
+    console.error(error)
     throw error
   }
 }
