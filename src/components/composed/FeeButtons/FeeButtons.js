@@ -19,9 +19,10 @@ const FeeButtons = ({ onSelect, clear }) => {
   }
 
   useEffect(() => {
-    if (fee && !!clear) {
-      setFee(undefined)
+    if (clear) {
+      fee && setFee(undefined)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clear])
 
   return (
