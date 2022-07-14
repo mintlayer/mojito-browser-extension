@@ -4,7 +4,7 @@
   height: 4rem;
 }
 
-.btn {
+.fee-button {
   display: flex;
   color: rgb(var(--text-black));
   background-color: rgb(var(--color-extra-light-gray));
@@ -14,8 +14,8 @@
   align-items: center;
 }
 
-.btn.alternate {
+.fee-button.alternate {
   font-weight: bold;
   color: rgb(var(--color-white));
-  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+  background-color: rgb(var(--color-green));
 }

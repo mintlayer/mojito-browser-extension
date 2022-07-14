@@ -31,6 +31,7 @@ const FeeButtons = ({ onSelect, clear }) => {
           <Button
             key={type.value}
             alternate={fee === type.value}
+            extraStyleClasses={['fee-button']}
             onClickHandle={() => onClick(type.value)}
           >
             {type.name}
