@@ -2,7 +2,7 @@ import Balance from './Balance/Balance'
 import Carousel from './Carousel/Carousel'
 import ArcChart from './Charts/ArcChart/ArcChart'
 import LineChart from './Charts/LineChart/LineChart'
-import FeeButtons from './FeeButtons/FeeButtons'
+import RadioButtons from './RadioButtons/RadioButtons'
 import Header from './Header/Header'
 import InputList from './InputList/InputsList'
 import Loading from './Loading/Loading'
@@ -15,7 +15,7 @@ export {
   Carousel,
   ArcChart,
   LineChart,
-  FeeButtons,
+  RadioButtons,
   Header,
   InputList,
   Loading,

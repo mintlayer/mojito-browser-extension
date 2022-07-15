@@ -1,10 +1,10 @@
-.fee-buttons {
+.radio-buttons {
   display: flex;
   width: 18rem;
   height: 4rem;
 }
 
-.fee-button {
+.radio-button {
   display: flex;
   color: rgb(var(--text-black));
   background-color: rgb(var(--color-extra-light-gray));
@@ -14,7 +14,7 @@
   align-items: center;
 }
 
-.fee-button.alternate {
+.radio-button.alternate {
   font-weight: bold;
   color: rgb(var(--color-white));
   background-color: rgb(var(--color-green));
