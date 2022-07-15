@@ -14,7 +14,7 @@ const getEnoughUtxo = (transactions, target) =>
     return acc
   }, [])
 
-const utxoSelection = (utxoList, amountNeeded) => {
+const utxoSelect = (utxoList, amountNeeded) => {
   if (BTC.calculateBalanceFromUtxoList(utxoList) < amountNeeded)
     throw Error('Not enough funds')
 
@@ -30,4 +30,20 @@ const utxoSelection = (utxoList, amountNeeded) => {
   return selectedTransactions
 }
 
-export { utxoSelection }
+const buildTransaction = ({ to, amount, fee, wif }) => {
+  const transaction = { to, amount, fee, wif }
+  // get uTxos ✅
+  // select needed uTxos (LIFO) needed to cover `amount + fee` ✅
+  // request raw transaction hex from non-SegWit selected uTxos ✅
+
+  // calculate `change` as the `sum of selected uTxos - fee - amount`
+  // use selected transactions as transaction input[]
+  // if SegWit transaction, use whole raw transaction
+  // if non-SegWit, use just vout scriptPubKey
+  // set first output to `to` with value `amount`
+  // set second output to the btc addr in the app AccountContext with value of `change`
+  // sign input with WIF
+  return transaction
+}
+
+export { utxoSelect, buildTransaction }

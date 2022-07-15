@@ -1,4 +1,4 @@
-import { utxoSelection } from './BTCTransaction'
+import { utxoSelect, buildTransaction } from './BTCTransaction'
 
 import utxos from './testUtxos.json'
 
@@ -17,7 +17,7 @@ test('Select UTXO', () => {
 
   const balance = utxos.reduce(sumAll, 0)
   const targetValue = balance - utxos[0].value - 1
-  const selectedTransaction = utxoSelection(utxos, targetValue)
+  const selectedTransaction = utxoSelect(utxos, targetValue)
   const orderedUtxo = utxos.sort(orderByDateDesc)
 
   const newerFromUtxoDate = utxos.reduce(getNewerDate, 0)
@@ -40,5 +40,15 @@ test('Select UTXO - not enough funds', () => {
   const balance = utxos.reduce(sumAll, 0)
   const targetValue = balance + 1
 
-  expect(utxoSelection.bind(null, utxos, targetValue)).toThrow()
+  expect(utxoSelect.bind(null, utxos, targetValue)).toThrow()
+})
+
+test('Build transaction', () => {
+  const transaction = buildTransaction({
+    to: 'addr',
+    amount: 100,
+    fee: 1,
+    wif: 'wif',
+  })
+  console.log(transaction)
 })
