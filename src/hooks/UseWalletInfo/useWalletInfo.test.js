@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
-import rawTransactions from '../../services/Crypto/BTC/testTransactions.json'
+import rawTransactions from '../../utils/Helpers/testTransactions.json'
 import useWalletInfo from './useWalletInfo'
 
 test('UseWalletInfo hook', async () => {

@@ -108,10 +108,11 @@
       "./src/contexts/AccountProvider/AccountProvider.js",
       "./src/utils/Constants/EnvironmentVars.js",
       "./src/utils/Helpers/fees.json",
+      "./src/utils/Helpers/testTransactions.json",
       "./src/utils/reportWebVitals.js",
       "./src/services/Crypto/BTC/BTC.worker.js",
       "./src/services/Crypto/Cipher/Cipher.worker.js",
-      "./src/services/Crypto/BTC/testTransactions.json",
+      "./src/services/Crypto/BTC/testUtxos.json",
       "./src/services/Entity/Account/Account.worker.js",
       "./src/assets/images/*"
     ],

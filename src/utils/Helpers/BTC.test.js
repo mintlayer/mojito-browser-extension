@@ -8,7 +8,8 @@ import {
 } from './BTC'
 
 import fees from './fees.json'
-import rawTransactions from '../../services/Crypto/BTC/testTransactions.json'
+import rawTransactions from './testTransactions.json'
+import utxos from '../../services/Crypto/BTC/testUtxos.json'
 
 test('Parse Fees Estimates', () => {
   const estimates = parseFeesEstimates(fees)
@@ -40,46 +41,8 @@ test('BTC helpers', () => {
 })
 
 test('Calculate Balance From Utxo List', () => {
-  const utxoListSamples = [
-    {
-      txid: '6106cf34a6b0fd1d4f81bc7644237adb1f40a7da0cafff7c90212c053e63ee6e',
-      vout: 1,
-      status: {},
-      value: 881771,
-    },
-    {
-      txid: '6ec6b313788063402c7404b00433b7a30bb511fb2f73429097e0cbc4dea3be33',
-      vout: 0,
-      status: {},
-      value: 2000000,
-    },
-    {
-      txid: '0aadaf5f3a267a409a24c5adfc50ceb7a28943910da02247be7608c5934a3217',
-      vout: 1,
-      status: {},
-      value: 50000000,
-    },
-    {
-      txid: 'd9d587c9f77996e5618141a564d46f3bb7c92a7cdd8cbe9142bc43eb18a63887',
-      vout: 0,
-      status: {},
-      value: 13999000,
-    },
-    {
-      txid: '99845fd840ad2cc4d6f93fafb8b072d188821f55d9298772415175c456f3077d',
-      vout: 0,
-      status: {},
-      value: 50000,
-    },
-    {
-      txid: '164f86f0226afdda9d431e58e94b48ac4bd382b7c72b8814d6eb502678e32268',
-      vout: 0,
-      status: {},
-      value: 10000,
-    },
-  ]
-  const balance = 66940771
-  const satoshiAmount = calculateBalanceFromUtxoList(utxoListSamples)
+  const balance = 2075724
+  const satoshiAmount = calculateBalanceFromUtxoList(utxos)
   expect(satoshiAmount).toBe(balance)
 })
 
