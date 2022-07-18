@@ -1,9 +1,6 @@
 .create-tr-field {
   position: relative;
   display: flex;
-}
-
-.create-tr-field-bottom {
   padding-bottom: 37px;
 }
 
@@ -43,13 +40,14 @@
   height: 71px;
 }
 
-.create-tr-icons-wrapper {
+.create-tr-switch-button {
   position: absolute;
   top: 18px;
   right: 23px;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .create-tr-icon-arrow {
@@ -67,4 +65,10 @@
 .create-tr-icon-arrow path,
 .create-tr-icon-arrow-reverse path {
   fill: black;
+}
+
+.current-value-type {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-left: 5px;
 }
