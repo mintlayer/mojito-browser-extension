@@ -1,0 +1,70 @@
+.create-tr-field {
+  position: relative;
+  display: flex;
+}
+
+.create-tr-field-bottom {
+  padding-bottom: 37px;
+}
+
+.create-tr-filed-label {
+  display: flex;
+  width: 7.5rem;
+  font-size: 1.5rem;
+  justify-content: flex-start;
+  align-items: center;
+  word-break: break-all;
+}
+
+.create-input-wrapper {
+  position: relative;
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.create-tr-note {
+  position: absolute;
+  bottom: 8px;
+  left: 9rem;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.create-trasaction-input {
+  height: 71px;
+  width: 100%;
+}
+
+.create-trasaction-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 87px;
+  height: 71px;
+}
+
+.create-tr-icons-wrapper {
+  position: absolute;
+  top: 18px;
+  right: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-tr-icon-arrow {
+  height: 30px;
+  width: auto;
+  margin-left: -5px;
+}
+
+.create-tr-icon-arrow-reverse {
+  height: 30px;
+  width: auto;
+  transform: rotate(180deg);
+}
+
+.create-tr-icon-arrow path,
+.create-tr-icon-arrow-reverse path {
+  fill: black;
+}
