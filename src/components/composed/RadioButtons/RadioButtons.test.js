@@ -1,13 +1,19 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
-import FeeButtons from './FeeButtons'
+import RadioButtons from './RadioButtons'
 
 const _data = {
+  value: undefined,
+  options: [
+    { name: 'low', value: 'low' },
+    { name: 'norm', value: 'norm' },
+    { name: 'high', value: 'high' },
+  ],
   onSelect: jest.fn(),
 }
 
 const setup = ({ data = _data } = {}) => {
-  const utils = render(<FeeButtons {...data} />)
+  const utils = render(<RadioButtons {...data} />)
   const low = screen.getByRole('button', { name: /low/i })
   const norm = screen.getByRole('button', { name: /norm/i })
   const high = screen.getByRole('button', { name: /high/i })
@@ -19,7 +25,7 @@ const setup = ({ data = _data } = {}) => {
   }
 }
 
-test('Renders FeeButtons page', () => {
+test('Renders RadioButtons page', () => {
   const { low, norm, high } = setup()
 
   expect(low).toBeInTheDocument()
@@ -27,7 +33,7 @@ test('Renders FeeButtons page', () => {
   expect(high).toBeInTheDocument()
 })
 
-test('Renders FeeButtons page and click on low', async () => {
+test('Renders RadioButtons and click on low', async () => {
   const { low } = setup()
 
   fireEvent.click(low)
@@ -35,19 +41,24 @@ test('Renders FeeButtons page and click on low', async () => {
   expect(low).toHaveClass('alternate')
 })
 
-test('Renders FeeButtons page clear option', async () => {
+test('Renders RadioButtons and reset selection with new value', async () => {
   const { low, utils } = setup()
 
   fireEvent.click(low)
   expect(low).toHaveClass('alternate')
 
-  utils.rerender(<FeeButtons clear />)
+  utils.rerender(
+    <RadioButtons
+      {..._data}
+      value={1}
+    />,
+  )
   expect(screen.getByRole('button', { name: /low/i })).not.toHaveClass(
     'alternate',
   )
 })
 
-test('Renders FeeButtons page and unselected', async () => {
+test('Renders RadioButtons do select and unselected', async () => {
   const { low } = setup()
 
   fireEvent.click(low)
