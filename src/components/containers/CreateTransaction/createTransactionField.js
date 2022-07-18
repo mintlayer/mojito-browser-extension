@@ -9,79 +9,62 @@ const CreateTransactionField = ({
   buttonTitle,
   transactionData,
   inputValue,
-  setInputValue,
   validity,
 }) => {
   const [bottomValue, setBottomValue] = useState('')
   const [currentValueType, setCurrentValueType] = useState(
     transactionData ? transactionData.tokenName : 'Token',
   )
+  const [value, setValue] = useState(inputValue)
 
-  if (!transactionData) {
-    return null
-  }
+  if (!transactionData) return null
 
   const { tokenName, fiatName, exchangeRate } = transactionData
   const maxCryptoValue = transactionData.maxValueInToken
   const maxFiatValue = maxCryptoValue * transactionData.exchangeRate
   const buttonExtraClasses = ['create-trasaction-button']
   const inputExtraClasses = ['create-trasaction-input']
-  /* istanbul ignore next */
+
+  const isTypeFiat = () => currentValueType === fiatName
+
   const finaBottomValue = `≈ ${bottomValue ? bottomValue : 0} ${
-    currentValueType === fiatName ? tokenName : fiatName
+    isTypeFiat() ? tokenName : fiatName
   }`
-  /* istanbul ignore next */
-  const calculateFiatValue = (value) => {
-    return value * exchangeRate
-  }
 
-  /* istanbul ignore next */
-  const calculateCryptoValue = (value) => {
-    return value / exchangeRate
-  }
+  const calculateFiatValue = (value) => value * exchangeRate
 
-  /* istanbul ignore next */
+  const calculateCryptoValue = (value) => value / exchangeRate
+
   const updateValue = (value) => {
-    currentValueType === fiatName
+    isTypeFiat()
       ? setBottomValue(calculateCryptoValue(value))
       : setBottomValue(calculateFiatValue(value))
   }
 
-  /* istanbul ignore next */
-  const switchToFiat = (value) => {
-    setCurrentValueType(fiatName)
+  const switchCurrency = (currencyName, recalculateFn) => {
+    setCurrentValueType(currencyName)
     setBottomValue(value)
-    setInputValue(value > 0 ? calculateFiatValue(value) : '')
+    setValue(value > 0 ? recalculateFn(value) : '0')
   }
 
-  /* istanbul ignore next */
-  const switchToCrypto = (value) => {
-    setCurrentValueType(tokenName)
-    setBottomValue(value)
-    setInputValue(value > 0 ? calculateCryptoValue(value) : '')
-  }
-
-  /* istanbul ignore next */
   const changeButtonClickHandler = () => {
-    currentValueType === fiatName
-      ? switchToCrypto(inputValue)
-      : switchToFiat(inputValue)
+    isTypeFiat()
+      ? switchCurrency(tokenName, calculateCryptoValue)
+      : switchCurrency(fiatName, calculateFiatValue)
   }
 
-  /* istanbul ignore next */
   const actionButtonClickHandler = () => {
-    if (currentValueType === fiatName) {
-      setInputValue(maxFiatValue)
+    if (isTypeFiat()) {
+      setValue(maxFiatValue)
       setBottomValue(maxFiatValue / exchangeRate)
     } else {
-      setInputValue(maxCryptoValue)
+      setValue(maxCryptoValue)
       setBottomValue(maxCryptoValue * exchangeRate)
     }
   }
 
-  /* istanbul ignore next */
   const changeHandler = (e) => {
-    setInputValue(e.target.value)
+    setValue(e.target.value)
     updateValue(e.target.value)
   }
 
@@ -102,7 +85,7 @@ const CreateTransactionField = ({
           id="transactionInput"
           extraStyleClasses={inputExtraClasses}
           placeholder={placeholder}
-          value={inputValue}
+          value={value}
           onChangeHandle={changeHandler}
           validity={validity}
         />

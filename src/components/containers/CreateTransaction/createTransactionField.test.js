@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import { act } from 'react-dom/test-utils'
 
 import CreateTransactionField from './createTransactionField'
 
@@ -17,18 +18,15 @@ const PROPSSAMPLE = {
   placeholder: 'Placeholder',
   value: '',
   transactionData: TRANSACTIONDATASAMPLE,
-  setValue: ONCHANGEHANDLESAMPLE,
 }
 
 test('Render TextField component', () => {
-  const mockOnCHangeFn = jest.fn()
   render(
     <CreateTransactionField
       label={PROPSSAMPLE.label}
       buttonTitle={PROPSSAMPLE.buttonTitle}
       placeholder={PROPSSAMPLE.placeholder}
       inputValue={PROPSSAMPLE.value}
-      setInputValue={mockOnCHangeFn}
       transactionData={PROPSSAMPLE.transactionData}
     />,
   )
@@ -66,29 +64,46 @@ test('Render TextField component', () => {
 })
 
 test('Render TextField component fdf', () => {
-  const mockOnCHangeFn = jest.fn()
   render(
     <CreateTransactionField
       label={PROPSSAMPLE.label}
       buttonTitle={PROPSSAMPLE.buttonTitle}
       placeholder={PROPSSAMPLE.placeholder}
       inputValue={PROPSSAMPLE.value}
-      setInputValue={mockOnCHangeFn}
       transactionData={PROPSSAMPLE.transactionData}
     />,
   )
 
-  // const switchButton = screen.getByTestId('create-tr-switch-button')
-  // const actionButton = screen.getByTestId('button')
-  // const bottomNote = screen.getByTestId('create-tr-bottom-note')
-  // const input = screen.getByTestId('input')
+  const switchButton = screen.getByTestId('create-tr-switch-button')
+  const actionButton = screen.getByTestId('button')
+  const bottomNote = screen.getByTestId('create-tr-bottom-note')
+  const input = screen.getByTestId('input')
 
-  // fireEvent.click(actionButton)
-  // expect(input).toHaveValue(TRANSACTIONDATASAMPLE.maxValueInToken)
-  // fireEvent.click(switchButton)
-  // expect(bottomNote).toHaveTextContent(
-  //   TRANSACTIONDATASAMPLE.maxValueInToken
-  // )
+  fireEvent.click(actionButton)
+  expect(input).toHaveValue(TRANSACTIONDATASAMPLE.maxValueInToken.toString())
+
+  fireEvent.click(switchButton)
+  expect(bottomNote).toHaveTextContent(TRANSACTIONDATASAMPLE.maxValueInToken)
+
+  fireEvent.change(input, { target: { value: '' } })
+
+  fireEvent.click(actionButton)
+  expect(input).toHaveValue(
+    (
+      TRANSACTIONDATASAMPLE.maxValueInToken * TRANSACTIONDATASAMPLE.exchangeRate
+    ).toString(),
+  )
+
+  fireEvent.click(switchButton)
+  expect(input).toHaveValue(TRANSACTIONDATASAMPLE.maxValueInToken.toString())
+
+  fireEvent.change(input, { target: { value: '0' } })
+  fireEvent.click(switchButton)
+  expect(input).toHaveValue('0')
+
+  fireEvent.change(input, { target: { value: '0' } })
+  fireEvent.click(switchButton)
+  expect(input).toHaveValue('0')
 })
 
 test('Render TextField component without transactionData', () => {
