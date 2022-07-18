@@ -1,0 +1,21 @@
+.radio-buttons {
+  display: flex;
+  width: 100%;
+  height: 4rem;
+}
+
+.radio-button {
+  display: flex;
+  color: rgb(var(--text-black));
+  background-color: rgb(var(--color-extra-light-gray));
+  font-size: 1.25rem;
+  font-weight: lighter;
+  justify-content: center;
+  align-items: center;
+}
+
+.radio-button.alternate {
+  font-weight: bold;
+  color: rgb(var(--color-white));
+  background-color: rgb(var(--color-green));
+}
