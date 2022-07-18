@@ -10,6 +10,7 @@ const CreateTransactionField = ({
   transactionData,
   inputValue,
   setInputValue,
+  validity,
 }) => {
   const [bottomValue, setBottomValue] = useState('')
   const [currentValueType, setCurrentValueType] = useState(
@@ -20,13 +21,11 @@ const CreateTransactionField = ({
     return null
   }
 
-  const buttonExtraClasses = ['create-trasaction-button']
-  const inputExtraClasses = ['create-trasaction-input']
-  const fiatName = transactionData.fiatName
-  const tokenName = transactionData.tokenName
-  const exchangeRate = transactionData.exchangeRate
+  const { tokenName, fiatName, exchangeRate } = transactionData
   const maxCryptoValue = transactionData.maxValueInToken
   const maxFiatValue = maxCryptoValue * transactionData.exchangeRate
+  const buttonExtraClasses = ['create-trasaction-button']
+  const inputExtraClasses = ['create-trasaction-input']
   /* istanbul ignore next */
   const finaBottomValue = `≈ ${bottomValue ? bottomValue : 0} ${
     currentValueType === fiatName ? tokenName : fiatName
@@ -83,12 +82,6 @@ const CreateTransactionField = ({
   /* istanbul ignore next */
   const changeHandler = (e) => {
     setInputValue(e.target.value)
-    if (currentValueType === tokenName && e.target.value > maxCryptoValue) {
-      setInputValue(maxCryptoValue)
-    }
-    if (currentValueType === fiatName && e.target.value > maxFiatValue) {
-      setInputValue(maxFiatValue)
-    }
     updateValue(e.target.value)
   }
 
@@ -111,7 +104,7 @@ const CreateTransactionField = ({
           placeholder={placeholder}
           value={inputValue}
           onChangeHandle={changeHandler}
-          number
+          validity={validity}
         />
 
         <button
