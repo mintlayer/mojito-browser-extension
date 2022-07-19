@@ -1,9 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { act } from 'react-dom/test-utils'
 
-import CreateTransactionField from './createTransactionField'
-
-const ONCHANGEHANDLESAMPLE = () => {}
+import CryptoFiatField from './CryptoFiatField'
 
 const TRANSACTIONDATASAMPLE = {
   fiatName: 'USD',
@@ -22,7 +19,7 @@ const PROPSSAMPLE = {
 
 test('Render TextField component', () => {
   render(
-    <CreateTransactionField
+    <CryptoFiatField
       label={PROPSSAMPLE.label}
       buttonTitle={PROPSSAMPLE.buttonTitle}
       placeholder={PROPSSAMPLE.placeholder}
@@ -31,13 +28,13 @@ test('Render TextField component', () => {
     />,
   )
 
-  const component = screen.getByTestId('create-transaction-field')
-  const label = screen.getByTestId('create-transaction-label')
+  const component = screen.getByTestId('crypto-fiat-field')
+  const label = screen.getByTestId('crypto-fiat-field-label')
   const input = screen.getByTestId('input')
-  const switchButton = screen.getByTestId('create-tr-switch-button')
+  const switchButton = screen.getByTestId('crypto-fiat-switch-button')
   const arrowIcons = screen.getAllByTestId('arrow-icon')
   const actionButton = screen.getByTestId('button')
-  const bottomNote = screen.getByTestId('create-tr-bottom-note')
+  const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
 
   expect(component).toBeInTheDocument()
 
@@ -65,7 +62,7 @@ test('Render TextField component', () => {
 
 test('Render TextField component fdf', () => {
   render(
-    <CreateTransactionField
+    <CryptoFiatField
       label={PROPSSAMPLE.label}
       buttonTitle={PROPSSAMPLE.buttonTitle}
       placeholder={PROPSSAMPLE.placeholder}
@@ -74,9 +71,9 @@ test('Render TextField component fdf', () => {
     />,
   )
 
-  const switchButton = screen.getByTestId('create-tr-switch-button')
+  const switchButton = screen.getByTestId('crypto-fiat-switch-button')
   const actionButton = screen.getByTestId('button')
-  const bottomNote = screen.getByTestId('create-tr-bottom-note')
+  const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
   const input = screen.getByTestId('input')
 
   fireEvent.click(actionButton)
@@ -107,9 +104,7 @@ test('Render TextField component fdf', () => {
 })
 
 test('Render TextField component without transactionData', () => {
-  render(<CreateTransactionField />)
+  render(<CryptoFiatField />)
 
-  expect(
-    screen.queryByTestId('create-transaction-field'),
-  ).not.toBeInTheDocument()
+  expect(screen.queryByTestId('crypto-fiat-field')).not.toBeInTheDocument()
 })

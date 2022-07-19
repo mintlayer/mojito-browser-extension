@@ -1,6 +1,5 @@
 import CreateAccount from './CreateAccount/CreateAccount'
 import RestoreAccount from './RestoreAccount/RestoreAccount'
-import CreateTransactionField from './CreateTransaction/createTransactionField'
 
 import LoginContainer from './Login/Login'
 import SetPassword from './Login/SetPassword'
@@ -26,4 +25,4 @@ const Login = {
   SetPassword,
 }
 
-export { CreateAccount, CreateTransactionField, RestoreAccount, Wallet, Login }
+export { CreateAccount, RestoreAccount, Wallet, Login }

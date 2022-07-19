@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { Button, Input } from '@BasicComponents'
-import './createTransactionField.css'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 
-const CreateTransactionField = ({
+import './CryptoFiatField.css'
+
+const CryptoFiatField = ({
   label,
   placeholder,
   buttonTitle,
@@ -11,6 +12,18 @@ const CreateTransactionField = ({
   inputValue,
   validity,
 }) => {
+  const formatCryptoValue = (value) =>
+    value
+      .toFixed(8)
+      .replace(/\.0+$/, '')
+      .replace(/(\.[1-9]+)(0+)$/, '$1')
+
+  const formatFiatValue = (value) =>
+    value
+      .toFixed(2)
+      .replace(/\.0+$/, '')
+      .replace(/(\.[1-9]+)(0+)$/, '$1')
+
   const [bottomValue, setBottomValue] = useState('')
   const [currentValueType, setCurrentValueType] = useState(
     transactionData ? transactionData.tokenName : 'Token',
@@ -31,9 +44,10 @@ const CreateTransactionField = ({
     isTypeFiat() ? tokenName : fiatName
   }`
 
-  const calculateFiatValue = (value) => value * exchangeRate
+  const calculateFiatValue = (value) => formatFiatValue(value * exchangeRate)
 
-  const calculateCryptoValue = (value) => value / exchangeRate
+  const calculateCryptoValue = (value) =>
+    formatCryptoValue(value / exchangeRate)
 
   const updateValue = (value) => {
     isTypeFiat()
@@ -44,7 +58,7 @@ const CreateTransactionField = ({
   const switchCurrency = (currencyName, recalculateFn) => {
     setCurrentValueType(currencyName)
     setBottomValue(value)
-    setValue(value > 0 ? recalculateFn(value) : '0')
+    setValue(recalculateFn(value))
   }
 
   const changeButtonClickHandler = () => {
@@ -56,10 +70,10 @@ const CreateTransactionField = ({
   const actionButtonClickHandler = () => {
     if (isTypeFiat()) {
       setValue(maxFiatValue)
-      setBottomValue(maxFiatValue / exchangeRate)
+      setBottomValue(formatCryptoValue(maxFiatValue / exchangeRate))
     } else {
       setValue(maxCryptoValue)
-      setBottomValue(maxCryptoValue * exchangeRate)
+      setBottomValue(formatFiatValue(maxCryptoValue * exchangeRate))
     }
   }
 
@@ -70,17 +84,17 @@ const CreateTransactionField = ({
 
   return (
     <div
-      className="create-tr-field"
-      data-testid="create-transaction-field"
+      className="crypto-fiat-field"
+      data-testid="crypto-fiat-field"
     >
       <label
-        className="create-tr-filed-label"
+        className="crypto-fiat-field-label"
         htmlFor="transactionInput"
-        data-testid="create-transaction-label"
+        data-testid="crypto-fiat-field-label"
       >
         {label}
       </label>
-      <div className="create-input-wrapper">
+      <div className="fiat-field-input">
         <Input
           id="transactionInput"
           extraStyleClasses={inputExtraClasses}
@@ -91,16 +105,16 @@ const CreateTransactionField = ({
         />
 
         <button
-          className="create-tr-switch-button"
-          data-testid="create-tr-switch-button"
+          className="crypto-fiat-switch-button"
+          data-testid="crypto-fiat-switch-button"
           onClick={changeButtonClickHandler}
         >
           <ArrowIcon
-            className="create-tr-icon-arrow-reverse"
+            className="crypto-fiat-icon-reverse"
             data-testid="arrow-icon"
           />
           <ArrowIcon
-            className="create-tr-icon-arrow"
+            className="crypto-fiat-icon"
             data-testid="arrow-icon"
           />
           <span className="current-value-type">{currentValueType}</span>
@@ -115,8 +129,8 @@ const CreateTransactionField = ({
       </Button>
 
       <p
-        className="create-tr-note"
-        data-testid="create-tr-bottom-note"
+        className="crypto-fiat-bottom-text"
+        data-testid="crypto-fiat-bottom-text"
       >
         {finaBottomValue}
       </p>
@@ -124,4 +138,4 @@ const CreateTransactionField = ({
   )
 }
 
-export default CreateTransactionField
+export default CryptoFiatField
