@@ -1,0 +1,74 @@
+.crypto-fiat-field {
+  position: relative;
+  display: flex;
+  padding-bottom: 37px;
+}
+
+.crypto-fiat-field-label {
+  display: flex;
+  width: 7.5rem;
+  font-size: 1.5rem;
+  justify-content: flex-start;
+  align-items: center;
+  word-break: break-all;
+}
+
+.fiat-field-input {
+  position: relative;
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.crypto-fiat-bottom-text {
+  position: absolute;
+  bottom: 8px;
+  left: 9rem;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.crypto-fiat-input {
+  height: 71px;
+  width: 100%;
+}
+
+.crypto-fiat-input-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 87px;
+  height: 71px;
+}
+
+.crypto-fiat-switch-button {
+  position: absolute;
+  top: 18px;
+  right: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.crypto-fiat-icon {
+  height: 30px;
+  width: auto;
+  margin-left: -5px;
+}
+
+.crypto-fiat-icon-reverse {
+  height: 30px;
+  width: auto;
+  transform: rotate(180deg);
+}
+
+.crypto-fiat-icon path,
+.crypto-fiat-icon-reverse path {
+  fill: black;
+}
+
+.current-value-type {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-left: 5px;
+}

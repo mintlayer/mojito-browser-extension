@@ -9,6 +9,7 @@ import Loading from './Loading/Loading'
 import PopUp from './PopUp/Popup'
 import ProgressTracker from './ProgressTracker/ProgressTracker'
 import TextField from './TextField/TextField'
+import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 
 export {
   Balance,
@@ -22,4 +23,5 @@ export {
   PopUp,
   ProgressTracker,
   TextField,
+  CryptoFiatField,
 }
