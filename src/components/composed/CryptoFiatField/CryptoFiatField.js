@@ -10,7 +10,7 @@ const CryptoFiatField = ({
   buttonTitle,
   transactionData,
   inputValue,
-  validity,
+  validity: parentValidity,
 }) => {
   const formatCryptoValue = (value) =>
     value
@@ -18,25 +18,22 @@ const CryptoFiatField = ({
       .replace(/\.0+$/, '')
       .replace(/(\.[1-9]+)(0+)$/, '$1')
 
-  const formatFiatValue = (value) =>
-    value
-      .toFixed(2)
-      .replace(/\.0+$/, '')
-      .replace(/(\.[1-9]+)(0+)$/, '$1')
+  const formatFiatValue = (value) => value.toFixed(2)
 
   const [bottomValue, setBottomValue] = useState('')
   const [currentValueType, setCurrentValueType] = useState(
     transactionData ? transactionData.tokenName : 'Token',
   )
   const [value, setValue] = useState(inputValue)
+  const [validity, setValidity] = useState(parentValidity)
 
   if (!transactionData) return null
 
   const { tokenName, fiatName, exchangeRate } = transactionData
   const maxCryptoValue = transactionData.maxValueInToken
   const maxFiatValue = maxCryptoValue * transactionData.exchangeRate
-  const buttonExtraClasses = ['create-trasaction-button']
-  const inputExtraClasses = ['create-trasaction-input']
+  const buttonExtraClasses = ['crypto-fiat-input-button']
+  const inputExtraClasses = ['crypto-fiat-input']
 
   const isTypeFiat = () => currentValueType === fiatName
 
@@ -69,17 +66,23 @@ const CryptoFiatField = ({
 
   const actionButtonClickHandler = () => {
     if (isTypeFiat()) {
-      setValue(maxFiatValue)
+      setValue(formatFiatValue(maxFiatValue))
       setBottomValue(formatCryptoValue(maxFiatValue / exchangeRate))
     } else {
-      setValue(maxCryptoValue)
+      setValue(formatCryptoValue(maxCryptoValue))
       setBottomValue(formatFiatValue(maxCryptoValue * exchangeRate))
     }
   }
 
-  const changeHandler = (e) => {
-    setValue(e.target.value)
-    updateValue(e.target.value)
+  const changeHandler = ({ target: { value } }) => {
+    setValue(value)
+    updateValue(value)
+
+    const isValid = isTypeFiat()
+      ? value <= maxFiatValue
+      : value <= maxCryptoValue
+
+    setValidity(isValid ? 'valid' : 'invalid')
   }
 
   return (
@@ -89,14 +92,14 @@ const CryptoFiatField = ({
     >
       <label
         className="crypto-fiat-field-label"
-        htmlFor="transactionInput"
+        htmlFor="cryptoFiatInput"
         data-testid="crypto-fiat-field-label"
       >
         {label}
       </label>
       <div className="fiat-field-input">
         <Input
-          id="transactionInput"
+          id="cryptoFiatInput"
           extraStyleClasses={inputExtraClasses}
           placeholder={placeholder}
           value={value}

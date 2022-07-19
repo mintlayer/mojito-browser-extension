@@ -86,9 +86,9 @@ test('Render TextField component fdf', () => {
 
   fireEvent.click(actionButton)
   expect(input).toHaveValue(
-    (
-      TRANSACTIONDATASAMPLE.maxValueInToken * TRANSACTIONDATASAMPLE.exchangeRate
-    ).toString(),
+    (TRANSACTIONDATASAMPLE.maxValueInToken * TRANSACTIONDATASAMPLE.exchangeRate)
+      .toFixed(2)
+      .toString(),
   )
 
   fireEvent.click(switchButton)
@@ -96,7 +96,16 @@ test('Render TextField component fdf', () => {
 
   fireEvent.change(input, { target: { value: '0' } })
   fireEvent.click(switchButton)
-  expect(input).toHaveValue('0')
+  expect(input).toHaveValue('0.00')
+
+  fireEvent.change(input, {
+    target: {
+      value:
+        (TRANSACTIONDATASAMPLE.maxValueInToken + 1) *
+        TRANSACTIONDATASAMPLE.exchangeRate,
+    },
+  })
+  expect(input).toHaveClass('invalid')
 
   fireEvent.change(input, { target: { value: '0' } })
   fireEvent.click(switchButton)

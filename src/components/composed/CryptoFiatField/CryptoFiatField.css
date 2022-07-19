@@ -27,12 +27,12 @@
   font-weight: 600;
 }
 
-.create-trasaction-input {
+.crypto-fiat-input {
   height: 71px;
   width: 100%;
 }
 
-.create-trasaction-button {
+.crypto-fiat-input-button {
   display: flex;
   align-items: center;
   justify-content: center;
