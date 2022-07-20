@@ -1,3 +1,5 @@
+import { Electrum } from '@APIs'
+import { BTC } from '@Helpers'
 import { utxoSelect, buildTransaction } from './BTCTransaction'
 
 import utxos from './testUtxos.json'
@@ -43,12 +45,26 @@ test('Select UTXO - not enough funds', () => {
   expect(utxoSelect.bind(null, utxos, targetValue)).toThrow()
 })
 
-test('Build transaction', () => {
-  const transaction = buildTransaction({
-    to: 'addr',
-    amount: 100,
-    fee: 1,
-    wif: 'wif',
+test('Build transaction', async () => {
+  const from = 'mgLB5u6BG5YTDVkPPjs1rWnZdtb33aDVMT'
+  const to = 'mmLMRUn75mM2FC11ETfsZTtsTDUWSNa9q2'
+  const amount = 196168
+  const fee = 373
+  const result = await buildTransaction({
+    from,
+    amount,
+    fee,
+    to,
+    wif: 'cTTMFqx7bJSB58TSwXzjSKZaM8frxWZjVzzQfCKCFQaswdzDTFKs',
   })
-  console.log(transaction)
+
+  const utxos = JSON.parse(await Electrum.getAddressUtxo(from))
+  const selected = utxoSelect(utxos, amount + fee)
+  const amountUsed = selected.reduce((acc, utxo) => acc + utxo.value, 0)
+
+  expect(result.outs.length).toBe(2)
+  expect(result.outs.map((out) => out.value)).toContain(
+    amountUsed - amount - fee,
+  )
+  expect(result.outs.map((out) => out.value)).toContain(amount)
 })

@@ -4,7 +4,9 @@ import {
   getParsedTransactions,
   getConfirmationsAmount,
   parseFeesEstimates,
-  formatBTCValue
+  formatBTCValue,
+  nonSegwitFilter,
+  isTransactionSegwit,
 } from './BTC'
 
 import fees from './fees.json'
@@ -94,4 +96,20 @@ test('Check confirmations amount - success', async () => {
 
   const confirmations = await getConfirmationsAmount(transaction)
   expect(confirmations).toBeGreaterThan(1_000_000)
+})
+
+test('Filter non-segwit', () => {
+  const result = nonSegwitFilter({
+    vin: [{ witness: [] }, { witness: [] }],
+  })
+
+  expect(result).toBeTruthy()
+})
+
+test('Is Segwit', () => {
+  const result = isTransactionSegwit({
+    vin: [{ witness: [] }, { witness: [] }],
+  })
+
+  expect(result).toBeFalsy()
 })

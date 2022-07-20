@@ -45,7 +45,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
         >
           {transaction && formatAddress(transaction.otherPart[0])}
           {transaction &&
-            transaction.otherPart.length > 1 &&
+            [...new Set(transaction.otherPart)].length > 1 &&
             ` (+${transaction.otherPart.length - 1})`}
         </p>
         <div className="transaction-date-amout">

@@ -65,7 +65,7 @@ const getConfirmationsAmount = async (transaction) => {
   if (!transaction.blockHeight) return Promise.resolve(0)
 
   const lastBlockHeight = await Electrum.getLastBlockHeight()
-  return lastBlockHeight - transaction.blockHeight
+  return lastBlockHeight - transaction.blockHeight + 1
 }
 
 const getParsedTransactions = (rawTransactions, baseAddress) => {
@@ -123,6 +123,11 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
   return parsedTransactions
 }
 
+const isTransactionSegwit = (transaction) =>
+  transaction.vin.some((vin) => vin.witness && vin.witness.length)
+
+const nonSegwitFilter = (transaction) => !isTransactionSegwit(transaction)
+
 export {
   parseFeesEstimates,
   calculateTransactionSizeInBytes,
@@ -132,4 +137,6 @@ export {
   convertSatoshiToBtc,
   getParsedTransactions,
   getConfirmationsAmount,
+  nonSegwitFilter,
+  isTransactionSegwit,
 }
