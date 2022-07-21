@@ -7,6 +7,7 @@ import {
   getAddressUtxo,
   requestElectrum,
   getLastBlockHeight,
+  getFeesEstimates,
   ELECTRUM_URL,
 } from './Electrum.js'
 
@@ -87,4 +88,10 @@ test('Electrum request - getAdressUtxo', async () => {
   const result = await getAddressUtxo(FIRST_TESTNET_WALLET)
   const transactions = JSON.parse(result)
   expect(transactions.length).toBeGreaterThan(0)
+})
+
+test('Electrum request - getFeesEstimates', async () => {
+  const result = await getFeesEstimates()
+  const fees = JSON.parse(result)
+  expect(Object.keys(fees).length).toBe(28)
 })

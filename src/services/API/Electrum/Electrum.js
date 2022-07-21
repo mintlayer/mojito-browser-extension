@@ -8,6 +8,7 @@ const ELECTRUM_ENDPOINTS = {
   GET_ADDRESS: '/address/:address',
   GET_ADDRESS_UTXO: '/address/:address/utxo',
   GET_LAST_BLOCK_HEIGHT: '/blocks/tip/height',
+  GET_FEES_ESTIMATES: '/fee-estimates',
 }
 
 const requestElectrum = async (endpoint, data = null, request = fetch) => {
@@ -51,6 +52,9 @@ const getAddressUtxo = (address) =>
 const getLastBlockHeight = () =>
   requestElectrum(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HEIGHT)
 
+const getFeesEstimates = () =>
+  requestElectrum(ELECTRUM_ENDPOINTS.GET_FEES_ESTIMATES)
+
 export {
   getLastBlockHash,
   getTransactionData,
@@ -60,6 +64,7 @@ export {
   getAddressUtxo,
   requestElectrum,
   getLastBlockHeight,
+  getFeesEstimates,
   ELECTRUM_ENDPOINTS,
   ELECTRUM_URL,
 }
