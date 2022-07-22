@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { Balance, Header, PopUp } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
@@ -16,6 +17,7 @@ const WalletPage = () => {
   const [openShowAddress, setOpenShowAddress] = useState(false)
   const [transactionsList, setTransactionsList] = useState([])
   const [balance, setBalance] = useState(0)
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (effectCalled.current) return
@@ -38,6 +40,8 @@ const WalletPage = () => {
     getTransactions()
   }, [btcAddress])
 
+  const setOpenTransactionForm = () => navigate('/send-transaction')
+
   return (
     <div data-testid="wallet-page">
       <VerticalGroup bigGap>
@@ -48,6 +52,7 @@ const WalletPage = () => {
             <Wallet.TransactionButton
               title={'Send'}
               up
+              onClick={setOpenTransactionForm}
             />
             <Wallet.TransactionButton
               title={'Receive'}
