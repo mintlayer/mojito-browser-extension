@@ -5,6 +5,7 @@ import LoginPage from './Login/Login'
 import SetAccountPasswordPage from './Login/SetAccountPassword'
 import RestoreAccountPage from './RestoreAccount/RestoreAccount'
 import WalletPage from './Wallet/Wallet'
+import SendTransactionPage from './SendTransaction/SendTransaction'
 
 export {
   CreateAccountPage,
@@ -14,4 +15,5 @@ export {
   SetAccountPasswordPage,
   RestoreAccountPage,
   WalletPage,
+  SendTransactionPage,
 }

@@ -7,6 +7,7 @@ import './Button.css'
 const Button = ({
   children = 'Label',
   alternate = false,
+  dark = false,
   onClickHandle = () => {},
   extraStyleClasses = [],
 }) => {
@@ -17,8 +18,10 @@ const Button = ({
     useStyleClasses(classesList)
 
   useEffect(() => {
+    dark ? addStyleClass('dark') : removeStyleClass('dark')
+    if (dark) return
     alternate ? addStyleClass('alternate') : removeStyleClass('alternate')
-  }, [alternate, addStyleClass, removeStyleClass])
+  }, [alternate, dark, addStyleClass, removeStyleClass])
 
   return (
     <>

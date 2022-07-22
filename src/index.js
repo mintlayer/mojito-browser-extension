@@ -9,6 +9,7 @@ import {
   WalletPage,
   SetAccountPasswordPage,
   CreateRestorePage,
+  SendTransactionPage,
 } from '@Pages'
 
 import { AccountProvider } from '@Contexts'
@@ -32,6 +33,10 @@ root.render(
             <Route
               path="/restore-account"
               element={<RestoreAccountPage />}
+            />
+            <Route
+              path="/send-transaction"
+              element={<SendTransactionPage />}
             />
             <Route
               path="/wallet"

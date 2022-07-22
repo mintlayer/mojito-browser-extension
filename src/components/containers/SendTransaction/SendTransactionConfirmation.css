@@ -1,0 +1,41 @@
+.descriptionList {
+  margin-top: 1.2rem;
+}
+
+dt {
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 2.25rem;
+}
+
+dd {
+  font-weight: 300;
+  line-height: 1.81rem;
+  margin-bottom: 1.5rem;
+  line-break: anywhere;
+}
+
+dd,
+dd > strong {
+  font-size: 1.5rem;
+}
+
+dd > strong {
+  font-weight: bold;
+  margin-right: 0.3rem;
+}
+
+dd span {
+  font-weight: 300;
+  margin-left: 0.4rem;
+}
+
+dd span > strong {
+  font-weight: bold;
+  margin-right: 0.3rem;
+}
+
+dd span,
+dd span * {
+  font-size: 1.12rem;
+}

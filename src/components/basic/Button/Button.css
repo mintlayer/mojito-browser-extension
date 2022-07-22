@@ -28,3 +28,15 @@
 .btn.alternate:focus {
   border: 2px solid rgba(var(--color-green), var(--nearly-transparent-alpha));
 }
+
+.btn.dark {
+  background-color: rgb(var(--color-black));
+  border: 2px solid transparent;
+  color: rgb(var(--color-white));
+  transition: opacity 0.25s ease-in-out, border 0.25s ease-in-out;
+}
+
+.btn.dark:hover,
+.btn.dark:focus {
+  opacity: 0.8;
+}

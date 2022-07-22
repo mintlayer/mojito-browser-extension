@@ -10,6 +10,8 @@ import TransactionButton from './Wallet/TransactionButton'
 import TransactionDetails from './Wallet/TransactionDetails'
 import TransactionsList from './Wallet/TransactionsList'
 
+import SendTransaction from './SendTransaction/SendTransaction'
+
 /* istanbul ignore next */
 const Wallet = {
   ShowAddress,
@@ -25,4 +27,4 @@ const Login = {
   SetPassword,
 }
 
-export { CreateAccount, RestoreAccount, Wallet, Login }
+export { CreateAccount, RestoreAccount, Wallet, Login, SendTransaction }
