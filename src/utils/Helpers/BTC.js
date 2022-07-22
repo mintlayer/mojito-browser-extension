@@ -1,6 +1,7 @@
 import { Electrum } from '@APIs'
 
 const AVERAGE_MIN_PER_BLOCK = 15
+const SATOSHI_BTC_CONVERSION_FACTOR = 100_000_000
 
 const sizeConstants = {
   overhead: 10,
@@ -54,7 +55,8 @@ const calculateTransactionSizeInBytes = ({ addressFrom, amountToTranfer }) => {
   return sizeConstants.overhead + inputsSize + ouputsSize
 }
 
-const convertSatoshiToBtc = (satoshiAmount) => satoshiAmount / 100_000_000
+const convertSatoshiToBtc = (satoshiAmount) =>
+  satoshiAmount / SATOSHI_BTC_CONVERSION_FACTOR
 
 const calculateBalanceFromUtxoList = (list) =>
   list.reduce((accumulator, transaction) => accumulator + transaction.value, 0)

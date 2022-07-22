@@ -26,8 +26,9 @@ const useWalletInfo = (address) => {
     try {
       const utxos = await Electrum.getAddressUtxo(address)
       const satoshiBalance = BTC.calculateBalanceFromUtxoList(JSON.parse(utxos))
-
-      setBalance(BTC.formatBTCValue(BTC.convertSatoshiToBtc(satoshiBalance)))
+      const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
+      const formattedBalance = BTC.formatBTCValue(balanceConvertedToBTC)
+      setBalance(formattedBalance)
     } catch (error) {
       console.error(error)
     }
