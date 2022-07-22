@@ -8,11 +8,16 @@
   overflow: hidden;
 }
 
+html {
+  background: #f5f5f5;
+}
+
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   height: 600px;
   width: 800px;
+  background: #fff;
 }
 
 .App {
