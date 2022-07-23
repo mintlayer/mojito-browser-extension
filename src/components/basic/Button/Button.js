@@ -13,7 +13,6 @@ const Button = ({
 }) => {
   const classesList = ['btn', ...extraStyleClasses]
   alternate && classesList.push('alternate')
-
   const { styleClasses, addStyleClass, removeStyleClass } =
     useStyleClasses(classesList)
 

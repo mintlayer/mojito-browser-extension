@@ -1,3 +1,5 @@
+const AVERAGE_MIN_PER_BLOCK = 15
+
 const parseFeesEstimates = (allEstimates) => {
   const blockLevels = {
     25: 'LOW',
@@ -18,4 +20,7 @@ const parseFeesEstimates = (allEstimates) => {
     }, {})
 }
 
-export { parseFeesEstimates }
+export {
+  parseFeesEstimates,
+  AVERAGE_MIN_PER_BLOCK,
+}

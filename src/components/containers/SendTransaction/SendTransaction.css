@@ -1,0 +1,31 @@
+.formField {
+  display: flex;
+  flex-direction: row;
+}
+
+.formField input,
+.formField button {
+  height: 4.5rem;
+}
+
+.formField label {
+  font-size: 1.5rem
+}
+
+.formField > * {
+  align-self: center;
+}
+
+.formField > *:first-child {
+  width: 9rem;
+}
+
+.formField:nth-child(2) > *:first-child,
+.formField:nth-child(3) > *:first-child {
+  align-self: unset;
+  margin-top: 1.75rem;
+}
+
+.send-transaction-button {
+  margin-top: 1.5rem;
+}

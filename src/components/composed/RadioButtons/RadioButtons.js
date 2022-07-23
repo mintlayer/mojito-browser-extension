@@ -7,9 +7,10 @@ import './RadioButtons.css'
 const RadioButtons = ({ onSelect, value: parentValue, options }) => {
   const [value, setValue] = useState(parentValue)
 
-  const onClick = (newValue) => {
-    setValue(value === newValue ? undefined : newValue)
-    onSelect && onSelect(newValue)
+  const onClick = (option) => {
+    const newValue = value === option.name ? undefined : option.name
+    setValue(newValue)
+    onSelect && onSelect(newValue ? option : undefined)
   }
 
   useEffect(() => {
@@ -18,14 +19,14 @@ const RadioButtons = ({ onSelect, value: parentValue, options }) => {
 
   return (
     <div className="radio-buttons">
-      {options.map((type) => (
+      {options.map((option) => (
         <Button
-          key={type.value}
-          alternate={value === type.value}
+          key={option.name}
+          alternate={value === option.name}
           extraStyleClasses={['radio-button']}
-          onClickHandle={() => onClick(type.value)}
+          onClickHandle={() => onClick(option)}
         >
-          {type.name}
+          {option.name}
         </Button>
       ))}
     </div>

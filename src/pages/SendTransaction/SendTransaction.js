@@ -2,14 +2,17 @@ import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 
+import './SendTransaction.css'
+
 const SendTransactionPage = () => {
   return (
     <>
       <Header />
-      <VerticalGroup>
-        <h3>Send Funds</h3>
-        <SendTransaction />
-      </VerticalGroup>
+      <div className="page">
+        <VerticalGroup>
+          <SendTransaction />
+        </VerticalGroup>
+      </div>
     </>
   )
 }

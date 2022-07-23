@@ -1,3 +1,5 @@
+import { EnvVars } from '@Constants'
+
 const ELECTRUM_URL = 'http://51.158.172.176:3001'
 
 const ELECTRUM_ENDPOINTS = {
@@ -52,8 +54,13 @@ const getAddressUtxo = (address) =>
 const getLastBlockHeight = () =>
   requestElectrum(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HEIGHT)
 
-const getFeesEstimates = () =>
-  requestElectrum(ELECTRUM_ENDPOINTS.GET_FEES_ESTIMATES)
+const getFeesEstimates = async () => {
+  if (!EnvVars.IS_PROD_ENV) {
+    const fees = await import('../../../utils/Helpers/fees.json')
+    return JSON.stringify(fees)
+  }
+  return requestElectrum(ELECTRUM_ENDPOINTS.GET_FEES_ESTIMATES)
+}
 
 export {
   getLastBlockHash,

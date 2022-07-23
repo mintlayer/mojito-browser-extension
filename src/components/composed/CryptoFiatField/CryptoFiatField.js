@@ -5,7 +5,6 @@ import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 import './CryptoFiatField.css'
 
 const CryptoFiatField = ({
-  label,
   placeholder,
   buttonTitle,
   transactionData,
@@ -90,13 +89,6 @@ const CryptoFiatField = ({
       className="crypto-fiat-field"
       data-testid="crypto-fiat-field"
     >
-      <label
-        className="crypto-fiat-field-label"
-        htmlFor="cryptoFiatInput"
-        data-testid="crypto-fiat-field-label"
-      >
-        {label}
-      </label>
       <div className="fiat-field-input">
         <Input
           id="cryptoFiatInput"
