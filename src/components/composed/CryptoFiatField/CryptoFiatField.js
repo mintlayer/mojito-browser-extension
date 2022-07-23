@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button, Input } from '@BasicComponents'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 
@@ -10,6 +10,8 @@ const CryptoFiatField = ({
   transactionData,
   inputValue,
   validity: parentValidity,
+  id,
+  changeValueHandle
 }) => {
   const formatCryptoValue = (value) =>
     value
@@ -26,8 +28,6 @@ const CryptoFiatField = ({
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
 
-  if (!transactionData) return null
-
   const { tokenName, fiatName, exchangeRate } = transactionData
   const maxCryptoValue = transactionData.maxValueInToken
   const maxFiatValue = maxCryptoValue * transactionData.exchangeRate
@@ -40,12 +40,22 @@ const CryptoFiatField = ({
     isTypeFiat() ? tokenName : fiatName
   }`
 
+  const sendValueToParent = (value) => {
+    if (!changeValueHandle) return
+
+    const cryptoValue = isTypeFiat()
+      ? setBottomValue(calculateCryptoValue(value))
+      : value
+    changeValueHandle(cryptoValue)
+  }
+
   const calculateFiatValue = (value) => formatFiatValue(value * exchangeRate)
 
   const calculateCryptoValue = (value) =>
     formatCryptoValue(value / exchangeRate)
 
   const updateValue = (value) => {
+    sendValueToParent(value)
     isTypeFiat()
       ? setBottomValue(calculateCryptoValue(value))
       : setBottomValue(calculateFiatValue(value))
@@ -84,6 +94,15 @@ const CryptoFiatField = ({
     setValidity(isValid ? 'valid' : 'invalid')
   }
 
+  useEffect(() => {
+    changeValueHandle({
+      currency: currentValueType,
+      value
+    })
+  }, [changeValueHandle, currentValueType, value])
+
+  if (!transactionData) return null
+
   return (
     <div
       className="crypto-fiat-field"
@@ -91,7 +110,7 @@ const CryptoFiatField = ({
     >
       <div className="fiat-field-input">
         <Input
-          id="cryptoFiatInput"
+          id={id}
           extraStyleClasses={inputExtraClasses}
           placeholder={placeholder}
           value={value}

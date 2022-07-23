@@ -1,23 +1,28 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { Button, Input } from '@BasicComponents'
 import { CryptoFiatField, FeeField, PopUp } from '@ComposedComponents'
+import { CenteredLayout } from '@LayoutComponents'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
 
-
 import './SendTransaction.css'
-import { CenteredLayout } from '@LayoutComponents'
 
-const SendTransaction = () => {
-  const [addressTo] = useState('mmLMRUn75mM2FC11ETfsZTtsTDUWSNa9q2')
-  const [amountInFiat] = useState('0.00')
-  const [amountInCrypto] = useState('0')
-  const [cryptoName] = useState('BTC')
-  const [fiatName] = useState('USD')
-  const [totalFeeFiat] = useState('0.00')
-  const [totalFeeCrypto] = useState('0')
-  const [fee] = useState('0')
+const SendTransaction = ({
+  onSendTransaction,
+  transactionData,
+  totalFeeFiat: totalFeeFiatParent,
+  totalFeeCrypto: totalFeeCryptoParent
+}) => {
+  const [cryptoName] = useState(transactionData.tokenName)
+  const [fiatName] = useState(transactionData.fiatName)
+  const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
+  const [totalFeeCrypto, setTotalFeeCrypto] = useState(totalFeeCryptoParent)
+
+  const [amountInCrypto, setAmountInCrypto] = useState('0')
+  const [amountInFiat, setAmountInFiat] = useState('0.00')
+  const [fee, setFee] = useState('0')
+  const [addressTo, setAddressTo] = useState()
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -25,36 +30,63 @@ const SendTransaction = () => {
   const FormField = ({children}) =>
     <div className="formField">{children}</div>
 
-  const openConfirmation = () => setOpenSendFundConfirmation(true)
+  const openConfirmation = () => {
+    onSendTransaction({
+      to: addressTo,
+      amount: amountInCrypto,
+      fee
+    })
+    setOpenSendFundConfirmation(true)
+  }
 
   const handleConfirm = () => setOpenSendFundConfirmation(false)
 
   const handleCancel = () => setOpenSendFundConfirmation(false)
 
-  const transactionData = {
-    fiatName: 'USD',
-    tokenName: 'BTC',
-    exchangeRate: 22343.23,
-    maxValueInToken: 450,
+  useEffect(() => setTotalFeeFiat(totalFeeFiatParent), [totalFeeFiatParent])
+  useEffect(() => setTotalFeeCrypto(totalFeeCryptoParent), [totalFeeCryptoParent])
+
+  const feeChanged = (value) => setFee(value)
+  const amountChanged = (amount) => {
+    console.log(1)
+    if (amount.currency === transactionData.tokenName) {
+      setAmountInCrypto(amount.value)
+      setAmountInFiat(amount.value * transactionData.exchangeRate)
+      return
+    }
+
+    setAmountInFiat(amount.value)
+    setAmountInCrypto(amount.value / transactionData.exchangeRate)
+  }
+
+  const addressChanged = (value) => {
+    setAddressTo(value)
   }
 
   return (
     <>
       <FormField>
-        <label>Send to:</label>
-        <Input placeholder="bc1.... or 1... or 3..."/>
+        <label htmlFor="address">Send to:</label>
+        <Input
+          id="address"
+          placeholder="bc1.... or 1... or 3..."
+          changeValueHandle={addressChanged}/>
       </FormField>
       <FormField>
-        <label>Amount:</label>
+        <label htmlFor="amount">Amount:</label>
         <CryptoFiatField
+          id="amount"
           buttonTitle="Max"
           placeholder="0.00"
           transactionData={transactionData}
-          validity={undefined}/>
+          validity={undefined}
+          changeValueHandle={amountChanged}/>
       </FormField>
       <FormField>
-        <label>Fee:</label>
-        <FeeField value='norm'/>
+        <label htmlFor="fee">Fee:</label>
+        <FeeField
+          id="fee"
+          changeValueHandle={feeChanged}/>
       </FormField>
 
       <CenteredLayout>
@@ -62,6 +94,7 @@ const SendTransaction = () => {
           extraStyleClasses={['send-transaction-button']}
           onClickHandle={openConfirmation}>Send</Button>
       </CenteredLayout>
+
       {openSendFundConfirmation && (
         <PopUp setOpen={setOpenSendFundConfirmation}>
           <SendTransactionConfirmation

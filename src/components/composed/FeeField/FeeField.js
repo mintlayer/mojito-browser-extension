@@ -6,7 +6,11 @@ import { BTC } from '@Helpers'
 
 import './FeeField.css'
 
-const FeeField = ({ value: parentValue }) => {
+const FeeField = ({
+  value: parentValue,
+  id,
+  changeValueHandle
+}) => {
   const effectCalled = useRef(false)
   const [ options, setOptions ] = useState([])
   const [ inputValue, setInputValue ] = useState(0)
@@ -21,7 +25,7 @@ const FeeField = ({ value: parentValue }) => {
 
   const changeInputValue = useCallback((value) => {
     if (!value) {
-      setInputValue('---')
+      setInputValue(0)
       setTimeToFirstConfirmations('---')
       return
     }
@@ -75,12 +79,18 @@ const FeeField = ({ value: parentValue }) => {
     optionSelected
       ? changeInputValue(optionSelected.value)
       : changeInputValue(0)
-  }, [parentValue, options, setInputValue, changeInputValue])
+  }, [parentValue, options, changeInputValue])
+
+  useEffect(() => {
+    console.log(3)
+    changeValueHandle(inputValue)
+  }, [inputValue, changeValueHandle])
 
   return (
     <div className="fee-field-wrapper">
       <div className="fee-field">
         <Input
+          id={id}
           value={inputValue}
           onChangeHandle={inputChangeHandler}/>
         <small>sat/B</small>
