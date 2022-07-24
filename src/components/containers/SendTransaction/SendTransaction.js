@@ -10,12 +10,13 @@ import AmountField from './AmountField'
 import FeesField from './FeesField'
 
 import './SendTransaction.css'
+import { BTC } from '@Helpers'
 
 const SendTransaction = ({
   onSendTransaction,
   transactionData,
   totalFeeFiat: totalFeeFiatParent,
-  totalFeeCrypto: totalFeeCryptoParent
+  totalFeeCrypto: totalFeeCryptoParent,
 }) => {
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
@@ -34,7 +35,7 @@ const SendTransaction = ({
     onSendTransaction({
       to: addressTo,
       amount: amountInCrypto,
-      fee
+      fee,
     })
     setOpenSendFundConfirmation(true)
   }
@@ -44,18 +45,23 @@ const SendTransaction = ({
   const handleCancel = () => setOpenSendFundConfirmation(false)
 
   useEffect(() => setTotalFeeFiat(totalFeeFiatParent), [totalFeeFiatParent])
-  useEffect(() => setTotalFeeCrypto(totalFeeCryptoParent), [totalFeeCryptoParent])
+  useEffect(
+    () => setTotalFeeCrypto(totalFeeCryptoParent),
+    [totalFeeCryptoParent],
+  )
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
     if (amount.currency === transactionData.tokenName) {
-      setAmountInCrypto(amount.value)
-      setAmountInFiat(amount.value * transactionData.exchangeRate)
+      setAmountInCrypto(BTC.formatBTCValue(Number(amount.value)))
+      setAmountInFiat((amount.value * transactionData.exchangeRate).toFixed(2))
       return
     }
 
-    setAmountInFiat(amount.value)
-    setAmountInCrypto(amount.value / transactionData.exchangeRate)
+    setAmountInFiat(Number(amount.value).toFixed(2))
+    setAmountInCrypto(
+      BTC.formatBTCValue(amount.value / transactionData.exchangeRate),
+    )
   }
 
   const addressChanged = (e) => {
@@ -64,20 +70,22 @@ const SendTransaction = ({
 
   return (
     <>
-      <AddressField
-        addressChanged={addressChanged} />
+      <AddressField addressChanged={addressChanged} />
 
       <AmountField
         transactionData={transactionData}
-        amountChanged={amountChanged} />
+        amountChanged={amountChanged}
+      />
 
-      <FeesField
-        feeChanged={feeChanged} />
+      <FeesField feeChanged={feeChanged} />
 
       <CenteredLayout>
         <Button
           extraStyleClasses={['send-transaction-button']}
-          onClickHandle={openConfirmation}>Send</Button>
+          onClickHandle={openConfirmation}
+        >
+          Send
+        </Button>
       </CenteredLayout>
 
       {openSendFundConfirmation && (

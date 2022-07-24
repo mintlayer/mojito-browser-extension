@@ -20,6 +20,10 @@ dd > strong {
   font-size: 1.5rem;
 }
 
+dd:nth-child(2) > strong {
+  font-size: 1.25rem;
+}
+
 dd > strong {
   font-weight: bold;
   margin-right: 0.3rem;
