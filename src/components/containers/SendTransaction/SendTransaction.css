@@ -3,6 +3,10 @@
   flex-direction: row;
 }
 
+.form-field .address-field {
+  font-size: 1.4rem;
+}
+
 .form-field input,
 .form-field button {
   height: 4.5rem;

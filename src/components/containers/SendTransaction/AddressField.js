@@ -8,6 +8,7 @@ const AddressField = ({ addressChanged }) => {
       <Input
         id="address"
         placeholder="bc1.... or 1... or 3..."
+        extraStyleClasses={['address-field']}
         onChangeHandle={addressChanged}
         />
     </TransactionField>
