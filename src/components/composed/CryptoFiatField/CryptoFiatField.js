@@ -95,6 +95,7 @@ const CryptoFiatField = ({
   }
 
   useEffect(() => {
+    changeValueHandle &&
     changeValueHandle({
       currency: currentValueType,
       value

@@ -31,7 +31,8 @@ const SendTransactionPage = () => {
             totalFeeFiat={totalFeeFiat}
             totalFeeCrypto={totalFeeCrypto}
             transactionData={transactionData}
-            onSendTransaction={createTransaction} />
+            onSendTransaction={createTransaction}
+            />
         </VerticalGroup>
       </div>
     </>

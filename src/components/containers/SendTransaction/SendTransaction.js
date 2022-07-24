@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react'
 
-import { Button, Input } from '@BasicComponents'
-import { CryptoFiatField, FeeField, PopUp } from '@ComposedComponents'
+import { Button } from '@BasicComponents'
+import { PopUp } from '@ComposedComponents'
 import { CenteredLayout } from '@LayoutComponents'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
+import AddressField from './AddressField'
+import AmountField from './AmountField'
+import FeesField from './FeesField'
 
 import './SendTransaction.css'
 
@@ -22,13 +25,10 @@ const SendTransaction = ({
   const [amountInCrypto, setAmountInCrypto] = useState('0')
   const [amountInFiat, setAmountInFiat] = useState('0.00')
   const [fee, setFee] = useState('0')
-  const [addressTo, setAddressTo] = useState()
+  const [addressTo, setAddressTo] = useState('')
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
-
-  const FormField = ({children}) =>
-    <div className="formField">{children}</div>
 
   const openConfirmation = () => {
     onSendTransaction({
@@ -48,7 +48,6 @@ const SendTransaction = ({
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
-    console.log(1)
     if (amount.currency === transactionData.tokenName) {
       setAmountInCrypto(amount.value)
       setAmountInFiat(amount.value * transactionData.exchangeRate)
@@ -59,35 +58,21 @@ const SendTransaction = ({
     setAmountInCrypto(amount.value / transactionData.exchangeRate)
   }
 
-  const addressChanged = (value) => {
-    setAddressTo(value)
+  const addressChanged = (e) => {
+    setAddressTo(e.target.value)
   }
 
   return (
     <>
-      <FormField>
-        <label htmlFor="address">Send to:</label>
-        <Input
-          id="address"
-          placeholder="bc1.... or 1... or 3..."
-          changeValueHandle={addressChanged}/>
-      </FormField>
-      <FormField>
-        <label htmlFor="amount">Amount:</label>
-        <CryptoFiatField
-          id="amount"
-          buttonTitle="Max"
-          placeholder="0.00"
-          transactionData={transactionData}
-          validity={undefined}
-          changeValueHandle={amountChanged}/>
-      </FormField>
-      <FormField>
-        <label htmlFor="fee">Fee:</label>
-        <FeeField
-          id="fee"
-          changeValueHandle={feeChanged}/>
-      </FormField>
+      <AddressField
+        addressChanged={addressChanged} />
+
+      <AmountField
+        transactionData={transactionData}
+        amountChanged={amountChanged} />
+
+      <FeesField
+        feeChanged={feeChanged} />
 
       <CenteredLayout>
         <Button

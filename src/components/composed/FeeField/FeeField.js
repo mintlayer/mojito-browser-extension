@@ -82,7 +82,7 @@ const FeeField = ({
   }, [parentValue, options, changeInputValue])
 
   useEffect(() => {
-    console.log(3)
+    // console.log(3)
     changeValueHandle(inputValue)
   }, [inputValue, changeValueHandle])
 

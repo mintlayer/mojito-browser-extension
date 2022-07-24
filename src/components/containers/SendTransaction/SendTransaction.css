@@ -1,27 +1,27 @@
-.formField {
+.form-field {
   display: flex;
   flex-direction: row;
 }
 
-.formField input,
-.formField button {
+.form-field input,
+.form-field button {
   height: 4.5rem;
 }
 
-.formField label {
+.form-field label {
   font-size: 1.5rem
 }
 
-.formField > * {
+.form-field > * {
   align-self: center;
 }
 
-.formField > *:first-child {
+.form-field > *:first-child {
   width: 9rem;
 }
 
-.formField:nth-child(2) > *:first-child,
-.formField:nth-child(3) > *:first-child {
+.form-field:nth-child(2) > *:first-child,
+.form-field:nth-child(3) > *:first-child {
   align-self: unset;
   margin-top: 1.75rem;
 }
