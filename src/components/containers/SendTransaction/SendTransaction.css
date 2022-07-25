@@ -1,0 +1,35 @@
+.form-field {
+  display: flex;
+  flex-direction: row;
+}
+
+.form-field .address-field {
+  font-size: 1.4rem;
+}
+
+.form-field input,
+.form-field button {
+  height: 4.5rem;
+}
+
+.form-field label {
+  font-size: 1.5rem
+}
+
+.form-field > * {
+  align-self: center;
+}
+
+.form-field > *:first-child {
+  width: 9rem;
+}
+
+.form-field:nth-child(2) > *:first-child,
+.form-field:nth-child(3) > *:first-child {
+  align-self: unset;
+  margin-top: 1.75rem;
+}
+
+.send-transaction-button {
+  margin-top: 1.5rem;
+}

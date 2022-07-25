@@ -30,9 +30,7 @@ jobs:
         run: npm run lint
       - name: Prettier
         run: npm run pretty-quick-check-branch
-      - name: Clear Test Cache
-        run: npx react-scripts -- --clearCache
       - name: Test
-        run: npm test
+        run: npm test -- --watchAll=false
       - name: Build
         run: npm run build --if-present

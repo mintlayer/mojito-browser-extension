@@ -2,6 +2,7 @@
   position: relative;
   display: flex;
   padding-bottom: 37px;
+  width: 100%;
 }
 
 .crypto-fiat-field-label {
@@ -22,13 +23,12 @@
 .crypto-fiat-bottom-text {
   position: absolute;
   bottom: 8px;
-  left: 9rem;
+  left: 1.85rem;
   font-size: 18px;
   font-weight: 600;
 }
 
 .crypto-fiat-input {
-  height: 71px;
   width: 100%;
 }
 
@@ -37,7 +37,6 @@
   align-items: center;
   justify-content: center;
   width: 87px;
-  height: 71px;
 }
 
 .crypto-fiat-switch-button {
@@ -48,6 +47,8 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .crypto-fiat-icon {

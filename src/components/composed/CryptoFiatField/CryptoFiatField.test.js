@@ -10,7 +10,6 @@ const TRANSACTIONDATASAMPLE = {
 }
 
 const PROPSSAMPLE = {
-  label: 'Label',
   buttonTitle: 'Button title',
   placeholder: 'Placeholder',
   value: '',
@@ -20,7 +19,6 @@ const PROPSSAMPLE = {
 test('Render TextField component', () => {
   render(
     <CryptoFiatField
-      label={PROPSSAMPLE.label}
       buttonTitle={PROPSSAMPLE.buttonTitle}
       placeholder={PROPSSAMPLE.placeholder}
       inputValue={PROPSSAMPLE.value}
@@ -29,7 +27,6 @@ test('Render TextField component', () => {
   )
 
   const component = screen.getByTestId('crypto-fiat-field')
-  const label = screen.getByTestId('crypto-fiat-field-label')
   const input = screen.getByTestId('input')
   const switchButton = screen.getByTestId('crypto-fiat-switch-button')
   const arrowIcons = screen.getAllByTestId('arrow-icon')
@@ -37,9 +34,6 @@ test('Render TextField component', () => {
   const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
 
   expect(component).toBeInTheDocument()
-
-  expect(label).toBeInTheDocument()
-  expect(label.textContent).toBe(PROPSSAMPLE.label)
 
   expect(input).toBeInTheDocument()
 

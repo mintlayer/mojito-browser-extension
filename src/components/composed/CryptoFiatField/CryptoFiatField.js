@@ -1,16 +1,17 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button, Input } from '@BasicComponents'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 
 import './CryptoFiatField.css'
 
 const CryptoFiatField = ({
-  label,
   placeholder,
   buttonTitle,
   transactionData,
   inputValue,
   validity: parentValidity,
+  id,
+  changeValueHandle,
 }) => {
   const formatCryptoValue = (value) =>
     value
@@ -27,6 +28,14 @@ const CryptoFiatField = ({
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
 
+  useEffect(() => {
+    changeValueHandle &&
+      changeValueHandle({
+        currency: currentValueType,
+        value,
+      })
+  }, [changeValueHandle, currentValueType, value])
+
   if (!transactionData) return null
 
   const { tokenName, fiatName, exchangeRate } = transactionData
@@ -41,12 +50,22 @@ const CryptoFiatField = ({
     isTypeFiat() ? tokenName : fiatName
   }`
 
+  const sendValueToParent = (value) => {
+    if (!changeValueHandle) return
+
+    const cryptoValue = isTypeFiat()
+      ? setBottomValue(calculateCryptoValue(value))
+      : value
+    changeValueHandle(cryptoValue)
+  }
+
   const calculateFiatValue = (value) => formatFiatValue(value * exchangeRate)
 
   const calculateCryptoValue = (value) =>
     formatCryptoValue(value / exchangeRate)
 
   const updateValue = (value) => {
+    sendValueToParent(value)
     isTypeFiat()
       ? setBottomValue(calculateCryptoValue(value))
       : setBottomValue(calculateFiatValue(value))
@@ -90,16 +109,9 @@ const CryptoFiatField = ({
       className="crypto-fiat-field"
       data-testid="crypto-fiat-field"
     >
-      <label
-        className="crypto-fiat-field-label"
-        htmlFor="cryptoFiatInput"
-        data-testid="crypto-fiat-field-label"
-      >
-        {label}
-      </label>
       <div className="fiat-field-input">
         <Input
-          id="cryptoFiatInput"
+          id={id}
           extraStyleClasses={inputExtraClasses}
           placeholder={placeholder}
           value={value}

@@ -32,6 +32,7 @@ const Header = ({ customBackAction, noBackButton = false }) => {
           <BackImg />
         </Button>
       )}
+
       {isAccountUnlocked() && (
         <Button
           alternate
@@ -39,16 +40,6 @@ const Header = ({ customBackAction, noBackButton = false }) => {
           onClickHandle={logoutHandle}
         >
           <LogoutImg />
-        </Button>
-      )}
-
-      {!noBackButton && (
-        <Button
-          alternate
-          extraStyleClasses={['backButton']}
-          onClickHandle={goBack}
-        >
-          <BackImg />
         </Button>
       )}
 

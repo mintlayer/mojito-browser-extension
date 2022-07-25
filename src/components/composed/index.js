@@ -10,6 +10,7 @@ import PopUp from './PopUp/Popup'
 import ProgressTracker from './ProgressTracker/ProgressTracker'
 import TextField from './TextField/TextField'
 import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
+import FeeField from './FeeField/FeeField'
 
 export {
   Balance,
@@ -24,4 +25,5 @@ export {
   ProgressTracker,
   TextField,
   CryptoFiatField,
+  FeeField,
 }
