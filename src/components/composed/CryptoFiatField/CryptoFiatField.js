@@ -11,7 +11,7 @@ const CryptoFiatField = ({
   inputValue,
   validity: parentValidity,
   id,
-  changeValueHandle
+  changeValueHandle,
 }) => {
   const formatCryptoValue = (value) =>
     value
@@ -27,6 +27,16 @@ const CryptoFiatField = ({
   )
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
+
+  useEffect(() => {
+    changeValueHandle &&
+      changeValueHandle({
+        currency: currentValueType,
+        value,
+      })
+  }, [changeValueHandle, currentValueType, value])
+
+  if (!transactionData) return null
 
   const { tokenName, fiatName, exchangeRate } = transactionData
   const maxCryptoValue = transactionData.maxValueInToken
@@ -93,16 +103,6 @@ const CryptoFiatField = ({
 
     setValidity(isValid ? 'valid' : 'invalid')
   }
-
-  useEffect(() => {
-    changeValueHandle &&
-    changeValueHandle({
-      currency: currentValueType,
-      value
-    })
-  }, [changeValueHandle, currentValueType, value])
-
-  if (!transactionData) return null
 
   return (
     <div

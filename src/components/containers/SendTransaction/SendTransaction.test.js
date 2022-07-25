@@ -1,25 +1,21 @@
 import { render, screen, act, fireEvent } from '@testing-library/react'
 import SendTransaction from './SendTransaction'
 
-test('Send Transaction', () => {
-  render(<SendTransaction />)
+const TRANSACTIONDATASAMPLE = {
+  fiatName: 'USD',
+  tokenName: 'BTC',
+  exchangeRate: 22343.23,
+  maxValueInToken: 450,
+}
+
+test('Send Transaction', async () => {
+  await act(async () => {
+    await render(<SendTransaction transactionData={TRANSACTIONDATASAMPLE} />)
+  })
+
   const btn = screen.getByText('Send')
 
   act(() => {
     fireEvent.click(btn)
-  })
-
-  const confirm = screen.getByText('Confirm')
-  act(() => {
-    fireEvent.click(confirm)
-  })
-
-  act(() => {
-    fireEvent.click(btn)
-  })
-
-  const cancel = screen.getByText('Cancel')
-  act(() => {
-    fireEvent.click(cancel)
   })
 })

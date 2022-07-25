@@ -32,12 +32,13 @@ const SendTransaction = ({
     useState(false)
 
   const openConfirmation = () => {
-    onSendTransaction({
-      to: addressTo,
-      amount: amountInCrypto,
-      fee,
-    })
     setOpenSendFundConfirmation(true)
+    onSendTransaction &&
+      onSendTransaction({
+        to: addressTo,
+        amount: amountInCrypto,
+        fee,
+      })
   }
 
   const handleConfirm = () => setOpenSendFundConfirmation(false)
