@@ -36,7 +36,9 @@
     "pretty-quick": "pretty-quick",
     "pretty-quick-check": "pretty-quick --check",
     "pretty-quick-check-branch": "pretty-quick --check --branch main",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "storybook": "start-storybook -p 6006 -s public",
+    "build-storybook": "build-storybook -s public"
   },
   "eslintConfig": {
     "ignorePatterns": [
@@ -81,7 +83,17 @@
         "always"
       ],
       "testing-library/no-unnecessary-act": "off"
-    }
+    },
+    "overrides": [
+      {
+        "files": [
+          "**/*.stories.*"
+        ],
+        "rules": {
+          "import/no-anonymous-default-export": "off"
+        }
+      }
+    ]
   },
   "jest": {
     "moduleNameMapper": {
@@ -101,7 +113,8 @@
       "d3": "<rootDir>/node_modules/d3/dist/d3.min.js"
     },
     "collectCoverageFrom": [
-      "!src/pages"
+      "!src/pages",
+      "!src/**/*.stories.js"
     ],
     "coveragePathIgnorePatterns": [
       "index.js",
@@ -139,6 +152,19 @@
     ]
   },
   "devDependencies": {
+    "@mdx-js/loader": "^1.6.22",
+    "@mdx-js/react": "^2.1.2",
+    "@storybook/addon-actions": "^6.5.3",
+    "@storybook/addon-essentials": "^6.5.3",
+    "@storybook/addon-interactions": "^6.5.3",
+    "@storybook/addon-links": "^6.5.3",
+    "@storybook/builder-webpack5": "^6.5.3",
+    "@storybook/manager-webpack5": "^6.5.3",
+    "@storybook/mdx2-csf": "^0.0.3",
+    "@storybook/node-logger": "^6.5.3",
+    "@storybook/preset-create-react-app": "^4.1.0",
+    "@storybook/react": "^6.5.3",
+    "@storybook/testing-library": "^0.0.11",
     "dotenv-webpack": "^7.1.0",
     "ecpair": "^2.0.1",
     "fake-indexeddb": "^3.1.8",

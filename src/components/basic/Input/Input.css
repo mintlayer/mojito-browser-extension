@@ -29,4 +29,8 @@
 
 .input.valid {
   border-bottom: 2px solid rgb(var(--color-green));
+  color: rgb(var(--color-green));
+}
+.input.valid::placeholder {
+  color: rgb(var(--color-green));
 }

@@ -1,8 +1,5 @@
 import React from 'react'
-import Input from './input'
-
-import '../../../constants.css'
-import '../../assets/css/index_stories.css'
+import Input from './Input'
 
 export default {
   title: 'Components/Basic/Input',
@@ -10,51 +7,53 @@ export default {
   parameters: {
     layout: 'centered',
   },
+  args: {
+    placeholder: 'Placeholder',
+    value: '',
+    validity: [],
+    extraStyleClasses: [],
+  },
   argTypes: {
     placeholder: {
       description: 'The contents of the field when empty',
-      defaultValue: 'Placeholder',
       type: 'string',
       table: {
         type: {
-          summary: 'string'
+          summary: 'string',
         },
       },
       control: 'text',
     },
     value: {
       description: 'The contents of the field',
-      defaultValue: '',
       type: 'string',
       table: {
         type: {
-          summary: 'string'
+          summary: 'string',
         },
       },
       control: 'text',
     },
     validity: {
       description: 'List of custom CSS classes to the field',
-      defaultValue: [],
       type: 'array',
       table: {
         type: {
-          summary: 'array'
+          summary: 'array',
         },
       },
       control: 'radio',
-      options: ['valid', 'invalid', 'unset']
+      options: ['valid', 'invalid', 'unset'],
     },
     extraStyleClasses: {
       description: 'List of custom CSS classes to the field',
-      defaultValue: [],
       type: 'array',
       table: {
         type: {
-          summary: 'array'
+          summary: 'array',
         },
       },
-      control: 'null'
+      control: 'null',
     },
     onBlurHandle: {
       description: 'Function to handle blur event on the field',
@@ -62,7 +61,7 @@ export default {
       type: 'function',
       table: {
         type: {
-          summary: 'function'
+          summary: 'function',
         },
       },
       control: null,
@@ -73,7 +72,7 @@ export default {
       type: 'function',
       table: {
         type: {
-          summary: 'function'
+          summary: 'function',
         },
       },
       control: {
@@ -87,7 +86,7 @@ export default {
       table: {
         type: {
           summary: 'function',
-          detail: 'The function receives as parameter the event dispatched'
+          detail: 'The function receives as parameter the event dispatched',
         },
       },
       control: null,

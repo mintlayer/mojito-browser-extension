@@ -1,8 +1,5 @@
 import React from 'react'
-import Button from './button'
-
-import '../../../constants.css'
-import '../../assets/css/index_stories.css'
+import Button from './Button'
 
 export default {
   title: 'Components/Basic/Button',
@@ -10,14 +7,18 @@ export default {
   parameters: {
     layout: 'centered',
   },
+  args: {
+    children: 'Label',
+    alternate: false,
+    extraStyleClasses: [],
+  },
   argTypes: {
     children: {
       description: 'Contents of the button',
-      defaultValue: 'Label',
-      type: {name: 'string', required: true},
+      type: { name: 'string', required: true },
       table: {
         type: {
-          summary: 'string | component'
+          summary: 'string | component',
         },
       },
       control: {
@@ -26,11 +27,10 @@ export default {
     },
     alternate: {
       description: 'Changes button to alternate style',
-      defaultValue: false,
       type: { name: 'boolean' },
       table: {
         type: {
-          summary: 'boolean'
+          summary: 'boolean',
         },
       },
       control: {
@@ -39,11 +39,10 @@ export default {
     },
     extraStyleClasses: {
       description: 'List of custom CSS classes to the button',
-      defaultValue: [],
       type: { name: 'array' },
       table: {
         type: {
-          summary: 'array'
+          summary: 'array',
         },
       },
       control: {
@@ -56,13 +55,13 @@ export default {
       type: { name: 'function' },
       table: {
         type: {
-          summary: 'function'
+          summary: 'function',
         },
       },
       control: {
         type: 'null',
       },
-    }
+    },
   },
 }
 
