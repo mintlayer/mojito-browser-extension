@@ -1,8 +1,21 @@
 import React, { useEffect, useState, useMemo } from 'react'
+import InputMask from 'react-input-mask'
 
 import { useStyleClasses } from '@Hooks'
 
 import './Input.css'
+
+const INPUT_MASKS = {
+  INTEGER: /([0-9]+)/,
+  FLOAT: /(([0-9]{1,})$|([0-9]{1,3}\.?)*|([0-9]{1,3}))(,[0-9]{0,2})?(.{0,})/,
+}
+
+const INPUTMASKS = {
+  INTEGER: 'INTEGER',
+  FLOAT: 'FLOAT',
+}
+
+export { INPUTMASKS }
 
 const Input = ({
   placeholder = 'Placeholder',
@@ -16,6 +29,7 @@ const Input = ({
   password = false,
   pattern,
   disabled = false,
+  mask = '',
 }) => {
   const classesList = useMemo(
     () => ['input', ...extraStyleClasses],
@@ -55,13 +69,37 @@ const Input = ({
     setType(password ? 'password' : 'text')
   }, [password])
 
+  const getMaskValue = (matchedValue, mask) => {
+    switch (mask) {
+      case 'INTEGER':
+        return matchedValue[1]
+      case 'FLOAT':
+        return `${matchedValue[1]}${matchedValue[5] || ''}`
+      default:
+        return ''
+    }
+  }
+
   const onChangeDefaultHandler = (ev) => {
-    setVal(ev.target.value)
+    const {
+      target: { value },
+    } = ev
+
+    let newValue = value
+    if (mask) {
+      const matchedValue = value.match(INPUT_MASKS[mask])
+      console.log(matchedValue)
+      newValue =
+        matchedValue && matchedValue[1] ? getMaskValue(matchedValue, mask) : ''
+    }
+
+    ev.target.value = newValue
+    setVal(newValue)
     onChangeHandle(ev)
   }
 
   return (
-    <input
+    <InputMask
       type={type}
       id={id}
       placeholder={placeholder}
