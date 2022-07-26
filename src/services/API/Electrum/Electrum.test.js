@@ -8,12 +8,14 @@ import {
   requestElectrum,
   getLastBlockHeight,
   getFeesEstimates,
+  broadcastTransaction,
   ELECTRUM_URL,
 } from './Electrum.js'
 
 test('Electrum request', async () => {
-  jest.spyOn(console, 'dir').mockImplementation((err) => {
-    console.dir.restoreMock()
+  jest.spyOn(console, 'error').mockImplementation((err) => {
+    expect(err).toBeInstanceOf(Error)
+    console.error.restoreMock()
   })
 
   const fetchAddr = 'testFetch'
@@ -94,4 +96,10 @@ test('Electrum request - getFeesEstimates', async () => {
   const result = await getFeesEstimates()
   const fees = JSON.parse(result)
   expect(Object.keys(fees).length).toBe(28)
+})
+
+test('Electrum request - broadcastTransaction', async () => {
+  await expect(
+    async () => await broadcastTransaction({}),
+  ).rejects.toThrowError()
 })

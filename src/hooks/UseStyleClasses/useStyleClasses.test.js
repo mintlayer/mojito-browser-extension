@@ -141,7 +141,7 @@ test('UseStyleClasses hook, rerender (should not update classes)', async () => {
     styleClasses = result.current[0]
   })
 
-  // ! It should not chage because the component should not be rendered again with new parameters
+  // ! It should not change because the component should not be rendered again with new parameters
   expect(styleClasses).not.toBe(secondClassName)
 })
 

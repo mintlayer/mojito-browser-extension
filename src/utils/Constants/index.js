@@ -1,5 +1,5 @@
-import * as AppInfo from './AppInfo'
-import Expressions from './Expressions'
-import * as EnvVars from './EnvironmentVars'
+import * as AppInfo from './AppInfo/AppInfo'
+import * as EnvVars from './EnvironmentVars/EnvironmentVars'
+import Expressions from './Expressions/Expressions'
 
 export { AppInfo, Expressions, EnvVars }

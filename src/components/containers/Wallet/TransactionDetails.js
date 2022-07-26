@@ -29,8 +29,8 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
 
   const date = format(new Date(transaction?.date * 1000), 'dd/MM/yyyy HH:mm')
   const buttonExtraStyles = ['transaction-details-button']
-  const adressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
-  const transactionAddress = transaction?.otherPart?.join('; ')
+  const addressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
+  const transactionAddress = [...new Set(transaction?.otherPart)].join('; ')
   const externalLink = `https://www.blockchain.com/btc-${EnvVars.BTC_NETWORK}/tx/${transaction?.txid}`
 
   useEffect(() => {
@@ -48,7 +48,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
     >
       <div className="transaction-details-items-wrapper">
         <TransactionDetailsItem
-          title={adressTitle}
+          title={addressTitle}
           content={transactionAddress}
           data-testid="transaction-address"
         />

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { Button } from '@BasicComponents'
 import { PopUp } from '@ComposedComponents'
 import { CenteredLayout } from '@LayoutComponents'
+import { BTC } from '@Helpers'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
 import AddressField from './AddressField'
@@ -10,7 +11,6 @@ import AmountField from './AmountField'
 import FeesField from './FeesField'
 
 import './SendTransaction.css'
-import { BTC } from '@Helpers'
 
 const SendTransaction = ({
   onSendTransaction,

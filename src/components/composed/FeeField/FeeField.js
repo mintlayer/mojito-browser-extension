@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+
 import { Input } from '@BasicComponents'
 import { RadioButtons } from '@ComposedComponents'
 import { Electrum } from '@APIs'
@@ -6,41 +7,43 @@ import { BTC } from '@Helpers'
 
 import './FeeField.css'
 
-const FeeField = ({
-  value: parentValue,
-  id,
-  changeValueHandle
-}) => {
+const FeeField = ({ value: parentValue, id, changeValueHandle }) => {
   const effectCalled = useRef(false)
-  const [ options, setOptions ] = useState([])
-  const [ inputValue, setInputValue ] = useState(0)
-  const [ radioButtonValue, setButtonValue ] = useState(undefined)
-  const [ timeToFirstConfirmations, setTimeToFirstConfirmations ] = useState('15 minutes')
-  const [ estimatedFees, setEstimatedFees ] = useState([])
+  const [options, setOptions] = useState([])
+  const [inputValue, setInputValue] = useState(0)
+  const [radioButtonValue, setButtonValue] = useState(undefined)
+  const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
+    useState('15 minutes')
+  const [estimatedFees, setEstimatedFees] = useState([])
 
-  const blocksToConfirm = useCallback((value) =>
-    Object
-      .entries(estimatedFees)
-      .find(([_, fee]) => fee <= Number(value))[0], [estimatedFees])
+  const blocksToConfirm = useCallback(
+    (value) =>
+      Object.entries(estimatedFees).find(([_, fee]) => fee <= Number(value))[0],
+    [estimatedFees],
+  )
 
-  const changeInputValue = useCallback((value) => {
-    if (!value) {
-      setInputValue(0)
-      setTimeToFirstConfirmations('---')
-      return
-    }
+  const changeInputValue = useCallback(
+    (value) => {
+      if (!value) {
+        setInputValue(0)
+        setTimeToFirstConfirmations('---')
+        return
+      }
 
-    const blocksAmount = blocksToConfirm(value)
-    const minutesTo1stConfirmation = blocksAmount * BTC.AVERAGE_MIN_PER_BLOCK
-    const timeTo1stConfirmation = minutesTo1stConfirmation <= 60
-      ? `${minutesTo1stConfirmation} minutes`
-      : `${Math.ceil(minutesTo1stConfirmation / 60)} hours`
+      const blocksAmount = blocksToConfirm(value)
+      const minutesTo1stConfirmation = blocksAmount * BTC.AVERAGE_MIN_PER_BLOCK
+      const timeTo1stConfirmation =
+        minutesTo1stConfirmation <= 60
+          ? `${minutesTo1stConfirmation} minutes`
+          : `${Math.ceil(minutesTo1stConfirmation / 60)} hours`
 
-    setInputValue(value)
-    setTimeToFirstConfirmations(`${timeTo1stConfirmation}`)
-  }, [blocksToConfirm])
+      setInputValue(value)
+      setTimeToFirstConfirmations(`${timeTo1stConfirmation}`)
+    },
+    [blocksToConfirm],
+  )
 
-  const inputChangeHandler = ({target: {value}}) => changeInputValue(value)
+  const inputChangeHandler = ({ target: { value } }) => changeInputValue(value)
 
   const optionSelectHandle = (selectedOption) => {
     if (!selectedOption) return
@@ -52,7 +55,8 @@ const FeeField = ({
     effectCalled.current = true
 
     const populateOptions = async () => {
-      const estimates = JSON.parse(await Electrum.getFeesEstimates())
+      const fees = await Electrum.getFeesEstimates()
+      const estimates = JSON.parse(fees)
       setEstimatedFees(estimates)
 
       const parsedFees = BTC.parseFeesEstimates(estimates)
@@ -73,7 +77,7 @@ const FeeField = ({
       return
     }
 
-    const optionSelected = options.find(item => item.name === parentValue)
+    const optionSelected = options.find((item) => item.name === parentValue)
 
     setButtonValue(parentValue)
     optionSelected
@@ -82,7 +86,6 @@ const FeeField = ({
   }, [parentValue, options, changeInputValue])
 
   useEffect(() => {
-    // console.log(3)
     changeValueHandle(inputValue)
   }, [inputValue, changeValueHandle])
 
@@ -92,12 +95,14 @@ const FeeField = ({
         <Input
           id={id}
           value={inputValue}
-          onChangeHandle={inputChangeHandler}/>
+          onChangeHandle={inputChangeHandler}
+        />
         <small>sat/B</small>
         <RadioButtons
           value={radioButtonValue}
           options={options}
-          onSelect={optionSelectHandle} />
+          onSelect={optionSelectHandle}
+        />
       </div>
       <p>Estimate time for 1st confirmation: {timeToFirstConfirmations}</p>
     </div>
