@@ -1,5 +1,5 @@
 import { Electrum } from '@APIs'
-import { BTCTransaction } from '@Helpers'
+import { CoinSelectionAlgo } from '@Helpers'
 
 import { buildTransaction } from './BTCTransaction'
 
@@ -17,7 +17,7 @@ test('Build transaction', async () => {
   })
 
   const utxos = JSON.parse(await Electrum.getAddressUtxo(from))
-  const selected = BTCTransaction.utxoSelect(utxos, amount + fee)
+  const selected = CoinSelectionAlgo.utxoSelect(utxos, amount + fee)
   const amountUsed = selected.reduce((acc, utxo) => acc + utxo.value, 0)
 
   expect(result.outs.length).toBe(2)

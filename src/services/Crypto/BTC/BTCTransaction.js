@@ -4,7 +4,7 @@ import * as ecc from 'tiny-secp256k1'
 
 import { Electrum } from '@APIs'
 import { EnvVars } from '@Constants'
-import { Concurrency, BTC, BTCTransaction } from '@Helpers'
+import { Concurrency, BTC, BTCTransaction, CoinSelectionAlgo } from '@Helpers'
 
 const getFullTransactionsFromUtxoList = async (utxoList) =>
   await Concurrency.map(utxoList, async (utxo) =>
@@ -20,7 +20,7 @@ const getHexTransactions = async (transactionList) =>
 const getTransactionData = async ({ from, amount, fee }) => {
   const EcPair = ECPairFactory(ecc)
   const utxos = JSON.parse(await Electrum.getAddressUtxo(from))
-  const selectedUtxo = BTCTransaction.utxoSelect(utxos, amount + fee)
+  const selectedUtxo = CoinSelectionAlgo.utxoSelect(utxos, amount + fee)
   const fullTransactions = await getFullTransactionsFromUtxoList(selectedUtxo)
   const rawTransactions = await getHexTransactions(fullTransactions)
   const change = BTC.calculateBalanceFromUtxoList(selectedUtxo) - fee - amount
