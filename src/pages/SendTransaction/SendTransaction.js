@@ -2,7 +2,10 @@ import { useState } from 'react'
 import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
-import { BTC as BTCHelper } from '@Helpers'
+import {
+  BTC as BTCHelper,
+  BTCTransaction as BTCTransactionHelper,
+} from '@Helpers'
 
 import './SendTransaction.css'
 
@@ -18,10 +21,11 @@ const SendTransactionPage = () => {
   }
 
   const createTransaction = (transactionInfo) => {
-    const transactionSize = BTCHelper.calculateTransactionSizeInBytes({
-      addressFrom: transactionInfo.to,
-      amountToTranfer: transactionInfo.amount,
-    })
+    const transactionSize =
+      BTCTransactionHelper.calculateTransactionSizeInBytes({
+        addressFrom: transactionInfo.to,
+        amountToTranfer: transactionInfo.amount,
+      })
     const feeInBTC = BTCHelper.formatBTCValue(
       BTCHelper.convertSatoshiToBtc(transactionInfo.fee),
     )
