@@ -109,13 +109,12 @@
       "./src/pages",
       "./src/contexts/AccountProvider/AccountProvider.js",
       "./src/utils/Constants/EnvironmentVars.js",
-      "./src/utils/Helpers/fees.json",
-      "./src/utils/Helpers/testTransactions.json",
       "./src/utils/reportWebVitals.js",
       "./src/services/Crypto/BTC/BTC.worker.js",
       "./src/services/Crypto/Cipher/Cipher.worker.js",
-      "./src/services/Crypto/BTC/testUtxos.json",
       "./src/services/Entity/Account/Account.worker.js",
+      "./src/utils/TestData/testTransactions.json",
+      "./src/utils/TestData/*",
       "./src/assets/images/*"
     ],
     "coverageThreshold": {
