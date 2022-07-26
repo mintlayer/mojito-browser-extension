@@ -63,8 +63,8 @@ const getLastBlockHeight = () =>
 
 const getFeesEstimates = async () => {
   if (!EnvVars.IS_PROD_ENV) {
-    const fees = await import('../../../utils/Helpers/fees.json')
-    return JSON.stringify(fees.default)
+    const { fees } = await import('@TestData')
+    return JSON.stringify(fees)
   }
   return requestElectrum(ELECTRUM_ENDPOINTS.GET_FEES_ESTIMATES)
 }

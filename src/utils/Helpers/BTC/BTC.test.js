@@ -9,9 +9,7 @@ import {
   isTransactionSegwit,
 } from './BTC'
 
-import fees from './fees.json'
-import rawTransactions from './testTransactions.json'
-import utxos from '../../services/Crypto/BTC/testUtxos.json'
+import { fees, rawTransactions, utxos } from '@TestData'
 
 test('Parse Fees Estimates', () => {
   const estimates = parseFeesEstimates(fees)
@@ -21,9 +19,6 @@ test('Parse Fees Estimates', () => {
 
 test('BTC helpers', () => {
   let value = 0.6
-  expect(formatBTCValue(value)).toBe('0.6')
-
-  value = 0.6
   expect(formatBTCValue(value)).toBe('0.6')
 
   value = 0.60000001

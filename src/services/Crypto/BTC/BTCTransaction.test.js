@@ -1,8 +1,7 @@
 import { Electrum } from '@APIs'
-import { BTC } from '@Helpers'
-import { utxoSelect, buildTransaction } from './BTCTransaction'
+import { utxos } from '@TestData'
 
-import utxos from './testUtxos.json'
+import { utxoSelect, buildTransaction } from './BTCTransaction'
 
 const orderByDateDesc = (transactionA, transactionB) => {
   if (transactionA.status.block_time > transactionB.status.block_time) return -1

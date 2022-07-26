@@ -15,7 +15,8 @@
       "@Databases": ["./src/services/Database/index.js"],
       "@Entities": ["./src/services/Entity/index.js"],
       "@Helpers": ["./src/utils/Helpers/index.js"],
-      "@Constants": ["./src/utils/Constants/index.js"]
+      "@Constants": ["./src/utils/Constants/index.js"],
+      "@TestData": ["./src/utils/TestData/index.js"]
     }
   },
   "exclude": ["node_modules", "build"]
