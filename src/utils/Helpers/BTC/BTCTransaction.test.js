@@ -1,5 +1,9 @@
 import { utxos } from '@TestData'
-import { utxoSelect } from './BTCTransaction'
+import {
+  utxoSelect,
+  nonSegwitFilter,
+  isTransactionSegwit,
+} from './BTCTransaction'
 
 const orderByDateDesc = (transactionA, transactionB) => {
   if (transactionA.status.block_time > transactionB.status.block_time) return -1
@@ -40,4 +44,20 @@ test('Select UTXO - not enough funds', () => {
   const targetValue = balance + 1
 
   expect(utxoSelect.bind(null, utxos, targetValue)).toThrow()
+})
+
+test('Filter non-segwit', () => {
+  const result = nonSegwitFilter({
+    vin: [{ witness: [] }, { witness: [] }],
+  })
+
+  expect(result).toBeTruthy()
+})
+
+test('Is Segwit', () => {
+  const result = isTransactionSegwit({
+    vin: [{ witness: [] }, { witness: [] }],
+  })
+
+  expect(result).toBeFalsy()
 })

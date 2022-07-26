@@ -35,6 +35,11 @@ const getTransactionData = async ({ from, amount, fee }) => {
 }
 
 const buildTransaction = async ({ to, amount, fee, wif, from }) => {
+  if (!BTCTransaction.isValidAmount(amount))
+    return Promise.reject('Amount out of bounds.')
+  if (!BTCTransaction.isValidAmount(fee))
+    return Promise.reject('Fee out of bounds.')
+
   const { EcPair, fullTransactions, selectedUtxo, rawTransactions, change } =
     await getTransactionData({ from, fee, amount })
 

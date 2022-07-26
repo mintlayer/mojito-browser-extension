@@ -2,12 +2,8 @@ import { Electrum } from '@APIs'
 
 const AVERAGE_MIN_PER_BLOCK = 15
 const SATOSHI_BTC_CONVERSION_FACTOR = 100_000_000
-
-const sizeConstants = {
-  overhead: 10,
-  input: 148,
-  output: 34,
-}
+const MAX_BTC = 21_000_000
+const MAX_BTC_IN_SATOSHIS = MAX_BTC * SATOSHI_BTC_CONVERSION_FACTOR
 
 const blockLevels = {
   25: 'LOW',
@@ -35,25 +31,6 @@ const formatBTCValue = (value) =>
     .toFixed(8)
     .replace(/\.0+$/, '')
     .replace(/(\.[1-9]+)(0+)$/, '$1')
-
-const getInputsAmount = ({ addressFrom, amountToTranfer }) => {
-  // TODO: implement function
-  console.log(addressFrom, amountToTranfer)
-  return 2
-}
-
-const getOuputsAmount = ({ usedUtxos, amountToTranfer }) => {
-  // TODO: implement function
-  console.log(usedUtxos, amountToTranfer)
-  return 2
-}
-
-const calculateTransactionSizeInBytes = ({ addressFrom, amountToTranfer }) => {
-  const inputsSize = sizeConstants.input * getInputsAmount({})
-  const ouputsSize = sizeConstants.output * getOuputsAmount({})
-
-  return sizeConstants.overhead + inputsSize + ouputsSize
-}
 
 const convertSatoshiToBtc = (satoshiAmount) =>
   satoshiAmount / SATOSHI_BTC_CONVERSION_FACTOR
@@ -125,20 +102,13 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
   return parsedTransactions
 }
 
-const isTransactionSegwit = (transaction) =>
-  transaction.vin.some((vin) => vin.witness && vin.witness.length)
-
-const nonSegwitFilter = (transaction) => !isTransactionSegwit(transaction)
-
 export {
   parseFeesEstimates,
-  calculateTransactionSizeInBytes,
   formatBTCValue,
-  AVERAGE_MIN_PER_BLOCK,
   calculateBalanceFromUtxoList,
   convertSatoshiToBtc,
   getParsedTransactions,
   getConfirmationsAmount,
-  nonSegwitFilter,
-  isTransactionSegwit,
+  AVERAGE_MIN_PER_BLOCK,
+  MAX_BTC_IN_SATOSHIS,
 }
