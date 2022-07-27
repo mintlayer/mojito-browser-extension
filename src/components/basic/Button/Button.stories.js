@@ -51,15 +51,11 @@ export default {
     },
     onClickHandle: {
       description: 'Function to handle button click',
-      defaultValue: () => {},
-      type: { name: 'function' },
+      action: 'clicked',
       table: {
         type: {
           summary: 'function',
         },
-      },
-      control: {
-        type: 'null',
       },
     },
   },
@@ -70,7 +66,4 @@ const Template = (args) => <Button {...args} />
 export const Primary = Template.bind({})
 Primary.args = {
   children: 'Label',
-  onClickHandle: () => {
-    alert('Button clicked!')
-  },
 }

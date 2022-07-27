@@ -53,43 +53,34 @@ export default {
           summary: 'array',
         },
       },
-      control: 'null',
     },
     onBlurHandle: {
       description: 'Function to handle blur event on the field',
-      defaultValue: () => {},
-      type: 'function',
+      action: 'clicked',
       table: {
         type: {
           summary: 'function',
         },
       },
-      control: null,
     },
     onFocusHandle: {
       description: 'Function to handle focus event on the field',
-      defaultValue: () => {},
-      type: 'function',
+      action: 'clicked',
       table: {
         type: {
           summary: 'function',
         },
-      },
-      control: {
-        type: 'null',
       },
     },
     onChangeHandle: {
       description: 'Function to handle change event on the field',
-      defaultValue: () => {},
-      type: 'function',
+      action: 'clicked',
       table: {
         type: {
           summary: 'function',
           detail: 'The function receives as parameter the event dispatched',
         },
       },
-      control: null,
     },
   },
 }
@@ -97,9 +88,9 @@ export default {
 const Template = (args) => <Input {...args} />
 
 export const Primary = Template.bind({})
+Primary.args = {}
 
-// export const Alternate = Template.bind({})
-// Alternate.args = {
-//   children: 'Label',
-//   alternate: true,
-// }
+export const Alternate = Template.bind({})
+Alternate.args = {
+  alternate: true,
+}
