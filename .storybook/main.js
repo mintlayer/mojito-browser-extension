@@ -17,6 +17,7 @@ const projectAlias = {
   '@Entities': resolve('../src/services/Entity/index.js'),
   '@Helpers': resolve('../src/utils/Helpers/index.js'),
   '@Constants': resolve('../src/utils/Constants/index.js'),
+  '@TestData': resolve('../src/utils/TestData/index.js'),
 }
 
 module.exports = {
