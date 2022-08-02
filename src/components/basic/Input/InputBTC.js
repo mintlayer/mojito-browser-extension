@@ -1,10 +1,10 @@
 import { AppInfo, Expressions } from '@Constants'
 import { NumbersHelper } from '@Helpers'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Input from './Input'
 
-const InputFloat = (props) => {
-  const mask = Expressions.FIELDS.FLOAT.getExpression(
+const InputBTC = (props) => {
+  const mask = Expressions.FIELDS.BTC.getExpression(
     AppInfo.decimalSeparator,
     AppInfo.thousandsSeparator,
   )
@@ -12,7 +12,7 @@ const InputFloat = (props) => {
   const [regexIntegerPartIndex, regexDecimalPartIndex] = [1, 5]
   const breakersRegex = /[.,]/g
 
-  const [value] = useState(props.value || '')
+  const [value, setValue] = useState(props.value || '')
 
   const removeBreakers = (value) => value.replaceAll(breakersRegex, '')
 
@@ -76,6 +76,10 @@ const InputFloat = (props) => {
     return parsedVal.value || ev.target.value
   }
 
+  useEffect(() => {
+    setValue(props.value)
+  }, [props.value])
+
   return (
     <Input
       {...props}
@@ -87,4 +91,4 @@ const InputFloat = (props) => {
   )
 }
 
-export default InputFloat
+export default InputBTC

@@ -5,6 +5,7 @@ import { VerticalGroup } from '@LayoutComponents'
 import {
   BTC as BTCHelper,
   BTCTransaction as BTCTransactionHelper,
+  Format,
 } from '@Helpers'
 
 import './SendTransaction.css'
@@ -26,11 +27,11 @@ const SendTransactionPage = () => {
         addressFrom: transactionInfo.to,
         amountToTranfer: transactionInfo.amount,
       })
-    const feeInBTC = BTCHelper.formatBTCValue(
+    const feeInBTC = Format.BTCValue(
       BTCHelper.convertSatoshiToBtc(transactionInfo.fee),
     )
-    const totalFee = BTCHelper.formatBTCValue(transactionSize * feeInBTC)
-    setTotalFeeFiat((totalFee * transactionData.exchangeRate).toFixed(2))
+    const totalFee = Format.BTCValue(transactionSize * feeInBTC)
+    setTotalFeeFiat(Format.fiatValue(totalFee * transactionData.exchangeRate))
     setTotalFeeCrypto(totalFee)
   }
 

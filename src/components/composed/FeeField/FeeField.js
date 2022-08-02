@@ -76,7 +76,7 @@ const FeeField = ({ value: parentValue, id, changeValueHandle }) => {
       changeInputValue(parentValue)
       return
     }
-    console.log(parentValue)
+
     const optionSelected = options.find((item) => item.name === parentValue)
 
     setButtonValue(parentValue)

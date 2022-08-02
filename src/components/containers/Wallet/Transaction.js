@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { format } from 'date-fns'
 
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
-
+import { Format } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
 
 import TransactionDetails from './TransactionDetails'
@@ -59,7 +59,8 @@ const Transaction = ({ transaction, getConfirmations }) => {
             className="transaction-amout"
             data-testid="transaction-amout"
           >
-            Amout: <span>{transaction && transaction.value}</span>
+            Amout:{' '}
+            <span>{transaction && Format.BTCValue(transaction.value)}</span>
           </p>
         </div>
       </div>

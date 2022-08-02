@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { Button } from '@BasicComponents'
 import { PopUp } from '@ComposedComponents'
 import { CenteredLayout } from '@LayoutComponents'
-import { BTC } from '@Helpers'
+import { Format } from '@Helpers'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
 import AddressField from './AddressField'
@@ -54,14 +54,14 @@ const SendTransaction = ({
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
     if (amount.currency === transactionData.tokenName) {
-      setAmountInCrypto(BTC.formatBTCValue(Number(amount.value)))
+      setAmountInCrypto(Format.BTCValue(amount.value))
       setAmountInFiat((amount.value * transactionData.exchangeRate).toFixed(2))
       return
     }
 
-    setAmountInFiat(Number(amount.value).toFixed(2))
+    setAmountInFiat(Format.fiatValue(amount.value))
     setAmountInCrypto(
-      BTC.formatBTCValue(amount.value / transactionData.exchangeRate),
+      Format.BTCValue(amount.value / transactionData.exchangeRate),
     )
   }
 

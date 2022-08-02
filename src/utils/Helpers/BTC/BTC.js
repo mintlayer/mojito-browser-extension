@@ -26,12 +26,6 @@ const parseFeesEstimates = (allEstimates) => {
     }, {})
 }
 
-const formatBTCValue = (value) =>
-  value
-    .toFixed(8)
-    .replace(/\.0+$/, '')
-    .replace(/(\.[1-9]+)(0+)$/, '$1')
-
 const convertSatoshiToBtc = (satoshiAmount) =>
   satoshiAmount / SATOSHI_BTC_CONVERSION_FACTOR
 
@@ -104,7 +98,6 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
 
 export {
   parseFeesEstimates,
-  formatBTCValue,
   calculateBalanceFromUtxoList,
   convertSatoshiToBtc,
   getParsedTransactions,

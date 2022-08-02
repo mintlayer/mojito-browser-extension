@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { Button, Input } from '@BasicComponents'
+import { Button, InputBTC, InputFloat } from '@BasicComponents'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 
 import './CryptoFiatField.css'
+import { Format, NumbersHelper } from '@Helpers'
 
 const CryptoFiatField = ({
   placeholder,
@@ -13,14 +14,6 @@ const CryptoFiatField = ({
   id,
   changeValueHandle,
 }) => {
-  const formatCryptoValue = (value) =>
-    value
-      .toFixed(8)
-      .replace(/\.0+$/, '')
-      .replace(/(\.[1-9]+)(0+)$/, '$1')
-
-  const formatFiatValue = (value) => value.toFixed(2)
-
   const [bottomValue, setBottomValue] = useState('')
   const [currentValueType, setCurrentValueType] = useState(
     transactionData ? transactionData.tokenName : 'Token',
@@ -46,60 +39,59 @@ const CryptoFiatField = ({
 
   const isTypeFiat = () => currentValueType === fiatName
 
-  const finaBottomValue = `≈ ${bottomValue ? bottomValue : 0} ${
-    isTypeFiat() ? tokenName : fiatName
-  }`
+  const formattedBottomValue = `≈ ${
+    bottomValue ? bottomValue : Format.fiatValue(0)
+  } ${isTypeFiat() ? tokenName : fiatName}`
 
-  const sendValueToParent = (value) => {
-    if (!changeValueHandle) return
-
-    const cryptoValue = isTypeFiat()
-      ? setBottomValue(calculateCryptoValue(value))
-      : value
-    changeValueHandle(cryptoValue)
+  const calculateFiatValue = (value) => {
+    const parsedValue = NumbersHelper.floatStringToNumber(value)
+    return Format.fiatValue(parsedValue * exchangeRate)
   }
 
-  const calculateFiatValue = (value) => formatFiatValue(value * exchangeRate)
-
-  const calculateCryptoValue = (value) =>
-    formatCryptoValue(value / exchangeRate)
+  const calculateCryptoValue = (value) => {
+    const parsedValue = NumbersHelper.floatStringToNumber(value)
+    return Format.BTCValue(parsedValue / exchangeRate)
+  }
 
   const updateValue = (value) => {
-    sendValueToParent(value)
     isTypeFiat()
       ? setBottomValue(calculateCryptoValue(value))
       : setBottomValue(calculateFiatValue(value))
   }
 
-  const switchCurrency = (currencyName, recalculateFn) => {
+  const switchCurrency = (
+    currencyName,
+    recalculateValueFn,
+    calculateBottomFn,
+  ) => {
     setCurrentValueType(currencyName)
-    setBottomValue(value)
-    setValue(recalculateFn(value))
+    setBottomValue(calculateBottomFn(value))
+    setValue(recalculateValueFn(value))
   }
 
   const changeButtonClickHandler = () => {
     isTypeFiat()
-      ? switchCurrency(tokenName, calculateCryptoValue)
-      : switchCurrency(fiatName, calculateFiatValue)
+      ? switchCurrency(tokenName, calculateCryptoValue, Format.fiatValue)
+      : switchCurrency(fiatName, calculateFiatValue, Format.BTCValue)
   }
 
-  const actionButtonClickHandler = () => {
+  const maxButtonClickHandler = () => {
     if (isTypeFiat()) {
-      setValue(formatFiatValue(maxFiatValue))
-      setBottomValue(formatCryptoValue(maxFiatValue / exchangeRate))
+      setValue(Format.fiatValue(maxFiatValue))
+      setBottomValue(Format.BTCValue(maxFiatValue / exchangeRate))
     } else {
-      setValue(formatCryptoValue(maxCryptoValue))
-      setBottomValue(formatFiatValue(maxCryptoValue * exchangeRate))
+      setValue(Format.BTCValue(maxCryptoValue))
+      setBottomValue(Format.fiatValue(maxCryptoValue * exchangeRate))
     }
   }
 
-  const changeHandler = ({ target: { value } }) => {
+  const changeHandler = ({ target: { value, parsedValue } }) => {
     setValue(value)
-    updateValue(value)
+    updateValue(parsedValue)
 
     const isValid = isTypeFiat()
-      ? value <= maxFiatValue
-      : value <= maxCryptoValue
+      ? parsedValue <= maxFiatValue
+      : parsedValue <= maxCryptoValue
 
     setValidity(isValid ? 'valid' : 'invalid')
   }
@@ -110,14 +102,25 @@ const CryptoFiatField = ({
       data-testid="crypto-fiat-field"
     >
       <div className="fiat-field-input">
-        <Input
-          id={id}
-          extraStyleClasses={inputExtraClasses}
-          placeholder={placeholder}
-          value={value}
-          onChangeHandle={changeHandler}
-          validity={validity}
-        />
+        {isTypeFiat() ? (
+          <InputFloat
+            id={id}
+            extraStyleClasses={inputExtraClasses}
+            placeholder={placeholder || Format.fiatValue(0)}
+            value={value}
+            onChangeHandle={changeHandler}
+            validity={validity}
+          />
+        ) : (
+          <InputBTC
+            id={id}
+            extraStyleClasses={inputExtraClasses}
+            placeholder={placeholder || Format.BTCValue(0)}
+            value={value}
+            onChangeHandle={changeHandler}
+            validity={validity}
+          />
+        )}
 
         <button
           className="crypto-fiat-switch-button"
@@ -138,7 +141,7 @@ const CryptoFiatField = ({
 
       <Button
         extraStyleClasses={buttonExtraClasses}
-        onClickHandle={actionButtonClickHandler}
+        onClickHandle={maxButtonClickHandler}
       >
         {buttonTitle}
       </Button>
@@ -147,7 +150,7 @@ const CryptoFiatField = ({
         className="crypto-fiat-bottom-text"
         data-testid="crypto-fiat-bottom-text"
       >
-        {finaBottomValue}
+        {formattedBottomValue}
       </p>
     </div>
   )
