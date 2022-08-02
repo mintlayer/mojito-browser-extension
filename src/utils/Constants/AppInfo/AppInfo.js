@@ -6,4 +6,7 @@ const appAccounts = async () => {
   return accounts
 }
 
-export { appAccounts }
+const decimalSeparator = ','
+const thousandsSeparator = '.'
+
+export { appAccounts, decimalSeparator, thousandsSeparator }

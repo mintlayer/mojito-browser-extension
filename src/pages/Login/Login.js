@@ -5,7 +5,6 @@ import { Login } from '@ContainerComponents'
 import { useStyleClasses } from '@Hooks'
 
 import './Login.css'
-import { Input, INPUTMASKS } from '@BasicComponents'
 
 const LoginPage = ({
   accounts = [
@@ -49,7 +48,6 @@ const LoginPage = ({
       data-testid="generic"
       className={styleClasses}
     >
-      <Input mask={INPUTMASKS.FLOAT} />
       {!account && (
         <Login.Login
           account={account}

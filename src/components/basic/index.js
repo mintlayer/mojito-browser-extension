@@ -1,7 +1,9 @@
 import * as Arc from './Arc/Arc'
 import Button from './Button/Button'
-import Input, { INPUTMASKS } from './Input/Input'
+import Input from './Input/Input'
+import InputInteger from './Input/InputInteger'
+import InputFloat from './Input/InputFloat'
 import Line from './Line/Line'
 import Svg from './Svg/Svg'
 
-export { Arc, Button, Input, Line, Svg, INPUTMASKS }
+export { Arc, Button, Input, Line, Svg, InputInteger, InputFloat }
