@@ -1,13 +1,15 @@
 import { FeeField } from '@ComposedComponents'
 import TransactionField from './TransactionField'
 
-const FeesField = ({ feeChanged }) => {
+const FeesField = ({ feeChanged, value }) => {
   return (
     <TransactionField>
       <label htmlFor="fee">Fee:</label>
       <FeeField
         id="fee"
-        changeValueHandle={feeChanged}/>
+        changeValueHandle={feeChanged}
+        value={value}
+      />
     </TransactionField>
   )
 }

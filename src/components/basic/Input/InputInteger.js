@@ -6,7 +6,6 @@ const InputInteger = (props) => {
 
   const parseValue = ({ target: { value, matchedValue } }) => {
     const newValue = matchedValue[1]
-    console.log(newValue)
     const response = { originalValue: value, value: newValue }
     if (!newValue) return { ...response, parsedValue: 0 }
 

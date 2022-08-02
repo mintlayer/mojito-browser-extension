@@ -78,7 +78,10 @@ const SendTransaction = ({
         amountChanged={amountChanged}
       />
 
-      <FeesField feeChanged={feeChanged} />
+      <FeesField
+        feeChanged={feeChanged}
+        value="norm"
+      />
 
       <CenteredLayout>
         <Button
