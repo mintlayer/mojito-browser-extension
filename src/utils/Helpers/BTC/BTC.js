@@ -104,4 +104,5 @@ export {
   getConfirmationsAmount,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
+  MAX_BTC,
 }

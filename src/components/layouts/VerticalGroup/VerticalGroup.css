@@ -8,3 +8,11 @@
 .v-group.bigGap {
   gap: 2.75em;
 }
+
+.v-group.midGap {
+  gap: 1.75em;
+}
+
+.v-group.smallGap {
+  gap: 0.4em;
+}

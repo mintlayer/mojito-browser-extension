@@ -39,7 +39,7 @@ const SendTransactionPage = () => {
     <>
       <Header />
       <div className="page">
-        <VerticalGroup>
+        <VerticalGroup smallGap>
           <SendTransaction
             totalFeeFiat={totalFeeFiat}
             totalFeeCrypto={totalFeeCrypto}

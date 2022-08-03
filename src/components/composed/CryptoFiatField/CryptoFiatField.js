@@ -3,7 +3,7 @@ import { Button, InputBTC, InputFloat } from '@BasicComponents'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 
 import './CryptoFiatField.css'
-import { Format, NumbersHelper } from '@Helpers'
+import { BTC, Format, NumbersHelper } from '@Helpers'
 
 const CryptoFiatField = ({
   placeholder,
@@ -13,6 +13,7 @@ const CryptoFiatField = ({
   validity: parentValidity,
   id,
   changeValueHandle,
+  setErrorMessage
 }) => {
   const [bottomValue, setBottomValue] = useState('')
   const [currentValueType, setCurrentValueType] = useState(
@@ -89,11 +90,21 @@ const CryptoFiatField = ({
     setValue(value)
     updateValue(parsedValue)
 
-    const isValid = isTypeFiat()
+    let isValid = isTypeFiat()
+      ? NumbersHelper.floatStringToNumber(calculateCryptoValue(parsedValue)) < BTC.MAX_BTC
+      : parsedValue < BTC.MAX_BTC
+    setValidity(isValid ? 'valid' : 'invalid')
+    setErrorMessage(isValid ? undefined : 'Amount set is bigger than max available BTC on the blockchain.')
+    if (!isValid) return
+
+
+    isValid = isTypeFiat()
       ? parsedValue <= maxFiatValue
       : parsedValue <= maxCryptoValue
 
     setValidity(isValid ? 'valid' : 'invalid')
+    setErrorMessage(isValid ? undefined : 'Amount set is bigger than this wallet balance.')
+    if (!isValid) return
   }
 
   return (

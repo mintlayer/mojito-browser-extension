@@ -1,7 +1,18 @@
+import { useEffect, useState } from 'react'
+
 import { FeeField } from '@ComposedComponents'
 import TransactionField from './TransactionField'
 
-const FeesField = ({ feeChanged, value }) => {
+import './errorMessages.css'
+
+const FeesField = ({ feeChanged, value, errorMessage }) => {
+
+  const [ message, setMessage ] = useState(errorMessage)
+
+  useEffect(() => {
+    setMessage(errorMessage)
+  }, [errorMessage, setMessage])
+
   return (
     <TransactionField>
       <label htmlFor="fee">Fee:</label>
@@ -9,7 +20,9 @@ const FeesField = ({ feeChanged, value }) => {
         id="fee"
         changeValueHandle={feeChanged}
         value={value}
+        setErrorMessage={setMessage}
       />
+      <p className="error-message">{message}</p>
     </TransactionField>
   )
 }
