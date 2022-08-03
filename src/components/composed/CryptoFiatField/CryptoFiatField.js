@@ -13,14 +13,23 @@ const CryptoFiatField = ({
   validity: parentValidity,
   id,
   changeValueHandle,
-  setErrorMessage
+  setErrorMessage,
+  exchangeRate,
+  maxValueInToken,
 }) => {
+  const [maxCryptoValue, setMaxCryptoValue] = useState(
+    NumbersHelper.floatStringToNumber(maxValueInToken),
+  )
+
   const [bottomValue, setBottomValue] = useState('')
   const [currentValueType, setCurrentValueType] = useState(
     transactionData ? transactionData.tokenName : 'Token',
   )
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
+  const [maxFiatValue, setMaxFiatValue] = useState(
+    maxCryptoValue * exchangeRate,
+  )
 
   useEffect(() => {
     changeValueHandle &&
@@ -30,11 +39,17 @@ const CryptoFiatField = ({
       })
   }, [changeValueHandle, currentValueType, value])
 
+  useEffect(() => {
+    setMaxFiatValue(maxCryptoValue * exchangeRate)
+  }, [exchangeRate, setMaxFiatValue, maxCryptoValue])
+
+  useEffect(() => {
+    setMaxCryptoValue(NumbersHelper.floatStringToNumber(maxValueInToken))
+  }, [maxValueInToken])
+
   if (!transactionData) return null
 
-  const { tokenName, fiatName, exchangeRate } = transactionData
-  const maxCryptoValue = transactionData.maxValueInToken
-  const maxFiatValue = maxCryptoValue * transactionData.exchangeRate
+  const { tokenName, fiatName } = transactionData
   const buttonExtraClasses = ['crypto-fiat-input-button']
   const inputExtraClasses = ['crypto-fiat-input']
 
@@ -88,22 +103,28 @@ const CryptoFiatField = ({
 
   const changeHandler = ({ target: { value, parsedValue } }) => {
     setValue(value)
-    updateValue(parsedValue)
+    updateValue(value)
 
     let isValid = isTypeFiat()
-      ? NumbersHelper.floatStringToNumber(calculateCryptoValue(parsedValue)) < BTC.MAX_BTC
+      ? NumbersHelper.floatStringToNumber(calculateCryptoValue(parsedValue)) <
+        BTC.MAX_BTC
       : parsedValue < BTC.MAX_BTC
     setValidity(isValid ? 'valid' : 'invalid')
-    setErrorMessage(isValid ? undefined : 'Amount set is bigger than max available BTC on the blockchain.')
+    setErrorMessage(
+      isValid
+        ? undefined
+        : 'Amount set is bigger than max available BTC on the blockchain.',
+    )
     if (!isValid) return
-
 
     isValid = isTypeFiat()
       ? parsedValue <= maxFiatValue
       : parsedValue <= maxCryptoValue
 
     setValidity(isValid ? 'valid' : 'invalid')
-    setErrorMessage(isValid ? undefined : 'Amount set is bigger than this wallet balance.')
+    setErrorMessage(
+      isValid ? undefined : 'Amount set is bigger than this wallet balance.',
+    )
     if (!isValid) return
   }
 

@@ -15,6 +15,8 @@ import './SendTransaction.css'
 const SendTransaction = ({
   onSendTransaction,
   transactionData,
+  exchangeRate,
+  maxValueInToken,
   totalFeeFiat: totalFeeFiatParent,
   totalFeeCrypto: totalFeeCryptoParent,
 }) => {
@@ -53,16 +55,15 @@ const SendTransaction = ({
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
+    if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
       setAmountInCrypto(Format.BTCValue(amount.value))
-      setAmountInFiat((amount.value * transactionData.exchangeRate).toFixed(2))
+      setAmountInFiat((amount.value * exchangeRate).toFixed(2))
       return
     }
 
     setAmountInFiat(Format.fiatValue(amount.value))
-    setAmountInCrypto(
-      Format.BTCValue(amount.value / transactionData.exchangeRate),
-    )
+    setAmountInCrypto(Format.BTCValue(amount.value / exchangeRate))
   }
 
   const addressChanged = (e) => {
@@ -76,6 +77,8 @@ const SendTransaction = ({
       <AmountField
         transactionData={transactionData}
         amountChanged={amountChanged}
+        exchangeRate={exchangeRate}
+        maxValueInToken={maxValueInToken}
       />
 
       <FeesField

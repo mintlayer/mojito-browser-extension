@@ -4,9 +4,15 @@ import TransactionField from './TransactionField'
 
 import './errorMessages.css'
 
-const AmountField = ({ amountChanged, transactionData, validity = undefined, errorMessage }) => {
-
-  const [ message, setMessage ] = useState(errorMessage)
+const AmountField = ({
+  amountChanged,
+  transactionData,
+  validity = undefined,
+  errorMessage,
+  exchangeRate,
+  maxValueInToken,
+}) => {
+  const [message, setMessage] = useState(errorMessage)
 
   useEffect(() => {
     setMessage(errorMessage)
@@ -23,7 +29,9 @@ const AmountField = ({ amountChanged, transactionData, validity = undefined, err
         validity={validity}
         changeValueHandle={amountChanged}
         setErrorMessage={setMessage}
-        />
+        exchangeRate={exchangeRate}
+        maxValueInToken={maxValueInToken}
+      />
       <p className="error-message">{message}</p>
     </TransactionField>
   )

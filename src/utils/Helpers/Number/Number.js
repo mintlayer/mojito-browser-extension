@@ -12,8 +12,7 @@ const floatStringToNumber = (value = '') => {
     .toString()
     .replaceAll(AppInfo.thousandsSeparator, '')
     .replace(AppInfo.decimalSeparator, '.')
-
-  return Number(parsedValue)
+  return parseFloat(parsedValue)
 }
 
 export { getSafeIntegerPart, SAFE_INTEGER_LENGTH, floatStringToNumber }
