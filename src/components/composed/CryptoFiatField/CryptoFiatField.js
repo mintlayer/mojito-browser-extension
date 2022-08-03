@@ -102,19 +102,20 @@ const CryptoFiatField = ({
   }
 
   const changeHandler = ({ target: { value, parsedValue } }) => {
-    setValue(value)
-    updateValue(value)
+    setValue(value || 0)
+    updateValue(value || 0)
 
     let isValid = isTypeFiat()
       ? NumbersHelper.floatStringToNumber(calculateCryptoValue(parsedValue)) <
         BTC.MAX_BTC
       : parsedValue < BTC.MAX_BTC
     setValidity(isValid ? 'valid' : 'invalid')
-    setErrorMessage(
-      isValid
-        ? undefined
-        : 'Amount set is bigger than max available BTC on the blockchain.',
-    )
+    setErrorMessage &&
+      setErrorMessage(
+        isValid
+          ? undefined
+          : 'Amount set is bigger than max available BTC on the blockchain.',
+      )
     if (!isValid) return
 
     isValid = isTypeFiat()
@@ -122,9 +123,10 @@ const CryptoFiatField = ({
       : parsedValue <= maxCryptoValue
 
     setValidity(isValid ? 'valid' : 'invalid')
-    setErrorMessage(
-      isValid ? undefined : 'Amount set is bigger than this wallet balance.',
-    )
+    setErrorMessage &&
+      setErrorMessage(
+        isValid ? undefined : 'Amount set is bigger than this wallet balance.',
+      )
     if (!isValid) return
   }
 
