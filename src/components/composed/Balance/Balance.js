@@ -5,10 +5,8 @@ import { Format, NumbersHelper } from '@Helpers'
 
 import './Balance.css'
 
-const Balance = ({ balance }) => {
-  const btcPriceInUSD = 25000
-  const balanceInUSD =
-    NumbersHelper.floatStringToNumber(balance) * btcPriceInUSD
+const Balance = ({ balance, exchangeRate }) => {
+  const balanceInUSD = NumbersHelper.floatStringToNumber(balance) * exchangeRate
 
   return (
     <div
