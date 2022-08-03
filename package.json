@@ -1,6 +1,7 @@
 {
   "name": "browser-extension",
   "version": "0.1.0",
+  "homepage": "https://mintlayer.github.io/mojito-browser-extension",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.4",
@@ -38,7 +39,9 @@
     "pretty-quick-check-branch": "pretty-quick --check --branch main",
     "prepare": "husky install",
     "storybook": "start-storybook -p 6006 -s public",
-    "build-storybook": "build-storybook -s public"
+    "build-storybook": "build-storybook -s public",
+    "predeploy": "npm run build-storybook",
+    "deploy": "gh-pages -d storybook-static"
   },
   "eslintConfig": {
     "ignorePatterns": [
@@ -169,6 +172,7 @@
     "dotenv-webpack": "^7.1.0",
     "ecpair": "^2.0.1",
     "fake-indexeddb": "^3.1.8",
+    "gh-pages": "^4.0.0",
     "husky": "^7.0.4",
     "prettier": "^2.6.2",
     "pretty-quick": "^3.1.3",
