@@ -8,6 +8,7 @@ import {
   BTC as BTCHelper,
   BTCTransaction as BTCTransactionHelper,
   Format,
+  NumbersHelper,
 } from '@Helpers'
 
 import './SendTransaction.css'
@@ -32,10 +33,14 @@ const SendTransactionPage = () => {
         addressFrom: transactionInfo.to,
         amountToTranfer: transactionInfo.amount,
       })
-    const feeInBTC = Format.BTCValue(
-      BTCHelper.convertSatoshiToBtc(transactionInfo.fee),
+    const feeInBTC = NumbersHelper.floatStringToNumber(
+      Format.BTCValue(BTCHelper.convertSatoshiToBtc(transactionInfo.fee)),
     )
-    const totalFee = Format.BTCValue(transactionSize * feeInBTC)
+
+    const totalFee = NumbersHelper.floatStringToNumber(
+      Format.BTCValue(transactionSize * feeInBTC),
+    )
+
     setTotalFeeFiat(Format.fiatValue(totalFee * exchangeRate))
     setTotalFeeCrypto(totalFee)
   }

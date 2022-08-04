@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { Button } from '@BasicComponents'
 import { PopUp } from '@ComposedComponents'
 import { CenteredLayout } from '@LayoutComponents'
-import { Format } from '@Helpers'
+import { Format, NumbersHelper } from '@Helpers'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
 import AddressField from './AddressField'
@@ -43,7 +43,7 @@ const SendTransaction = ({
     onSendTransaction &&
       onSendTransaction({
         to: addressTo,
-        amount: amountInCrypto,
+        amount: NumbersHelper.floatStringToNumber(amountInCrypto),
         fee,
       })
   }
@@ -63,7 +63,12 @@ const SendTransaction = ({
     if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
       setAmountInCrypto(Format.BTCValue(amount.value))
-      setAmountInFiat((amount.value * exchangeRate).toFixed(2))
+      setAmountInFiat(
+        Format.fiatValue(
+          NumbersHelper.floatStringToNumber(amount.value) *
+            exchangeRate.toFixed(2),
+        ),
+      )
       return
     }
 
