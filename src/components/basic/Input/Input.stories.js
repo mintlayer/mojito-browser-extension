@@ -1,3 +1,4 @@
+import { Expressions } from '@Constants'
 import React from 'react'
 import Input from './Input'
 
@@ -34,12 +35,27 @@ export default {
       },
       control: 'text',
     },
-    validity: {
-      description: 'List of custom CSS classes to the field',
-      type: 'array',
+    pattern: {
+      description: 'The pattern to validate the field against',
+      type: 'any',
+      options: ['pasword', 'unset'],
+      mapping: {
+        password: Expressions.PASSWORD,
+        unset: undefined,
+      },
+
       table: {
         type: {
-          summary: 'array',
+          summary: 'any',
+        },
+      },
+    },
+    validity: {
+      description: 'List of custom CSS classes to the field',
+      type: 'string',
+      table: {
+        type: {
+          summary: 'string',
         },
       },
       control: 'radio',
@@ -48,9 +64,12 @@ export default {
     extraStyleClasses: {
       description: 'List of custom CSS classes to the field',
       type: 'array',
+      control: {
+        type: 'array',
+      },
       table: {
         type: {
-          summary: 'array',
+          summary: 'Array<string>',
         },
       },
     },
@@ -90,7 +109,17 @@ const Template = (args) => <Input {...args} />
 export const Primary = Template.bind({})
 Primary.args = {}
 
-export const Alternate = Template.bind({})
-Alternate.args = {
-  alternate: true,
+export const Valid = Template.bind({})
+Valid.args = {
+  validity: 'valid',
+}
+
+export const Invalid = Template.bind({})
+Invalid.args = {
+  validity: 'invalid',
+}
+
+export const ExtraStyle = Template.bind({})
+ExtraStyle.args = {
+  extraStyleClasses: ['extra-style'],
 }

@@ -7,23 +7,81 @@ export default {
   parameters: {
     layout: 'centered',
   },
-  argTypes: {},
+  args: {
+    placeholder: 'Placeholder',
+    buttonTitle: 'Button',
+  },
+  argTypes: {
+    placeholder: {
+      description: 'The contents of the field when empty',
+      type: 'string',
+      table: {
+        type: {
+          summary: 'string',
+        },
+      },
+      control: 'text',
+    },
+    buttonTitle: {
+      description: 'The contents of the button',
+      control: {
+        type: 'text',
+      },
+      table: {
+        type: {
+          summary: 'string',
+        },
+      },
+    },
+    transactionData: {
+      control: 'object',
+    },
+    inputValue: {
+      description: 'The contents of the field',
+      type: 'number',
+      table: {
+        type: {
+          summary: 'number',
+        },
+      },
+      control: 'number',
+    },
+    validity: {
+      description: 'Validity of the input',
+      type: { name: 'boolean' },
+      table: {
+        type: {
+          summary: 'boolean',
+        },
+      },
+      control: {
+        type: 'select',
+        options: [undefined, true, false],
+      },
+    },
+    id: {
+      description: 'The id of the input',
+      type: 'string',
+      table: {
+        type: {
+          summary: 'string',
+        },
+      },
+      control: 'text',
+    },
+    changeValueHandle: {
+      control: 'func',
+    },
+  },
 }
 
 const Template = (args) => <CryptoFiatField {...args} />
-
-const _data = {
-  label: 'Label',
-  placeholder: 'Placeholder',
-  buttonTitle: 'Button',
-}
 
 export const Empty = Template.bind({})
 Empty.args = {}
 
 export const Btc450 = Template.bind({})
 Btc450.args = {
-  ..._data,
   transactionData: {
     fiatName: 'USD',
     tokenName: 'BTC',
@@ -31,4 +89,15 @@ Btc450.args = {
     maxValueInToken: 450,
   },
   inputValue: 450,
+}
+
+export const BtcSmall = Template.bind({})
+BtcSmall.args = {
+  transactionData: {
+    fiatName: 'USD',
+    tokenName: 'BTC',
+    exchangeRate: 1,
+    maxValueInToken: 450,
+  },
+  inputValue: 0.00000001,
 }

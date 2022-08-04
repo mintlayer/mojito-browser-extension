@@ -8,9 +8,23 @@ export default {
     layout: 'centered',
   },
   argTypes: {
+    children: {
+      description: 'Children',
+      type: 'any',
+      options: ['String', 'Component'],
+      mapping: {
+        String: 'String',
+        Component: <b>A Example Component</b>,
+      },
+      table: {
+        type: {
+          summary: 'any',
+        },
+      },
+    },
     setOpen: {
       description: 'callback after click on close button in the popup',
-      action: 'clicked',
+      action: 'setOpen',
     },
   },
 }

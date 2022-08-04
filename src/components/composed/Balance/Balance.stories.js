@@ -31,6 +31,11 @@ Balance1.args = {
 export const Empty = Template.bind({})
 Empty.args = {}
 
+export const Small = Template.bind({})
+Small.args = {
+  balance: 0.000001,
+}
+
 export const Balance20 = Template.bind({})
 Balance20.args = {
   balance: 100000000000000000000,

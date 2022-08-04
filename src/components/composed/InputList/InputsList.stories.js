@@ -54,6 +54,17 @@ InputsValid.args = {
   wordsList: ['car', 'house', 'cat'],
 }
 
+export const words12 = Template.bind({})
+words12.args = {
+  restoreMode: true,
+  fields: [...Array(12).keys()].map((i) => ({
+    order: i,
+    validity: true,
+    value: `word${i + 1}`,
+  })),
+  wordsList: ['word1', 'word2', 'word3'],
+}
+
 export const empty = Template.bind({})
 empty.args = {}
 
@@ -70,10 +81,10 @@ InputsInvalid.args = {
   wordsList: ['car', 'house', 'cat'],
 }
 
-export const bip30list = Template.bind({})
-bip30list.args = {
+export const bip39list = Template.bind({})
+bip39list.args = {
   restoreMode: true,
-  fields: [{ order: 0, value: 'other' }],
+  fields: [{ order: 0, value: 'bip39', validity: true }],
   wordsList: ['car', 'house', 'cat'],
-  BIP39DefaultWordList: ['other'],
+  BIP39DefaultWordList: ['bip39'],
 }

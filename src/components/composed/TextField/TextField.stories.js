@@ -7,6 +7,12 @@ export default {
   parameters: {
     layout: 'centered',
   },
+  args: {
+    label: 'label',
+    placeHolder: 'placeholder',
+    extraStyleClasses: [],
+    errorMessages: 'errorMessages',
+  },
   argTypes: {
     value: {
       control: {
@@ -39,7 +45,20 @@ export default {
         },
       },
     },
+    validity: {
+      description: 'validity of the field',
+      type: 'boolean',
+      table: {
+        type: {
+          summary: 'boolean',
+        },
+      },
+      control: 'boolean',
+    },
+
     extraStyleClasses: {
+      description: 'List of custom CSS classes to the button',
+      type: { name: 'array' },
       control: {
         type: 'array',
       },
@@ -115,11 +134,12 @@ const Template = (args) => <TextField {...args} />
 export const Label = Template.bind({})
 Label.args = {
   label: 'label',
-  value: undefined,
-  pattern: 'pattern',
-  extraStyleClasses: [''],
-  errorMessages: 'errorMessages',
   placeHolder: 'placeHolder',
+  errorMessages: 'errorMessages',
+  value: 'value',
+  validity: true,
+  pristinity: true,
+  extraStyleClasses: [''],
 }
 
 export const empty = Template.bind({})

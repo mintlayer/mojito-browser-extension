@@ -5,23 +5,43 @@ export default {
   title: 'Components/Composed/InputsListItem',
   component: InputsListItem,
   args: {
-    word: '',
+    number: 1,
+    value: 'value',
+    validity: 'valid',
+    restoreMode: true,
   },
   parameters: {
     layout: 'centered',
   },
   argTypes: {
-    onChangeHandler: {
-      action: 'onChangeHandler',
-      method: true,
-      description: 'Function to be called when the input changes',
+    number: {
+      description: 'Number',
+      type: 'number',
+      control: 'number',
       table: {
         type: {
-          summary: 'function',
+          summary: 'number',
         },
       },
-      control: {
-        type: 'function',
+    },
+    value: {
+      description: 'value',
+      type: 'string',
+      control: 'text',
+      table: {
+        type: {
+          summary: 'string',
+        },
+      },
+    },
+    restoreMode: {
+      description: 'to restore mode or not',
+      type: 'boolean',
+      control: 'boolean',
+      table: {
+        type: {
+          summary: 'boolean',
+        },
       },
     },
     validity: {
@@ -34,7 +54,20 @@ export default {
       },
       control: {
         type: 'select',
-        options: [undefined, 'valid', 'invalid'],
+        options: [undefined, true, false],
+      },
+    },
+    onChangeHandler: {
+      action: 'onChangeHandler',
+      method: true,
+      description: 'Function to be called when the input changes',
+      table: {
+        type: {
+          summary: 'function',
+        },
+      },
+      control: {
+        type: 'function',
       },
     },
   },

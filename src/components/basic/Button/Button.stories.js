@@ -40,13 +40,13 @@ export default {
     extraStyleClasses: {
       description: 'List of custom CSS classes to the button',
       type: { name: 'array' },
+      control: {
+        type: 'array',
+      },
       table: {
         type: {
-          summary: 'array',
+          summary: 'Array<string>',
         },
-      },
-      control: {
-        type: 'null',
       },
     },
     onClickHandle: {
@@ -66,4 +66,16 @@ const Template = (args) => <Button {...args} />
 export const Primary = Template.bind({})
 Primary.args = {
   children: 'Label',
+}
+
+export const Alternate = Template.bind({})
+Alternate.args = {
+  children: 'Label',
+  alternate: true,
+}
+
+export const ExtraStyle = Template.bind({})
+ExtraStyle.args = {
+  children: 'Label',
+  extraStyleClasses: ['extra-style'],
 }
