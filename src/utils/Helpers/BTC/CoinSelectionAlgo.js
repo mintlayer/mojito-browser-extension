@@ -1,4 +1,4 @@
-import { BTC } from '@Helpers'
+import { BTC, BTCTransaction } from '@Helpers'
 
 const orderByDateDesc = (transactionA, transactionB) => {
   if (transactionA.status.block_time > transactionB.status.block_time) return -1
@@ -6,15 +6,25 @@ const orderByDateDesc = (transactionA, transactionB) => {
   return 0
 }
 
-const getEnoughUtxo = (transactions, target) =>
-  transactions.reduce((acc, item) => {
-    if (target < 0) return acc
+const getEnoughUtxo = (transactions, amount, fee) => {
+  let target = amount
+  let feeNeeded = 0
+  return transactions.reduce((acc, item) => {
+    feeNeeded =
+      (BTCTransaction.SIZE_CONSTANTS.overhead +
+        BTCTransaction.SIZE_CONSTANTS.output *
+          BTCTransaction.OUTPUT_AMOUNT_DEFAULT +
+        BTCTransaction.SIZE_CONSTANTS.input * (acc.length + 1)) *
+      fee
+
+    if (target + feeNeeded <= 0) return acc
     target = target - item.value
     acc.push(item)
     return acc
   }, [])
+}
 
-const utxoSelect = (utxoList, amountNeeded) => {
+const utxoSelect = (utxoList, amountNeeded, fee) => {
   if (BTC.calculateBalanceFromUtxoList(utxoList) < amountNeeded)
     throw Error('Not enough funds')
 
@@ -25,7 +35,7 @@ const utxoSelect = (utxoList, amountNeeded) => {
    * to cover the desired amount.
    */
   const newerToOlder = utxoList.sort(orderByDateDesc)
-  const selectedTransactions = getEnoughUtxo(newerToOlder, amountNeeded)
+  const selectedTransactions = getEnoughUtxo(newerToOlder, amountNeeded, fee)
 
   return selectedTransactions
 }

@@ -29,6 +29,9 @@ const parseFeesEstimates = (allEstimates) => {
 const convertSatoshiToBtc = (satoshiAmount) =>
   satoshiAmount / SATOSHI_BTC_CONVERSION_FACTOR
 
+const convertBtcToSatoshi = (satoshiAmount) =>
+  satoshiAmount * SATOSHI_BTC_CONVERSION_FACTOR
+
 const calculateBalanceFromUtxoList = (list) =>
   list.reduce((accumulator, transaction) => accumulator + transaction.value, 0)
 
@@ -102,6 +105,7 @@ export {
   convertSatoshiToBtc,
   getParsedTransactions,
   getConfirmationsAmount,
+  convertBtcToSatoshi,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
   MAX_BTC,

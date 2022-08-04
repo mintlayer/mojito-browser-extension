@@ -15,8 +15,8 @@ import './SendTransaction.css'
 
 const SendTransactionPage = () => {
   const [tokenName, fiatName] = ['BTC', 'USD']
-  const [totalFeeFiat, setTotalFeeFiat] = useState()
-  const [totalFeeCrypto, setTotalFeeCrypto] = useState()
+  const [totalFeeFiat, setTotalFeeFiat] = useState(0)
+  const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [transactionData] = useState({
     fiatName,
     tokenName,
@@ -27,11 +27,12 @@ const SendTransactionPage = () => {
   const { btcAddress } = useContext(AccountContext)
   const { balance } = useWalletInfo(btcAddress)
 
-  const createTransaction = (transactionInfo) => {
+  const createTransaction = async (transactionInfo) => {
     const transactionSize =
-      BTCTransactionHelper.calculateTransactionSizeInBytes({
-        addressFrom: transactionInfo.to,
-        amountToTranfer: transactionInfo.amount,
+      await BTCTransactionHelper.calculateTransactionSizeInBytes({
+        addressFrom: btcAddress,
+        amountToTranfer: BTCHelper.convertBtcToSatoshi(transactionInfo.amount),
+        fee: transactionInfo.fee,
       })
     const feeInBTC = NumbersHelper.floatStringToNumber(
       Format.BTCValue(BTCHelper.convertSatoshiToBtc(transactionInfo.fee)),
