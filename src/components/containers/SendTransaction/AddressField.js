@@ -8,14 +8,14 @@ import './errorMessages.css'
 
 import { EnvVars } from '@Constants'
 
-const AddressField = ({ addressChanged, errorMessage }) => {
-
-  const [ message, setMessage ] = useState(errorMessage)
-  const [ isValid, setIsValid ] = useState(true)
+const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
+  const [message, setMessage] = useState(errorMessage)
+  const [isValid, setIsValid] = useState(true)
 
   const changeHandle = (ev) => {
     const validity = validate(ev.target.value, 'btc', EnvVars.BTC_NETWORK)
     setIsValid(validity)
+    setAddressValidity(validity)
     setMessage(validity ? undefined : 'This is not a valid BTC address.')
     addressChanged && addressChanged(ev)
   }
@@ -34,7 +34,7 @@ const AddressField = ({ addressChanged, errorMessage }) => {
         onChangeHandle={changeHandle}
         setErrorMessage={setMessage}
         validity={isValid}
-        />
+      />
       <p className="error-message">{message}</p>
     </TransactionField>
   )

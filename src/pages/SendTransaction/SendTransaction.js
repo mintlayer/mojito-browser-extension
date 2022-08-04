@@ -20,6 +20,8 @@ const SendTransactionPage = () => {
     fiatName,
     tokenName,
   })
+  const [isFormValid, setFormValid] = useState(false)
+
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const { btcAddress } = useContext(AccountContext)
   const { balance } = useWalletInfo(btcAddress)
@@ -50,6 +52,8 @@ const SendTransactionPage = () => {
             exchangeRate={exchangeRate}
             maxValueInToken={balance}
             onSendTransaction={createTransaction}
+            setFormValidity={setFormValid}
+            isFormValid={isFormValid}
           />
         </VerticalGroup>
       </div>

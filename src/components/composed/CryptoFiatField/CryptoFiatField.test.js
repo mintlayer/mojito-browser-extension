@@ -25,6 +25,7 @@ test('Render TextField component', () => {
       transactionData={PROPSSAMPLE.transactionData}
       exchangeRate={exchangeRate}
       maxValueInToken={maxValueInToken}
+      setAmountValidity={() => {}}
     />,
   )
 
@@ -65,6 +66,7 @@ test('Render TextField component fdf', async () => {
       exchangeRate={exchangeRate}
       maxValueInToken={maxValueInToken}
       setErrorMessage={() => {}}
+      setAmountValidity={() => {}}
     />,
   )
 
@@ -109,7 +111,7 @@ test('Render TextField component fdf', async () => {
 })
 
 test('Render TextField component without transactionData', () => {
-  render(<CryptoFiatField />)
+  render(<CryptoFiatField setAmountValidity={() => {}} />)
 
   expect(screen.queryByTestId('crypto-fiat-field')).not.toBeInTheDocument()
 })

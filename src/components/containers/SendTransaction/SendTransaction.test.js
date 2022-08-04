@@ -11,7 +11,12 @@ const TRANSACTIONDATASAMPLE = {
 
 test('Send Transaction', async () => {
   await act(async () => {
-    await render(<SendTransaction transactionData={TRANSACTIONDATASAMPLE} />)
+    await render(
+      <SendTransaction
+        transactionData={TRANSACTIONDATASAMPLE}
+        setFormValidity={() => {}}
+      />,
+    )
   })
 
   const btn = screen.getByText('Send')

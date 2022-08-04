@@ -5,9 +5,8 @@ import TransactionField from './TransactionField'
 
 import './errorMessages.css'
 
-const FeesField = ({ feeChanged, value, errorMessage }) => {
-
-  const [ message, setMessage ] = useState(errorMessage)
+const FeesField = ({ feeChanged, value, errorMessage, setFeeValidity }) => {
+  const [message, setMessage] = useState(errorMessage)
 
   useEffect(() => {
     setMessage(errorMessage)
@@ -21,6 +20,7 @@ const FeesField = ({ feeChanged, value, errorMessage }) => {
         changeValueHandle={feeChanged}
         value={value}
         setErrorMessage={setMessage}
+        setFeeValidity={setFeeValidity}
       />
       <p className="error-message">{message}</p>
     </TransactionField>

@@ -19,6 +19,8 @@ const SendTransaction = ({
   maxValueInToken,
   totalFeeFiat: totalFeeFiatParent,
   totalFeeCrypto: totalFeeCryptoParent,
+  setFormValidity,
+  isFormValid,
 }) => {
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
@@ -29,6 +31,9 @@ const SendTransaction = ({
   const [amountInFiat, setAmountInFiat] = useState('0.00')
   const [fee, setFee] = useState('0')
   const [addressTo, setAddressTo] = useState('')
+  const [addressValidity, setAddressValidity] = useState(false)
+  const [amountValidity, setAmountValidity] = useState(false)
+  const [feeValidity, setFeeValidity] = useState(false)
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -70,26 +75,36 @@ const SendTransaction = ({
     setAddressTo(e.target.value)
   }
 
+  useEffect(() => {
+    setFormValidity(!!(addressValidity && amountValidity && feeValidity))
+  }, [addressValidity, amountValidity, feeValidity, setFormValidity])
+
   return (
     <>
-      <AddressField addressChanged={addressChanged} />
+      <AddressField
+        addressChanged={addressChanged}
+        setAddressValidity={setAddressValidity}
+      />
 
       <AmountField
         transactionData={transactionData}
         amountChanged={amountChanged}
         exchangeRate={exchangeRate}
         maxValueInToken={maxValueInToken}
+        setAmountValidity={setAmountValidity}
       />
 
       <FeesField
         feeChanged={feeChanged}
         value="norm"
+        setFeeValidity={setFeeValidity}
       />
 
       <CenteredLayout>
         <Button
           extraStyleClasses={['send-transaction-button']}
           onClickHandle={openConfirmation}
+          disabled={!isFormValid}
         >
           Send
         </Button>
