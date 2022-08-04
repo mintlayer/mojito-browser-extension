@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 
+import { Format } from '@Helpers'
 import { EnvVars } from '@Constants'
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
@@ -59,7 +60,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
           />
           <TransactionDetailsItem
             title={'Amount:'}
-            content={transaction?.value}
+            content={Format.BTCValue(transaction.value)}
           />
         </div>
         <TransactionDetailsItem

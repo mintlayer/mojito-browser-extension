@@ -1,7 +1,29 @@
+import { useEffect, useState } from 'react'
+import { validate } from 'wallet-address-validator'
+
 import { Input } from '@BasicComponents'
 import TransactionField from './TransactionField'
 
-const AddressField = ({ addressChanged }) => {
+import './errorMessages.css'
+
+import { EnvVars } from '@Constants'
+
+const AddressField = ({ addressChanged, errorMessage }) => {
+
+  const [ message, setMessage ] = useState(errorMessage)
+  const [ isValid, setIsValid ] = useState(true)
+
+  const changeHandle = (ev) => {
+    const validity = validate(ev.target.value, 'btc', EnvVars.BTC_NETWORK)
+    setIsValid(validity)
+    setMessage(validity ? undefined : 'This is not a valid BTC address.')
+    addressChanged && addressChanged(ev)
+  }
+
+  useEffect(() => {
+    setMessage(errorMessage)
+  }, [errorMessage, setMessage])
+
   return (
     <TransactionField>
       <label htmlFor="address">Send to:</label>
@@ -9,8 +31,11 @@ const AddressField = ({ addressChanged }) => {
         id="address"
         placeholder="bc1.... or 1... or 3..."
         extraStyleClasses={['address-field']}
-        onChangeHandle={addressChanged}
+        onChangeHandle={changeHandle}
+        setErrorMessage={setMessage}
+        validity={isValid}
         />
+      <p className="error-message">{message}</p>
     </TransactionField>
   )
 }

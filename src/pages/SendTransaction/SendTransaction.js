@@ -1,24 +1,28 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
+import { useExchangeRates, useWalletInfo } from '@Hooks'
+import { AccountContext } from '@Contexts'
 import {
   BTC as BTCHelper,
   BTCTransaction as BTCTransactionHelper,
+  Format,
 } from '@Helpers'
 
 import './SendTransaction.css'
 
 const SendTransactionPage = () => {
+  const [tokenName, fiatName] = ['BTC', 'USD']
   const [totalFeeFiat, setTotalFeeFiat] = useState()
   const [totalFeeCrypto, setTotalFeeCrypto] = useState()
-
-  const transactionData = {
-    fiatName: 'USD',
-    tokenName: 'BTC',
-    exchangeRate: 22343.23,
-    maxValueInToken: 450,
-  }
+  const [transactionData] = useState({
+    fiatName,
+    tokenName,
+  })
+  const { exchangeRate } = useExchangeRates(tokenName, fiatName)
+  const { btcAddress } = useContext(AccountContext)
+  const { balance } = useWalletInfo(btcAddress)
 
   const createTransaction = (transactionInfo) => {
     const transactionSize =
@@ -26,11 +30,11 @@ const SendTransactionPage = () => {
         addressFrom: transactionInfo.to,
         amountToTranfer: transactionInfo.amount,
       })
-    const feeInBTC = BTCHelper.formatBTCValue(
+    const feeInBTC = Format.BTCValue(
       BTCHelper.convertSatoshiToBtc(transactionInfo.fee),
     )
-    const totalFee = BTCHelper.formatBTCValue(transactionSize * feeInBTC)
-    setTotalFeeFiat((totalFee * transactionData.exchangeRate).toFixed(2))
+    const totalFee = Format.BTCValue(transactionSize * feeInBTC)
+    setTotalFeeFiat(Format.fiatValue(totalFee * exchangeRate))
     setTotalFeeCrypto(totalFee)
   }
 
@@ -38,11 +42,13 @@ const SendTransactionPage = () => {
     <>
       <Header />
       <div className="page">
-        <VerticalGroup>
+        <VerticalGroup smallGap>
           <SendTransaction
             totalFeeFiat={totalFeeFiat}
             totalFeeCrypto={totalFeeCrypto}
             transactionData={transactionData}
+            exchangeRate={exchangeRate}
+            maxValueInToken={balance}
             onSendTransaction={createTransaction}
           />
         </VerticalGroup>

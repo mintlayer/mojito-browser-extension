@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
-import { Input } from '@BasicComponents'
+import { InputInteger } from '@BasicComponents'
 import { RadioButtons } from '@ComposedComponents'
 import { Electrum } from '@APIs'
 import { BTC } from '@Helpers'
@@ -10,7 +10,7 @@ import './FeeField.css'
 const FeeField = ({ value: parentValue, id, changeValueHandle }) => {
   const effectCalled = useRef(false)
   const [options, setOptions] = useState([])
-  const [inputValue, setInputValue] = useState(0)
+  const [inputValue, setInputValue] = useState()
   const [radioButtonValue, setButtonValue] = useState(undefined)
   const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
     useState('15 minutes')
@@ -92,7 +92,7 @@ const FeeField = ({ value: parentValue, id, changeValueHandle }) => {
   return (
     <div className="fee-field-wrapper">
       <div className="fee-field">
-        <Input
+        <InputInteger
           id={id}
           value={inputValue}
           onChangeHandle={inputChangeHandler}

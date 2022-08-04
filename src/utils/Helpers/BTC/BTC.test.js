@@ -4,7 +4,6 @@ import {
   getParsedTransactions,
   getConfirmationsAmount,
   parseFeesEstimates,
-  formatBTCValue,
 } from './BTC'
 
 import { fees, rawTransactions, utxos } from '@TestData'
@@ -15,25 +14,25 @@ test('Parse Fees Estimates', () => {
   expect(estimates.MEDIUM).toBeLessThan(estimates.HIGH)
 })
 
-test('BTC helpers', () => {
-  let value = 0.6
-  expect(formatBTCValue(value)).toBe('0.6')
+// test('BTC helpers', () => {
+//   let value = 0.6
+//   expect(formatBTCValue(value)).toBe('0.6')
 
-  value = 0.60000001
-  expect(formatBTCValue(value)).toBe('0.60000001')
+//   value = 0.60000001
+//   expect(formatBTCValue(value)).toBe('0.60000001')
 
-  value = 6
-  expect(formatBTCValue(value)).toBe('6')
+//   value = 6
+//   expect(formatBTCValue(value)).toBe('6')
 
-  value = 6.3
-  expect(formatBTCValue(value)).toBe('6.3')
+//   value = 6.3
+//   expect(formatBTCValue(value)).toBe('6.3')
 
-  value = 6.324
-  expect(formatBTCValue(value)).toBe('6.324')
+//   value = 6.324
+//   expect(formatBTCValue(value)).toBe('6.324')
 
-  value = 6.30000001
-  expect(formatBTCValue(value)).toBe('6.30000001')
-})
+//   value = 6.30000001
+//   expect(formatBTCValue(value)).toBe('6.30000001')
+// })
 
 test('Calculate Balance From Utxo List', () => {
   const balance = 2075724

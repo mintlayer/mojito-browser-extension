@@ -1,12 +1,13 @@
 import React from 'react'
 
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
+import { Format, NumbersHelper } from '@Helpers'
 
 import './Balance.css'
 
-const Balance = ({ balance }) => {
-  const btcPriceInUSD = 25000
-  const balanceInUSD = balance * btcPriceInUSD
+const Balance = ({ balance, exchangeRate }) => {
+  const balanceInUSD = NumbersHelper.floatStringToNumber(balance) * exchangeRate
+
   return (
     <div
       className="balance-wrapper"
@@ -18,13 +19,13 @@ const Balance = ({ balance }) => {
           className="balance-btc"
           data-testid="balance-paragraph"
         >
-          <span>{balance}</span> BTC
+          <span>{Format.BTCValue(balance)}</span> BTC
         </p>
         <p
           className="balance-usd"
           data-testid="balance-paragraph"
         >
-          <span>{balanceInUSD}</span> USD
+          <span>{Format.fiatValue(balanceInUSD)}</span> USD
         </p>
       </div>
     </div>

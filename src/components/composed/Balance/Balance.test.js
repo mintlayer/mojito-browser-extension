@@ -2,9 +2,14 @@ import { render, screen } from '@testing-library/react'
 import Balance from './Balance'
 
 const BALANCESAMPLE = 1
-
+const exchangeRate = 25000
 test('Render account balance', () => {
-  render(<Balance balance={BALANCESAMPLE} />)
+  render(
+    <Balance
+      balance={BALANCESAMPLE}
+      exchangeRate={exchangeRate}
+    />,
+  )
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
 
@@ -12,5 +17,7 @@ test('Render account balance', () => {
   expect(currantBalanceComponent).toBeInTheDocument()
 
   expect(balanceParagraphs[0].textContent).toBe(BALANCESAMPLE + ' BTC')
-  expect(balanceParagraphs[1].textContent).toBe(BALANCESAMPLE * 25000 + ' USD')
+  expect(balanceParagraphs[1].textContent).toBe(
+    BALANCESAMPLE * exchangeRate + ',00 USD',
+  )
 })

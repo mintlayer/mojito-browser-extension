@@ -1,6 +1,7 @@
 .form-field {
   display: flex;
   flex-direction: row;
+  height: 7.6rem;
 }
 
 .form-field .address-field {
@@ -9,7 +10,7 @@
 
 .form-field input,
 .form-field button {
-  height: 4.5rem;
+  height: 3rem;
 }
 
 .form-field label {
@@ -31,5 +32,5 @@
 }
 
 .send-transaction-button {
-  margin-top: 1.5rem;
+  margin-top: 0.8rem;
 }

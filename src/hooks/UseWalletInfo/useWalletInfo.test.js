@@ -56,7 +56,7 @@ test('UseWalletInfo hook', async () => {
     transactionsList = result.current.transactionsList
   })
 
-  expect(balance).toBe('0.02881771')
+  expect(balance).toBe('0,02881771')
   expect(transactionsList.length).toBe(rawTransactions.length)
 })
 

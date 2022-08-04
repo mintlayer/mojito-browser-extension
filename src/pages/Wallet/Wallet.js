@@ -5,7 +5,7 @@ import { Balance, Header, PopUp } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 
-import { useWalletInfo } from '@Hooks'
+import { useExchangeRates, useWalletInfo } from '@Hooks'
 import { AccountContext } from '@Contexts'
 import { BTC } from '@Helpers'
 
@@ -14,9 +14,10 @@ import './Wallet.css'
 const WalletPage = () => {
   const navigate = useNavigate()
   const { btcAddress } = useContext(AccountContext)
-  const [openShowAddress, setOpenShowAddress] = useState(false)
 
+  const [openShowAddress, setOpenShowAddress] = useState(false)
   const { transactionsList, balance } = useWalletInfo(btcAddress)
+  const { exchangeRate } = useExchangeRates('btc', 'usd')
 
   const setOpenTransactionForm = () => navigate('/send-transaction')
 
@@ -25,7 +26,10 @@ const WalletPage = () => {
       <VerticalGroup bigGap>
         <Header noBackButton />
         <div className="balance-transactions-wrapper">
-          <Balance balance={balance} />
+          <Balance
+            balance={balance}
+            exchangeRate={exchangeRate}
+          />
           <div className="transactions-buttons-wrapper">
             <Wallet.TransactionButton
               title={'Send'}

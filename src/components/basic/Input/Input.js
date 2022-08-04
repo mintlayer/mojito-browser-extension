@@ -16,6 +16,9 @@ const Input = ({
   password = false,
   pattern,
   disabled = false,
+  mask = '',
+  getMaskedValue,
+  justNumbers = false,
 }) => {
   const classesList = useMemo(
     () => ['input', ...extraStyleClasses],
@@ -56,7 +59,21 @@ const Input = ({
   }, [password])
 
   const onChangeDefaultHandler = (ev) => {
-    setVal(ev.target.value)
+    const {
+      target: { value },
+    } = ev
+
+    if (justNumbers && value.match(/[^0-9,.]/)) return false
+
+    let newValue = value
+    if (mask && getMaskedValue) {
+      const matchedValue = value.match(mask)
+      ev.target.matchedValue = matchedValue
+      newValue = matchedValue ? getMaskedValue(ev) : ''
+    }
+
+    ev.target.value = newValue
+    setVal(newValue)
     onChangeHandle(ev)
   }
 
