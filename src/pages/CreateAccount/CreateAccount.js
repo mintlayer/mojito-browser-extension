@@ -35,7 +35,7 @@ const CreateAccountPage = () => {
     setCreatingWallet(true)
     Account.saveAccount(accountName, accountPassword, words.join(' '))
       .then((id) => Account.unlockAccount(id, accountPassword))
-      .then((address) => {
+      .then(([address]) => {
         setBtcAddress(address)
         navigate('/wallet')
       })

@@ -5,8 +5,11 @@ const AccountContext = createContext()
 
 const AccountProvider = ({ value: propValue, children }) => {
   const [btcAddress, setBtcAddress] = useState('')
+  const [accountID, setAccountID] = useState('')
   const accountRegistryName = 'unlockedAccount'
   const loginTimeoutInMinutes = 30
+
+  const setId = (id) => setAccountID(id)
 
   const unlockAccount = (address) => {
     const account = { address }
@@ -59,6 +62,8 @@ const AccountProvider = ({ value: propValue, children }) => {
     isAccountUnlocked: checkAccountLockState,
     setLoginTimeoutLimit,
     logout,
+    accountID,
+    setAccountID: setId,
   }
 
   useEffect(() => {

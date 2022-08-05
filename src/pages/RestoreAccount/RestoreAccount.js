@@ -21,7 +21,7 @@ const RestoreAccountPage = () => {
     setCreatingWallet(true)
     Account.saveAccount(accountName, accountPassword, mnemonic)
       .then((id) => Account.unlockAccount(id, accountPassword))
-      .then((address) => {
+      .then(([address]) => {
         setBtcAddress(address)
         navigate('/wallet')
       })

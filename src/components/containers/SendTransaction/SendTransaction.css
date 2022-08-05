@@ -14,7 +14,7 @@
 }
 
 .form-field label {
-  font-size: 1.5rem
+  font-size: 1.5rem;
 }
 
 .form-field > * {
@@ -33,4 +33,8 @@
 
 .send-transaction-button {
   margin-top: 0.8rem;
+}
+
+.loading-center {
+  margin: 0 auto;
 }

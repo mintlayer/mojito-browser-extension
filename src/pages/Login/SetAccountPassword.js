@@ -7,11 +7,12 @@ import { Account } from '@Entities'
 import { AccountContext } from '@Contexts'
 
 const SetAccountPasswordPage = () => {
-  const { setBtcAddress } = useContext(AccountContext)
+  const { setBtcAddress, setAccountID } = useContext(AccountContext)
   const navigate = useNavigate()
 
-  const login = (address) => {
+  const login = (address, id) => {
     setBtcAddress(address)
+    setAccountID(id)
     navigate('/wallet')
   }
 

@@ -74,7 +74,10 @@ const buildTransaction = async ({ to, amount, fee, wif, from }) => {
   )
   transactionBuilder.finalizeAllInputs()
 
-  return transactionBuilder.extractTransaction()
+  return [
+    transactionBuilder.extractTransaction(),
+    transactionBuilder.extractTransaction().toHex(),
+  ]
 }
 
 export { buildTransaction }

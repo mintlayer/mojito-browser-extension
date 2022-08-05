@@ -9,7 +9,7 @@ test('Account creation and restoring', async () => {
   const [pubKey] = BTC.generateKeysFromMnemonic(mnemonic)
   const originalAddress = BTC.getAddressFromPubKey(pubKey)
   const id = await saveAccount('Savings', pass, mnemonic)
-  const address = await unlockAccount(id, pass)
+  const [address] = await unlockAccount(id, pass)
 
   expect(address).toStrictEqual(originalAddress)
 })
@@ -23,5 +23,5 @@ test('Account creation and restoring - error', async () => {
 
   await expect(async () => {
     await unlockAccount(id, wrongPass)
-  }).rejects.toThrowError()
+  }).rejects.toStrictEqual([false, false])
 })

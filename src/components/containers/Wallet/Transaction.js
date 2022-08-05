@@ -11,7 +11,9 @@ import './Transaction.css'
 
 const Transaction = ({ transaction, getConfirmations }) => {
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
-  const date = format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
+  const date = transaction.date
+    ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
+    : 'not confirmed'
   const formatAddress = (address) => {
     const limitSize = 24
     const halfLimit = limitSize / 2

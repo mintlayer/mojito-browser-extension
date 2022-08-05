@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 
 import { Button } from '@BasicComponents'
-import { PopUp } from '@ComposedComponents'
-import { CenteredLayout } from '@LayoutComponents'
+import { Loading, PopUp } from '@ComposedComponents'
+import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { Format, NumbersHelper } from '@Helpers'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
@@ -21,6 +21,7 @@ const SendTransaction = ({
   totalFeeCrypto: totalFeeCryptoParent,
   setFormValidity,
   isFormValid,
+  confirmTransaction,
 }) => {
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
@@ -34,6 +35,8 @@ const SendTransaction = ({
   const [addressValidity, setAddressValidity] = useState(false)
   const [amountValidity, setAmountValidity] = useState(false)
   const [feeValidity, setFeeValidity] = useState(false)
+  const [sendingTransaction, setSendingTransaction] = useState(false)
+  const [transactionTxid, setTransactionTxid] = useState(false)
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -48,7 +51,12 @@ const SendTransaction = ({
       })
   }
 
-  const handleConfirm = () => setOpenSendFundConfirmation(false)
+  const handleConfirm = async () => {
+    setSendingTransaction(true)
+    const txid = await confirmTransaction()
+    setTransactionTxid(txid)
+    setSendingTransaction(false)
+  }
 
   const handleCancel = () => setOpenSendFundConfirmation(false)
 
@@ -117,18 +125,35 @@ const SendTransaction = ({
 
       {openSendFundConfirmation && (
         <PopUp setOpen={setOpenSendFundConfirmation}>
-          <SendTransactionConfirmation
-            address={addressTo}
-            amountInFiat={amountInFiat}
-            amountInCrypto={amountInCrypto}
-            cryptoName={cryptoName}
-            fiatName={fiatName}
-            totalFeeFiat={totalFeeFiat}
-            totalFeeCrypto={totalFeeCrypto}
-            fee={fee}
-            onConfirm={handleConfirm}
-            onCancel={handleCancel}
-          ></SendTransactionConfirmation>
+          {!transactionTxid ? (
+            sendingTransaction ? (
+              <VerticalGroup bigGap>
+                <h2>Your transaction is being created and sent.</h2>
+                <div className="loading-center">
+                  <Loading />
+                </div>
+              </VerticalGroup>
+            ) : (
+              <SendTransactionConfirmation
+                address={addressTo}
+                amountInFiat={amountInFiat}
+                amountInCrypto={amountInCrypto}
+                cryptoName={cryptoName}
+                fiatName={fiatName}
+                totalFeeFiat={totalFeeFiat}
+                totalFeeCrypto={totalFeeCrypto}
+                fee={fee}
+                onConfirm={handleConfirm}
+                onCancel={handleCancel}
+              ></SendTransactionConfirmation>
+            )
+          ) : (
+            <VerticalGroup bigGap>
+              <h2>Your transaction was sent.</h2>
+              <h3>txid: {transactionTxid}</h3>
+              <Button>Back to Wallet</Button>
+            </VerticalGroup>
+          )}
         </PopUp>
       )}
     </>
