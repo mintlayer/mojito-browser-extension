@@ -15,6 +15,11 @@ test('Account creation and restoring', async () => {
 })
 
 test('Account creation and restoring - error', async () => {
+  jest.spyOn(console, 'error').mockImplementation((message) => {
+    expect(typeof message).toBe('string')
+    console.error.mockRestore()
+  })
+
   const pass = 'pass'
   const wrongPass = 'pasz'
   const { generateNewAccountMnemonic } = await loadAccountSubRoutines()
@@ -23,5 +28,5 @@ test('Account creation and restoring - error', async () => {
 
   await expect(async () => {
     await unlockAccount(id, wrongPass)
-  }).rejects.toStrictEqual([false, false])
+  }).rejects.toThrowError()
 })

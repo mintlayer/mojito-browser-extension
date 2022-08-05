@@ -1,4 +1,6 @@
 import { useContext, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
 import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
@@ -12,9 +14,9 @@ import {
   Format,
   NumbersHelper,
 } from '@Helpers'
+import { Electrum } from '@APIs'
 
 import './SendTransaction.css'
-import { Electrum } from '@APIs'
 
 const SendTransactionPage = () => {
   const [tokenName, fiatName] = ['BTC', 'USD']
@@ -27,9 +29,17 @@ const SendTransactionPage = () => {
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
 
-  const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const { btcAddress, accountID } = useContext(AccountContext)
+  const navigate = useNavigate()
+
+  const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const { balance } = useWalletInfo(btcAddress)
+
+  if (!accountID) {
+    console.log('No account id.')
+    navigate('/wallet')
+    return
+  }
 
   const createTransaction = async (transactionInfo) => {
     const transactionSize =
@@ -51,8 +61,6 @@ const SendTransactionPage = () => {
   }
 
   const confirmTransaction = async (password = 'Qq@1poiu') => {
-    console.log(accountID)
-
     // eslint-disable-next-line no-unused-vars
     const [_, WIF] = await Account.unlockAccount(accountID, password)
 
@@ -78,6 +86,8 @@ const SendTransactionPage = () => {
     return result
   }
 
+  const goBackToWallet = () => navigate('/wallet')
+
   return (
     <>
       <Header />
@@ -93,6 +103,7 @@ const SendTransactionPage = () => {
             setFormValidity={setFormValid}
             isFormValid={isFormValid}
             confirmTransaction={confirmTransaction}
+            goBackToWallet={goBackToWallet}
           />
         </VerticalGroup>
       </div>

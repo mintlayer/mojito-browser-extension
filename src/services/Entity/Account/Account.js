@@ -49,6 +49,7 @@ const unlockAccount = async (id, password) => {
     const address = BTC.getAddressFromPubKey(pubKey)
     return [address, WIF]
   } catch (e) {
+    console.error(e)
     return Promise.reject([false, false])
   }
 }

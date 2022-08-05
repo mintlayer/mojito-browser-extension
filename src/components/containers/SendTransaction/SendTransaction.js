@@ -22,6 +22,7 @@ const SendTransaction = ({
   setFormValidity,
   isFormValid,
   confirmTransaction,
+  goBackToWallet,
 }) => {
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
@@ -37,12 +38,19 @@ const SendTransaction = ({
   const [feeValidity, setFeeValidity] = useState(false)
   const [sendingTransaction, setSendingTransaction] = useState(false)
   const [transactionTxid, setTransactionTxid] = useState(false)
+  const [allowClosing, setAllowClosing] = useState(true)
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
 
+  const setPopupState = (state) => {
+    if (transactionTxid) return
+    if (sendingTransaction) return
+    setOpenSendFundConfirmation(state)
+  }
+
   const openConfirmation = () => {
-    setOpenSendFundConfirmation(true)
+    setPopupState(true)
     onSendTransaction &&
       onSendTransaction({
         to: addressTo,
@@ -53,12 +61,19 @@ const SendTransaction = ({
 
   const handleConfirm = async () => {
     setSendingTransaction(true)
-    const txid = await confirmTransaction()
-    setTransactionTxid(txid)
-    setSendingTransaction(false)
+    setAllowClosing(false)
+    try {
+      const txid = await confirmTransaction()
+      setTransactionTxid(txid)
+    } catch (e) {
+      console.error(e)
+      setAllowClosing(true)
+    } finally {
+      setSendingTransaction(false)
+    }
   }
 
-  const handleCancel = () => setOpenSendFundConfirmation(false)
+  const handleCancel = () => setPopupState(false)
 
   useEffect(() => setTotalFeeFiat(totalFeeFiatParent), [totalFeeFiatParent])
   useEffect(
@@ -124,7 +139,10 @@ const SendTransaction = ({
       </CenteredLayout>
 
       {openSendFundConfirmation && (
-        <PopUp setOpen={setOpenSendFundConfirmation}>
+        <PopUp
+          setOpen={setPopupState}
+          allowClosing={allowClosing}
+        >
           {!transactionTxid ? (
             sendingTransaction ? (
               <VerticalGroup bigGap>
@@ -151,7 +169,7 @@ const SendTransaction = ({
             <VerticalGroup bigGap>
               <h2>Your transaction was sent.</h2>
               <h3>txid: {transactionTxid}</h3>
-              <Button>Back to Wallet</Button>
+              <Button onClickHandle={goBackToWallet}>Back to Wallet</Button>
             </VerticalGroup>
           )}
         </PopUp>
