@@ -71,7 +71,9 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
         />
         <TransactionDetailsItem
           title={'Confirmations:'}
-          content={confirmations ? confirmations : <Loading />}
+          content={
+            confirmations || confirmations === 0 ? confirmations : <Loading />
+          }
         />
       </div>
       <a

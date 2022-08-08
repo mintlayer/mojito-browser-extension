@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
 import { Button } from '@BasicComponents'
-import { Loading, PopUp } from '@ComposedComponents'
+import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { Format, NumbersHelper } from '@Helpers'
 
@@ -39,6 +39,8 @@ const SendTransaction = ({
   const [sendingTransaction, setSendingTransaction] = useState(false)
   const [transactionTxid, setTransactionTxid] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
+  const [askPassword, setAskPassword] = useState(false)
+  const [pass, setPass] = useState(null)
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -46,6 +48,7 @@ const SendTransaction = ({
   const setPopupState = (state) => {
     if (transactionTxid) return
     if (sendingTransaction) return
+    if (!state) setAskPassword(false)
     setOpenSendFundConfirmation(state)
   }
 
@@ -59,11 +62,12 @@ const SendTransaction = ({
       })
   }
 
-  const handleConfirm = async () => {
+  const sendTransaction = async () => {
     setSendingTransaction(true)
     setAllowClosing(false)
+    setAskPassword(false)
     try {
-      const txid = await confirmTransaction()
+      const txid = await confirmTransaction(pass)
       setTransactionTxid(txid)
     } catch (e) {
       console.error(e)
@@ -73,7 +77,13 @@ const SendTransaction = ({
     }
   }
 
-  const handleCancel = () => setPopupState(false)
+  const handleConfirm = async () => {
+    setAskPassword(true)
+  }
+
+  const handleCancel = () => {
+    setPopupState(false)
+  }
 
   useEffect(() => setTotalFeeFiat(totalFeeFiatParent), [totalFeeFiatParent])
   useEffect(
@@ -101,6 +111,10 @@ const SendTransaction = ({
 
   const addressChanged = (e) => {
     setAddressTo(e.target.value)
+  }
+
+  const changePassHandle = (value) => {
+    setPass(value)
   }
 
   useEffect(() => {
@@ -151,7 +165,7 @@ const SendTransaction = ({
                   <Loading />
                 </div>
               </VerticalGroup>
-            ) : (
+            ) : !askPassword ? (
               <SendTransactionConfirmation
                 address={addressTo}
                 amountInFiat={amountInFiat}
@@ -164,6 +178,19 @@ const SendTransaction = ({
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
               ></SendTransactionConfirmation>
+            ) : (
+              <VerticalGroup bigGap>
+                <TextField
+                  label="Insert your password"
+                  placeHolder="Password"
+                  password
+                  validity={false}
+                  onChangeHandle={changePassHandle}
+                />
+                <Button onClickHandle={sendTransaction}>
+                  Send Transaction
+                </Button>
+              </VerticalGroup>
             )
           ) : (
             <VerticalGroup bigGap>

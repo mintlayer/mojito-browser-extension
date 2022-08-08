@@ -18,6 +18,7 @@ const TextField = ({
   extraStyleClasses,
   errorMessages,
   pristinity = true,
+  reference,
 }) => {
   const inputId = useId()
   const { styleClasses, addStyleClass, removeStyleClass } =
@@ -56,11 +57,12 @@ const TextField = ({
         placeholder={placeHolder}
         password={password}
         value={value}
-        onChangeHandle={(e) => onChangeHandle(e.target.value)}
+        onChangeHandle={(e) => onChangeHandle && onChangeHandle(e.target.value)}
         validity={fieldValidity}
         pattern={pattern}
         extraStyleClasses={extraStyleClasses}
         onBlurHandle={setPristineState}
+        ref={reference}
       />
       {errorMessages && !isPristine && (
         <div className="errorMessage">

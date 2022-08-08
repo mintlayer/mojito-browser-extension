@@ -60,7 +60,7 @@ const SendTransactionPage = () => {
     setTransactionInformation(transactionInfo)
   }
 
-  const confirmTransaction = async (password = 'Qq@1poiu') => {
+  const confirmTransaction = async (password) => {
     // eslint-disable-next-line no-unused-vars
     const [_, WIF] = await Account.unlockAccount(accountID, password)
 
