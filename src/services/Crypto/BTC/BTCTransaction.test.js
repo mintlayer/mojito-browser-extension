@@ -4,6 +4,7 @@ import { CoinSelectionAlgo, BTCTransaction } from '@Helpers'
 import { buildTransaction } from './BTCTransaction'
 
 test('Build transaction', async () => {
+  jest.setTimeout(30000)
   const from = 'mgLB5u6BG5YTDVkPPjs1rWnZdtb33aDVMT'
   const to = 'mmLMRUn75mM2FC11ETfsZTtsTDUWSNa9q2'
   const amount = 196168
