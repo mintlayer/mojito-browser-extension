@@ -14,15 +14,19 @@ import './RestoreAccount.css'
 const RestoreAccountPage = () => {
   const [step, setStep] = useState(1)
   const navigate = useNavigate()
-  const { setBtcAddress } = useContext(AccountContext)
+  const { setWalletInfo } = useContext(AccountContext)
   const [creatingWallet, setCreatingWallet] = useState(false)
 
   const createAccount = (accountName, accountPassword, mnemonic) => {
     setCreatingWallet(true)
+    let accountID = null
     Account.saveAccount(accountName, accountPassword, mnemonic)
-      .then((id) => Account.unlockAccount(id, accountPassword))
-      .then((address) => {
-        setBtcAddress(address)
+      .then((id) => {
+        accountID = id
+        return Account.unlockAccount(id, accountPassword)
+      })
+      .then(([address]) => {
+        setWalletInfo(address, accountID)
         navigate('/wallet')
       })
   }

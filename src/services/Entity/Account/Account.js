@@ -26,25 +26,32 @@ const saveAccount = async (name, password, mnemonic) => {
 const unlockAccount = async (id, password) => {
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
 
-  const accounts = await IndexedDB.loadAccounts()
-  const account = await IndexedDB.get(accounts, id)
+  try {
+    const accounts = await IndexedDB.loadAccounts()
+    const account = await IndexedDB.get(accounts, id)
 
-  const { key } = await generateEncryptionKey({ password, salt: account.salt })
-  const seed = await decryptSeed({
-    data: account.seed,
-    iv: account.iv,
-    tag: account.tag,
-    key,
-  })
+    const { key } = await generateEncryptionKey({
+      password,
+      salt: account.salt,
+    })
+    const seed = await decryptSeed({
+      data: account.seed,
+      iv: account.iv,
+      tag: account.tag,
+      key,
+    })
 
-  // this error just exists if the jobe was run in a worker
-  /* istanbul ignore next */
-  if (seed.error) throw new Error(seed.error)
+    // this error just exists if the jobe was run in a worker
+    /* istanbul ignore next */
+    if (seed.error) throw new Error(seed.error)
 
-  const [pubKey] = BTC.getKeysFromSeed(Buffer.from(seed))
-  const address = BTC.getAddressFromPubKey(pubKey)
-
-  return address
+    const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
+    const address = BTC.getAddressFromPubKey(pubKey)
+    return [address, WIF]
+  } catch (e) {
+    console.error(e)
+    return Promise.reject([false, false])
+  }
 }
 
 export { saveAccount, unlockAccount }

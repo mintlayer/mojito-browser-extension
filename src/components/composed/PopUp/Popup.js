@@ -6,11 +6,12 @@ import { ReactComponent as IconClose } from '@Assets/images/icon-close.svg'
 
 import './Popup.css'
 
-const Popup = ({ children, setOpen }) => {
+const Popup = ({ children, setOpen, allowClosing = true }) => {
   const closeButtonExtraStyles = ['popupCloseButton']
   const [popupClosing, setPopupClosing] = useState(false)
 
   const closeButtonClickHandler = () => {
+    if (!allowClosing) return
     setPopupClosing(true)
     setTimeout(() => {
       setOpen(false)
@@ -29,13 +30,15 @@ const Popup = ({ children, setOpen }) => {
         data-testid={'popup'}
         ref={popupRef}
       >
-        <Button
-          alternate
-          extraStyleClasses={closeButtonExtraStyles}
-          onClickHandle={closeButtonClickHandler}
-        >
-          <IconClose />
-        </Button>
+        {allowClosing && (
+          <Button
+            alternate
+            extraStyleClasses={closeButtonExtraStyles}
+            onClickHandle={closeButtonClickHandler}
+          >
+            <IconClose />
+          </Button>
+        )}
         {children}
       </div>
     </div>

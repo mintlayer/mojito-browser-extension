@@ -15,8 +15,8 @@ test('Select UTXO', () => {
     !acc || acc > item.status.block_time ? item.status.block_time : acc
 
   const balance = utxos.reduce(sumAll, 0)
-  const targetValue = balance - utxos[0].value - 1
-  const selectedTransaction = utxoSelect(utxos, targetValue)
+  const targetValue = balance - utxos[0].value - utxos[1].value - 1
+  const selectedTransaction = utxoSelect(utxos, targetValue, 1)
   const orderedUtxo = utxos.sort(orderByDateDesc)
 
   const newerFromUtxoDate = utxos.reduce(getNewerDate, 0)
@@ -24,7 +24,7 @@ test('Select UTXO', () => {
   const olderFromUtxoDate = utxos.reduce(getOlderDate, 0)
   const olderFromSelectedDate = selectedTransaction.reduce(getOlderDate, 0)
 
-  expect(selectedTransaction.length).toBe(utxos.length - 1)
+  expect(selectedTransaction.length).toBe(utxos.length - 2)
   expect(selectedTransaction.reduce(sumAll, 0)).toBeGreaterThan(targetValue)
   expect(newerFromSelectedDate).toBe(newerFromUtxoDate)
   expect(olderFromSelectedDate).toBeGreaterThanOrEqual(olderFromUtxoDate)

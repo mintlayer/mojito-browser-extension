@@ -10,6 +10,7 @@ const Button = ({
   dark = false,
   onClickHandle = () => {},
   extraStyleClasses = [],
+  disabled = false,
 }) => {
   const classesList = ['btn', ...extraStyleClasses]
   alternate && classesList.push('alternate')
@@ -28,6 +29,7 @@ const Button = ({
         className={styleClasses}
         onClick={onClickHandle}
         data-testid="button"
+        disabled={disabled}
       >
         {children}
       </button>

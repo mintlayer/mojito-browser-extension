@@ -16,6 +16,7 @@ const CryptoFiatField = ({
   setErrorMessage,
   exchangeRate,
   maxValueInToken,
+  setAmountValidity,
 }) => {
   const [maxCryptoValue, setMaxCryptoValue] = useState(
     NumbersHelper.floatStringToNumber(maxValueInToken),
@@ -110,6 +111,7 @@ const CryptoFiatField = ({
         BTC.MAX_BTC
       : parsedValue < BTC.MAX_BTC
     setValidity(isValid ? 'valid' : 'invalid')
+    setAmountValidity && setAmountValidity(isValid)
     setErrorMessage &&
       setErrorMessage(
         isValid
@@ -123,6 +125,7 @@ const CryptoFiatField = ({
       : parsedValue <= maxCryptoValue
 
     setValidity(isValid ? 'valid' : 'invalid')
+    setAmountValidity(isValid)
     setErrorMessage &&
       setErrorMessage(
         isValid ? undefined : 'Amount set is bigger than this wallet balance.',

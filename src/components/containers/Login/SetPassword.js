@@ -13,16 +13,15 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
 
   const [accountPasswordValue, setAccountPasswordValue] = useState('')
   const [accountPasswordValid, setAccountPasswordValid] = useState(null)
-  const [accountPasswordPritinity, setaAccountPasswordPritinity] =
-    useState(true)
+  const [accountPasswordPritinity, setAccountPasswordPritinity] = useState(true)
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
     useState(null)
   const [unlockingAccount, setUnlockingAccount] = useState(false)
 
   const passwordFieldValidity = async () => {
     try {
-      const address = await checkPassword(account.id, accountPasswordValue)
-      return address
+      const accountData = await checkPassword(account.id, accountPasswordValue)
+      return accountData
     } catch (e) {
       return false
     }
@@ -42,17 +41,18 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
   const doLogin = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    setaAccountPasswordPritinity(false)
+    setAccountPasswordPritinity(false)
     setUnlockingAccount(true)
 
-    passwordFieldValidity().then((address) => {
+    passwordFieldValidity().then((validated) => {
+      const address = validated[0]
       if (!address) {
         setAccountPasswordValid(false)
         setUnlockingAccount(false)
         setAccountPasswordErrorMessage('Wrong password')
         return
       }
-      onSubmit(address)
+      onSubmit(address, account.id)
     })
   }
 

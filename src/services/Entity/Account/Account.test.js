@@ -9,12 +9,17 @@ test('Account creation and restoring', async () => {
   const [pubKey] = BTC.generateKeysFromMnemonic(mnemonic)
   const originalAddress = BTC.getAddressFromPubKey(pubKey)
   const id = await saveAccount('Savings', pass, mnemonic)
-  const address = await unlockAccount(id, pass)
+  const [address] = await unlockAccount(id, pass)
 
   expect(address).toStrictEqual(originalAddress)
 })
 
 test('Account creation and restoring - error', async () => {
+  jest.spyOn(console, 'error').mockImplementation((message) => {
+    expect(typeof message).toBe('string')
+    console.error.mockRestore()
+  })
+
   const pass = 'pass'
   const wrongPass = 'pasz'
   const { generateNewAccountMnemonic } = await loadAccountSubRoutines()

@@ -1,4 +1,5 @@
-import { BTC } from '@Helpers'
+import { BTC, CoinSelectionAlgo } from '@Helpers'
+import { Electrum } from '@APIs'
 
 const SIZE_CONSTANTS = {
   overhead: 10,
@@ -6,22 +7,29 @@ const SIZE_CONSTANTS = {
   output: 34,
 }
 
-const getInputsAmount = ({ addressFrom, amountToTranfer }) => {
-  // TODO: implement function
-  console.log(addressFrom, amountToTranfer)
-  return 2
+const OUTPUT_AMOUNT_DEFAULT = 2
+
+const selectNeededUtxos = async (address, amount, fee) => {
+  const utxos = JSON.parse(await Electrum.getAddressUtxo(address))
+  return CoinSelectionAlgo.utxoSelect(utxos, amount, fee)
 }
 
-const getOuputsAmount = ({ usedUtxos, amountToTranfer }) => {
-  // TODO: implement function
-  console.log(usedUtxos, amountToTranfer)
-  return 2
+const getInputsAmount = async ({ addressFrom, amountToTranfer, fee }) => {
+  const inputs = await selectNeededUtxos(addressFrom, amountToTranfer, fee)
+  return inputs.length
 }
 
-const calculateTransactionSizeInBytes = ({ addressFrom, amountToTranfer }) => {
-  const inputsSize = SIZE_CONSTANTS.input * getInputsAmount({})
-  const ouputsSize = SIZE_CONSTANTS.output * getOuputsAmount({})
+const getOuputsAmount = () => OUTPUT_AMOUNT_DEFAULT
 
+const calculateTransactionSizeInBytes = async ({
+  addressFrom,
+  amountToTranfer,
+  fee,
+}) => {
+  const inputsSize =
+    SIZE_CONSTANTS.input *
+    (await getInputsAmount({ addressFrom, amountToTranfer, fee }))
+  const ouputsSize = SIZE_CONSTANTS.output * getOuputsAmount()
   return SIZE_CONSTANTS.overhead + inputsSize + ouputsSize
 }
 
@@ -37,4 +45,7 @@ export {
   nonSegwitFilter,
   isTransactionSegwit,
   isValidAmount,
+  selectNeededUtxos,
+  SIZE_CONSTANTS,
+  OUTPUT_AMOUNT_DEFAULT,
 }

@@ -28,7 +28,9 @@ const TransactionDetailsItem = ({ title, content }) => {
 const TransactionDetails = ({ transaction, getConfirmations }) => {
   const [confirmations, setConfirmations] = useState(null)
 
-  const date = format(new Date(transaction?.date * 1000), 'dd/MM/yyyy HH:mm')
+  const date = transaction.date
+    ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
+    : 'not confirmed'
   const buttonExtraStyles = ['transaction-details-button']
   const addressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
   const transactionAddress = [...new Set(transaction?.otherPart)].join('; ')
@@ -69,7 +71,9 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
         />
         <TransactionDetailsItem
           title={'Confirmations:'}
-          content={confirmations ? confirmations : <Loading />}
+          content={
+            confirmations || confirmations === 0 ? confirmations : <Loading />
+          }
         />
       </div>
       <a
