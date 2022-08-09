@@ -1,9 +1,12 @@
+// eslint-disable-next-line no-restricted-globals
+const glob = typeof window !== 'undefined' ? window : self
 /* istanbul ignore next */
 const IDB =
-  window.indexedDB ||
-  window.mozIndexedDB ||
-  window.webkitIndexedDB ||
-  window.msIndexedDB
+  glob.indexedDB ||
+  glob.mozIndexedDB ||
+  glob.webkitIndexedDB ||
+  glob.msIndexedDB
+
 const SCHEMAVERSION = 1
 const DATABASENAME = 'mojito'
 const ACCOUNTSSTORENAME = 'accounts'
