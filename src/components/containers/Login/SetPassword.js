@@ -74,6 +74,7 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
                   pristinity={accountPasswordPritinity}
                   errorMessages={accountPasswordErrorMessage}
                   alternate
+                  focus
                 />
                 <Button onClickHandle={doLogin}>Log In</Button>
               </>

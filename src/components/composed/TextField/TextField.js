@@ -19,8 +19,10 @@ const TextField = ({
   errorMessages,
   pristinity = true,
   reference,
+  focus = false,
 }) => {
   const inputId = useId()
+
   const { styleClasses, addStyleClass, removeStyleClass } =
     useStyleClasses('inputLabel')
   const [isPristine, setIsPristine] = useState(true)
@@ -62,7 +64,7 @@ const TextField = ({
         pattern={pattern}
         extraStyleClasses={extraStyleClasses}
         onBlurHandle={setPristineState}
-        ref={reference}
+        focus
       />
       {errorMessages && !isPristine && (
         <div className="errorMessage">
