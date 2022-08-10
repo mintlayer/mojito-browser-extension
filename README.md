@@ -38,7 +38,18 @@ The build is minified and the filenames include the hashes.
 ## After Build
 
 The build process generates a `ext.zip` and a `extFF.zip` files in the project's root directory. The first one should be used for Chromium based browsers, while the last is meant just for Firefox.
+
 They can be imported in the browser as a developer extension on Mozilla Firefox. To test in Chomium-based browsers, you can point the `build` directory as the `unpacked extension`.
+
+### Build specificities
+
+### CSP HTML meta tag
+
+On `public/index.html` there is a `meta` tag named `CSP`. This is tags render just in DEVELOPMENT mode. But it has no use in delevelopment mode.
+
+The only purpose of that tag is to serve as a placeholder to the real `Content-Security-Policy` meta tag, which will be inserted just on the build process for the final packages and the `build` path.
+
+This meta tag is needed to load properly all the external scripts, stylesheets, fonts, and images on the final product.
 
 ## How to Contribute
 
