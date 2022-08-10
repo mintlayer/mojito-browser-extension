@@ -17,7 +17,13 @@ describe('mojito wallet app', () => {
     cy.contains('button', 'Restore')
   })
 
-  it.only('click on Create and navigate', () => {
+  it('click on Create and navigate', () => {
     cy.contains('button', 'Create').click()
+    // TODO: check if the page is the right one
+  })
+
+  it('click on Restore and navigate', () => {
+    cy.contains('button', 'Restore').click()
+    // TODO: check if the page is the right one
   })
 })
