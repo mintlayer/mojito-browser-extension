@@ -31,15 +31,15 @@ const CreateRestorePage = () => {
           className="center-text footnote-name"
           data-testid="footnote-name"
         >
-          ©Mojito Wallet, 2022
+          ©Mintlayer, 2022
         </small>
         <a
           className="center-text footnote-link"
-          href="http://mojito-wallet.com"
+          href="https://mintlayer.org"
           target="_blank"
           data-testid="footnote-link"
         >
-          mojito-wallet.com
+          mintlayer.org
         </a>
       </div>
     </div>
