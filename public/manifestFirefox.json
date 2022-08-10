@@ -17,7 +17,7 @@
     "default_title": "Mojito",
     "default_popup": "index.html"
   },
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
       "id": "browserextension@mintlayer.org",
       "strict_min_version": "42.0"
