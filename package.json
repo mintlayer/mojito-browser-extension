@@ -1,7 +1,6 @@
 {
   "name": "browser-extension",
   "version": "0.1.0",
-  "homepage": "https://mintlayer.github.io/mojito-browser-extension",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.4",
@@ -28,7 +27,7 @@
   },
   "scripts": {
     "start": "react-app-rewired start --env production",
-    "build": "INLINE_RUNTIME_CHUNK=false react-app-rewired build && rm -f package.zip && (cd build && zip -r ../ext.zip ./*)",
+    "build": "INLINE_RUNTIME_CHUNK=false GENERATE_SOURCEMAP=false react-app-rewired build && sh packing.sh",
     "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --testPathIgnorePatterns='src/pages'",
     "coverage": "npm test -- --coverage ",
     "eject": "react-scripts eject",

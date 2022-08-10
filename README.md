@@ -37,7 +37,8 @@ The build is minified and the filenames include the hashes.
 
 ## After Build
 
-The build process generates a `ext.zip` file in the project's root directory. It can be imported in the browser as a developer extension on Mozilla Firefox. To test in Chomium-based browsers, you can point the `build` directory as the `unpacked extension`.
+The build process generates a `ext.zip` and a `extFF.zip` files in the project's root directory. The first one should be used for Chromium based browsers, while the last is meant just for Firefox.
+They can be imported in the browser as a developer extension on Mozilla Firefox. To test in Chomium-based browsers, you can point the `build` directory as the `unpacked extension`.
 
 ## How to Contribute
 
