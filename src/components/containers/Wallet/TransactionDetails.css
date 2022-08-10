@@ -27,14 +27,6 @@
   font-weight: 600;
 }
 
-.details-date-amount {
-  display: flex;
-}
-
-.details-date-amount .transaction-details-item:nth-child(1) {
-  margin-right: 3.5rem;
-}
-
 .transaction-details-button {
   margin-top: 1.3rem;
 }

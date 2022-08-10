@@ -55,16 +55,14 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
           content={transactionAddress}
           data-testid="transaction-address"
         />
-        <div className="details-date-amount">
-          <TransactionDetailsItem
-            title={'Date:'}
-            content={date}
-          />
-          <TransactionDetailsItem
-            title={'Amount:'}
-            content={Format.BTCValue(transaction.value)}
-          />
-        </div>
+        <TransactionDetailsItem
+          title={'Date:'}
+          content={date}
+        />
+        <TransactionDetailsItem
+          title={'Amount:'}
+          content={Format.BTCValue(transaction.value)}
+        />
         <TransactionDetailsItem
           title={'Tx:'}
           content={transaction.txid}
