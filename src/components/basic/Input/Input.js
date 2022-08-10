@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 
 import { useStyleClasses } from '@Hooks'
 
@@ -19,6 +19,7 @@ const Input = ({
   mask = '',
   getMaskedValue,
   justNumbers = false,
+  focus,
 }) => {
   const classesList = useMemo(
     () => ['input', ...extraStyleClasses],
@@ -29,6 +30,11 @@ const Input = ({
     useStyleClasses(classesList)
   const [val, setVal] = useState(value)
   const [type, setType] = useState(password ? 'password' : 'text')
+  const ref = useRef(false)
+
+  useEffect(() => {
+    if (focus && ref.current) ref.current.focus()
+  }, [focus])
 
   useEffect(() => {
     setVal(value)
@@ -90,6 +96,7 @@ const Input = ({
       data-testid="input"
       pattern={pattern}
       disabled={disabled ? 'disabled' : ''}
+      ref={ref}
     />
   )
 }
