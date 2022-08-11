@@ -34,8 +34,20 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
     carouselRef.current.style.transform = `translateX(${newTranslateValue}rem)`
   }, [currentSlide])
 
+  const carouselSize = () => {
+    switch (accounts.length) {
+      case 0:
+        return 'small'
+      case 1:
+        return 'small'
+      case 2:
+        return 'mid'
+      default:
+        return ''
+    }
+  }
   return (
-    <div className="carousel">
+    <div className={`carousel ${carouselSize()}`}>
       <button
         name="back"
         type="button"
