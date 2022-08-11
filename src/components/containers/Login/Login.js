@@ -17,18 +17,17 @@ const Login = ({ accounts, onSelect, onCreate }) => {
       className="list-accounts"
     >
       <h2 className="subtitle">wallet available</h2>
-      <CenteredLayout>
-        <VerticalGroup bigGap>
-          <div className="content">
-            <Carousel
-              accounts={accounts}
-              onClick={onSelectAccount}
-            />
-          </div>
-
+      <VerticalGroup bigGap>
+        <div className="content">
+          <Carousel
+            accounts={accounts}
+            onClick={onSelectAccount}
+          />
+        </div>
+        <CenteredLayout>
           <Button onClickHandle={onCreateAccount}>Create Wallet</Button>
-        </VerticalGroup>
-      </CenteredLayout>
+        </CenteredLayout>
+      </VerticalGroup>
     </div>
   )
 }
