@@ -24,3 +24,5 @@ yarn-error.log*
 *.zip
 
 /storybook-static
+
+/cypress/videos
