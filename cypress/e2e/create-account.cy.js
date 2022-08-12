@@ -13,20 +13,20 @@ describe('create account page', () => {
     cy.contains('button', 'Create').click()
     cy.setAccountAndPassword(accounts[0].name, accounts[0].password)
 
-    cy.intercept('**/address/**/utxo', { fixture: 'empty-utxo.json' }).as(
-      'utxo',
-    )
-    cy.intercept('**/address/**/txs', { fixture: 'empty-txs.json' }).as('txs')
+    cy.intercept('**/address/**/utxo').as('utxo')
+    cy.intercept('**/address/**/txs').as('txs')
   })
 
   it('displays attribute pages', () => {
-    cy.contains('Mojito')
+    cy.contains('Mojito').should('be.visible')
     cy.contains('li.step.active', 'Restoring Information').should('be.visible')
     cy.contains(
       'Write down all of the next words. They will be asked to restores your wallet in the future.',
-    )
-    cy.contains('Save they in a very safe place. It is only your backup')
-    cy.contains('button', 'I understand')
+    ).should('be.visible')
+    cy.contains(
+      'Save they in a very safe place. It is only your backup',
+    ).should('be.visible')
+    cy.contains('button', 'I understand').should('be.visible')
   })
 
   it('click on continue', () => {
