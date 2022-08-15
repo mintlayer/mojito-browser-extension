@@ -17,7 +17,8 @@ const HomePage = () => {
   const navigate = useNavigate()
   const { isAccountUnlocked } = useContext(AccountContext)
   const accountUnlocked = isAccountUnlocked()
-  accountUnlocked && navigate('/wallet')
+  // accountUnlocked && navigate('/wallet')
+  accountUnlocked && navigate('/dashboard')
 
   useEffect(() => {
     if (effectCalled.current) return

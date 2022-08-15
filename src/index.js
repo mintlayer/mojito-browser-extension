@@ -10,6 +10,7 @@ import {
   SetAccountPasswordPage,
   CreateRestorePage,
   SendTransactionPage,
+  DashboardPage,
 } from '@Pages'
 
 import { AccountProvider } from '@Contexts'
@@ -26,6 +27,10 @@ root.render(
       <main className="App">
         <MemoryRouter>
           <Routes>
+            <Route
+              path="/dashboard"
+              element={<DashboardPage />}
+            />
             <Route
               path="/set-account"
               element={<CreateAccountPage />}

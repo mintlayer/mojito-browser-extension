@@ -1,6 +1,6 @@
 import * as d3 from 'd3'
 
-const createArcGenerator = () => d3.arc().innerRadius(85).outerRadius(100)
+const createArcGenerator = () => d3.arc().innerRadius(94).outerRadius(100)
 
 const createPieGenerator = () =>
   d3
@@ -28,7 +28,7 @@ const mouseOverHandle = (tooltip, _, item) => {
     .duration(200)
     .style('opacity', 0.9)
 
-  tooltip.html(`${item.data.asset} <br /> ${item.data.value}`)
+  tooltip.html(`${item.data.asset} <br />${item.data.value} ${item.data.valueSymbol} `)
 }
 
 const mouseOutHandle = (tooltip) => {
@@ -36,7 +36,6 @@ const mouseOutHandle = (tooltip) => {
     .attr('data-show', 'false')
     .transition()
     .duration(500)
-
     .style('opacity', 0)
 }
 
