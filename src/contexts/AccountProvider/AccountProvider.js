@@ -6,19 +6,21 @@ const AccountContext = createContext()
 const AccountProvider = ({ value: propValue, children }) => {
   const [btcAddress, setBtcAddress] = useState('')
   const [accountID, setAccountID] = useState('')
+  const [accountName, setAccountName] = useState('')
   const accountRegistryName = 'unlockedAccount'
   const loginTimeoutInMinutes = 30
 
   const setId = (id) => id && setAccountID(id)
-
-  const unlockAccount = (address, id) => {
-    const account = { address, id }
+  const setName = (name) => name && setAccountName(name)
+  const unlockAccount = (address, id, name) => {
+    const account = { address, id, name }
     localStorage.setItem(accountRegistryName, JSON.stringify(account))
   }
 
-  const unlockAccountAndSaveParams = (address, id) => {
-    unlockAccount(address, id)
+  const unlockAccountAndSaveParams = (address, id, name) => {
+    unlockAccount(address, id, name)
     setBtcAddress(address)
+    setName(name)
     setId(id)
   }
 
@@ -29,6 +31,7 @@ const AccountProvider = ({ value: propValue, children }) => {
     const account = JSON.parse(registry)
     setBtcAddress(account.address)
     setId(account.id)
+    setName(account.name)
 
     const { logoutDate } = account
     if (!logoutDate) return true
@@ -42,7 +45,9 @@ const AccountProvider = ({ value: propValue, children }) => {
 
     !isUnlocked
       ? localStorage.removeItem(accountRegistryName)
-      : setBtcAddress(account.address) && setId(account.id)
+      : setBtcAddress(account.address) &&
+        setId(account.id) &&
+        setName(account.name)
 
     return isUnlocked
   }
@@ -60,6 +65,7 @@ const AccountProvider = ({ value: propValue, children }) => {
 
   const value = {
     btcAddress,
+    accountName,
     setWalletInfo: unlockAccountAndSaveParams,
     isAccountUnlocked: checkAccountLockState,
     setLoginTimeoutLimit,

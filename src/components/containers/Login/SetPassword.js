@@ -45,14 +45,14 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
     setUnlockingAccount(true)
 
     passwordFieldValidity().then((validated) => {
-      const address = validated[0]
+      const address = validated.address
       if (!address) {
         setAccountPasswordValid(false)
         setUnlockingAccount(false)
         setAccountPasswordErrorMessage('Wrong password')
         return
       }
-      onSubmit(address, account.id)
+      onSubmit(address, account.id, account.name)
     })
   }
 
