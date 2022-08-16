@@ -41,3 +41,9 @@ jobs:
           build: npm run build:test
           start: npm run serve
           wait-on: http://localhost:8000
+          record: true
+        env:
+          # CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          # TODO: tobe deleted, temp test key
+          CYPRESS_RECORD_KEY: 6274de0d-5f04-49f4-9461-c8b87a1f24ae
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
