@@ -21,9 +21,6 @@ describe('mojito wallet app', () => {
 
     cy.contains('button', 'Create').should('be.visible')
     cy.contains('button', 'Restore').should('be.visible')
-
-    // TODO: just for test remove this next commit
-    cy.contains('button', 'Restore').should('not.be.visible')
   })
 
   it('click on Create and navigate', () => {

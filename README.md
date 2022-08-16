@@ -41,6 +41,15 @@ alternatively can be build with env development as follow:
 
 on this option is not created the zip option
 
+### `npm run e2e`
+
+it will run cypress to run the e2e test against serve
+after run it generate videos and screenshots result of the e2e test runned
+
+note: it will need to be running the app at http://localhost:8000 to apply the e2e test against it
+
+> npm run serve
+
 ## After Build
 
 The build process generates a `ext.zip` and a `extFF.zip` files in the project's root directory. The first one should be used for Chromium based browsers, while the last is meant just for Firefox.
