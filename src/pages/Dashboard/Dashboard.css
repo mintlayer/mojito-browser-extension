@@ -1,0 +1,8 @@
+.stats {
+  display: flex;
+  margin-top: 1.5rem;
+}
+
+.stats > *:nth-child(2) {
+  width: 357px;
+}
