@@ -35,6 +35,12 @@ It correctly bundles React in production mode and optimizes the build for the be
 
 The build is minified and the filenames include the hashes.
 
+alternatively can be build with env development as follow:
+
+> npm run build:development
+
+on this option is not created the zip option
+
 ## After Build
 
 The build process generates a `ext.zip` and a `extFF.zip` files in the project's root directory. The first one should be used for Chromium based browsers, while the last is meant just for Firefox.

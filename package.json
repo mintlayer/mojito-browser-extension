@@ -27,8 +27,8 @@
   },
   "scripts": {
     "start": "react-app-rewired start --env production",
-    "build:staging": "env-cmd -f ./.env.staging react-app-rewired build",
-    "build": "env-cmd -f ./.env.production react-app-rewired build && sh packing.sh",
+    "build:test": "INLINE_RUNTIME_CHUNK=false GENERATE_SOURCEMAP=true REACT_APP_NODE_ENV=test react-app-rewired build",
+    "build": "INLINE_RUNTIME_CHUNK=false GENERATE_SOURCEMAP=false react-app-rewired build && sh packing.sh",
     "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --testPathIgnorePatterns='src/pages'",
     "coverage": "npm test -- --coverage ",
     "serve": "http-server -p 8000 build/ ",
@@ -176,7 +176,6 @@
     "cypress": "^10.4.0",
     "dotenv-webpack": "^7.1.0",
     "ecpair": "^2.0.1",
-    "env-cmd": "^10.1.0",
     "fake-indexeddb": "^3.1.8",
     "gh-pages": "^4.0.0",
     "http-server": "^14.1.1",

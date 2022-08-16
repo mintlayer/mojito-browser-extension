@@ -6,6 +6,8 @@ const {
 } = require('react-app-rewire-alias/lib/aliasDangerous')
 
 module.exports = function overrideConf(config) {
+  const ENVIRONMENT = process.env.REACT_APP_NODE_ENV || process.env.NODE_ENV
+
   const fallback = config.resolve.fallback || {}
   Object.assign(fallback, {
     stream: require.resolve('stream-browserify'),
@@ -17,9 +19,7 @@ module.exports = function overrideConf(config) {
       Buffer: ['buffer', 'Buffer'],
     }),
     new Dotenv({
-      path: `./.env${
-        process.env.NODE_ENV === 'production' ? '.production' : ''
-      }`,
+      path: `./.env.${ENVIRONMENT.trim()}`,
       systemvars: true,
       silent: true,
       ignoreStub: true,
