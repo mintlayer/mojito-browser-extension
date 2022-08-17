@@ -41,7 +41,7 @@ const CreateAccountPage = () => {
       })
       .then(({ address, name }) => {
         setWalletInfo(address, accountID, name)
-        navigate('/wallet')
+        navigate('/dashboard')
       })
   }
 

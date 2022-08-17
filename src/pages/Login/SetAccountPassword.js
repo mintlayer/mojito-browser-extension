@@ -12,7 +12,7 @@ const SetAccountPasswordPage = () => {
 
   const login = (address, id, name) => {
     setWalletInfo(address, id, name)
-    navigate('/wallet')
+    navigate('/dashboard')
   }
 
   return (

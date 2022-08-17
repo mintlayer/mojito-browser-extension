@@ -14,6 +14,7 @@ import SendTransaction from './SendTransaction/SendTransaction'
 
 import CryptoSharesChart from './Dashboard/CryptoSharesChart'
 import Statistics from './Dashboard/Statistics'
+import CryptoList from './Dashboard/CryptoList'
 
 /* istanbul ignore next */
 const Wallet = {
@@ -34,6 +35,7 @@ const Login = {
 const Dashboard = {
   CryptoSharesChart,
   Statistics,
+  CryptoList,
 }
 
 export {

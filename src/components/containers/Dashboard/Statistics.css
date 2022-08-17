@@ -3,6 +3,10 @@
   margin-top: 0.5rem;
 }
 
+.stats-list {
+  margin-top: 3rem;
+}
+
 .stats-list ul {
   display: flex;
   justify-content: space-evenly;
@@ -13,13 +17,11 @@
   text-align: center;
 }
 
-.highest-balance dt,
 .stats-list dt {
   font-weight: 600;
   font-size: 1.5rem;
 }
 
-.highest-balance dd,
 .stats-list dd {
   font-weight: thin;
   font-size: 1.125rem;
@@ -31,4 +33,8 @@
 
 .stats-list dt.negative {
   color: rgb(var(--color-red));
+}
+
+.stats-list .stat-unit {
+  font-size: 1rem;
 }

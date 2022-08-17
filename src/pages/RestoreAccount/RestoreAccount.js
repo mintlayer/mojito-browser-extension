@@ -27,7 +27,7 @@ const RestoreAccountPage = () => {
       })
       .then(([address]) => {
         setWalletInfo(address, accountID)
-        navigate('/wallet')
+        navigate('/dashboardd')
       })
   }
 

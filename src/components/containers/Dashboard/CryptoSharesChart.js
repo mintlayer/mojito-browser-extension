@@ -8,12 +8,8 @@ const CryptoSharesChart = ({
   totalBalance,
   fiatSymbol = 'USD',
   accountName = 'Account Name',
+  colorList,
 }) => {
-  const colorList = {
-    btc: '#F7931A',
-    mlt: '#0C7764',
-  }
-
   const data = cryptos.map((crypto) => ({
     value: (crypto.balance * crypto.exchangeRate).toFixed(2),
     asset: crypto.name,

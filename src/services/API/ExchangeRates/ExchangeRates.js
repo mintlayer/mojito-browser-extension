@@ -1,7 +1,9 @@
 const EXCHANGE_RATES_SERVER_URL = 'http://51.158.172.176:3000'
 
 const EXCHANGE_RATES_SERVER_ENDPOINTS = {
-  GET_RATE: '/:crypto/:fiat',
+  GET_RATE: '/getCurrentRate/:crypto/:fiat',
+  GET_OLD_RATE: '/getOneDayAgoRate/:crypto/:fiat',
+  GET_HIST: '/getOneDayAgoHist/:crypto/:fiat',
 }
 
 const requestExchangeRates = async (endpoint, request = fetch) => {
@@ -24,4 +26,20 @@ const getRate = (crypto, fiat) =>
     ),
   )
 
-export { getRate }
+const getOneDayAgoRate = (crypto, fiat) =>
+  requestExchangeRates(
+    EXCHANGE_RATES_SERVER_ENDPOINTS.GET_OLD_RATE.replace(
+      ':crypto',
+      crypto,
+    ).replace(':fiat', fiat),
+  )
+
+const getOneDayAgoHist = (crypto, fiat) =>
+  requestExchangeRates(
+    EXCHANGE_RATES_SERVER_ENDPOINTS.GET_HIST.replace(':crypto', crypto).replace(
+      ':fiat',
+      fiat,
+    ),
+  )
+
+export { getRate, getOneDayAgoRate, getOneDayAgoHist }

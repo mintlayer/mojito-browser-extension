@@ -1,6 +1,6 @@
 .stats {
   display: flex;
-  margin-top: 1.5rem;
+  margin: 1.5rem 0 2.75rem;
 }
 
 .stats > *:nth-child(2) {

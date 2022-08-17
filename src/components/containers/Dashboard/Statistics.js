@@ -1,18 +1,11 @@
-import { Format } from '@Helpers'
 import { VerticalGroup } from '@LayoutComponents'
 
 import './Statistics.css'
 
-const Statistics = ({ stats = [], highestBalance = 0 }) => {
+const Statistics = ({ stats = [], highestBalance }) => {
   return (
     <>
       <VerticalGroup smallGap>
-        <div className="highest-balance">
-          <dl>
-            <dt>{Format.fiatValue(highestBalance)}</dt>
-            <dd>Highest Balance</dd>
-          </dl>
-        </div>
         <div className="stats-list">
           <ul>
             {stats &&
@@ -24,7 +17,8 @@ const Statistics = ({ stats = [], highestBalance = 0 }) => {
                     }
                   >
                     {parseFloat(stat.value) >= 0 ? '+' : '-'}{' '}
-                    {Math.abs(parseFloat(stat.value))}%
+                    {Math.abs(parseFloat(stat.value))}{' '}
+                    <span className="stat-unit">{stat.unit}</span>
                   </dt>
                   <dd>{stat.name}</dd>
                 </li>
