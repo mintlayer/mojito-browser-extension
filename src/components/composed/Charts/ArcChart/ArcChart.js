@@ -30,8 +30,8 @@ const ArcChart = ({ data = DATASAMPLE, width = '200px', height = '100px' }) => {
     <Svg
       width={width}
       height={height}
-      sizeH={parseInt(height)}
-      sizeW={parseInt(width) + 2}
+      sizeH={height.includes('%') ? '100' : parseInt(height)}
+      sizeW={width.includes('%') ? '202' : parseInt(width) + 2}
     >
       <g
         transform="translate(102, 100)"

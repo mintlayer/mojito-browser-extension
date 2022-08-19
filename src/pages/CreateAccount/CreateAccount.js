@@ -39,9 +39,9 @@ const CreateAccountPage = () => {
         accountID = id
         return Account.unlockAccount(id, accountPassword)
       })
-      .then(([address]) => {
-        setWalletInfo(address, accountID)
-        navigate('/wallet')
+      .then(({ address, name }) => {
+        setWalletInfo(address, accountID, name)
+        navigate('/dashboard')
       })
   }
 

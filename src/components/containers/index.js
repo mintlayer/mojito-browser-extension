@@ -12,6 +12,10 @@ import TransactionsList from './Wallet/TransactionsList'
 
 import SendTransaction from './SendTransaction/SendTransaction'
 
+import CryptoSharesChart from './Dashboard/CryptoSharesChart'
+import Statistics from './Dashboard/Statistics'
+import CryptoList from './Dashboard/CryptoList'
+
 /* istanbul ignore next */
 const Wallet = {
   ShowAddress,
@@ -27,4 +31,18 @@ const Login = {
   SetPassword,
 }
 
-export { CreateAccount, RestoreAccount, Wallet, Login, SendTransaction }
+/* istanbul ignore next */
+const Dashboard = {
+  CryptoSharesChart,
+  Statistics,
+  CryptoList,
+}
+
+export {
+  CreateAccount,
+  RestoreAccount,
+  Wallet,
+  Login,
+  SendTransaction,
+  Dashboard,
+}

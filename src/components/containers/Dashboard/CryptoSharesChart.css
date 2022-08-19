@@ -1,0 +1,32 @@
+.chart {
+  position: relative;
+}
+
+.portifolio-chart {
+  position: relative;
+  width: 356px;
+  height: 178px;
+}
+
+.portifolio-chart h2 {
+  display: block;
+  position: absolute;
+  top: 63%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 355px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.875rem;
+}
+
+.portifolio-chart h2 span {
+  font-size: 1.5rem;
+}
+
+.portifolio-chart h2 em {
+  font-size: 1.5rem;
+  font-style: normal;
+  font-weight: 600;
+  display: block;
+}

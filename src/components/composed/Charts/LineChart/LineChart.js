@@ -32,6 +32,7 @@ const getProportionalHeight = (size, width) => {
 
 const LineChart = ({
   lineColor,
+  lineWidth,
   points = POINTSSAMPLE,
   height,
   width = '100px',
@@ -42,9 +43,9 @@ const LineChart = ({
   useEffect(() => {
     setSize({
       w: maxWidthPoint(points) + EXTRABOUNDARIES,
-      h: maxHeightPoint(points) + EXTRABOUNDARIES,
+      h: parseInt(height) + EXTRABOUNDARIES,
     })
-  }, [points])
+  }, [points, height])
 
   useEffect(() => {
     setProportionalHeight(height || getProportionalHeight(size, width))
@@ -60,6 +61,8 @@ const LineChart = ({
       <Line
         points={points}
         stroke={lineColor}
+        height={height}
+        strokeWidth={lineWidth}
       />
     </Svg>
   )

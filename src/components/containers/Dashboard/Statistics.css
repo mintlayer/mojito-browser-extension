@@ -1,0 +1,40 @@
+.highest-balance {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.stats-list {
+  margin-top: 3rem;
+}
+
+.stats-list ul {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.stats-list ul li {
+  width: 50%;
+  text-align: center;
+}
+
+.stats-list dt {
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+
+.stats-list dd {
+  font-weight: thin;
+  font-size: 1.125rem;
+}
+
+.stats-list dt.positive {
+  color: rgb(var(--color-light-green));
+}
+
+.stats-list dt.negative {
+  color: rgb(var(--color-red));
+}
+
+.stats-list .stat-unit {
+  font-size: 1rem;
+}

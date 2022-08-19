@@ -47,10 +47,10 @@ const unlockAccount = async (id, password) => {
 
     const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
     const address = BTC.getAddressFromPubKey(pubKey)
-    return [address, WIF]
+    return { address, WIF, name: account.name }
   } catch (e) {
     console.error(e)
-    return Promise.reject([false, false])
+    return Promise.reject({ address: '', WIF: '', name: '' })
   }
 }
 
