@@ -142,7 +142,7 @@ const SendTransaction = ({
   }, [addressValidity, amountValidity, feeValidity, setFormValidity])
 
   return (
-    <>
+    <div className="transaction-form">
       <AddressField
         addressChanged={addressChanged}
         setAddressValidity={setAddressValidity}
@@ -225,7 +225,7 @@ const SendTransaction = ({
           )}
         </PopUp>
       )}
-    </>
+    </div>
   )
 }
 
