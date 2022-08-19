@@ -35,6 +35,21 @@ It correctly bundles React in production mode and optimizes the build for the be
 
 The build is minified and the filenames include the hashes.
 
+### `npm run e2e`
+
+it will run cypress to run the e2e test against serve
+after run it generate videos and screenshots result of the e2e test runned
+
+note: it will need to be running the app at http://localhost:8000 to apply the e2e test against it
+
+> npm run serve
+
+#### dev in e2e
+
+have this command to launch cypress tool
+
+> npm run dev:e2e
+
 ## After Build
 
 The build process generates a `ext.zip` and a `extFF.zip` files in the project's root directory. The first one should be used for Chromium based browsers, while the last is meant just for Firefox.

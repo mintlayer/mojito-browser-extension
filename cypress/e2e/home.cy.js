@@ -12,7 +12,10 @@ describe('mojito wallet app', () => {
   })
 
   it('displays attribute page', () => {
-    cy.title({ log: true }).should('eq', 'Mojito Wallet (staging)')
+    cy.title({ log: true }).should(
+      'eq',
+      'Mojito - A Mintlayer Wallet (staging)',
+    )
 
     cy.contains('Mojito').should('be.visible')
     cy.contains('Your Bitcoin wallet right in your browser').should(
