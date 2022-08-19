@@ -36,7 +36,7 @@ const CryptoItem = (colorList, onClickItem, item) => {
       <div className="crypto-stats">
         <div className="crypto-stats-numbers">
           <strong className={item.change24h < 0 ? 'negative' : 'positive'}>
-            {item.change24h}%
+            {!Number(balance) ? 0 : item.change24h}%
           </strong>
           <span>24h</span>
         </div>

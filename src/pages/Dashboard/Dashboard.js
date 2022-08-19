@@ -84,7 +84,10 @@ const DashboardPage = () => {
           accountName={accountName}
           colorList={colorList}
         />
-        <Dashboard.Statistics stats={stats} />
+        <Dashboard.Statistics
+          stats={stats}
+          totalBalance={totalBalance}
+        />
       </div>
       <Dashboard.CryptoList
         cryptoList={cryptoList}

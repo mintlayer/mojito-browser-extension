@@ -2,7 +2,7 @@ import { VerticalGroup } from '@LayoutComponents'
 
 import './Statistics.css'
 
-const Statistics = ({ stats = [], highestBalance }) => {
+const Statistics = ({ stats = [], highestBalance, totalBalance }) => {
   return (
     <>
       <VerticalGroup smallGap>
@@ -13,12 +13,22 @@ const Statistics = ({ stats = [], highestBalance }) => {
                 <li key={stat.name}>
                   <dt
                     className={
-                      parseFloat(stat.value) >= 0 ? 'positive' : 'negative'
+                      totalBalance
+                        ? parseFloat(stat.value) >= 0
+                          ? 'positive'
+                          : 'negative'
+                        : 'positive'
                     }
                   >
-                    {parseFloat(stat.value) >= 0 ? '+' : '-'}{' '}
-                    {Math.abs(parseFloat(stat.value))}{' '}
-                    <span className="stat-unit">{stat.unit}</span>
+                    {totalBalance ? (
+                      <>
+                        `${parseFloat(stat.value) >= 0 ? '+' : '-'}$
+                        {Math.abs(parseFloat(stat.value))}`
+                        <span className="stat-unit">{stat.unit}</span>
+                      </>
+                    ) : (
+                      0
+                    )}
                   </dt>
                   <dd>{stat.name}</dd>
                 </li>
