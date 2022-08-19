@@ -1,8 +1,27 @@
 {
-  "accounts": [
-    {
+  "user": {
+    "access": {
       "name": "AccountTest",
       "password": "Mintlayer,1"
-    }
-  ]
+    },
+    "accounts": [
+      {
+        "account": "mjSfKnv1eU5ndji1qUiBwiz4hTDisrvADF",
+        "words": [
+          "mercy",
+          "movie",
+          "acquire",
+          "equal",
+          "dirt",
+          "team",
+          "correct",
+          "coral",
+          "recall",
+          "myself",
+          "fringe",
+          "smile"
+        ]
+      }
+    ]
+  }
 }

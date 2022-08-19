@@ -1,7 +1,7 @@
 /// <reference types="cypress" />
 
 import { deleteDatabase } from './utils'
-import { accounts } from '../fixtures/accounts.json'
+import { user } from '../fixtures/accounts.json'
 
 describe('set Account page', () => {
   before(() => {
@@ -20,7 +20,7 @@ describe('set Account page', () => {
   })
 
   it('click on button Account Name', () => {
-    cy.setAccount(accounts[0].name)
+    cy.setAccount(user.access.name)
     cy.contains('button', 'Continue').should('be.visible')
 
     cy.contains('li.step.false', 'Account Name').should('be.visible')

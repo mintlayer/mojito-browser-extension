@@ -1,7 +1,7 @@
 /// <reference types="cypress" />
 
 import { deleteDatabase } from './utils'
-import { accounts } from '../fixtures/accounts.json'
+import { user } from '../fixtures/accounts.json'
 
 describe('create account page', () => {
   before(() => {
@@ -11,7 +11,8 @@ describe('create account page', () => {
   beforeEach(() => {
     cy.visit(Cypress.env('baseUrl'))
     cy.contains('button', 'Create').click()
-    cy.setAccountAndPassword(accounts[0].name, accounts[0].password)
+    const { name, password } = user.access
+    cy.setAccountAndPassword(name, password)
 
     cy.intercept('**/address/**/utxo').as('utxo')
     cy.intercept('**/address/**/txs').as('txs')
@@ -31,25 +32,19 @@ describe('create account page', () => {
 
   it('click on continue', () => {
     cy.contains('button', 'I understand').click()
+    cy.getWords('input').then((words) => {
+      expect(words)
 
-    cy.get('input')
-      .then(($els) => Array.from($els, (el) => el.value))
-      .then((words) => {
-        expect(words)
-        cy.contains('button', 'Backup done!').click()
+      cy.contains('button', 'Backup done!').click()
+      cy.writeWords('input', words)
+      cy.contains('button', 'Create account').click()
 
-        cy.get('input').each((x, i, a) => {
-          cy.wrap(x).type(words[i])
-        })
+      cy.contains('Just a sec, we are creating your account...').should(
+        'be.visible',
+      )
 
-        cy.contains('button', 'Create account').click()
-
-        cy.contains('Just a sec, we are creating your account...').should(
-          'be.visible',
-        )
-
-        cy.wait('@utxo')
-        cy.wait('@txs')
-      })
+      cy.wait('@utxo')
+      cy.wait('@txs')
+    })
   })
 })
