@@ -61,33 +61,35 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
       <Header />
       <div className="content">
         <CenteredLayout>
-          <VerticalGroup bigGap>
-            {!unlockingAccount ? (
-              <>
-                <TextField
-                  value={accountPasswordValue}
-                  onChangeHandle={accountPasswordChangeHandler}
-                  validity={accountPasswordValid}
-                  password
-                  label={label()}
-                  placeHolder={'Password'}
-                  pristinity={accountPasswordPritinity}
-                  errorMessages={accountPasswordErrorMessage}
-                  alternate
-                  focus
-                />
-                <Button onClickHandle={doLogin}>Log In</Button>
-              </>
-            ) : (
-              <>
-                <h1 className="loadingText">
-                  {' '}
-                  Just a sec, we are validating your password...{' '}
-                </h1>
-                <Loading />
-              </>
-            )}
-          </VerticalGroup>
+          <form>
+            <VerticalGroup bigGap>
+              {!unlockingAccount ? (
+                <>
+                  <TextField
+                    value={accountPasswordValue}
+                    onChangeHandle={accountPasswordChangeHandler}
+                    validity={accountPasswordValid}
+                    password
+                    label={label()}
+                    placeHolder={'Password'}
+                    pristinity={accountPasswordPritinity}
+                    errorMessages={accountPasswordErrorMessage}
+                    alternate
+                    focus
+                  />
+                  <Button onClickHandle={doLogin}>Log In</Button>
+                </>
+              ) : (
+                <>
+                  <h1 className="loadingText">
+                    {' '}
+                    Just a sec, we are validating your password...{' '}
+                  </h1>
+                  <Loading />
+                </>
+              )}
+            </VerticalGroup>
+          </form>
         </CenteredLayout>
       </div>
     </div>

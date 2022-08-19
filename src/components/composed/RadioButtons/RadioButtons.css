@@ -14,7 +14,12 @@
 }
 
 .radio-button.alternate {
+  border: none !important;
   font-weight: bold;
   color: rgb(var(--color-white));
   background-color: rgb(var(--color-green));
+}
+
+.radio-button.alternate:hover {
+  border: none;
 }

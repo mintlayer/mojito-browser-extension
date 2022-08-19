@@ -24,7 +24,7 @@ const WalletPage = () => {
   return (
     <div data-testid="wallet-page">
       <VerticalGroup bigGap>
-        <Header noBackButton />
+        <Header />
         <div className="balance-transactions-wrapper">
           <Balance
             balance={balance}

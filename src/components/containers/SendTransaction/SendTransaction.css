@@ -8,9 +8,12 @@
   font-size: 1.4rem;
 }
 
-.form-field input,
-.form-field button {
+.form-field input {
   height: 3rem;
+}
+
+.form-field button {
+  height: 3.75rem;
 }
 
 .form-field label {
@@ -37,4 +40,9 @@
 
 .loading-center {
   margin: 0 auto;
+}
+
+.transaction-form input.invalid,
+.transaction-form input.valid {
+  padding: 1.8rem 1.685rem;
 }
