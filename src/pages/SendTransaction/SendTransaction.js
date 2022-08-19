@@ -62,7 +62,7 @@ const SendTransactionPage = () => {
 
   const confirmTransaction = async (password) => {
     // eslint-disable-next-line no-unused-vars
-    const [_, WIF] = await Account.unlockAccount(accountID, password)
+    const { WIF } = await Account.unlockAccount(accountID, password)
 
     const transactionSize =
       await BTCTransactionHelper.calculateTransactionSizeInBytes({

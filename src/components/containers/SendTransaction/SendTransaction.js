@@ -36,6 +36,9 @@ const SendTransaction = ({
   const [addressValidity, setAddressValidity] = useState(false)
   const [amountValidity, setAmountValidity] = useState(false)
   const [feeValidity, setFeeValidity] = useState(false)
+  const [passValidity, setPassValidity] = useState(false)
+  const [passPristinity, setPassPristinity] = useState(true)
+  const [passErrorMessage, setPassErrorMessage] = useState('')
   const [sendingTransaction, setSendingTransaction] = useState(false)
   const [transactionTxid, setTransactionTxid] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
@@ -49,6 +52,10 @@ const SendTransaction = ({
     if (transactionTxid) return
     if (sendingTransaction) return
     if (!state) setAskPassword(false)
+    setPassPristinity(true)
+    setPassValidity(false)
+    setPass('')
+    setPassErrorMessage('')
     setOpenSendFundConfirmation(state)
   }
 
@@ -62,15 +69,28 @@ const SendTransaction = ({
       })
   }
 
-  const sendTransaction = async () => {
+  const sendTransaction = async (ev) => {
+    ev.preventDefault()
+    if (!pass) {
+      setPassPristinity(false)
+      setPassValidity(false)
+      setPassErrorMessage('Password must be set.')
+      return
+    }
     setSendingTransaction(true)
     setAllowClosing(false)
-    setAskPassword(false)
     try {
       const txid = await confirmTransaction(pass)
       setTransactionTxid(txid)
+      setPassValidity(true)
+      setPassErrorMessage('')
+      setAskPassword(false)
     } catch (e) {
       console.error(e)
+      setPassPristinity(false)
+      setPassValidity(false)
+      setPass('')
+      setPassErrorMessage('Wrong password. Account could not be unlocked')
       setAllowClosing(true)
     } finally {
       setSendingTransaction(false)
@@ -179,18 +199,22 @@ const SendTransaction = ({
                 onCancel={handleCancel}
               ></SendTransactionConfirmation>
             ) : (
-              <VerticalGroup bigGap>
-                <TextField
-                  label="Insert your password"
-                  placeHolder="Password"
-                  password
-                  validity={false}
-                  onChangeHandle={changePassHandle}
-                />
-                <Button onClickHandle={sendTransaction}>
-                  Send Transaction
-                </Button>
-              </VerticalGroup>
+              <form>
+                <VerticalGroup bigGap>
+                  <TextField
+                    label="Insert your password"
+                    placeHolder="Password"
+                    password
+                    validity={passValidity}
+                    pristinity={passPristinity}
+                    errorMessages={passErrorMessage}
+                    onChangeHandle={changePassHandle}
+                  />
+                  <Button onClickHandle={sendTransaction}>
+                    Send Transaction
+                  </Button>
+                </VerticalGroup>
+              </form>
             )
           ) : (
             <VerticalGroup bigGap>
