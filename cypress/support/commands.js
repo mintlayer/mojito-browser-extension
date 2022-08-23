@@ -14,7 +14,7 @@ Cypress.Commands.add('setAccountAndPassword', (name, password) => {
 })
 
 Cypress.Commands.add('getWords', (path) => {
-  cy.wait(2000)
+  cy.get(path).first().invoke('val').should('not.be.empty')
   return cy.get(path).then(($els) => Array.from($els, (el) => el.value))
 })
 

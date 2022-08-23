@@ -14,6 +14,7 @@ describe('create account page', () => {
 
     cy.intercept('**/address/**/utxo').as('utxo')
     cy.intercept('**/address/**/txs').as('txs')
+    cy.intercept('**/getCurrentRate/**').as('rate')
   })
 
   it('displays attribute pages', () => {
@@ -30,11 +31,11 @@ describe('create account page', () => {
 
   it('click on continue', () => {
     cy.contains('button', 'I understand').click()
-    cy.getWords('input').then((words) => {
+    cy.getWords('input.words-list-input.readonly').then((words) => {
       expect(words)
 
       cy.contains('button', 'Backup done!').click()
-      cy.writeWords('input', words)
+      cy.writeWords('input.words-list-input', words)
       cy.contains('button', 'Create account').click()
 
       cy.contains('Just a sec, we are creating your account...').should(
@@ -43,6 +44,7 @@ describe('create account page', () => {
 
       cy.wait('@utxo')
       cy.wait('@txs')
+      cy.wait('@rate')
     })
   })
 })
