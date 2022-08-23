@@ -22,7 +22,8 @@ const InputsList = ({
 
   useEffect(() => {
     if (effectCalled.current) return
-    if (wordsList.length && wordsList.filter((x) => !!x).length === 0) return
+    if (!wordsList.length && !restoreMode) return
+    if (!restoreMode && wordsList.filter((x) => !!x).length === 0) return
     effectCalled.current = true
 
     let newFields
