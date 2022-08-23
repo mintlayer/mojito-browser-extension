@@ -23,7 +23,7 @@ describe('Restore account page', () => {
     cy.contains('button', 'I have them').click()
     cy.writeWords('input', user.accounts[0].words)
     cy.contains('button', 'Confirm').click()
-    //
+
     cy.wait('@utxo')
     cy.wait('@txs')
   })
