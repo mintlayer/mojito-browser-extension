@@ -1,5 +1,3 @@
-/// <reference types="cypress" />
-
 import { deleteDatabase } from './utils'
 import { user } from '../fixtures/accounts.json'
 

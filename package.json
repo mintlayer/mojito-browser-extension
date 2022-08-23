@@ -34,7 +34,6 @@
     "serve": "http-server -p 8000 build/ ",
     "dev:e2e": "cypress open",
     "e2e": "cypress run",
-    "e2e:coverage": "cypress run --config baseUrl=http://localhost:8000 --env coverage",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js",
     "prettier": "pretty-quick --staged",
