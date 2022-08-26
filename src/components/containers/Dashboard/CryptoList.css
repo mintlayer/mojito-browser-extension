@@ -27,6 +27,7 @@
   justify-content: flex-end;
   align-items: flex-end;
   gap: 10px;
+  height: 30px;
 }
 
 .crypto-item .crypto-stats .crypto-stats-numbers > * {

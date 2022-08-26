@@ -35,10 +35,14 @@ const CryptoItem = (colorList, onClickItem, item) => {
       </div>
       <div className="crypto-stats">
         <div className="crypto-stats-numbers">
-          <strong className={item.change24h < 0 ? 'negative' : 'positive'}>
-            {!Number(balance) ? 0 : item.change24h}%
-          </strong>
-          <span>24h</span>
+          {Number(balance) > 0 && (
+            <>
+              <strong className={item.change24h < 0 ? 'negative' : 'positive'}>
+                {item.change24h}%
+              </strong>
+              <span>24h</span>
+            </>
+          )}
         </div>
         <LineChart
           points={data}

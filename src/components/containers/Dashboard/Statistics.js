@@ -20,17 +20,15 @@ const Statistics = ({ stats = [], highestBalance, totalBalance }) => {
                         : 'positive'
                     }
                   >
-                    {totalBalance ? (
+                    {totalBalance > 0 && (
                       <>
-                        `${parseFloat(stat.value) >= 0 ? '+' : '-'}$
-                        {Math.abs(parseFloat(stat.value))}`
-                        <span className="stat-unit">{stat.unit}</span>
+                        {parseFloat(stat.value) >= 0 ? '+' : '-'}
+                        {Math.abs(parseFloat(stat.value))}
+                        <span className="stat-unit"> {stat.unit}</span>
                       </>
-                    ) : (
-                      0
                     )}
                   </dt>
-                  <dd>{stat.name}</dd>
+                  {totalBalance > 0 && <dd>{stat.name}</dd>}
                 </li>
               ))}
           </ul>
