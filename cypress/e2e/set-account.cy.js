@@ -1,5 +1,5 @@
 import { deleteDatabase } from './utils'
-import { user } from '../fixtures/accounts.json'
+import { wallets } from '../fixtures/accounts.json'
 
 describe('set Account page', () => {
   before(() => {
@@ -18,7 +18,7 @@ describe('set Account page', () => {
   })
 
   it('click on button Account Name', () => {
-    cy.setAccount(user.access.name)
+    cy.setAccount(wallets[0].access.name)
     cy.contains('button', 'Continue').should('be.visible')
 
     cy.contains('li.step.false', 'Account Name').should('be.visible')

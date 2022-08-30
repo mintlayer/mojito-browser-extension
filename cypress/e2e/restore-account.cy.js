@@ -1,12 +1,11 @@
 import { deleteDatabase } from './utils'
-import { user } from '../fixtures/accounts.json'
+import { wallets } from '../fixtures/accounts.json'
 
 describe('Restore account page', () => {
   before(() => {
     deleteDatabase()
 
-    cy.intercept('**/address/**/utxo').as('utxo')
-    cy.intercept('**/address/**/txs').as('txs')
+    cy.interceptAll(0)
   })
 
   beforeEach(() => {
@@ -16,12 +15,12 @@ describe('Restore account page', () => {
   it('click on continue', () => {
     cy.contains('button', 'Restore').click()
 
-    cy.setAccount(user.access.name)
-    cy.get('input[placeholder="Password"]').type(user.access.password)
+    cy.setAccount(wallets[0].access.name)
+    cy.get('input[placeholder="Password"]').type(wallets[0].access.password)
     cy.contains('button', 'Create').click()
 
     cy.contains('button', 'I have them').click()
-    cy.writeWords('input', user.accounts[0].words)
+    cy.writeWords('input', wallets[0].account.words)
     cy.contains('button', 'Confirm').click()
 
     cy.wait('@utxo')

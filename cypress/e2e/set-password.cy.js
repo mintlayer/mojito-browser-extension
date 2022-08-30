@@ -1,5 +1,5 @@
 import { deleteDatabase } from './utils'
-import { user } from '../fixtures/accounts.json'
+import { wallets } from '../fixtures/accounts.json'
 
 describe('set password page', () => {
   before(() => {
@@ -9,7 +9,7 @@ describe('set password page', () => {
   beforeEach(() => {
     cy.visit(Cypress.env('baseUrl'))
     cy.contains('button', 'Create').click()
-    cy.setAccount(user.access.name)
+    cy.setAccount(wallets[0].access.name)
   })
 
   it('displays attribute pages', () => {
@@ -21,7 +21,7 @@ describe('set password page', () => {
   })
 
   it('click on continue', () => {
-    cy.setPassword(user.access.password)
+    cy.setPassword(wallets[0].access.password)
     cy.contains('button', 'I understand').should('be.visible')
 
     cy.contains('li.step.false', 'Account Password').should('be.visible')

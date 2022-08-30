@@ -1,5 +1,5 @@
 import { deleteDatabase } from './utils'
-import { user } from '../fixtures/accounts.json'
+import { wallets } from '../fixtures/accounts.json'
 
 describe('create account page', () => {
   before(() => {
@@ -9,12 +9,10 @@ describe('create account page', () => {
   beforeEach(() => {
     cy.visit(Cypress.env('baseUrl'))
     cy.contains('button', 'Create').click()
-    const { name, password } = user.access
+    const { name, password } = wallets[0].access
     cy.setAccountAndPassword(name, password)
 
-    cy.intercept('**/address/**/utxo').as('utxo')
-    cy.intercept('**/address/**/txs').as('txs')
-    cy.intercept('**/getCurrentRate/**').as('rate')
+    cy.interceptAll(0)
   })
 
   it('displays attribute pages', () => {

@@ -1,12 +1,12 @@
 {
-  "user": {
-    "access": {
-      "name": "AccountTest",
-      "password": "Mintlayer,1"
-    },
-    "accounts": [
-      {
-        "account": "mjSfKnv1eU5ndji1qUiBwiz4hTDisrvADF",
+  "wallets": [
+    {
+      "access": {
+        "name": "Sender",
+        "password": "Mintlayer,1S"
+      },
+      "account": {
+        "address": "mjSfKnv1eU5ndji1qUiBwiz4hTDisrvADF",
         "words": [
           "mercy",
           "movie",
@@ -22,6 +22,52 @@
           "smile"
         ]
       }
-    ]
-  }
+    },
+    {
+      "access": {
+        "name": "Receiver",
+        "password": "Mintlayer,1R"
+      },
+      "account": {
+        "address": "mqHxdLkBbqxd56quCahA5Sx9uYSfRQBa1e",
+        "words": [
+          "ladder",
+          "must",
+          "deny",
+          "fortune",
+          "work",
+          "cabbage",
+          "grass",
+          "peace",
+          "speed",
+          "chief",
+          "uniform",
+          "board"
+        ]
+      }
+    },
+    {
+      "access": {
+        "name": "NewOne",
+        "password": "Mintlayer,1N"
+      },
+      "account": {
+        "address": "",
+        "words": [
+          "loan",
+          "silent",
+          "clutch",
+          "own",
+          "grow",
+          "venue",
+          "butter",
+          "session",
+          "wrong",
+          "magnet",
+          "link",
+          "moral"
+        ]
+      }
+    }
+  ]
 }
