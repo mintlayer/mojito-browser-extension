@@ -50,7 +50,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
             [...new Set(transaction.otherPart)].length > 1 &&
             ` (+${transaction.otherPart.length - 1})`}
         </p>
-        <div className="transaction-date-amout">
+        <div className="transaction-date-amount">
           <p
             className="transaction-date"
             data-testid="transaction-date"
@@ -58,10 +58,10 @@ const Transaction = ({ transaction, getConfirmations }) => {
             Date: <span>{date}</span>
           </p>
           <p
-            className="transaction-amout"
-            data-testid="transaction-amout"
+            className="transaction-amount"
+            data-testid="transaction-amount"
           >
-            Amout:{' '}
+            Amount:{' '}
             <span>{transaction && Format.BTCValue(transaction.value)}</span>
           </p>
         </div>

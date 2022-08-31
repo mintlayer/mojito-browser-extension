@@ -1,12 +1,18 @@
-import txsEmpty from '../fixtures/empty-txs.json'
-import utxoEmpty from '../fixtures/empty-utxo.json'
+import txsEmpty from '../fixtures/txs-empty.json'
+import utxoEmpty from '../fixtures/utxo-empty.json'
+
+import txsSender from '../fixtures/txs-sender.json'
+import utxoSender from '../fixtures/utxo-sender.json'
+
+import txsReceiver from '../fixtures/txs-receiver.json'
+import utxoReceiver from '../fixtures/utxo-receiver.json'
 
 import rate from '../fixtures/rate-current.json'
 import rate1Day from '../fixtures/rate-1day.json'
 import rateHist from '../fixtures/rate-history.json'
 
-const txsList = [txsEmpty]
-const utxoList = [utxoEmpty]
+const txsList = [txsEmpty, txsSender, txsReceiver]
+const utxoList = [utxoEmpty, utxoSender, utxoReceiver]
 
 Cypress.Commands.add('interceptAll', (index = 0) => {
   cy.intercept('**/address/**/txs', txsList[index]).as('txs')
