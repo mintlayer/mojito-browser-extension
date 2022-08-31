@@ -16,6 +16,11 @@ Cypress.Commands.add('interceptAll', (index = 0) => {
   cy.intercept('**/getOneDayAgoHist/**', rateHist).as('rateAll')
 })
 
+Cypress.Commands.add('waitAll', () => {
+  cy.wait(['@txs', '@utxo'])
+  cy.wait(['@rate', '@rateD1', '@rateAll'])
+})
+
 Cypress.Commands.add('setAccount', (name) => {
   cy.get('input[placeholder="Account Name"]').type(name)
   cy.contains('button', 'Continue').click()
@@ -42,7 +47,24 @@ Cypress.Commands.add('writeWords', (path, words) => {
   })
 })
 
+Cypress.Commands.add('login', (name, password, intercepts = 0) => {
+  cy.contains(name).should('be.visible')
+  cy.contains(name).click()
+  cy.interceptAll(intercepts)
+
+  cy.get('input[placeholder="Password"]').type(password)
+  cy.contains('button', 'Log In').click()
+
+  cy.waitAll()
+})
+
+Cypress.Commands.add('logout', () => {
+  cy.get('button[class="btn logout alternate"]').click()
+})
+
 Cypress.Commands.add('restoreAccount', (name, password, words) => {
+  cy.interceptAll()
+
   cy.contains('button', 'Restore').click()
 
   cy.setAccount(name)
@@ -52,8 +74,8 @@ Cypress.Commands.add('restoreAccount', (name, password, words) => {
   cy.contains('button', 'I have them').click()
   cy.writeWords('input', words)
   cy.contains('button', 'Confirm').click()
-})
 
-Cypress.Commands.add('logout', () => {
-  cy.get('button[class="btn logout alternate"]').click()
+  cy.waitAll()
+  cy.logout()
+  cy.contains(name).should('be.visible')
 })

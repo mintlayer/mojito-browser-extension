@@ -8,4 +8,6 @@ module.exports = defineConfig({
   e2e: {
     setupNodeEvents(on, config) {},
   },
+  viewportWidth: 800,
+  viewportHeight: 600,
 })

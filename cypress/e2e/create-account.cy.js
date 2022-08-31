@@ -40,9 +40,7 @@ describe('create account page', () => {
         'be.visible',
       )
 
-      cy.wait('@utxo')
-      cy.wait('@txs')
-      cy.wait('@rate')
+      cy.waitAll()
     })
   })
 })

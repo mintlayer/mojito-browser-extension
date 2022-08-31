@@ -9,13 +9,6 @@ describe('login Account wallet', () => {
     cy.visit(Cypress.env('baseUrl'))
     const { name, password } = wallets[0].access
     cy.restoreAccount(name, password, wallets[0].account.words)
-    cy.interceptAll()
-    cy.wait('@utxo')
-    cy.wait('@txs')
-
-    cy.contains('li', 'BTC').click()
-    cy.logout()
-    cy.contains(name).should('be.visible')
   })
 
   beforeEach(() => {
@@ -23,7 +16,10 @@ describe('login Account wallet', () => {
   })
 
   it('login Account and logout Account', () => {
-    const { name, password } = wallets[0].access
+    const {
+      access: { name, password },
+      account: { address },
+    } = wallets[0]
     cy.contains(name).should('be.visible')
     cy.contains(name).click()
     cy.interceptAll()
@@ -35,7 +31,7 @@ describe('login Account wallet', () => {
       .should('be.visible')
       .then(() => {
         expect(localStorage.getItem('unlockedAccount')).be.eq(
-          `{"address":"${wallets[0].account.address}","id":1,"name":"${name}"}`,
+          `{"address":"${address}","id":1,"name":"${name}"}`,
         )
       })
 
