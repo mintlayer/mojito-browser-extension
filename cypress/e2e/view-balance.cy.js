@@ -59,7 +59,7 @@ describe('View balance page', () => {
       _name = name
     })
 
-    it.only('checks Sender', () => {
+    it('checks Sender', () => {
       cy.contains(_name).should('be.visible')
       cy.contains('li', 'BTC').click()
       cy.contains('Send').should('be.visible')
