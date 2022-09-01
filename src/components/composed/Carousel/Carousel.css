@@ -93,6 +93,7 @@ button {
   text-transform: capitalize;
   transition: all 0.3s ease-in-out;
   cursor: pointer;
+  word-wrap: anywhere;
 }
 .button-account:hover {
   color: rgb(var(--color-white));
