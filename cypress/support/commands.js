@@ -68,8 +68,8 @@ Cypress.Commands.add('logout', () => {
   cy.get('button[class="btn logout alternate"]').click()
 })
 
-Cypress.Commands.add('restoreAccount', (name, password, words) => {
-  cy.interceptAll()
+Cypress.Commands.add('restoreAccount', (name, password, words, index = 0) => {
+  cy.interceptAll(index)
 
   cy.contains('button', 'Restore').click()
 

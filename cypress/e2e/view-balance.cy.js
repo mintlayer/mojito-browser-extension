@@ -26,16 +26,19 @@ describe('View balance page', () => {
     )
   })
 
-  describe('Clean account', () => {
+  describe('Account NewOne view balance', () => {
+    let _name
     beforeEach(() => {
       cy.visit(Cypress.env('baseUrl'))
       const { name, password } = wallets[0].access
       cy.login(name, password, 0)
+      _name = name
     })
 
     it('checks Empty', () => {
-      cy.contains('BTC').should('be.visible')
-      cy.contains('USD').should('be.visible')
+      cy.contains(_name).should('be.visible')
+      cy.contains('Bitcoin (BTC)').should('be.visible')
+      cy.contains('Mintlayer (MLT)').should('be.visible')
 
       cy.contains('Bitcoin').should('be.visible')
       cy.contains('Mintlayer').should('be.visible')
@@ -43,55 +46,41 @@ describe('View balance page', () => {
       cy.get('button[class="btn logout alternate"]').should('be.visible')
 
       cy.contains('li', 'BTC').should('be.visible')
-
-      cy.contains('li', 'BTC').click()
-      cy.contains('Send').should('be.visible')
-      cy.contains('Receive').should('be.visible')
-    })
-  })
-
-  describe('Sender account', () => {
-    let _name
-    beforeEach(() => {
-      cy.visit(Cypress.env('baseUrl'))
-      const { name, password } = wallets[1].access
-      cy.login(name, password, 1)
-      _name = name
     })
 
-    it('checks Sender', () => {
-      cy.contains(_name).should('be.visible')
-      cy.contains('li', 'BTC').click()
-      cy.contains('Send').should('be.visible')
-      cy.contains('Receive').should('be.visible')
-
-      cy.get('div.transaction-logo-type.transaction-logo-out')
-        .first()
-        .should('be.visible')
-      cy.contains('li', 'Amount').should('be.visible')
-    })
-  })
-
-  describe('Receiver account', () => {
-    let _name
-    beforeEach(() => {
-      cy.visit(Cypress.env('baseUrl'))
-      const { name, password } = wallets[2].access
-      cy.login(name, password, 2)
-      _name = name
-    })
-
-    it('checks Receiver', () => {
+    it('click in BTC detail', () => {
       cy.contains(_name).should('be.visible')
       cy.contains('li', 'BTC')
         .click()
         .then(() => {
-          cy.contains('Send').should('be.visible')
-          cy.contains('Receive').should('be.visible')
-
-          cy.get('div.transaction-logo-type.false').first().should('be.visible')
-          cy.contains('li', 'Amount').should('be.visible')
+          cy.get(_name).should('not.exist')
         })
+    })
+  })
+
+  describe('Account Sender view balance', () => {
+    beforeEach(() => {
+      cy.visit(Cypress.env('baseUrl'))
+      const { name, password } = wallets[1].access
+      cy.login(name, password, 1)
+    })
+
+    it('checks Sender balance', () => {
+      cy.contains('Bitcoin (BTC)').should('be.visible')
+      cy.contains('Mintlayer (MLT)').should('be.visible')
+    })
+  })
+
+  describe('Receiver account view balance', () => {
+    beforeEach(() => {
+      cy.visit(Cypress.env('baseUrl'))
+      const { name, password } = wallets[2].access
+      cy.login(name, password, 2)
+    })
+
+    it('checks Receiver balance', () => {
+      cy.contains('Bitcoin (BTC)').should('be.visible')
+      cy.contains('Mintlayer (MLT)').should('be.visible')
     })
   })
 })
