@@ -1,25 +1,22 @@
 import { BIP32Factory } from 'bip32'
 import * as Bip39 from 'bip39'
-import * as bitcoin from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
+import * as bitcoin from 'bitcoinjs-lib'
 
 import { EnvVars } from '@Constants'
+import BTC_ADDRESS_TYPE_MAP from './BTC.addressType'
 
-// eslint-disable-next-line
-const DERIVATION_PATH = "m/44'/0'/0'/0/0"
 const NETWORK = bitcoin.networks[EnvVars.BTC_NETWORK]
 
 const getBIP32Object = () => BIP32Factory(ecc)
 
 const getSeedFromMnemonic = (mnemonic) => Bip39.mnemonicToSeedSync(mnemonic)
 
-const getKeysFromSeed = (seed) => {
+const getKeysFromSeed = (seed, algoType = BTC_ADDRESS_TYPE_MAP.legacy) => {
   const root = getBIP32Object().fromSeed(seed, NETWORK)
-  const account = root.derivePath(DERIVATION_PATH)
+  const account = root.derivePath(algoType.derivationPath)
   return [account.publicKey, account.toWIF()]
 }
-const getAddressFromPubKey = (pubkey) =>
-  bitcoin.payments.p2pkh({ pubkey, network: NETWORK }).address
 
 const generateMnemonic = () => Bip39.generateMnemonic()
 
@@ -28,9 +25,9 @@ const generateKeysFromMnemonic = (mnemonic) => {
   return getKeysFromSeed(seed)
 }
 
-const generateAddr = (mnemonic) => {
+const generateAddr = (mnemonic, algoType = BTC_ADDRESS_TYPE_MAP.legacy) => {
   const [pubKey] = generateKeysFromMnemonic(mnemonic)
-  const btcAddress = getAddressFromPubKey(pubKey)
+  const btcAddress = algoType.getAddressFromPubKey(pubKey)
 
   return btcAddress
 }
@@ -45,7 +42,6 @@ export {
   generateKeysFromMnemonic,
   getSeedFromMnemonic,
   getKeysFromSeed,
-  getAddressFromPubKey,
   validateMnemonic,
   getWordList,
 }

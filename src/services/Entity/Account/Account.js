@@ -1,4 +1,4 @@
-import { BTC } from '@Cryptos'
+import { BTC, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
 import { IndexedDB } from '@Databases'
 
 import loadAccountSubRoutines from './loadWorkers'
@@ -46,7 +46,7 @@ const unlockAccount = async (id, password) => {
     if (seed.error) throw new Error(seed.error)
 
     const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
-    const address = BTC.getAddressFromPubKey(pubKey)
+    const address = BTC_ADDRESS_TYPE_MAP.legacy.getAddressFromPubKey(pubKey)
     return { address, WIF, name: account.name }
   } catch (e) {
     console.error(e)
