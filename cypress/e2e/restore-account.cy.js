@@ -12,7 +12,7 @@ describe('Restore account page', () => {
     cy.visit(Cypress.env('baseUrl'))
   })
 
-  it('click on continue', () => {
+  it('click on Restore for NewOne', () => {
     cy.contains('button', 'Restore').click()
 
     cy.setAccount(wallets[0].access.name)

@@ -15,11 +15,19 @@ const txsList = [txsEmpty, txsSender, txsReceiver]
 const utxoList = [utxoEmpty, utxoSender, utxoReceiver]
 
 Cypress.Commands.add('interceptAll', (index = 0) => {
-  cy.intercept('**/address/**/txs', txsList[index]).as('txs')
-  cy.intercept('**/address/**/utxo', utxoList[index]).as('utxo')
-  cy.intercept('**/getCurrentRate/**', rate).as('rate')
-  cy.intercept('**/getOneDayAgoRate/**', rate1Day).as('rateD1')
-  cy.intercept('**/getOneDayAgoHist/**', rateHist).as('rateAll')
+  if (index !== -1) {
+    cy.intercept('**/address/**/txs', txsList[index]).as('txs')
+    cy.intercept('**/address/**/utxo', utxoList[index]).as('utxo')
+    cy.intercept('**/getCurrentRate/**', rate).as('rate')
+    cy.intercept('**/getOneDayAgoRate/**', rate1Day).as('rateD1')
+    cy.intercept('**/getOneDayAgoHist/**', rateHist).as('rateAll')
+  } else {
+    cy.intercept('**/address/**/txs').as('txs')
+    cy.intercept('**/address/**/utxo').as('utxo')
+    cy.intercept('**/getCurrentRate/**').as('rate')
+    cy.intercept('**/getOneDayAgoRate/**').as('rateD1')
+    cy.intercept('**/getOneDayAgoHist/**').as('rateAll')
+  }
 })
 
 Cypress.Commands.add('waitAll', () => {
@@ -56,11 +64,11 @@ Cypress.Commands.add('writeWords', (path, words) => {
 Cypress.Commands.add('login', (name, password, intercepts = 0) => {
   cy.contains(name).should('be.visible')
   cy.contains(name).click()
+
   cy.interceptAll(intercepts)
 
   cy.get('input[placeholder="Password"]').type(password)
   cy.contains('button', 'Log In').click()
-
   cy.waitAll()
 })
 
@@ -80,7 +88,6 @@ Cypress.Commands.add('restoreAccount', (name, password, words, index = 0) => {
   cy.contains('button', 'I have them').click()
   cy.writeWords('input', words)
   cy.contains('button', 'Confirm').click()
-
   cy.waitAll()
   cy.logout()
   cy.contains(name).should('be.visible')

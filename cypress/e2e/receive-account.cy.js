@@ -1,7 +1,7 @@
 import { deleteDatabase } from './utils'
 import { wallets } from '../fixtures/accounts.json'
 
-describe('View balance page', () => {
+describe('View Account page', () => {
   before(() => {
     deleteDatabase()
     cy.clearLocalStorage()
