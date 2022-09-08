@@ -12,7 +12,7 @@ describe('create account page', () => {
     const { name, password } = wallets[0].access
     cy.setAccountAndPassword(name, password)
 
-    cy.interceptAll(0)
+    cy.interceptAll()
   })
 
   it('displays attribute pages', () => {
@@ -31,6 +31,7 @@ describe('create account page', () => {
     cy.contains('button', 'I understand').click()
     cy.getWords('input.words-list-input.readonly').then((words) => {
       expect(words)
+      // cy.writeFile('cypress/info.log', JSON.stringify(words))
 
       cy.contains('button', 'Backup done!').click()
       cy.writeWords('input.words-list-input', words)

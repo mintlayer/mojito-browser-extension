@@ -32,7 +32,7 @@
     "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --testPathIgnorePatterns='src/pages'",
     "coverage": "npm test -- --coverage ",
     "serve": "http-server -p 8000 build/ ",
-    "dev:e2e": "cypress open",
+    "dev:e2e": "cypress open --env host=none ",
     "e2e": "cypress run",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js",

@@ -1,37 +1,102 @@
-import txsEmpty from '../fixtures/txs-empty.json'
-import utxoEmpty from '../fixtures/utxo-empty.json'
-
-import txsSender from '../fixtures/txs-sender.json'
-import utxoSender from '../fixtures/utxo-sender.json'
-
-import txsReceiver from '../fixtures/txs-receiver.json'
-import utxoReceiver from '../fixtures/utxo-receiver.json'
-
 import rate from '../fixtures/rate-current.json'
 import rate1Day from '../fixtures/rate-1day.json'
 import rateHist from '../fixtures/rate-history.json'
 
-const txsList = [txsEmpty, txsSender, txsReceiver]
-const utxoList = [utxoEmpty, utxoSender, utxoReceiver]
+import rateUpper from '../fixtures/rate-current-upper.json'
 
-Cypress.Commands.add('interceptAll', (index = 0) => {
-  if (index !== -1) {
-    cy.intercept('**/address/**/txs', txsList[index]).as('txs')
-    cy.intercept('**/address/**/utxo', utxoList[index]).as('utxo')
-    cy.intercept('**/getCurrentRate/**', rate).as('rate')
-    cy.intercept('**/getOneDayAgoRate/**', rate1Day).as('rateD1')
-    cy.intercept('**/getOneDayAgoHist/**', rateHist).as('rateAll')
+import feeEstimates from '../fixtures/fee-estimates.json'
+
+import txid from '../fixtures/txid.json'
+
+function interceptAndSave(path, file, as) {
+  cy.intercept(path, (req) => {
+    // override the previously-declared stub to just continue the request instead of stubbing
+    return req.continue((res) => {
+      if (res.body.status === 'failed') {
+        // sends a fixture body instead of the existing 'res.body'
+        // res.send({ fixture: 'success.json' })
+        console.log('error', path, res.body)
+      }
+
+      // cy.exec().then(() => cy.writeFile('cypress/fixtures/' + file, res.body))
+      if (res.body) {
+        cy.now('writeFile', 'cypress/fixtures/' + file, res.body)
+        res.send(res.body)
+      } else {
+        console.log('empty response', path, file, as)
+        res.send()
+      }
+    })
+  }).as(as)
+}
+
+Cypress.Commands.add('interceptAll', (name) => {
+  if (Cypress.env('host') === 'none') {
+    console.log('intercept and use from local', name)
+    cy.intercept('**/address/*/txs', `cypress/fixtures/${name}/txs.json`).as(
+      'txs',
+    )
+    cy.intercept('**/address/*/utxo', `cypress/fixtures/${name}/utxo.json`).as(
+      'utxo',
+    )
+    cy.intercept(
+      '**/getCurrentRate/BTC/USD',
+      `cypress/fixtures/${name}/rateUpper.json`,
+    ).as('rateUpper')
+    cy.intercept(
+      '**/getCurrentRate/btc/usd',
+      `cypress/fixtures/${name}/rate.json`,
+    ).as('rate')
+    cy.intercept(
+      '**/getOneDayAgoRate/**',
+      `cypress/fixtures/${name}/rateD1.json`,
+    ).as('rateD1')
+    cy.intercept(
+      '**/getOneDayAgoHist/**',
+      `cypress/fixtures/${name}/rateAll.json`,
+    ).as('rateAll')
+    cy.intercept(
+      '**/fee-estimates',
+      `cypress/fixtures/${name}/feeEstimates.json`,
+    ).as('feeEstimates') // JSON.stringify(feeEstimates)
+    cy.intercept('**/tx/*', `cypress/fixtures/${name}/txid.json`).as('txid')
+    cy.intercept('**/tx/*/hex', `cypress/fixtures/${name}/txidHex.txt`).as(
+      'txidHex',
+    )
+    cy.intercept('POST', '**/tx', `cypress/fixtures/${name}/tx.txt`).as('tx')
+    cy.intercept('POST', '**/*', (req) => {
+      console.log('intercept-req', req)
+    })
   } else {
-    cy.intercept('**/address/**/txs').as('txs')
-    cy.intercept('**/address/**/utxo').as('utxo')
-    cy.intercept('**/getCurrentRate/**').as('rate')
-    cy.intercept('**/getOneDayAgoRate/**').as('rateD1')
-    cy.intercept('**/getOneDayAgoHist/**').as('rateAll')
+    console.log('intercept and save from host', Cypress.env('host'))
+    interceptAndSave('**/address/**/txs', `${name}/txs.json`, 'txs')
+    interceptAndSave('**/address/**/utxo', `${name}/utxo.json`, 'utxo')
+    interceptAndSave('**/getCurrentRate/btc/usd', `${name}/rate.json`, 'rate')
+    interceptAndSave(
+      '**/getCurrentRate/BTC/USD',
+      `${name}/rateUpper.json`,
+      'rateUpper',
+    )
+    interceptAndSave('**/getOneDayAgoRate/**', `${name}/rateD1.json`, 'rateD1')
+    interceptAndSave(
+      '**/getOneDayAgoHist/**',
+      `${name}/rateAll.json`,
+      'rateAll',
+    )
+    interceptAndSave(
+      '**/fee-estimates',
+      `${name}/feeEstimates.json`,
+      'feeEstimates',
+    )
+    interceptAndSave('**/tx/*', `${name}/txid.json`, 'txid')
+    interceptAndSave('**/tx/*/hex', `${name}/txidHex.txt`, 'txidHex')
+    interceptAndSave('**/tx', `${name}/tx.txt`, 'tx')
   }
 })
 
 Cypress.Commands.add('waitAll', () => {
-  cy.wait(['@txs', '@utxo'])
+  cy.wait('@txs')
+  cy.wait('@utxo')
   cy.wait(['@rate', '@rateD1', '@rateAll'])
 })
 
@@ -61,11 +126,11 @@ Cypress.Commands.add('writeWords', (path, words) => {
   })
 })
 
-Cypress.Commands.add('login', (name, password, intercepts = 0) => {
+Cypress.Commands.add('login', (name, password) => {
   cy.contains(name).should('be.visible')
   cy.contains(name).click()
 
-  cy.interceptAll(intercepts)
+  cy.interceptAll(name)
 
   cy.get('input[placeholder="Password"]').type(password)
   cy.contains('button', 'Log In').click()
@@ -76,8 +141,8 @@ Cypress.Commands.add('logout', () => {
   cy.get('button[class="btn logout alternate"]').click()
 })
 
-Cypress.Commands.add('restoreAccount', (name, password, words, index = 0) => {
-  cy.interceptAll(index)
+Cypress.Commands.add('restoreAccount', (name, password, words) => {
+  cy.interceptAll(name)
 
   cy.contains('button', 'Restore').click()
 

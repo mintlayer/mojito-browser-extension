@@ -11,7 +11,7 @@ describe('Create transaction page', () => {
       wallets[1].access.name,
       wallets[1].access.password,
       wallets[1].account.words,
-      -1,
+      1,
     )
     cy.visit(Cypress.env('baseUrl'))
     cy.contains('button', 'Create Wallet').click()
@@ -19,7 +19,7 @@ describe('Create transaction page', () => {
       wallets[2].access.name,
       wallets[2].access.password,
       wallets[2].account.words,
-      -1,
+      2,
     )
   })
 
@@ -28,7 +28,7 @@ describe('Create transaction page', () => {
   beforeEach(() => {
     cy.visit(Cypress.env('baseUrl'))
     const { name, password } = wallets[1].access
-    cy.login(name, password, -1)
+    cy.login(name, password)
     _password = password
     cy.contains('li', 'BTC').click()
     cy.contains('Send').siblings('button').click()
@@ -38,8 +38,11 @@ describe('Create transaction page', () => {
     let _txid
     const _from = wallets[1].account.address
     const _amount = '0,000001'
+    cy.wait('@feeEstimates').then(() => {})
+    cy.wait(1000)
     cy.contains('Send to').siblings('input').type(wallets[2].account.address)
     cy.get('input[id="amount"]').type(_amount)
+
     cy.contains('button', 'high').click()
     cy.contains('button', 'Send').click()
 
@@ -55,6 +58,16 @@ describe('Create transaction page', () => {
 
     cy.get('input[placeholder="Password"]').type(_password)
     cy.contains('button', 'Send Transaction').click()
+
+    cy.wait('@txid').then((x) => {
+      console.log('txid', x)
+    })
+    cy.wait('@txidHex').then((x) => {
+      console.log('txidHex', x)
+    })
+    cy.wait('@tx').then((x) => {
+      console.log('tx', x)
+    })
 
     cy.wait(1000)
 
