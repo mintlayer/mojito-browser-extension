@@ -12,6 +12,20 @@ describe(
       deleteDatabase()
       cy.clearLocalStorage()
 
+      Cypress.on('window:before:load', (win) => {
+        let copyText
+
+        if (!win.navigator.clipboard) {
+          win.navigator.clipboard = {
+            __proto__: {},
+          }
+        }
+
+        win.navigator.clipboard.__proto__.writeText = (text) =>
+          (copyText = text)
+        win.navigator.clipboard.__proto__.readText = () => copyText
+      })
+
       cy.visit(Cypress.env('baseUrl'))
       cy.restoreWallet(Cypress.env('login'))
       cy.wrap(Cypress.env('login')).as('login')
