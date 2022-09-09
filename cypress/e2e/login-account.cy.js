@@ -1,45 +1,52 @@
 import { deleteDatabase } from './utils'
-import { wallets } from '../fixtures/accounts.json'
 
-describe('login Account wallet', () => {
-  before(() => {
-    deleteDatabase()
-    cy.clearLocalStorage()
+describe(
+  'login Account wallet',
+  {
+    env: {
+      login: Cypress.env('login') || 'NewOne',
+    },
+  },
+  () => {
+    before(() => {
+      deleteDatabase()
+      cy.clearLocalStorage()
 
-    cy.visit(Cypress.env('baseUrl'))
-    const { name, password } = wallets[0].access
-    cy.restoreAccount(name, password, wallets[0].account.words)
-  })
+      cy.visit(Cypress.env('baseUrl'))
+      cy.restoreWallet(Cypress.env('login'))
+    })
 
-  beforeEach(() => {
-    cy.visit(Cypress.env('baseUrl'))
-  })
+    beforeEach(() => {
+      cy.visit(Cypress.env('baseUrl'))
 
-  it('login Account and logout Account', () => {
-    const {
-      access: { name, password },
-      account: { address },
-    } = wallets[0]
-    cy.contains(name).should('be.visible')
-    cy.contains(name).click()
-    cy.interceptAll()
+      cy.getAccess(Cypress.env('login')).as('access')
+      cy.getAddress(Cypress.env('login')).as('login')
+    })
 
-    cy.get('input[placeholder="Password"]').type(password)
-    cy.contains('button', 'Log In').click()
+    it('login Account and logout Account', function () {
+      cy.contains(this.access.name).should('be.visible')
+      cy.contains(this.access.name).click()
+      cy.interceptAll(this.access.name)
 
-    cy.get('button[class="btn logout alternate"]')
-      .should('be.visible')
-      .then(() => {
-        expect(localStorage.getItem('unlockedAccount')).be.eq(
-          `{"address":"${address}","id":1,"name":"${name}"}`,
-        )
-      })
+      cy.get('input[placeholder="Password"]').type(this.access.password)
+      cy.contains('button', 'Log In').click()
 
-    cy.get('button[class="btn logout alternate"]').click()
-    cy.contains(name)
-      .should('be.visible')
-      .then(() => {
-        expect(localStorage.getItem('unlockedAccount')).be.eq(null)
-      })
-  })
-})
+      cy.get('button[class="btn logout alternate"]')
+        .should('be.visible')
+        .then(() => {
+          const savedAccount = JSON.parse(
+            localStorage.getItem('unlockedAccount'),
+          )
+          expect(savedAccount.name).be.eq(this.access.name)
+          expect(savedAccount.address).be.not.eq(undefined)
+        })
+
+      cy.get('button[class="btn logout alternate"]').click()
+      cy.contains(this.access.name)
+        .should('be.visible')
+        .then(() => {
+          expect(localStorage.getItem('unlockedAccount')).be.eq(null)
+        })
+    })
+  },
+)

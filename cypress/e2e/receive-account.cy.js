@@ -1,49 +1,62 @@
 import { deleteDatabase } from './utils'
-import { wallets } from '../fixtures/accounts.json'
 
-describe('View Account page', () => {
-  before(() => {
-    deleteDatabase()
-    cy.clearLocalStorage()
+describe(
+  'View Account page',
+  {
+    env: {
+      login: Cypress.env('login') || 'Receiver',
+    },
+  },
+  () => {
+    before(function () {
+      deleteDatabase()
+      cy.clearLocalStorage()
 
-    cy.visit(Cypress.env('baseUrl'))
-    cy.restoreAccount(
-      wallets[0].access.name,
-      wallets[0].access.password,
-      wallets[0].account.words,
-    )
-  })
-
-  beforeEach(() => {
-    cy.visit(Cypress.env('baseUrl'))
-    cy.visit(Cypress.env('baseUrl'))
-    const { name, password } = wallets[0].access
-    cy.login(name, password, 0)
-
-    cy.contains('li', 'BTC').click()
-    cy.contains('Receive').siblings('button').click()
-  })
-
-  it('checks', () => {
-    cy.contains('Address').should('be.visible')
-    cy.contains(wallets[0].account.address)
-
-    cy.contains('button', 'Copy Address').should('be.visible')
-    cy.get('svg').should('be.visible')
-
-    cy.get('button[class="btn popupCloseButton alternate"]').should(
-      'be.visible',
-    )
-  })
-
-  it('click on Copy Address', () => {
-    cy.contains('button', 'Copy Address').focus().click()
-    cy.window().then((win) => {
-      win.navigator.clipboard.readText().then((text) => {
-        expect(text).to.eq(wallets[0].account.address)
-      })
+      cy.visit(Cypress.env('baseUrl'))
+      cy.restoreWallet(Cypress.env('login'))
+      cy.wrap(Cypress.env('login')).as('login')
     })
-    cy.wait(1000)
-    cy.get('button[class="btn popupCloseButton alternate"]').click()
-  })
-})
+
+    beforeEach(function () {
+      cy.visit(Cypress.env('baseUrl'))
+      cy.loginWallet(this.login)
+
+      cy.contains('li', 'BTC').click()
+      cy.contains('Receive').siblings('button').click()
+      cy.wait(2000)
+      cy.contains('Address')
+        .parent()
+        .get('strong')
+        .invoke('text')
+        .then((address) => {
+          cy.setAddress(this.login, address)
+          return cy.wrap(address).as('address')
+        })
+    })
+
+    it('checks and click', function () {
+      cy.contains('Address').should('be.visible')
+      cy.contains(this.address)
+
+      cy.contains('button', 'Copy Address').should('be.visible')
+      cy.get('svg').should('be.visible')
+
+      cy.get('button[class="btn popupCloseButton alternate"]').should(
+        'be.visible',
+      )
+
+      cy.contains('button', 'Copy Address')
+        .focus()
+        .click()
+        .wait(4000)
+        .then(() => {
+          cy.window().then((win) => {
+            win.navigator.clipboard.readText().then((text) => {
+              expect(text).to.eq(this.address)
+            })
+          })
+          cy.get('button[class="btn popupCloseButton alternate"]').click()
+        })
+    })
+  },
+)

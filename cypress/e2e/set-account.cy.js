@@ -1,26 +1,34 @@
 import { deleteDatabase } from './utils'
-import { wallets } from '../fixtures/accounts.json'
 
-describe('set Account page', () => {
-  before(() => {
-    deleteDatabase()
-  })
+describe(
+  'set Account page',
+  {
+    env: {
+      wallet: Cypress.env('creation') || 'NewOne',
+    },
+  },
+  () => {
+    before(() => {
+      deleteDatabase()
+      cy.getAccess(Cypress.env('wallet')).then((access) => {
+        return cy.wrap(access).as('access')
+      })
+    })
 
-  beforeEach(() => {
-    cy.visit(Cypress.env('baseUrl'))
-    cy.contains('button', 'Create').click()
-  })
+    beforeEach(() => {
+      cy.visit(Cypress.env('baseUrl'))
+      cy.contains('button', 'Create').click()
+    })
 
-  it('displays attribute page', () => {
-    cy.contains('li.step.active', 'Account Name').should('be.visible')
-    cy.contains('Create a name to your account').should('be.visible')
-    cy.contains('Mojito').should('be.visible')
-  })
+    it('check and click on button Account Name', function () {
+      cy.contains('li.step.active', 'Account Name').should('be.visible')
+      cy.contains('Create a name to your account').should('be.visible')
+      cy.contains('Mojito').should('be.visible')
 
-  it('click on button Account Name', () => {
-    cy.setAccount(wallets[0].access.name)
-    cy.contains('button', 'Continue').should('be.visible')
+      cy.setAccount(this.access.name)
+      cy.contains('button', 'Continue').should('be.visible')
 
-    cy.contains('li.step.false', 'Account Name').should('be.visible')
-  })
-})
+      cy.contains('li.step.false', 'Account Name').should('be.visible')
+    })
+  },
+)

@@ -1,31 +1,71 @@
-import rate from '../fixtures/rate-current.json'
-import rate1Day from '../fixtures/rate-1day.json'
-import rateHist from '../fixtures/rate-history.json'
+Cypress.Commands.add('getAccess', (folderName) => {
+  return cy.fixture(`${folderName}/access.json`)
+})
 
-import rateUpper from '../fixtures/rate-current-upper.json'
+Cypress.Commands.add('getAccount', (folderName) => {
+  return cy.fixture(`${folderName}/account.json`)
+})
+Cypress.Commands.add('getAddress', (folderName) => {
+  return cy.fixture(`${folderName}/address.json`)
+})
 
-import feeEstimates from '../fixtures/fee-estimates.json'
+Cypress.Commands.add('setAddress', (folderName, address) => {
+  if (Cypress.env('overwrite') === true) {
+    cy.writeFile(
+      `cypress/fixtures/${folderName}/address.json`,
+      JSON.stringify({
+        address,
+      }),
+    )
+  }
+})
 
-import txid from '../fixtures/txid.json'
+Cypress.Commands.add('setAccess', (folderName) => {
+  if (Cypress.env('overwrite') === true) {
+    cy.writeFile(
+      `cypress/fixtures/${folderName}/access.json`,
+      JSON.stringify({
+        name: folderName,
+        password: `Mintlayer,1${folderName}`,
+      }),
+    )
+  }
+})
+
+Cypress.Commands.add('saveAccount', (folderName, account) => {
+  Cypress.env('overwrite') === true &&
+    cy.writeFile(
+      `cypress/fixtures/${folderName}/account.json`,
+      JSON.stringify(account),
+    )
+})
 
 function interceptAndSave(path, file, as) {
-  cy.intercept(path, (req) => {
-    // override the previously-declared stub to just continue the request instead of stubbing
-    return req.continue((res) => {
-      if (res.body.status === 'failed') {
-        // sends a fixture body instead of the existing 'res.body'
-        // res.send({ fixture: 'success.json' })
-        console.log('error', path, res.body)
-      }
+  if (Cypress.env('overwrite') === true) {
+    cy.intercept(path, (req) => {
+      return req.continue((res) => {
+        if (res.body.status === 'failed') {
+          console.log('error', path, res.body)
+        }
 
-      // cy.exec().then(() => cy.writeFile('cypress/fixtures/' + file, res.body))
-      if (res.body) {
-        cy.now('writeFile', 'cypress/fixtures/' + file, res.body)
-        res.send(res.body)
-      } else {
-        console.log('empty response', path, file, as)
-        res.send()
-      }
+        if (res.body) {
+          cy.now('writeFile', 'cypress/fixtures/' + file, res.body)
+          res.send(res.body)
+        } else {
+          console.log('empty response', path, file, as)
+          res.send()
+        }
+      })
+    }).as(as)
+  } else {
+    cy.intercept(path).as(as)
+  }
+}
+
+function interceptAndUse(path, file, as) {
+  cy.intercept(path, (req) => {
+    req.reply({
+      fixture: file,
     })
   }).as(as)
 }
@@ -33,42 +73,28 @@ function interceptAndSave(path, file, as) {
 Cypress.Commands.add('interceptAll', (name) => {
   if (Cypress.env('host') === 'none') {
     console.log('intercept and use from local', name)
-    cy.intercept('**/address/*/txs', `cypress/fixtures/${name}/txs.json`).as(
-      'txs',
-    )
-    cy.intercept('**/address/*/utxo', `cypress/fixtures/${name}/utxo.json`).as(
-      'utxo',
-    )
-    cy.intercept(
+    interceptAndUse('**/address/*/txs', `${name}/txs.json`, 'txs')
+    interceptAndUse('**/address/*/utxo', `${name}/utxo.json`, 'utxo')
+    interceptAndUse(
       '**/getCurrentRate/BTC/USD',
-      `cypress/fixtures/${name}/rateUpper.json`,
-    ).as('rateUpper')
-    cy.intercept(
-      '**/getCurrentRate/btc/usd',
-      `cypress/fixtures/${name}/rate.json`,
-    ).as('rate')
-    cy.intercept(
-      '**/getOneDayAgoRate/**',
-      `cypress/fixtures/${name}/rateD1.json`,
-    ).as('rateD1')
-    cy.intercept(
-      '**/getOneDayAgoHist/**',
-      `cypress/fixtures/${name}/rateAll.json`,
-    ).as('rateAll')
-    cy.intercept(
-      '**/fee-estimates',
-      `cypress/fixtures/${name}/feeEstimates.json`,
-    ).as('feeEstimates') // JSON.stringify(feeEstimates)
-    cy.intercept('**/tx/*', `cypress/fixtures/${name}/txid.json`).as('txid')
-    cy.intercept('**/tx/*/hex', `cypress/fixtures/${name}/txidHex.txt`).as(
-      'txidHex',
+      `${name}/rateUpper.json`,
+      'rateUpper',
     )
-    cy.intercept('POST', '**/tx', `cypress/fixtures/${name}/tx.txt`).as('tx')
+    interceptAndUse('**/getCurrentRate/btc/usd', `${name}/rate.json`, 'rate')
+    interceptAndUse('**/getOneDayAgoRate/**', `${name}/rateD1.json`, 'rateD1')
+    interceptAndUse('**/getOneDayAgoHist/**', `${name}/rateAll.json`, 'rateAll')
+    interceptAndUse(
+      '**/fee-estimates',
+      `${name}/feeEstimates.json`,
+      'feeEstimates',
+    ) // JSON.stringify(feeEstimates)
+    interceptAndUse('**/tx/*', `${name}/txid.json`, 'txid')
+    interceptAndUse('**/tx/*/hex', `${name}/txidHex.txt`, 'txidHex')
+    interceptAndUse('POST', '**/tx', `${name}/tx.txt`, 'tx')
     cy.intercept('POST', '**/*', (req) => {
       console.log('intercept-req', req)
     })
   } else {
-    console.log('intercept and save from host', Cypress.env('host'))
     interceptAndSave('**/address/**/txs', `${name}/txs.json`, 'txs')
     interceptAndSave('**/address/**/utxo', `${name}/utxo.json`, 'utxo')
     interceptAndSave('**/getCurrentRate/btc/usd', `${name}/rate.json`, 'rate')
@@ -134,7 +160,8 @@ Cypress.Commands.add('login', (name, password) => {
 
   cy.get('input[placeholder="Password"]').type(password)
   cy.contains('button', 'Log In').click()
-  cy.waitAll()
+  cy.wait(4000)
+  // cy.waitAll()
 })
 
 Cypress.Commands.add('logout', () => {
@@ -156,4 +183,21 @@ Cypress.Commands.add('restoreAccount', (name, password, words) => {
   cy.waitAll()
   cy.logout()
   cy.contains(name).should('be.visible')
+})
+
+Cypress.Commands.add('restoreWallet', (sender) => {
+  cy.getAccess(sender)
+    .then((access) =>
+      cy.getAccount(sender).then(({ account }) => ({ access, account })),
+    )
+    .then(({ access: { name, password }, account }) =>
+      cy.restoreAccount(name, password, account),
+    )
+})
+
+Cypress.Commands.add('loginWallet', (sender) => {
+  cy.getAccess(sender).then(({ name, password }) => {
+    cy.wrap(password).as('password')
+    cy.login(name, password)
+  })
 })
