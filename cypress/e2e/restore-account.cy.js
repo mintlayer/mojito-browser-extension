@@ -34,7 +34,6 @@ describe(
       cy.contains('button', 'Confirm').click()
 
       cy.wait('@utxo')
-      cy.wait('@txs')
     })
   },
 )

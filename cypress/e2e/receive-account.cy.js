@@ -18,7 +18,11 @@ describe(
     })
 
     beforeEach(function () {
-      cy.visit(Cypress.env('baseUrl'))
+      cy.visit(Cypress.env('baseUrl'), {
+        onBeforeLoad(win) {
+          cy.spy(win.navigator.clipboard, 'writeText').as('copy')
+        },
+      })
       cy.loginWallet(this.login)
 
       cy.contains('li', 'BTC').click()
@@ -50,11 +54,7 @@ describe(
         .click()
         .wait(4000)
         .then(() => {
-          cy.window().then((win) => {
-            win.navigator.clipboard.readText().then((text) => {
-              expect(text).to.eq(this.address)
-            })
-          })
+          cy.get('@copy').should('be.calledWithExactly', `${this.address}`)
           cy.get('button[class="btn popupCloseButton alternate"]').click()
         })
     })

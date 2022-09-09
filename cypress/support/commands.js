@@ -160,8 +160,7 @@ Cypress.Commands.add('login', (name, password) => {
 
   cy.get('input[placeholder="Password"]').type(password)
   cy.contains('button', 'Log In').click()
-  cy.wait(4000)
-  // cy.waitAll()
+  cy.wait(2000)
 })
 
 Cypress.Commands.add('logout', () => {
@@ -180,7 +179,7 @@ Cypress.Commands.add('restoreAccount', (name, password, words) => {
   cy.contains('button', 'I have them').click()
   cy.writeWords('input', words)
   cy.contains('button', 'Confirm').click()
-  cy.waitAll()
+  cy.wait(2000)
   cy.logout()
   cy.contains(name).should('be.visible')
 })
