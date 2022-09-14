@@ -1,3 +1,94 @@
+import IDBExportImport from 'indexeddb-export-import'
+
+Cypress.Commands.add('getNaviteIdDb', (DATABASENAME) => {
+  return new Cypress.Promise((resolve, reject) => {
+    const request = window.indexedDB.open(DATABASENAME, 1)
+    request.onsuccess = (event) => {
+      if (event.err) {
+        console.error(err)
+        reject(err)
+      } else {
+        resolve(request)
+      }
+    }
+  })
+})
+
+Cypress.Commands.add('exportDb', (nativeIdDb) => {
+  return new Cypress.Promise((resolve, reject) => {
+    IDBExportImport.exportToJsonString(nativeIdDb, function (err, jsonString) {
+      console.log('jsonString', jsonString)
+      if (err) {
+        console.error(err)
+        reject(err)
+      } else {
+        resolve(jsonString)
+      }
+    })
+  })
+})
+
+Cypress.Commands.add('clearDb', (nativeIdDb) => {
+  // return a promise that resolves after 1 second
+  return new Cypress.Promise((resolve, reject) => {
+    IDBExportImport.clearDatabase(nativeIdDb, function (err) {
+      if (err) {
+        console.error(err)
+        reject(err)
+      } else {
+        resolve()
+      }
+    })
+  })
+})
+
+Cypress.Commands.add('restoreDbFromJson', (nativeIdDb, jsonString) => {
+  return new Cypress.Promise((resolve, reject) => {
+    IDBExportImport.importFromJsonString(
+      nativeIdDb,
+      jsonString,
+      function (err) {
+        if (err) {
+          console.error(err)
+          reject(err)
+        } else {
+          console.log('Imported data successfully')
+          resolve(jsonString)
+        }
+      },
+    )
+  })
+})
+
+Cypress.Commands.add('setDb', (jsonString) => {
+  if (Cypress.env('overwrite') === true) {
+    cy.writeFile(
+      'cypress/fixtures/DB.json',
+      JSON.stringify({ mojito: jsonString }),
+    )
+  }
+})
+
+Cypress.Commands.add('getDb', () => {
+  return cy.fixture('DB.json').then((r) => r.mojito)
+})
+
+Cypress.Commands.add('restoreDb', (DATABASENAME) => {
+  cy.wait(2000).then(() => {
+    return cy.getNaviteIdDb(DATABASENAME).then((nativeIdDb) => {
+      return cy.getDb().then((jsonString) => {
+        cy.wrap(null).then(() => {
+          return cy.clearDb(nativeIdDb.result)
+        })
+        cy.wrap(null).then(() => {
+          console.log('nativeIdDb', nativeIdDb.result, jsonString)
+          cy.restoreDbFromJson(nativeIdDb.result, jsonString)
+        })
+      })
+    })
+  })
+})
+
 Cypress.Commands.add('getAccess', (folderName) => {
   return cy.fixture(`${folderName}/access.json`)
 })

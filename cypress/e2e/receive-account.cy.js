@@ -1,4 +1,5 @@
 import { deleteDatabase } from './utils'
+import { DATABASENAME } from '/src/services/Database/IndexedDB/IndexedDB.js'
 
 describe(
   'View Account page',
@@ -27,7 +28,7 @@ describe(
       })
 
       cy.visit(Cypress.env('baseUrl'))
-      cy.restoreWallet(Cypress.env('login'))
+      cy.restoreDb(DATABASENAME)
       cy.wrap(Cypress.env('login')).as('login')
     })
 
@@ -37,6 +38,7 @@ describe(
           cy.spy(win.navigator.clipboard, 'writeText').as('copy')
         },
       })
+      cy.wait(1000)
       cy.loginWallet(this.login)
 
       cy.contains('li', 'BTC').click()

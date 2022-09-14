@@ -1,4 +1,5 @@
 import { deleteDatabase } from './utils'
+import { DATABASENAME } from '/src/services/Database/IndexedDB/IndexedDB.js'
 
 describe(
   'View transactions page',
@@ -15,12 +16,7 @@ describe(
       cy.clearLocalStorage()
 
       cy.visit(Cypress.env('baseUrl'))
-      cy.restoreWallet(Cypress.env('newone'))
-      cy.contains('button', 'Create Wallet').click()
-      cy.restoreWallet(Cypress.env('sender'))
-      cy.contains('button', 'Create Wallet').click()
-      cy.restoreWallet(Cypress.env('receiver'))
-      cy.wait(2000)
+      cy.restoreDb(DATABASENAME)
     })
 
     describe('Account NewOne with no transactions', () => {

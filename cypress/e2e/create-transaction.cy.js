@@ -1,4 +1,5 @@
 import { deleteDatabase } from './utils'
+import { DATABASENAME } from '/src/services/Database/IndexedDB/IndexedDB.js'
 
 describe(
   'Create transaction page',
@@ -15,14 +16,14 @@ describe(
       cy.clearLocalStorage()
       cy.wrap(Cypress.env('sender')).as('sender')
       cy.wrap(Cypress.env('receiver')).as('receiver')
+
       cy.visit(Cypress.env('baseUrl'))
-      cy.restoreWallet(Cypress.env('sender'))
-      cy.contains('button', 'Create Wallet').click()
-      cy.restoreWallet(Cypress.env('receiver'))
+      cy.restoreDb(DATABASENAME)
     })
 
     beforeEach(function () {
       cy.visit(Cypress.env('baseUrl'))
+      cy.wait(1000)
       cy.loginWallet(this.sender)
       cy.getAddress(this.sender).as('from')
       cy.getAddress(this.receiver).as('to')
