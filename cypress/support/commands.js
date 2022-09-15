@@ -2,6 +2,10 @@ import IDBExportImport from 'indexeddb-export-import'
 
 import { DATABASENAME } from '/src/services/Database/IndexedDB/IndexedDB.js'
 
+Cypress.Commands.add('deleteDatabase', () => {
+  indexedDB.deleteDatabase(DATABASENAME)
+})
+
 Cypress.Commands.add('getNaviteIdDb', () => {
   return new Cypress.Promise((resolve, reject) => {
     const request = window.indexedDB.open(DATABASENAME, 1)
@@ -73,13 +77,13 @@ Cypress.Commands.add('getDb', (from = 'DB.json') => {
 
 Cypress.Commands.add('restoreDb', (from = undefined) => {
   cy.wait(2000).then(() => {
-    return cy.getNaviteIdDb(DATABASENAME).then((nativeIdDb) => {
+    return cy.getNaviteIdDb(DATABASENAME).then((request) => {
       return cy.getDb(from).then((jsonString) => {
         cy.wrap(null).then(() => {
-          return cy.clearDb(nativeIdDb.result)
+          return cy.clearDb(request.result)
         })
         cy.wrap(null).then(() => {
-          cy.restoreDbFromJson(nativeIdDb.result, jsonString)
+          cy.restoreDbFromJson(request.result, jsonString)
         })
       })
     })
@@ -114,7 +118,7 @@ Cypress.Commands.add('setAccess', (folderName) => {
       `cypress/fixtures/${folderName}/access.json`,
       JSON.stringify({
         name: folderName,
-        password: `Mintlayer,1${folderName}`,
+        password: `Mintlayer$1${folderName}`,
       }),
     )
   }

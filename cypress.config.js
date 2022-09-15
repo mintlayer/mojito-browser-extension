@@ -6,6 +6,12 @@ module.exports = defineConfig({
     baseUrl: 'http://localhost:8000',
     host: 'testnet',
     BD: 'DB.json',
+    overwrite: false,
+    create: 'NewOne',
+    wallets: 'NewOne,Sender,Receiver',
+    newone: 'NewOne',
+    login: 'Sender',
+    receiver: 'Receiver',
   },
   e2e: {
     setupNodeEvents(on, config) {

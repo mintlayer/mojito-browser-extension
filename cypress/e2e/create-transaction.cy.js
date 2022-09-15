@@ -1,30 +1,26 @@
-import { deleteDatabase } from './utils'
-
 describe(
   'Create transaction page',
   {
     requestTimeout: 10000,
-    env: {
-      sender: Cypress.env('login') || 'Sender',
-      receiver: Cypress.env('receiver') || 'Receiver',
-    },
   },
   () => {
     before(function () {
-      deleteDatabase()
+      cy.deleteDatabase()
       cy.clearLocalStorage()
-      cy.wrap(Cypress.env('sender')).as('sender')
+      cy.wrap(Cypress.env('login')).as('login')
       cy.wrap(Cypress.env('receiver')).as('receiver')
+      const baseUrl = Cypress.env('baseUrl')
+      cy.wrap(baseUrl).as('baseUrl')
 
-      cy.visit(Cypress.env('baseUrl'))
+      cy.visit(baseUrl)
       cy.restoreDb()
     })
 
     beforeEach(function () {
-      cy.visit(Cypress.env('baseUrl'))
+      cy.visit(this.baseUrl)
       cy.wait(1000)
-      cy.loginWallet(this.sender)
-      cy.getAddress(this.sender).as('from')
+      cy.loginWallet(this.login)
+      cy.getAddress(this.login).as('from')
       cy.getAddress(this.receiver).as('to')
 
       cy.contains('li', 'BTC').click()

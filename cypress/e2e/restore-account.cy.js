@@ -1,39 +1,31 @@
-import { deleteDatabase } from './utils'
+describe('Restore account page', () => {
+  before(function () {
+    cy.deleteDatabase()
 
-describe(
-  'Restore account page',
-  {
-    env: {
-      wallet: Cypress.env('login') || 'NewOne',
-    },
-  },
-  () => {
-    before(function () {
-      deleteDatabase()
-
-      cy.getAccount(Cypress.env('wallet')).as('wallet')
-      cy.getAccess(Cypress.env('wallet')).then((access) => {
-        cy.interceptAll(access.name)
-        return cy.wrap(access).as('access')
-      })
+    cy.wrap(Cypress.env('baseUrl')).as('baseUrl')
+    const login = Cypress.env('login')
+    cy.getAccount(login).as('login')
+    cy.getAccess(login).then((access) => {
+      cy.interceptAll(access.name)
+      return cy.wrap(access).as('access')
     })
+  })
 
-    beforeEach(() => {
-      cy.visit(Cypress.env('baseUrl'))
-    })
+  beforeEach(function () {
+    cy.visit(this.baseUrl)
+  })
 
-    it('click on Restore for NewOne', function () {
-      cy.contains('button', 'Restore').click()
+  it('click on Restore for NewOne', function () {
+    cy.contains('button', 'Restore').click()
 
-      cy.setAccount(this.access.name)
-      cy.get('input[placeholder="Password"]').type(this.access.password)
-      cy.contains('button', 'Create').click()
+    cy.setAccount(this.access.name)
+    cy.get('input[placeholder="Password"]').type(this.access.password)
+    cy.contains('button', 'Create').click()
 
-      cy.contains('button', 'I have them').click()
-      cy.writeWords('input', this.wallet.account)
-      cy.contains('button', 'Confirm').click()
+    cy.contains('button', 'I have them').click()
+    cy.writeWords('input', this.login.account)
+    cy.contains('button', 'Confirm').click()
 
-      cy.wait('@utxo')
-    })
-  },
-)
+    cy.wait('@utxo')
+  })
+})

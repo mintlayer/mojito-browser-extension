@@ -1,12 +1,11 @@
-import { deleteDatabase } from './utils'
-
 describe('mojito wallet app', () => {
   before(() => {
-    deleteDatabase()
+    cy.deleteDatabase()
+    cy.wrap(Cypress.env('baseUrl')).as('baseUrl')
   })
 
-  beforeEach(() => {
-    cy.visit(Cypress.env('baseUrl'))
+  beforeEach(function () {
+    cy.visit(this.baseUrl)
   })
 
   it('displays attribute page', () => {
