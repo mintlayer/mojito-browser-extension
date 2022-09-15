@@ -5,6 +5,7 @@ module.exports = defineConfig({
   env: {
     baseUrl: 'http://localhost:8000',
     host: 'testnet',
+    BD: 'DB.json',
   },
   e2e: {
     setupNodeEvents(on, config) {

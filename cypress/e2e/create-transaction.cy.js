@@ -1,5 +1,4 @@
 import { deleteDatabase } from './utils'
-import { DATABASENAME } from '/src/services/Database/IndexedDB/IndexedDB.js'
 
 describe(
   'Create transaction page',
@@ -18,7 +17,7 @@ describe(
       cy.wrap(Cypress.env('receiver')).as('receiver')
 
       cy.visit(Cypress.env('baseUrl'))
-      cy.restoreDb(DATABASENAME)
+      cy.restoreDb()
     })
 
     beforeEach(function () {

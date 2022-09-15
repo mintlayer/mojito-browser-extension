@@ -1,5 +1,4 @@
 import { deleteDatabase } from './utils'
-import { DATABASENAME } from '/src/services/Database/IndexedDB/IndexedDB.js'
 
 describe(
   'login Account wallet',
@@ -14,7 +13,7 @@ describe(
       cy.clearLocalStorage()
 
       cy.visit(Cypress.env('baseUrl'))
-      cy.restoreDb(DATABASENAME)
+      cy.restoreDb()
     })
 
     beforeEach(() => {

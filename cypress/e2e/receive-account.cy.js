@@ -1,5 +1,4 @@
 import { deleteDatabase } from './utils'
-import { DATABASENAME } from '/src/services/Database/IndexedDB/IndexedDB.js'
 
 describe(
   'View Account page',
@@ -28,7 +27,7 @@ describe(
       })
 
       cy.visit(Cypress.env('baseUrl'))
-      cy.restoreDb(DATABASENAME)
+      cy.restoreDb()
       cy.wrap(Cypress.env('login')).as('login')
     })
 

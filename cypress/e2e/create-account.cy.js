@@ -9,7 +9,6 @@ describe(
   },
   () => {
     before(function () {
-      console.log('creation', Cypress.env('creation'), Cypress.env())
       cy.setAccess(Cypress.env('creation'))
       deleteDatabase()
       cy.wrap(Cypress.env('baseUrl')).as('baseUrl')

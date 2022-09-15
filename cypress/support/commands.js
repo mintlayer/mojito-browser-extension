@@ -1,6 +1,8 @@
 import IDBExportImport from 'indexeddb-export-import'
 
-Cypress.Commands.add('getNaviteIdDb', (DATABASENAME) => {
+import { DATABASENAME } from '/src/services/Database/IndexedDB/IndexedDB.js'
+
+Cypress.Commands.add('getNaviteIdDb', () => {
   return new Cypress.Promise((resolve, reject) => {
     const request = window.indexedDB.open(DATABASENAME, 1)
     request.onsuccess = (event) => {
@@ -17,7 +19,6 @@ Cypress.Commands.add('getNaviteIdDb', (DATABASENAME) => {
 Cypress.Commands.add('exportDb', (nativeIdDb) => {
   return new Cypress.Promise((resolve, reject) => {
     IDBExportImport.exportToJsonString(nativeIdDb, function (err, jsonString) {
-      console.log('jsonString', jsonString)
       if (err) {
         console.error(err)
         reject(err)
@@ -60,28 +61,24 @@ Cypress.Commands.add('restoreDbFromJson', (nativeIdDb, jsonString) => {
   })
 })
 
-Cypress.Commands.add('setDb', (jsonString) => {
+Cypress.Commands.add('setDb', (jsonString, to = 'cypress/fixtures/DB.json') => {
   if (Cypress.env('overwrite') === true) {
-    cy.writeFile(
-      'cypress/fixtures/DB.json',
-      JSON.stringify({ mojito: jsonString }),
-    )
+    cy.writeFile(to, JSON.stringify({ mojito: jsonString }))
   }
 })
 
-Cypress.Commands.add('getDb', () => {
-  return cy.fixture('DB.json').then((r) => r.mojito)
+Cypress.Commands.add('getDb', (from = 'DB.json') => {
+  return cy.fixture(from).then((r) => r.mojito)
 })
 
-Cypress.Commands.add('restoreDb', (DATABASENAME) => {
+Cypress.Commands.add('restoreDb', (from = undefined) => {
   cy.wait(2000).then(() => {
     return cy.getNaviteIdDb(DATABASENAME).then((nativeIdDb) => {
-      return cy.getDb().then((jsonString) => {
+      return cy.getDb(from).then((jsonString) => {
         cy.wrap(null).then(() => {
           return cy.clearDb(nativeIdDb.result)
         })
         cy.wrap(null).then(() => {
-          console.log('nativeIdDb', nativeIdDb.result, jsonString)
           cy.restoreDbFromJson(nativeIdDb.result, jsonString)
         })
       })

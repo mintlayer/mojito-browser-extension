@@ -1,7 +1,5 @@
 import { deleteDatabase } from './utils'
 
-import { DATABASENAME } from '/src/services/Database/IndexedDB/IndexedDB.js'
-
 let nativeIdDb
 
 describe(
@@ -25,24 +23,28 @@ describe(
       cy.contains('button', 'Create Wallet').click()
       cy.restoreWallet(Cypress.env('receiver'))
       cy.wrap(null).then(() => {
-        return cy
-          .getNaviteIdDb(DATABASENAME)
-          .then((r) => (nativeIdDb = r.result))
+        return cy.getNaviteIdDb().then((r) => (nativeIdDb = r.result))
       })
     })
 
-    it('do something', () => {
+    it('do something', function () {
       cy.wrap(nativeIdDb).should('be.not.null')
       cy.wrap(null).then(() => {
         return cy.exportDb(nativeIdDb).then((jsonString) => {
           expect(jsonString).to.not.eq(undefined)
 
           cy.wrap(jsonString).should('not.be.empty')
-          cy.setDb(jsonString)
+          const db = Cypress.env('DB')
+            ? `cypress/fixtures/${Cypress.env('DB')}`
+            : undefined
 
-          cy.getDb().then((d) => {
-            cy.wrap(d).should('not.be.empty')
-          })
+          cy.setDb(jsonString, db)
+
+          cy.getDb(Cypress.env('DB') ? Cypress.env('DB') : undefined).then(
+            (d) => {
+              cy.wrap(d).should('not.be.empty')
+            },
+          )
 
           cy.wrap(null).then(() => {
             return cy.clearDb(nativeIdDb)
