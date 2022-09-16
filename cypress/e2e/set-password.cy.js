@@ -1,15 +1,17 @@
-import { deleteDatabase } from './utils'
-import { user } from '../fixtures/accounts.json'
-
 describe('set password page', () => {
   before(() => {
-    deleteDatabase()
+    cy.deleteDatabase()
+    cy.wrap(Cypress.env('baseUrl')).as('baseUrl')
+    cy.wrap(Cypress.env('create')).as('create')
   })
 
-  beforeEach(() => {
-    cy.visit(Cypress.env('baseUrl'))
+  beforeEach(function () {
+    cy.visit(this.baseUrl)
     cy.contains('button', 'Create').click()
-    cy.setAccount(user.access.name)
+    cy.getAccess(this.create).then((access) => {
+      cy.setAccount(access.name)
+      return cy.wrap(access).as('access')
+    })
   })
 
   it('displays attribute pages', () => {
@@ -20,8 +22,8 @@ describe('set password page', () => {
     cy.get('input[placeholder="Password"]').should('be.visible')
   })
 
-  it('click on continue', () => {
-    cy.setPassword(user.access.password)
+  it('click on continue', function () {
+    cy.setPassword(this.access.password)
     cy.contains('button', 'I understand').should('be.visible')
 
     cy.contains('li.step.false', 'Account Password').should('be.visible')

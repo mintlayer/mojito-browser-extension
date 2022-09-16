@@ -36,7 +36,7 @@ test('Render transaction component', async () => {
   const transaction = screen.getByTestId('transaction')
   const transactionOtherPart = screen.getByTestId('transaction-otherPart')
   const transactionDate = screen.getByTestId('transaction-date')
-  const transactionAmout = screen.getByTestId('transaction-amout')
+  const transactionAmount = screen.getByTestId('transaction-amount')
   const transactionIcon = screen.getByTestId('transaction-icon')
 
   await act(async () => expect(transaction).toBeInTheDocument())
@@ -44,7 +44,9 @@ test('Render transaction component', async () => {
     TRANSCTIONSAMPLE.otherPart[0].slice(0, 10),
   )
   expect(transactionDate.textContent).toBe('Date: ' + date)
-  expect(transactionAmout.textContent).toBe('Amout: ' + TRANSCTIONSAMPLE.value)
+  expect(transactionAmount.textContent).toBe(
+    'Amount: ' + TRANSCTIONSAMPLE.value,
+  )
 
   expect(transactionIcon).not.toHaveClass('transaction-logo-out')
 
@@ -56,7 +58,7 @@ test('Render transaction out component', async () => {
   const transaction = screen.getByTestId('transaction')
   const transactionOtherPart = screen.getByTestId('transaction-otherPart')
   const transactionDate = screen.getByTestId('transaction-date')
-  const transactionAmout = screen.getByTestId('transaction-amout')
+  const transactionAmount = screen.getByTestId('transaction-amount')
   const transactionIcon = screen.getByTestId('transaction-icon')
 
   await act(async () => expect(transaction).toBeInTheDocument())
@@ -65,7 +67,9 @@ test('Render transaction out component', async () => {
   )
   expect(transactionOtherPart.textContent).toContain('+1')
   expect(transactionDate.textContent).toBe('Date: ' + date)
-  expect(transactionAmout.textContent).toBe('Amout: ' + TRANSCTIONSAMPLE.value)
+  expect(transactionAmount.textContent).toBe(
+    'Amount: ' + TRANSCTIONSAMPLE.value,
+  )
 
   expect(transactionIcon).toHaveClass('transaction-logo-out')
 })

@@ -38,7 +38,7 @@
   transform: rotate(180deg);
 }
 
-.transaction-date-amout {
+.transaction-date-amount {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -52,12 +52,12 @@
 }
 
 .transaction-date,
-.transaction-amout {
+.transaction-amount {
   font-size: 1.2rem;
   font-weight: 400;
 }
 
 .transaction-date span,
-.transaction-amout span {
+.transaction-amount span {
   font-weight: 600;
 }
