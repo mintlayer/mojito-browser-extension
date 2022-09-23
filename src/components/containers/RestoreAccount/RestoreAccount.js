@@ -74,7 +74,7 @@ const RestoreAccount = ({
     { name: 'Account Name', active: step === 1 },
     { name: 'Account Password', active: step === 2 },
     {
-      name: 'Restoring Information',
+      name: 'Seed Phrases',
       active: step > 2,
     },
   ]
@@ -88,7 +88,7 @@ const RestoreAccount = ({
 
   const titles = {
     2: 'Create',
-    3: 'I have them',
+    3: 'Enter Seed Phrases',
     4: 'Confirm',
   }
 
@@ -164,7 +164,7 @@ const RestoreAccount = ({
                 onChangeHandle={accountNameChangeHandler}
                 validity={accountNameValid}
                 placeHolder={'Account Name'}
-                label={'Create a name to your account'}
+                label={'Create a name for your account'}
                 extraStyleClasses={inputExtraclasses}
                 errorMessages={accountNameErrorMessage}
                 pristinity={accountNamePristinity}
@@ -180,7 +180,7 @@ const RestoreAccount = ({
                 validity={accountPasswordValid}
                 pattern={passwordPattern}
                 password
-                label={'Create a password to your account'}
+                label={'Create a password for your account'}
                 placeHolder={'Password'}
                 extraStyleClasses={inputExtraclasses}
                 errorMessages={accountPasswordErrorMessage}
@@ -195,7 +195,8 @@ const RestoreAccount = ({
                 className="words-description"
                 data-testid="description-paragraph"
               >
-                In order to restore your wallet you need your 12 words backup.
+                In order to restore the wallet, please enter your 12 Seed
+                Phrase.
               </p>
             </CenteredLayout>
           )}

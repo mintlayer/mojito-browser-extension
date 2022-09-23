@@ -15,9 +15,7 @@ describe('mojito wallet app', () => {
     )
 
     cy.contains('Mojito').should('be.visible')
-    cy.contains('Your Bitcoin wallet right in your browser').should(
-      'be.visible',
-    )
+    cy.contains('Your Bitcoin, right in your browser.').should('be.visible')
     cy.contains('©Mintlayer, 2022').should('be.visible')
     cy.contains('mintlayer.org').should('be.visible')
 
@@ -28,11 +26,11 @@ describe('mojito wallet app', () => {
   it('click on Create and navigate', () => {
     cy.contains('button', 'Create').click()
 
-    cy.contains('Create a name to your account').should('be.visible')
+    cy.contains('Create a name for your account').should('be.visible')
   })
 
   it('click on Restore and navigate', () => {
     cy.contains('button', 'Restore').click()
-    cy.contains('Create a name to your account').should('be.visible')
+    cy.contains('Create a name for your account').should('be.visible')
   })
 })

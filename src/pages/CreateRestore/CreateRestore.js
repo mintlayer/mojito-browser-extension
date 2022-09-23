@@ -13,7 +13,7 @@ const CreateRestorePage = () => {
   return (
     <div data-testid="create-restore">
       <h1 className="center-text title-create">
-        Your Bitcoin wallet right in your browser
+        Your Bitcoin, right in your browser.
       </h1>
       <CenteredLayout>
         <VerticalGroup>

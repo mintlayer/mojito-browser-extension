@@ -90,7 +90,7 @@ const SendTransaction = ({
       setPassPristinity(false)
       setPassValidity(false)
       setPass('')
-      setPassErrorMessage('Wrong password. Account could not be unlocked')
+      setPassErrorMessage('Incorrect password. Account could not be unlocked')
       setAllowClosing(true)
     } finally {
       setSendingTransaction(false)

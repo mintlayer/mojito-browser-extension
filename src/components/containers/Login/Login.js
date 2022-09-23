@@ -16,7 +16,7 @@ const Login = ({ accounts, onSelect, onCreate }) => {
       data-testid="list-accounts"
       className="list-accounts"
     >
-      <h2 className="subtitle">wallet available</h2>
+      <h2 className="subtitle">Available wallet(s)</h2>
       <VerticalGroup bigGap>
         <div className="content">
           <Carousel

@@ -15,7 +15,7 @@ describe('set Account page', () => {
 
   it('check and click on button Account Name', function () {
     cy.contains('li.step.active', 'Account Name').should('be.visible')
-    cy.contains('Create a name to your account').should('be.visible')
+    cy.contains('Create a name for your account').should('be.visible')
     cy.contains('Mojito').should('be.visible')
 
     cy.setAccount(this.access.name)

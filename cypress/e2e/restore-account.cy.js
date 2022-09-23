@@ -22,7 +22,7 @@ describe('Restore account page', () => {
     cy.get('input[placeholder="Password"]').type(this.access.password)
     cy.contains('button', 'Create').click()
 
-    cy.contains('button', 'I have them').click()
+    cy.contains('button', 'Enter Seed Phrases').click()
     cy.writeWords('input', this.login.account)
     cy.contains('button', 'Confirm').click()
 
