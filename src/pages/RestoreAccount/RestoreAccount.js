@@ -26,7 +26,7 @@ const RestoreAccountPage = () => {
         return Account.unlockAccount(id, accountPassword)
       })
       .then(({ address }) => {
-        setWalletInfo(address, accountID)
+        setWalletInfo(address, accountID, accountName)
         navigate('/dashboard')
       })
   }
