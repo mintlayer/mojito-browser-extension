@@ -18,12 +18,12 @@ describe('create account page ', () => {
 
   it('displays attribute pages', function () {
     cy.contains('Mojito').should('be.visible')
-    cy.contains('li.step.active', 'Restoring Information').should('be.visible')
+    cy.contains('li.step.active', 'Seed Phrases').should('be.visible')
     cy.contains(
-      'Write down all of the next words. They will be asked to restores your wallet in the future.',
+      'Write down each of the words (seed phrases) that are shown on the next screen.',
     ).should('be.visible')
     cy.contains(
-      'Save they in a very safe place. It is only your backup',
+      'Store them in a safe place as they are the only way to restore your account.',
     ).should('be.visible')
     cy.contains('button', 'I understand').should('be.visible')
   })

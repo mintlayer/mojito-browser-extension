@@ -16,7 +16,7 @@ describe('set password page', () => {
 
   it('displays attribute pages', () => {
     cy.contains('li.step.active', 'Account Password').should('be.visible')
-    cy.contains('Create a password to your account').should('be.visible')
+    cy.contains('Create a password for your account').should('be.visible')
     cy.contains('Mojito').should('be.visible')
     cy.contains('button', 'Continue').should('be.visible')
     cy.get('input[placeholder="Password"]').should('be.visible')

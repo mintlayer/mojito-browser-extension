@@ -74,7 +74,7 @@ const CreateAccount = ({
     { name: 'Account Name', active: step === 1 },
     { name: 'Account Password', active: step === 2 },
     {
-      name: 'Restoring Information',
+      name: 'Seed Phrases',
       active: step > 2,
     },
   ]
@@ -165,7 +165,7 @@ const CreateAccount = ({
                 onChangeHandle={accountNameChangeHandler}
                 validity={accountNameValid}
                 placeHolder={'Account Name'}
-                label={'Create a name to your account'}
+                label={'Create a name for your account'}
                 extraStyleClasses={inputExtraclasses}
                 errorMessages={accountNameErrorMessage}
                 pristinity={accountNamePristinity}
@@ -181,7 +181,7 @@ const CreateAccount = ({
                 validity={accountPasswordValid}
                 pattern={passwordPattern}
                 password
-                label={'Create a password to your account'}
+                label={'Create a password for your account'}
                 placeHolder={'Password'}
                 extraStyleClasses={inputExtraclasses}
                 errorMessages={accountPasswordErrorMessage}

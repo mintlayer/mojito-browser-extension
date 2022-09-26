@@ -79,7 +79,7 @@ const decryptAES = ({
   decipher.update(util.createBuffer(data))
   const result = decipher.finish()
 
-  if (!result) throw new Error('Wrong password')
+  if (!result) throw new Error('Incorrect password')
   return hexToBytes(decipher.output.data)
 }
 

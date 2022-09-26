@@ -49,7 +49,7 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
       if (!address) {
         setAccountPasswordValid(false)
         setUnlockingAccount(false)
-        setAccountPasswordErrorMessage('Wrong password')
+        setAccountPasswordErrorMessage('Incorrect password')
         return
       }
       onSubmit(address, account.id, account.name)

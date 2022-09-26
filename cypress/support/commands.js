@@ -268,7 +268,7 @@ Cypress.Commands.add('restoreAccount', (name, password, words) => {
   cy.get('input[placeholder="Password"]').type(password)
   cy.contains('button', 'Create').click()
 
-  cy.contains('button', 'I have them').click()
+  cy.contains('button', 'Enter Seed Phrases').click()
   cy.writeWords('input', words)
   cy.contains('button', 'Confirm').click()
   cy.wait(2000)

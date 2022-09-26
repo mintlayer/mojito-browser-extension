@@ -122,7 +122,7 @@ const FeeField = ({
           onSelect={optionSelectHandle}
         />
       </div>
-      <p>Estimate time for 1st confirmation: {timeToFirstConfirmations}</p>
+      <p>Estimated time for 1st confirmation: {timeToFirstConfirmations}</p>
     </div>
   )
 }
