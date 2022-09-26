@@ -30,7 +30,7 @@ const convertSatoshiToBtc = (satoshiAmount) =>
   satoshiAmount / SATOSHI_BTC_CONVERSION_FACTOR
 
 const convertBtcToSatoshi = (satoshiAmount) =>
-  satoshiAmount * SATOSHI_BTC_CONVERSION_FACTOR
+  Math.round(satoshiAmount * SATOSHI_BTC_CONVERSION_FACTOR)
 
 const calculateBalanceFromUtxoList = (list) =>
   list.reduce((accumulator, transaction) => accumulator + transaction.value, 0)
