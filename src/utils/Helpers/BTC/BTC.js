@@ -29,6 +29,7 @@ const parseFeesEstimates = (allEstimates) => {
 const convertSatoshiToBtc = (satoshiAmount) =>
   satoshiAmount / SATOSHI_BTC_CONVERSION_FACTOR
 
+//Rounding is needed because of floating point issue in some cases like (0.00001 * 100_000_000)."
 const convertBtcToSatoshi = (satoshiAmount) =>
   Math.round(satoshiAmount * SATOSHI_BTC_CONVERSION_FACTOR)
 
