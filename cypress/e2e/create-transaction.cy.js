@@ -29,7 +29,7 @@ describe(
 
     it('Send and receive amount', function () {
       let _txid
-      const _amount = '0,000001'
+      const _amount = '0,00001'
       cy.wait('@feeEstimates').then(() => {})
       cy.wait(1000)
       cy.contains('Send to').siblings('input').type(this.to.address)
