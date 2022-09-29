@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { ReactComponent as BackImg } from '@Assets/images/back-button.svg'
@@ -11,8 +11,14 @@ import { AccountContext } from '@Contexts'
 import './Header.css'
 
 const Header = ({ customBackAction, noBackButton = false }) => {
+  const [unlocked, setUnlocked] = useState(false)
   const navigate = useNavigate()
   const { isAccountUnlocked, logout } = useContext(AccountContext)
+
+  useEffect(() => {
+    const accountUnlocked = isAccountUnlocked()
+    setUnlocked(accountUnlocked)
+  }, [isAccountUnlocked])
 
   const goBack = () => (customBackAction ? customBackAction() : navigate(-1))
 
@@ -33,7 +39,7 @@ const Header = ({ customBackAction, noBackButton = false }) => {
         </Button>
       )}
 
-      {isAccountUnlocked() && (
+      {unlocked && (
         <Button
           alternate
           extraStyleClasses={['logout']}
