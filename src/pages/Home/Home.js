@@ -12,12 +12,17 @@ import './Home.css'
 const HomePage = () => {
   const effectCalled = useRef(false)
   const [accounts, setAccounts] = useState(null)
+  const [unlocked, setUnlocked] = useState(false)
   const location = useLocation()
 
   const navigate = useNavigate()
   const { isAccountUnlocked } = useContext(AccountContext)
-  const accountUnlocked = isAccountUnlocked()
-  accountUnlocked && navigate('/dashboard')
+
+  useEffect(() => {
+    const currentUnlocked = isAccountUnlocked()
+    setUnlocked(currentUnlocked)
+    currentUnlocked && navigate('/dashboard')
+  }, [isAccountUnlocked, navigate])
 
   useEffect(() => {
     if (effectCalled.current) return
@@ -43,7 +48,7 @@ const HomePage = () => {
   }
 
   return (
-    !accountUnlocked && (
+    !unlocked && (
       <>
         <div className="homeLogoContainer">
           <img
