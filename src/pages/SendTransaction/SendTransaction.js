@@ -63,11 +63,11 @@ const SendTransactionPage = () => {
   const confirmTransaction = async (password) => {
     // eslint-disable-next-line no-unused-vars
     const { WIF } = await Account.unlockAccount(accountID, password)
-    const formatedBalance = NumbersHelper.floatStringToNumber(balance)
+    // const formatedBalance = NumbersHelper.floatStringToNumber(balance)
     const transactionAmountInSatoshi = BTCHelper.convertBtcToSatoshi(
       transactionInformation.amount,
     )
-    const totalFeeInSatoshi = BTCHelper.convertBtcToSatoshi(totalFeeCrypto)
+    // const totalFeeInSatoshi = BTCHelper.convertBtcToSatoshi(totalFeeCrypto)
 
     const transactionSize =
       await BTCTransactionHelper.calculateTransactionSizeInBytes({
@@ -78,15 +78,12 @@ const SendTransactionPage = () => {
         fee: transactionInformation.fee,
       })
 
-    const amount =
-      transactionInformation.amount >= formatedBalance - totalFeeCrypto
-        ? transactionAmountInSatoshi - totalFeeInSatoshi
-        : transactionAmountInSatoshi
+    // const amount = transactionAmountInSatoshi - totalFeeInSatoshi
 
     // eslint-disable-next-line no-unused-vars
     const [__, transactionHex] = await BTCTransaction.buildTransaction({
       to: transactionInformation.to,
-      amount: amount,
+      amount: transactionAmountInSatoshi,
       fee: transactionSize * transactionInformation.fee,
       wif: WIF,
       from: btcAddress,

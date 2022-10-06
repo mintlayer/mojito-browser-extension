@@ -96,9 +96,11 @@ const CryptoFiatField = ({
     if (isTypeFiat()) {
       setValue(Format.fiatValue(maxFiatValue))
       setBottomValue(Format.BTCValue(maxFiatValue / exchangeRate))
+      setAmountValidity(true)
     } else {
       setValue(Format.BTCValue(maxCryptoValue))
       setBottomValue(Format.fiatValue(maxCryptoValue * exchangeRate))
+      setAmountValidity(true)
     }
   }
 
