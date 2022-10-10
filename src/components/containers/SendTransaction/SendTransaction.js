@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { Button } from '@BasicComponents'
 import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
-import { Format, NumbersHelper } from '@Helpers'
+import { BTC, Format, NumbersHelper } from '@Helpers'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
 import AddressField from './AddressField'
@@ -115,6 +115,7 @@ const SendTransaction = ({
   const amountChanged = (amount) => {
     if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
+      console.log(Format.BTCValue(amount.value), 'amount.value')
       setAmountInCrypto(Format.BTCValue(amount.value))
       setAmountInFiat(
         Format.fiatValue(
@@ -126,7 +127,11 @@ const SendTransaction = ({
     }
 
     setAmountInFiat(Format.fiatValue(amount.value))
-    setAmountInCrypto(Format.BTCValue(amount.value / exchangeRate))
+    setAmountInCrypto(
+      Format.BTCValue(
+        NumbersHelper.floatStringToNumber(amount.value) / exchangeRate,
+      ),
+    )
   }
 
   const addressChanged = (e) => {
@@ -141,6 +146,39 @@ const SendTransaction = ({
     setFormValidity(!!(addressValidity && amountValidity && feeValidity))
   }, [addressValidity, amountValidity, feeValidity, setFormValidity])
 
+  useEffect(
+    () => {
+      if (addressTo && fee && amountInCrypto) {
+        onSendTransaction({
+          to: addressTo,
+          amount: NumbersHelper.floatStringToNumber(amountInCrypto),
+          fee,
+        })
+      } else {
+        return
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [addressTo, fee, amountInCrypto],
+  )
+
+  useEffect(() => {
+    const maxValue = BTC.convertBtcToSatoshi(
+      NumbersHelper.floatStringToNumber(maxValueInToken),
+    )
+    const amount = BTC.convertBtcToSatoshi(
+      NumbersHelper.floatStringToNumber(amountInCrypto),
+    )
+    const totalFee = BTC.convertBtcToSatoshi(totalFeeCrypto)
+    if (amount + totalFee > maxValue) {
+      setAmountValidity(false)
+      setPassErrorMessage('Insufficient funds')
+    } else if (amount + totalFee <= maxValue) {
+      setAmountValidity(true)
+      setPassErrorMessage('')
+    }
+  }, [totalFeeCrypto, amountInCrypto, maxValueInToken, amountInFiat])
+
   return (
     <div className="transaction-form">
       <AddressField
@@ -154,6 +192,8 @@ const SendTransaction = ({
         exchangeRate={exchangeRate}
         maxValueInToken={maxValueInToken}
         setAmountValidity={setAmountValidity}
+        errorMessage={passErrorMessage}
+        totalFeeInCrypto={totalFeeCrypto}
       />
 
       <FeesField

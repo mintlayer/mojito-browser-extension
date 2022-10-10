@@ -10,6 +10,7 @@ const getEnoughUtxo = (transactions, amount, fee) => {
   let target = amount
   let feeNeeded = 0
   return transactions.reduce((acc, item) => {
+    if (item.value === 0) return acc
     feeNeeded =
       (BTCTransaction.SIZE_CONSTANTS.overhead +
         BTCTransaction.SIZE_CONSTANTS.output *
@@ -36,7 +37,6 @@ const utxoSelect = (utxoList, amountNeeded, fee) => {
    */
   const newerToOlder = utxoList.sort(orderByDateDesc)
   const selectedTransactions = getEnoughUtxo(newerToOlder, amountNeeded, fee)
-
   return selectedTransactions
 }
 
