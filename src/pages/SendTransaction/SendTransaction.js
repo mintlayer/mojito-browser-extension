@@ -41,7 +41,7 @@ const SendTransactionPage = () => {
     return
   }
 
-  const createTransaction = async (transactionInfo) => {
+  const calculateTotalFee = async (transactionInfo) => {
     const transactionSize =
       await BTCTransactionHelper.calculateTransactionSizeInBytes({
         addressFrom: btcAddress,
@@ -57,6 +57,10 @@ const SendTransactionPage = () => {
 
     setTotalFeeFiat(Format.fiatValue(totalFee * exchangeRate))
     setTotalFeeCrypto(totalFee)
+  }
+
+  const createTransaction = async (transactionInfo) => {
+    calculateTotalFee(transactionInfo)
     setTransactionInformation(transactionInfo)
   }
 
@@ -103,6 +107,7 @@ const SendTransactionPage = () => {
             exchangeRate={exchangeRate}
             maxValueInToken={balance}
             onSendTransaction={createTransaction}
+            calculateTotalFee={calculateTotalFee}
             setFormValidity={setFormValid}
             isFormValid={isFormValid}
             confirmTransaction={confirmTransaction}

@@ -15,6 +15,7 @@ test('Send Transaction', async () => {
       <SendTransaction
         transactionData={TRANSACTIONDATASAMPLE}
         setFormValidity={() => {}}
+        calculateTotalFee={() => {}}
       />,
     )
   })

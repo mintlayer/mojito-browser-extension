@@ -23,6 +23,7 @@ const SendTransaction = ({
   isFormValid,
   confirmTransaction,
   goBackToWallet,
+  calculateTotalFee,
 }) => {
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
@@ -115,7 +116,6 @@ const SendTransaction = ({
   const amountChanged = (amount) => {
     if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
-      console.log(Format.BTCValue(amount.value), 'amount.value')
       setAmountInCrypto(Format.BTCValue(amount.value))
       setAmountInFiat(
         Format.fiatValue(
@@ -148,9 +148,8 @@ const SendTransaction = ({
 
   useEffect(
     () => {
-      if (addressTo && fee && amountInCrypto) {
-        onSendTransaction({
-          to: addressTo,
+      if (fee && amountInCrypto) {
+        calculateTotalFee({
           amount: NumbersHelper.floatStringToNumber(amountInCrypto),
           fee,
         })
@@ -159,7 +158,7 @@ const SendTransaction = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addressTo, fee, amountInCrypto],
+    [fee, amountInCrypto],
   )
 
   useEffect(() => {
