@@ -41,7 +41,7 @@ const SendTransactionPage = () => {
     return
   }
 
-  const createTransaction = async (transactionInfo) => {
+  const calculateTotalFee = async (transactionInfo) => {
     const transactionSize =
       await BTCTransactionHelper.calculateTransactionSizeInBytes({
         addressFrom: btcAddress,
@@ -57,12 +57,19 @@ const SendTransactionPage = () => {
 
     setTotalFeeFiat(Format.fiatValue(totalFee * exchangeRate))
     setTotalFeeCrypto(totalFee)
+  }
+
+  const createTransaction = async (transactionInfo) => {
+    calculateTotalFee(transactionInfo)
     setTransactionInformation(transactionInfo)
   }
 
   const confirmTransaction = async (password) => {
     // eslint-disable-next-line no-unused-vars
     const { WIF } = await Account.unlockAccount(accountID, password)
+    const transactionAmountInSatoshi = BTCHelper.convertBtcToSatoshi(
+      transactionInformation.amount,
+    )
 
     const transactionSize =
       await BTCTransactionHelper.calculateTransactionSizeInBytes({
@@ -76,7 +83,7 @@ const SendTransactionPage = () => {
     // eslint-disable-next-line no-unused-vars
     const [__, transactionHex] = await BTCTransaction.buildTransaction({
       to: transactionInformation.to,
-      amount: BTCHelper.convertBtcToSatoshi(transactionInformation.amount),
+      amount: transactionAmountInSatoshi,
       fee: transactionSize * transactionInformation.fee,
       wif: WIF,
       from: btcAddress,
@@ -100,6 +107,7 @@ const SendTransactionPage = () => {
             exchangeRate={exchangeRate}
             maxValueInToken={balance}
             onSendTransaction={createTransaction}
+            calculateTotalFee={calculateTotalFee}
             setFormValidity={setFormValid}
             isFormValid={isFormValid}
             confirmTransaction={confirmTransaction}

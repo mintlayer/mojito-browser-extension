@@ -17,10 +17,11 @@ const CryptoFiatField = ({
   exchangeRate,
   maxValueInToken,
   setAmountValidity,
+  totalFeeInCrypto,
 }) => {
-  const [maxCryptoValue, setMaxCryptoValue] = useState(
-    NumbersHelper.floatStringToNumber(maxValueInToken),
-  )
+  const finalMaxValue =
+    NumbersHelper.floatStringToNumber(maxValueInToken) - totalFeeInCrypto
+  const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
 
   const [bottomValue, setBottomValue] = useState('')
   const [currentValueType, setCurrentValueType] = useState(
@@ -45,8 +46,8 @@ const CryptoFiatField = ({
   }, [exchangeRate, setMaxFiatValue, maxCryptoValue])
 
   useEffect(() => {
-    setMaxCryptoValue(NumbersHelper.floatStringToNumber(maxValueInToken))
-  }, [maxValueInToken])
+    setMaxCryptoValue(finalMaxValue)
+  }, [finalMaxValue])
 
   if (!transactionData) return null
 
@@ -82,8 +83,8 @@ const CryptoFiatField = ({
     calculateBottomFn,
   ) => {
     setCurrentValueType(currencyName)
-    setBottomValue(calculateBottomFn(value))
-    setValue(recalculateValueFn(value))
+    setBottomValue(calculateBottomFn(value || 0))
+    setValue(recalculateValueFn(value || 0))
   }
 
   const changeButtonClickHandler = () => {
@@ -96,9 +97,11 @@ const CryptoFiatField = ({
     if (isTypeFiat()) {
       setValue(Format.fiatValue(maxFiatValue))
       setBottomValue(Format.BTCValue(maxFiatValue / exchangeRate))
+      setAmountValidity(true)
     } else {
       setValue(Format.BTCValue(maxCryptoValue))
       setBottomValue(Format.fiatValue(maxCryptoValue * exchangeRate))
+      setAmountValidity(true)
     }
   }
 

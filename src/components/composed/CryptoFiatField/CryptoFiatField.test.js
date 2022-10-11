@@ -14,7 +14,7 @@ const PROPSSAMPLE = {
   transactionData: TRANSACTIONDATASAMPLE,
 }
 
-const [exchangeRate, maxValueInToken] = [22343.23, 450]
+const [exchangeRate, maxValueInToken, totalFeeCrypto] = [22343.23, 450, 0.00045]
 
 test('Render TextField component', () => {
   render(
@@ -26,6 +26,7 @@ test('Render TextField component', () => {
       exchangeRate={exchangeRate}
       maxValueInToken={maxValueInToken}
       setAmountValidity={() => {}}
+      totalFeeInCrypto={totalFeeCrypto}
     />,
   )
 
@@ -43,6 +44,7 @@ test('Render TextField component', () => {
   fireEvent.change(input, {
     target: { value: maxValueInToken },
   })
+
   expect(input).toHaveValue(maxValueInToken.toString())
   expect(bottomNote).toHaveTextContent('≈ 10054453,50 USD')
 
@@ -67,6 +69,7 @@ test('Render TextField component fdf', async () => {
       maxValueInToken={maxValueInToken}
       setErrorMessage={() => {}}
       setAmountValidity={() => {}}
+      totalFeeInCrypto={totalFeeCrypto}
     />,
   )
 
@@ -75,39 +78,17 @@ test('Render TextField component fdf', async () => {
   const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
   const input = screen.getByTestId('input')
 
+  const maxValueInCrypto = maxValueInToken - totalFeeCrypto
+
   fireEvent.click(actionButton)
-  expect(input).toHaveValue(maxValueInToken.toString())
+  expect(input).toHaveValue(maxValueInCrypto.toString().replace('.', ','))
 
   fireEvent.click(switchButton)
-  expect(bottomNote).toHaveTextContent(maxValueInToken)
+  expect(bottomNote).toHaveTextContent(
+    `≈ ${maxValueInCrypto.toString().replace('.', ',')} BTC`,
+  )
 
   fireEvent.change(input, { target: { value: '' } })
-
-  // await act(async() => {
-  //   fireEvent.click(actionButton)
-  // })
-
-  // expect(input).toHaveValue(
-  //   (maxValueInToken * exchangeRate).toFixed(2).toString(),
-  // )
-
-  // fireEvent.click(switchButton)
-  // expect(input).toHaveValue(maxValueInToken.toString())
-
-  // fireEvent.change(input, { target: { value: '0' } })
-  // fireEvent.click(switchButton)
-  // expect(input).toHaveValue('0.00')
-
-  // fireEvent.change(input, {
-  //   target: {
-  //     value: (maxValueInToken + 1) * exchangeRate,
-  //   },
-  // })
-  // expect(input).toHaveClass('invalid')
-
-  // fireEvent.change(input, { target: { value: '0' } })
-  // fireEvent.click(switchButton)
-  // expect(input).toHaveValue('0')
 })
 
 test('Render TextField component without transactionData', () => {
