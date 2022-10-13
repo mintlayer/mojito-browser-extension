@@ -71,7 +71,7 @@ const Input = ({
 
     if (justNumbers && value.match(/[^0-9,.]/)) return false
 
-    let newValue = value
+    let newValue = password ? value : value.toString().trim()
     if (mask && getMaskedValue) {
       const matchedValue = value.match(mask)
       ev.target.matchedValue = matchedValue
