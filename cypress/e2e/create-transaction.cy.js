@@ -23,6 +23,7 @@ describe(
       cy.getAddress(this.login).as('from')
       cy.getAddress(this.receiver).as('to')
 
+      cy.wait(1000)
       cy.contains('li', 'BTC').click()
       cy.contains('Send').siblings('button').click()
     })
@@ -30,12 +31,13 @@ describe(
     it('Send and receive amount', function () {
       let _txid
       const _amount = '0,00001'
+      const _fee = '30'
       cy.wait('@feeEstimates').then(() => {})
       cy.wait(1000)
       cy.contains('Send to').siblings('input').type(this.to.address)
       cy.get('input[id="amount"]').type(_amount)
+      cy.get('input[id="fee"]').clear().type(_fee)
 
-      cy.contains('button', 'high').click()
       cy.contains('button', 'Send').click()
 
       cy.contains('Send to').should('be.visible')
