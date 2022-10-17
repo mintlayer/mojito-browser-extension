@@ -19,8 +19,8 @@ const CryptoFiatField = ({
   setAmountValidity,
   totalFeeInCrypto,
 }) => {
-  const finalMaxValue =
-    NumbersHelper.floatStringToNumber(maxValueInToken) - totalFeeInCrypto
+  const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
+  const finalMaxValue = parsedValueInToken - totalFeeInCrypto
   const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
 
   const [bottomValue, setBottomValue] = useState('')
@@ -46,8 +46,9 @@ const CryptoFiatField = ({
   }, [exchangeRate, setMaxFiatValue, maxCryptoValue])
 
   useEffect(() => {
-    setMaxCryptoValue(finalMaxValue)
-  }, [finalMaxValue])
+    const maxValue = finalMaxValue < 0 ? parsedValueInToken : finalMaxValue
+    setMaxCryptoValue(maxValue)
+  }, [finalMaxValue, parsedValueInToken])
 
   if (!transactionData) return null
 
@@ -97,11 +98,11 @@ const CryptoFiatField = ({
     if (isTypeFiat()) {
       setValue(Format.fiatValue(maxFiatValue))
       setBottomValue(Format.BTCValue(maxFiatValue / exchangeRate))
-      setAmountValidity(true)
+      finalMaxValue > 0 && setAmountValidity(true)
     } else {
       setValue(Format.BTCValue(maxCryptoValue))
       setBottomValue(Format.fiatValue(maxCryptoValue * exchangeRate))
-      setAmountValidity(true)
+      finalMaxValue > 0 && setAmountValidity(true)
     }
   }
 
