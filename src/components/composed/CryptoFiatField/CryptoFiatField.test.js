@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import { getDecimalNumber } from 'src/utils/Helpers/Number/Number'
 
 import CryptoFiatField from './CryptoFiatField'
 
@@ -76,19 +77,26 @@ test('Render TextField component fdf', async () => {
   const switchButton = screen.getByTestId('crypto-fiat-switch-button')
   const actionButton = screen.getByTestId('button')
   const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
-  const input = screen.getByTestId('input')
+  const cryptoInput = screen.getByTestId('input')
 
   const maxValueInCrypto = maxValueInToken - totalFeeCrypto
 
   fireEvent.click(actionButton)
-  expect(input).toHaveValue(maxValueInCrypto.toString().replace('.', ','))
+  expect(cryptoInput).toHaveValue(maxValueInCrypto.toString().replace('.', ','))
 
   fireEvent.click(switchButton)
+  const fiatInput = screen.getByTestId('input')
+  expect(fiatInput).toHaveValue(
+    getDecimalNumber(maxValueInCrypto * exchangeRate)
+      .toString()
+      .replace('.', ','),
+  )
+
   expect(bottomNote).toHaveTextContent(
     `≈ ${maxValueInCrypto.toString().replace('.', ',')} BTC`,
   )
 
-  fireEvent.change(input, { target: { value: '' } })
+  fireEvent.change(cryptoInput, { target: { value: '' } })
 })
 
 test('Render TextField component without transactionData', () => {
