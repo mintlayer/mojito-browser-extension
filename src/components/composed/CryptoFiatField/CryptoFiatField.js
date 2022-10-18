@@ -22,6 +22,9 @@ const CryptoFiatField = ({
   const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
   const finalMaxValue = parsedValueInToken - totalFeeInCrypto
   const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
+  const [maxFiatValue, setMaxFiatValue] = useState(
+    maxCryptoValue * exchangeRate,
+  )
 
   const [bottomValue, setBottomValue] = useState('')
   const [currentValueType, setCurrentValueType] = useState(
@@ -29,9 +32,6 @@ const CryptoFiatField = ({
   )
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
-  const [maxFiatValue, setMaxFiatValue] = useState(
-    maxCryptoValue * exchangeRate,
-  )
 
   useEffect(() => {
     changeValueHandle &&
@@ -64,6 +64,7 @@ const CryptoFiatField = ({
 
   const calculateFiatValue = (value) => {
     const parsedValue = NumbersHelper.floatStringToNumber(value)
+    console.log('parsedValue', Format.fiatValue(parsedValue * exchangeRate))
     return Format.fiatValue(parsedValue * exchangeRate)
   }
 

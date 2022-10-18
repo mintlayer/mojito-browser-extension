@@ -12,6 +12,8 @@ const BTCValue = (value) =>
     .replace('.', AppInfo.decimalSeparator)
 
 const fiatValue = (value) =>
-  getNumber(value).toFixed(2).replace('.', AppInfo.decimalSeparator)
+  (Math.trunc(getNumber(value) * 100) / 100)
+    .toFixed(2)
+    .replace('.', AppInfo.decimalSeparator)
 
 export { BTCValue, fiatValue }
