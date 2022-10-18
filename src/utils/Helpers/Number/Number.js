@@ -1,4 +1,5 @@
 import { AppInfo } from '@Constants'
+import { getNumber } from './Format'
 
 const INTEGER_LENGHT_THRESHOLD = 2
 const SAFE_INTEGER_LENGTH =
@@ -15,4 +16,12 @@ const floatStringToNumber = (value = '') => {
   return parseFloat(parsedValue)
 }
 
-export { getSafeIntegerPart, SAFE_INTEGER_LENGTH, floatStringToNumber }
+const getDecimalNumber = (value) =>
+  (Math.trunc(getNumber(value) * 100) / 100).toFixed(2)
+
+export {
+  getSafeIntegerPart,
+  SAFE_INTEGER_LENGTH,
+  floatStringToNumber,
+  getDecimalNumber,
+}

@@ -1,5 +1,6 @@
 import { AppInfo } from '@Constants'
 import { NumbersHelper } from '@Helpers'
+import { getDecimalNumber } from './Number'
 
 const getNumber = (value) =>
   typeof value === 'number' ? value : NumbersHelper.floatStringToNumber(value)
@@ -12,8 +13,6 @@ const BTCValue = (value) =>
     .replace('.', AppInfo.decimalSeparator)
 
 const fiatValue = (value) =>
-  (Math.trunc(getNumber(value) * 100) / 100)
-    .toFixed(2)
-    .replace('.', AppInfo.decimalSeparator)
+  getDecimalNumber(value).replace('.', AppInfo.decimalSeparator)
 
-export { BTCValue, fiatValue }
+export { BTCValue, fiatValue, getNumber }
