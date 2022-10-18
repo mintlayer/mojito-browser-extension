@@ -64,7 +64,6 @@ const CryptoFiatField = ({
 
   const calculateFiatValue = (value) => {
     const parsedValue = NumbersHelper.floatStringToNumber(value)
-    console.log('parsedValue', Format.fiatValue(parsedValue * exchangeRate))
     return Format.fiatValue(parsedValue * exchangeRate)
   }
 
