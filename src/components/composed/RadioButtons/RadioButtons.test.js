@@ -12,6 +12,17 @@ const _data = {
   onSelect: jest.fn(),
 }
 
+const _dataColumn = {
+  value: undefined,
+  options: [
+    { name: 'low', value: 'low' },
+    { name: 'norm', value: 'norm' },
+    { name: 'high', value: 'high' },
+  ],
+  onSelect: jest.fn(),
+  column: true,
+}
+
 const setup = ({ data = _data } = {}) => {
   const utils = render(<RadioButtons {...data} />)
   const low = screen.getByRole('button', { name: /low/i })
@@ -68,4 +79,12 @@ test('Renders RadioButtons do select and unselected', async () => {
   fireEvent.click(low)
   expect(_data.onSelect).toHaveBeenCalledTimes(2)
   expect(low).not.toHaveClass('alternate')
+})
+
+test('Render Inputs list item', async () => {
+  render(<RadioButtons {..._dataColumn} />)
+  const component = screen.getByTestId('radio-buttons')
+
+  expect(component).toBeInTheDocument()
+  expect(component).toHaveClass('radio-buttons-column')
 })

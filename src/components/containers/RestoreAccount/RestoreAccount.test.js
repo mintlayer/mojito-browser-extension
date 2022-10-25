@@ -142,6 +142,34 @@ test('Renders set account page with step 3', () => {
   const descriptionParagraph = screen.getAllByTestId('description-paragraph')
   const restoreAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
+  const legacyRadioButton = screen.getByRole('button', { name: /Legacy/i })
+
+  expect(buttons).toHaveLength(5)
+  expect(descriptionParagraph).toHaveLength(1)
+
+  expect(legacyRadioButton).toBeInTheDocument()
+  act(() => {
+    legacyRadioButton.click()
+  })
+
+  act(() => {
+    restoreAccountForm.submit()
+  })
+})
+
+test('Renders set account page with step 4', () => {
+  render(
+    <AccountProvider>
+      <RestoreAccount
+        step={4}
+        setStep={SETSTEPSAMPLE}
+      />
+    </AccountProvider>,
+    { wrapper: MemoryRouter },
+  )
+  const descriptionParagraph = screen.getAllByTestId('description-paragraph')
+  const restoreAccountForm = screen.getByTestId('restore-account-form')
+  const buttons = screen.getAllByTestId('button')
 
   expect(buttons).toHaveLength(2)
   expect(descriptionParagraph).toHaveLength(1)
@@ -151,7 +179,7 @@ test('Renders set account page with step 3', () => {
   })
 })
 
-test('Renders restore account page with step 4', () => {
+test('Renders restore account page with step 5', () => {
   jest.spyOn(window, 'alert').mockImplementation((message) => {
     expect(typeof message).toBe('string')
     window.alert.mockRestore()
@@ -166,7 +194,7 @@ test('Renders restore account page with step 4', () => {
   render(
     <AccountProvider>
       <RestoreAccount
-        step={4}
+        step={5}
         setStep={SETSTEPSAMPLE}
         words={WORDSSAMPLE}
         onStepsFinished={onStepsFinishedFn}

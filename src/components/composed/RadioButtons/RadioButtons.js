@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 
 import './RadioButtons.css'
 
-const RadioButtons = ({ onSelect, value: parentValue, options }) => {
+const RadioButtons = ({ onSelect, value: parentValue, options, column }) => {
   const [value, setValue] = useState(parentValue)
 
   const onClick = (option) => {
@@ -18,7 +18,10 @@ const RadioButtons = ({ onSelect, value: parentValue, options }) => {
   }, [parentValue])
 
   return (
-    <div className="radio-buttons">
+    <div
+      className={`radio-buttons ${column && 'radio-buttons-column'}`}
+      data-testid="radio-buttons"
+    >
       {options.map((option) => (
         <Button
           key={option.name}
