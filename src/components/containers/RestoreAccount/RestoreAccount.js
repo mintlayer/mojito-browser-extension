@@ -53,6 +53,8 @@ const RestoreAccount = ({
 
   const [radioButtonValue, setButtonValue] = useState(undefined)
 
+  const addressType = radioButtonValue && radioButtonValue.value
+
   const walletTypes = [
     {
       name: (
@@ -114,7 +116,7 @@ const RestoreAccount = ({
           accountNameValue,
           accountPasswordValue,
           getMnemonics(),
-          radioButtonValue && radioButtonValue.value,
+          addressType,
         )
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
