@@ -15,6 +15,15 @@ import {
 
 import './RestoreAccount.css'
 
+const WalletTypeTitle = ({ top, bottom }) => {
+  return (
+    <div>
+      <p className="walletTypeTopTitle">{top}</p>
+      <p className="walletTypeBottomTitle">{bottom}</p>
+    </div>
+  )
+}
+
 const RestoreAccount = ({
   step,
   setStep,
@@ -24,6 +33,7 @@ const RestoreAccount = ({
 }) => {
   const inputExtraclasses = ['account-input']
   const passwordPattern = Expressions.PASSWORD
+  const radioButtonExtraClasses = ['address-type-button']
   const [wordsFields, setWordsFields] = useState([])
   const [accountWordsValid, setAccountWordsValid] = useState(false)
 
@@ -44,9 +54,33 @@ const RestoreAccount = ({
   const [radioButtonValue, setButtonValue] = useState(undefined)
 
   const walletTypes = [
-    { name: 'Legacy', value: 'Legacy' },
-    { name: 'P2SH', value: 'P2SH' },
-    { name: 'Segwit', value: 'Segwit' },
+    {
+      name: (
+        <WalletTypeTitle
+          top={'Legacy'}
+          bottom={'Your address starts with "1..."'}
+        />
+      ),
+      value: 'legacy',
+    },
+    {
+      name: (
+        <WalletTypeTitle
+          top={'P2SH'}
+          bottom={'Your address starts with "3..."'}
+        />
+      ),
+      value: 'P2SH',
+    },
+    {
+      name: (
+        <WalletTypeTitle
+          top={'Segwit'}
+          bottom={'Your address starts with "BC1..."'}
+        />
+      ),
+      value: 'segwit',
+    },
   ]
 
   const navigate = useNavigate()
@@ -76,7 +110,12 @@ const RestoreAccount = ({
   const goToNextStep = () =>
     step < 5
       ? setStep(step + 1)
-      : onStepsFinished(accountNameValue, accountPasswordValue, getMnemonics())
+      : onStepsFinished(
+          accountNameValue,
+          accountPasswordValue,
+          getMnemonics(),
+          radioButtonValue && radioButtonValue.value,
+        )
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
@@ -203,7 +242,6 @@ const RestoreAccount = ({
           )}
           {step === 3 && (
             <>
-              {' '}
               <p
                 className="words-description"
                 data-testid="description-paragraph"
@@ -212,10 +250,11 @@ const RestoreAccount = ({
               </p>
               <CenteredLayout>
                 <RadioButtons
-                  value={radioButtonValue && radioButtonValue.name}
+                  value={radioButtonValue && radioButtonValue.value}
                   options={walletTypes}
                   onSelect={setButtonValue}
                   column
+                  buttonExtraStyles={radioButtonExtraClasses}
                 />
               </CenteredLayout>
             </>

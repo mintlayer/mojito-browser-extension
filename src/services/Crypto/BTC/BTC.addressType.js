@@ -16,14 +16,17 @@ const getNativeSegwitAddress = (pubkey) =>
 
 const BTC_ADDRESS_TYPE_MAP = {
   legacy: {
+    // eslint-disable-next-line quotes
     derivationPath: "m/44'/0'/0'/0/0",
     getAddressFromPubKey: getLegacyAddress,
   },
   p2sh: {
+    // eslint-disable-next-line quotes
     derivationPath: "m/49'/0'/0'/0/0",
     getAddressFromPubKey: getP2shAddress,
   },
   nativeSegwit: {
+    // eslint-disable-next-line quotes
     derivationPath: "m/48'/0'/0'/0/0",
     getAddressFromPubKey: getNativeSegwitAddress,
   },

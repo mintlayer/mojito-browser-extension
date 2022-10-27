@@ -19,3 +19,16 @@
   color: rgb(var(--color-dark-gray));
   text-align: center;
 }
+
+.walletTypeTopTitle {
+  font-size: 1.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.walletTypeBottomTitle {
+  font-size: 0.8rem;
+}
+
+.address-type-button {
+  padding: 0.9rem 0;
+}
