@@ -15,6 +15,7 @@ const ELECTRUM_ENDPOINTS = {
   POST_TRANSACTION: '/tx',
 }
 
+// eslint-disable-next-line max-params
 const requestElectrum = async (endpoint, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
 

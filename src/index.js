@@ -1,6 +1,15 @@
-import React from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import ReactDOM from 'react-dom/client'
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import {
+  MemoryRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
+import { Electrum } from '@APIs'
+import { AccountContext } from '@Contexts'
+import { ConnectionErrorPopup } from '@ComposedComponents'
 
 import {
   HomePage,
@@ -21,48 +30,86 @@ import '@Assets/styles/constants.css'
 import '@Assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
+
+const App = () => {
+  const [open, setOpen] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { accountRegistryName } = useContext(AccountContext)
+  const logout = () => localStorage.removeItem(accountRegistryName)
+  const account = localStorage.getItem(accountRegistryName)
+
+  const isElectrumConnected = async () => {
+    try {
+      const response = await Electrum.getLastBlockHash()
+      return response
+    } catch (error) {
+      if (account) {
+        console.error(error)
+        setOpen(true)
+        logout()
+        navigate('/')
+      }
+    }
+  }
+
+  useEffect(() => {
+    account && isElectrumConnected()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, account, navigate])
+
+  const popupButtonClickHandler = () => {
+    setOpen(false)
+  }
+
+  return (
+    <main className="App">
+      {open && <ConnectionErrorPopup onClickHandle={popupButtonClickHandler} />}
+      <Routes>
+        <Route
+          path="/dashboard"
+          element={<DashboardPage />}
+        />
+        <Route
+          path="/set-account"
+          element={<CreateAccountPage />}
+        />
+        <Route
+          path="/restore-account"
+          element={<RestoreAccountPage />}
+        />
+        <Route
+          path="/send-transaction"
+          element={<SendTransactionPage />}
+        />
+        <Route
+          path="/wallet"
+          element={<WalletPage />}
+        />
+        <Route
+          path="/set-account-password"
+          element={<SetAccountPasswordPage />}
+        />
+        <Route
+          path="/create-restore"
+          element={<CreateRestorePage />}
+        />
+        <Route
+          exact
+          path="/"
+          element={<HomePage />}
+        />
+      </Routes>
+    </main>
+  )
+}
+
 root.render(
   <React.StrictMode>
     <AccountProvider>
-      <main className="App">
-        <MemoryRouter>
-          <Routes>
-            <Route
-              path="/dashboard"
-              element={<DashboardPage />}
-            />
-            <Route
-              path="/set-account"
-              element={<CreateAccountPage />}
-            />
-            <Route
-              path="/restore-account"
-              element={<RestoreAccountPage />}
-            />
-            <Route
-              path="/send-transaction"
-              element={<SendTransactionPage />}
-            />
-            <Route
-              path="/wallet"
-              element={<WalletPage />}
-            />
-            <Route
-              path="/set-account-password"
-              element={<SetAccountPasswordPage />}
-            />
-            <Route
-              path="/create-restore"
-              element={<CreateRestorePage />}
-            />
-            <Route
-              exact
-              path="/"
-              element={<HomePage />}
-            />
-          </Routes>
-        </MemoryRouter>
-      </main>
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>
     </AccountProvider>
   </React.StrictMode>,
 )
