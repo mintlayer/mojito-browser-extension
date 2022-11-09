@@ -32,21 +32,19 @@ import '@Assets/styles/index.css'
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
 const App = () => {
-  const [open, setOpen] = useState(false)
+  const [errorPopupOpen, setErrorPopupOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { accountRegistryName } = useContext(AccountContext)
-  const logout = () => localStorage.removeItem(accountRegistryName)
-  const account = localStorage.getItem(accountRegistryName)
+  const { logout, isAccountUnlocked } = useContext(AccountContext)
 
-  const isElectrumConnected = async () => {
+  const isElectrumConnected = async (accountUnlocked) => {
     try {
       const response = await Electrum.getLastBlockHash()
       return response
     } catch (error) {
-      if (account) {
-        console.error(error)
-        setOpen(true)
+      if (accountUnlocked) {
+        console.log(error)
+        setErrorPopupOpen(true)
         logout()
         navigate('/')
       }
@@ -54,17 +52,20 @@ const App = () => {
   }
 
   useEffect(() => {
-    account && isElectrumConnected()
+    const accountUnlocked = isAccountUnlocked()
+    accountUnlocked && isElectrumConnected(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, account, navigate])
+  }, [location.pathname, navigate])
 
   const popupButtonClickHandler = () => {
-    setOpen(false)
+    setErrorPopupOpen(false)
   }
 
   return (
     <main className="App">
-      {open && <ConnectionErrorPopup onClickHandle={popupButtonClickHandler} />}
+      {errorPopupOpen && (
+        <ConnectionErrorPopup onClickHandle={popupButtonClickHandler} />
+      )}
       <Routes>
         <Route
           path="/dashboard"
