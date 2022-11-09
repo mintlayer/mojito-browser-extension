@@ -15,6 +15,9 @@ const Transaction = ({ transaction, getConfirmations }) => {
     ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
   const formatAddress = (address) => {
+    if (!address) {
+      return 'Wrong address'
+    }
     const limitSize = 24
     const halfLimit = limitSize / 2
     const firstPart = address.slice(0, halfLimit)

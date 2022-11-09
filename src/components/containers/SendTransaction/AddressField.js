@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { validate } from 'wallet-address-validator'
 
 import { Input } from '@BasicComponents'
@@ -8,15 +8,26 @@ import './errorMessages.css'
 
 import { EnvVars } from '@Constants'
 
+import { AccountContext } from '@Contexts'
+
 const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
+  const { btcAddress } = useContext(AccountContext)
   const [message, setMessage] = useState(errorMessage)
   const [isValid, setIsValid] = useState(true)
 
   const changeHandle = (ev) => {
-    const validity = validate(ev.target.value, 'btc', EnvVars.BTC_NETWORK)
+    const value = ev.target.value
+    const validity =
+      validate(value, 'btc', EnvVars.BTC_NETWORK) && value !== btcAddress
     setIsValid(validity)
     setAddressValidity(validity)
-    setMessage(validity ? undefined : 'This is not a valid BTC address.')
+    if (value === btcAddress) {
+      setMessage('Cannot send to yourself')
+    } else if (!validity) {
+      setMessage('This is not a valid BTC address.')
+    } else {
+      setMessage(undefined)
+    }
     addressChanged && addressChanged(ev)
   }
 

@@ -11,6 +11,7 @@ import ProgressTracker from './ProgressTracker/ProgressTracker'
 import TextField from './TextField/TextField'
 import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 import FeeField from './FeeField/FeeField'
+import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 
 export {
   Balance,
@@ -26,4 +27,5 @@ export {
   TextField,
   CryptoFiatField,
   FeeField,
+  ConnectionErrorPopup,
 }

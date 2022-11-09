@@ -64,6 +64,7 @@ const AccountProvider = ({ value: propValue, children }) => {
   const logout = () => localStorage.removeItem(accountRegistryName)
 
   const value = {
+    accountRegistryName,
     btcAddress,
     accountName,
     setWalletInfo: unlockAccountAndSaveParams,
