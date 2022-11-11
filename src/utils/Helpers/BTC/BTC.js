@@ -62,6 +62,8 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
           .filter((item) => item.scriptpubkey_address !== baseAddress)
           .reduce((acc, item) => acc + item.value, 0)
 
+  const isTheSameWithBase = (item) => item.scriptpubkey_address === baseAddress
+
   const getTransactionOtherParts = (direction, transaction) =>
     direction === 'in'
       ? transaction.vin
@@ -71,10 +73,14 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
             return acc
           }, [])
       : transaction.vout.reduce((arr, item) => {
-          if (item.scriptpubkey_address !== baseAddress)
+          if (transaction.vout.every(isTheSameWithBase))
+            arr.push(item.scriptpubkey_address)
+          else if (
+            !transaction.vout.every(isTheSameWithBase) &&
+            item.scriptpubkey_address !== baseAddress
+          )
             arr.push(item.scriptpubkey_address)
           else return arr
-
           return arr
         }, [])
 
