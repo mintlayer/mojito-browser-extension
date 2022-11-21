@@ -10,6 +10,7 @@ import {
 import { Electrum } from '@APIs'
 import { AccountContext } from '@Contexts'
 import { ConnectionErrorPopup } from '@ComposedComponents'
+import { useExchangeRates } from '@Hooks'
 
 import {
   HomePage,
@@ -36,6 +37,7 @@ const App = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { logout, isAccountUnlocked } = useContext(AccountContext)
+  const { exchangeRate } = useExchangeRates('btc', 'usd')
 
   const isElectrumConnected = async (accountUnlocked) => {
     try {
@@ -51,11 +53,23 @@ const App = () => {
     }
   }
 
+  const isExchangeConnected = (accountUnlocked) => {
+    if (accountUnlocked && exchangeRate) {
+      return true
+    } else {
+      setErrorPopupOpen(true)
+      logout()
+      navigate('/')
+      console.log('Exchange rate is not available')
+    }
+  }
+
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
     accountUnlocked && isElectrumConnected(accountUnlocked)
+    accountUnlocked && isExchangeConnected(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, navigate])
+  }, [location.pathname, navigate, exchangeRate])
 
   const popupButtonClickHandler = () => {
     setErrorPopupOpen(false)
