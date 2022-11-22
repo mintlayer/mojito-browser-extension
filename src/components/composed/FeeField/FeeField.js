@@ -55,7 +55,7 @@ const FeeField = ({
                 : '∞'
             } hours`
 
-      setInputValue(value)
+      setInputValue(Math.ceil(value))
       setTimeToFirstConfirmations(`${timeTo1stConfirmation}`)
     },
     [blocksToConfirm, setFeeValidity],
