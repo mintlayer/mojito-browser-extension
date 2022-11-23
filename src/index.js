@@ -41,7 +41,7 @@ const App = () => {
     try {
       const electrumResponse = await Electrum.getLastBlockHash()
       const exchangeResponse = await ExchangeRates.getRate('btc', 'usd')
-      return { electrumResponse, exchangeResponse }
+      return !!electrumResponse && !!exchangeResponse
     } catch (error) {
       if (accountUnlocked) {
         console.log(error)
