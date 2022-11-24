@@ -19,9 +19,12 @@ const floatStringToNumber = (value = '') => {
 const getDecimalNumber = (value) =>
   (Math.trunc(getNumber(value) * 100) / 100).toFixed(2)
 
+const isInteger = (number) => number === ~~number
+
 export {
   getSafeIntegerPart,
   SAFE_INTEGER_LENGTH,
   floatStringToNumber,
   getDecimalNumber,
+  isInteger,
 }

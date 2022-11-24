@@ -15,7 +15,7 @@ const FeeField = ({
 }) => {
   const effectCalled = useRef(false)
   const [options, setOptions] = useState([])
-  const [inputValue, setInputValue] = useState()
+  const [inputValue, setInputValue] = useState(0)
   const [radioButtonValue, setButtonValue] = useState(undefined)
   const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
     useState('15 minutes')
