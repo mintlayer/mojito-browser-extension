@@ -12,7 +12,7 @@ const InputInteger = (props) => {
     setValue(~~props.value)
     !NumbersHelper.isInteger(props.value) &&
       console.warn(
-        'A non-integer value was passed to InputInteger. Is has been converted to integer.',
+        'A non-integer value was passed to InputInteger. It has been converted to integer.',
       )
   }, [props.value])
 
