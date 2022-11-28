@@ -7,7 +7,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
-import { Electrum } from '@APIs'
+import { Electrum, ExchangeRates } from '@APIs'
 import { AccountContext } from '@Contexts'
 import { ConnectionErrorPopup } from '@ComposedComponents'
 
@@ -37,10 +37,11 @@ const App = () => {
   const navigate = useNavigate()
   const { logout, isAccountUnlocked } = useContext(AccountContext)
 
-  const isElectrumConnected = async (accountUnlocked) => {
+  const isConnectionAvailable = async (accountUnlocked) => {
     try {
-      const response = await Electrum.getLastBlockHash()
-      return response
+      const electrumResponse = await Electrum.getLastBlockHash()
+      const exchangeResponse = await ExchangeRates.getRate('btc', 'usd')
+      return !!electrumResponse && !!exchangeResponse
     } catch (error) {
       if (accountUnlocked) {
         console.log(error)
@@ -53,7 +54,7 @@ const App = () => {
 
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
-    accountUnlocked && isElectrumConnected(accountUnlocked)
+    accountUnlocked && isConnectionAvailable(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, navigate])
 
