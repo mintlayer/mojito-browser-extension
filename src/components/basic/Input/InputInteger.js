@@ -1,8 +1,20 @@
-import { Expressions } from '@Constants'
+import { useEffect, useState } from 'react'
 import Input from './Input'
+
+import { Expressions } from '@Constants'
+import { NumbersHelper } from '@Helpers'
 
 const InputInteger = (props) => {
   const mask = Expressions.FIELDS.INTEGER
+  const [value, setValue] = useState(0)
+
+  useEffect(() => {
+    setValue(~~props.value)
+    !NumbersHelper.isInteger(props.value) &&
+      console.warn(
+        'A non-integer value was passed to InputInteger. It has been converted to integer.',
+      )
+  }, [props.value])
 
   const parseValue = ({ target: { value, matchedValue } }) => {
     const newValue = matchedValue[1]
@@ -23,6 +35,7 @@ const InputInteger = (props) => {
     <Input
       {...props}
       mask={mask}
+      value={value}
       getMaskedValue={getMaskedValue}
       justNumbers
     />
