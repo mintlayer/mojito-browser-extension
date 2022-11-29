@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import ReactDOM from 'react-dom'
 
 import { Button } from '@BasicComponents'
 import { useOnClickOutside } from '@Hooks'
@@ -20,7 +21,7 @@ const Popup = ({ children, setOpen, allowClosing = true }) => {
 
   const popupRef = useRef(null)
   useOnClickOutside(popupRef, closeButtonClickHandler)
-  return (
+  return ReactDOM.createPortal(
     <div
       className={`backdrop ${popupClosing && 'backdropClosing'}`}
       data-testid={'backdrop'}
@@ -41,7 +42,8 @@ const Popup = ({ children, setOpen, allowClosing = true }) => {
         )}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
