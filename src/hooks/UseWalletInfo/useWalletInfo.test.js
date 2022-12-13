@@ -3,6 +3,10 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import useWalletInfo from './useWalletInfo'
 import { rawTransactions } from '@TestData'
 
+jest.spyOn(console, 'warn').mockImplementation(() => {
+  console.warn.restoreMock()
+})
+
 test('UseWalletInfo hook', async () => {
   const returnTxs = {
     ok: true,
