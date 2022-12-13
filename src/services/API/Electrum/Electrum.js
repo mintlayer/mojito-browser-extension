@@ -27,11 +27,12 @@ const requestElectrum = async (url, body = null, request = fetch) => {
   }
 }
 
-const tryServers = async (endpoint) => {
+const tryServers = async (endpoint, body = null) => {
   for (let i = 0; i < EnvVars.ELECTRUM_SERVERS.length; i++) {
     try {
       const response = await requestElectrum(
         EnvVars.ELECTRUM_SERVERS[i] + endpoint,
+        body,
       )
       return response
     } catch (error) {
