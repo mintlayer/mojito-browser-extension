@@ -9,8 +9,11 @@ import {
   getLastBlockHeight,
   getFeesEstimates,
   broadcastTransaction,
-  ELECTRUM_URL,
 } from './Electrum.js'
+
+jest.spyOn(console, 'warn').mockImplementation(() => {
+  console.warn.restoreMock()
+})
 
 test('Electrum request', async () => {
   jest.spyOn(console, 'error').mockImplementation((err) => {
@@ -23,13 +26,13 @@ test('Electrum request', async () => {
     return new Promise((resolve, reject) => {
       resolve({
         ok: true,
-        text: async () => new Promise((resolve) => resolve(addr)),
+        text: async () => new Promise((resolve) => resolve(fetchAddr)),
       })
     })
   })
 
   await expect(requestElectrum(fetchAddr, null, mockFetch)).resolves.toMatch(
-    ELECTRUM_URL + fetchAddr,
+    fetchAddr,
   )
 })
 
@@ -102,4 +105,5 @@ test('Electrum request - broadcastTransaction', async () => {
   await expect(
     async () => await broadcastTransaction({}),
   ).rejects.toThrowError()
+  expect(console.warn).toHaveBeenCalledTimes(1)
 })
