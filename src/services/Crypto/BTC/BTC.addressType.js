@@ -22,13 +22,13 @@ const BTC_ADDRESS_TYPE_MAP = {
     getAddressFromPubKey: getLegacyAddress,
   },
   p2sh: {
-    // * mainnet: 3address, testnet: 3address
+    // * mainnet: 3address, testnet: 2address
     // eslint-disable-next-line quotes
     derivationPath: "m/49'/0'/0'/0/0",
     getAddressFromPubKey: getP2shAddress,
   },
   nativeSegwit: {
-    // * mainnet: tb1address, testnet: bc1address
+    // * mainnet: bc1address, testnet: tb1address
     // eslint-disable-next-line quotes
     derivationPath: "m/84'/0'/0'/0/0",
     getAddressFromPubKey: getNativeSegwitAddress,
