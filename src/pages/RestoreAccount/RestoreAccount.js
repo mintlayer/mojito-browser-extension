@@ -24,10 +24,9 @@ const RestoreAccountPage = () => {
     walletType,
     // eslint-disable-next-line max-params
   ) => {
-    console.log(walletType)
     setCreatingWallet(true)
     let accountID = null
-    Account.saveAccount(accountName, accountPassword, mnemonic)
+    Account.saveAccount(accountName, accountPassword, mnemonic, walletType)
       .then((id) => {
         accountID = id
         return Account.unlockAccount(id, accountPassword)

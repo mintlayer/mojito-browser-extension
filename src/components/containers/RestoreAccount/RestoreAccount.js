@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Expressions } from '@Constants'
+import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
 import { Button } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
@@ -63,7 +64,7 @@ const RestoreAccount = ({
           bottom={'Your address starts with "1..."'}
         />
       ),
-      value: 'legacy',
+      value: BTC_ADDRESS_TYPE_ENUM.LEGACY,
     },
     {
       name: (
@@ -72,7 +73,7 @@ const RestoreAccount = ({
           bottom={'Your address starts with "3..."'}
         />
       ),
-      value: 'P2SH',
+      value: BTC_ADDRESS_TYPE_ENUM.P2SH,
     },
     {
       name: (
@@ -81,7 +82,7 @@ const RestoreAccount = ({
           bottom={'Your address starts with "BC1..."'}
         />
       ),
-      value: 'segwit',
+      value: BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT,
     },
   ]
 
