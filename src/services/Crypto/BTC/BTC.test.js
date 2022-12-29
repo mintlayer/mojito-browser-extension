@@ -55,6 +55,7 @@ test('Keys Generation - auto reference', () => {
 
 test('Address Generation - know data', () => {
   const address = generateAddr(knownMnemonic)
+
   expect(address).toBe(knownAddress)
 })
 

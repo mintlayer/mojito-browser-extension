@@ -23,3 +23,11 @@
 .radio-button.alternate:hover {
   border: none;
 }
+
+.radio-buttons-column {
+  flex-direction: column;
+}
+
+.radio-buttons-column .radio-button {
+  margin-bottom: 0.3rem;
+}

@@ -7,7 +7,7 @@ import { CreateAccount } from '@ContainerComponents'
 
 import { Account, loadAccountSubRoutines } from '@Entities'
 import { AccountContext } from '@Contexts'
-import { BTC } from '@Cryptos'
+import { BTC, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
 import './CreateAccount.css'
 
@@ -34,7 +34,12 @@ const CreateAccountPage = () => {
   const createAccount = (accountName, accountPassword) => {
     setCreatingWallet(true)
     let accountID = null
-    Account.saveAccount(accountName, accountPassword, words.join(' '))
+    Account.saveAccount(
+      accountName,
+      accountPassword,
+      words.join(' '),
+      BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT,
+    )
       .then((id) => {
         accountID = id
         return Account.unlockAccount(id, accountPassword)

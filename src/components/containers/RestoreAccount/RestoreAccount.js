@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Expressions } from '@Constants'
+import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
 import { Button } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
@@ -10,9 +11,19 @@ import {
   Header,
   TextField,
   InputList,
+  RadioButtons,
 } from '@ComposedComponents'
 
 import './RestoreAccount.css'
+
+const WalletTypeTitle = ({ top, bottom }) => {
+  return (
+    <div>
+      <p className="walletTypeTopTitle">{top}</p>
+      <p className="walletTypeBottomTitle">{bottom}</p>
+    </div>
+  )
+}
 
 const RestoreAccount = ({
   step,
@@ -23,6 +34,7 @@ const RestoreAccount = ({
 }) => {
   const inputExtraclasses = ['account-input']
   const passwordPattern = Expressions.PASSWORD
+  const radioButtonExtraClasses = ['address-type-button']
   const [wordsFields, setWordsFields] = useState([])
   const [accountWordsValid, setAccountWordsValid] = useState(false)
 
@@ -39,6 +51,40 @@ const RestoreAccount = ({
   const [accountNamePristinity, setAccountNamePristinity] = useState(true)
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
+
+  const [radioButtonValue, setButtonValue] = useState(undefined)
+
+  const addressType = radioButtonValue && radioButtonValue.value
+
+  const walletTypes = [
+    {
+      name: (
+        <WalletTypeTitle
+          top={'Legacy'}
+          bottom={'Your address starts with "1..."'}
+        />
+      ),
+      value: BTC_ADDRESS_TYPE_ENUM.LEGACY,
+    },
+    {
+      name: (
+        <WalletTypeTitle
+          top={'P2SH'}
+          bottom={'Your address starts with "3..."'}
+        />
+      ),
+      value: BTC_ADDRESS_TYPE_ENUM.P2SH,
+    },
+    {
+      name: (
+        <WalletTypeTitle
+          top={'Segwit'}
+          bottom={'Your address starts with "BC1..."'}
+        />
+      ),
+      value: BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT,
+    },
+  ]
 
   const navigate = useNavigate()
 
@@ -65,9 +111,14 @@ const RestoreAccount = ({
     wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
 
   const goToNextStep = () =>
-    step < 4
+    step < 5
       ? setStep(step + 1)
-      : onStepsFinished(accountNameValue, accountPasswordValue, getMnemonics())
+      : onStepsFinished(
+          accountNameValue,
+          accountPasswordValue,
+          getMnemonics(),
+          addressType,
+        )
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
@@ -75,21 +126,23 @@ const RestoreAccount = ({
     { name: 'Account Password', active: step === 2 },
     {
       name: 'Seed Phrases',
-      active: step > 2,
+      active: step > 3,
     },
   ]
 
   const stepsValidations = {
     1: accountNameValid,
     2: accountPasswordValid,
-    3: true,
-    4: accountWordsValid,
+    3: radioButtonValue,
+    4: true,
+    5: accountWordsValid,
   }
 
   const titles = {
     2: 'Create',
-    3: 'Enter Seed Phrases',
-    4: 'Confirm',
+    3: 'Next',
+    4: 'Enter Seed Phrases',
+    5: 'Confirm',
   }
 
   const nameFieldValidity = (value) => {
@@ -118,7 +171,8 @@ const RestoreAccount = ({
   }, [wordsFields, step])
 
   const handleError = (step) => {
-    if (step < 4) return
+    if (step === 3) alert('Please select a wallet type')
+    if (step < 5) return
     alert(
       'These words do not form a valid mnemonic. Check if you had any typos or if you inserted them in a different order',
     )
@@ -136,7 +190,7 @@ const RestoreAccount = ({
     if (step === 2) setAccountPasswordPristinity(false)
 
     let validForm = stepsValidations[step]
-    if (step === 4) validForm = validForm && isMnemonicValid()
+    if (step === 5) validForm = validForm && isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
   }
@@ -146,8 +200,8 @@ const RestoreAccount = ({
       <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
-        className={`account-form ${step === 4 && 'account-form-words'} ${
-          step === 3 && 'account-form-description'
+        className={`account-form ${step === 5 && 'account-form-words'} ${
+          step === 4 && 'account-form-description'
         }`}
         method="POST"
         data-testid="restore-account-form"
@@ -155,7 +209,7 @@ const RestoreAccount = ({
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step !== 4}
+          bigGap={step !== 5 && step !== 3}
         >
           {step === 1 && (
             <CenteredLayout>
@@ -190,6 +244,25 @@ const RestoreAccount = ({
             </CenteredLayout>
           )}
           {step === 3 && (
+            <>
+              <p
+                className="words-description"
+                data-testid="description-paragraph"
+              >
+                Choose your address type:
+              </p>
+              <CenteredLayout>
+                <RadioButtons
+                  value={radioButtonValue && radioButtonValue.value}
+                  options={walletTypes}
+                  onSelect={setButtonValue}
+                  column
+                  buttonExtraStyles={radioButtonExtraClasses}
+                />
+              </CenteredLayout>
+            </>
+          )}
+          {step === 4 && (
             <CenteredLayout>
               <p
                 className="words-description"
@@ -200,7 +273,7 @@ const RestoreAccount = ({
               </p>
             </CenteredLayout>
           )}
-          {step === 4 && (
+          {step === 5 && (
             <InputList
               fields={wordsFields}
               setFields={setWordsFields}

@@ -17,10 +17,16 @@ const RestoreAccountPage = () => {
   const { setWalletInfo } = useContext(AccountContext)
   const [creatingWallet, setCreatingWallet] = useState(false)
 
-  const createAccount = (accountName, accountPassword, mnemonic) => {
+  const createAccount = (
+    accountName,
+    accountPassword,
+    mnemonic,
+    walletType,
+    // eslint-disable-next-line max-params
+  ) => {
     setCreatingWallet(true)
     let accountID = null
-    Account.saveAccount(accountName, accountPassword, mnemonic)
+    Account.saveAccount(accountName, accountPassword, mnemonic, walletType)
       .then((id) => {
         accountID = id
         return Account.unlockAccount(id, accountPassword)
