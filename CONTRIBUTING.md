@@ -6,7 +6,7 @@ Follow this for each task:
 - Create a new branch named `A-[id of Asana task]`
   - E.g.:
   ```
-  git checkout main
+  git checkout dev
   git checkout -b A-1202012043191654
   ```
 - Do as many commits as you need.
@@ -17,8 +17,10 @@ Follow this for each task:
   ```
 - Create your PR setting a title like `A-[id of Asana task]: [short description]`:
   - E.g.: `A-1202012043191654: Update README with branches info`
+- **Always set base branch to `dev`**
 - Set some relevant reviewers to your PR
-- Move your Asana task to `On Staging (to be tested)` column on the project board
+- Check if you've completed all the items on the PR's template checklist
+- Move your Asana task to `Ready for Code Review` column on the project board
 - After getting the approval of all of the selected reviewers, merge your branch with `Squash and merge`
 - Remove your branch after merging
 - Move your asana task to `Ready do be deployed`
