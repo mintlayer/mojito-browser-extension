@@ -65,7 +65,7 @@ const CreateAccount = ({
   }, [accountPasswordValid])
 
   const goToNextStep = () =>
-    step < 5
+    step < 6
       ? setStep(step + 1)
       : onStepsFinished(accountNameValue, accountPasswordValue)
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
@@ -73,9 +73,10 @@ const CreateAccount = ({
   const steps = [
     { name: 'Account Name', active: step === 1 },
     { name: 'Account Password', active: step === 2 },
+    { name: 'Entropy Generator', active: step === 3 },
     {
       name: 'Seed Phrases',
-      active: step > 2,
+      active: step > 3,
     },
   ]
 
@@ -84,13 +85,14 @@ const CreateAccount = ({
     2: accountPasswordValid,
     3: true,
     4: true,
-    5: accountWordsValid,
+    5: true,
+    6: accountWordsValid,
   }
 
   const titles = {
-    3: 'I understand',
-    4: 'Backup done!',
-    5: 'Create account',
+    4: 'I understand',
+    5: 'Backup done!',
+    6: 'Create account',
   }
 
   const nameFieldValidity = (value) => {
@@ -119,7 +121,7 @@ const CreateAccount = ({
   }, [wordsFields, step])
 
   const handleError = (step) => {
-    if (step < 5) return
+    if (step < 6) return
     alert(
       'These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order',
     )
@@ -139,7 +141,7 @@ const CreateAccount = ({
     if (step === 2) setAccountPasswordPristinity(false)
 
     let validForm = stepsValidations[step]
-    if (step === 5) validForm = validForm && isMnemonicValid()
+    if (step === 6) validForm = validForm && isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
   }
@@ -149,14 +151,14 @@ const CreateAccount = ({
       <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
-        className={`set-account-form ${step > 3 && 'set-account-form-words'}`}
+        className={`set-account-form ${step > 4 && 'set-account-form-words'}`}
         method="POST"
         data-testid="set-account-form"
         onSubmit={handleSubmit}
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step < 5}
+          bigGap={step < 6}
         >
           {step === 1 && (
             <CenteredLayout>
@@ -190,8 +192,9 @@ const CreateAccount = ({
               />
             </CenteredLayout>
           )}
-          {step === 3 && <WordsDescription />}
-          {step === 4 && (
+          {step === 3 && <div>Entropy</div>}
+          {step === 4 && <WordsDescription />}
+          {step === 5 && (
             <InputList
               wordsList={words}
               fields={wordsFields}
@@ -200,7 +203,7 @@ const CreateAccount = ({
               BIP39DefaultWordList={defaultBTCWordList}
             />
           )}
-          {step === 5 && (
+          {step === 6 && (
             <InputList
               wordsList={words}
               fields={wordsFields}
