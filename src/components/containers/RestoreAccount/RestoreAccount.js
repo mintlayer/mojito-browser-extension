@@ -111,7 +111,7 @@ const RestoreAccount = ({
     wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
 
   const goToNextStep = () =>
-    step < 5
+    step < 6
       ? setStep(step + 1)
       : onStepsFinished(
           accountNameValue,
@@ -124,9 +124,10 @@ const RestoreAccount = ({
   const steps = [
     { name: 'Account Name', active: step === 1 },
     { name: 'Account Password', active: step === 2 },
+    { name: 'Entropy Generator', active: step === 4 },
     {
       name: 'Seed Phrases',
-      active: step > 3,
+      active: step > 4,
     },
   ]
 
@@ -135,14 +136,16 @@ const RestoreAccount = ({
     2: accountPasswordValid,
     3: radioButtonValue,
     4: true,
-    5: accountWordsValid,
+    5: true,
+    6: accountWordsValid,
   }
 
   const titles = {
     2: 'Create',
     3: 'Next',
-    4: 'Enter Seed Phrases',
-    5: 'Confirm',
+    4: 'Continue',
+    5: 'Enter Seed Phrases',
+    6: 'Confirm',
   }
 
   const nameFieldValidity = (value) => {
@@ -172,7 +175,7 @@ const RestoreAccount = ({
 
   const handleError = (step) => {
     if (step === 3) alert('Please select a wallet type')
-    if (step < 5) return
+    if (step < 6) return
     alert(
       'These words do not form a valid mnemonic. Check if you had any typos or if you inserted them in a different order',
     )
@@ -190,7 +193,7 @@ const RestoreAccount = ({
     if (step === 2) setAccountPasswordPristinity(false)
 
     let validForm = stepsValidations[step]
-    if (step === 5) validForm = validForm && isMnemonicValid()
+    if (step === 6) validForm = validForm && isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
   }
@@ -200,8 +203,8 @@ const RestoreAccount = ({
       <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
-        className={`account-form ${step === 5 && 'account-form-words'} ${
-          step === 4 && 'account-form-description'
+        className={`account-form ${step === 6 && 'account-form-words'} ${
+          step === 5 && 'account-form-description'
         }`}
         method="POST"
         data-testid="restore-account-form"
@@ -209,7 +212,7 @@ const RestoreAccount = ({
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step !== 5 && step !== 3}
+          bigGap={step !== 6 && step !== 3}
         >
           {step === 1 && (
             <CenteredLayout>
@@ -243,6 +246,7 @@ const RestoreAccount = ({
               />
             </CenteredLayout>
           )}
+          {step === 4 && <CenteredLayout>Entropy</CenteredLayout>}
           {step === 3 && (
             <>
               <p
@@ -262,7 +266,7 @@ const RestoreAccount = ({
               </CenteredLayout>
             </>
           )}
-          {step === 4 && (
+          {step === 5 && (
             <CenteredLayout>
               <p
                 className="words-description"
@@ -273,7 +277,7 @@ const RestoreAccount = ({
               </p>
             </CenteredLayout>
           )}
-          {step === 5 && (
+          {step === 6 && (
             <InputList
               fields={wordsFields}
               setFields={setWordsFields}
