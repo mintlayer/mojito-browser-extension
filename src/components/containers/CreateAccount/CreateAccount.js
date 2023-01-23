@@ -10,6 +10,7 @@ import {
   InputList,
   ProgressTracker,
   TextField,
+  Entropy,
 } from '@ComposedComponents'
 
 import WordsDescription from './WordsListDescription'
@@ -192,7 +193,7 @@ const CreateAccount = ({
               />
             </CenteredLayout>
           )}
-          {step === 3 && <div>Entropy</div>}
+          {step === 3 && <Entropy />}
           {step === 4 && <WordsDescription />}
           {step === 5 && (
             <InputList
