@@ -1,6 +1,7 @@
 import React from 'react'
 
 import EntropyDescription from './EntropyDescription'
+import DrawingBoard from './DrawingBoard'
 
 import './Entropy.css'
 
@@ -15,6 +16,7 @@ const Entropy = () => {
   return (
     <div className="entropy">
       <EntropyDescription descriptionItems={DESCRIPTION_ITEMS} />
+      <DrawingBoard />
     </div>
   )
 }
