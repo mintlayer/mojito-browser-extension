@@ -4,13 +4,18 @@ import { BTC, BTC_ADDRESS_TYPE_MAP, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
 test('Account creation and restoring', async () => {
   const pass = 'pass'
+  const walletType = BTC_ADDRESS_TYPE_MAP[BTC_ADDRESS_TYPE_ENUM.LEGACY]
   const { generateNewAccountMnemonic } = await loadAccountSubRoutines()
   const mnemonic = await generateNewAccountMnemonic()
-  const [pubKey] = BTC.generateKeysFromMnemonic(mnemonic)
-  const originalAddress =
-    BTC_ADDRESS_TYPE_MAP[BTC_ADDRESS_TYPE_ENUM.LEGACY].getAddressFromPubKey(
-      pubKey,
-    )
+  const rootWallet = BTC.generateKeysFromMnemonic(mnemonic)
+  const derivedWallet = BTC.deriveWallet(
+    rootWallet,
+    walletType.derivationPath,
+    0,
+  )
+  const originalAddress = walletType.getAddressFromPubKey(
+    derivedWallet.publicKey,
+  )
   const accountName = 'Savings'
   const id = await saveAccount(
     accountName,

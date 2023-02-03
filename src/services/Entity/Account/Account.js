@@ -30,7 +30,7 @@ const unlockAccount = async (id, password) => {
   try {
     const accounts = await IndexedDB.loadAccounts()
     const account = await IndexedDB.get(accounts, id)
-
+    const walletType = BTC_ADDRESS_TYPE_MAP[account.walletType]
     const { key } = await generateEncryptionKey({
       password,
       salt: account.salt,
@@ -46,9 +46,10 @@ const unlockAccount = async (id, password) => {
     /* istanbul ignore next */
     if (seed.error) throw new Error(seed.error)
 
-    const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
-    const address =
-      BTC_ADDRESS_TYPE_MAP[account.walletType].getAddressFromPubKey(pubKey)
+    const wallet = BTC.getWalletFromSeed(Buffer.from(seed))
+    const derivedWallet = BTC.deriveWallet(wallet, walletType.derivationPath, 0)
+    const WIF = derivedWallet.toWIF()
+    const address = walletType.getAddressFromPubKey(derivedWallet.publicKey)
 
     return { address, WIF, name: account.name }
   } catch (e) {

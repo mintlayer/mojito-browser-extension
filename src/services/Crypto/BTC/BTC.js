@@ -12,23 +12,26 @@ const getBIP32Object = () => BIP32Factory(ecc)
 
 const getSeedFromMnemonic = (mnemonic) => Bip39.mnemonicToSeedSync(mnemonic)
 
-const getKeysFromSeed = (seed, algoType = BTC_ADDRESS_TYPE_MAP.legacy) => {
-  const root = getBIP32Object().fromSeed(seed, NETWORK)
-  const account = root.derivePath(algoType.derivationPath)
-  return [account.publicKey, account.toWIF()]
-}
+const getWalletFromSeed = (seed) => getBIP32Object().fromSeed(seed, NETWORK)
 
 const generateMnemonic = () => Bip39.generateMnemonic()
 
 const generateKeysFromMnemonic = (mnemonic) => {
   const seed = getSeedFromMnemonic(mnemonic)
-  return getKeysFromSeed(seed)
+  return getWalletFromSeed(seed)
 }
 
-const generateAddr = (mnemonic, algoType = BTC_ADDRESS_TYPE_MAP.legacy) => {
-  const [pubKey] = generateKeysFromMnemonic(mnemonic)
-  const btcAddress = algoType.getAddressFromPubKey(pubKey)
+const deriveWallet = (wallet, path, index) =>
+  wallet.derivePath(path).derive(index)
 
+const generateAddr = (
+  mnemonic,
+  algoType = BTC_ADDRESS_TYPE_MAP.legacy,
+  index = 0,
+) => {
+  const wallet = generateKeysFromMnemonic(mnemonic)
+  const { publicKey } = deriveWallet(wallet, algoType.derivationPath, index)
+  const btcAddress = algoType.getAddressFromPubKey(publicKey)
   return btcAddress
 }
 
@@ -41,7 +44,8 @@ export {
   generateMnemonic,
   generateKeysFromMnemonic,
   getSeedFromMnemonic,
-  getKeysFromSeed,
+  getWalletFromSeed,
   validateMnemonic,
   getWordList,
+  deriveWallet,
 }

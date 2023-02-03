@@ -2,6 +2,7 @@ import * as ecc from 'tiny-secp256k1'
 import * as bitcoin from 'bitcoinjs-lib'
 import { validate } from 'wallet-address-validator'
 import { ECPairFactory } from 'ecpair'
+import { BIP32Factory } from 'bip32'
 
 import {
   generateAddr,
@@ -9,6 +10,8 @@ import {
   generateKeysFromMnemonic,
   validateMnemonic,
 } from './BTC'
+
+import BTC_ADDRESS_TYPE_MAP from './BTC.addressType'
 
 const ECPair = ECPairFactory(ecc)
 const knownAddress = 'msPGWzYgtjeTZKsmF7hUg5qmj76wdVi6qQ'
@@ -37,13 +40,19 @@ test('Address Generation - auto reference', () => {
 })
 
 test('Keys Generation - auto reference', () => {
-  const [pubKey, WIF] = generateKeysFromMnemonic(autoReferencedMnemonic)
+  const rootWallet = generateKeysFromMnemonic(autoReferencedMnemonic)
+  const derivedWallet = rootWallet
+    .derivePath(BTC_ADDRESS_TYPE_MAP.legacy.derivationPath)
+    .derive(0)
   const generatedAddress = bitcoin.payments.p2pkh({
-    pubkey: pubKey,
+    pubkey: derivedWallet.publicKey,
     network: bitcoin.networks['testnet'],
   }).address
 
-  const keyPair = ECPair.fromWIF(WIF, bitcoin.networks['testnet'])
+  const keyPair = ECPair.fromWIF(
+    derivedWallet.toWIF(),
+    bitcoin.networks['testnet'],
+  )
   const generatedAddress2 = bitcoin.payments.p2pkh({
     pubkey: keyPair.publicKey,
     network: bitcoin.networks['testnet'],
@@ -55,14 +64,17 @@ test('Keys Generation - auto reference', () => {
 
 test('Address Generation - know data', () => {
   const address = generateAddr(knownMnemonic)
-
   expect(address).toBe(knownAddress)
 })
 
 test('Keys Generation - know data', () => {
-  const [pubKey, WIF] = generateKeysFromMnemonic(knownMnemonic)
-  expect(pubKey.toString('hex')).toBe(knownPubkey)
-  expect(WIF).toBe(knownWIF)
+  const rootWallet = generateKeysFromMnemonic(knownMnemonic)
+  const derivedWallet = rootWallet
+    .derivePath(BTC_ADDRESS_TYPE_MAP.legacy.derivationPath)
+    .derive(0)
+
+  expect(derivedWallet.publicKey.toString('hex')).toBe(knownPubkey)
+  expect(derivedWallet.toWIF()).toBe(knownWIF)
 })
 
 test('Validate Mnemonic parse', () => {
