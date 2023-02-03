@@ -13,10 +13,10 @@ import './Wallet.css'
 
 const WalletPage = () => {
   const navigate = useNavigate()
-  const { btcAddress } = useContext(AccountContext)
+  const { btcAddresses, nextAddress } = useContext(AccountContext)
 
   const [openShowAddress, setOpenShowAddress] = useState(false)
-  const { transactionsList, balance } = useWalletInfo(btcAddress)
+  const { transactionsList, balance } = useWalletInfo(btcAddresses)
   const { exchangeRate } = useExchangeRates('btc', 'usd')
 
   const setOpenTransactionForm = () => navigate('/send-transaction')
@@ -42,7 +42,7 @@ const WalletPage = () => {
             />
             {openShowAddress && (
               <PopUp setOpen={setOpenShowAddress}>
-                <Wallet.ShowAddress address={btcAddress}></Wallet.ShowAddress>
+                <Wallet.ShowAddress address={nextAddress}></Wallet.ShowAddress>
               </PopUp>
             )}
           </div>

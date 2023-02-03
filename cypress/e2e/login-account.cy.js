@@ -31,7 +31,7 @@ describe('login Account wallet', () => {
       .then(() => {
         const savedAccount = JSON.parse(localStorage.getItem('unlockedAccount'))
         expect(savedAccount.name).be.eq(this.access.name)
-        expect(savedAccount.address).be.not.eq(undefined)
+        expect(savedAccount.addresses).be.not.eq(undefined)
       })
 
     cy.get('button[class="btn logout alternate"]').click()

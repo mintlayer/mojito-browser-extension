@@ -18,7 +18,8 @@ const Header = ({ customBackAction, noBackButton = false }) => {
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
     setUnlocked(accountUnlocked)
-  }, [isAccountUnlocked])
+    // eslint-disable-next-line
+  }, [])
 
   const goBack = () => (customBackAction ? customBackAction() : navigate(-1))
 

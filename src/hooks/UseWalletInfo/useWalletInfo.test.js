@@ -46,11 +46,11 @@ test('UseWalletInfo hook', async () => {
       return response
     })
 
-  const address = '2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom'
+  const addresses = ['2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom']
 
   let result
   await act(async () => {
-    result = renderHook(() => useWalletInfo(address)).result
+    result = renderHook(() => useWalletInfo(addresses)).result
   })
 
   let balance, transactionsList

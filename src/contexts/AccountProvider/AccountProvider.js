@@ -4,7 +4,8 @@ import differenceInMinutes from 'date-fns/differenceInMinutes'
 const AccountContext = createContext()
 
 const AccountProvider = ({ value: propValue, children }) => {
-  const [btcAddress, setBtcAddress] = useState('')
+  const [btcAddresses, setBtcAddresses] = useState('')
+  const [nextAddress, setNextAddress] = useState('')
   const [accountID, setAccountID] = useState('')
   const [accountName, setAccountName] = useState('')
   const accountRegistryName = 'unlockedAccount'
@@ -12,14 +13,15 @@ const AccountProvider = ({ value: propValue, children }) => {
 
   const setId = (id) => id && setAccountID(id)
   const setName = (name) => name && setAccountName(name)
-  const unlockAccount = (address, id, name) => {
-    const account = { address, id, name }
+  const unlockAccount = (addresses, id, name, nextAddress) => {
+    const account = { addresses, id, name, nextAddress }
     localStorage.setItem(accountRegistryName, JSON.stringify(account))
   }
 
-  const unlockAccountAndSaveParams = (address, id, name) => {
-    unlockAccount(address, id, name)
-    setBtcAddress(address)
+  const unlockAccountAndSaveParams = (addresses, id, name, nextAddress) => {
+    unlockAccount(addresses, id, name, nextAddress)
+    setNextAddress(nextAddress)
+    setBtcAddresses(addresses)
     setName(name)
     setId(id)
   }
@@ -29,9 +31,10 @@ const AccountProvider = ({ value: propValue, children }) => {
     if (!registry) return false
 
     const account = JSON.parse(registry)
-    setBtcAddress(account.address)
+    setBtcAddresses(account.addresses)
     setId(account.id)
     setName(account.name)
+    setNextAddress(account.nextAddress)
 
     const { logoutDate } = account
     if (!logoutDate) return true
@@ -45,9 +48,10 @@ const AccountProvider = ({ value: propValue, children }) => {
 
     !isUnlocked
       ? localStorage.removeItem(accountRegistryName)
-      : setBtcAddress(account.address) &&
+      : setBtcAddresses(account.addresses) &&
         setId(account.id) &&
-        setName(account.name)
+        setName(account.name) &&
+        setNextAddress(account.nextAddress)
 
     return isUnlocked
   }
@@ -65,7 +69,8 @@ const AccountProvider = ({ value: propValue, children }) => {
 
   const value = {
     accountRegistryName,
-    btcAddress,
+    btcAddresses,
+    nextAddress,
     accountName,
     setWalletInfo: unlockAccountAndSaveParams,
     isAccountUnlocked: checkAccountLockState,

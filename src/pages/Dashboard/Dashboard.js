@@ -14,8 +14,8 @@ import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router-dom'
 
 const DashboardPage = () => {
-  const { btcAddress, accountName } = useContext(AccountContext)
-  const { balance } = useWalletInfo(btcAddress)
+  const { btcAddresses, accountName } = useContext(AccountContext)
+  const { balance } = useWalletInfo(btcAddresses)
   const { exchangeRate } = useExchangeRates('btc', 'usd')
   const { yesterdayExchangeRate } = useOneDayAgoExchangeRates('btc', 'usd')
   const { historyRates } = useOneDayAgoHist('btc', 'usd')

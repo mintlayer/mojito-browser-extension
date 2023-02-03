@@ -23,13 +23,9 @@ test('Account creation and restoring', async () => {
     mnemonic,
     BTC_ADDRESS_TYPE_ENUM.LEGACY,
   )
-  const { address, name } = await unlockAccount(
-    id,
-    pass,
-    BTC_ADDRESS_TYPE_ENUM.LEGACY,
-  )
+  const { addresses, name } = await unlockAccount(id, pass)
 
-  expect(address).toStrictEqual(originalAddress)
+  expect(addresses[0]).toStrictEqual(originalAddress)
   expect(name).toBe(accountName)
 })
 

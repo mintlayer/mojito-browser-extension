@@ -28,6 +28,6 @@ describe('Restore account page', () => {
     cy.writeWords('input', this.login.account)
     cy.contains('button', 'Confirm').click()
 
-    cy.wait('@utxo')
+    cy.wait('@txs')
   })
 })

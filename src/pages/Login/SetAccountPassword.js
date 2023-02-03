@@ -10,8 +10,8 @@ const SetAccountPasswordPage = () => {
   const { setWalletInfo } = useContext(AccountContext)
   const navigate = useNavigate()
 
-  const login = (address, id, name) => {
-    setWalletInfo(address, id, name)
+  const login = (address, id, name, nextAddress) => {
+    setWalletInfo(address, id, name, nextAddress)
     navigate('/dashboard')
   }
 

@@ -1,6 +1,6 @@
 import { BTC, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
 import { IndexedDB } from '@Databases'
-
+import { Electrum } from '@APIs'
 import loadAccountSubRoutines from './loadWorkers'
 
 const saveAccount = async (name, password, mnemonic, walletType) => {
@@ -22,6 +22,33 @@ const saveAccount = async (name, password, mnemonic, walletType) => {
 
   const accounts = await IndexedDB.loadAccounts()
   return await IndexedDB.save(accounts, account)
+}
+
+const loadWalletUsedAddresses = async (wallet, walletType) => {
+  const addresses = []
+  let index = 0
+  let nextAddress = 0
+
+  for (;;) {
+    const derivedWallet = BTC.deriveWallet(
+      wallet,
+      walletType.derivationPath,
+      index,
+    )
+    const address = walletType.getAddressFromPubKey(derivedWallet.publicKey)
+    const transactions = JSON.parse(
+      await Electrum.getAddressTransactions(address),
+    )
+    if (transactions.length || index === 0) {
+      addresses.push(address)
+      index++
+    } else {
+      nextAddress = address
+      break
+    }
+  }
+
+  return { addresses, nextAddress }
 }
 
 const unlockAccount = async (id, password) => {
@@ -46,15 +73,14 @@ const unlockAccount = async (id, password) => {
     /* istanbul ignore next */
     if (seed.error) throw new Error(seed.error)
 
-    const wallet = BTC.getWalletFromSeed(Buffer.from(seed))
-    const derivedWallet = BTC.deriveWallet(wallet, walletType.derivationPath, 0)
-    const WIF = derivedWallet.toWIF()
-    const address = walletType.getAddressFromPubKey(derivedWallet.publicKey)
+    const rootWallet = BTC.getWalletFromSeed(Buffer.from(seed))
+    const addrs = await loadWalletUsedAddresses(rootWallet, walletType)
+    const WIF = rootWallet.toWIF()
 
-    return { address, WIF, name: account.name }
+    return { WIF, name: account.name, ...addrs }
   } catch (e) {
     console.error(e)
-    return Promise.reject({ address: '', WIF: '', name: '' })
+    return Promise.reject({ addresses: '', nextAddress: '', WIF: '', name: '' })
   }
 }
 
