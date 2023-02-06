@@ -12,6 +12,7 @@ import {
   TextField,
   InputList,
   RadioButtons,
+  Entropy,
 } from '@ComposedComponents'
 
 import './RestoreAccount.css'
@@ -246,7 +247,7 @@ const RestoreAccount = ({
               />
             </CenteredLayout>
           )}
-          {step === 4 && <CenteredLayout>Entropy</CenteredLayout>}
+          {step === 4 && <Entropy />}
           {step === 3 && (
             <>
               <p
