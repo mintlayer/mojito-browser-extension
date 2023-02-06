@@ -14,7 +14,10 @@ const DESCRIPTION_ITEMS = [
 
 const Entropy = () => {
   return (
-    <div className="entropy">
+    <div
+      className="entropy"
+      data-testid="entropy"
+    >
       <EntropyDescription descriptionItems={DESCRIPTION_ITEMS} />
       <DrawingBoard />
     </div>
