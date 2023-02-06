@@ -40,7 +40,10 @@ const DrawingBoard = () => {
   }
 
   return (
-    <div className="drawingBoard">
+    <div
+      className="drawingBoard"
+      data-testid="entropy-drawing-board"
+    >
       <Stage
         width={337}
         height={230}
@@ -49,7 +52,10 @@ const DrawingBoard = () => {
         onMouseup={handleMouseUp}
         className="drawingBoardStage"
       >
-        <Layer className="layer">
+        <Layer
+          className="layer"
+          data-testid="drawing-board-layer"
+        >
           {lines.map((line, i) => (
             <Line
               key={i}

@@ -4,3 +4,5 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
 import 'fake-indexeddb/auto'
+import 'jest-canvas-mock'
+import 'jest-webgl-canvas-mock'
