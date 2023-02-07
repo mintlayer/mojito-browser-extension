@@ -6,7 +6,7 @@ import DrawingBoard from './DrawingBoard'
 import './Entropy.css'
 
 const DESCRIPTION_ITEMS = [
-  'In the blank screen aside please draw anything tou want.',
+  'In the blank screen aside please draw anything you want.',
   'We are going to use this drawing to generate a random seed for your wallet.',
   'The more random the drawing is, the more secure your wallet will be.',
   'Express your art.',
