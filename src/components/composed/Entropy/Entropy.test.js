@@ -1,8 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import Entropy from './Entropy'
+import { AccountProvider } from '@Contexts'
 
 test('Render Entropy', async () => {
-  render(<Entropy />)
+  render(
+    <AccountProvider>
+      <Entropy />
+    </AccountProvider>,
+  )
 
   const entropy = screen.getByTestId('entropy')
   const description = screen.getByTestId('entropy-description')

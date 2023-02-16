@@ -1,8 +1,13 @@
 import { render, screen, act } from '@testing-library/react'
 import DrawingBoard from './Entropy'
+import { AccountProvider } from '@Contexts'
 
 test('Render Drawing Board', async () => {
-  render(<DrawingBoard />)
+  render(
+    <AccountProvider>
+      <DrawingBoard />
+    </AccountProvider>,
+  )
 
   const drawingBoard = screen.getByTestId('entropy-drawing-board')
   const layer = screen.getByRole('presentation')
