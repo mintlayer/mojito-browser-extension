@@ -21,13 +21,15 @@ const knownPubkey =
 let autoReferencedMnemonic = null
 let autoReferencedaddress = null
 
+const ENTROPY_DATA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+
 /**
  * Auto reference: checks if the data it is generating matches and have be reused
  * Known data: checks if data generated in the past keeps working
  */
 
 test('Mnemonic Generation - auto reference', () => {
-  autoReferencedMnemonic = generateMnemonic()
+  autoReferencedMnemonic = generateMnemonic(ENTROPY_DATA)
   expect(autoReferencedMnemonic.split(' ').length).toBe(12)
 })
 
