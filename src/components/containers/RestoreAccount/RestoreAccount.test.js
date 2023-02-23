@@ -157,11 +157,11 @@ test('Renders set account page with step 3', () => {
   })
 })
 
-test('Renders set account page with step 5', () => {
+test('Renders set account page with step 4', () => {
   render(
     <AccountProvider>
       <RestoreAccount
-        step={5}
+        step={4}
         setStep={SETSTEPSAMPLE}
       />
     </AccountProvider>,
@@ -179,7 +179,7 @@ test('Renders set account page with step 5', () => {
   })
 })
 
-test('Renders restore account page with step 6', () => {
+test('Renders restore account page with step 5', () => {
   jest.spyOn(window, 'alert').mockImplementation((message) => {
     expect(typeof message).toBe('string')
     window.alert.mockRestore()
@@ -194,7 +194,7 @@ test('Renders restore account page with step 6', () => {
   render(
     <AccountProvider>
       <RestoreAccount
-        step={6}
+        step={5}
         setStep={SETSTEPSAMPLE}
         words={WORDSSAMPLE}
         onStepsFinished={onStepsFinishedFn}
