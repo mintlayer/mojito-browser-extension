@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Expressions } from '@Constants'
@@ -16,6 +16,8 @@ import {
 import WordsDescription from './WordsListDescription'
 
 import './CreateAccount.css'
+import { AccountContext } from '@Contexts'
+import { generateEntropy, normalize } from 'entropy-generator'
 
 const CreateAccount = ({
   step,
@@ -25,6 +27,7 @@ const CreateAccount = ({
   validateMnemonicFn,
   defaultBTCWordList,
 }) => {
+  const { setEntropy, lines } = useContext(AccountContext)
   const inputExtraclasses = ['set-account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
@@ -45,6 +48,19 @@ const CreateAccount = ({
     useState(true)
 
   const navigate = useNavigate()
+
+  const calculateEntropy = useCallback(
+    (size) => {
+      const points = lines.flatMap((line) => line.points)
+      const normalizedPoints = normalize(
+        points.map((point) => Math.round(point)),
+      )
+      return size
+        ? generateEntropy(normalizedPoints, size)
+        : generateEntropy(normalizedPoints)
+    },
+    [lines],
+  )
 
   useEffect(() => {
     const message = !accountNameValid
@@ -140,6 +156,7 @@ const CreateAccount = ({
 
     if (step === 1) setAccountNamePristinity(false)
     if (step === 2) setAccountPasswordPristinity(false)
+    if (step === 3) setEntropy(calculateEntropy())
 
     let validForm = stepsValidations[step]
     if (step === 6) validForm = validForm && isMnemonicValid()

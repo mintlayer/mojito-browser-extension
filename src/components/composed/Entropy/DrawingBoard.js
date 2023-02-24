@@ -1,35 +1,14 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useContext,
-} from 'react'
+import React, { useRef, useContext } from 'react'
 import { Stage, Layer, Line } from 'react-konva'
 import { Button } from '@BasicComponents'
-import { generateEntropy, normalize } from 'entropy-generator'
 import { AccountContext } from '@Contexts'
 
 import './DrawingBoard.css'
 
 const DrawingBoard = () => {
+  const { lines, setLines, setEntropy } = useContext(AccountContext)
   const tool = 'pen'
-  const [lines, setLines] = useState([])
   const isDrawing = useRef(false)
-  const { setEntropy } = useContext(AccountContext)
-
-  const calculateEntropy = useCallback(() => {
-    const points = lines.flatMap((line) => line.points)
-    const normalizedPoints = normalize(points.map((point) => Math.round(point)))
-    return generateEntropy(normalizedPoints)
-  }, [lines])
-
-  useEffect(() => {
-    if (!lines.length) {
-      return
-    }
-    setEntropy(calculateEntropy())
-  }, [calculateEntropy, lines, setEntropy])
 
   const handleMouseDown = (e) => {
     isDrawing.current = true
