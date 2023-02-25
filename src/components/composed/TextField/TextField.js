@@ -1,6 +1,6 @@
 import React, { useId, useEffect, useState } from 'react'
 
-import { Input } from '@BasicComponents'
+import { Input, Error } from '@BasicComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useStyleClasses } from '@Hooks'
 
@@ -66,17 +66,7 @@ const TextField = ({
         onBlurHandle={setPristineState}
         focus
       />
-      {errorMessages && !isPristine && (
-        <div className="errorMessage">
-          {Array.isArray(errorMessages) ? (
-            errorMessages.map((message) => (
-              <p key={message.trim()}>{message}</p>
-            ))
-          ) : (
-            <p key={errorMessages.trim()}>{errorMessages}</p>
-          )}
-        </div>
-      )}
+      {errorMessages && !isPristine && <Error error={errorMessages} />}
     </VerticalGroup>
   )
 }

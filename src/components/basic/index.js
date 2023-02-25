@@ -6,5 +6,16 @@ import InputFloat from './Input/InputFloat'
 import InputBTC from './Input/InputBTC'
 import Line from './Line/Line'
 import Svg from './Svg/Svg'
+import Error from './Error/Error'
 
-export { Arc, Button, Input, Line, Svg, InputInteger, InputFloat, InputBTC }
+export {
+  Arc,
+  Button,
+  Input,
+  Line,
+  Svg,
+  InputInteger,
+  InputFloat,
+  InputBTC,
+  Error,
+}
