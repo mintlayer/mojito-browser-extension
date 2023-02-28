@@ -48,7 +48,7 @@ const DrawingBoard = () => {
     >
       <Stage
         width={337}
-        height={230}
+        height={238}
         onMouseDown={handleMouseDown}
         onMousemove={handleMouseMove}
         onMouseup={handleMouseUp}

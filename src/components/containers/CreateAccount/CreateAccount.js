@@ -83,13 +83,19 @@ const CreateAccount = ({
     setAccountPasswordErrorMessage(message)
   }, [accountPasswordValid])
 
+  const accountEntropyValidity = (lines) => {
+    const points = lines.flatMap((line) => line.points)
+    return points.length >= AppInfo.minEntropyLength
+  }
+
   useEffect(() => {
     if (!lines) return
-    const points = lines.flatMap((line) => line.points)
-    const isEntropyValid = points.length >= AppInfo.minEntropyLength
+    const isEntropyValid = accountEntropyValidity(lines)
     setAccountEntropyValid(isEntropyValid)
-    isEntropyValid && setShowEntropyError(false)
-  }, [lines, accountEntropyValid])
+    if (step < 3 || isEntropyValid) {
+      setShowEntropyError(false)
+    }
+  }, [lines, step, accountEntropyValid])
 
   const thirdStepSubmitHandler = () => {
     if (!accountEntropyValid) {
