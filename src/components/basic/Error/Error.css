@@ -1,3 +1,7 @@
+.errorMessage {
+  margin: 2px 0 0 0;
+}
+
 .errorMessage,
 .errorMessage * {
   color: rgb(var(--color-red));

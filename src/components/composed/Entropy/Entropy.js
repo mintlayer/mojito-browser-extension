@@ -2,6 +2,7 @@ import React from 'react'
 
 import EntropyDescription from './EntropyDescription'
 import DrawingBoard from './DrawingBoard'
+import { Error } from '@BasicComponents'
 
 import './Entropy.css'
 
@@ -12,15 +13,20 @@ const DESCRIPTION_ITEMS = [
   'Express your art.',
 ]
 
-const Entropy = () => {
+const errorMessages = 'Your entropy is too small. Please draw more lines.'
+
+const Entropy = ({ isError }) => {
   return (
-    <div
-      className="entropy"
-      data-testid="entropy"
-    >
-      <EntropyDescription descriptionItems={DESCRIPTION_ITEMS} />
-      <DrawingBoard />
-    </div>
+    <>
+      <div
+        className="entropy"
+        data-testid="entropy"
+      >
+        <EntropyDescription descriptionItems={DESCRIPTION_ITEMS} />
+        <DrawingBoard />
+      </div>
+      {isError && <Error error={errorMessages} />}
+    </>
   )
 }
 

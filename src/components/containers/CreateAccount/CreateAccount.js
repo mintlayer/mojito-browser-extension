@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Expressions } from '@Constants'
+import { AppInfo, Expressions } from '@Constants'
 
 import { Button } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
@@ -38,10 +38,12 @@ const CreateAccount = ({
 
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
+  const [accountEntropyValid, setAccountEntropyValid] = useState(false)
 
   const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
     useState(null)
+  const [showEntropyError, setShowEntropyError] = useState(false)
 
   const [accountNamePristinity, setAccountNamePristinity] = useState(true)
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
@@ -81,6 +83,21 @@ const CreateAccount = ({
     setAccountPasswordErrorMessage(message)
   }, [accountPasswordValid])
 
+  useEffect(() => {
+    if (!lines) return
+    const points = lines.flatMap((line) => line.points)
+    const isEntropyValid = points.length >= AppInfo.minEntropyLength
+    setAccountEntropyValid(isEntropyValid)
+    isEntropyValid && setShowEntropyError(false)
+  }, [lines, accountEntropyValid])
+
+  const thirdStepSubmitHandler = () => {
+    if (!accountEntropyValid) {
+      setShowEntropyError(true)
+    }
+    setEntropy(calculateEntropy())
+  }
+
   const goToNextStep = () =>
     step < 6
       ? setStep(step + 1)
@@ -90,7 +107,7 @@ const CreateAccount = ({
   const steps = [
     { name: 'Account Name', active: step === 1 },
     { name: 'Account Password', active: step === 2 },
-    { name: 'Entropy Generator', active: step === 3 },
+    { name: 'Entropy Generation', active: step === 3 },
     {
       name: 'Seed Phrases',
       active: step > 3,
@@ -100,7 +117,7 @@ const CreateAccount = ({
   const stepsValidations = {
     1: accountNameValid,
     2: accountPasswordValid,
-    3: true,
+    3: accountEntropyValid,
     4: true,
     5: true,
     6: accountWordsValid,
@@ -156,7 +173,7 @@ const CreateAccount = ({
 
     if (step === 1) setAccountNamePristinity(false)
     if (step === 2) setAccountPasswordPristinity(false)
-    if (step === 3) setEntropy(calculateEntropy())
+    if (step === 3) thirdStepSubmitHandler()
 
     let validForm = stepsValidations[step]
     if (step === 6) validForm = validForm && isMnemonicValid()
@@ -176,7 +193,7 @@ const CreateAccount = ({
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step < 6}
+          bigGap={step < 6 && !showEntropyError}
         >
           {step === 1 && (
             <CenteredLayout>
@@ -210,7 +227,7 @@ const CreateAccount = ({
               />
             </CenteredLayout>
           )}
-          {step === 3 && <Entropy />}
+          {step === 3 && <Entropy isError={showEntropyError} />}
           {step === 4 && <WordsDescription />}
           {step === 5 && (
             <InputList

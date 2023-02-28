@@ -8,5 +8,6 @@ const appAccounts = async () => {
 
 const decimalSeparator = ','
 const thousandsSeparator = '.'
+const minEntropyLength = 192
 
-export { appAccounts, decimalSeparator, thousandsSeparator }
+export { appAccounts, decimalSeparator, thousandsSeparator, minEntropyLength }
