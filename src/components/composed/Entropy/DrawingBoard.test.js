@@ -1,8 +1,13 @@
-import { render, screen, act } from '@testing-library/react'
-import DrawingBoard from './Entropy'
+import React from 'react'
+import { render, fireEvent, screen } from '@testing-library/react'
+import DrawingBoard from './DrawingBoard'
 import { AccountProvider } from '@Contexts'
+import 'konva/lib/shapes/Line'
 
-test('Render Drawing Board', async () => {
+const setLines = jest.fn()
+const setEntropy = jest.fn()
+
+test('Render Drawing Board', () => {
   render(
     <AccountProvider>
       <DrawingBoard />
@@ -20,8 +25,34 @@ test('Render Drawing Board', async () => {
 
   expect(clearButton).toBeInTheDocument()
   expect(clearButton).toHaveTextContent('Clear')
+})
 
-  act(() => {
-    clearButton.click()
-  })
+test('allows drawing on the canvas', () => {
+  render(
+    <AccountProvider value={{ lines: [], setLines }}>
+      <DrawingBoard />
+    </AccountProvider>,
+  )
+  const canvas = screen.getByRole('presentation')
+
+  fireEvent.mouseDown(canvas, { clientX: 50, clientY: 50 })
+  fireEvent.mouseUp(canvas)
+  fireEvent.mouseDown(canvas, { clientX: 60, clientY: 60 })
+  fireEvent.mouseUp(canvas)
+
+  expect(setLines).toHaveBeenCalledTimes(2)
+})
+
+test('Clears the canvas when the Clear button is clicked', () => {
+  render(
+    <AccountProvider value={{ lines: [], setLines, setEntropy }}>
+      <DrawingBoard />
+    </AccountProvider>,
+  )
+
+  const clearButton = screen.getByText('Clear')
+  fireEvent.click(clearButton)
+
+  expect(setLines).toHaveBeenCalledWith([])
+  expect(setEntropy).toHaveBeenCalledWith([])
 })
