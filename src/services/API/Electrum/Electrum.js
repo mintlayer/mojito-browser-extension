@@ -34,13 +34,16 @@ const tryServers = async (endpoint, body = null) => {
         EnvVars.ELECTRUM_SERVERS[i] + endpoint,
         body,
       )
+      // console.log(i, 'response', response)
       return response
     } catch (error) {
       console.warn(
         `${EnvVars.ELECTRUM_SERVERS[i] + endpoint} request failed: `,
         error,
       )
-      throw error
+      if (i === EnvVars.ELECTRUM_SERVERS.length - 1) {
+        throw error
+      }
     }
   }
 }

@@ -53,7 +53,8 @@
   },
   "eslintConfig": {
     "ignorePatterns": [
-      "src/commons/utils/main.js"
+      "src/commons/utils/main.js",
+      "cypress"
     ],
     "extends": [
       "eslint:recommended",
