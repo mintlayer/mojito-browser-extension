@@ -15,6 +15,8 @@ jest.spyOn(console, 'warn').mockImplementation(() => {
   console.warn.restoreMock()
 })
 
+jest.useRealTimers()
+
 test('Electrum request', async () => {
   jest.spyOn(console, 'error').mockImplementation((err) => {
     expect(err).toBeInstanceOf(Error)
