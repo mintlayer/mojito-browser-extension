@@ -17,7 +17,7 @@ import WordsDescription from './WordsListDescription'
 
 import './CreateAccount.css'
 import { AccountContext } from '@Contexts'
-import { generateEntropy, normalize } from 'entropy-generator'
+import { generateEntropy, normalize } from '@mintlayer/entropy-generator'
 
 const CreateAccount = ({
   step,
