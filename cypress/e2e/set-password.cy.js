@@ -24,7 +24,7 @@ describe('set password page', () => {
 
   it('click on continue', function () {
     cy.setPassword(this.access.password)
-    cy.contains('button', 'I understand').should('be.visible')
+    cy.contains('button', 'Continue').should('be.visible')
 
     cy.contains('li.step.false', 'Account Password').should('be.visible')
   })

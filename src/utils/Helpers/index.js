@@ -4,6 +4,7 @@ import * as CoinSelectionAlgo from './BTC/CoinSelectionAlgo'
 import * as Concurrency from './Concurrency/Concurrency'
 import * as NumbersHelper from './Number/Number'
 import * as Format from './Number/Format'
+import * as ArrayHelper from './Array/Array'
 
 export {
   BTC,
@@ -12,4 +13,5 @@ export {
   CoinSelectionAlgo,
   NumbersHelper,
   Format,
+  ArrayHelper,
 }

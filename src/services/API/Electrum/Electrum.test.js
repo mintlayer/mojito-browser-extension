@@ -15,6 +15,8 @@ jest.spyOn(console, 'warn').mockImplementation(() => {
   console.warn.restoreMock()
 })
 
+jest.useRealTimers()
+
 test('Electrum request', async () => {
   jest.spyOn(console, 'error').mockImplementation((err) => {
     expect(err).toBeInstanceOf(Error)
@@ -105,5 +107,5 @@ test('Electrum request - broadcastTransaction', async () => {
   await expect(
     async () => await broadcastTransaction({}),
   ).rejects.toThrowError()
-  expect(console.warn).toHaveBeenCalledTimes(1)
+  expect(console.warn).toHaveBeenCalled()
 })

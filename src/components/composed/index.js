@@ -12,6 +12,7 @@ import TextField from './TextField/TextField'
 import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 import FeeField from './FeeField/FeeField'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
+import Entropy from './Entropy/Entropy'
 
 export {
   Balance,
@@ -28,4 +29,5 @@ export {
   CryptoFiatField,
   FeeField,
   ConnectionErrorPopup,
+  Entropy,
 }

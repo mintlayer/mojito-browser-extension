@@ -124,11 +124,11 @@ test('Renders set account page with step 2', async () => {
   })
 })
 
-test('Renders set account page with step 3', () => {
+test('Renders set account page with step 4', () => {
   render(
     <AccountProvider>
       <SetAccount
-        step={3}
+        step={4}
         setStep={SETSTEPSAMPLE}
       />
     </AccountProvider>,
@@ -146,11 +146,11 @@ test('Renders set account page with step 3', () => {
   })
 })
 
-test('Renders set account page with step 4', () => {
+test('Renders set account page with step 5', () => {
   render(
     <AccountProvider>
       <SetAccount
-        step={4}
+        step={5}
         setStep={SETSTEPSAMPLE}
         words={WORDSSAMPLE}
       />
@@ -170,7 +170,7 @@ test('Renders set account page with step 4', () => {
   expect(input).toBeDisabled()
 })
 
-test('Renders set account page with step 5', () => {
+test('Renders set account page with step 6', () => {
   jest.spyOn(window, 'alert').mockImplementation((message) => {
     window.alert.mockRestore()
   })
@@ -184,7 +184,7 @@ test('Renders set account page with step 5', () => {
   render(
     <AccountProvider>
       <SetAccount
-        step={5}
+        step={6}
         setStep={SETSTEPSAMPLE}
         words={WORDSSAMPLE}
         onStepsFinished={onStepsFinishedFn}

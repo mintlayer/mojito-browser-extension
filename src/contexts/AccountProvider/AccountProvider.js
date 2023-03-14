@@ -7,6 +7,8 @@ const AccountProvider = ({ value: propValue, children }) => {
   const [btcAddress, setBtcAddress] = useState('')
   const [accountID, setAccountID] = useState('')
   const [accountName, setAccountName] = useState('')
+  const [lines, setLines] = useState([])
+  const [entropy, setEntropy] = useState([])
   const accountRegistryName = 'unlockedAccount'
   const loginTimeoutInMinutes = 30
 
@@ -67,6 +69,10 @@ const AccountProvider = ({ value: propValue, children }) => {
     accountRegistryName,
     btcAddress,
     accountName,
+    lines,
+    setLines,
+    entropy,
+    setEntropy,
     setWalletInfo: unlockAccountAndSaveParams,
     isAccountUnlocked: checkAccountLockState,
     setLoginTimeoutLimit,

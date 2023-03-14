@@ -18,7 +18,10 @@ const getKeysFromSeed = (seed, algoType = BTC_ADDRESS_TYPE_MAP.legacy) => {
   return [account.publicKey, account.toWIF()]
 }
 
-const generateMnemonic = () => Bip39.generateMnemonic()
+const generateMnemonic = (entropy) => {
+  const mnemonic = Bip39.entropyToMnemonic(entropy)
+  return mnemonic
+}
 
 const generateKeysFromMnemonic = (mnemonic) => {
   const seed = getSeedFromMnemonic(mnemonic)

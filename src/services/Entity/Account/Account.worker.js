@@ -6,11 +6,12 @@ const getWalletWorker = () =>
 const getCipherWorker = () =>
   new Worker(new URL('../../Crypto/Cipher/Cipher.worker', import.meta.url))
 
-const generateNewAccountMnemonic = () => {
+const generateNewAccountMnemonic = (entropy) => {
   return new Promise((resolve) => {
     const worker = getWalletWorker()
     worker.postMessage({
       job: WalletWorkerEnum.GENERATE_MNEMONIC,
+      data: entropy,
     })
     worker.onmessage = ({ data }) => {
       worker.terminate()
