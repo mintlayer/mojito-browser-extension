@@ -9,8 +9,16 @@ import { Account, loadAccountSubRoutines } from '@Entities'
 import { AccountContext } from '@Contexts'
 import { BTC, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 import { ArrayHelper } from '@Helpers'
+import { EnvVars } from '@Constants'
 
 import './CreateAccount.css'
+
+import Plausible from 'plausible-tracker'
+
+const { trackEvent } = Plausible({
+  domain: EnvVars.PLAUSIBLE_DOMAIN,
+  trackLocalhost: EnvVars.PLAUSIBLE_TRACK_LOCALHOST,
+})
 
 const CreateAccountPage = () => {
   const navigate = useNavigate()
@@ -59,6 +67,7 @@ const CreateAccountPage = () => {
         setWalletInfo(address, accountID, name)
         navigate('/dashboard')
       })
+    trackEvent('account_create__finish')
     setLines([])
     setEntropy([])
   }

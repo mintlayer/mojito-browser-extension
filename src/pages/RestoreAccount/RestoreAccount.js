@@ -8,8 +8,15 @@ import { BTC } from '@Cryptos'
 import { Header, Loading } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { RestoreAccount } from '@ContainerComponents'
+import Plausible from 'plausible-tracker'
+import { EnvVars } from '@Constants'
 
 import './RestoreAccount.css'
+
+const { trackEvent } = Plausible({
+  domain: EnvVars.PLAUSIBLE_DOMAIN,
+  trackLocalhost: EnvVars.PLAUSIBLE_TRACK_LOCALHOST,
+})
 
 const RestoreAccountPage = () => {
   const [step, setStep] = useState(1)
@@ -33,6 +40,7 @@ const RestoreAccountPage = () => {
       })
       .then(({ address }) => {
         setWalletInfo(address, accountID, accountName)
+        trackEvent('account_create_finish')
         navigate('/dashboard')
       })
   }

@@ -39,7 +39,6 @@ const HomePage = () => {
 
   const Home = () => {
     if (accounts === null) return <Loading />
-
     return !accounts.length || location.state?.fromLogin ? (
       <CreateRestorePage />
     ) : (

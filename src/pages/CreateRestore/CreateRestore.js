@@ -3,12 +3,27 @@ import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@BasicComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
+import { EnvVars } from '@Constants'
+
+import Plausible from 'plausible-tracker'
+
+const { trackEvent } = Plausible({
+  domain: EnvVars.PLAUSIBLE_DOMAIN,
+  trackLocalhost: EnvVars.PLAUSIBLE_TRACK_LOCALHOST,
+})
 
 const CreateRestorePage = () => {
   const navigate = useNavigate()
 
-  const goToSetAccountPage = () => navigate('/set-account')
-  const goToRestoreAccountPage = () => navigate('/restore-account')
+  const createButtonClickHandler = () => {
+    trackEvent('account_create__start')
+    navigate('/set-account')
+  }
+
+  const restoreButtonClickHandler = () => {
+    trackEvent('account_restore__start')
+    navigate('/restore-account')
+  }
 
   return (
     <div data-testid="create-restore">
@@ -17,9 +32,9 @@ const CreateRestorePage = () => {
       </h1>
       <CenteredLayout>
         <VerticalGroup>
-          <Button onClickHandle={goToSetAccountPage}>Create</Button>
+          <Button onClickHandle={createButtonClickHandler}>Create</Button>
           <Button
-            onClickHandle={goToRestoreAccountPage}
+            onClickHandle={restoreButtonClickHandler}
             alternate
           >
             Restore

@@ -9,8 +9,15 @@ import SendTransactionConfirmation from './SendTransactionConfirmation'
 import AddressField from './AddressField'
 import AmountField from './AmountField'
 import FeesField from './FeesField'
+import Plausible from 'plausible-tracker'
+import { EnvVars } from '@Constants'
 
 import './SendTransaction.css'
+
+const { trackEvent } = Plausible({
+  domain: EnvVars.PLAUSIBLE_DOMAIN,
+  trackLocalhost: EnvVars.PLAUSIBLE_TRACK_LOCALHOST,
+})
 
 const SendTransaction = ({
   onSendTransaction,
@@ -68,6 +75,7 @@ const SendTransaction = ({
         amount: NumbersHelper.floatStringToNumber(amountInCrypto),
         fee,
       })
+    trackEvent('transaction_send__open_confirmation')
   }
 
   const sendTransaction = async (ev) => {
@@ -86,6 +94,7 @@ const SendTransaction = ({
       setPassValidity(true)
       setPassErrorMessage('')
       setAskPassword(false)
+      trackEvent('transaction_send__sent')
     } catch (e) {
       console.error(e)
       setPassPristinity(false)
@@ -100,6 +109,7 @@ const SendTransaction = ({
 
   const handleConfirm = async () => {
     setAskPassword(true)
+    trackEvent('transaction_send__confirmed')
   }
 
   const handleCancel = () => {

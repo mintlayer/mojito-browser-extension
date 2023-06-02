@@ -9,7 +9,15 @@ import { useExchangeRates, useWalletInfo } from '@Hooks'
 import { AccountContext } from '@Contexts'
 import { BTC } from '@Helpers'
 
+import Plausible from 'plausible-tracker'
+import { EnvVars } from '@Constants'
+
 import './Wallet.css'
+
+const { trackEvent } = Plausible({
+  domain: EnvVars.PLAUSIBLE_DOMAIN,
+  trackLocalhost: EnvVars.PLAUSIBLE_TRACK_LOCALHOST,
+})
 
 const WalletPage = () => {
   const navigate = useNavigate()
@@ -19,7 +27,10 @@ const WalletPage = () => {
   const { transactionsList, balance } = useWalletInfo(btcAddress)
   const { exchangeRate } = useExchangeRates('btc', 'usd')
 
-  const setOpenTransactionForm = () => navigate('/send-transaction')
+  const setOpenTransactionForm = () => {
+    navigate('/send-transaction')
+    trackEvent('transaction_send__open')
+  }
 
   return (
     <div data-testid="wallet-page">
