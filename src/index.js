@@ -10,6 +10,7 @@ import {
 import { Electrum, ExchangeRates } from '@APIs'
 import { AccountContext } from '@Contexts'
 import { ConnectionErrorPopup } from '@ComposedComponents'
+import { PlausibleRouter } from '@Helpers'
 
 import {
   HomePage,
@@ -67,6 +68,7 @@ const App = () => {
       {errorPopupOpen && (
         <ConnectionErrorPopup onClickHandle={popupButtonClickHandler} />
       )}
+      <PlausibleRouter />
       <Routes>
         <Route
           path="/dashboard"
