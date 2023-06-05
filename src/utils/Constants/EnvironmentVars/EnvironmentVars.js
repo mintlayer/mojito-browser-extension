@@ -3,7 +3,7 @@ const USE_WEB_WORKERS = process.env.NODE_ENV !== 'test'
 const IS_PROD_ENV = process.env.NODE_ENV === 'production'
 const ELECTRUM_SERVERS = process.env.ELECTRUM_SERVERS.split(',')
 const PLAUSIBLE_DOMAIN = process.env.PLAUSIBLE_DOMAIN
-const PLAUSIBLE_TRACK_LOCALHOST = process.env.PLAUSIBLE_LOCALHOST
+const PLAUSIBLE_TRACK_LOCALHOST = process.env.PLAUSIBLE_TRACK_LOCALHOST
 
 export {
   BTC_NETWORK,
