@@ -11,6 +11,7 @@ import {
   ProgressTracker,
   TextField,
   Entropy,
+  WalletList,
 } from '@ComposedComponents'
 
 import WordsDescription from './WordsListDescription'
@@ -39,6 +40,7 @@ const CreateAccount = ({
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
   const [accountEntropyValid, setAccountEntropyValid] = useState(false)
+  const [accountWalletValid, setAccountWalletValid] = useState(false)
 
   const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
@@ -48,6 +50,7 @@ const CreateAccount = ({
   const [accountNamePristinity, setAccountNamePristinity] = useState(true)
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
+  const [selectedWallet, setSelectedWallet] = useState([])
 
   const navigate = useNavigate()
 
@@ -88,6 +91,15 @@ const CreateAccount = ({
     return points.length >= AppInfo.minEntropyLength
   }
 
+  const walletValidity = (wallets) => {
+    setAccountWalletValid(wallets.length > 0)
+  }
+
+  const onSelectWallet = (wallets) => {
+    setSelectedWallet(wallets)
+    walletValidity(wallets)
+  }
+
   useEffect(() => {
     if (!lines) return
     const isEntropyValid = accountEntropyValidity(lines)
@@ -105,7 +117,7 @@ const CreateAccount = ({
   }
 
   const goToNextStep = () =>
-    step < 6
+    step < 7
       ? setStep(step + 1)
       : onStepsFinished(accountNameValue, accountPasswordValue)
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
@@ -127,12 +139,13 @@ const CreateAccount = ({
     4: true,
     5: true,
     6: accountWordsValid,
+    7: accountWalletValid,
   }
 
   const titles = {
     4: 'I understand',
     5: 'Backup done!',
-    6: 'Create account',
+    7: 'Create account',
   }
 
   const nameFieldValidity = (value) => {
@@ -162,9 +175,14 @@ const CreateAccount = ({
 
   const handleError = (step) => {
     if (step < 6) return
-    alert(
-      'These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order',
-    )
+    if (step === 6) {
+      alert(
+        'These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order',
+      )
+    }
+    if (step === 7) {
+      alert('You must select at least one wallet')
+    }
   }
 
   const isMnemonicValid = () => {
@@ -182,7 +200,8 @@ const CreateAccount = ({
     if (step === 3) thirdStepSubmitHandler()
 
     let validForm = stepsValidations[step]
-    if (step === 6) validForm = validForm && isMnemonicValid()
+    if (step === 6) goToNextStep()
+    if (step === 7) validForm = validForm && isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
   }
@@ -199,7 +218,7 @@ const CreateAccount = ({
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step < 6 && !showEntropyError}
+          bigGap={step !== 6 && !showEntropyError}
         >
           {step === 1 && (
             <CenteredLayout>
@@ -251,6 +270,13 @@ const CreateAccount = ({
               setFields={setWordsFields}
               restoreMode={true}
               BIP39DefaultWordList={defaultBTCWordList}
+            />
+          )}
+          {step === 7 && (
+            <WalletList
+              selectedWallet={selectedWallet}
+              setSelectedWallet={onSelectWallet}
+              walletTypes={AppInfo.walletTypes}
             />
           )}
           <CenteredLayout>
