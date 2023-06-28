@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
-import RadioButtons from './RadioButtons'
+import OptionButtons from './OptionButtons'
 
 const _data = {
   value: undefined,
@@ -24,7 +24,7 @@ const _dataColumn = {
 }
 
 const setup = ({ data = _data } = {}) => {
-  const utils = render(<RadioButtons {...data} />)
+  const utils = render(<OptionButtons {...data} />)
   const low = screen.getByRole('button', { name: /low/i })
   const norm = screen.getByRole('button', { name: /norm/i })
   const high = screen.getByRole('button', { name: /high/i })
@@ -59,7 +59,7 @@ test('Renders RadioButtons and reset selection with new value', async () => {
   expect(low).toHaveClass('alternate')
 
   utils.rerender(
-    <RadioButtons
+    <OptionButtons
       {..._data}
       value={1}
     />,
@@ -82,9 +82,9 @@ test('Renders RadioButtons do select and unselected', async () => {
 })
 
 test('Render Inputs list item', async () => {
-  render(<RadioButtons {..._dataColumn} />)
-  const component = screen.getByTestId('radio-buttons')
+  render(<OptionButtons {..._dataColumn} />)
+  const component = screen.getByTestId('option-buttons')
 
   expect(component).toBeInTheDocument()
-  expect(component).toHaveClass('radio-buttons-column')
+  expect(component).toHaveClass('option-buttons-column')
 })

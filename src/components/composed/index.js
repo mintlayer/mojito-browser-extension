@@ -2,7 +2,7 @@ import Balance from './Balance/Balance'
 import Carousel from './Carousel/Carousel'
 import ArcChart from './Charts/ArcChart/ArcChart'
 import LineChart from './Charts/LineChart/LineChart'
-import RadioButtons from './RadioButtons/RadioButtons'
+import OptionButtons from './OptionButtons/OptionButtons'
 import Header from './Header/Header'
 import InputList from './InputList/InputsList'
 import Loading from './Loading/Loading'
@@ -13,13 +13,14 @@ import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 import FeeField from './FeeField/FeeField'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import Entropy from './Entropy/Entropy'
+import WalletList from './WalletList/WalletList'
 
 export {
   Balance,
   Carousel,
   ArcChart,
   LineChart,
-  RadioButtons,
+  OptionButtons,
   Header,
   InputList,
   Loading,
@@ -30,4 +31,5 @@ export {
   FeeField,
   ConnectionErrorPopup,
   Entropy,
+  WalletList,
 }
