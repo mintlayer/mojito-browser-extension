@@ -200,6 +200,7 @@ const CreateAccount = ({
     if (step === 3) thirdStepSubmitHandler()
 
     let validForm = stepsValidations[step]
+    if (step === 6) goToNextStep()
     if (step === 7) validForm = validForm && isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
