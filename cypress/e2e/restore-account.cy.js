@@ -21,7 +21,7 @@ describe('Restore account page', () => {
     cy.setAccount(this.access.name)
     cy.get('input[placeholder="Password"]').type(this.access.password)
     cy.contains('button', 'Create').click()
-    cy.get('.radio-buttons-column>button:first-child').click()
+    cy.get('.option-buttons-column>button:first-child').click()
     cy.contains('button', 'Next').click()
 
     cy.contains('button', 'Enter Seed Phrases').click()

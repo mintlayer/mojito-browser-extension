@@ -107,13 +107,20 @@ describe('create account page ', () => {
 
       cy.contains('button', 'Backup done!').click()
       cy.writeWords('input.words-list-input', words)
-      cy.contains('button', 'Create account').click()
-
-      cy.contains('Just a sec, we are creating your account...').should(
-        'be.visible',
-      )
-
-      cy.wait(2000)
+      cy.contains('button', 'Continue').click()
     })
+
+    cy.contains('button', 'Create account').click()
+    cy.wait(1000)
+    cy.contains('button', 'Create account').should('be.visible')
+
+    cy.contains('button', 'Bitcoin (BTC)').click()
+    cy.contains('button', 'Create account').click()
+
+    cy.contains('Just a sec, we are creating your account...').should(
+      'be.visible',
+    )
+
+    cy.wait(2000)
   })
 })
