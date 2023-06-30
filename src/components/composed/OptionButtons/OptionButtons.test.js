@@ -23,6 +23,17 @@ const _dataColumn = {
   column: true,
 }
 
+const _dataMultiple = {
+  value: [],
+  options: [
+    { name: 'low', value: 'low' },
+    { name: 'norm', value: 'norm' },
+    { name: 'high', value: 'high' },
+  ],
+  onSelect: jest.fn(),
+  multiple: true,
+}
+
 const setup = ({ data = _data } = {}) => {
   const utils = render(<OptionButtons {...data} />)
   const low = screen.getByRole('button', { name: /low/i })
@@ -87,4 +98,24 @@ test('Render Inputs list item', async () => {
 
   expect(component).toBeInTheDocument()
   expect(component).toHaveClass('option-buttons-column')
+})
+
+test('Render multiple selection', async () => {
+  render(<OptionButtons {..._dataMultiple} />)
+
+  const low = screen.getByRole('button', { name: /low/i })
+  const norm = screen.getByRole('button', { name: /norm/i })
+  const high = screen.getByRole('button', { name: /high/i })
+
+  fireEvent.click(low)
+  fireEvent.click(norm)
+  fireEvent.click(high)
+  expect(_dataMultiple.onSelect).toHaveBeenCalledTimes(3)
+  expect(low).toHaveClass('alternate')
+  expect(norm).toHaveClass('alternate')
+  expect(high).toHaveClass('alternate')
+
+  fireEvent.click(norm)
+  expect(_dataMultiple.onSelect).toHaveBeenCalledTimes(4)
+  expect(norm).not.toHaveClass('alternate')
 })
