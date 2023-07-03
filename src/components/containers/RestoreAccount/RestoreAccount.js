@@ -52,8 +52,7 @@ const RestoreAccount = ({
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
 
-  const [radioButtonValue, setButtonValue] = useState(undefined)
-  // console.log(radioButtonValue, 'radioButtonValue')
+  const [radioButtonValue, setRadioButtonValue] = useState(undefined)
 
   const addressType = radioButtonValue && radioButtonValue.value
 
@@ -256,7 +255,7 @@ const RestoreAccount = ({
                 <OptionButtons
                   value={radioButtonValue && radioButtonValue.value}
                   options={walletTypes}
-                  onSelect={setButtonValue}
+                  onSelect={setRadioButtonValue}
                   column
                   buttonExtraStyles={radioButtonExtraClasses}
                 />

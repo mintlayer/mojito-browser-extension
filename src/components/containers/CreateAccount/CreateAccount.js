@@ -92,7 +92,7 @@ const CreateAccount = ({
   }
 
   const walletValidity = (wallets) => {
-    setAccountWalletValid(wallets.length > 0)
+    setAccountWalletValid(wallets.length)
   }
 
   const onSelectWallet = (wallets) => {
