@@ -145,7 +145,11 @@ const RestoreAccount = ({
     { name: 'Account Password', active: step === 2 },
     {
       name: 'Seed Phrases',
-      active: step > 3,
+      active: step === 3 || step === 4,
+    },
+    {
+      name: 'Wallet Types',
+      active: step > 4,
     },
   ]
 
@@ -223,6 +227,7 @@ const RestoreAccount = ({
 
     let validForm = stepsValidations[step]
     if (step === 4) validForm = validForm && isMnemonicValid()
+    if (step === 4) validForm = true
 
     validForm ? goToNextStep() : handleError(step)
   }
