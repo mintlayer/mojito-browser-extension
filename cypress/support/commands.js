@@ -268,12 +268,16 @@ Cypress.Commands.add('restoreAccount', (name, password, words) => {
   cy.get('input[placeholder="Password"]').type(password)
   cy.contains('button', 'Create').click()
 
-  cy.get('.option-buttons-column>button:first-child').click()
-  cy.contains('button', 'Next').click()
-
   cy.contains('button', 'Enter Seed Phrases').click()
   cy.writeWords('input', words)
+  cy.contains('button', 'Continue').click()
+
+  cy.contains('button', 'Bitcoin (BTC)').click()
   cy.contains('button', 'Confirm').click()
+
+  cy.get('.option-buttons-column>button:first-child').click()
+  cy.contains('button', 'Confirm').click()
+
   cy.wait(2000)
   cy.logout()
   cy.contains(name).should('be.visible')

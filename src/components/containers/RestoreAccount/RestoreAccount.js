@@ -161,7 +161,7 @@ const RestoreAccount = ({
   const titles = {
     2: 'Create',
     3: 'Enter Seed Phrases',
-    4: 'Next',
+    4: 'Continue',
     5: 'Confirm',
     6: 'Confirm',
   }
