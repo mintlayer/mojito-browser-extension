@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Expressions } from '@Constants'
+import { AppInfo, Expressions } from '@Constants'
 import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
 import { Button } from '@BasicComponents'
@@ -12,6 +12,7 @@ import {
   TextField,
   InputList,
   OptionButtons,
+  WalletList,
 } from '@ComposedComponents'
 
 import './RestoreAccount.css'
@@ -24,6 +25,36 @@ const WalletTypeTitle = ({ top, bottom }) => {
     </div>
   )
 }
+
+const bitcoinWalletTypes = [
+  {
+    name: (
+      <WalletTypeTitle
+        top={'Legacy'}
+        bottom={'Your address starts with "1..."'}
+      />
+    ),
+    value: BTC_ADDRESS_TYPE_ENUM.LEGACY,
+  },
+  {
+    name: (
+      <WalletTypeTitle
+        top={'P2SH'}
+        bottom={'Your address starts with "3..."'}
+      />
+    ),
+    value: BTC_ADDRESS_TYPE_ENUM.P2SH,
+  },
+  {
+    name: (
+      <WalletTypeTitle
+        top={'Segwit'}
+        bottom={'Your address starts with "BC1..."'}
+      />
+    ),
+    value: BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT,
+  },
+]
 
 const RestoreAccount = ({
   step,
@@ -43,6 +74,7 @@ const RestoreAccount = ({
 
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
+  const [accountWalletValid, setAccountWalletValid] = useState(false)
 
   const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
@@ -52,39 +84,10 @@ const RestoreAccount = ({
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
 
-  const [radioButtonValue, setRadioButtonValue] = useState(undefined)
+  const [btcAddressTypeValue, setBtcAddressTypeValue] = useState(undefined)
+  const [selectedWallet, setSelectedWallet] = useState([])
 
-  const addressType = radioButtonValue && radioButtonValue.value
-
-  const walletTypes = [
-    {
-      name: (
-        <WalletTypeTitle
-          top={'Legacy'}
-          bottom={'Your address starts with "1..."'}
-        />
-      ),
-      value: BTC_ADDRESS_TYPE_ENUM.LEGACY,
-    },
-    {
-      name: (
-        <WalletTypeTitle
-          top={'P2SH'}
-          bottom={'Your address starts with "3..."'}
-        />
-      ),
-      value: BTC_ADDRESS_TYPE_ENUM.P2SH,
-    },
-    {
-      name: (
-        <WalletTypeTitle
-          top={'Segwit'}
-          bottom={'Your address starts with "BC1..."'}
-        />
-      ),
-      value: BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT,
-    },
-  ]
+  const btcAddressType = btcAddressTypeValue && btcAddressTypeValue.value
 
   const navigate = useNavigate()
 
@@ -110,15 +113,31 @@ const RestoreAccount = ({
   const getMnemonics = () =>
     wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
 
-  const goToNextStep = () =>
-    step < 5
-      ? setStep(step + 1)
-      : onStepsFinished(
-          accountNameValue,
-          accountPasswordValue,
-          getMnemonics(),
-          addressType,
-        )
+  const goToNextStep = () => {
+    const mnemonics = getMnemonics()
+    const isBtcSelected = selectedWallet.includes('btc')
+    const isLastStep = step >= 6
+
+    if (step === 5 && !isBtcSelected) {
+      onStepsFinished(
+        accountNameValue,
+        accountPasswordValue,
+        mnemonics,
+        btcAddressType,
+        selectedWallet,
+      )
+    } else if (!isLastStep) {
+      setStep(step + 1)
+    } else {
+      onStepsFinished(
+        accountNameValue,
+        accountPasswordValue,
+        mnemonics,
+        btcAddressType,
+        selectedWallet,
+      )
+    }
+  }
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
@@ -133,16 +152,18 @@ const RestoreAccount = ({
   const stepsValidations = {
     1: accountNameValid,
     2: accountPasswordValid,
-    3: radioButtonValue,
-    4: true,
-    5: accountWordsValid,
+    3: true,
+    4: accountWordsValid,
+    5: accountWalletValid,
+    6: btcAddressTypeValue,
   }
 
   const titles = {
     2: 'Create',
-    3: 'Next',
-    4: 'Enter Seed Phrases',
+    3: 'Enter Seed Phrases',
+    4: 'Next',
     5: 'Confirm',
+    6: 'Confirm',
   }
 
   const nameFieldValidity = (value) => {
@@ -163,6 +184,15 @@ const RestoreAccount = ({
     setAccountPasswordValue(value)
   }
 
+  const walletValidity = (wallets) => {
+    setAccountWalletValid(wallets.length)
+  }
+
+  const onSelectWallet = (wallets) => {
+    setSelectedWallet(wallets)
+    walletValidity(wallets)
+  }
+
   const genButtonTitle = (currentStep) => titles[currentStep] || 'Continue'
 
   useEffect(() => {
@@ -171,11 +201,13 @@ const RestoreAccount = ({
   }, [wordsFields, step])
 
   const handleError = (step) => {
-    if (step === 3) alert('Please select a wallet type')
+    if (step === 6) alert('Please select a wallet type')
+    if (step === 4)
+      alert(
+        'These words do not form a valid mnemonic. Check if you had any typos or if you inserted them in a different order',
+      )
+    if (step === 5) alert('You must select at least one wallet')
     if (step < 5) return
-    alert(
-      'These words do not form a valid mnemonic. Check if you had any typos or if you inserted them in a different order',
-    )
   }
 
   const isMnemonicValid = () => {
@@ -190,7 +222,7 @@ const RestoreAccount = ({
     if (step === 2) setAccountPasswordPristinity(false)
 
     let validForm = stepsValidations[step]
-    if (step === 5) validForm = validForm && isMnemonicValid()
+    if (step === 4) validForm = validForm && isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
   }
@@ -200,16 +232,16 @@ const RestoreAccount = ({
       <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
-        className={`account-form ${step === 5 && 'account-form-words'} ${
-          step === 4 && 'account-form-description'
-        }`}
+        className={`account-form ${
+          (step === 4 || step === 5) && 'account-form-words'
+        } ${step === 3 && 'account-form-description'}`}
         method="POST"
         data-testid="restore-account-form"
         onSubmit={handleSubmit}
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step !== 5 && step !== 3}
+          bigGap={step !== 4 && step !== 6}
         >
           {step === 1 && (
             <CenteredLayout>
@@ -244,25 +276,6 @@ const RestoreAccount = ({
             </CenteredLayout>
           )}
           {step === 3 && (
-            <>
-              <p
-                className="words-description"
-                data-testid="description-paragraph"
-              >
-                Choose your address type:
-              </p>
-              <CenteredLayout>
-                <OptionButtons
-                  value={radioButtonValue && radioButtonValue.value}
-                  options={walletTypes}
-                  onSelect={setRadioButtonValue}
-                  column
-                  buttonExtraStyles={radioButtonExtraClasses}
-                />
-              </CenteredLayout>
-            </>
-          )}
-          {step === 4 && (
             <CenteredLayout>
               <p
                 className="words-description"
@@ -273,13 +286,39 @@ const RestoreAccount = ({
               </p>
             </CenteredLayout>
           )}
-          {step === 5 && (
+          {step === 4 && (
             <InputList
               fields={wordsFields}
               setFields={setWordsFields}
               restoreMode
               BIP39DefaultWordList={defaultBTCWordList}
             />
+          )}
+          {step === 5 && (
+            <WalletList
+              selectedWallet={selectedWallet}
+              setSelectedWallet={onSelectWallet}
+              walletTypes={AppInfo.walletTypes}
+            />
+          )}
+          {step === 6 && (
+            <>
+              <p
+                className="words-description"
+                data-testid="description-paragraph"
+              >
+                Choose your BTC address type:
+              </p>
+              <CenteredLayout>
+                <OptionButtons
+                  value={btcAddressTypeValue && btcAddressTypeValue.value}
+                  options={bitcoinWalletTypes}
+                  onSelect={setBtcAddressTypeValue}
+                  column
+                  buttonExtraStyles={radioButtonExtraClasses}
+                />
+              </CenteredLayout>
+            </>
           )}
           <CenteredLayout>
             <Button onClickHandle={handleSubmit}>{genButtonTitle(step)}</Button>

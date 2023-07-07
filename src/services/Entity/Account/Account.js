@@ -3,7 +3,7 @@ import { IndexedDB } from '@Databases'
 
 import loadAccountSubRoutines from './loadWorkers'
 
-const saveAccount = async (name, password, mnemonic, walletType) => {
+const saveAccount = async (name, password, mnemonic, btcAddressType) => {
   const { generateSeed, generateEncryptionKey, encryptSeed } =
     await loadAccountSubRoutines()
 
@@ -17,7 +17,7 @@ const saveAccount = async (name, password, mnemonic, walletType) => {
     iv,
     tag,
     seed: encryptedData,
-    walletType,
+    btcAddressType,
   }
 
   const accounts = await IndexedDB.loadAccounts()
@@ -48,7 +48,7 @@ const unlockAccount = async (id, password) => {
 
     const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
     const address =
-      BTC_ADDRESS_TYPE_MAP[account.walletType].getAddressFromPubKey(pubKey)
+      BTC_ADDRESS_TYPE_MAP[account.btcAddressType].getAddressFromPubKey(pubKey)
 
     return { address, WIF, name: account.name }
   } catch (e) {
