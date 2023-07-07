@@ -227,7 +227,6 @@ const RestoreAccount = ({
 
     let validForm = stepsValidations[step]
     if (step === 4) validForm = validForm && isMnemonicValid()
-    if (step === 4) validForm = true
 
     validForm ? goToNextStep() : handleError(step)
   }
