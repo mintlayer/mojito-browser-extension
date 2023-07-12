@@ -1,10 +1,22 @@
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
-import Logo from '@Assets/images/logo96_white.png'
+import LogoMl from '@Assets/images/logo96_white.png'
 import { LineChart } from '@ComposedComponents'
+import { AppInfo } from '@Constants'
 
 import './CryptoList.css'
 
-const CryptoItem = (colorList, onClickItem, item) => {
+const MlLogo = () => {
+  return (
+    <div className="connect-logo">
+      <img
+        src={LogoMl}
+        alt="Logo"
+      />
+    </div>
+  )
+}
+
+const CryptoItem = ({ colorList, onClickItem, item }) => {
   const color = colorList[item.symbol.toLowerCase()]
   const balance = Number(item.balance * item.exchangeRate).toFixed(2)
   const bigValues = balance.length > 13
@@ -19,7 +31,7 @@ const CryptoItem = (colorList, onClickItem, item) => {
       className="crypto-item"
       onClick={onClickItem}
     >
-      <BtcLogo />
+      {item.name === 'Mintlayer' ? <MlLogo /> : <BtcLogo />}
       <div className="name-values">
         <h5>
           {item.name} ({item.symbol})
@@ -56,24 +68,60 @@ const CryptoItem = (colorList, onClickItem, item) => {
   )
 }
 
-const CryptoList = ({ cryptoList, colorList, onClickItem }) => {
+const ConnectItem = ({ walletType, onClick }) => {
+  const onItemClick = () => {
+    if (!walletType.disabled) onClick(walletType)
+  }
+  const message = walletType.disabled ? 'Coming soon' : 'Add wallet'
+  return (
+    <li
+      className={`crypto-item add-item ${
+        walletType.disabled ? 'disabled' : ''
+      }`}
+      onClick={onItemClick}
+    >
+      {walletType.name === 'Mintlayer' ? <MlLogo /> : <BtcLogo />}
+      <div className="name-values">
+        <h5>
+          {walletType.name} ({walletType.symbol})
+        </h5>
+      </div>
+      <div className="connect-message">{message}</div>
+    </li>
+  )
+}
+
+const CryptoList = ({
+  cryptoList,
+  colorList,
+  onWalletItemClick,
+  onConnectItemClick,
+}) => {
+  const missingWalletTypes = AppInfo.walletTypes.filter(
+    (walletType) =>
+      !cryptoList.find((crypto) => crypto.name === walletType.name),
+  )
   return (
     <>
       <ul>
         {cryptoList.length &&
-          cryptoList.map(CryptoItem.bind(null, colorList, onClickItem))}
-        <li className="crypto-item coming-soon">
-          <div className="mlt-logo">
-            <img
-              src={Logo}
-              alt="MLT"
+          cryptoList.map((crypto) => (
+            <CryptoItem
+              key={crypto.symbol}
+              colorList={colorList}
+              item={crypto}
+              onClickItem={onWalletItemClick}
             />
-          </div>
-          <div className="name-values">
-            <h5>Mintlayer (MLT)</h5>
-          </div>
-          <div>Coming Soon</div>
-        </li>
+          ))}
+
+        {missingWalletTypes.length &&
+          missingWalletTypes.map((walletType) => (
+            <ConnectItem
+              key={walletType.name}
+              walletType={walletType}
+              onClick={onConnectItemClick}
+            />
+          ))}
       </ul>
     </>
   )
