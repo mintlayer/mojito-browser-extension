@@ -1,6 +1,9 @@
-import { useContext } from 'react'
-import { Header } from '@ComposedComponents'
+import { useContext, useState } from 'react'
+import { Button } from '@BasicComponents'
+import { Header, PopUp, TextField } from '@ComposedComponents'
+import { VerticalGroup } from '@LayoutComponents'
 import { AccountContext } from '@Contexts'
+import { Account } from '@Entities'
 import {
   useExchangeRates,
   useWalletInfo,
@@ -14,12 +17,23 @@ import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router-dom'
 
 const DashboardPage = () => {
-  const { btcAddress, accountName } = useContext(AccountContext)
+  const [opeaConnectConfirmation, setOpeaConnectConfirmation] = useState(false)
+  const [allowClosing, setAllowClosing] = useState(true)
+  const [passValidity, setPassValidity] = useState(false)
+  const [passPristinity, setPassPristinity] = useState(true)
+  const [passErrorMessage, setPassErrorMessage] = useState('')
+  const [connectedWalletType, setConnectedWalletType] = useState('')
+  const [pass, setPass] = useState(null)
+  const { btcAddress, accountName, accountID } = useContext(AccountContext)
   const { balance } = useWalletInfo(btcAddress)
   const { exchangeRate } = useExchangeRates('btc', 'usd')
   const { yesterdayExchangeRate } = useOneDayAgoExchangeRates('btc', 'usd')
   const { historyRates } = useOneDayAgoHist('btc', 'usd')
   const navigate = useNavigate()
+
+  const changePassHandle = (value) => {
+    setPass(value)
+  }
 
   const colorList = {
     btc: '#F7931A',
@@ -74,6 +88,43 @@ const DashboardPage = () => {
 
   const goToWallet = () => navigate('/wallet')
 
+  const onConnectItemClick = (walletType) => {
+    setConnectedWalletType(walletType)
+    setOpeaConnectConfirmation(true)
+    setAllowClosing(true)
+  }
+
+  const connectWalletHandle = (pass) => {
+    return Account.unlockAccount(accountID, pass)
+  }
+
+  const onConnectSubmit = async (e) => {
+    e.preventDefault()
+    if (!pass) {
+      setPassPristinity(false)
+      setPassValidity(false)
+      setPassErrorMessage('Password must be set.')
+      return
+    }
+    setAllowClosing(false)
+    try {
+      console.log('walletType', connectedWalletType)
+      const responce = await connectWalletHandle(pass)
+      console.log(responce)
+      setPassValidity(true)
+      setPassErrorMessage('')
+    } catch (e) {
+      console.error(e)
+      setPassPristinity(false)
+      setPassValidity(false)
+      setPass('')
+      setPassErrorMessage('Incorrect password. Account could not be unlocked')
+      setAllowClosing(true)
+    } finally {
+      setAllowClosing(true)
+    }
+  }
+
   return (
     <>
       <Header noBackButton />
@@ -92,8 +143,30 @@ const DashboardPage = () => {
       <Dashboard.CryptoList
         cryptoList={cryptoList}
         colorList={colorList}
-        onClickItem={goToWallet}
+        onWalletItemClick={goToWallet}
+        onConnectItemClick={onConnectItemClick}
       />
+      {opeaConnectConfirmation && (
+        <PopUp
+          setOpen={setOpeaConnectConfirmation}
+          allowClosing={allowClosing}
+        >
+          <form>
+            <VerticalGroup bigGap>
+              <TextField
+                label="Insert your password"
+                placeHolder="Password"
+                password
+                validity={passValidity}
+                pristinity={passPristinity}
+                errorMessages={passErrorMessage}
+                onChangeHandle={changePassHandle}
+              />
+              <Button onClickHandle={onConnectSubmit}>Create Wallet</Button>
+            </VerticalGroup>
+          </form>
+        </PopUp>
+      )}
     </>
   )
 }
