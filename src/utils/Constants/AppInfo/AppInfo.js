@@ -9,5 +9,23 @@ const appAccounts = async () => {
 const decimalSeparator = ','
 const thousandsSeparator = '.'
 const minEntropyLength = 192
+const walletTypes = [
+  {
+    name: 'Bitcoin',
+    symbol: 'BTC',
+    value: 'btc',
+  },
+  {
+    name: 'Mintlayer',
+    symbol: 'ML',
+    value: 'ml',
+  },
+]
 
-export { appAccounts, decimalSeparator, thousandsSeparator, minEntropyLength }
+export {
+  appAccounts,
+  decimalSeparator,
+  thousandsSeparator,
+  minEntropyLength,
+  walletTypes,
+}
