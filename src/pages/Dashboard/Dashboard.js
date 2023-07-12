@@ -94,8 +94,9 @@ const DashboardPage = () => {
     setAllowClosing(true)
   }
 
-  const connectWalletHandle = (pass) => {
-    return Account.unlockAccount(accountID, pass)
+  const connectWalletHandle = (id, pass, walletType) => {
+    console.log(id, pass, walletType)
+    return Account.unlockAccount(id, pass)
   }
 
   const onConnectSubmit = async (e) => {
@@ -108,9 +109,12 @@ const DashboardPage = () => {
     }
     setAllowClosing(false)
     try {
-      console.log('walletType', connectedWalletType)
-      const responce = await connectWalletHandle(pass)
-      console.log(responce)
+      const response = await connectWalletHandle(
+        accountID,
+        pass,
+        connectedWalletType,
+      )
+      console.log(response)
       setPassValidity(true)
       setPassErrorMessage('')
     } catch (e) {
