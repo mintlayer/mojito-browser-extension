@@ -11,13 +11,14 @@ const thousandsSeparator = '.'
 const minEntropyLength = 192
 const walletTypes = [
   {
-    name: 'Bitcoin (BTC)',
+    name: 'Bitcoin',
+    symbol: 'BTC',
     value: 'btc',
   },
   {
-    name: 'Mintlayer (ML)',
+    name: 'Mintlayer',
+    symbol: 'ML',
     value: 'ml',
-    disabled: true,
   },
 ]
 
