@@ -17,7 +17,7 @@ import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router-dom'
 
 const DashboardPage = () => {
-  const [opeaConnectConfirmation, setOpeaConnectConfirmation] = useState(false)
+  const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
   const [passValidity, setPassValidity] = useState(false)
   const [passPristinity, setPassPristinity] = useState(true)
@@ -90,7 +90,7 @@ const DashboardPage = () => {
 
   const onConnectItemClick = (walletType) => {
     setConnectedWalletType(walletType)
-    setOpeaConnectConfirmation(true)
+    setOpenConnectConfirmation(true)
     setAllowClosing(true)
   }
 
@@ -150,9 +150,9 @@ const DashboardPage = () => {
         onWalletItemClick={goToWallet}
         onConnectItemClick={onConnectItemClick}
       />
-      {opeaConnectConfirmation && (
+      {openConnectConfirmation && (
         <PopUp
-          setOpen={setOpeaConnectConfirmation}
+          setOpen={setOpenConnectConfirmation}
           allowClosing={allowClosing}
         >
           <form>
