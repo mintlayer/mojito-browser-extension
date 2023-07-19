@@ -3,7 +3,6 @@ import { Button } from '@BasicComponents'
 import { Header, PopUp, TextField } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { AccountContext } from '@Contexts'
-import { Account } from '@Entities'
 import {
   useExchangeRates,
   useWalletInfo,
@@ -94,9 +93,9 @@ const DashboardPage = () => {
     setAllowClosing(true)
   }
 
+  // TODO: implement correct function to creat ML wallet
   const connectWalletHandle = (id, pass, walletType) => {
     console.log(id, pass, walletType)
-    return Account.unlockAccount(id, pass)
   }
 
   const onConnectSubmit = async (e) => {
