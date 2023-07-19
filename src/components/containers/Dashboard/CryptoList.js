@@ -1,7 +1,9 @@
+import { useContext } from 'react'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 import LogoMl from '@Assets/images/logo96_white.png'
 import { LineChart } from '@ComposedComponents'
 import { AppInfo } from '@Constants'
+import { SettingsContext } from '@Contexts'
 
 import './CryptoList.css'
 
@@ -24,7 +26,6 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
     idx * 10,
     Number(value),
   ])
-
   return (
     <li
       key={item.symbol}
@@ -69,15 +70,19 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
 }
 
 const ConnectItem = ({ walletType, onClick }) => {
+  const { networkType } = useContext(SettingsContext)
+
+  const isDisabled =
+    walletType.disabled ||
+    (walletType.name === 'Mintlayer' && networkType !== 'testnet')
+
   const onItemClick = () => {
-    if (!walletType.disabled) onClick(walletType)
+    if (!isDisabled) onClick(walletType)
   }
-  const message = walletType.disabled ? 'Coming soon' : 'Add wallet'
+  const message = isDisabled ? 'Coming soon' : 'Add wallet'
   return (
     <li
-      className={`crypto-item add-item ${
-        walletType.disabled ? 'disabled' : ''
-      }`}
+      className={`crypto-item add-item ${isDisabled ? 'disabled' : ''}`}
       onClick={onItemClick}
     >
       {walletType.name === 'Mintlayer' ? <MlLogo /> : <BtcLogo />}

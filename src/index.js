@@ -8,7 +8,6 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import { Electrum, ExchangeRates } from '@APIs'
-import { AccountContext } from '@Contexts'
 import { ConnectionErrorPopup } from '@ComposedComponents'
 
 import {
@@ -22,7 +21,7 @@ import {
   DashboardPage,
 } from '@Pages'
 
-import { AccountProvider } from '@Contexts'
+import { AccountContext, AccountProvider, SettingsProvider } from '@Contexts'
 
 import reportWebVitals from './utils/reportWebVitals'
 
@@ -109,9 +108,11 @@ const App = () => {
 root.render(
   <React.StrictMode>
     <AccountProvider>
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
+      <SettingsProvider>
+        <MemoryRouter>
+          <App />
+        </MemoryRouter>
+      </SettingsProvider>
     </AccountProvider>
   </React.StrictMode>,
 )
