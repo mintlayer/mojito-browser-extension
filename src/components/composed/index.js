@@ -14,6 +14,7 @@ import FeeField from './FeeField/FeeField'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import Entropy from './Entropy/Entropy'
 import WalletList from './WalletList/WalletList'
+import SettingsTestnet from './SettingsTestnet/SettingsTestnet'
 
 export {
   Balance,
@@ -32,4 +33,5 @@ export {
   ConnectionErrorPopup,
   Entropy,
   WalletList,
+  SettingsTestnet,
 }
