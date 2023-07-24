@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { ReactComponent as BackImg } from '@Assets/images/back-button.svg'
 import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
+import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
 import Logo from '@Assets/images/logo96.png'
 
 import { Button } from '@BasicComponents'
@@ -27,6 +28,10 @@ const Header = ({ customBackAction, noBackButton = false }) => {
     navigate('/')
   }
 
+  const goSettings = () => {
+    navigate('/settings')
+  }
+
   return (
     <header data-testid="header-container">
       {!noBackButton && (
@@ -40,13 +45,22 @@ const Header = ({ customBackAction, noBackButton = false }) => {
       )}
 
       {unlocked && (
-        <Button
-          alternate
-          extraStyleClasses={['logout']}
-          onClickHandle={logoutHandle}
-        >
-          <LogoutImg />
-        </Button>
+        <>
+          <Button
+            alternate
+            extraStyleClasses={['settings']}
+            onClickHandle={goSettings}
+          >
+            <SettingsImg />
+          </Button>
+          <Button
+            alternate
+            extraStyleClasses={['logout']}
+            onClickHandle={logoutHandle}
+          >
+            <LogoutImg />
+          </Button>
+        </>
       )}
 
       <div className="logoContainer">
