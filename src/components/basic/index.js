@@ -7,6 +7,7 @@ import InputBTC from './Input/InputBTC'
 import Line from './Line/Line'
 import Svg from './Svg/Svg'
 import Error from './Error/Error'
+import Toggle from './Toggle/Toggle'
 
 export {
   Arc,
@@ -18,4 +19,5 @@ export {
   InputFloat,
   InputBTC,
   Error,
+  Toggle,
 }
