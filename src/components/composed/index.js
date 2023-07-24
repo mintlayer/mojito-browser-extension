@@ -13,6 +13,7 @@ import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 import FeeField from './FeeField/FeeField'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import Entropy from './Entropy/Entropy'
+import SettingsTestnet from './SettingsTestnet/SettingsTestnet'
 
 export {
   Balance,
@@ -30,4 +31,5 @@ export {
   FeeField,
   ConnectionErrorPopup,
   Entropy,
+  SettingsTestnet,
 }
