@@ -19,6 +19,7 @@ import {
   CreateRestorePage,
   SendTransactionPage,
   DashboardPage,
+  SettingsPage,
 } from '@Pages'
 
 import { AccountContext, AccountProvider, SettingsProvider } from '@Contexts'
@@ -94,6 +95,10 @@ const App = () => {
         <Route
           path="/create-restore"
           element={<CreateRestorePage />}
+        />
+        <Route
+          path="/settings"
+          element={<SettingsPage />}
         />
         <Route
           exact
