@@ -1,0 +1,27 @@
+.settingsWrapper {
+  display: grid;
+  margin-top: 50px;
+}
+
+.settingsItem {
+  position: relative;
+  padding: 20px 5px;
+}
+
+.divider {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  margin: 0 auto;
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    #ccc 5%,
+    #ccc 95%,
+    transparent
+  );
+  background-position: center;
+  background-size: 90% 1px;
+  background-repeat: no-repeat;
+}
