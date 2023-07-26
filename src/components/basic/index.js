@@ -8,6 +8,7 @@ import Line from './Line/Line'
 import Svg from './Svg/Svg'
 import Error from './Error/Error'
 import Toggle from './Toggle/Toggle'
+import Logo from './Logo/Logo'
 
 export {
   Arc,
@@ -20,4 +21,5 @@ export {
   InputBTC,
   Error,
   Toggle,
+  Logo,
 }
