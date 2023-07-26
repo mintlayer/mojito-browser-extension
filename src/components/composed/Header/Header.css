@@ -39,21 +39,3 @@ header {
   width: 100%;
   height: 100%;
 }
-
-.logoContainer {
-  display: flex;
-  margin: 0 auto;
-  justify-content: space-between;
-  line-height: 60px;
-  width: 205px;
-}
-
-.logoContainer .logo {
-  width: 64px;
-  margin: 0;
-}
-
-.logoContainer .mojitoLettering {
-  font-size: 2.5rem;
-  color: rgb(var(--color-black));
-}
