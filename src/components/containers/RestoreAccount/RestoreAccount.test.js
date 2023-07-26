@@ -4,7 +4,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 
 import RestoreAccount from './RestoreAccount'
 import { Expressions } from '@Constants'
-import { AccountProvider } from '@Contexts'
+import { AccountProvider, SettingsProvider } from '@Contexts'
 import { BTC } from '@Cryptos'
 
 const SETSTEPSAMPLE = jest.fn()
@@ -13,10 +13,12 @@ const WORDSSAMPLE = ['car', 'house', 'cat']
 test('Renders restore account page with step 1', () => {
   render(
     <AccountProvider>
-      <RestoreAccount
-        step={1}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <RestoreAccount
+          step={1}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -52,10 +54,12 @@ test('Renders restore account page with step 2', () => {
   const passwordPattern = Expressions.PASSWORD
   render(
     <AccountProvider>
-      <RestoreAccount
-        step={2}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <RestoreAccount
+          step={2}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -132,10 +136,12 @@ test('Renders restore account page with step 2', () => {
 test('Renders set account page with step 3', () => {
   render(
     <AccountProvider>
-      <RestoreAccount
-        step={3}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <RestoreAccount
+          step={3}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -160,10 +166,12 @@ test('Renders set account page with step 3', () => {
 test('Renders set account page with step 4', () => {
   render(
     <AccountProvider>
-      <RestoreAccount
-        step={4}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <RestoreAccount
+          step={4}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -193,14 +201,16 @@ test('Renders restore account page with step 5', () => {
 
   render(
     <AccountProvider>
-      <RestoreAccount
-        step={5}
-        setStep={SETSTEPSAMPLE}
-        words={WORDSSAMPLE}
-        onStepsFinished={onStepsFinishedFn}
-        validateMnemonicFn={validateMnemonicMock}
-        defaultBTCWordList={BTC.getWordList()}
-      />
+      <SettingsProvider>
+        <RestoreAccount
+          step={5}
+          setStep={SETSTEPSAMPLE}
+          words={WORDSSAMPLE}
+          onStepsFinished={onStepsFinishedFn}
+          validateMnemonicFn={validateMnemonicMock}
+          defaultBTCWordList={BTC.getWordList()}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -249,19 +259,21 @@ test('Checks back button behavior in a internal navigation component - first ste
 
   render(
     <AccountProvider>
-      <MemoryRouter initialEntries={['/', '/set-account']}>
-        <Routes>
-          <Route
-            path="/set-account"
-            element={<RestoreAccountMock />}
-          />
-          <Route
-            exact
-            path="/"
-            element={<PrevPageMock />}
-          />
-        </Routes>
-      </MemoryRouter>
+      <SettingsProvider>
+        <MemoryRouter initialEntries={['/', '/set-account']}>
+          <Routes>
+            <Route
+              path="/set-account"
+              element={<RestoreAccountMock />}
+            />
+            <Route
+              exact
+              path="/"
+              element={<PrevPageMock />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </SettingsProvider>
     </AccountProvider>,
   )
 

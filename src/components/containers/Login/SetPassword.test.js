@@ -2,7 +2,7 @@ import * as React from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
-import { AccountProvider } from '@Contexts'
+import { AccountProvider, SettingsProvider } from '@Contexts'
 import SetPassword from './SetPassword'
 
 jest.spyOn(console, 'error').getMockImplementation(() => {
@@ -18,16 +18,18 @@ const _data = {
 const setup = ({ data = _data } = {}) => {
   const utils = render(
     <AccountProvider>
-      <MemoryRouter
-        initialEntries={[
-          {
-            pathname: '/',
-            state: { account: data.account },
-          },
-        ]}
-      >
-        <SetPassword {...data} />
-      </MemoryRouter>
+      <SettingsProvider>
+        <MemoryRouter
+          initialEntries={[
+            {
+              pathname: '/',
+              state: { account: data.account },
+            },
+          ]}
+        >
+          <SetPassword {...data} />
+        </MemoryRouter>
+      </SettingsProvider>
     </AccountProvider>,
   )
   const title = screen.getByText('Password for')
@@ -69,19 +71,21 @@ test('Click login button onSubmit', async () => {
 
   render(
     <AccountProvider>
-      <MemoryRouter
-        initialEntries={[
-          {
-            pathname: '/',
-            state: { account: _data.account },
-          },
-        ]}
-      >
-        <SetPassword
-          {..._data}
-          checkPassword={checkPassword}
-        />
-      </MemoryRouter>
+      <SettingsProvider>
+        <MemoryRouter
+          initialEntries={[
+            {
+              pathname: '/',
+              state: { account: _data.account },
+            },
+          ]}
+        >
+          <SetPassword
+            {..._data}
+            checkPassword={checkPassword}
+          />
+        </MemoryRouter>
+      </SettingsProvider>
     </AccountProvider>,
   )
 
@@ -101,19 +105,21 @@ test('Click login button onSubmit - error', async () => {
 
   render(
     <AccountProvider>
-      <MemoryRouter
-        initialEntries={[
-          {
-            pathname: '/',
-            state: { account: _data.account },
-          },
-        ]}
-      >
-        <SetPassword
-          {..._data}
-          checkPassword={checkPassword}
-        />
-      </MemoryRouter>
+      <SettingsProvider>
+        <MemoryRouter
+          initialEntries={[
+            {
+              pathname: '/',
+              state: { account: _data.account },
+            },
+          ]}
+        >
+          <SetPassword
+            {..._data}
+            checkPassword={checkPassword}
+          />
+        </MemoryRouter>
+      </SettingsProvider>
     </AccountProvider>,
   )
 

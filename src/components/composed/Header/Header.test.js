@@ -8,8 +8,10 @@ import {
   useLocation,
 } from 'react-router-dom'
 
-import { AccountProvider } from '../../../contexts/AccountProvider/AccountProvider'
+import { AccountProvider, SettingsProvider } from '@Contexts'
 import Header from './Header'
+
+const toggleNetworkType = jest.fn()
 
 const setup = async (location) => {
   const value = { isAccountUnlocked: () => true, logout: jest.fn() }
@@ -38,19 +40,21 @@ const setup = async (location) => {
 
   await render(
     <AccountProvider value={value}>
-      <MemoryRouter initialEntries={['/']}>
-        <Routes>
-          <Route
-            path="/next-page"
-            element={<NextPage />}
-          />
-          <Route
-            exact
-            path="/"
-            element={<PreviousPage />}
-          />
-        </Routes>
-      </MemoryRouter>
+      <SettingsProvider value={{ networkType: 'testnet', toggleNetworkType }}>
+        <MemoryRouter initialEntries={['/']}>
+          <Routes>
+            <Route
+              path="/next-page"
+              element={<NextPage />}
+            />
+            <Route
+              exact
+              path="/"
+              element={<PreviousPage />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </SettingsProvider>
     </AccountProvider>,
   )
 
