@@ -4,9 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { ReactComponent as BackImg } from '@Assets/images/back-button.svg'
 import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
 import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
-import Logo from '@Assets/images/logo96.png'
 
-import { Button } from '@BasicComponents'
+import { Button, Logo } from '@BasicComponents'
 import { AccountContext } from '@Contexts'
 
 import './Header.css'
@@ -62,15 +61,7 @@ const Header = ({ customBackAction, noBackButton = false }) => {
           </Button>
         </>
       )}
-
-      <div className="logoContainer">
-        <img
-          src={Logo}
-          alt="Mojito Logo"
-          className="logo"
-        />
-        <h1 className="mojitoLettering">Mojito</h1>
-      </div>
+      <Logo />
     </header>
   )
 }
