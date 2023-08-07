@@ -11,7 +11,7 @@ import {
   Header,
   TextField,
   InputList,
-  RadioButtons,
+  OptionButtons,
 } from '@ComposedComponents'
 
 import './RestoreAccount.css'
@@ -52,7 +52,7 @@ const RestoreAccount = ({
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
 
-  const [radioButtonValue, setButtonValue] = useState(undefined)
+  const [radioButtonValue, setRadioButtonValue] = useState(undefined)
 
   const addressType = radioButtonValue && radioButtonValue.value
 
@@ -252,10 +252,10 @@ const RestoreAccount = ({
                 Choose your address type:
               </p>
               <CenteredLayout>
-                <RadioButtons
+                <OptionButtons
                   value={radioButtonValue && radioButtonValue.value}
                   options={walletTypes}
-                  onSelect={setButtonValue}
+                  onSelect={setRadioButtonValue}
                   column
                   buttonExtraStyles={radioButtonExtraClasses}
                 />

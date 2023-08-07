@@ -268,7 +268,7 @@ Cypress.Commands.add('restoreAccount', (name, password, words) => {
   cy.get('input[placeholder="Password"]').type(password)
   cy.contains('button', 'Create').click()
 
-  cy.get('.radio-buttons-column>button:first-child').click()
+  cy.get('.option-buttons-column>button:first-child').click()
   cy.contains('button', 'Next').click()
 
   cy.contains('button', 'Enter Seed Phrases').click()

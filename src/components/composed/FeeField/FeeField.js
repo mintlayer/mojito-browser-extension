@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { InputInteger } from '@BasicComponents'
-import { RadioButtons } from '@ComposedComponents'
+import { OptionButtons } from '@ComposedComponents'
 import { Electrum } from '@APIs'
 import { BTC } from '@Helpers'
 
@@ -116,7 +116,7 @@ const FeeField = ({
           onChangeHandle={inputChangeHandler}
         />
         <small>sat/B</small>
-        <RadioButtons
+        <OptionButtons
           value={radioButtonValue}
           options={options}
           onSelect={optionSelectHandle}
