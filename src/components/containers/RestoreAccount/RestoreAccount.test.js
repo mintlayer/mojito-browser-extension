@@ -213,10 +213,6 @@ test('Renders set account page with step 5', () => {
   const description = screen.getByTestId('wallet-list-description')
 
   expect(description).toBeInTheDocument()
-
-  // act(() => {
-  //   restoreAccountForm.submit()
-  // })
 })
 
 test('Renders set account page with step 6', () => {
