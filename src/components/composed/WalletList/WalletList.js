@@ -11,7 +11,7 @@ const WalletList = ({ selectedWallet, setSelectedWallet, walletTypes }) => {
         className="wallet-list-description"
         data-testid="wallet-list-description"
       >
-        Whitch of this wallet would you ask to add
+        Whitch of this wallet would you ask to add?
       </p>
       <OptionButtons
         value={selectedWallet}

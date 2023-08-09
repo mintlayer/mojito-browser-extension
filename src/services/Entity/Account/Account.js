@@ -3,6 +3,8 @@ import { IndexedDB } from '@Databases'
 
 import loadAccountSubRoutines from './loadWorkers'
 
+// walletType has to be changed to btcAddressType after migration
+
 const saveAccount = async (name, password, mnemonic, walletType) => {
   const { generateSeed, generateEncryptionKey, encryptSeed } =
     await loadAccountSubRoutines()

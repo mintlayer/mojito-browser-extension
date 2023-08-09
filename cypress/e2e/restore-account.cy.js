@@ -21,11 +21,18 @@ describe('Restore account page', () => {
     cy.setAccount(this.access.name)
     cy.get('input[placeholder="Password"]').type(this.access.password)
     cy.contains('button', 'Create').click()
-    cy.get('.option-buttons-column>button:first-child').click()
-    cy.contains('button', 'Next').click()
 
     cy.contains('button', 'Enter Seed Phrases').click()
     cy.writeWords('input', this.login.account)
+
+    cy.contains('button', 'Continue').click()
+    cy.wait(1000)
+    cy.contains('button', 'Bitcoin (BTC)').should('be.visible')
+
+    cy.contains('button', 'Bitcoin (BTC)').click()
+    cy.contains('button', 'Confirm').click()
+
+    cy.get('.option-buttons-column>button:first-child').click()
     cy.contains('button', 'Confirm').click()
 
     cy.wait('@utxo')
