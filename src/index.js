@@ -8,7 +8,6 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import { Electrum, ExchangeRates } from '@APIs'
-import { AccountContext } from '@Contexts'
 import { ConnectionErrorPopup } from '@ComposedComponents'
 
 import {
@@ -20,9 +19,10 @@ import {
   CreateRestorePage,
   SendTransactionPage,
   DashboardPage,
+  SettingsPage,
 } from '@Pages'
 
-import { AccountProvider } from '@Contexts'
+import { AccountContext, AccountProvider, SettingsProvider } from '@Contexts'
 
 import reportWebVitals from './utils/reportWebVitals'
 
@@ -97,6 +97,10 @@ const App = () => {
           element={<CreateRestorePage />}
         />
         <Route
+          path="/settings"
+          element={<SettingsPage />}
+        />
+        <Route
           exact
           path="/"
           element={<HomePage />}
@@ -109,9 +113,11 @@ const App = () => {
 root.render(
   <React.StrictMode>
     <AccountProvider>
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
+      <SettingsProvider>
+        <MemoryRouter>
+          <App />
+        </MemoryRouter>
+      </SettingsProvider>
     </AccountProvider>
   </React.StrictMode>,
 )
