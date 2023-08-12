@@ -1,5 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useContext,
+} from 'react'
 
+import { AccountContext } from '@Contexts'
 import { InputInteger } from '@BasicComponents'
 import { OptionButtons } from '@ComposedComponents'
 import { Electrum } from '@APIs'
@@ -13,6 +20,7 @@ const FeeField = ({
   changeValueHandle,
   setFeeValidity,
 }) => {
+  const { walletType } = useContext(AccountContext)
   const effectCalled = useRef(false)
   const [options, setOptions] = useState([])
   const [inputValue, setInputValue] = useState(0)
@@ -20,6 +28,7 @@ const FeeField = ({
   const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
     useState('15 minutes')
   const [estimatedFees, setEstimatedFees] = useState([])
+  const feeType = walletType.name === 'Mintlayer' ? 'ML' : 'sat/B'
 
   const blocksToConfirm = useCallback(
     (value) => {
@@ -110,12 +119,14 @@ const FeeField = ({
   return (
     <div className="fee-field-wrapper">
       <div className="fee-field">
-        <InputInteger
-          id={id}
-          value={inputValue}
-          onChangeHandle={inputChangeHandler}
-        />
-        <small>sat/B</small>
+        <div className="fee-input-wrapper">
+          <InputInteger
+            id={id}
+            value={inputValue}
+            onChangeHandle={inputChangeHandler}
+          />
+          <small>{feeType}</small>
+        </div>
         <OptionButtons
           value={radioButtonValue}
           options={options}
