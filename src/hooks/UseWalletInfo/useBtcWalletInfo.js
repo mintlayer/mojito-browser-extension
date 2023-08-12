@@ -3,10 +3,10 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { Electrum } from '@APIs'
 import { BTC, Format } from '@Helpers'
 
-const useWalletInfo = (address) => {
+const useBtcWalletInfo = (address) => {
   const effectCalled = useRef(false)
-  const [transactionsList, setTransactionsList] = useState([])
-  const [balance, setBalance] = useState(0)
+  const [btcTransactionsList, setBtcTransactionsList] = useState([])
+  const [btcBalance, setBtcBalance] = useState(0)
 
   const getTransactions = useCallback(async () => {
     try {
@@ -16,7 +16,7 @@ const useWalletInfo = (address) => {
         transactions,
         address,
       )
-      setTransactionsList(parsedTransactions)
+      setBtcTransactionsList(parsedTransactions)
     } catch (error) {
       console.error(error)
     }
@@ -28,7 +28,7 @@ const useWalletInfo = (address) => {
       const satoshiBalance = BTC.calculateBalanceFromUtxoList(JSON.parse(utxos))
       const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
       const formattedBalance = Format.BTCValue(balanceConvertedToBTC)
-      setBalance(formattedBalance)
+      setBtcBalance(formattedBalance)
     } catch (error) {
       console.error(error)
     }
@@ -43,7 +43,7 @@ const useWalletInfo = (address) => {
     getBalance()
   }, [getBalance, getTransactions])
 
-  return { transactionsList, balance }
+  return { btcTransactionsList, btcBalance }
 }
 
-export default useWalletInfo
+export default useBtcWalletInfo
