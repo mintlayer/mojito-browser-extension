@@ -103,6 +103,74 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
   return parsedTransactions
 }
 
+const getYesterdayFiatBalances = (cryptos, yesterdayExchangeRateList) => {
+  const btcCrypto = cryptos.find((crypto) => crypto.symbol === 'BTC')
+  const mlCrypto = cryptos.find((crypto) => crypto.symbol === 'ML')
+
+  const btcYesterdayBalance = btcCrypto
+    ? btcCrypto.balance * yesterdayExchangeRateList.btc
+    : 0
+  const mlYesterdayBalance = mlCrypto
+    ? mlCrypto.balance * yesterdayExchangeRateList.ml
+    : 0
+  const totalYesterdayBalance = btcYesterdayBalance + mlYesterdayBalance
+
+  return { btcYesterdayBalance, mlYesterdayBalance, totalYesterdayBalance }
+}
+
+const getCurrentFiatBalances = (cryptos) => {
+  const btcCrypto = cryptos.find((crypto) => crypto.symbol === 'BTC')
+  const mlCrypto = cryptos.find((crypto) => crypto.symbol === 'ML')
+
+  const btcCurrentBalance = btcCrypto
+    ? btcCrypto.balance * btcCrypto.exchangeRate
+    : 0
+  const mlCurrentBalance = mlCrypto
+    ? mlCrypto.balance * mlCrypto.exchangeRate
+    : 0
+  const totalCurrentBalance =
+    cryptos.reduce(
+      (acc, crypto) => acc + crypto.balance * crypto.exchangeRate,
+      0,
+    ) || 0
+
+  return { btcCurrentBalance, mlCurrentBalance, totalCurrentBalance }
+}
+
+const calculateBalances = (cryptos, yesterdayExchangeRates) => {
+  const { btcYesterdayBalance, mlYesterdayBalance, totalYesterdayBalance } =
+    getYesterdayFiatBalances(cryptos, yesterdayExchangeRates)
+
+  const { btcCurrentBalance, mlCurrentBalance, totalCurrentBalance } =
+    getCurrentFiatBalances(cryptos)
+
+  const currentBalances = {
+    btc: btcCurrentBalance,
+    ml: mlCurrentBalance,
+    total: totalCurrentBalance,
+  }
+
+  const yesterdayBalances = {
+    btc: btcYesterdayBalance,
+    ml: mlYesterdayBalance,
+    total: totalYesterdayBalance,
+  }
+
+  const proportionDiffs = {
+    btc: currentBalances.btc / yesterdayBalances.btc,
+    ml: currentBalances.ml / yesterdayBalances.ml,
+    total: currentBalances.total / yesterdayBalances.total,
+  }
+
+  const balanceDiffs = {
+    btc: currentBalances.btc - btcYesterdayBalance,
+    ml: currentBalances.ml - mlYesterdayBalance,
+    total: currentBalances.total - yesterdayBalances.total,
+  }
+
+  return { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs }
+}
+
 export {
   parseFeesEstimates,
   calculateBalanceFromUtxoList,
@@ -110,6 +178,8 @@ export {
   getParsedTransactions,
   getConfirmationsAmount,
   convertBtcToSatoshi,
+  getYesterdayFiatBalances,
+  calculateBalances,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
   MAX_BTC,
