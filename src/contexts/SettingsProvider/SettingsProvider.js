@@ -6,7 +6,7 @@ const SettingsProvider = ({ value: propValue, children }) => {
   const [networkType, setNetworkType] = useState(
     localStorage.getItem('networkType') || 'mainnet',
   )
-  // TODO: Localstorage is being used directly in the Provider. It would be nice to have an Entity for this dataset, as we have for user, and use a Service for LocalStorage as we have for IndexedDB
+  // TODO: Localstorage is being used directly in the Provider. git It would be nice to have an Entity for this dataset, as we have for user, and use a Service for LocalStorage as we have for IndexedDB
   useEffect(() => {
     try {
       const storedNetworkType = localStorage.getItem('networkType')
