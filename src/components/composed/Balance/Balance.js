@@ -1,25 +1,30 @@
-import React from 'react'
+import React, { useContext } from 'react'
 
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
+import { LogoRound } from '@BasicComponents'
 import { Format, NumbersHelper } from '@Helpers'
+import { AccountContext } from '@Contexts'
 
 import './Balance.css'
 
 const Balance = ({ balance, exchangeRate }) => {
+  const { walletType } = useContext(AccountContext)
   const balanceInUSD = NumbersHelper.floatStringToNumber(balance) * exchangeRate
+
+  const symbol = walletType.name === 'Mintlayer' ? 'ML' : 'BTC'
 
   return (
     <div
       className="balance-wrapper"
       data-testid="current-balance"
     >
-      <BtcLogo />
+      {walletType.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
       <div className="balance">
         <p
           className="balance-btc"
           data-testid="balance-paragraph"
         >
-          <span>{Format.BTCValue(balance)}</span> BTC
+          <span>{Format.BTCValue(balance)}</span> {symbol}
         </p>
         <p
           className="balance-usd"
