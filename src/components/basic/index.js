@@ -9,6 +9,7 @@ import Svg from './Svg/Svg'
 import Error from './Error/Error'
 import Toggle from './Toggle/Toggle'
 import Logo from './Logo/Logo'
+import LogoRound from './LogoRound/LogoRound'
 
 export {
   Arc,
@@ -22,4 +23,5 @@ export {
   Error,
   Toggle,
   Logo,
+  LogoRound,
 }
