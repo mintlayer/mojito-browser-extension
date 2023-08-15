@@ -105,11 +105,9 @@ const FeeField = ({
       const mlFees = ML_FEE_MOCK
       const fees = walletType.name === 'Mintlayer' ? mlFees : btcFees
       const estimates = JSON.parse(fees)
-      console.log(estimates)
-      setEstimatedFees(estimates, 'estimates')
+      setEstimatedFees(estimates)
 
       const parsedFees = BTC.parseFeesEstimates(estimates)
-      console.log(parsedFees, 'parsedFees')
 
       setOptions([
         { name: 'low', value: parsedFees.LOW },
