@@ -16,7 +16,7 @@ const WalletPage = () => {
   const { btcAddress, mlAddress, walletType } = useContext(AccountContext)
 
   const [openShowAddress, setOpenShowAddress] = useState(false)
-  const { btcTransactionList, btcBalance } = useBtcWalletInfo(btcAddress)
+  const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
   const { mlTransactionsList, mlBalance } = useMlWalletInfo(mlAddress)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
@@ -28,7 +28,7 @@ const WalletPage = () => {
   const walletBalance = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
   const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
   const walletTransactionList =
-    walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionList
+    walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
 
   return (
     <div data-testid="wallet-page">

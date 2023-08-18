@@ -1,5 +1,7 @@
+import { useContext } from 'react'
 import { ArcChart } from '@ComposedComponents'
 import { Format } from '@Helpers'
+import { SettingsContext } from '@Contexts'
 
 import './CryptoSharesChart.css'
 
@@ -10,6 +12,9 @@ const CryptoSharesChart = ({
   accountName = 'Account Name',
   colorList,
 }) => {
+  const { networkType } = useContext(SettingsContext)
+  const totalBalanceInFiat =
+    networkType === 'testnet' ? '0' : Format.fiatValue(totalBalance)
   const data = cryptos.map((crypto) => ({
     value: (crypto.balance * crypto.exchangeRate).toFixed(2),
     asset: crypto.name,
@@ -28,7 +33,7 @@ const CryptoSharesChart = ({
           />
         </div>
         <h2>
-          {Format.fiatValue(totalBalance)}
+          {totalBalanceInFiat}
           <span> {fiatSymbol}</span>
           <em>{accountName}</em>
         </h2>

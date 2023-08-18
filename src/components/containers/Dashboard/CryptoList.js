@@ -8,8 +8,12 @@ import { SettingsContext } from '@Contexts'
 import './CryptoList.css'
 
 const CryptoItem = ({ colorList, onClickItem, item }) => {
+  const { networkType } = useContext(SettingsContext)
   const color = colorList[item.symbol.toLowerCase()]
-  const balance = Number(item.balance * item.exchangeRate).toFixed(2)
+  const balance =
+    networkType === 'testnet'
+      ? item.balance
+      : Number(item.balance * item.exchangeRate).toFixed(2)
   const bigValues = balance.length > 13
   const data = Object.values(item.historyRates).map((value, idx) => [
     idx * 10,
@@ -35,8 +39,12 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
           <dl>
             <dt>Value:</dt>
             <dd>{balance}</dd>
-            <dt>Price:</dt>
-            <dd>{item.exchangeRate.toFixed(2)}</dd>
+            {networkType !== 'testnet' && (
+              <>
+                <dt>Price:</dt>
+                <dd>{item.exchangeRate.toFixed(2)}</dd>
+              </>
+            )}
           </dl>
         </div>
       </div>
@@ -45,7 +53,7 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
           {Number(balance) > 0 && (
             <>
               <strong className={item.change24h < 0 ? 'negative' : 'positive'}>
-                {item.change24h}%
+                {networkType === 'testnet' ? 0 : item.change24h}%
               </strong>
               <span>24h</span>
             </>

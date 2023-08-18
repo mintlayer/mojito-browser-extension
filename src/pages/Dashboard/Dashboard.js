@@ -79,40 +79,30 @@ const DashboardPage = () => {
     },
   ]
 
-  const {
-    currentBalances: mainnetCurrentBalances,
-    proportionDiffs: mainnetProportionDiffs,
-    balanceDiffs: mainnetBalanceDiffs,
-  } = BTC.calculateBalances(cryptos, yesterdayExchangeRateList)
+  const { currentBalances, proportionDiffs, balanceDiffs } =
+    BTC.calculateBalances(cryptos, yesterdayExchangeRateList)
 
-  // TODO: it has been added to test the dashboard with multiple cryptos. Has to to be removed or changed when the dashboard is ready
-  const {
-    currentBalances: testnetCurrentBalances,
-    proportionDiffs: testnetProportionDiffs,
-    balanceDiffs: testnetBalanceDiffs,
-  } = BTC.calculateBalances(cryptosTestnet, yesterdayExchangeRateList)
-
-  const proportionDiffs =
-    networkType === 'testnet' ? testnetProportionDiffs : mainnetProportionDiffs
-  const balanceDiffs =
-    networkType === 'testnet' ? testnetBalanceDiffs : mainnetBalanceDiffs
-
-  const getStats = (proportionDiffs, balanceDiffs) => {
+  const getStats = (proportionDiffs, balanceDiffs, networkType) => {
+    const isTestnet = networkType === 'testnet'
+    const precentValue = isTestnet
+      ? 0
+      : Number((proportionDiffs.total - 1) * 100).toFixed(2)
+    const fiatValue = isTestnet ? 0 : balanceDiffs.total.toFixed(2)
     return [
       {
         name: '24h percent',
-        value: Number((proportionDiffs.total - 1) * 100).toFixed(2),
+        value: precentValue,
         unit: '%',
       },
       {
         name: '24h fiat',
-        value: balanceDiffs.total.toFixed(2),
+        value: fiatValue,
         unit: 'USD',
       },
     ]
   }
 
-  const stats = getStats(proportionDiffs, balanceDiffs)
+  const stats = getStats(proportionDiffs, balanceDiffs, networkType)
 
   const cryptoList = [
     {
@@ -133,7 +123,7 @@ const DashboardPage = () => {
       balance: NumbersHelper.floatStringToNumber(btcBalance),
       exchangeRate: btcExchangeRate,
       historyRates,
-      change24h: Number((proportionDiffs.btc - 1) * 100).toFixed(2),
+      change24h: 0,
     },
     {
       name: 'Mintlayer',
@@ -141,7 +131,7 @@ const DashboardPage = () => {
       balance: NumbersHelper.floatStringToNumber(mlBalance),
       exchangeRate: mlExchangeRate,
       historyRates,
-      change24h: Number((proportionDiffs.ml - 1) * 100).toFixed(2),
+      change24h: 0,
     },
   ]
 
@@ -198,21 +188,13 @@ const DashboardPage = () => {
       <div className="stats">
         <Dashboard.CryptoSharesChart
           cryptos={networkType === 'testnet' ? cryptosTestnet : cryptos}
-          totalBalance={
-            networkType === 'testnet'
-              ? testnetCurrentBalances.total
-              : mainnetCurrentBalances.total
-          }
+          totalBalance={currentBalances.total}
           accountName={accountName}
           colorList={colorList}
         />
         <Dashboard.Statistics
           stats={stats}
-          totalBalance={
-            networkType === 'testnet'
-              ? testnetCurrentBalances.total
-              : mainnetCurrentBalances.total
-          }
+          totalBalance={currentBalances.total}
         />
       </div>
       <Dashboard.CryptoList
