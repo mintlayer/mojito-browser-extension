@@ -84,14 +84,14 @@ const DashboardPage = () => {
 
   const getStats = (proportionDiffs, balanceDiffs, networkType) => {
     const isTestnet = networkType === 'testnet'
-    const precentValue = isTestnet
+    const percentValue = isTestnet
       ? 0
       : Number((proportionDiffs.total - 1) * 100).toFixed(2)
     const fiatValue = isTestnet ? 0 : balanceDiffs.total.toFixed(2)
     return [
       {
         name: '24h percent',
-        value: precentValue,
+        value: percentValue,
         unit: '%',
       },
       {
