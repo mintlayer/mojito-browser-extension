@@ -3,13 +3,17 @@ import React, { useContext } from 'react'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 import { LogoRound } from '@BasicComponents'
 import { Format, NumbersHelper } from '@Helpers'
-import { AccountContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 
 import './Balance.css'
 
 const Balance = ({ balance, exchangeRate }) => {
   const { walletType } = useContext(AccountContext)
-  const balanceInUSD = NumbersHelper.floatStringToNumber(balance) * exchangeRate
+  const { networkType } = useContext(SettingsContext)
+  const balanceInUSD =
+    networkType === 'testnet'
+      ? '0,00'
+      : NumbersHelper.floatStringToNumber(balance) * exchangeRate
 
   const symbol = walletType.name === 'Mintlayer' ? 'ML' : 'BTC'
 
