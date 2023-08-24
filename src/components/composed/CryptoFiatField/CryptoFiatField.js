@@ -64,6 +64,7 @@ const CryptoFiatField = ({
     bottomValue ? bottomValue : Format.fiatValue(0)
   } ${isTypeFiat() ? tokenName : fiatName}`
 
+  // Consider the correct format for 0,00 that might also be 0.00
   const displayedBottomValue =
     networkType === 'testnet' ? `≈ 0,00 ${fiatName}` : formattedBottomValue
 

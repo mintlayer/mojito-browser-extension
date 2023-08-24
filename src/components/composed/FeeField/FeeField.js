@@ -47,7 +47,7 @@ const FeeField = ({
   const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
     useState('15 minutes')
   const [estimatedFees, setEstimatedFees] = useState([])
-  const feeType = walletType.name === 'Mintlayer' ? 'ML' : 'sat/B'
+  const feeType = walletType.name === 'Mintlayer' ? 'atoms/B' : 'sat/B'
 
   const blocksToConfirm = useCallback(
     (value) => {
