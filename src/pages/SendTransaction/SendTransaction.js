@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
-import { useExchangeRates, useWalletInfo } from '@Hooks'
+import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
 import { AccountContext } from '@Contexts'
 import { BTCTransaction } from '@Cryptos'
 import { Account } from '@Entities'
@@ -19,9 +19,12 @@ import { Electrum } from '@APIs'
 import './SendTransaction.css'
 
 const SendTransactionPage = () => {
-  const [tokenName, fiatName] = ['BTC', 'USD']
+  const { btcAddress, accountID, walletType } = useContext(AccountContext)
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
+  const navigate = useNavigate()
+  const tokenName = walletType.name === 'Mintlayer' ? 'ML' : 'BTC'
+  const fiatName = 'USD'
   const [transactionData] = useState({
     fiatName,
     tokenName,
@@ -29,11 +32,11 @@ const SendTransactionPage = () => {
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
 
-  const { btcAddress, accountID } = useContext(AccountContext)
-  const navigate = useNavigate()
-
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { balance } = useWalletInfo(btcAddress)
+  const { btcBalance } = useBtcWalletInfo(btcAddress)
+  const { mlBalance } = useMlWalletInfo(btcAddress)
+
+  const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
 
   if (!accountID) {
     console.log('No account id.')
@@ -105,7 +108,7 @@ const SendTransactionPage = () => {
             totalFeeCrypto={totalFeeCrypto}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
-            maxValueInToken={balance}
+            maxValueInToken={maxValueToken}
             onSendTransaction={createTransaction}
             calculateTotalFee={calculateTotalFee}
             setFormValidity={setFormValid}

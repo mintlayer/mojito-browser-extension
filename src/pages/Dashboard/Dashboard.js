@@ -2,10 +2,12 @@ import { useContext, useState } from 'react'
 import { Button } from '@BasicComponents'
 import { Header, PopUp, TextField } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
-import { AccountContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
+
 import {
   useExchangeRates,
-  useWalletInfo,
+  useBtcWalletInfo,
+  useMlWalletInfo,
   useOneDayAgoExchangeRates,
 } from '@Hooks'
 import { Dashboard } from '@ContainerComponents'
@@ -14,19 +16,27 @@ import { NumbersHelper } from '@Helpers'
 import './Dashboard.css'
 import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router-dom'
+import { BTC } from '@Helpers'
 
 const DashboardPage = () => {
+  const [pass, setPass] = useState(null)
+  const { btcAddress, mlAddress, accountName, accountID, setWalletType } =
+    useContext(AccountContext)
   const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
   const [passValidity, setPassValidity] = useState(false)
   const [passPristinity, setPassPristinity] = useState(true)
   const [passErrorMessage, setPassErrorMessage] = useState('')
   const [connectedWalletType, setConnectedWalletType] = useState('')
-  const [pass, setPass] = useState(null)
-  const { btcAddress, accountName, accountID } = useContext(AccountContext)
-  const { balance } = useWalletInfo(btcAddress)
-  const { exchangeRate } = useExchangeRates('btc', 'usd')
-  const { yesterdayExchangeRate } = useOneDayAgoExchangeRates('btc', 'usd')
+  const { networkType } = useContext(SettingsContext)
+  const { btcBalance } = useBtcWalletInfo(btcAddress)
+  const { mlBalance } = useMlWalletInfo(mlAddress)
+  const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
+  const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
+  const { yesterdayExchangeRate: btcYesterdayExchangeRate } =
+    useOneDayAgoExchangeRates('btc', 'usd')
+  const { yesterdayExchangeRate: mlYesterdayExchangeRate } =
+    useOneDayAgoExchangeRates('ml', 'usd')
   const { historyRates } = useOneDayAgoHist('btc', 'usd')
   const navigate = useNavigate()
 
@@ -34,61 +44,105 @@ const DashboardPage = () => {
     setPass(value)
   }
 
+  const yesterdayExchangeRateList = {
+    btc: btcYesterdayExchangeRate,
+    ml: mlYesterdayExchangeRate,
+  }
+
   const colorList = {
     btc: '#F7931A',
-    mlt: '#0C7764',
+    ml: '#0C7764',
   }
 
   const cryptos = [
     {
       name: 'Bitcoin',
       symbol: 'BTC',
-      balance: NumbersHelper.floatStringToNumber(balance),
-      exchangeRate,
+      balance: NumbersHelper.floatStringToNumber(btcBalance),
+      exchangeRate: btcExchangeRate,
     },
   ]
 
-  const totalBalance = cryptos.reduce(
-    (acc, crypto) => acc + crypto.balance * crypto.exchangeRate,
-    0,
-  )
-
-  const yesterdayBalance = cryptos.reduce(
-    (acc, crypto) => acc + crypto.balance * yesterdayExchangeRate,
-    0,
-  )
-
-  const proportionDiff = totalBalance / yesterdayBalance || 0
-  const balanceDiff = totalBalance - yesterdayBalance || 0
-
-  const stats = [
+  // TODO: it has been added to test the dashboard with multiple cryptos. Has to to be removed when the dashboard is ready
+  const cryptosTestnet = [
     {
-      name: '24h percent',
-      value: Number((proportionDiff - 1) * 100).toFixed(2),
-      unit: '%',
+      name: 'Bitcoin',
+      symbol: 'BTC',
+      balance: NumbersHelper.floatStringToNumber(btcBalance),
+      exchangeRate: btcExchangeRate,
     },
     {
-      name: '24h fiat',
-      value: balanceDiff.toFixed(2),
-      unit: 'USD',
+      name: 'Mintlayer',
+      symbol: 'ML',
+      balance: NumbersHelper.floatStringToNumber(mlBalance),
+      exchangeRate: mlExchangeRate,
     },
   ]
+
+  const { currentBalances, proportionDiffs, balanceDiffs } =
+    BTC.calculateBalances(cryptos, yesterdayExchangeRateList)
+
+  const getStats = (proportionDiffs, balanceDiffs, networkType) => {
+    const isTestnet = networkType === 'testnet'
+    const percentValue = isTestnet
+      ? 0
+      : Number((proportionDiffs.total - 1) * 100).toFixed(2)
+    const fiatValue = isTestnet ? 0 : balanceDiffs.total.toFixed(2)
+    return [
+      {
+        name: '24h percent',
+        value: percentValue,
+        unit: '%',
+      },
+      {
+        name: '24h fiat',
+        value: fiatValue,
+        unit: 'USD',
+      },
+    ]
+  }
+
+  const stats = getStats(proportionDiffs, balanceDiffs, networkType)
 
   const cryptoList = [
     {
       name: 'Bitcoin',
       symbol: 'BTC',
-      balance: NumbersHelper.floatStringToNumber(balance),
-      exchangeRate,
+      balance: NumbersHelper.floatStringToNumber(btcBalance),
+      exchangeRate: btcExchangeRate,
       historyRates,
-      change24h: Number((proportionDiff - 1) * 100).toFixed(2),
+      change24h: Number((proportionDiffs.btc - 1) * 100).toFixed(2),
     },
   ]
 
-  const goToWallet = () => navigate('/wallet')
+  // TODO: it has been added to test the dashboard with multiple cryptos. Has to to be removed or changed when the dashboard is ready
+  const cryptoListTestnet = [
+    {
+      name: 'Bitcoin',
+      symbol: 'BTC',
+      balance: NumbersHelper.floatStringToNumber(btcBalance),
+      exchangeRate: btcExchangeRate,
+      historyRates,
+      change24h: 0,
+    },
+    {
+      name: 'Mintlayer',
+      symbol: 'ML',
+      balance: NumbersHelper.floatStringToNumber(mlBalance),
+      exchangeRate: mlExchangeRate,
+      historyRates,
+      change24h: 0,
+    },
+  ]
+
+  const goToWallet = (walletType) => {
+    setWalletType(walletType)
+    navigate('/wallet')
+  }
 
   const onConnectItemClick = (walletType) => {
     setConnectedWalletType(walletType)
+    console.log(walletType)
     setOpenConnectConfirmation(true)
     setAllowClosing(true)
   }
@@ -133,18 +187,18 @@ const DashboardPage = () => {
       <Header noBackButton />
       <div className="stats">
         <Dashboard.CryptoSharesChart
-          cryptos={cryptos}
-          totalBalance={totalBalance}
+          cryptos={networkType === 'testnet' ? cryptosTestnet : cryptos}
+          totalBalance={currentBalances.total}
           accountName={accountName}
           colorList={colorList}
         />
         <Dashboard.Statistics
           stats={stats}
-          totalBalance={totalBalance}
+          totalBalance={currentBalances.total}
         />
       </div>
       <Dashboard.CryptoList
-        cryptoList={cryptoList}
+        cryptoList={networkType === 'testnet' ? cryptoListTestnet : cryptoList}
         colorList={colorList}
         onWalletItemClick={goToWallet}
         onConnectItemClick={onConnectItemClick}

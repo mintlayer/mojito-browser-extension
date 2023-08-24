@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { Button, InputBTC, InputFloat } from '@BasicComponents'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
+import { SettingsContext } from '@Contexts'
 
 import './CryptoFiatField.css'
 import { BTC, Format, NumbersHelper } from '@Helpers'
@@ -19,6 +20,7 @@ const CryptoFiatField = ({
   setAmountValidity,
   totalFeeInCrypto,
 }) => {
+  const { networkType } = useContext(SettingsContext)
   const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
   const finalMaxValue = parsedValueInToken - totalFeeInCrypto
   const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
@@ -62,6 +64,10 @@ const CryptoFiatField = ({
     bottomValue ? bottomValue : Format.fiatValue(0)
   } ${isTypeFiat() ? tokenName : fiatName}`
 
+  // Consider the correct format for 0,00 that might also be 0.00
+  const displayedBottomValue =
+    networkType === 'testnet' ? `≈ 0,00 ${fiatName}` : formattedBottomValue
+
   const calculateFiatValue = (value) => {
     const parsedValue = NumbersHelper.floatStringToNumber(value)
     return Format.fiatValue(parsedValue * exchangeRate)
@@ -89,6 +95,7 @@ const CryptoFiatField = ({
   }
 
   const changeButtonClickHandler = () => {
+    if (networkType === 'testnet') return
     isTypeFiat()
       ? switchCurrency(tokenName, calculateCryptoValue, Format.fiatValue)
       : switchCurrency(fiatName, calculateFiatValue, Format.BTCValue)
@@ -168,14 +175,19 @@ const CryptoFiatField = ({
           data-testid="crypto-fiat-switch-button"
           onClick={changeButtonClickHandler}
         >
-          <ArrowIcon
-            className="crypto-fiat-icon-reverse"
-            data-testid="arrow-icon"
-          />
-          <ArrowIcon
-            className="crypto-fiat-icon"
-            data-testid="arrow-icon"
-          />
+          {networkType !== 'testnet' && (
+            <>
+              <ArrowIcon
+                className="crypto-fiat-icon-reverse"
+                data-testid="arrow-icon"
+              />
+              <ArrowIcon
+                className="crypto-fiat-icon"
+                data-testid="arrow-icon"
+              />
+            </>
+          )}
+
           <span className="current-value-type">{currentValueType}</span>
         </button>
       </div>
@@ -191,7 +203,7 @@ const CryptoFiatField = ({
         className="crypto-fiat-bottom-text"
         data-testid="crypto-fiat-bottom-text"
       >
-        {formattedBottomValue}
+        {displayedBottomValue}
       </p>
     </div>
   )

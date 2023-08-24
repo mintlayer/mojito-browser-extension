@@ -1,5 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useContext,
+} from 'react'
 
+import { AccountContext } from '@Contexts'
 import { InputInteger } from '@BasicComponents'
 import { OptionButtons } from '@ComposedComponents'
 import { Electrum } from '@APIs'
@@ -7,12 +14,32 @@ import { BTC } from '@Helpers'
 
 import './FeeField.css'
 
+const ML_FEE_MOCK = JSON.stringify({
+  1: 30,
+  2: 29,
+  3: 28,
+  4: 27,
+  5: 26,
+  6: 25,
+  7: 24,
+  8: 23,
+  9: 22,
+  10: 21,
+  11: 20,
+  12: 19,
+  13: 18,
+  14: 17,
+  15: 16,
+  16: 15,
+})
+
 const FeeField = ({
   value: parentValue,
   id,
   changeValueHandle,
   setFeeValidity,
 }) => {
+  const { walletType } = useContext(AccountContext)
   const effectCalled = useRef(false)
   const [options, setOptions] = useState([])
   const [inputValue, setInputValue] = useState(0)
@@ -20,6 +47,7 @@ const FeeField = ({
   const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
     useState('15 minutes')
   const [estimatedFees, setEstimatedFees] = useState([])
+  const feeType = walletType.name === 'Mintlayer' ? 'atoms/B' : 'sat/B'
 
   const blocksToConfirm = useCallback(
     (value) => {
@@ -73,7 +101,9 @@ const FeeField = ({
     effectCalled.current = true
 
     const populateOptions = async () => {
-      const fees = await Electrum.getFeesEstimates()
+      const btcFees = await Electrum.getFeesEstimates()
+      const mlFees = ML_FEE_MOCK
+      const fees = walletType.name === 'Mintlayer' ? mlFees : btcFees
       const estimates = JSON.parse(fees)
       setEstimatedFees(estimates)
 
@@ -87,7 +117,7 @@ const FeeField = ({
     }
 
     populateOptions()
-  }, [])
+  }, [walletType.name])
 
   useEffect(() => {
     if (Number(parentValue)) {
@@ -110,12 +140,14 @@ const FeeField = ({
   return (
     <div className="fee-field-wrapper">
       <div className="fee-field">
-        <InputInteger
-          id={id}
-          value={inputValue}
-          onChangeHandle={inputChangeHandler}
-        />
-        <small>sat/B</small>
+        <div className="fee-input-wrapper">
+          <InputInteger
+            id={id}
+            value={inputValue}
+            onChangeHandle={inputChangeHandler}
+          />
+          <small>{feeType}</small>
+        </div>
         <OptionButtons
           value={radioButtonValue}
           options={options}

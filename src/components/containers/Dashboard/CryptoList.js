@@ -1,38 +1,36 @@
 import { useContext } from 'react'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
-import LogoMl from '@Assets/images/logo96_white.png'
+import { LogoRound } from '@BasicComponents'
 import { LineChart } from '@ComposedComponents'
 import { AppInfo } from '@Constants'
 import { SettingsContext } from '@Contexts'
 
 import './CryptoList.css'
 
-const MlLogo = () => {
-  return (
-    <div className="connect-logo">
-      <img
-        src={LogoMl}
-        alt="Logo"
-      />
-    </div>
-  )
-}
-
 const CryptoItem = ({ colorList, onClickItem, item }) => {
+  const { networkType } = useContext(SettingsContext)
   const color = colorList[item.symbol.toLowerCase()]
-  const balance = Number(item.balance * item.exchangeRate).toFixed(2)
+  const balance =
+    networkType === 'testnet'
+      ? item.balance
+      : Number(item.balance * item.exchangeRate).toFixed(2)
   const bigValues = balance.length > 13
   const data = Object.values(item.historyRates).map((value, idx) => [
     idx * 10,
     Number(value),
   ])
+
+  const onClick = () => {
+    onClickItem(item)
+  }
+
   return (
     <li
       key={item.symbol}
       className="crypto-item"
-      onClick={onClickItem}
+      onClick={onClick}
     >
-      {item.name === 'Mintlayer' ? <MlLogo /> : <BtcLogo />}
+      {item.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
       <div className="name-values">
         <h5>
           {item.name} ({item.symbol})
@@ -41,8 +39,12 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
           <dl>
             <dt>Value:</dt>
             <dd>{balance}</dd>
-            <dt>Price:</dt>
-            <dd>{item.exchangeRate.toFixed(2)}</dd>
+            {networkType !== 'testnet' && (
+              <>
+                <dt>Price:</dt>
+                <dd>{item.exchangeRate.toFixed(2)}</dd>
+              </>
+            )}
           </dl>
         </div>
       </div>
@@ -51,7 +53,7 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
           {Number(balance) > 0 && (
             <>
               <strong className={item.change24h < 0 ? 'negative' : 'positive'}>
-                {item.change24h}%
+                {networkType === 'testnet' ? 0 : item.change24h}%
               </strong>
               <span>24h</span>
             </>
@@ -85,7 +87,7 @@ const ConnectItem = ({ walletType, onClick }) => {
       className={`crypto-item add-item ${isDisabled ? 'disabled' : ''}`}
       onClick={onItemClick}
     >
-      {walletType.name === 'Mintlayer' ? <MlLogo /> : <BtcLogo />}
+      {walletType.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
       <div className="name-values">
         <h5>
           {walletType.name} ({walletType.symbol})
@@ -109,24 +111,26 @@ const CryptoList = ({
   return (
     <>
       <ul>
-        {cryptoList.length &&
-          cryptoList.map((crypto) => (
-            <CryptoItem
-              key={crypto.symbol}
-              colorList={colorList}
-              item={crypto}
-              onClickItem={onWalletItemClick}
-            />
-          ))}
+        {cryptoList.length
+          ? cryptoList.map((crypto) => (
+              <CryptoItem
+                key={crypto.symbol}
+                colorList={colorList}
+                item={crypto}
+                onClickItem={onWalletItemClick}
+              />
+            ))
+          : null}
 
-        {missingWalletTypes.length &&
-          missingWalletTypes.map((walletType) => (
-            <ConnectItem
-              key={walletType.name}
-              walletType={walletType}
-              onClick={onConnectItemClick}
-            />
-          ))}
+        {missingWalletTypes.length
+          ? missingWalletTypes.map((walletType) => (
+              <ConnectItem
+                key={walletType.name}
+                walletType={walletType}
+                onClick={onConnectItemClick}
+              />
+            ))
+          : null}
       </ul>
     </>
   )
