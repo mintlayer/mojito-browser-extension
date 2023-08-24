@@ -1,4 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+// import { Mintlayer } from '@APIs'
+
+// TODO - remove when API is ready
 const ML_BALANCE_MOCK = '300,00'
 const ML_TRANSACTION_LIST_MOCK = [
   {
@@ -18,6 +21,10 @@ const useMlWalletInfo = (address) => {
 
   const getTransactions = useCallback(async () => {
     try {
+      // TODO - uncomment when API is ready
+
+      // const response = await Mintlayer.getAddressTransactions(address)
+      // const transactions = JSON.parse(response)
       console.log(address)
       const response = ML_TRANSACTION_LIST_MOCK
       setMlTransactionsList(response)
@@ -29,6 +36,14 @@ const useMlWalletInfo = (address) => {
   const getBalance = useCallback(async () => {
     try {
       console.log(address)
+
+      // TODO - uncomment when API is ready
+
+      // const utxos = await Mintlayer.getAddressUtxo(address)
+      // const satoshiBalance = BTC.calculateBalanceFromUtxoList(JSON.parse(utxos))
+      // const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
+      // const formattedBalance = Format.BTCValue(balanceConvertedToBTC)
+
       const responce = ML_BALANCE_MOCK
       setMlBalance(responce)
     } catch (error) {
