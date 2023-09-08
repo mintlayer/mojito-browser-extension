@@ -1,5 +1,6 @@
 import { BTC, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
 import { IndexedDB } from '@Databases'
+import * as bitcoin from 'bitcoinjs-lib'
 
 import loadAccountSubRoutines from './loadWorkers'
 
@@ -27,6 +28,8 @@ const saveAccount = async (name, password, mnemonic, walletType) => {
 }
 
 const unlockAccount = async (id, password) => {
+  const mainnetNetwork = bitcoin.networks['mainnet']
+  const testnetNetwork = bitcoin.networks['testnet']
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
 
   try {
@@ -49,10 +52,20 @@ const unlockAccount = async (id, password) => {
     if (seed.error) throw new Error(seed.error)
 
     const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
-    const address =
-      BTC_ADDRESS_TYPE_MAP[account.walletType].getAddressFromPubKey(pubKey)
+    // TODO: Make changes here to support other BTC address types
+    const addresses = {
+      btcMainnetAddress: BTC_ADDRESS_TYPE_MAP[
+        account.walletType
+      ].getAddressFromPubKey(pubKey, mainnetNetwork),
+      btcTestnetAddress: BTC_ADDRESS_TYPE_MAP[
+        account.walletType
+      ].getAddressFromPubKey(pubKey, testnetNetwork),
+      // TODO: Add ML address here
+      mlMainnetAddress: 'mlAddressMain',
+      mlTestnetAddress: 'mlAddressTest',
+    }
 
-    return { address, WIF, name: account.name }
+    return { addresses, WIF, name: account.name }
   } catch (e) {
     console.error(e)
     return Promise.reject({ address: '', WIF: '', name: '' })
