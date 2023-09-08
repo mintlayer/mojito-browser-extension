@@ -1,18 +1,15 @@
-import { EnvVars } from '@Constants'
 import * as bitcoin from 'bitcoinjs-lib'
 
-const NETWORK = bitcoin.networks[EnvVars.BTC_NETWORK]
+const getLegacyAddress = (pubkey, network) =>
+  bitcoin.payments.p2pkh({ pubkey, network }).address
 
-const getLegacyAddress = (pubkey) =>
-  bitcoin.payments.p2pkh({ pubkey, network: NETWORK }).address
-
-const getP2shAddress = (pubkey) =>
+const getP2shAddress = (pubkey, network) =>
   bitcoin.payments.p2sh({
-    redeem: bitcoin.payments.p2wpkh({ pubkey, network: NETWORK }),
+    redeem: bitcoin.payments.p2wpkh({ pubkey, network }),
   }).address
 
-const getNativeSegwitAddress = (pubkey) =>
-  bitcoin.payments.p2wpkh({ pubkey, network: NETWORK }).address
+const getNativeSegwitAddress = (pubkey, network) =>
+  bitcoin.payments.p2wpkh({ pubkey, network }).address
 
 const BTC_ADDRESS_TYPE_MAP = {
   legacy: {
