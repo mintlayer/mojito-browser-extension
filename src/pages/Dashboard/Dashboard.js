@@ -20,17 +20,25 @@ import { BTC } from '@Helpers'
 
 const DashboardPage = () => {
   const [pass, setPass] = useState(null)
-  const { btcAddress, mlAddress, accountName, accountID, setWalletType } =
+  const { addresses, accountName, accountID, setWalletType } =
     useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const currentBtcAddress =
+    networkType === 'mainnet'
+      ? addresses.btcMainnetAddress
+      : addresses.btcTestnetAddress
+  const currentMlAddress =
+    networkType === 'mainnet'
+      ? addresses.mlMainnetAddress
+      : addresses.mlTestnetAddress
   const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
   const [passValidity, setPassValidity] = useState(false)
   const [passPristinity, setPassPristinity] = useState(true)
   const [passErrorMessage, setPassErrorMessage] = useState('')
   const [connectedWalletType, setConnectedWalletType] = useState('')
-  const { networkType } = useContext(SettingsContext)
-  const { btcBalance } = useBtcWalletInfo(btcAddress)
-  const { mlBalance } = useMlWalletInfo(mlAddress)
+  const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
+  const { mlBalance } = useMlWalletInfo(currentMlAddress)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
   const { yesterdayExchangeRate: btcYesterdayExchangeRate } =

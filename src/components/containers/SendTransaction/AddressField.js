@@ -6,12 +6,19 @@ import TransactionField from './TransactionField'
 
 import './errorMessages.css'
 
-import { EnvVars } from '@Constants'
-
-import { AccountContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 
 const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
-  const { btcAddress, mlAddress, walletType } = useContext(AccountContext)
+  const { addresses, walletType } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const currentBtcAddress =
+    networkType === 'mainnet'
+      ? addresses.btcMainnetAddress
+      : addresses.btcTestnetAddress
+  const currentMlAddress =
+    networkType === 'mainnet'
+      ? addresses.mlMainnetAddress
+      : addresses.mlTestnetAddress
   const [message, setMessage] = useState(errorMessage)
   const [isValid, setIsValid] = useState(true)
   // TODO add placeholder for ML address
@@ -24,10 +31,10 @@ const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
     const value = ev.target.value
     // TODO: add validation for ML address
     const validity =
-      validate(value, 'btc', EnvVars.BTC_NETWORK) && value !== btcAddress
+      validate(value, 'btc', networkType) && value !== currentBtcAddress
     setIsValid(validity)
     setAddressValidity(validity)
-    if (value === btcAddress || value === mlAddress) {
+    if (value === currentBtcAddress || value === currentMlAddress) {
       setMessage('Cannot send to yourself')
     } else if (!validity) {
       setMessage('This is not a valid BTC address.')

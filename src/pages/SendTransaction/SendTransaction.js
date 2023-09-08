@@ -5,7 +5,7 @@ import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
-import { AccountContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 import { BTCTransaction } from '@Cryptos'
 import { Account } from '@Entities'
 import {
@@ -19,7 +19,12 @@ import { Electrum } from '@APIs'
 import './SendTransaction.css'
 
 const SendTransactionPage = () => {
-  const { btcAddress, accountID, walletType } = useContext(AccountContext)
+  const { addresses, accountID, walletType } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const currentBtcAddress =
+    networkType === 'mainnet'
+      ? addresses.btcMainnetAddress
+      : addresses.btcTestnetAddress
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
@@ -33,8 +38,8 @@ const SendTransactionPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { btcBalance } = useBtcWalletInfo(btcAddress)
-  const { mlBalance } = useMlWalletInfo(btcAddress)
+  const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
+  const { mlBalance } = useMlWalletInfo(currentBtcAddress)
 
   const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
 
@@ -47,7 +52,7 @@ const SendTransactionPage = () => {
   const calculateTotalFee = async (transactionInfo) => {
     const transactionSize =
       await BTCTransactionHelper.calculateTransactionSizeInBytes({
-        addressFrom: btcAddress,
+        addressFrom: currentBtcAddress,
         amountToTranfer: BTCHelper.convertBtcToSatoshi(transactionInfo.amount),
         fee: transactionInfo.fee,
       })
@@ -76,7 +81,7 @@ const SendTransactionPage = () => {
 
     const transactionSize =
       await BTCTransactionHelper.calculateTransactionSizeInBytes({
-        addressFrom: btcAddress,
+        addressFrom: currentBtcAddress,
         amountToTranfer: BTCHelper.convertBtcToSatoshi(
           transactionInformation.amount,
         ),
@@ -89,7 +94,7 @@ const SendTransactionPage = () => {
       amount: transactionAmountInSatoshi,
       fee: transactionSize * transactionInformation.fee,
       wif: WIF,
-      from: btcAddress,
+      from: currentBtcAddress,
     })
 
     const result = await Electrum.broadcastTransaction(transactionHex)
