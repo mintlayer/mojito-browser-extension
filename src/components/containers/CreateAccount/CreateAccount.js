@@ -217,7 +217,7 @@ const CreateAccount = ({
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step !== 6 && !showEntropyError}
+          bigGap={step !== 6 && step !== 7 && !showEntropyError}
         >
           {step === 1 && (
             <CenteredLayout>
