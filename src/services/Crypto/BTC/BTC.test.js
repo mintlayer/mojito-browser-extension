@@ -10,6 +10,14 @@ import {
   validateMnemonic,
 } from './BTC'
 
+import {
+  localStorageMock,
+  setLocalStorage,
+} from 'src/tests/mock/localStorage/localStorage'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+setLocalStorage('networkType', 'testnet')
+
 const ECPair = ECPairFactory(ecc)
 const knownAddress = 'msPGWzYgtjeTZKsmF7hUg5qmj76wdVi6qQ'
 const knownMnemonic =
@@ -23,10 +31,15 @@ let autoReferencedaddress = null
 
 const ENTROPY_DATA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
+const testnetNetwork = bitcoin.networks['testnet']
+
 /**
  * Auto reference: checks if the data it is generating matches and have be reused
  * Known data: checks if data generated in the past keeps working
  */
+afterEach(() => {
+  jest.restoreAllMocks()
+})
 
 test('Mnemonic Generation - auto reference', () => {
   autoReferencedMnemonic = generateMnemonic(ENTROPY_DATA)
@@ -34,7 +47,7 @@ test('Mnemonic Generation - auto reference', () => {
 })
 
 test('Address Generation - auto reference', () => {
-  autoReferencedaddress = generateAddr(autoReferencedMnemonic)
+  autoReferencedaddress = generateAddr(autoReferencedMnemonic, testnetNetwork)
   expect(validate(autoReferencedaddress, 'btc', 'testnet')).toBeTruthy()
 })
 
@@ -56,7 +69,7 @@ test('Keys Generation - auto reference', () => {
 })
 
 test('Address Generation - know data', () => {
-  const address = generateAddr(knownMnemonic)
+  const address = generateAddr(knownMnemonic, testnetNetwork)
 
   expect(address).toBe(knownAddress)
 })

@@ -9,6 +9,15 @@ import { BTC } from '@Helpers'
 
 import TransactionDetails from './TransactionDetails'
 import { TransactionDetailsItem } from './TransactionDetails'
+import { SettingsProvider } from '@Contexts'
+
+import {
+  localStorageMock,
+  setLocalStorage,
+} from 'src/tests/mock/localStorage/localStorage'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+setLocalStorage('networkType', 'testnet')
 
 const TRANSCTIONSAMPLE = {
   txid: 'txid',
@@ -36,10 +45,13 @@ const TITLESAMPLE = 'title'
 
 test('Render transaction detail item component', () => {
   render(
-    <TransactionDetailsItem
-      title={TITLESAMPLE}
-      content={CONTENTSAMPLE}
-    />,
+    <SettingsProvider>
+      <TransactionDetailsItem
+        title={TITLESAMPLE}
+        content={CONTENTSAMPLE}
+      />
+      ,
+    </SettingsProvider>,
   )
   const transactionDetailsItem = screen.getByTestId('transaction-details-item')
   const transactionDetailsItemTitle = screen.getByTestId(
@@ -57,10 +69,13 @@ test('Render transaction detail item component', () => {
 
 test('Render transaction component', () => {
   render(
-    <TransactionDetails
-      transaction={TRANSCTIONSAMPLE}
-      getConfirmations={BTC.getConfirmationsAmount}
-    />,
+    <SettingsProvider>
+      <TransactionDetails
+        transaction={TRANSCTIONSAMPLE}
+        getConfirmations={BTC.getConfirmationsAmount}
+      />
+      ,
+    </SettingsProvider>,
   )
   const transactionDetails = screen.getByTestId('transaction-details')
   const transactionDetailsItems = screen.getAllByTestId(
@@ -85,10 +100,13 @@ test('Render transaction component', () => {
 
 test('Render transaction out component', async () => {
   render(
-    <TransactionDetails
-      transaction={TRANSCTIONSAMPLEOUT}
-      getConfirmations={BTC.getConfirmationsAmount}
-    />,
+    <SettingsProvider>
+      <TransactionDetails
+        transaction={TRANSCTIONSAMPLEOUT}
+        getConfirmations={BTC.getConfirmationsAmount}
+      />
+      ,
+    </SettingsProvider>,
   )
 
   const transactionDetails = screen.getByTestId('transaction-details')
