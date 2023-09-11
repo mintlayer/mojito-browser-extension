@@ -245,7 +245,7 @@ const RestoreAccount = ({
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step !== 4 && step !== 6}
+          bigGap={step !== 4 && step !== 5 && step !== 6}
         >
           {step === 1 && (
             <CenteredLayout>

@@ -1,13 +1,10 @@
 import React, { createContext, useEffect, useState } from 'react'
 import differenceInMinutes from 'date-fns/differenceInMinutes'
 
-const ML_ADDRESS_MOCK = '1dasd3m3mm1k23mm312k3m1k3'
-
 const AccountContext = createContext()
 
 const AccountProvider = ({ value: propValue, children }) => {
-  const [btcAddress, setBtcAddress] = useState('')
-  const [mlAddress, setMlBtcAddress] = useState('')
+  const [addresses, setAddresses] = useState('')
   const [accountID, setAccountID] = useState('')
   const [accountName, setAccountName] = useState('')
   const [walletType, setWalletType] = useState('')
@@ -18,14 +15,14 @@ const AccountProvider = ({ value: propValue, children }) => {
 
   const setId = (id) => id && setAccountID(id)
   const setName = (name) => name && setAccountName(name)
-  const unlockAccount = (address, id, name) => {
-    const account = { address, id, name }
+  const unlockAccount = (addresses, id, name) => {
+    const account = { addresses, id, name }
     localStorage.setItem(accountRegistryName, JSON.stringify(account))
   }
 
-  const unlockAccountAndSaveParams = (address, id, name) => {
-    unlockAccount(address, id, name)
-    setBtcAddress(address)
+  const unlockAccountAndSaveParams = (addresses, id, name) => {
+    unlockAccount(addresses, id, name)
+    setAddresses(addresses)
     setName(name)
     setId(id)
   }
@@ -35,7 +32,7 @@ const AccountProvider = ({ value: propValue, children }) => {
     if (!registry) return false
 
     const account = JSON.parse(registry)
-    setBtcAddress(account.address)
+    setAddresses(account.addresses)
     setId(account.id)
     setName(account.name)
 
@@ -51,7 +48,7 @@ const AccountProvider = ({ value: propValue, children }) => {
 
     !isUnlocked
       ? localStorage.removeItem(accountRegistryName)
-      : setBtcAddress(account.address) &&
+      : setAddresses(account.addresses) &&
         setId(account.id) &&
         setName(account.name)
 
@@ -69,14 +66,9 @@ const AccountProvider = ({ value: propValue, children }) => {
 
   const logout = () => localStorage.removeItem(accountRegistryName)
 
-  useEffect(() => {
-    setMlBtcAddress(ML_ADDRESS_MOCK)
-  }, [])
-
   const value = {
     accountRegistryName,
-    btcAddress,
-    mlAddress,
+    addresses,
     accountName,
     lines,
     setLines,

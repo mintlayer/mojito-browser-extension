@@ -1,4 +1,5 @@
 import { Electrum } from '@APIs'
+import * as bitcoin from 'bitcoinjs-lib'
 
 const AVERAGE_MIN_PER_BLOCK = 15
 const SATOSHI_BTC_CONVERSION_FACTOR = 100_000_000
@@ -171,6 +172,11 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
   return { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs }
 }
 
+const getNetwork = () => {
+  const networkType = localStorage.getItem('networkType') || 'mainnet'
+  return bitcoin.networks[networkType]
+}
+
 export {
   parseFeesEstimates,
   calculateBalanceFromUtxoList,
@@ -180,6 +186,7 @@ export {
   convertBtcToSatoshi,
   getYesterdayFiatBalances,
   calculateBalances,
+  getNetwork,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
   MAX_BTC,

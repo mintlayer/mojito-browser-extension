@@ -6,18 +6,27 @@ import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
-import { AccountContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 import { BTC } from '@Helpers'
 
 import './Wallet.css'
 
 const WalletPage = () => {
   const navigate = useNavigate()
-  const { btcAddress, mlAddress, walletType } = useContext(AccountContext)
-
+  const { addresses, walletType } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const currentBtcAddress =
+    networkType === 'mainnet'
+      ? addresses.btcMainnetAddress
+      : addresses.btcTestnetAddress
+  const currentMlAddress =
+    networkType === 'mainnet'
+      ? addresses.mlMainnetAddress
+      : addresses.mlTestnetAddress
   const [openShowAddress, setOpenShowAddress] = useState(false)
-  const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
-  const { mlTransactionsList, mlBalance } = useMlWalletInfo(mlAddress)
+  const { btcTransactionsList, btcBalance } =
+    useBtcWalletInfo(currentBtcAddress)
+  const { mlTransactionsList, mlBalance } = useMlWalletInfo(currentMlAddress)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
 
@@ -26,7 +35,8 @@ const WalletPage = () => {
   const walletExangeRate =
     walletType.name === 'Mintlayer' ? mlExchangeRate : btcExchangeRate
   const walletBalance = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
-  const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
+  const walletAddress =
+    walletType.name === 'Mintlayer' ? currentMlAddress : currentBtcAddress
   const walletTransactionList =
     walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
 

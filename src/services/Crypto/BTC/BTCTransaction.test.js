@@ -2,8 +2,16 @@ import { Electrum } from '@APIs'
 import { CoinSelectionAlgo, BTCTransaction } from '@Helpers'
 
 import { buildTransaction } from './BTCTransaction'
+import {
+  localStorageMock,
+  setLocalStorage,
+} from 'src/tests/mock/localStorage/localStorage'
 
 jest.setTimeout(30000)
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+const mockId = 'networkType'
+const mockValue = 'testnet'
+setLocalStorage(mockId, mockValue)
 
 test('Build transaction', async () => {
   const from = 'mgLB5u6BG5YTDVkPPjs1rWnZdtb33aDVMT'

@@ -65,7 +65,14 @@ test('Renders SetAccountPassword page with change password', async () => {
 test('Click login button onSubmit', async () => {
   const checkPassword = async () => {
     return new Promise((resolve) => {
-      resolve({ address: 'address' })
+      resolve({
+        addresses: {
+          btcMainnetAddress: 'btcMainnetAddress',
+          btcTestnetAddress: 'btcTestnetAddress',
+          mlMainnetAddress: 'mlMainnetAddress',
+          mlTestnetAddress: 'mlTestnetAddress',
+        },
+      })
     })
   }
 

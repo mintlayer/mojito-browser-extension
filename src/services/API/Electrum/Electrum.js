@@ -28,20 +28,18 @@ const requestElectrum = async (url, body = null, request = fetch) => {
 }
 
 const tryServers = async (endpoint, body = null) => {
-  for (let i = 0; i < EnvVars.ELECTRUM_SERVERS.length; i++) {
+  const networkType = localStorage.getItem('networkType')
+  const electrumServes =
+    networkType === 'testnet'
+      ? EnvVars.TESTNET_ELECTRUM_SERVERS
+      : EnvVars.MAINNET_ELECTRUM_SERVERS
+  for (let i = 0; i < electrumServes.length; i++) {
     try {
-      const response = await requestElectrum(
-        EnvVars.ELECTRUM_SERVERS[i] + endpoint,
-        body,
-      )
-      // console.log(i, 'response', response)
+      const response = await requestElectrum(electrumServes[i] + endpoint, body)
       return response
     } catch (error) {
-      console.warn(
-        `${EnvVars.ELECTRUM_SERVERS[i] + endpoint} request failed: `,
-        error,
-      )
-      if (i === EnvVars.ELECTRUM_SERVERS.length - 1) {
+      console.warn(`${electrumServes[i] + endpoint} request failed: `, error)
+      if (i === electrumServes.length - 1) {
         throw error
       }
     }

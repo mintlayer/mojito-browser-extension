@@ -3,7 +3,6 @@ import * as bitcoin from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
 
 import { Electrum } from '@APIs'
-import { EnvVars } from '@Constants'
 import { Concurrency, BTC, BTCTransaction } from '@Helpers'
 
 const getFullTransactionsFromUtxoList = async (utxoList) =>
@@ -43,7 +42,7 @@ const buildTransaction = async ({ to, amount, fee, wif, from }) => {
     await getTransactionData({ from, fee, amount })
 
   const transactionBuilder = new bitcoin.Psbt({
-    network: bitcoin.networks[EnvVars.BTC_NETWORK],
+    network: BTC.getNetwork(),
   })
 
   fullTransactions.forEach((transaction) => {
@@ -69,9 +68,7 @@ const buildTransaction = async ({ to, amount, fee, wif, from }) => {
     value: change,
   })
 
-  transactionBuilder.signAllInputs(
-    EcPair.fromWIF(wif, bitcoin.networks[EnvVars.BTC_NETWORK]),
-  )
+  transactionBuilder.signAllInputs(EcPair.fromWIF(wif, BTC.getNetwork()))
   transactionBuilder.finalizeAllInputs()
 
   return [

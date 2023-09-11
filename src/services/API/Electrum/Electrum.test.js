@@ -11,6 +11,16 @@ import {
   broadcastTransaction,
 } from './Electrum.js'
 
+import {
+  localStorageMock,
+  setLocalStorage,
+} from 'src/tests/mock/localStorage/localStorage.js'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+const mockId = 'networkType'
+const mockValue = 'testnet'
+setLocalStorage(mockId, mockValue)
+
 jest.spyOn(console, 'warn').mockImplementation(() => {
   console.warn.restoreMock()
 })

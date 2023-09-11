@@ -7,7 +7,17 @@ import {
   convertBtcToSatoshi,
 } from './BTC'
 
+import {
+  localStorageMock,
+  setLocalStorage,
+} from 'src/tests/mock/localStorage/localStorage'
+
 import { fees, rawTransactions, utxos } from '@TestData'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+const mockId = 'networkType'
+const mockValue = 'testnet'
+setLocalStorage(mockId, mockValue)
 
 test('Parse Fees Estimates', () => {
   const estimates = parseFeesEstimates(fees)

@@ -31,7 +31,8 @@ const Logo = () => {
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
     setUnlocked(accountUnlocked)
-  }, [isAccountUnlocked])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   return (
     <div className="logoContainer">
       <img
