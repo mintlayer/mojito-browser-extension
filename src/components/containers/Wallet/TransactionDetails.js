@@ -16,7 +16,7 @@ const TransactionDetailsItem = ({ title, content }) => {
     >
       <h2 data-testid="transaction-details-item-title">{title}</h2>
       <div
-        className="transactionDeyItemContent"
+        className="transactionDetItemContent"
         data-testid="transaction-details-item-content"
       >
         {content}
