@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 
 import { Format } from '@Helpers'
-import { EnvVars } from '@Constants'
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
+import { EnvVars } from '@Constants'
 
 import './TransactionDetails.css'
 
@@ -16,7 +16,7 @@ const TransactionDetailsItem = ({ title, content }) => {
     >
       <h2 data-testid="transaction-details-item-title">{title}</h2>
       <div
-        className="transactionDeyItemContent"
+        className="transactionDetItemContent"
         data-testid="transaction-details-item-content"
       >
         {content}
@@ -27,6 +27,7 @@ const TransactionDetailsItem = ({ title, content }) => {
 
 const TransactionDetails = ({ transaction, getConfirmations }) => {
   const [confirmations, setConfirmations] = useState(null)
+  const isTestnet = EnvVars.BTC_NETWORK === 'testnet'
 
   const date = transaction.date
     ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
@@ -34,7 +35,10 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
   const buttonExtraStyles = ['transaction-details-button']
   const addressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
   const transactionAddress = [...new Set(transaction?.otherPart)].join('; ')
-  const externalLink = `https://www.blockchain.com/btc-${EnvVars.BTC_NETWORK}/tx/${transaction?.txid}`
+  const externalBtcLink = `https://blockstream.info${
+    isTestnet ? '/testnet' : ''
+  }/tx/${transaction?.txid}`
+  // TODO: add Mintlayer explorer link
 
   useEffect(() => {
     const getConfirmationAmount = async () => {
@@ -75,7 +79,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
         />
       </div>
       <a
-        href={externalLink}
+        href={externalBtcLink}
         target="_blank"
       >
         <Button extraStyleClasses={buttonExtraStyles}>
