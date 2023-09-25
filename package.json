@@ -125,7 +125,8 @@
       "@Cryptos": "<rootDir>/src/services/Crypto/index.js",
       "@Entities": "<rootDir>/src/services/Entity/index.js",
       "@APIs": "<rootDir>/src/services/API/index.js",
-      "d3": "<rootDir>/node_modules/d3/dist/d3.min.js"
+      "d3": "<rootDir>/node_modules/d3/dist/d3.min.js",
+      "@Storage": "<rootDir>/src/services/Storage/index.js"
     },
     "collectCoverageFrom": [
       "!src/pages",
