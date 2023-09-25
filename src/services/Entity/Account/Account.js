@@ -1,14 +1,16 @@
 import { BTC, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
 import { IndexedDB } from '@Databases'
 import * as bitcoin from 'bitcoinjs-lib'
+import { AppInfo } from '@Constants'
 
 import loadAccountSubRoutines from './loadWorkers'
 
-// walletType has to be changed to btcAddressType after migration
+// TODO: walletType has to be changed to btcAddressType after migration
 
-const saveAccount = async (name, password, mnemonic, walletType) => {
+const saveAccount = async (data) => {
   const { generateSeed, generateEncryptionKey, encryptSeed } =
     await loadAccountSubRoutines()
+  const { name, password, mnemonic, walletType, walletsToCreate } = data
 
   const seed = await generateSeed(mnemonic)
   const { key, salt } = await generateEncryptionKey({ password })
@@ -21,20 +23,37 @@ const saveAccount = async (name, password, mnemonic, walletType) => {
     tag,
     seed: encryptedData,
     walletType,
+    walletsToCreate,
   }
 
   const accounts = await IndexedDB.loadAccounts()
   return await IndexedDB.save(accounts, account)
 }
 
+const updateAccount = async (id, updates) => {
+  const accounts = await IndexedDB.loadAccounts()
+  const account = await IndexedDB.get(accounts, id)
+  const updatedAccount = { ...account, ...updates }
+
+  await IndexedDB.update(accounts, updatedAccount)
+
+  return updatedAccount
+}
+
 const unlockAccount = async (id, password) => {
-  const mainnetNetwork = bitcoin.networks['mainnet']
-  const testnetNetwork = bitcoin.networks['testnet']
+  const mainnetNetwork = bitcoin.networks[AppInfo.NETWORK_TYPES.MAINNET]
+  const testnetNetwork = bitcoin.networks[AppInfo.NETWORK_TYPES.TESTNET]
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
+  const addresses = {}
 
   try {
     const accounts = await IndexedDB.loadAccounts()
     const account = await IndexedDB.get(accounts, id)
+    const walletsToCreate =
+      account.walletsToCreate || AppInfo.DEFAULT_WALLETS_TO_CREATE
+
+    if (!account.walletsToCreate)
+      updateAccount(id, { walletsToCreate: AppInfo.DEFAULT_WALLETS_TO_CREATE })
 
     const { key } = await generateEncryptionKey({
       password,
@@ -52,17 +71,21 @@ const unlockAccount = async (id, password) => {
     if (seed.error) throw new Error(seed.error)
 
     const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
-    // TODO: Make changes here to support other BTC address types
-    const addresses = {
-      btcMainnetAddress: BTC_ADDRESS_TYPE_MAP[
+
+    if (walletsToCreate.includes('btc')) {
+      addresses.btcMainnetAddress = BTC_ADDRESS_TYPE_MAP[
         account.walletType
-      ].getAddressFromPubKey(pubKey, mainnetNetwork),
-      btcTestnetAddress: BTC_ADDRESS_TYPE_MAP[
+      ].getAddressFromPubKey(pubKey, mainnetNetwork)
+      addresses.btcTestnetAddress = BTC_ADDRESS_TYPE_MAP[
         account.walletType
-      ].getAddressFromPubKey(pubKey, testnetNetwork),
+      ].getAddressFromPubKey(pubKey, testnetNetwork)
+    }
+
+    if (walletsToCreate.includes('ml')) {
+      console.warn('ML wallet not implemented yet.')
       // TODO: Add ML address here
-      mlMainnetAddress: 'mlAddressMain',
-      mlTestnetAddress: 'mlAddressTest',
+      addresses.mlMainnetAddress = false
+      addresses.mlTestnetAddress = false
     }
 
     return { addresses, WIF, name: account.name }
@@ -72,4 +95,4 @@ const unlockAccount = async (id, password) => {
   }
 }
 
-export { saveAccount, unlockAccount }
+export { saveAccount, unlockAccount, updateAccount }
