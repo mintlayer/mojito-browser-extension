@@ -17,6 +17,7 @@ import './Dashboard.css'
 import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router-dom'
 import { BTC } from '@Helpers'
+import { AppInfo } from '@Constants'
 
 const DashboardPage = () => {
   const [pass, setPass] = useState(null)
@@ -24,11 +25,11 @@ const DashboardPage = () => {
     useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
-    networkType === 'mainnet'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
   const currentMlAddress =
-    networkType === 'mainnet'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddress
       : addresses.mlTestnetAddress
   const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
@@ -71,7 +72,6 @@ const DashboardPage = () => {
     },
   ]
 
-  // TODO: it has been added to test the dashboard with multiple cryptos. Has to to be removed when the dashboard is ready
   const cryptosTestnet = [
     {
       name: 'Bitcoin',
@@ -90,58 +90,46 @@ const DashboardPage = () => {
   const { currentBalances, proportionDiffs, balanceDiffs } =
     BTC.calculateBalances(cryptos, yesterdayExchangeRateList)
 
-  const getStats = (proportionDiffs, balanceDiffs, networkType) => {
-    const isTestnet = networkType === 'testnet'
-    const percentValue = isTestnet
-      ? 0
-      : Number((proportionDiffs.total - 1) * 100).toFixed(2)
-    const fiatValue = isTestnet ? 0 : balanceDiffs.total.toFixed(2)
-    return [
-      {
-        name: '24h percent',
-        value: percentValue,
-        unit: '%',
-      },
-      {
-        name: '24h fiat',
-        value: fiatValue,
-        unit: 'USD',
-      },
-    ]
+  const stats = BTC.getStats(proportionDiffs, balanceDiffs, networkType)
+
+  const getCryptoList = (addresses, network) => {
+    if (!addresses) return []
+
+    const cryptos = []
+    // eslint-disable-next-line max-params
+    const addCrypto = (name, symbol, balance, exchangeRate, change24h) => {
+      cryptos.push({
+        name,
+        symbol,
+        balance: NumbersHelper.floatStringToNumber(balance),
+        exchangeRate,
+        historyRates,
+        change24h,
+      })
+    }
+
+    const btcAddress =
+      network === AppInfo.NETWORK_TYPES.MAINNET
+        ? addresses.btcMainnetAddress
+        : addresses.btcTestnetAddress
+    if (btcAddress) {
+      const change24h =
+        network === AppInfo.NETWORK_TYPES.MAINNET
+          ? Number((proportionDiffs.btc - 1) * 100).toFixed(2)
+          : 0
+      addCrypto('Bitcoin', 'BTC', btcBalance, btcExchangeRate, change24h)
+    }
+
+    const mlAddress =
+      network === AppInfo.NETWORK_TYPES.MAINNET
+        ? addresses.mlMainnetAddress
+        : addresses.mlTestnetAddress
+    if (mlAddress) {
+      addCrypto('Mintlayer', 'ML', mlBalance, mlExchangeRate, 0)
+    }
+
+    return cryptos
   }
-
-  const stats = getStats(proportionDiffs, balanceDiffs, networkType)
-
-  const cryptoList = [
-    {
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      balance: NumbersHelper.floatStringToNumber(btcBalance),
-      exchangeRate: btcExchangeRate,
-      historyRates,
-      change24h: Number((proportionDiffs.btc - 1) * 100).toFixed(2),
-    },
-  ]
-
-  // TODO: it has been added to test the dashboard with multiple cryptos. Has to to be removed or changed when the dashboard is ready
-  const cryptoListTestnet = [
-    {
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      balance: NumbersHelper.floatStringToNumber(btcBalance),
-      exchangeRate: btcExchangeRate,
-      historyRates,
-      change24h: 0,
-    },
-    {
-      name: 'Mintlayer',
-      symbol: 'ML',
-      balance: NumbersHelper.floatStringToNumber(mlBalance),
-      exchangeRate: mlExchangeRate,
-      historyRates,
-      change24h: 0,
-    },
-  ]
 
   const goToWallet = (walletType) => {
     setWalletType(walletType)
@@ -195,7 +183,11 @@ const DashboardPage = () => {
       <Header noBackButton />
       <div className="stats">
         <Dashboard.CryptoSharesChart
-          cryptos={networkType === 'testnet' ? cryptosTestnet : cryptos}
+          cryptos={
+            networkType === AppInfo.NETWORK_TYPES.TESTNET
+              ? cryptosTestnet
+              : cryptos
+          }
           totalBalance={currentBalances.total}
           accountName={accountName}
           colorList={colorList}
@@ -206,7 +198,7 @@ const DashboardPage = () => {
         />
       </div>
       <Dashboard.CryptoList
-        cryptoList={networkType === 'testnet' ? cryptoListTestnet : cryptoList}
+        cryptoList={getCryptoList(addresses, networkType)}
         colorList={colorList}
         onWalletItemClick={goToWallet}
         onConnectItemClick={onConnectItemClick}

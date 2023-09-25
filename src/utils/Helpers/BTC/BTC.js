@@ -1,5 +1,7 @@
 import { Electrum } from '@APIs'
+import { NetworkTypeEntity } from '@Entities'
 import * as bitcoin from 'bitcoinjs-lib'
+import { AppInfo } from '@Constants'
 
 const AVERAGE_MIN_PER_BLOCK = 15
 const SATOSHI_BTC_CONVERSION_FACTOR = 100_000_000
@@ -172,8 +174,28 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
   return { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs }
 }
 
+const getStats = (proportionDiffs, balanceDiffs, networkType) => {
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
+  const percentValue = isTestnet
+    ? 0
+    : Number((proportionDiffs.total - 1) * 100).toFixed(2)
+  const fiatValue = isTestnet ? 0 : balanceDiffs.total.toFixed(2)
+  return [
+    {
+      name: '24h percent',
+      value: percentValue,
+      unit: '%',
+    },
+    {
+      name: '24h fiat',
+      value: fiatValue,
+      unit: 'USD',
+    },
+  ]
+}
+
 const getNetwork = () => {
-  const networkType = localStorage.getItem('networkType') || 'mainnet'
+  const networkType = NetworkTypeEntity.get()
   return bitcoin.networks[networkType]
 }
 
@@ -186,6 +208,7 @@ export {
   convertBtcToSatoshi,
   getYesterdayFiatBalances,
   calculateBalances,
+  getStats,
   getNetwork,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
