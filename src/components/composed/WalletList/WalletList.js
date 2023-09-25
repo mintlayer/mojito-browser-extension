@@ -3,7 +3,7 @@ import { OptionButtons } from '@ComposedComponents'
 
 import './WalletList.css'
 
-const WalletList = ({ selectedWallet, setSelectedWallet, walletTypes }) => {
+const WalletList = ({ selectedWallets, setSelectedWallets, walletTypes }) => {
   const radioButtonExtraClasses = ['crate-wallet-button']
   return (
     <CenteredLayout>
@@ -14,8 +14,8 @@ const WalletList = ({ selectedWallet, setSelectedWallet, walletTypes }) => {
         Whitch of this wallet would you ask to add?
       </p>
       <OptionButtons
-        value={selectedWallet}
-        onSelect={setSelectedWallet}
+        value={selectedWallets}
+        onSelect={setSelectedWallets}
         options={walletTypes}
         buttonExtraStyles={radioButtonExtraClasses}
         column
