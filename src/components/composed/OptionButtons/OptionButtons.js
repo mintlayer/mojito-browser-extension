@@ -15,6 +15,7 @@ const OptionButtons = ({
   const [value, setValue] = useState(parentValue)
 
   const isAlternate = (option) => {
+    if (!value) return
     if (multiple) {
       return value.includes(option.value)
     } else {

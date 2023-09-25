@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react'
 import { SettingsContext, AccountContext } from '@Contexts'
 import LogoIcon from '@Assets/images/logo96.png'
+import { AppInfo } from '@Constants'
 import './Logo.css'
 
 const Title = () => {
@@ -8,7 +9,7 @@ const Title = () => {
   return (
     <>
       Moji
-      {networkType === 'testnet' ? (
+      {networkType === AppInfo.NETWORK_TYPES.TESTNET ? (
         <span
           className="testnetMark"
           data-testid="testnet-mark"
@@ -46,7 +47,7 @@ const Logo = () => {
       >
         {unlocked ? <Title /> : 'Mojito'}
       </h1>
-      {unlocked && networkType === 'testnet' && (
+      {unlocked && networkType === AppInfo.NETWORK_TYPES.TESTNET && (
         <div
           className="testnetMessage"
           data-testid="testnet-message"

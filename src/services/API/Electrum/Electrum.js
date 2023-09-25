@@ -1,4 +1,6 @@
 import { EnvVars } from '@Constants'
+import { NetworkTypeEntity } from '@Entities'
+import { AppInfo } from '@Constants'
 
 const ELECTRUM_ENDPOINTS = {
   GET_LAST_BLOCK_HASH: '/blocks/tip/hash',
@@ -28,9 +30,9 @@ const requestElectrum = async (url, body = null, request = fetch) => {
 }
 
 const tryServers = async (endpoint, body = null) => {
-  const networkType = localStorage.getItem('networkType')
+  const networkType = NetworkTypeEntity.get()
   const electrumServes =
-    networkType === 'testnet'
+    networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? EnvVars.TESTNET_ELECTRUM_SERVERS
       : EnvVars.MAINNET_ELECTRUM_SERVERS
   for (let i = 0; i < electrumServes.length; i++) {

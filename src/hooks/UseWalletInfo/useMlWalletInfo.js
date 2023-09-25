@@ -2,17 +2,8 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 // import { Mintlayer } from '@APIs'
 
 // TODO - remove when API is ready
-const ML_BALANCE_MOCK = '300,00'
-const ML_TRANSACTION_LIST_MOCK = [
-  {
-    txid: 'e4675987639c476d7098e8b919a81f804199c527212200f531cddec06149c36e',
-    date: 1687959407,
-    direction: 'out',
-    value: 0.0001,
-    blockHeight: 2439479,
-    otherPart: ['muTNbPKhgUvQ2zhjRbjUmGx1cm2gTvvbfc'],
-  },
-]
+const ML_BALANCE_MOCK = '0,00'
+const ML_TRANSACTION_LIST_MOCK = []
 
 const useMlWalletInfo = (address) => {
   const effectCalled = useRef(false)
