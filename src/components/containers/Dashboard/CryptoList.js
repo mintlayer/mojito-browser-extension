@@ -11,7 +11,7 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
   const { networkType } = useContext(SettingsContext)
   const color = colorList[item.symbol.toLowerCase()]
   const balance =
-    networkType === 'testnet'
+    networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? item.balance
       : Number(item.balance * item.exchangeRate).toFixed(2)
   const bigValues = balance.length > 13
@@ -39,7 +39,7 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
           <dl>
             <dt>Value:</dt>
             <dd>{balance}</dd>
-            {networkType !== 'testnet' && (
+            {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
               <>
                 <dt>Price:</dt>
                 <dd>{item.exchangeRate.toFixed(2)}</dd>
@@ -53,7 +53,10 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
           {Number(balance) > 0 && (
             <>
               <strong className={item.change24h < 0 ? 'negative' : 'positive'}>
-                {networkType === 'testnet' ? 0 : item.change24h}%
+                {networkType === AppInfo.NETWORK_TYPES.TESTNET
+                  ? 0
+                  : item.change24h}
+                %
               </strong>
               <span>24h</span>
             </>
@@ -75,8 +78,9 @@ const ConnectItem = ({ walletType, onClick }) => {
   const { networkType } = useContext(SettingsContext)
 
   const isDisabled =
-    walletType.disabled ||
-    (walletType.name === 'Mintlayer' && networkType !== 'testnet')
+    walletType.disabled &&
+    walletType.name === 'Mintlayer' &&
+    networkType !== AppInfo.NETWORK_TYPES.TESTNET
 
   const onItemClick = () => {
     if (!isDisabled) onClick(walletType)

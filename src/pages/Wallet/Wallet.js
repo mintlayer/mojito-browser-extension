@@ -8,6 +8,7 @@ import { Wallet } from '@ContainerComponents'
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { BTC } from '@Helpers'
+import { AppInfo } from '@Constants'
 
 import './Wallet.css'
 
@@ -16,11 +17,11 @@ const WalletPage = () => {
   const { addresses, walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
-    networkType === 'mainnet'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
   const currentMlAddress =
-    networkType === 'mainnet'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddress
       : addresses.mlTestnetAddress
   const [openShowAddress, setOpenShowAddress] = useState(false)

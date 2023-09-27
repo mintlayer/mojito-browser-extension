@@ -15,6 +15,7 @@ import {
   NumbersHelper,
 } from '@Helpers'
 import { Electrum } from '@APIs'
+import { AppInfo } from '@Constants'
 
 import './SendTransaction.css'
 
@@ -22,7 +23,7 @@ const SendTransactionPage = () => {
   const { addresses, accountID, walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
-    networkType === 'mainnet'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)

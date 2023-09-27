@@ -1,17 +1,18 @@
 import React, { createContext, useEffect, useState } from 'react'
+import { LocalStorageService } from '@Storage'
+import { NetworkTypeEntity } from '@Entities'
+import { AppInfo } from '@Constants'
 
 const SettingsContext = createContext()
 
 const SettingsProvider = ({ value: propValue, children }) => {
-  const [networkType, setNetworkType] = useState(
-    localStorage.getItem('networkType') || 'mainnet',
-  )
-  // TODO: Localstorage is being used directly in the Provider. It would be nice to have an Entity for this dataset, as we have for user, and use a Service for LocalStorage as we have for IndexedDB
+  const [networkType, setNetworkType] = useState(NetworkTypeEntity.get())
+
   useEffect(() => {
     try {
-      const storedNetworkType = localStorage.getItem('networkType')
+      const storedNetworkType = LocalStorageService.getItem('networkType')
       if (storedNetworkType === null) {
-        localStorage.setItem('networkType', 'mainnet')
+        NetworkTypeEntity.set(AppInfo.NETWORK_TYPES.MAINNET)
       } else {
         setNetworkType(storedNetworkType)
       }
@@ -22,9 +23,12 @@ const SettingsProvider = ({ value: propValue, children }) => {
 
   const toggleNetworkType = () => {
     try {
-      const newNetworkType = networkType === 'mainnet' ? 'testnet' : 'mainnet'
+      const newNetworkType =
+        networkType === AppInfo.NETWORK_TYPES.MAINNET
+          ? AppInfo.NETWORK_TYPES.TESTNET
+          : AppInfo.NETWORK_TYPES.MAINNET
       setNetworkType(newNetworkType)
-      localStorage.setItem('networkType', newNetworkType)
+      NetworkTypeEntity.set(newNetworkType)
     } catch (error) {
       console.error('Error accessing localStorage:', error)
     }

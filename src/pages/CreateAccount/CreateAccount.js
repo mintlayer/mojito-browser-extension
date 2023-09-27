@@ -42,15 +42,19 @@ const CreateAccountPage = () => {
     }
   }, [entropy, step, setLines, setEntropy])
 
-  const createAccount = (accountName, accountPassword) => {
+  const createAccount = (accountName, accountPassword, selectedWallets) => {
     setCreatingWallet(true)
     let accountID = null
-    Account.saveAccount(
-      accountName,
-      accountPassword,
-      words.join(' '),
-      BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT,
-    )
+    const mnemonic = words.join(' ')
+    const btcAddressType = BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
+    const data = {
+      name: accountName,
+      password: accountPassword,
+      mnemonic,
+      walletType: btcAddressType,
+      walletsToCreate: selectedWallets,
+    }
+    Account.saveAccount(data)
       .then((id) => {
         accountID = id
         return Account.unlockAccount(id, accountPassword)

@@ -3,6 +3,7 @@ import { validate } from 'wallet-address-validator'
 
 import { Input } from '@BasicComponents'
 import TransactionField from './TransactionField'
+import { AppInfo } from '@Constants'
 
 import './errorMessages.css'
 
@@ -12,11 +13,11 @@ const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
   const { addresses, walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
-    networkType === 'mainnet'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
   const currentMlAddress =
-    networkType === 'mainnet'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddress
       : addresses.mlTestnetAddress
   const [message, setMessage] = useState(errorMessage)

@@ -10,13 +10,12 @@ import {
   validateMnemonic,
 } from './BTC'
 
-import {
-  localStorageMock,
-  setLocalStorage,
-} from 'src/tests/mock/localStorage/localStorage'
+import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
+
+import { LocalStorageService } from '@Storage'
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
-setLocalStorage('networkType', 'testnet')
+LocalStorageService.setItem('networkType', 'testnet')
 
 const ECPair = ECPairFactory(ecc)
 const knownAddress = 'msPGWzYgtjeTZKsmF7hUg5qmj76wdVi6qQ'

@@ -5,6 +5,7 @@ import { Format } from '@Helpers'
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 import { SettingsContext } from '@Contexts'
+import { AppInfo } from '@Constants'
 
 import './TransactionDetails.css'
 
@@ -28,7 +29,7 @@ const TransactionDetailsItem = ({ title, content }) => {
 const TransactionDetails = ({ transaction, getConfirmations }) => {
   const { networkType } = useContext(SettingsContext)
   const [confirmations, setConfirmations] = useState(null)
-  const isTestnet = networkType === 'testnet'
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
   const date = transaction.date
     ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')

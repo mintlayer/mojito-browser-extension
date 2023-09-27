@@ -5,6 +5,7 @@ import { SettingsContext } from '@Contexts'
 
 import './CryptoFiatField.css'
 import { BTC, Format, NumbersHelper } from '@Helpers'
+import { AppInfo } from '@Constants'
 
 const CryptoFiatField = ({
   placeholder,
@@ -66,7 +67,9 @@ const CryptoFiatField = ({
 
   // Consider the correct format for 0,00 that might also be 0.00
   const displayedBottomValue =
-    networkType === 'testnet' ? `≈ 0,00 ${fiatName}` : formattedBottomValue
+    networkType === AppInfo.NETWORK_TYPES.TESTNET
+      ? `≈ 0,00 ${fiatName}`
+      : formattedBottomValue
 
   const calculateFiatValue = (value) => {
     const parsedValue = NumbersHelper.floatStringToNumber(value)
@@ -95,7 +98,7 @@ const CryptoFiatField = ({
   }
 
   const changeButtonClickHandler = () => {
-    if (networkType === 'testnet') return
+    if (networkType === AppInfo.NETWORK_TYPES.TESTNET) return
     isTypeFiat()
       ? switchCurrency(tokenName, calculateCryptoValue, Format.fiatValue)
       : switchCurrency(fiatName, calculateFiatValue, Format.BTCValue)
@@ -175,7 +178,7 @@ const CryptoFiatField = ({
           data-testid="crypto-fiat-switch-button"
           onClick={changeButtonClickHandler}
         >
-          {networkType !== 'testnet' && (
+          {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
             <>
               <ArrowIcon
                 className="crypto-fiat-icon-reverse"

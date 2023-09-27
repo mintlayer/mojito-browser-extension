@@ -50,7 +50,7 @@ const CreateAccount = ({
   const [accountNamePristinity, setAccountNamePristinity] = useState(true)
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
-  const [selectedWallet, setSelectedWallet] = useState([])
+  const [selectedWallets, setSelectedWallets] = useState([])
 
   const navigate = useNavigate()
 
@@ -92,11 +92,11 @@ const CreateAccount = ({
   }
 
   const walletValidity = (wallets) => {
-    setAccountWalletValid(wallets.length)
+    setAccountWalletValid(wallets.length > 0)
   }
 
   const onSelectWallet = (wallets) => {
-    setSelectedWallet(wallets)
+    setSelectedWallets(wallets)
     walletValidity(wallets)
   }
 
@@ -119,7 +119,7 @@ const CreateAccount = ({
   const goToNextStep = () =>
     step < 7
       ? setStep(step + 1)
-      : onStepsFinished(accountNameValue, accountPasswordValue)
+      : onStepsFinished(accountNameValue, accountPasswordValue, selectedWallets)
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
@@ -273,8 +273,8 @@ const CreateAccount = ({
           )}
           {step === 7 && (
             <WalletList
-              selectedWallet={selectedWallet}
-              setSelectedWallet={onSelectWallet}
+              selectedWallets={selectedWallets}
+              setSelectedWallets={onSelectWallet}
               walletTypes={AppInfo.walletTypes}
             />
           )}

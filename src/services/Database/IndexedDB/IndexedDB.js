@@ -77,6 +77,14 @@ const getAll = (store) => {
   })
 }
 
+const update = (store, entity) => {
+  return new Promise((resolve, reject) => {
+    const dbOperation = store.put(entity)
+    dbOperation.onsuccess = ({ target: { result } }) => resolve(result)
+    dbOperation.onerror = (error) => reject(error)
+  })
+}
+
 export {
   DATABASENAME,
   ACCOUNTSSTORENAME,
@@ -88,4 +96,5 @@ export {
   save,
   get,
   getAll,
+  update,
 }

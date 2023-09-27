@@ -9,6 +9,11 @@ const appAccounts = async () => {
 const decimalSeparator = ','
 const thousandsSeparator = '.'
 const minEntropyLength = 192
+const DEFAULT_WALLETS_TO_CREATE = ['btc']
+const NETWORK_TYPES = {
+  MAINNET: 'mainnet',
+  TESTNET: 'testnet',
+}
 const walletTypes = [
   {
     name: 'Bitcoin',
@@ -29,4 +34,6 @@ export {
   thousandsSeparator,
   minEntropyLength,
   walletTypes,
+  DEFAULT_WALLETS_TO_CREATE,
+  NETWORK_TYPES,
 }
