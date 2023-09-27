@@ -10,14 +10,12 @@ import { BTC } from '@Helpers'
 import TransactionDetails from './TransactionDetails'
 import { TransactionDetailsItem } from './TransactionDetails'
 import { SettingsProvider } from '@Contexts'
+import { LocalStorageService } from '@Storage'
 
-import {
-  localStorageMock,
-  setLocalStorage,
-} from 'src/tests/mock/localStorage/localStorage'
+import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
-setLocalStorage('networkType', 'testnet')
+LocalStorageService.setItem('networkType', 'testnet')
 
 const TRANSCTIONSAMPLE = {
   txid: 'txid',
