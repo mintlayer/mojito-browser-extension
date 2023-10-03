@@ -85,7 +85,7 @@ const RestoreAccount = ({
     useState(true)
 
   const [btcAddressTypeValue, setBtcAddressTypeValue] = useState(undefined)
-  const [selectedWallet, setSelectedWallet] = useState([])
+  const [selectedWallets, setSelectedWallets] = useState([])
 
   const btcAddressType = btcAddressTypeValue && btcAddressTypeValue.value
 
@@ -115,7 +115,7 @@ const RestoreAccount = ({
 
   const goToNextStep = () => {
     const mnemonics = getMnemonics()
-    const isBtcSelected = selectedWallet.includes('btc')
+    const isBtcSelected = selectedWallets.includes('btc')
     const isLastStep = step >= 6
 
     if (step === 5 && !isBtcSelected) {
@@ -124,7 +124,7 @@ const RestoreAccount = ({
         accountPasswordValue,
         mnemonics,
         btcAddressType,
-        selectedWallet,
+        selectedWallets,
       )
     } else if (!isLastStep) {
       setStep(step + 1)
@@ -134,7 +134,7 @@ const RestoreAccount = ({
         accountPasswordValue,
         mnemonics,
         btcAddressType,
-        selectedWallet,
+        selectedWallets,
       )
     }
   }
@@ -193,7 +193,7 @@ const RestoreAccount = ({
   }
 
   const onSelectWallet = (wallets) => {
-    setSelectedWallet(wallets)
+    setSelectedWallets(wallets)
     walletValidity(wallets)
   }
 
@@ -300,8 +300,8 @@ const RestoreAccount = ({
           )}
           {step === 5 && (
             <WalletList
-              selectedWallet={selectedWallet}
-              setSelectedWallet={onSelectWallet}
+              selectedWallets={selectedWallets}
+              setSelectedWallets={onSelectWallet}
               walletTypes={AppInfo.walletTypes}
             />
           )}
