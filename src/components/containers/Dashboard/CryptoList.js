@@ -7,7 +7,7 @@ import { SettingsContext } from '@Contexts'
 
 import './CryptoList.css'
 
-const CryptoItem = ({ colorList, onClickItem, item }) => {
+export const CryptoItem = ({ colorList, onClickItem, item }) => {
   const { networkType } = useContext(SettingsContext)
   const color = colorList[item.symbol.toLowerCase()]
   const balance =
@@ -29,6 +29,7 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
       key={item.symbol}
       className="crypto-item"
       onClick={onClick}
+      data-testid="crypto-item"
     >
       {item.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
       <div className="name-values">
@@ -74,7 +75,7 @@ const CryptoItem = ({ colorList, onClickItem, item }) => {
   )
 }
 
-const ConnectItem = ({ walletType, onClick }) => {
+export const ConnectItem = ({ walletType, onClick }) => {
   const { networkType } = useContext(SettingsContext)
 
   const isDisabled =
@@ -90,6 +91,7 @@ const ConnectItem = ({ walletType, onClick }) => {
     <li
       className={`crypto-item add-item ${isDisabled ? 'disabled' : ''}`}
       onClick={onItemClick}
+      data-testid="connect-item"
     >
       {walletType.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
       <div className="name-values">
@@ -114,7 +116,7 @@ const CryptoList = ({
   )
   return (
     <>
-      <ul>
+      <ul data-testid="crypto-list">
         {cryptoList.length
           ? cryptoList.map((crypto) => (
               <CryptoItem
