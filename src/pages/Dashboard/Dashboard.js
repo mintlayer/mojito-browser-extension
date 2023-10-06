@@ -18,10 +18,11 @@ import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router-dom'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
+import { Account } from '@Entities'
 
 const DashboardPage = () => {
   const [pass, setPass] = useState(null)
-  const { addresses, accountName, accountID, setWalletType } =
+  const { addresses, accountName, accountID, setWalletType, setWalletInfo } =
     useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
@@ -138,40 +139,53 @@ const DashboardPage = () => {
 
   const onConnectItemClick = (walletType) => {
     setConnectedWalletType(walletType)
-    console.log(walletType)
     setOpenConnectConfirmation(true)
     setAllowClosing(true)
   }
 
-  // TODO: implement correct function to creat ML wallet
-  const connectWalletHandle = (id, pass, walletType) => {
-    console.log(id, pass, walletType)
-  }
-
-  const onConnectSubmit = async (e) => {
-    e.preventDefault()
+  const connectWalletHandle = async (id, walletType) => {
     if (!pass) {
       setPassPristinity(false)
       setPassValidity(false)
       setPassErrorMessage('Password must be set.')
       return
     }
+
+    const currentAccount = await Account.getAccount(id)
+    const currentWallets = currentAccount.walletsToCreate
+    const walletToAdd = walletType.value
+
+    if (currentWallets.includes(walletToAdd)) {
+      console.error('Wallet already added')
+      setPassErrorMessage('Wallet already added')
+      return
+    }
+
+    return await Account.updateAccount(id, {
+      walletsToCreate: [...currentWallets, walletToAdd],
+    })
+  }
+
+  const onConnectSubmit = async (e) => {
+    e.preventDefault()
     setAllowClosing(false)
     try {
-      const response = await connectWalletHandle(
-        accountID,
-        pass,
-        connectedWalletType,
-      )
-      console.log(response)
-      setPassValidity(true)
-      setPassErrorMessage('')
+      const response = await connectWalletHandle(accountID, connectedWalletType)
+      if (response) {
+        const { addresses, name } = await Account.unlockAccount(accountID, pass)
+        setWalletInfo(addresses, accountID, name)
+        setOpenConnectConfirmation(false)
+        setPassValidity(true)
+        setPassErrorMessage('')
+        navigate('/')
+      }
+      return response
     } catch (e) {
       console.error(e)
       setPassPristinity(false)
       setPassValidity(false)
       setPass('')
-      setPassErrorMessage('Incorrect password. Account could not be unlocked')
+      setPassErrorMessage('Incorrect password. Account could not be added.')
       setAllowClosing(true)
     } finally {
       setAllowClosing(true)
