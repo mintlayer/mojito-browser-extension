@@ -10,6 +10,7 @@ const useBtcWalletInfo = (address) => {
 
   const getTransactions = useCallback(async () => {
     try {
+      if (!address) return ''
       const response = await Electrum.getAddressTransactions(address)
       const transactions = JSON.parse(response)
       const parsedTransactions = BTC.getParsedTransactions(
@@ -24,6 +25,7 @@ const useBtcWalletInfo = (address) => {
 
   const getBalance = useCallback(async () => {
     try {
+      if (!address) return ''
       const utxos = await Electrum.getAddressUtxo(address)
       const satoshiBalance = BTC.calculateBalanceFromUtxoList(JSON.parse(utxos))
       const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
