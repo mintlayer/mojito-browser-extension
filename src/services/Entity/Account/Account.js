@@ -30,6 +30,17 @@ const saveAccount = async (data) => {
   return await IndexedDB.save(accounts, account)
 }
 
+const getAccount = async (id) => {
+  const accounts = await IndexedDB.loadAccounts()
+  const account = await IndexedDB.get(accounts, id)
+  return {
+    id: account.id,
+    name: account.name,
+    walletType: account.walletType,
+    walletsToCreate: account.walletsToCreate,
+  }
+}
+
 const updateAccount = async (id, updates) => {
   const accounts = await IndexedDB.loadAccounts()
   const account = await IndexedDB.get(accounts, id)
@@ -85,7 +96,7 @@ const unlockAccount = async (id, password) => {
       console.warn('ML wallet not implemented yet.')
       // TODO: Add ML address here
       addresses.mlMainnetAddress = false
-      addresses.mlTestnetAddress = false
+      addresses.mlTestnetAddress = 'ML testnet address'
     }
 
     return { addresses, WIF, name: account.name }
@@ -95,4 +106,4 @@ const unlockAccount = async (id, password) => {
   }
 }
 
-export { saveAccount, unlockAccount, updateAccount }
+export { saveAccount, unlockAccount, updateAccount, getAccount }
