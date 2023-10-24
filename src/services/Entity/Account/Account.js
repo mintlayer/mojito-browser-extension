@@ -1,4 +1,4 @@
-import { BTC, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
+import { BTC, ML, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
 import { IndexedDB } from '@Databases'
 import * as bitcoin from 'bitcoinjs-lib'
 import { AppInfo } from '@Constants'
@@ -52,8 +52,9 @@ const updateAccount = async (id, updates) => {
 }
 
 const unlockAccount = async (id, password) => {
-  const mainnetNetwork = bitcoin.networks[AppInfo.NETWORK_TYPES.MAINNET]
-  const testnetNetwork = bitcoin.networks[AppInfo.NETWORK_TYPES.TESTNET]
+  const mainnetNetwork = bitcoin.networks['bitcoin']
+  const testnetNetwork = bitcoin.networks['testnet']
+
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
   const addresses = {}
 
@@ -80,8 +81,11 @@ const unlockAccount = async (id, password) => {
     // this error just exists if the jobe was run in a worker
     /* istanbul ignore next */
     if (seed.error) throw new Error(seed.error)
-
     const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
+
+    // TODO: replace this with private key generataed from the seed or mnemonic
+    const mlPrivateKey = await ML.getPrivateKey()
+    const mlPublicKey = await ML.getPublicKeyFromPrivate(mlPrivateKey)
 
     if (walletsToCreate.includes('btc')) {
       addresses.btcMainnetAddress = BTC_ADDRESS_TYPE_MAP[
@@ -93,10 +97,12 @@ const unlockAccount = async (id, password) => {
     }
 
     if (walletsToCreate.includes('ml')) {
-      console.warn('ML wallet not implemented yet.')
-      // TODO: Add ML address here
+      const mlTestnetAddress = await ML.getAddressFromPubKey(
+        mlPublicKey,
+        AppInfo.NETWORK_TYPES.TESTNET,
+      )
       addresses.mlMainnetAddress = false
-      addresses.mlTestnetAddress = 'ML testnet address'
+      addresses.mlTestnetAddress = mlTestnetAddress
     }
 
     return { addresses, WIF, name: account.name }
