@@ -13,7 +13,7 @@
     "192": "logo192.png",
     "512": "logo512.png"
   },
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+  "content_security_policy": "script-src 'self' 'wasm-eval' 'unsafe-eval'; object-src 'self'",
   "browser_action": {
     "default_icon": "logo192.png",
     "default_title": "Mojito",
