@@ -195,7 +195,10 @@ const getStats = (proportionDiffs, balanceDiffs, networkType) => {
 }
 
 const getNetwork = () => {
-  const networkType = LocalStorageService.getItem('networkType') || 'mainnet'
+  const networkType =
+    LocalStorageService.getItem('networkType') === 'testnet'
+      ? 'testnet'
+      : 'bitcoin'
   return bitcoin.networks[networkType]
 }
 
