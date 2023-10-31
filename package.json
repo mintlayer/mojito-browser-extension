@@ -4,9 +4,9 @@
   "private": true,
   "dependencies": {
     "@mintlayer/entropy-generator": "^1.0.2",
-    "@testing-library/jest-dom": "^5.16.4",
-    "@testing-library/react": "^13.1.1",
-    "@testing-library/user-event": "^13.5.0",
+    "@testing-library/jest-dom": "^6.1.4",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.5.1",
     "bip32": "^3.0.1",
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "^6.0.1",
@@ -126,7 +126,8 @@
       "@Entities": "<rootDir>/src/services/Entity/index.js",
       "@APIs": "<rootDir>/src/services/API/index.js",
       "d3": "<rootDir>/node_modules/d3/dist/d3.min.js",
-      "@Storage": "<rootDir>/src/services/Storage/index.js"
+      "@Storage": "<rootDir>/src/services/Storage/index.js",
+      ".*wasm_crypto.js": "<rootDir>/src/tests/mock/wasmCrypro/wasmCrypto.js"
     },
     "collectCoverageFrom": [
       "!src/pages",
