@@ -10,6 +10,7 @@ const decimalSeparator = ','
 const thousandsSeparator = '.'
 const minEntropyLength = 192
 const DEFAULT_WALLETS_TO_CREATE = ['btc']
+const ML_COINS_PER_TOKEN = 100000000000
 const NETWORK_TYPES = {
   MAINNET: 'mainnet',
   TESTNET: 'testnet',
@@ -36,4 +37,5 @@ export {
   walletTypes,
   DEFAULT_WALLETS_TO_CREATE,
   NETWORK_TYPES,
+  ML_COINS_PER_TOKEN,
 }
