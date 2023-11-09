@@ -48,20 +48,20 @@ const tryServers = async (endpoint, body = null) => {
 }
 
 const getAddressData = (address) => {
-    const data = tryServers(
-      MINTLAYER_ENDPOINTS.GET_ADDRESS_DATA.replace(':address', address),
-    )
-    return data
+  const data = tryServers(
+    MINTLAYER_ENDPOINTS.GET_ADDRESS_DATA.replace(':address', address),
+  )
+  return data
 }
 
 const getAddressBalance = async (address) => {
   try {
     const response = await getAddressData(address)
     const data = JSON.parse(response)
-    const balanceinTokens = data.coin_balance / AppInfo.ML_COINS_PER_TOKEN
+    const balanceInCoins = data.coin_balance / AppInfo.ML_ATOMS_PER_COIN
     const balance = {
-      balanceInCoins: data.coin_balance,
-      balanceInTokens: balanceinTokens,
+      balanceInAtoms: data.coin_balance,
+      balanceInCoins: balanceInCoins,
     }
     return balance
   } catch (error) {
