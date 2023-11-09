@@ -1,16 +1,11 @@
 import { EnvVars } from '@Constants'
+import { LocalStorageService } from '@Storage'
+import { AppInfo } from '@Constants'
+
+const prefix = '/api/v1'
 
 const MINTLAYER_ENDPOINTS = {
-  GET_LAST_BLOCK_HASH: '/blocks/tip/hash',
-  GET_TRANSACTION_DATA: '/tx/:txid',
-  GET_TRANSACTION_HEX: '/tx/:txid/hex',
-  GET_TRANSACTION_STATUS: '/tx/:txid/status',
-  GET_ADDRESS_TRANSACTIONS: '/address/:address/txs',
-  GET_ADDRESS: '/address/:address',
-  GET_ADDRESS_UTXO: '/address/:address/utxo',
-  GET_LAST_BLOCK_HEIGHT: '/blocks/tip/height',
-  GET_FEES_ESTIMATES: '/fee-estimates',
-  POST_TRANSACTION: '/tx',
+  GET_ADDRESS_DATA: '/address/:address',
 }
 
 const requestMintlayer = async (url, body = null, request = fetch) => {
@@ -28,74 +23,56 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
 }
 
 const tryServers = async (endpoint, body = null) => {
-  for (let i = 0; i < EnvVars.MINTLAYER_SERVERS.length; i++) {
+  const networkType = LocalStorageService.getItem('networkType')
+  const mintlayerServers =
+    networkType === AppInfo.NETWORK_TYPES.TESTNET
+      ? EnvVars.TESTNET_MINTLAYER_SERVERS
+      : EnvVars.MAINNET_MINTLAYER_SERVERS
+  for (let i = 0; i < mintlayerServers.length; i++) {
     try {
       const response = await requestMintlayer(
-        EnvVars.MINTLAYER_SERVERS[i] + endpoint,
+        mintlayerServers[i] + prefix + endpoint,
         body,
       )
-      // console.log(i, 'response', response)
       return response
     } catch (error) {
       console.warn(
-        `${EnvVars.MINTLAYER_SERVERS[i] + endpoint} request failed: `,
+        `${mintlayerServers[i] + prefix + endpoint} request failed: `,
         error,
       )
-      if (i === EnvVars.MINTLAYER_SERVERS.length - 1) {
+      if (i === mintlayerServers.length - 1) {
         throw error
       }
     }
   }
 }
 
-const getLastBlockHash = () =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_LAST_BLOCK_HASH)
-
-const getTransactionData = (txid) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_TRANSACTION_DATA.replace(':txid', txid))
-
-const getTransactionHex = (txid) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_TRANSACTION_HEX.replace(':txid', txid))
-
-const getTransactionStatus = (txid) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_TRANSACTION_STATUS.replace(':txid', txid))
-
-const getAddressTransactions = (address) =>
-  tryServers(
-    MINTLAYER_ENDPOINTS.GET_ADDRESS_TRANSACTIONS.replace(':address', address),
+const getAddressData = (address) => {
+  const data = tryServers(
+    MINTLAYER_ENDPOINTS.GET_ADDRESS_DATA.replace(':address', address),
   )
-
-const getAddress = (address) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_ADDRESS.replace(':address', address))
-
-const getAddressUtxo = (address) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_ADDRESS_UTXO.replace(':address', address))
-
-const getLastBlockHeight = () =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_LAST_BLOCK_HEIGHT)
-
-const getFeesEstimates = async () => {
-  if (!EnvVars.IS_PROD_ENV) {
-    const { fees } = await import('@TestData')
-    return JSON.stringify(fees)
-  }
-  return tryServers(MINTLAYER_ENDPOINTS.GET_FEES_ESTIMATES)
+  return data
 }
 
-const broadcastTransaction = (transaction) =>
-  tryServers(MINTLAYER_ENDPOINTS.POST_TRANSACTION, transaction)
+const getAddressBalance = async (address) => {
+  try {
+    const response = await getAddressData(address)
+    const data = JSON.parse(response)
+    const balanceInCoins = data.coin_balance / AppInfo.ML_ATOMS_PER_COIN
+    const balance = {
+      balanceInAtoms: data.coin_balance,
+      balanceInCoins: balanceInCoins,
+    }
+    return balance
+  } catch (error) {
+    console.warn(`Failed to get balance for address ${address}: `, error)
+    throw error
+  }
+}
 
 export {
-  getLastBlockHash,
-  getTransactionData,
-  getTransactionStatus,
-  getTransactionHex,
-  getAddressTransactions,
-  getAddress,
-  getAddressUtxo,
+  getAddressData,
+  getAddressBalance,
   requestMintlayer,
-  getLastBlockHeight,
-  getFeesEstimates,
-  broadcastTransaction,
   MINTLAYER_ENDPOINTS,
 }
