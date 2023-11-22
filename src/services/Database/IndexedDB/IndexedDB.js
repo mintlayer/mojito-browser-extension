@@ -1,3 +1,4 @@
+import { accountsMigration_01_add_mlwallet_private_keys } from '../migrations/migrations'
 // eslint-disable-next-line no-restricted-globals
 const glob = typeof window !== 'undefined' ? window : self
 /* istanbul ignore next */
@@ -7,18 +8,24 @@ const IDB =
   glob.webkitIndexedDB ||
   glob.msIndexedDB
 
-const SCHEMAVERSION = 1
+const SCHEMAVERSION = 2
 const DATABASENAME = 'mojito'
 const ACCOUNTSSTORENAME = 'accounts'
 
 const createOrUpdateDatabase = (event) => {
   const db = event.target.result
-  const objectStore = db.createObjectStore(ACCOUNTSSTORENAME, {
-    keyPath: 'id',
-    autoIncrement: true,
-  })
 
-  objectStore.createIndex('name', 'name', { unique: false })
+  if (!db.objectStoreNames.contains(ACCOUNTSSTORENAME)) {
+    const objectStore = db.createObjectStore(ACCOUNTSSTORENAME, {
+      keyPath: 'id',
+      autoIncrement: true,
+    })
+
+    // Create an index on the 'name' property
+    objectStore.createIndex('name', 'name', { unique: false })
+  }
+  // Apply migrations here
+  accountsMigration_01_add_mlwallet_private_keys()
 }
 
 const openDatabase = (DB = IDB) => {
@@ -50,6 +57,44 @@ const loadAccounts = async (onError, DB = IDB) => {
     return store
   } catch (error) {
     onError(error)
+  }
+}
+
+const saveAccounts = async (accounts, onError, DB = IDB) => {
+  try {
+    const db = await openDatabase(DB)
+    const oldAccounts = await loadAccounts()
+
+    for (const account of accounts) {
+      await update(oldAccounts, account)
+    }
+    console.log('Accounts saved successfully')
+
+    db.close()
+  } catch (error) {
+    onError && onError(error)
+    console.error(error)
+  }
+}
+
+const clearDatabase = async (onError, DB = IDB) => {
+  try {
+    const db = await openDatabase(DB)
+    const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
+    const store = transaction.objectStore(ACCOUNTSSTORENAME)
+
+    const request = store.clear()
+    request.onsuccess = function (event) {
+      console.log('All records have been removed from the store.')
+    }
+    request.onerror = function (event) {
+      console.error('Failed to clear object store:', event.target.errorCode)
+    }
+
+    db.close()
+  } catch (error) {
+    onError && onError(error)
+    console.error(error)
   }
 }
 
@@ -94,6 +139,8 @@ export {
   createTransaction,
   loadAccounts,
   save,
+  saveAccounts,
+  clearDatabase,
   get,
   getAll,
   update,

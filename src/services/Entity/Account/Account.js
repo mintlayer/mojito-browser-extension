@@ -14,14 +14,19 @@ const saveAccount = async (data) => {
 
   const seed = await generateSeed(mnemonic)
   const { key, salt } = await generateEncryptionKey({ password })
-  const { encryptedData, iv, tag } = await encryptSeed({ data: seed, key })
+
+  const {
+    encryptedData: btcEncryptedSeed,
+    iv: btcIv,
+    tag: btcTag,
+  } = await encryptSeed({ data: seed, key })
 
   const account = {
     name,
     salt,
-    iv,
-    tag,
-    seed: encryptedData,
+    iv: { btcIv },
+    tag: { btcTag },
+    seed: { btcEncryptedSeed },
     walletType,
     walletsToCreate,
   }
@@ -72,9 +77,9 @@ const unlockAccount = async (id, password) => {
       salt: account.salt,
     })
     const seed = await decryptSeed({
-      data: account.seed,
-      iv: account.iv,
-      tag: account.tag,
+      data: account.seed.btcEncryptedSeed,
+      iv: account.iv.btcIv,
+      tag: account.tag.btcTag,
       key,
     })
 
