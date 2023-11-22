@@ -5,31 +5,35 @@
  */
 export function make_private_key(): Uint8Array
 /**
+ * Create the default account's extended private key for a given mnemonic
+ * derivation path: 44'/mintlayer_coin_type'/0'
  * @param {string} mnemonic
- * @param {number} network
+ * @param {Network} network
  * @returns {Uint8Array}
  */
-export function make_default_account_pubkey(
+export function make_default_account_privkey(
   mnemonic: string,
-  network: number,
+  network: Network,
 ): Uint8Array
 /**
- * @param {Uint8Array} public_key_bytes
+ * From an extended private key create a receiving private key for a given key index
+ * derivation path: 44'/mintlayer_coin_type'/0'/0/key_index
+ * @param {Uint8Array} private_key_bytes
  * @param {number} key_index
  * @returns {Uint8Array}
  */
 export function make_receiving_address(
-  public_key_bytes: Uint8Array,
+  private_key_bytes: Uint8Array,
   key_index: number,
 ): Uint8Array
 /**
  * @param {Uint8Array} public_key_bytes
- * @param {number} network
+ * @param {Network} network
  * @returns {string}
  */
 export function pubkey_to_string(
   public_key_bytes: Uint8Array,
-  network: number,
+  network: Network,
 ): string
 /**
  * @param {Uint8Array} private_key
@@ -75,7 +79,7 @@ export type InitInput =
 export interface InitOutput {
   readonly memory: WebAssembly.Memory
   readonly make_private_key: (a: number) => void
-  readonly make_default_account_pubkey: (
+  readonly make_default_account_privkey: (
     a: number,
     b: number,
     c: number,
