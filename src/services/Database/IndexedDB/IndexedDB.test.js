@@ -44,7 +44,12 @@ test('IndexedDB basic functions - createOrUpdateDatabase', async () => {
 
   const event = {
     target: {
-      result: { createObjectStore },
+      result: {
+        createObjectStore,
+        objectStoreNames: {
+          contains: jest.fn().mockReturnValue(false),
+        },
+      },
     },
   }
 
