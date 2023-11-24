@@ -15,6 +15,7 @@ import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import Entropy from './Entropy/Entropy'
 import WalletList from './WalletList/WalletList'
 import SettingsTestnet from './SettingsTestnet/SettingsTestnet'
+import AddWallet from './AddWallet/AddWallet'
 
 export {
   Balance,
@@ -34,4 +35,5 @@ export {
   Entropy,
   WalletList,
   SettingsTestnet,
+  AddWallet,
 }
