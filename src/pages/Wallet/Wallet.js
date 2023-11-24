@@ -20,10 +20,21 @@ const WalletPage = () => {
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
-  const currentMlAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
-      : addresses.mlTestnetAddress
+
+  // TODO: has to be changed to use all addresses
+  const getCurrentMlAddress = (addresses, networkType) => {
+    const getFirstAddress = (addressList) =>
+      addressList ? addressList[0] : false
+
+    const mlTestnetAddress = getFirstAddress(addresses.mlTestnetAddresses)
+    const mlMainnetAddress = getFirstAddress(addresses.mlMainnetAddresses)
+
+    return networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? mlMainnetAddress
+      : mlTestnetAddress
+  }
+  const currentMlAddress = getCurrentMlAddress(addresses, networkType)
+
   const [openShowAddress, setOpenShowAddress] = useState(false)
   const { btcTransactionsList, btcBalance } =
     useBtcWalletInfo(currentBtcAddress)
