@@ -18,7 +18,7 @@ const useMlWalletInfo = (address) => {
   const getBalance = useCallback(async () => {
     try {
       const balance = await Mintlayer.getAddressBalance(address)
-      const formattedBalance = Format.BTCValue(balance.balanceInTokens)
+      const formattedBalance = Format.BTCValue(balance.balanceInCoins)
       if (balance) setMlBalance(formattedBalance)
       else setMlBalance(0)
     } catch (error) {
