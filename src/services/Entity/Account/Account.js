@@ -2,31 +2,36 @@ import { BTC, ML, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
 import { IndexedDB } from '@Databases'
 import * as bitcoin from 'bitcoinjs-lib'
 import { AppInfo } from '@Constants'
+import { AccountHelper } from '@Helpers'
 
 import loadAccountSubRoutines from './loadWorkers'
 
-// TODO: walletType has to be changed to btcAddressType after migration
-
 const saveAccount = async (data) => {
-  const { generateSeed, generateEncryptionKey, encryptSeed } =
-    await loadAccountSubRoutines()
+  const { generateEncryptionKey } = await loadAccountSubRoutines()
   const { name, password, mnemonic, walletType, walletsToCreate } = data
-
-  const seed = await generateSeed(mnemonic)
-  const { key, salt } = await generateEncryptionKey({ password })
-
+  const { salt } = await generateEncryptionKey({ password })
   const {
-    encryptedData: btcEncryptedSeed,
-    iv: btcIv,
-    tag: btcTag,
-  } = await encryptSeed({ data: seed, key })
+    encryptedMlTestnetPrivateKey,
+    encryptedMlMainnetPrivateKey,
+    btcEncryptedSeed,
+    mlTestnetPrivKeyIv,
+    mlMainnetPrivKeyIv,
+    btcIv,
+    mlTestnetPrivKeyTag,
+    mlMainnetPrivKeyTag,
+    btcTag,
+  } = await AccountHelper.getEncryptedPrivateKeys(password, salt, mnemonic)
 
   const account = {
     name,
     salt,
-    iv: { btcIv },
-    tag: { btcTag },
-    seed: { btcEncryptedSeed },
+    iv: { btcIv, mlTestnetPrivKeyIv, mlMainnetPrivKeyIv },
+    tag: { btcTag, mlTestnetPrivKeyTag, mlMainnetPrivKeyTag },
+    seed: {
+      btcEncryptedSeed,
+      encryptedMlTestnetPrivateKey,
+      encryptedMlMainnetPrivateKey,
+    },
     walletType,
     walletsToCreate,
   }
@@ -38,12 +43,7 @@ const saveAccount = async (data) => {
 const getAccount = async (id) => {
   const accounts = await IndexedDB.loadAccounts()
   const account = await IndexedDB.get(accounts, id)
-  return {
-    id: account.id,
-    name: account.name,
-    walletType: account.walletType,
-    walletsToCreate: account.walletsToCreate,
-  }
+  return account
 }
 
 const updateAccount = async (id, updates) => {
@@ -76,6 +76,7 @@ const unlockAccount = async (id, password) => {
       password,
       salt: account.salt,
     })
+
     const seed = await decryptSeed({
       data: account.seed.btcEncryptedSeed,
       iv: account.iv.btcIv,
@@ -88,10 +89,6 @@ const unlockAccount = async (id, password) => {
     if (seed.error) throw new Error(seed.error)
     const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
 
-    // TODO: replace this with private key generataed from the seed or mnemonic
-    const mlPrivateKey = await ML.getPrivateKey()
-    const mlPublicKey = await ML.getPublicKeyFromPrivate(mlPrivateKey)
-
     if (walletsToCreate.includes('btc')) {
       addresses.btcMainnetAddress = BTC_ADDRESS_TYPE_MAP[
         account.walletType
@@ -102,12 +99,20 @@ const unlockAccount = async (id, password) => {
     }
 
     if (walletsToCreate.includes('ml')) {
-      const mlTestnetAddress = await ML.getAddressFromPubKey(
-        mlPublicKey,
+      const mlTestnetPrivateKey = await decryptSeed({
+        data: account.seed.encryptedMlTestnetPrivateKey,
+        iv: account.iv.mlTestnetPrivKeyIv,
+        tag: account.tag.mlTestnetPrivKeyTag,
+        key,
+      })
+
+      const mlTestnetReceivingAddresses = await ML.getWalletReceivingAddresses(
+        mlTestnetPrivateKey,
         AppInfo.NETWORK_TYPES.TESTNET,
       )
+
       addresses.mlMainnetAddress = false
-      addresses.mlTestnetAddress = mlTestnetAddress
+      addresses.mlTestnetAddresses = mlTestnetReceivingAddresses
     }
 
     return { addresses, WIF, name: account.name }
