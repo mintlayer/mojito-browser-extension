@@ -26,27 +26,17 @@ const DashboardPage = () => {
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
-  // TODO: has to be changed to use all addresses
-  const getCurrentMlAddress = (addresses, networkType) => {
-    const getFirstAddress = (addressList) =>
-      addressList ? addressList[0] : false
-
-    const mlTestnetAddress = getFirstAddress(addresses.mlTestnetAddresses)
-    const mlMainnetAddress = getFirstAddress(addresses.mlMainnetAddresses)
-
-    return networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? mlMainnetAddress
-      : mlTestnetAddress
-  }
-
-  const currentMlAddress = getCurrentMlAddress(addresses, networkType)
+  const currentMlAddresses =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? addresses.mlMainnetAddress
+      : addresses.mlTestnetAddresses
   const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
   const [account, setAccount] = useState(null)
 
   const [connectedWalletType, setConnectedWalletType] = useState('')
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance } = useMlWalletInfo(currentMlAddress)
+  const { mlBalance } = useMlWalletInfo(currentMlAddresses)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
   const { yesterdayExchangeRate: btcYesterdayExchangeRate } =
@@ -122,8 +112,16 @@ const DashboardPage = () => {
           : 0
       addCrypto('Bitcoin', 'BTC', btcBalance, btcExchangeRate, change24h)
     }
-
-    const mlAddress = getCurrentMlAddress(addresses, network)
+    const mlMainnetAddress = addresses.mlMainnetAddress
+      ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
+      : false
+    const mlTestnetAddress = addresses.mlTestnetAddresses
+      ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
+      : false
+    const mlAddress =
+      network === AppInfo.NETWORK_TYPES.MAINNET
+        ? mlMainnetAddress
+        : mlTestnetAddress
     if (mlAddress) {
       addCrypto('Mintlayer', 'ML', mlBalance, mlExchangeRate, 0)
     }
