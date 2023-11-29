@@ -27,6 +27,17 @@ export function make_receiving_address(
   key_index: number,
 ): Uint8Array
 /**
+ * From an extended private key create a change private key for a given key index
+ * derivation path: 44'/mintlayer_coin_type'/0'/1/key_index
+ * @param {Uint8Array} private_key_bytes
+ * @param {number} key_index
+ * @returns {Uint8Array}
+ */
+export function make_change_address(
+  private_key_bytes: Uint8Array,
+  key_index: number,
+): Uint8Array
+/**
  * @param {Uint8Array} public_key_bytes
  * @param {Network} network
  * @returns {string}
@@ -61,12 +72,217 @@ export function verify_signature(
   message: Uint8Array,
 ): boolean
 /**
+ * @param {string} amount
+ * @param {string} address
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_transfer(
+  amount: string,
+  address: string,
+  network: Network,
+): Uint8Array
+/**
+ * @param {bigint} num
+ * @returns {Uint8Array}
+ */
+export function encode_lock_for_block_count(num: bigint): Uint8Array
+/**
+ * @param {bigint} num
+ * @returns {Uint8Array}
+ */
+export function encode_lock_for_seconds(num: bigint): Uint8Array
+/**
+ * @param {bigint} num
+ * @returns {Uint8Array}
+ */
+export function encode_lock_until_time(num: bigint): Uint8Array
+/**
+ * @param {bigint} num
+ * @returns {Uint8Array}
+ */
+export function encode_lock_until_height(num: bigint): Uint8Array
+/**
+ * @param {string} amount
+ * @param {string} address
+ * @param {Uint8Array} lock
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_lock_then_transfer(
+  amount: string,
+  address: string,
+  lock: Uint8Array,
+  network: Network,
+): Uint8Array
+/**
+ * @param {string} amount
+ * @returns {Uint8Array}
+ */
+export function encode_output_burn(amount: string): Uint8Array
+/**
+ * @param {string} pool_id
+ * @param {string} address
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_create_delegation(
+  pool_id: string,
+  address: string,
+  network: Network,
+): Uint8Array
+/**
+ * @param {string} amount
+ * @param {string} delegation_id
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_delegate_staking(
+  amount: string,
+  delegation_id: string,
+  network: Network,
+): Uint8Array
+/**
+ * @param {string} value
+ * @param {string} staker
+ * @param {string} vrf_public_key
+ * @param {string} decommission_key
+ * @param {number} margin_ratio_per_thousand
+ * @param {string} cost_per_block
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_stake_pool_data(
+  value: string,
+  staker: string,
+  vrf_public_key: string,
+  decommission_key: string,
+  margin_ratio_per_thousand: number,
+  cost_per_block: string,
+  network: Network,
+): Uint8Array
+/**
+ * @param {string} pool_id
+ * @param {Uint8Array} pool_data
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_create_stake_pool(
+  pool_id: string,
+  pool_data: Uint8Array,
+  network: Network,
+): Uint8Array
+/**
+ * @param {string} authority
+ * @param {Uint8Array} token_ticker
+ * @param {Uint8Array} metadata_uri
+ * @param {number} number_of_decimals
+ * @param {TotalSupply} total_supply
+ * @param {string} supply_amount
+ * @param {FreezableToken} is_token_freezable
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_issue_fungible_token(
+  authority: string,
+  token_ticker: Uint8Array,
+  metadata_uri: Uint8Array,
+  number_of_decimals: number,
+  total_supply: TotalSupply,
+  supply_amount: string,
+  is_token_freezable: FreezableToken,
+  network: Network,
+): Uint8Array
+/**
+ * @param {Uint8Array} data
+ * @returns {Uint8Array}
+ */
+export function encode_output_data_deposit(data: Uint8Array): Uint8Array
+/**
+ * @param {Uint8Array} id
+ * @param {SourceId} source
+ * @returns {Uint8Array}
+ */
+export function encode_outpoint_source_id(
+  id: Uint8Array,
+  source: SourceId,
+): Uint8Array
+/**
+ * @param {Uint8Array} outpoint_source_id
+ * @param {number} output_index
+ * @returns {Uint8Array}
+ */
+export function encode_input_utxo(
+  outpoint_source_id: Uint8Array,
+  output_index: number,
+): Uint8Array
+/**
+ * @param {Uint8Array} inputs
+ * @param {Uint8Array} outputs
+ * @param {bigint} flags
+ * @returns {Uint8Array}
+ */
+export function encode_transaction(
+  inputs: Uint8Array,
+  outputs: Uint8Array,
+  flags: bigint,
+): Uint8Array
+/**
+ * @returns {Uint8Array}
+ */
+export function encode_witness_no_signature(): Uint8Array
+/**
+ * @param {SignatureHashType} sighashtype
+ * @param {Uint8Array} raw_signature
+ * @returns {Uint8Array}
+ */
+export function encode_witness(
+  sighashtype: SignatureHashType,
+  raw_signature: Uint8Array,
+): Uint8Array
+/**
+ * @param {Uint8Array} transaction_bytes
+ * @param {Uint8Array} signatures
+ * @returns {Uint8Array}
+ */
+export function encode_signed_transaction(
+  transaction_bytes: Uint8Array,
+  signatures: Uint8Array,
+): Uint8Array
+/**
+ */
+export enum SignatureHashType {
+  ALL = 0,
+  NONE = 1,
+  SINGLE = 2,
+  ANYONECANPAY = 3,
+}
+/**
  */
 export enum Network {
   Mainnet = 0,
   Testnet = 1,
   Regtest = 2,
   Signet = 3,
+}
+/**
+ */
+export enum TotalSupply {
+  Lockable = 0,
+  Unlimited = 1,
+  Fixed = 2,
+}
+/**
+ */
+export enum SourceId {
+  Transaction = 0,
+  BlockReward = 1,
+}
+/**
+ */
+export enum FreezableToken {
+  No = 0,
+  Yes = 1,
 }
 
 export type InitInput =
@@ -86,6 +302,12 @@ export interface InitOutput {
     d: number,
   ) => void
   readonly make_receiving_address: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+  ) => void
+  readonly make_change_address: (
     a: number,
     b: number,
     c: number,
@@ -117,6 +339,113 @@ export interface InitOutput {
     e: number,
     f: number,
     g: number,
+  ) => void
+  readonly encode_output_transfer: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+  ) => void
+  readonly encode_lock_for_block_count: (a: number, b: number) => void
+  readonly encode_lock_for_seconds: (a: number, b: number) => void
+  readonly encode_lock_until_time: (a: number, b: number) => void
+  readonly encode_lock_until_height: (a: number, b: number) => void
+  readonly encode_output_lock_then_transfer: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+  ) => void
+  readonly encode_output_burn: (a: number, b: number, c: number) => void
+  readonly encode_output_create_delegation: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+  ) => void
+  readonly encode_output_delegate_staking: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+  ) => void
+  readonly encode_stake_pool_data: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+    i: number,
+    j: number,
+    k: number,
+    l: number,
+    m: number,
+  ) => void
+  readonly encode_output_create_stake_pool: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+  ) => void
+  readonly encode_output_issue_fungible_token: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+    i: number,
+    j: number,
+    k: number,
+    l: number,
+    m: number,
+  ) => void
+  readonly encode_output_data_deposit: (a: number, b: number, c: number) => void
+  readonly encode_outpoint_source_id: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+  ) => void
+  readonly encode_input_utxo: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+  ) => void
+  readonly encode_transaction: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+  ) => void
+  readonly encode_witness_no_signature: (a: number) => void
+  readonly encode_witness: (a: number, b: number, c: number, d: number) => void
+  readonly encode_signed_transaction: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
   ) => void
   readonly rustsecp256k1_v0_9_0_context_create: (a: number) => number
   readonly rustsecp256k1_v0_9_0_context_destroy: (a: number) => void

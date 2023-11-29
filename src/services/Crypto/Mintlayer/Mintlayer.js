@@ -6,6 +6,7 @@ import init, {
   make_receiving_address,
   pubkey_to_string,
   make_default_account_privkey,
+  make_change_address,
 } from './@mintlayerlib-js/wasm_crypto.js'
 
 const NETWORKS = {
@@ -41,6 +42,11 @@ export const getReceivingAddress = async (defAccPrivateKey, keyIndex) => {
   return make_receiving_address(defAccPrivateKey, keyIndex)
 }
 
+export const getChangeAddress = async (defAccPrivateKey, keyIndex) => {
+  await init()
+  return make_change_address(defAccPrivateKey, keyIndex)
+}
+
 export const getPublicKeyFromPrivate = async (privateKey) => {
   await init()
   return public_key_from_private_key(privateKey)
@@ -56,21 +62,25 @@ export const getAddressFromPubKey = (pubKey, networkType) => {
   return getPubKeyString(pubKey, networkIndex)
 }
 
-export const getWalletReceivingAddresses = async (mlPrivateKey, network) => {
-  const addressesPromises = Array.from({ length: 21 }, (_, i) =>
-    getReceivingAddress(mlPrivateKey, i),
-  )
-  const mlReceivingAddresses = await Promise.all(addressesPromises)
+export const getWalletAddresses = async (mlPrivateKey, network) => {
+  const generateAddresses = async (addressGenerator) => {
+    const addresses = await Promise.all(
+      Array.from({ length: 21 }, (_, i) => addressGenerator(mlPrivateKey, i)),
+    )
 
-  const mlPublicKeysPromises = mlReceivingAddresses.map((address) =>
-    getPublicKeyFromPrivate(address),
-  )
-  const mlPublicKeys = await Promise.all(mlPublicKeysPromises)
+    const publicKeys = await Promise.all(
+      addresses.map((address) => getPublicKeyFromPrivate(address)),
+    )
 
-  const mlAddressesPromises = mlPublicKeys.map((pubKey) =>
-    getAddressFromPubKey(pubKey, network),
-  )
-  const mlAddresses = await Promise.all(mlAddressesPromises)
+    return Promise.all(
+      publicKeys.map((pubKey) => getAddressFromPubKey(pubKey, network)),
+    )
+  }
 
-  return mlAddresses
+  const [mlReceivingAddresses, mlChangeAddresses] = await Promise.all([
+    generateAddresses(getReceivingAddress),
+    generateAddresses(getChangeAddress),
+  ])
+
+  return { mlReceivingAddresses, mlChangeAddresses }
 }
