@@ -2,7 +2,7 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory
 export function make_private_key(a: number): void
-export function make_default_account_pubkey(
+export function make_default_account_privkey(
   a: number,
   b: number,
   c: number,

@@ -1,8 +1,8 @@
 /* eslint-disable no-new-func */
+/* eslint-disable eqeqeq */
 /* eslint-disable no-undef */
 /* eslint-disable no-restricted-globals */
 /* eslint-disable max-depth */
-/* eslint-disable eqeqeq */
 let wasm
 
 const cachedTextDecoder =
@@ -86,7 +86,7 @@ export function make_private_key() {
     var r0 = getInt32Memory0()[retptr / 4 + 0]
     var r1 = getInt32Memory0()[retptr / 4 + 1]
     var v1 = getArrayU8FromWasm0(r0, r1).slice()
-    wasm.__wbindgen_free(r0, r1 * 1)
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
     return v1
   } finally {
     wasm.__wbindgen_add_to_stack_pointer(16)
@@ -157,11 +157,13 @@ function passStringToWasm0(arg, malloc, realloc) {
   return ptr
 }
 /**
+ * Create the default account's extended private key for a given mnemonic
+ * derivation path: 44'/mintlayer_coin_type'/0'
  * @param {string} mnemonic
- * @param {number} network
+ * @param {Network} network
  * @returns {Uint8Array}
  */
-export function make_default_account_pubkey(mnemonic, network) {
+export function make_default_account_privkey(mnemonic, network) {
   try {
     const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
     const ptr0 = passStringToWasm0(
@@ -170,7 +172,7 @@ export function make_default_account_pubkey(mnemonic, network) {
       wasm.__wbindgen_realloc,
     )
     const len0 = WASM_VECTOR_LEN
-    wasm.make_default_account_pubkey(retptr, ptr0, len0, network)
+    wasm.make_default_account_privkey(retptr, ptr0, len0, network)
     var r0 = getInt32Memory0()[retptr / 4 + 0]
     var r1 = getInt32Memory0()[retptr / 4 + 1]
     var r2 = getInt32Memory0()[retptr / 4 + 2]
@@ -179,7 +181,7 @@ export function make_default_account_pubkey(mnemonic, network) {
       throw takeObject(r2)
     }
     var v2 = getArrayU8FromWasm0(r0, r1).slice()
-    wasm.__wbindgen_free(r0, r1 * 1)
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
     return v2
   } finally {
     wasm.__wbindgen_add_to_stack_pointer(16)
@@ -193,14 +195,16 @@ function passArray8ToWasm0(arg, malloc) {
   return ptr
 }
 /**
- * @param {Uint8Array} public_key_bytes
+ * From an extended private key create a receiving private key for a given key index
+ * derivation path: 44'/mintlayer_coin_type'/0'/0/key_index
+ * @param {Uint8Array} private_key_bytes
  * @param {number} key_index
  * @returns {Uint8Array}
  */
-export function make_receiving_address(public_key_bytes, key_index) {
+export function make_receiving_address(private_key_bytes, key_index) {
   try {
     const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
-    const ptr0 = passArray8ToWasm0(public_key_bytes, wasm.__wbindgen_malloc)
+    const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
     const len0 = WASM_VECTOR_LEN
     wasm.make_receiving_address(retptr, ptr0, len0, key_index)
     var r0 = getInt32Memory0()[retptr / 4 + 0]
@@ -211,7 +215,7 @@ export function make_receiving_address(public_key_bytes, key_index) {
       throw takeObject(r2)
     }
     var v2 = getArrayU8FromWasm0(r0, r1).slice()
-    wasm.__wbindgen_free(r0, r1 * 1)
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
     return v2
   } finally {
     wasm.__wbindgen_add_to_stack_pointer(16)
@@ -220,7 +224,7 @@ export function make_receiving_address(public_key_bytes, key_index) {
 
 /**
  * @param {Uint8Array} public_key_bytes
- * @param {number} network
+ * @param {Network} network
  * @returns {string}
  */
 export function pubkey_to_string(public_key_bytes, network) {
@@ -269,7 +273,7 @@ export function public_key_from_private_key(private_key) {
       throw takeObject(r2)
     }
     var v2 = getArrayU8FromWasm0(r0, r1).slice()
-    wasm.__wbindgen_free(r0, r1 * 1)
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
     return v2
   } finally {
     wasm.__wbindgen_add_to_stack_pointer(16)
@@ -297,7 +301,7 @@ export function sign_message(private_key, message) {
       throw takeObject(r2)
     }
     var v3 = getArrayU8FromWasm0(r0, r1).slice()
-    wasm.__wbindgen_free(r0, r1 * 1)
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
     return v3
   } finally {
     wasm.__wbindgen_add_to_stack_pointer(16)
@@ -441,11 +445,11 @@ function __wbg_get_imports() {
       getObject(arg0).getRandomValues(getObject(arg1))
     }, arguments)
   }
-  imports.wbg.__wbg_newnoargs_581967eacc0e2604 = function (arg0, arg1) {
+  imports.wbg.__wbg_newnoargs_ccdcae30fd002262 = function (arg0, arg1) {
     const ret = new Function(getStringFromWasm0(arg0, arg1))
     return addHeapObject(ret)
   }
-  imports.wbg.__wbg_call_cb65541d95d71282 = function () {
+  imports.wbg.__wbg_call_669127b9d730c650 = function () {
     return handleError(function (arg0, arg1) {
       const ret = getObject(arg0).call(getObject(arg1))
       return addHeapObject(ret)
@@ -455,25 +459,25 @@ function __wbg_get_imports() {
     const ret = getObject(arg0)
     return addHeapObject(ret)
   }
-  imports.wbg.__wbg_self_1ff1d729e9aae938 = function () {
+  imports.wbg.__wbg_self_3fad056edded10bd = function () {
     return handleError(function () {
       const ret = self.self
       return addHeapObject(ret)
     }, arguments)
   }
-  imports.wbg.__wbg_window_5f4faef6c12b79ec = function () {
+  imports.wbg.__wbg_window_a4f46c98a61d4089 = function () {
     return handleError(function () {
       const ret = window.window
       return addHeapObject(ret)
     }, arguments)
   }
-  imports.wbg.__wbg_globalThis_1d39714405582d3c = function () {
+  imports.wbg.__wbg_globalThis_17eff828815f7d84 = function () {
     return handleError(function () {
       const ret = globalThis.globalThis
       return addHeapObject(ret)
     }, arguments)
   }
-  imports.wbg.__wbg_global_651f05c6a0944d1c = function () {
+  imports.wbg.__wbg_global_46f939f6541643c5 = function () {
     return handleError(function () {
       const ret = global.global
       return addHeapObject(ret)
@@ -483,17 +487,17 @@ function __wbg_get_imports() {
     const ret = getObject(arg0) === undefined
     return ret
   }
-  imports.wbg.__wbg_call_01734de55d61e11d = function () {
+  imports.wbg.__wbg_call_53fc3abd42e24ec8 = function () {
     return handleError(function (arg0, arg1, arg2) {
       const ret = getObject(arg0).call(getObject(arg1), getObject(arg2))
       return addHeapObject(ret)
     }, arguments)
   }
-  imports.wbg.__wbg_buffer_085ec1f694018c4f = function (arg0) {
+  imports.wbg.__wbg_buffer_344d9b41efe96da7 = function (arg0) {
     const ret = getObject(arg0).buffer
     return addHeapObject(ret)
   }
-  imports.wbg.__wbg_newwithbyteoffsetandlength_6da8e527659b86aa = function (
+  imports.wbg.__wbg_newwithbyteoffsetandlength_2dc04d99088b15e3 = function (
     arg0,
     arg1,
     arg2,
@@ -501,18 +505,18 @@ function __wbg_get_imports() {
     const ret = new Uint8Array(getObject(arg0), arg1 >>> 0, arg2 >>> 0)
     return addHeapObject(ret)
   }
-  imports.wbg.__wbg_new_8125e318e6245eed = function (arg0) {
+  imports.wbg.__wbg_new_d8a000788389a31e = function (arg0) {
     const ret = new Uint8Array(getObject(arg0))
     return addHeapObject(ret)
   }
-  imports.wbg.__wbg_set_5cf90238115182c3 = function (arg0, arg1, arg2) {
+  imports.wbg.__wbg_set_dcfd613a3420f908 = function (arg0, arg1, arg2) {
     getObject(arg0).set(getObject(arg1), arg2 >>> 0)
   }
-  imports.wbg.__wbg_newwithlength_e5d69174d6984cd7 = function (arg0) {
+  imports.wbg.__wbg_newwithlength_13b5319ab422dcf6 = function (arg0) {
     const ret = new Uint8Array(arg0 >>> 0)
     return addHeapObject(ret)
   }
-  imports.wbg.__wbg_subarray_13db269f57aa838d = function (arg0, arg1, arg2) {
+  imports.wbg.__wbg_subarray_6ca5cfa7fbb9abbe = function (arg0, arg1, arg2) {
     const ret = getObject(arg0).subarray(arg1 >>> 0, arg2 >>> 0)
     return addHeapObject(ret)
   }

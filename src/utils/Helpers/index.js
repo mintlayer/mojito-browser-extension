@@ -5,6 +5,7 @@ import * as Concurrency from './Concurrency/Concurrency'
 import * as NumbersHelper from './Number/Number'
 import * as Format from './Number/Format'
 import * as ArrayHelper from './Array/Array'
+import * as AccountHelper from './Account/Account'
 
 export {
   BTC,
@@ -14,4 +15,5 @@ export {
   NumbersHelper,
   Format,
   ArrayHelper,
+  AccountHelper,
 }

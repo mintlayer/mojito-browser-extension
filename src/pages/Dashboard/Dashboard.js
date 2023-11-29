@@ -1,8 +1,7 @@
-import { useContext, useState } from 'react'
-import { Button } from '@BasicComponents'
-import { Header, PopUp, TextField } from '@ComposedComponents'
-import { VerticalGroup } from '@LayoutComponents'
+import { useContext, useState, useEffect } from 'react'
+import { Header, PopUp, AddWallet } from '@ComposedComponents'
 import { AccountContext, SettingsContext } from '@Contexts'
+import { Account } from '@Entities'
 
 import {
   useExchangeRates,
@@ -18,26 +17,33 @@ import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router-dom'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
-import { Account } from '@Entities'
 
 const DashboardPage = () => {
-  const [pass, setPass] = useState(null)
-  const { addresses, accountName, accountID, setWalletType, setWalletInfo } =
+  const { addresses, accountName, setWalletType, accountID } =
     useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
-  const currentMlAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
-      : addresses.mlTestnetAddress
+  // TODO: has to be changed to use all addresses
+  const getCurrentMlAddress = (addresses, networkType) => {
+    const getFirstAddress = (addressList) =>
+      addressList ? addressList[0] : false
+
+    const mlTestnetAddress = getFirstAddress(addresses.mlTestnetAddresses)
+    const mlMainnetAddress = getFirstAddress(addresses.mlMainnetAddresses)
+
+    return networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? mlMainnetAddress
+      : mlTestnetAddress
+  }
+
+  const currentMlAddress = getCurrentMlAddress(addresses, networkType)
   const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
-  const [passValidity, setPassValidity] = useState(false)
-  const [passPristinity, setPassPristinity] = useState(true)
-  const [passErrorMessage, setPassErrorMessage] = useState('')
+  const [account, setAccount] = useState(null)
+
   const [connectedWalletType, setConnectedWalletType] = useState('')
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
   const { mlBalance } = useMlWalletInfo(currentMlAddress)
@@ -49,10 +55,6 @@ const DashboardPage = () => {
     useOneDayAgoExchangeRates('ml', 'usd')
   const { historyRates } = useOneDayAgoHist('btc', 'usd')
   const navigate = useNavigate()
-
-  const changePassHandle = (value) => {
-    setPass(value)
-  }
 
   const yesterdayExchangeRateList = {
     btc: btcYesterdayExchangeRate,
@@ -121,10 +123,7 @@ const DashboardPage = () => {
       addCrypto('Bitcoin', 'BTC', btcBalance, btcExchangeRate, change24h)
     }
 
-    const mlAddress =
-      network === AppInfo.NETWORK_TYPES.MAINNET
-        ? addresses.mlMainnetAddress
-        : addresses.mlTestnetAddress
+    const mlAddress = getCurrentMlAddress(addresses, network)
     if (mlAddress) {
       addCrypto('Mintlayer', 'ML', mlBalance, mlExchangeRate, 0)
     }
@@ -143,54 +142,14 @@ const DashboardPage = () => {
     setAllowClosing(true)
   }
 
-  const connectWalletHandle = async (id, walletType) => {
-    if (!pass) {
-      setPassPristinity(false)
-      setPassValidity(false)
-      setPassErrorMessage('Password must be set.')
-      return
-    }
-
-    const currentAccount = await Account.getAccount(id)
-    const currentWallets = currentAccount.walletsToCreate
-    const walletToAdd = walletType.value
-
-    if (currentWallets.includes(walletToAdd)) {
-      console.error('Wallet already added')
-      setPassErrorMessage('Wallet already added')
-      return
-    }
-
-    return await Account.updateAccount(id, {
-      walletsToCreate: [...currentWallets, walletToAdd],
-    })
+  const getCurrentAccount = async (accountID) => {
+    const currentAccount = await Account.getAccount(accountID)
+    return currentAccount
   }
 
-  const onConnectSubmit = async (e) => {
-    e.preventDefault()
-    setAllowClosing(false)
-    try {
-      const response = await connectWalletHandle(accountID, connectedWalletType)
-      if (response) {
-        const { addresses, name } = await Account.unlockAccount(accountID, pass)
-        setWalletInfo(addresses, accountID, name)
-        setOpenConnectConfirmation(false)
-        setPassValidity(true)
-        setPassErrorMessage('')
-        navigate('/')
-      }
-      return response
-    } catch (e) {
-      console.error(e)
-      setPassPristinity(false)
-      setPassValidity(false)
-      setPass('')
-      setPassErrorMessage('Incorrect password. Account could not be added.')
-      setAllowClosing(true)
-    } finally {
-      setAllowClosing(true)
-    }
-  }
+  useEffect(() => {
+    getCurrentAccount(accountID).then((account) => setAccount(account))
+  }, [accountID])
 
   return (
     <>
@@ -222,20 +181,12 @@ const DashboardPage = () => {
           setOpen={setOpenConnectConfirmation}
           allowClosing={allowClosing}
         >
-          <form>
-            <VerticalGroup bigGap>
-              <TextField
-                label="Insert your password"
-                placeHolder="Password"
-                password
-                validity={passValidity}
-                pristinity={passPristinity}
-                errorMessages={passErrorMessage}
-                onChangeHandle={changePassHandle}
-              />
-              <Button onClickHandle={onConnectSubmit}>Create Wallet</Button>
-            </VerticalGroup>
-          </form>
+          <AddWallet
+            account={account}
+            walletType={connectedWalletType}
+            setAllowClosing={setAllowClosing}
+            setOpenConnectConfirmation={setOpenConnectConfirmation}
+          />
         </PopUp>
       )}
     </>
