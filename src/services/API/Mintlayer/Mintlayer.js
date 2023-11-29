@@ -6,6 +6,7 @@ const prefix = '/api/v1'
 
 const MINTLAYER_ENDPOINTS = {
   GET_ADDRESS_DATA: '/address/:address',
+  GET_TRANSACTION_DATA: '/transaction/:txid',
 }
 
 const requestMintlayer = async (url, body = null, request = fetch) => {
@@ -66,6 +67,74 @@ const getAddressBalance = async (address) => {
     return balance
   } catch (error) {
     console.warn(`Failed to get balance for address ${address}: `, error)
+    return { balanceInAtoms: 0, balanceInCoins: 0 }
+  }
+}
+
+export const getWalletBalance = async (addresses) => {
+  const receivingBalancePromises = addresses.map((address) =>
+    getAddressBalance(address),
+  )
+  const receivingBalances = await Promise.all(receivingBalancePromises)
+  const totalBalance = receivingBalances.reduce(
+    (acc, curr) => {
+      return {
+        balanceInAtoms: acc.balanceInAtoms + curr.balanceInAtoms,
+        balanceInCoins: acc.balanceInCoins + curr.balanceInCoins,
+      }
+    },
+    { balanceInAtoms: 0, balanceInCoins: 0 },
+  )
+  return totalBalance
+}
+
+const getAddressTransactionIds = async (address) => {
+  try {
+    const response = await getAddressData(address)
+    const data = JSON.parse(response)
+    return data.transaction_history
+  } catch (error) {
+    console.warn(`Failed to get balance for address ${address}: `, error)
+    return []
+  }
+}
+
+const getWalletTransactionIds = async (addresses) => {
+  const receivingTransactionsPromises = addresses.map((address) =>
+    getAddressTransactionIds(address),
+  )
+  const receivingTransactions = await Promise.all(receivingTransactionsPromises)
+  return receivingTransactions.flat()
+}
+
+const getWalletTransactions = async (addresses) => {
+  const txids = await getWalletTransactionIds(addresses)
+  const transactionsPromises = txids.map((txid) => getTransactionData(txid))
+  const transactionsData = await Promise.all(transactionsPromises)
+  return transactionsData
+}
+
+const getTransactionData = async (txid) => {
+  try {
+    const responce = await tryServers(
+      MINTLAYER_ENDPOINTS.GET_TRANSACTION_DATA.replace(':txid', txid),
+    )
+    const data = JSON.parse(responce)
+    return { txid, ...data }
+  } catch (error) {
+    console.warn(`Failed to get data for transaction ${txid}: `, error)
+    throw error
+  }
+}
+
+const getAddressTransactions = async (address) => {
+  try {
+    const txids = await getAddressTransactionIds(address)
+    const transactionsPromises = txids.map((txid) => getTransactionData(txid))
+    const transactionsData = await Promise.all(transactionsPromises)
+    return transactionsData
+  } catch (error) {
+    console.error('Failed to get data for transactions: ', error)
     throw error
   }
 }
@@ -73,6 +142,11 @@ const getAddressBalance = async (address) => {
 export {
   getAddressData,
   getAddressBalance,
+  getAddressTransactionIds,
+  getWalletTransactionIds,
+  getWalletTransactions,
+  getTransactionData,
+  getAddressTransactions,
   requestMintlayer,
   MINTLAYER_ENDPOINTS,
 }
