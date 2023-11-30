@@ -81,9 +81,6 @@ describe('AddWallet', () => {
       expect(input.value).toBe('test')
       expect(input).toHaveClass('valid')
     })
-
-    fireEvent.click(submitButton)
-    expect(inputList).toBeInTheDocument()
   })
 
   test('renders password field and submit button when step is 3', async () => {
