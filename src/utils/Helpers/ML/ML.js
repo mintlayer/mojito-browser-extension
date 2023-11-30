@@ -7,11 +7,14 @@ const getAmountInCoins = (amointInAtoms, exchangeRate) => {
 
 const getParsedTransactions = (transactions) => {
   const filteredTransactions = ArrayHelper.removeDublicates(transactions)
-  const transactionsIds = filteredTransactions.map(
+  const sortedTransactions = filteredTransactions.sort(
+    (a, b) => b.timestamp - a.timestamp,
+  )
+  const transactionsIds = sortedTransactions.map(
     (transaction) => transaction.txid,
   )
 
-  return filteredTransactions.map((transaction) => {
+  return sortedTransactions.map((transaction) => {
     const isInputMine = transaction.inputs.some((input) =>
       transactionsIds.includes(input.Utxo.id.Transaction),
     )
