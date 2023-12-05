@@ -36,7 +36,8 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
     : 'not confirmed'
   const buttonExtraStyles = ['transaction-details-button']
   const addressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
-  const transactionAddress = [...new Set(transaction?.otherPart)].join('; ')
+  const transactionAddress =
+    transaction.destAddress || [...new Set(transaction?.otherPart)].join('; ')
   const externalBtcLink = `https://blockstream.info${
     isTestnet ? '/testnet' : ''
   }/tx/${transaction?.txid}`
@@ -44,7 +45,8 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
 
   useEffect(() => {
     const getConfirmationAmount = async () => {
-      const amount = await getConfirmations(transaction)
+      const amount =
+        (await getConfirmations(transaction)) || transaction.confirmations
       setConfirmations(amount)
     }
     getConfirmationAmount()

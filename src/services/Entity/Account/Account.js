@@ -106,7 +106,7 @@ const unlockAccount = async (id, password) => {
         key,
       })
 
-      const mlTestnetReceivingAddresses = await ML.getWalletReceivingAddresses(
+      const mlTestnetReceivingAddresses = await ML.getWalletAddresses(
         mlTestnetPrivateKey,
         AppInfo.NETWORK_TYPES.TESTNET,
       )

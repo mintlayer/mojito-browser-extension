@@ -14,6 +14,12 @@ export function make_receiving_address(
   c: number,
   d: number,
 ): void
+export function make_change_address(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+): void
 export function pubkey_to_string(
   a: number,
   b: number,
@@ -40,6 +46,117 @@ export function verify_signature(
   e: number,
   f: number,
   g: number,
+): void
+export function encode_output_transfer(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+): void
+export function encode_lock_for_block_count(a: number, b: number): void
+export function encode_lock_for_seconds(a: number, b: number): void
+export function encode_lock_until_time(a: number, b: number): void
+export function encode_lock_until_height(a: number, b: number): void
+export function encode_output_lock_then_transfer(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+): void
+export function encode_output_burn(a: number, b: number, c: number): void
+export function encode_output_create_delegation(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+): void
+export function encode_output_delegate_staking(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+): void
+export function encode_stake_pool_data(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: number,
+  l: number,
+  m: number,
+): void
+export function encode_output_create_stake_pool(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+): void
+export function encode_output_issue_fungible_token(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: number,
+  l: number,
+  m: number,
+): void
+export function encode_output_data_deposit(
+  a: number,
+  b: number,
+  c: number,
+): void
+export function encode_outpoint_source_id(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+): void
+export function encode_input_utxo(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+): void
+export function encode_transaction(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+): void
+export function encode_witness_no_signature(a: number): void
+export function encode_witness(a: number, b: number, c: number, d: number): void
+export function encode_signed_transaction(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
 ): void
 export function rustsecp256k1_v0_9_0_context_create(a: number): number
 export function rustsecp256k1_v0_9_0_context_destroy(a: number): void

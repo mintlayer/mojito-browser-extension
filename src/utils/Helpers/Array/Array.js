@@ -14,4 +14,12 @@ const getNRandomElementsFromArray = (array, n) => {
   return result
 }
 
-export { getNRandomElementsFromArray }
+const removeDublicates = (arr) => {
+  const seen = new Set()
+  return arr.filter((item) => {
+    const k = JSON.stringify(item)
+    return seen.has(k) ? false : seen.add(k)
+  })
+}
+
+export { getNRandomElementsFromArray, removeDublicates }

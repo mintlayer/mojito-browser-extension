@@ -16,29 +16,17 @@ const WalletPage = () => {
   const navigate = useNavigate()
   const { addresses, walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const currentBtcAddress =
+  const btcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
-
-  // TODO: has to be changed to use all addresses
-  const getCurrentMlAddress = (addresses, networkType) => {
-    const getFirstAddress = (addressList) =>
-      addressList ? addressList[0] : false
-
-    const mlTestnetAddress = getFirstAddress(addresses.mlTestnetAddresses)
-    const mlMainnetAddress = getFirstAddress(addresses.mlMainnetAddresses)
-
-    return networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? mlMainnetAddress
-      : mlTestnetAddress
-  }
-  const currentMlAddress = getCurrentMlAddress(addresses, networkType)
-
+  const currentMlAddresses =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? addresses.mlMainnetAddress
+      : addresses.mlTestnetAddresses
   const [openShowAddress, setOpenShowAddress] = useState(false)
-  const { btcTransactionsList, btcBalance } =
-    useBtcWalletInfo(currentBtcAddress)
-  const { mlTransactionsList, mlBalance } = useMlWalletInfo(currentMlAddress)
+  const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
+  const { mlTransactionsList, mlBalance } = useMlWalletInfo(currentMlAddresses)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
 
@@ -46,9 +34,20 @@ const WalletPage = () => {
 
   const walletExangeRate =
     walletType.name === 'Mintlayer' ? mlExchangeRate : btcExchangeRate
+
+  const mlMainnetAddress = addresses.mlMainnetAddress
+    ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
+    : false
+  const mlTestnetAddress = addresses.mlTestnetAddresses
+    ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
+    : false
+  const mlAddress =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? mlMainnetAddress
+      : mlTestnetAddress
+
   const walletBalance = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
-  const walletAddress =
-    walletType.name === 'Mintlayer' ? currentMlAddress : currentBtcAddress
+  const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
   const walletTransactionList =
     walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
 

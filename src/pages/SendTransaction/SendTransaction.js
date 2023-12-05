@@ -26,6 +26,10 @@ const SendTransactionPage = () => {
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
+  const currentMlAddresses =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? addresses.mlMainnetAddress
+      : addresses.mlTestnetAddresses
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
@@ -40,7 +44,7 @@ const SendTransactionPage = () => {
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance } = useMlWalletInfo(currentBtcAddress)
+  const { mlBalance } = useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
 

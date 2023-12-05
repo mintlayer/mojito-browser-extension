@@ -1,8 +1,9 @@
 /* eslint-disable no-new-func */
-/* eslint-disable eqeqeq */
 /* eslint-disable no-undef */
 /* eslint-disable no-restricted-globals */
 /* eslint-disable max-depth */
+/* eslint-disable eqeqeq */
+/* eslint-disable max-params */
 let wasm
 
 const cachedTextDecoder =
@@ -223,6 +224,34 @@ export function make_receiving_address(private_key_bytes, key_index) {
 }
 
 /**
+ * From an extended private key create a change private key for a given key index
+ * derivation path: 44'/mintlayer_coin_type'/0'/1/key_index
+ * @param {Uint8Array} private_key_bytes
+ * @param {number} key_index
+ * @returns {Uint8Array}
+ */
+export function make_change_address(private_key_bytes, key_index) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    wasm.make_change_address(retptr, ptr0, len0, key_index)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v2 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v2
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
  * @param {Uint8Array} public_key_bytes
  * @param {Network} network
  * @returns {string}
@@ -336,6 +365,636 @@ export function verify_signature(public_key, signature, message) {
   }
 }
 
+/**
+ * @param {string} amount
+ * @param {string} address
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_transfer(amount, address, network) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(
+      amount,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passStringToWasm0(
+      address,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len1 = WASM_VECTOR_LEN
+    wasm.encode_output_transfer(retptr, ptr0, len0, ptr1, len1, network)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v3 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v3
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {bigint} num
+ * @returns {Uint8Array}
+ */
+export function encode_lock_for_block_count(num) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    wasm.encode_lock_for_block_count(retptr, num)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var v1 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v1
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {bigint} num
+ * @returns {Uint8Array}
+ */
+export function encode_lock_for_seconds(num) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    wasm.encode_lock_for_seconds(retptr, num)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var v1 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v1
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {bigint} num
+ * @returns {Uint8Array}
+ */
+export function encode_lock_until_time(num) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    wasm.encode_lock_until_time(retptr, num)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var v1 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v1
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {bigint} num
+ * @returns {Uint8Array}
+ */
+export function encode_lock_until_height(num) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    wasm.encode_lock_until_height(retptr, num)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var v1 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v1
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {string} amount
+ * @param {string} address
+ * @param {Uint8Array} lock
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_lock_then_transfer(
+  amount,
+  address,
+  lock,
+  network,
+) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(
+      amount,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passStringToWasm0(
+      address,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len1 = WASM_VECTOR_LEN
+    const ptr2 = passArray8ToWasm0(lock, wasm.__wbindgen_malloc)
+    const len2 = WASM_VECTOR_LEN
+    wasm.encode_output_lock_then_transfer(
+      retptr,
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      ptr2,
+      len2,
+      network,
+    )
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v4 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v4
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {string} amount
+ * @returns {Uint8Array}
+ */
+export function encode_output_burn(amount) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(
+      amount,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len0 = WASM_VECTOR_LEN
+    wasm.encode_output_burn(retptr, ptr0, len0)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v2 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v2
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {string} pool_id
+ * @param {string} address
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_create_delegation(pool_id, address, network) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(
+      pool_id,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passStringToWasm0(
+      address,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len1 = WASM_VECTOR_LEN
+    wasm.encode_output_create_delegation(
+      retptr,
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      network,
+    )
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v3 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v3
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {string} amount
+ * @param {string} delegation_id
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_delegate_staking(amount, delegation_id, network) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(
+      amount,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passStringToWasm0(
+      delegation_id,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len1 = WASM_VECTOR_LEN
+    wasm.encode_output_delegate_staking(retptr, ptr0, len0, ptr1, len1, network)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v3 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v3
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {string} value
+ * @param {string} staker
+ * @param {string} vrf_public_key
+ * @param {string} decommission_key
+ * @param {number} margin_ratio_per_thousand
+ * @param {string} cost_per_block
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_stake_pool_data(
+  value,
+  staker,
+  vrf_public_key,
+  decommission_key,
+  margin_ratio_per_thousand,
+  cost_per_block,
+  network,
+) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(
+      value,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passStringToWasm0(
+      staker,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len1 = WASM_VECTOR_LEN
+    const ptr2 = passStringToWasm0(
+      vrf_public_key,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len2 = WASM_VECTOR_LEN
+    const ptr3 = passStringToWasm0(
+      decommission_key,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len3 = WASM_VECTOR_LEN
+    const ptr4 = passStringToWasm0(
+      cost_per_block,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len4 = WASM_VECTOR_LEN
+    wasm.encode_stake_pool_data(
+      retptr,
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      ptr2,
+      len2,
+      ptr3,
+      len3,
+      margin_ratio_per_thousand,
+      ptr4,
+      len4,
+      network,
+    )
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v6 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v6
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {string} pool_id
+ * @param {Uint8Array} pool_data
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_create_stake_pool(pool_id, pool_data, network) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(
+      pool_id,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passArray8ToWasm0(pool_data, wasm.__wbindgen_malloc)
+    const len1 = WASM_VECTOR_LEN
+    wasm.encode_output_create_stake_pool(
+      retptr,
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      network,
+    )
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v3 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v3
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {string} authority
+ * @param {Uint8Array} token_ticker
+ * @param {Uint8Array} metadata_uri
+ * @param {number} number_of_decimals
+ * @param {TotalSupply} total_supply
+ * @param {string} supply_amount
+ * @param {FreezableToken} is_token_freezable
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_issue_fungible_token(
+  authority,
+  token_ticker,
+  metadata_uri,
+  number_of_decimals,
+  total_supply,
+  supply_amount,
+  is_token_freezable,
+  network,
+) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(
+      authority,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passArray8ToWasm0(token_ticker, wasm.__wbindgen_malloc)
+    const len1 = WASM_VECTOR_LEN
+    const ptr2 = passArray8ToWasm0(metadata_uri, wasm.__wbindgen_malloc)
+    const len2 = WASM_VECTOR_LEN
+    const ptr3 = passStringToWasm0(
+      supply_amount,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len3 = WASM_VECTOR_LEN
+    wasm.encode_output_issue_fungible_token(
+      retptr,
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      ptr2,
+      len2,
+      number_of_decimals,
+      total_supply,
+      ptr3,
+      len3,
+      is_token_freezable,
+      network,
+    )
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v5 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v5
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {Uint8Array} data
+ * @returns {Uint8Array}
+ */
+export function encode_output_data_deposit(data) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    wasm.encode_output_data_deposit(retptr, ptr0, len0)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v2 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v2
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {Uint8Array} id
+ * @param {SourceId} source
+ * @returns {Uint8Array}
+ */
+export function encode_outpoint_source_id(id, source) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passArray8ToWasm0(id, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    wasm.encode_outpoint_source_id(retptr, ptr0, len0, source)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var v2 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v2
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {Uint8Array} outpoint_source_id
+ * @param {number} output_index
+ * @returns {Uint8Array}
+ */
+export function encode_input_utxo(outpoint_source_id, output_index) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passArray8ToWasm0(outpoint_source_id, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    wasm.encode_input_utxo(retptr, ptr0, len0, output_index)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v2 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v2
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {Uint8Array} inputs
+ * @param {Uint8Array} outputs
+ * @param {bigint} flags
+ * @returns {Uint8Array}
+ */
+export function encode_transaction(inputs, outputs, flags) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passArray8ToWasm0(outputs, wasm.__wbindgen_malloc)
+    const len1 = WASM_VECTOR_LEN
+    wasm.encode_transaction(retptr, ptr0, len0, ptr1, len1, flags)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v3 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v3
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @returns {Uint8Array}
+ */
+export function encode_witness_no_signature() {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    wasm.encode_witness_no_signature(retptr)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var v1 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v1
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {SignatureHashType} sighashtype
+ * @param {Uint8Array} raw_signature
+ * @returns {Uint8Array}
+ */
+export function encode_witness(sighashtype, raw_signature) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passArray8ToWasm0(raw_signature, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    wasm.encode_witness(retptr, sighashtype, ptr0, len0)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var v2 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v2
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {Uint8Array} transaction_bytes
+ * @param {Uint8Array} signatures
+ * @returns {Uint8Array}
+ */
+export function encode_signed_transaction(transaction_bytes, signatures) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passArray8ToWasm0(transaction_bytes, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passArray8ToWasm0(signatures, wasm.__wbindgen_malloc)
+    const len1 = WASM_VECTOR_LEN
+    wasm.encode_signed_transaction(retptr, ptr0, len0, ptr1, len1)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v3 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v3
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
 function handleError(f, args) {
   try {
     return f.apply(this, args)
@@ -343,6 +1002,18 @@ function handleError(f, args) {
     wasm.__wbindgen_exn_store(addHeapObject(e))
   }
 }
+/**
+ */
+export const SignatureHashType = Object.freeze({
+  ALL: 0,
+  0: 'ALL',
+  NONE: 1,
+  1: 'NONE',
+  SINGLE: 2,
+  2: 'SINGLE',
+  ANYONECANPAY: 3,
+  3: 'ANYONECANPAY',
+})
 /**
  */
 export const Network = Object.freeze({
@@ -354,6 +1025,32 @@ export const Network = Object.freeze({
   2: 'Regtest',
   Signet: 3,
   3: 'Signet',
+})
+/**
+ */
+export const TotalSupply = Object.freeze({
+  Lockable: 0,
+  0: 'Lockable',
+  Unlimited: 1,
+  1: 'Unlimited',
+  Fixed: 2,
+  2: 'Fixed',
+})
+/**
+ */
+export const SourceId = Object.freeze({
+  Transaction: 0,
+  0: 'Transaction',
+  BlockReward: 1,
+  1: 'BlockReward',
+})
+/**
+ */
+export const FreezableToken = Object.freeze({
+  No: 0,
+  0: 'No',
+  Yes: 1,
+  1: 'Yes',
 })
 
 async function __wbg_load(module, imports) {

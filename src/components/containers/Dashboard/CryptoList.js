@@ -1,13 +1,14 @@
 import { useContext } from 'react'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
-import { LogoRound } from '@BasicComponents'
+import { LogoRound, SkeletonLoader } from '@BasicComponents'
 import { LineChart } from '@ComposedComponents'
 import { AppInfo } from '@Constants'
-import { SettingsContext } from '@Contexts'
+import { SettingsContext, AccountContext } from '@Contexts'
 
 import './CryptoList.css'
 
 export const CryptoItem = ({ colorList, onClickItem, item }) => {
+  const { walletDataLoading } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const color = colorList[item.symbol.toLowerCase()]
   const balance =
@@ -25,53 +26,61 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
   }
 
   return (
-    <li
-      key={item.symbol}
-      className="crypto-item"
-      onClick={onClick}
-      data-testid="crypto-item"
-    >
-      {item.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
-      <div className="name-values">
-        <h5>
-          {item.name} ({item.symbol})
-        </h5>
-        <div className={`values ${bigValues ? 'big-values' : ''}`}>
-          <dl>
-            <dt>Value:</dt>
-            <dd>{balance}</dd>
-            {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
-              <>
-                <dt>Price:</dt>
-                <dd>{item.exchangeRate.toFixed(2)}</dd>
-              </>
-            )}
-          </dl>
-        </div>
-      </div>
-      <div className="crypto-stats">
-        <div className="crypto-stats-numbers">
-          {Number(balance) > 0 && (
-            <>
-              <strong className={item.change24h < 0 ? 'negative' : 'positive'}>
-                {networkType === AppInfo.NETWORK_TYPES.TESTNET
-                  ? 0
-                  : item.change24h}
-                %
-              </strong>
-              <span>24h</span>
-            </>
-          )}
-        </div>
-        <LineChart
-          points={data}
-          height="40px"
-          width="100%"
-          lineColor={color}
-          lineWidth="4px"
-        />
-      </div>
-    </li>
+    <>
+      {walletDataLoading ? (
+        <SkeletonLoader />
+      ) : (
+        <li
+          key={item.symbol}
+          className="crypto-item"
+          onClick={onClick}
+          data-testid="crypto-item"
+        >
+          {item.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
+          <div className="name-values">
+            <h5>
+              {item.name} ({item.symbol})
+            </h5>
+            <div className={`values ${bigValues ? 'big-values' : ''}`}>
+              <dl>
+                <dt>Value:</dt>
+                <dd>{balance}</dd>
+                {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
+                  <>
+                    <dt>Price:</dt>
+                    <dd>{item.exchangeRate.toFixed(2)}</dd>
+                  </>
+                )}
+              </dl>
+            </div>
+          </div>
+          <div className="crypto-stats">
+            <div className="crypto-stats-numbers">
+              {Number(balance) > 0 && (
+                <>
+                  <strong
+                    className={item.change24h < 0 ? 'negative' : 'positive'}
+                  >
+                    {networkType === AppInfo.NETWORK_TYPES.TESTNET
+                      ? 0
+                      : item.change24h}
+                    %
+                  </strong>
+                  <span>24h</span>
+                </>
+              )}
+            </div>
+            <LineChart
+              points={data}
+              height="40px"
+              width="100%"
+              lineColor={color}
+              lineWidth="4px"
+            />
+          </div>
+        </li>
+      )}
+    </>
   )
 }
 

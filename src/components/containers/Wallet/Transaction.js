@@ -48,10 +48,11 @@ const Transaction = ({ transaction, getConfirmations }) => {
           className="transaction-id"
           data-testid="transaction-otherPart"
         >
-          {transaction && formatAddress(transaction.otherPart[0])}
-          {transaction &&
+          {transaction.otherPart && formatAddress(transaction.otherPart[0])}
+          {transaction.otherPart &&
             [...new Set(transaction.otherPart)].length > 1 &&
             ` (+${transaction.otherPart.length - 1})`}
+          {transaction.destAddress && formatAddress(transaction.destAddress)}
         </p>
         <div className="transaction-date-amount">
           <p

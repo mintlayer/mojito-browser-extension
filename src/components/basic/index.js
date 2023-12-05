@@ -10,6 +10,7 @@ import Error from './Error/Error'
 import Toggle from './Toggle/Toggle'
 import Logo from './Logo/Logo'
 import LogoRound from './LogoRound/LogoRound'
+import SkeletonLoader from './SkeletonLoader/SkeletonLoader'
 
 export {
   Arc,
@@ -24,4 +25,5 @@ export {
   Toggle,
   Logo,
   LogoRound,
+  SkeletonLoader,
 }
