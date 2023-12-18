@@ -84,6 +84,20 @@ const unlockAccount = async (id, password) => {
       key,
     })
 
+    const mlTestnetPrivateKey = await decryptSeed({
+      data: account.seed.encryptedMlTestnetPrivateKey,
+      iv: account.iv.mlTestnetPrivKeyIv,
+      tag: account.tag.mlTestnetPrivKeyTag,
+      key,
+    })
+
+    const mlMainnetPrivateKey = await decryptSeed({
+      data: account.seed.encryptedMlMainnetPrivateKey,
+      iv: account.iv.mlMainnetPrivKeyIv,
+      tag: account.tag.mlMainnetPrivKeyTag,
+      key,
+    })
+
     // this error just exists if the jobe was run in a worker
     /* istanbul ignore next */
     if (seed.error) throw new Error(seed.error)
@@ -99,26 +113,30 @@ const unlockAccount = async (id, password) => {
     }
 
     if (walletsToCreate.includes('ml')) {
-      const mlTestnetPrivateKey = await decryptSeed({
-        data: account.seed.encryptedMlTestnetPrivateKey,
-        iv: account.iv.mlTestnetPrivKeyIv,
-        tag: account.tag.mlTestnetPrivKeyTag,
-        key,
-      })
-
-      const mlTestnetReceivingAddresses = await ML.getWalletAddresses(
+      const mlTestnetWalletAddresses = await ML.getWalletAddresses(
         mlTestnetPrivateKey,
         AppInfo.NETWORK_TYPES.TESTNET,
+        AppInfo.DEFAULT_ML_WALLET_OFFSET,
       )
 
       addresses.mlMainnetAddress = false
-      addresses.mlTestnetAddresses = mlTestnetReceivingAddresses
+      addresses.mlTestnetAddresses = mlTestnetWalletAddresses
     }
 
-    return { addresses, WIF, name: account.name }
+    return {
+      addresses,
+      WIF,
+      name: account.name,
+      mlPrivKeys: { mlMainnetPrivateKey, mlTestnetPrivateKey },
+    }
   } catch (e) {
     console.error(e)
-    return Promise.reject({ address: '', WIF: '', name: '' })
+    return Promise.reject({
+      address: '',
+      WIF: '',
+      name: '',
+      mlPrivKeys: { mlMainnetPrivateKey: '', mlTestnetPrivateKey: '' },
+    })
   }
 }
 
