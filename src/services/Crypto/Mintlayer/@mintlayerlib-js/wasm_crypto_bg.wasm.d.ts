@@ -135,11 +135,29 @@ export function encode_outpoint_source_id(
   c: number,
   d: number,
 ): void
-export function encode_input_utxo(
+export function encode_input_for_utxo(
   a: number,
   b: number,
   c: number,
   d: number,
+): void
+export function encode_input_for_account_outpoint(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+): void
+export function estimate_transaction_size(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
 ): void
 export function encode_transaction(
   a: number,
@@ -150,7 +168,20 @@ export function encode_transaction(
   f: number,
 ): void
 export function encode_witness_no_signature(a: number): void
-export function encode_witness(a: number, b: number, c: number, d: number): void
+export function encode_witness(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: number,
+  l: number,
+): void
 export function encode_signed_transaction(
   a: number,
   b: number,

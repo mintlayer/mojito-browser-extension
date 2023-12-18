@@ -212,10 +212,34 @@ export function encode_outpoint_source_id(
  * @param {number} output_index
  * @returns {Uint8Array}
  */
-export function encode_input_utxo(
+export function encode_input_for_utxo(
   outpoint_source_id: Uint8Array,
   output_index: number,
 ): Uint8Array
+/**
+ * @param {string} delegation_id
+ * @param {string} amount
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_account_outpoint(
+  delegation_id: string,
+  amount: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * @param {Uint8Array} inputs
+ * @param {Uint8Array} opt_utxos
+ * @param {Uint8Array} outputs
+ * @returns {number}
+ */
+export function estimate_transaction_size(
+  inputs: Uint8Array,
+  opt_utxos: Uint8Array,
+  outputs: Uint8Array,
+): number
 /**
  * @param {Uint8Array} inputs
  * @param {Uint8Array} outputs
@@ -233,12 +257,22 @@ export function encode_transaction(
 export function encode_witness_no_signature(): Uint8Array
 /**
  * @param {SignatureHashType} sighashtype
- * @param {Uint8Array} raw_signature
+ * @param {Uint8Array} private_key_bytes
+ * @param {string} address
+ * @param {Uint8Array} transaction_bytes
+ * @param {Uint8Array} inputs
+ * @param {number} input_num
+ * @param {Network} network
  * @returns {Uint8Array}
  */
 export function encode_witness(
   sighashtype: SignatureHashType,
-  raw_signature: Uint8Array,
+  private_key_bytes: Uint8Array,
+  address: string,
+  transaction_bytes: Uint8Array,
+  inputs: Uint8Array,
+  input_num: number,
+  network: Network,
 ): Uint8Array
 /**
  * @param {Uint8Array} transaction_bytes
@@ -259,11 +293,9 @@ export enum SignatureHashType {
 }
 /**
  */
-export enum Network {
-  Mainnet = 0,
-  Testnet = 1,
-  Regtest = 2,
-  Signet = 3,
+export enum SourceId {
+  Transaction = 0,
+  BlockReward = 1,
 }
 /**
  */
@@ -274,9 +306,11 @@ export enum TotalSupply {
 }
 /**
  */
-export enum SourceId {
-  Transaction = 0,
-  BlockReward = 1,
+export enum Network {
+  Mainnet = 0,
+  Testnet = 1,
+  Regtest = 2,
+  Signet = 3,
 }
 /**
  */
@@ -424,11 +458,29 @@ export interface InitOutput {
     c: number,
     d: number,
   ) => void
-  readonly encode_input_utxo: (
+  readonly encode_input_for_utxo: (
     a: number,
     b: number,
     c: number,
     d: number,
+  ) => void
+  readonly encode_input_for_account_outpoint: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+  ) => void
+  readonly estimate_transaction_size: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
   ) => void
   readonly encode_transaction: (
     a: number,
@@ -439,7 +491,20 @@ export interface InitOutput {
     f: number,
   ) => void
   readonly encode_witness_no_signature: (a: number) => void
-  readonly encode_witness: (a: number, b: number, c: number, d: number) => void
+  readonly encode_witness: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+    i: number,
+    j: number,
+    k: number,
+    l: number,
+  ) => void
   readonly encode_signed_transaction: (
     a: number,
     b: number,
