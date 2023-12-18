@@ -11,6 +11,7 @@ const thousandsSeparator = '.'
 const minEntropyLength = 192
 const DEFAULT_WALLETS_TO_CREATE = ['btc']
 const ML_ATOMS_PER_COIN = 100000000000
+const DEFAULT_ML_WALLET_OFFSET = 21
 const NETWORK_TYPES = {
   MAINNET: 'mainnet',
   TESTNET: 'testnet',
@@ -38,4 +39,5 @@ export {
   DEFAULT_WALLETS_TO_CREATE,
   NETWORK_TYPES,
   ML_ATOMS_PER_COIN,
+  DEFAULT_ML_WALLET_OFFSET,
 }
