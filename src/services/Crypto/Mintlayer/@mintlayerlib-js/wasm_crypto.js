@@ -1,5 +1,4 @@
 /* eslint-disable no-new-func */
-/* eslint-disable no-undef */
 /* eslint-disable no-restricted-globals */
 /* eslint-disable max-depth */
 /* eslint-disable eqeqeq */
@@ -879,12 +878,12 @@ export function encode_outpoint_source_id(id, source) {
  * @param {number} output_index
  * @returns {Uint8Array}
  */
-export function encode_input_utxo(outpoint_source_id, output_index) {
+export function encode_input_for_utxo(outpoint_source_id, output_index) {
   try {
     const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
     const ptr0 = passArray8ToWasm0(outpoint_source_id, wasm.__wbindgen_malloc)
     const len0 = WASM_VECTOR_LEN
-    wasm.encode_input_utxo(retptr, ptr0, len0, output_index)
+    wasm.encode_input_for_utxo(retptr, ptr0, len0, output_index)
     var r0 = getInt32Memory0()[retptr / 4 + 0]
     var r1 = getInt32Memory0()[retptr / 4 + 1]
     var r2 = getInt32Memory0()[retptr / 4 + 2]
@@ -895,6 +894,85 @@ export function encode_input_utxo(outpoint_source_id, output_index) {
     var v2 = getArrayU8FromWasm0(r0, r1).slice()
     wasm.__wbindgen_free(r0, r1 * 1, 1)
     return v2
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {string} delegation_id
+ * @param {string} amount
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_account_outpoint(
+  delegation_id,
+  amount,
+  nonce,
+  network,
+) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(
+      delegation_id,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passStringToWasm0(
+      amount,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len1 = WASM_VECTOR_LEN
+    wasm.encode_input_for_account_outpoint(
+      retptr,
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      nonce,
+      network,
+    )
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v3 = getArrayU8FromWasm0(r0, r1).slice()
+    wasm.__wbindgen_free(r0, r1 * 1, 1)
+    return v3
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+  }
+}
+
+/**
+ * @param {Uint8Array} inputs
+ * @param {Uint8Array} opt_utxos
+ * @param {Uint8Array} outputs
+ * @returns {number}
+ */
+export function estimate_transaction_size(inputs, opt_utxos, outputs) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passArray8ToWasm0(opt_utxos, wasm.__wbindgen_malloc)
+    const len1 = WASM_VECTOR_LEN
+    const ptr2 = passArray8ToWasm0(outputs, wasm.__wbindgen_malloc)
+    const len2 = WASM_VECTOR_LEN
+    wasm.estimate_transaction_size(retptr, ptr0, len0, ptr1, len1, ptr2, len2)
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    if (r2) {
+      throw takeObject(r1)
+    }
+    return r0 >>> 0
   } finally {
     wasm.__wbindgen_add_to_stack_pointer(16)
   }
@@ -948,20 +1026,61 @@ export function encode_witness_no_signature() {
 
 /**
  * @param {SignatureHashType} sighashtype
- * @param {Uint8Array} raw_signature
+ * @param {Uint8Array} private_key_bytes
+ * @param {string} address
+ * @param {Uint8Array} transaction_bytes
+ * @param {Uint8Array} inputs
+ * @param {number} input_num
+ * @param {Network} network
  * @returns {Uint8Array}
  */
-export function encode_witness(sighashtype, raw_signature) {
+export function encode_witness(
+  sighashtype,
+  private_key_bytes,
+  address,
+  transaction_bytes,
+  inputs,
+  input_num,
+  network,
+) {
   try {
     const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
-    const ptr0 = passArray8ToWasm0(raw_signature, wasm.__wbindgen_malloc)
+    const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
     const len0 = WASM_VECTOR_LEN
-    wasm.encode_witness(retptr, sighashtype, ptr0, len0)
+    const ptr1 = passStringToWasm0(
+      address,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len1 = WASM_VECTOR_LEN
+    const ptr2 = passArray8ToWasm0(transaction_bytes, wasm.__wbindgen_malloc)
+    const len2 = WASM_VECTOR_LEN
+    const ptr3 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+    const len3 = WASM_VECTOR_LEN
+    wasm.encode_witness(
+      retptr,
+      sighashtype,
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      ptr2,
+      len2,
+      ptr3,
+      len3,
+      input_num,
+      network,
+    )
     var r0 = getInt32Memory0()[retptr / 4 + 0]
     var r1 = getInt32Memory0()[retptr / 4 + 1]
-    var v2 = getArrayU8FromWasm0(r0, r1).slice()
+    var r2 = getInt32Memory0()[retptr / 4 + 2]
+    var r3 = getInt32Memory0()[retptr / 4 + 3]
+    if (r3) {
+      throw takeObject(r2)
+    }
+    var v5 = getArrayU8FromWasm0(r0, r1).slice()
     wasm.__wbindgen_free(r0, r1 * 1, 1)
-    return v2
+    return v5
   } finally {
     wasm.__wbindgen_add_to_stack_pointer(16)
   }
@@ -1016,15 +1135,11 @@ export const SignatureHashType = Object.freeze({
 })
 /**
  */
-export const Network = Object.freeze({
-  Mainnet: 0,
-  0: 'Mainnet',
-  Testnet: 1,
-  1: 'Testnet',
-  Regtest: 2,
-  2: 'Regtest',
-  Signet: 3,
-  3: 'Signet',
+export const SourceId = Object.freeze({
+  Transaction: 0,
+  0: 'Transaction',
+  BlockReward: 1,
+  1: 'BlockReward',
 })
 /**
  */
@@ -1038,11 +1153,15 @@ export const TotalSupply = Object.freeze({
 })
 /**
  */
-export const SourceId = Object.freeze({
-  Transaction: 0,
-  0: 'Transaction',
-  BlockReward: 1,
-  1: 'BlockReward',
+export const Network = Object.freeze({
+  Mainnet: 0,
+  0: 'Mainnet',
+  Testnet: 1,
+  1: 'Testnet',
+  Regtest: 2,
+  2: 'Regtest',
+  Signet: 3,
+  3: 'Signet',
 })
 /**
  */
@@ -1090,7 +1209,7 @@ function __wbg_get_imports() {
     const ret = getStringFromWasm0(arg0, arg1)
     return addHeapObject(ret)
   }
-  imports.wbg.__wbg_crypto_c48a774b022d20ac = function (arg0) {
+  imports.wbg.__wbg_crypto_58f13aa23ffcb166 = function (arg0) {
     const ret = getObject(arg0).crypto
     return addHeapObject(ret)
   }
@@ -1099,15 +1218,15 @@ function __wbg_get_imports() {
     const ret = typeof val === 'object' && val !== null
     return ret
   }
-  imports.wbg.__wbg_process_298734cf255a885d = function (arg0) {
+  imports.wbg.__wbg_process_5b786e71d465a513 = function (arg0) {
     const ret = getObject(arg0).process
     return addHeapObject(ret)
   }
-  imports.wbg.__wbg_versions_e2e78e134e3e5d01 = function (arg0) {
+  imports.wbg.__wbg_versions_c2ab80650590b6a2 = function (arg0) {
     const ret = getObject(arg0).versions
     return addHeapObject(ret)
   }
-  imports.wbg.__wbg_node_1cd7a5d853dbea79 = function (arg0) {
+  imports.wbg.__wbg_node_523d7bd03ef69fba = function (arg0) {
     const ret = getObject(arg0).node
     return addHeapObject(ret)
   }
@@ -1118,13 +1237,13 @@ function __wbg_get_imports() {
   imports.wbg.__wbindgen_object_drop_ref = function (arg0) {
     takeObject(arg0)
   }
-  imports.wbg.__wbg_require_8f08ceecec0f4fee = function () {
+  imports.wbg.__wbg_require_2784e593a4674877 = function () {
     return handleError(function () {
       const ret = module.require
       return addHeapObject(ret)
     }, arguments)
   }
-  imports.wbg.__wbg_msCrypto_bcb970640f50a1e8 = function (arg0) {
+  imports.wbg.__wbg_msCrypto_abcb1295e768d1f2 = function (arg0) {
     const ret = getObject(arg0).msCrypto
     return addHeapObject(ret)
   }
@@ -1132,12 +1251,12 @@ function __wbg_get_imports() {
     const ret = typeof getObject(arg0) === 'function'
     return ret
   }
-  imports.wbg.__wbg_randomFillSync_dc1e9a60c158336d = function () {
+  imports.wbg.__wbg_randomFillSync_a0d98aa11c81fe89 = function () {
     return handleError(function (arg0, arg1) {
       getObject(arg0).randomFillSync(takeObject(arg1))
     }, arguments)
   }
-  imports.wbg.__wbg_getRandomValues_37fa2ca9e4e07fab = function () {
+  imports.wbg.__wbg_getRandomValues_504510b5564925af = function () {
     return handleError(function (arg0, arg1) {
       getObject(arg0).getRandomValues(getObject(arg1))
     }, arguments)
