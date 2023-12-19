@@ -20,7 +20,10 @@ const getParsedTransactions = (transactions) => {
     )
 
     const direction = isInputMine ? 'out' : 'in'
-    const destAddress = transaction.outputs[1].destination
+    const destAddress =
+      direction === 'in'
+        ? transaction.outputs[1].destination
+        : transaction.outputs[0].destination
     const value = getAmountInCoins(
       transaction.outputs[0].value.amount,
       AppInfo.ML_ATOMS_PER_COIN,

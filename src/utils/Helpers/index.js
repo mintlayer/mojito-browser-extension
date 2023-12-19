@@ -7,11 +7,13 @@ import * as NumbersHelper from './Number/Number'
 import * as Format from './Number/Format'
 import * as ArrayHelper from './Array/Array'
 import * as AccountHelper from './Account/Account'
+import * as MLTransaction from './ML/MLTransaction'
 
 export {
   BTC,
   ML,
   BTCTransaction,
+  MLTransaction,
   Concurrency,
   CoinSelectionAlgo,
   NumbersHelper,
