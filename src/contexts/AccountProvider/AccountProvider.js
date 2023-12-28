@@ -11,7 +11,9 @@ const AccountProvider = ({ value: propValue, children }) => {
   const [walletType, setWalletType] = useState('')
   const [lines, setLines] = useState([])
   const [entropy, setEntropy] = useState([])
-  const [walletDataLoading, setWalletDataLoading] = useState(false)
+  const [balanceLoading, setBalanceLoading] = useState(false)
+  const [transactionsLoading, setTransactionsLoading] = useState(false)
+  const [feeLoading, setFeeLoading] = useState(false)
   const accountRegistryName = 'unlockedAccount'
   const loginTimeoutInMinutes = 30
 
@@ -84,8 +86,12 @@ const AccountProvider = ({ value: propValue, children }) => {
     setAccountID: setId,
     walletType,
     setWalletType,
-    walletDataLoading,
-    setWalletDataLoading,
+    balanceLoading,
+    setBalanceLoading,
+    transactionsLoading,
+    setTransactionsLoading,
+    feeLoading,
+    setFeeLoading,
   }
 
   useEffect(() => {
