@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { Format } from '@Helpers'
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
-import { SettingsContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './TransactionDetails.css'
@@ -28,6 +28,7 @@ const TransactionDetailsItem = ({ title, content }) => {
 
 const TransactionDetails = ({ transaction, getConfirmations }) => {
   const { networkType } = useContext(SettingsContext)
+  const { walletType } = useContext(AccountContext)
   const [confirmations, setConfirmations] = useState(null)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
@@ -41,7 +42,13 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
   const externalBtcLink = `https://blockstream.info${
     isTestnet ? '/testnet' : ''
   }/tx/${transaction?.txid}`
-  // TODO: add Mintlayer explorer link
+
+  const externalMlLink = `https://explorer.mintlayer.org${
+    isTestnet ? '/lovelace' : ''
+  }/tx/${transaction?.txid}`
+
+  const explorerLink =
+    walletType.name === 'Mintlayer' ? externalMlLink : externalBtcLink
 
   useEffect(() => {
     const getConfirmationAmount = async () => {
@@ -83,7 +90,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
         />
       </div>
       <a
-        href={externalBtcLink}
+        href={explorerLink}
         target="_blank"
       >
         <Button extraStyleClasses={buttonExtraStyles}>
