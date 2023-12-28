@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 
 import { Button } from '@BasicComponents'
 import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
+import { AccountContext } from '@Contexts'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
 import AddressField from './AddressField'
@@ -13,23 +14,24 @@ import FeesField from './FeesField'
 import './SendTransaction.css'
 
 const SendTransaction = ({
-  onSendTransaction,
+  totalFeeFiat: totalFeeFiatParent,
+  totalFeeCrypto: totalFeeCryptoParent,
+  setTotalFeeCrypto: setTotalFeeCryptoParent,
   transactionData,
   exchangeRate,
   maxValueInToken,
-  totalFeeFiat: totalFeeFiatParent,
-  totalFeeCrypto: totalFeeCryptoParent,
+  onSendTransaction,
+  calculateTotalFee,
   setFormValidity,
   isFormValid,
   confirmTransaction,
   goBackToWallet,
-  calculateTotalFee,
 }) => {
+  const { walletType, balanceLoading, feeLoading } = useContext(AccountContext)
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
   const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(totalFeeCryptoParent)
-
   const [amountInCrypto, setAmountInCrypto] = useState('0')
   const [amountInFiat, setAmountInFiat] = useState('0.00')
   const [fee, setFee] = useState('0')
@@ -45,6 +47,7 @@ const SendTransaction = ({
   const [allowClosing, setAllowClosing] = useState(true)
   const [askPassword, setAskPassword] = useState(false)
   const [pass, setPass] = useState(null)
+  const isBitcoinWallet = walletType.name === 'Bitcoin'
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -60,7 +63,7 @@ const SendTransaction = ({
     setOpenSendFundConfirmation(state)
   }
 
-  const openConfirmation = () => {
+  const openConfirmation = async () => {
     setPopupState(true)
     onSendTransaction &&
       onSendTransaction({
@@ -104,6 +107,9 @@ const SendTransaction = ({
 
   const handleCancel = () => {
     setPopupState(false)
+    if (walletType.name === 'Mintlayer') {
+      setTotalFeeCryptoParent(0)
+    }
   }
 
   useEffect(() => setTotalFeeFiat(totalFeeFiatParent), [totalFeeFiatParent])
@@ -143,12 +149,19 @@ const SendTransaction = ({
   }
 
   useEffect(() => {
+    if (!isBitcoinWallet) setFeeValidity(true)
     setFormValidity(!!(addressValidity && amountValidity && feeValidity))
-  }, [addressValidity, amountValidity, feeValidity, setFormValidity])
+  }, [
+    addressValidity,
+    amountValidity,
+    feeValidity,
+    setFormValidity,
+    isBitcoinWallet,
+  ])
 
   useEffect(
     () => {
-      if (fee && amountInCrypto) {
+      if (fee && amountInCrypto && isBitcoinWallet) {
         calculateTotalFee({
           amount: NumbersHelper.floatStringToNumber(amountInCrypto),
           fee,
@@ -180,36 +193,44 @@ const SendTransaction = ({
 
   return (
     <div className="transaction-form">
-      <AddressField
-        addressChanged={addressChanged}
-        setAddressValidity={setAddressValidity}
-      />
+      {balanceLoading ? (
+        <div className="loading-center">
+          <Loading />
+        </div>
+      ) : (
+        <>
+          <AddressField
+            addressChanged={addressChanged}
+            setAddressValidity={setAddressValidity}
+          />
 
-      <AmountField
-        transactionData={transactionData}
-        amountChanged={amountChanged}
-        exchangeRate={exchangeRate}
-        maxValueInToken={maxValueInToken}
-        setAmountValidity={setAmountValidity}
-        errorMessage={passErrorMessage}
-        totalFeeInCrypto={totalFeeCrypto}
-      />
+          <AmountField
+            transactionData={transactionData}
+            amountChanged={amountChanged}
+            exchangeRate={exchangeRate}
+            maxValueInToken={maxValueInToken}
+            setAmountValidity={setAmountValidity}
+            errorMessage={passErrorMessage}
+            totalFeeInCrypto={totalFeeCrypto}
+          />
 
-      <FeesField
-        feeChanged={feeChanged}
-        value="norm"
-        setFeeValidity={setFeeValidity}
-      />
+          <FeesField
+            feeChanged={feeChanged}
+            value="norm"
+            setFeeValidity={setFeeValidity}
+          />
 
-      <CenteredLayout>
-        <Button
-          extraStyleClasses={['send-transaction-button']}
-          onClickHandle={openConfirmation}
-          disabled={!isFormValid}
-        >
-          Send
-        </Button>
-      </CenteredLayout>
+          <CenteredLayout>
+            <Button
+              extraStyleClasses={['send-transaction-button']}
+              onClickHandle={openConfirmation}
+              disabled={!isFormValid}
+            >
+              Send
+            </Button>
+          </CenteredLayout>
+        </>
+      )}
 
       {openSendFundConfirmation && (
         <PopUp
@@ -224,7 +245,7 @@ const SendTransaction = ({
                   <Loading />
                 </div>
               </VerticalGroup>
-            ) : !askPassword ? (
+            ) : !askPassword && !feeLoading ? (
               <SendTransactionConfirmation
                 address={addressTo}
                 amountInFiat={amountInFiat}
@@ -237,6 +258,10 @@ const SendTransaction = ({
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
               ></SendTransactionConfirmation>
+            ) : feeLoading ? (
+              <div className="loading-center">
+                <Loading />
+              </div>
             ) : (
               <form>
                 <VerticalGroup bigGap>
@@ -258,7 +283,7 @@ const SendTransaction = ({
           ) : (
             <VerticalGroup bigGap>
               <h2>Your transaction was sent.</h2>
-              <h3>txid: {transactionTxid}</h3>
+              <h3 className="result-title">Txid: {transactionTxid}</h3>
               <Button onClickHandle={goBackToWallet}>Back to Wallet</Button>
             </VerticalGroup>
           )}
