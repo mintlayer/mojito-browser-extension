@@ -1,4 +1,6 @@
+/* eslint-disable max-params */
 import { ML } from '@Cryptos'
+import { Mintlayer } from '@APIs'
 
 const getUtxoBalance = (utxo) => {
   return utxo.reduce((sum, item) => sum + Number(item.utxo.value.amount), 0)
@@ -39,7 +41,7 @@ const getTxInput = async (outpointSourceId) => {
   )
 }
 
-const getTransactionUtxos = (utxos, amountToUse, fee) => {
+const getTransactionUtxos = (utxos, amountToUse, fee = 0) => {
   let balance = 0
   const utxosToSpend = []
 
@@ -116,7 +118,7 @@ const getOptUtxos = async (utxos, network) => {
     result.push(...opt_utxos[i])
   }
 
-  return opt_utxos
+  return result
 }
 
 const getEncodedWitnesses = async (
@@ -145,6 +147,109 @@ const getEncodedWitnesses = async (
   return encodedWitnesses
 }
 
+const getArraySpead = (inputs) => {
+  const inputsArray = []
+  inputs.flat().forEach((input) => {
+    input.forEach((item) => {
+      inputsArray.push(item)
+    })
+  })
+  return inputsArray
+}
+
+const totalUtxosAmount = (utxosToSpend) => {
+  return utxosToSpend
+    .flatMap((utxo) => [...utxo])
+    .reduce((acc, utxo) => acc + Number(utxo.utxo.value.amount), 0)
+}
+
+const calculateFee = async (
+  utxos,
+  address,
+  changeAddress,
+  amountToUse,
+  network,
+) => {
+  const totalAmount = totalUtxosAmount(utxos)
+  if (totalAmount < Number(amountToUse)) {
+    throw new Error('Insufficient funds')
+  }
+  const requireUtxo = getTransactionUtxos(utxos, amountToUse)
+  const TransactionStrings = getUtxoTransactions(requireUtxo)
+  const TransactionBytes = getTransactionsBytes(TransactionStrings)
+  const outpointedSourceIds = await getOutpointedSourceIds(TransactionBytes)
+  const inputs = await getTxInputs(outpointedSourceIds)
+  const inputsArray = getArraySpead(inputs)
+  const txOutput = await getTxOutput(amountToUse, address, network)
+  const changeAmount = (
+    totalUtxosAmount(requireUtxo) - Number(amountToUse)
+  ).toString()
+  const txChangeOutput = await getTxOutput(changeAmount, changeAddress, network)
+  const outputs = [...txOutput, ...txChangeOutput]
+  const optUtxos = await getOptUtxos(requireUtxo.flat(), network)
+  const size = await ML.getEstimatetransactionSize(
+    inputsArray,
+    optUtxos,
+    outputs,
+  )
+  // const feeEstimates = await Mintlayer.getFeesEstimates()
+  const feeEstimates = '100000000'
+  const fee = (Number(feeEstimates) / 1000) * size
+  return fee
+}
+
+const sendTransaction = async (
+  utxos,
+  keysList,
+  address,
+  changeAddress,
+  amountToUse,
+  network,
+) => {
+  const totalAmount = totalUtxosAmount(utxos)
+  const fee = await calculateFee(
+    utxos,
+    address,
+    changeAddress,
+    amountToUse,
+    network,
+  )
+  if (totalAmount < Number(amountToUse)) {
+    throw new Error('Insufficient funds')
+  }
+  const amountToUseAfterFee = (Number(amountToUse) - fee).toString()
+  const requireUtxo = getTransactionUtxos(utxos, amountToUse, fee)
+  const TransactionStrings = getUtxoTransactions(requireUtxo)
+  const TransactionBytes = getTransactionsBytes(TransactionStrings)
+  const outpointedSourceIds = await getOutpointedSourceIds(TransactionBytes)
+  const inputs = await getTxInputs(outpointedSourceIds)
+  const inputsArray = getArraySpead(inputs)
+  const txOutput = await getTxOutput(amountToUseAfterFee, address, network)
+  const changeAmount = (
+    totalUtxosAmount(requireUtxo) - Number(amountToUse)
+  ).toString()
+  const txChangeOutput = await getTxOutput(changeAmount, changeAddress, network)
+  const outputs = [...txOutput, ...txChangeOutput]
+  const optUtxos = await getOptUtxos(requireUtxo.flat(), network)
+  const transaction = await ML.getTransaction(inputsArray, outputs)
+  const encodedWitnesses = await getEncodedWitnesses(
+    requireUtxo,
+    keysList,
+    transaction,
+    optUtxos,
+    network,
+  )
+  const finalWitnesses = getArraySpead(encodedWitnesses)
+  const encodedSignedTransaction = await ML.getEncodedSignedTransaction(
+    transaction,
+    finalWitnesses,
+  )
+  const transactionHex = getTransactionHex(encodedSignedTransaction)
+  const result = await Mintlayer.broadcastTransaction(transactionHex)
+
+  return JSON.parse(result).tx_id
+}
+
 export {
   getTransactionUtxos,
   getUtxoTransactions,
@@ -155,4 +260,6 @@ export {
   getTransactionHex,
   getOptUtxos,
   getEncodedWitnesses,
+  calculateFee,
+  sendTransaction,
 }
