@@ -25,9 +25,9 @@ describe('CryptoItem', () => {
 
   const onClickItem = jest.fn()
 
-  const renderComponent = (networkType, walletDataLoading = false) =>
+  const renderComponent = (networkType, balanceLoading = false) =>
     render(
-      <AccountContext.Provider value={{ walletDataLoading: walletDataLoading }}>
+      <AccountContext.Provider value={{ balanceLoading: balanceLoading }}>
         <SettingsContext.Provider value={{ networkType }}>
           <CryptoItem
             colorList={colorList}
@@ -239,7 +239,7 @@ describe('CryptoList', () => {
 
   const renderEmptyComponent = (networkType) =>
     render(
-      <AccountContext.Provider value={{ walletDataLoading: false }}>
+      <AccountContext.Provider value={{ balanceLoading: false }}>
         <SettingsContext.Provider value={{ networkType }}>
           <CryptoList
             cryptoList={[]}
@@ -275,7 +275,7 @@ describe('CryptoList', () => {
   it('calls the onConnectItemClick callback when the add wallet item is clicked', () => {
     renderEmptyComponent('mainnet')
 
-    fireEvent.click(screen.getByText('Add wallet'))
+    fireEvent.click(screen.getAllByText('Add wallet')[0])
 
     expect(onConnectItemClick).toHaveBeenCalled()
   })

@@ -35,7 +35,7 @@ const TRANSACTIONSSAMPLE = [
 
 test('Render transactions list component', () => {
   render(
-    <AccountContext.Provider value={{ walletDataLoading: false }}>
+    <AccountContext.Provider value={{ transactionsLoading: false }}>
       <TransactionsList transactionsList={TRANSACTIONSSAMPLE} />
     </AccountContext.Provider>,
   )
@@ -48,7 +48,7 @@ test('Render transactions list component', () => {
 
 test('Render transactions list component - empty', () => {
   render(
-    <AccountContext.Provider value={{ walletDataLoading: false }}>
+    <AccountContext.Provider value={{ transactionsLoading: false }}>
       <TransactionsList transactionsList={[]} />
     </AccountContext.Provider>,
   )
@@ -61,7 +61,7 @@ test('Render transactions list component - empty', () => {
 
 test('Render transactions list component - loading', () => {
   render(
-    <AccountContext.Provider value={{ walletDataLoading: true }}>
+    <AccountContext.Provider value={{ transactionsLoading: true }}>
       <TransactionsList transactionsList={TRANSACTIONSSAMPLE} />
     </AccountContext.Provider>,
   )

@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 
 import Transaction from './Transaction'
 import { BTC } from '@Helpers'
-import { SettingsProvider } from '@Contexts'
+import { SettingsProvider, AccountProvider } from '@Contexts'
 
 const TRANSCTIONSAMPLE = {
   txid: 'txid',
@@ -29,13 +29,16 @@ const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'dd/MM/yyyy HH:mm')
 
 test('Render transaction component', async () => {
   render(
-    <SettingsProvider>
-      <Transaction
-        transaction={TRANSCTIONSAMPLE}
-        getConfirmations={BTC.getConfirmationsAmount}
-      />
+    <AccountProvider>
+      <SettingsProvider>
+        <Transaction
+          transaction={TRANSCTIONSAMPLE}
+          getConfirmations={BTC.getConfirmationsAmount}
+        />
+        ,
+      </SettingsProvider>
       ,
-    </SettingsProvider>,
+    </AccountProvider>,
   )
   const transaction = screen.getByTestId('transaction')
   const transactionOtherPart = screen.getByTestId('transaction-otherPart')
@@ -59,9 +62,12 @@ test('Render transaction component', async () => {
 
 test('Render transaction out component', async () => {
   render(
-    <SettingsProvider>
-      <Transaction transaction={TRANSCTIONSAMPLEOUT} />
-    </SettingsProvider>,
+    <AccountProvider>
+      <SettingsProvider>
+        <Transaction transaction={TRANSCTIONSAMPLEOUT} />
+      </SettingsProvider>
+      ,
+    </AccountProvider>,
   )
   const transaction = screen.getByTestId('transaction')
   const transactionOtherPart = screen.getByTestId('transaction-otherPart')
