@@ -105,14 +105,14 @@ export const getWalletAddresses = async (
   offset = 21,
 ) => {
   const generateAddresses = async (addressGenerator) => {
-    const addresses = await Promise.all(
+    const privKeys = await Promise.all(
       Array.from({ length: offset }, (_, i) =>
         addressGenerator(mlPrivateKey, i),
       ),
     )
 
     const publicKeys = await Promise.all(
-      addresses.map((address) => getPublicKeyFromPrivate(address)),
+      privKeys.map((address) => getPublicKeyFromPrivate(address)),
     )
 
     return Promise.all(

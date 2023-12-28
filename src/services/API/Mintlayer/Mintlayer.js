@@ -62,15 +62,13 @@ const getAddressBalance = async (address) => {
   try {
     const response = await getAddressData(address)
     const data = JSON.parse(response)
-    const balanceInCoins = data.coin_balance / AppInfo.ML_ATOMS_PER_COIN
     const balance = {
       balanceInAtoms: data.coin_balance,
-      balanceInCoins: balanceInCoins,
     }
     return balance
   } catch (error) {
     console.warn(`Failed to get balance for address ${address}: `, error)
-    return { balanceInAtoms: 0, balanceInCoins: 0 }
+    return { balanceInAtoms: 0 }
   }
 }
 
@@ -81,10 +79,9 @@ export const getWalletBalance = async (addresses) => {
     (acc, curr) => {
       return {
         balanceInAtoms: acc.balanceInAtoms + curr.balanceInAtoms,
-        balanceInCoins: acc.balanceInCoins + curr.balanceInCoins,
       }
     },
-    { balanceInAtoms: 0, balanceInCoins: 0 },
+    { balanceInAtoms: 0 },
   )
   return totalBalance
 }
