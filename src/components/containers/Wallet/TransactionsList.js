@@ -5,7 +5,7 @@ import { SkeletonLoader } from '@BasicComponents'
 import './TransactionsList.css'
 
 const TransactionsList = ({ transactionsList, getConfirmations }) => {
-  const { walletDataLoading } = useContext(AccountContext)
+  const { transactionsLoading } = useContext(AccountContext)
 
   const renderSkeletonLoaders = () =>
     Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
@@ -36,7 +36,7 @@ const TransactionsList = ({ transactionsList, getConfirmations }) => {
       className="transaction-list"
       data-testid={'transactions-list'}
     >
-      {walletDataLoading ? renderSkeletonLoaders() : renderTransactions()}
+      {transactionsLoading ? renderSkeletonLoaders() : renderTransactions()}
     </ul>
   )
 }

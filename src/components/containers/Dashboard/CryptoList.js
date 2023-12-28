@@ -8,7 +8,7 @@ import { SettingsContext, AccountContext } from '@Contexts'
 import './CryptoList.css'
 
 export const CryptoItem = ({ colorList, onClickItem, item }) => {
-  const { walletDataLoading } = useContext(AccountContext)
+  const { balanceLoading } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const color = colorList[item.symbol.toLowerCase()]
   const balance =
@@ -27,7 +27,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
 
   return (
     <>
-      {walletDataLoading ? (
+      {balanceLoading ? (
         <SkeletonLoader />
       ) : (
         <li

@@ -35,16 +35,7 @@ const WalletPage = () => {
   const walletExangeRate =
     walletType.name === 'Mintlayer' ? mlExchangeRate : btcExchangeRate
 
-  const mlMainnetAddress = addresses.mlMainnetAddress
-    ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
-    : false
-  const mlTestnetAddress = addresses.mlTestnetAddresses
-    ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
-    : false
-  const mlAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? mlMainnetAddress
-      : mlTestnetAddress
+  const mlAddress = currentMlAddresses.mlReceivingAddresses[0]
 
   const walletBalance = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
   const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
