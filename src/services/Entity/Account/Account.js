@@ -118,8 +118,13 @@ const unlockAccount = async (id, password) => {
         AppInfo.NETWORK_TYPES.TESTNET,
         AppInfo.DEFAULT_ML_WALLET_OFFSET,
       )
+      const mlMainnetWalletAddresses = await ML.getWalletAddresses(
+        mlMainnetPrivateKey,
+        AppInfo.NETWORK_TYPES.MAINNET,
+        AppInfo.DEFAULT_ML_WALLET_OFFSET,
+      )
 
-      addresses.mlMainnetAddress = false
+      addresses.mlMainnetAddress = mlMainnetWalletAddresses
       addresses.mlTestnetAddresses = mlTestnetWalletAddresses
     }
 

@@ -26,7 +26,6 @@ const walletTypes = [
     name: 'Mintlayer',
     symbol: 'ML',
     value: 'ml',
-    disabled: true,
   },
 ]
 
