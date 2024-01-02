@@ -151,9 +151,13 @@ const SendTransactionPage = () => {
       transactionInformation.amount,
     ).toString()
     const { mlPrivKeys } = await Account.unlockAccount(accountID, password)
+    const privKey =
+      networkType === 'mainnet'
+        ? mlPrivKeys.mlMainnetPrivateKey
+        : mlPrivKeys.mlTestnetPrivateKey
 
     const walletPrivKeys = await ML.getWalletPrivKeysList(
-      mlPrivKeys.mlTestnetPrivateKey,
+      privKey,
       networkType,
       changeAddressesLength,
     )
