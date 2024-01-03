@@ -2,6 +2,7 @@ import { useContext, useState, useEffect } from 'react'
 import { Header, PopUp, AddWallet } from '@ComposedComponents'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { Account } from '@Entities'
+import { Wallet } from '@ContainerComponents'
 
 import {
   useExchangeRates,
@@ -19,8 +20,14 @@ import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 const DashboardPage = () => {
-  const { addresses, accountName, setWalletType, accountID } =
-    useContext(AccountContext)
+  const {
+    addresses,
+    accountName,
+    setWalletType,
+    accountID,
+    openShowAddressTemp,
+    setOpenShowAddressTemp,
+  } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -185,6 +192,15 @@ const DashboardPage = () => {
             setAllowClosing={setAllowClosing}
             setOpenConnectConfirmation={setOpenConnectConfirmation}
           />
+        </PopUp>
+      )}
+
+      {/* //TODO: remove this after mainnet launch */}
+      {openShowAddressTemp && (
+        <PopUp setOpen={setOpenShowAddressTemp}>
+          <Wallet.ShowAddress
+            address={currentMlAddresses.mlReceivingAddresses[0]}
+          ></Wallet.ShowAddress>
         </PopUp>
       )}
     </>
