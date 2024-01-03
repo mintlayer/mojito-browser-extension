@@ -251,6 +251,10 @@ const sendTransaction = async (
 }
 
 export {
+  getUtxoBalance,
+  getUtxoTransaction,
+  getUtxoTransactionsBytes,
+  getOutpointedSourceId,
   getTransactionUtxos,
   getUtxoTransactions,
   getTransactionsBytes,
