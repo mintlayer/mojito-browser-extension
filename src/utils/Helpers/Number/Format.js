@@ -17,7 +17,7 @@ const BTCValue = (value) => {
   let str = getNumber(value).toString()
   const decimalIndex = str.indexOf('.')
   if (decimalIndex !== -1) {
-    str = str.slice(0, decimalIndex + 9) // Keep up to 8 decimal places 41.77386240774
+    str = str.slice(0, decimalIndex + 9)
   }
   return str
     .replace(/\.0+$/, '')
