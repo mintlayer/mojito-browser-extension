@@ -36,7 +36,7 @@
 }
 
 .toggleInput:checked + .toggleMark {
-  background-color: #00c853;
+  background-color: #11967f;
 }
 
 .toggleInput:checked + .toggleMark:before {
