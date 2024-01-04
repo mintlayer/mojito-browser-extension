@@ -96,7 +96,7 @@ describe('AddWallet', () => {
     const passwordField = screen.getByTestId('input')
 
     expect(label).toBeInTheDocument()
-    expect(label).toHaveTextContent('Insert your password')
+    expect(label).toHaveTextContent('Enter your password')
 
     expect(passwordField).toBeInTheDocument()
 

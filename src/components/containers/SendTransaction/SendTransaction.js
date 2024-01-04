@@ -266,7 +266,7 @@ const SendTransaction = ({
               <form>
                 <VerticalGroup bigGap>
                   <TextField
-                    label="Insert your password"
+                    label="Enter your password"
                     placeHolder="Password"
                     password
                     validity={passValidity}
