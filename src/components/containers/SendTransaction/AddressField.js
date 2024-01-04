@@ -22,13 +22,19 @@ const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
       : addresses.mlTestnetAddress
   const [message, setMessage] = useState(errorMessage)
   const [isValid, setIsValid] = useState(true)
+  const mintlayerAddressPlaceholder =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc...' : 'tmt...'
+  const bitcoinAddressPlaceholder =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? 'bc1... or 1... or 3...'
+      : 'tb1... or 1... or 3...'
   const placeholder =
     walletType.name === 'Mintlayer'
-      ? 'tmc... or tmt...'
-      : 'bc1.... or 1... or 3...'
+      ? mintlayerAddressPlaceholder
+      : bitcoinAddressPlaceholder
 
   const isMlAddressValid = (address, network) => {
-    const mainnetRegex = /^tmc1[a-z0-9]{30,}$/
+    const mainnetRegex = /^mtc1[a-z0-9]{30,}$/
     const testnetRegex = /^tmt1[a-z0-9]{30,}$/
     return network === AppInfo.NETWORK_TYPES.MAINNET
       ? mainnetRegex.test(address)

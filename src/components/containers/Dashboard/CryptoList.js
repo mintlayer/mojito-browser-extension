@@ -22,7 +22,7 @@ const MainnetAddressItem = () => {
         <LogoRound />
       </div>
       <div className="name-values">
-        <h5>Mintlayer (MLT)</h5>
+        <h5>Mintlayer (ML)</h5>
         <p className="show-address-text">
           Click here to get your Mainnet address
         </p>
