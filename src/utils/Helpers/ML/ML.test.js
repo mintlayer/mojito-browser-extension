@@ -2,6 +2,7 @@ import {
   getParsedTransactions,
   getAmountInAtoms,
   getAmountInCoins,
+  isMlAddressValid,
 } from './ML.js'
 import { AppInfo } from '@Constants'
 
@@ -56,5 +57,34 @@ describe('ML', () => {
         expectedParsedTransactions,
       )
     })
+  })
+})
+
+describe('isMlAddressValid', () => {
+  const mainnetAddress = 'mtc1qydxtnueeh3g8ge8mmp9rmgu6u468a2frqrzr9ka'
+  const testnetAddress = 'tmt1qydxtnueeh3g8ge8mmp9rmgu6u468a2frqrzr9ka'
+
+  it('should return true for valid mainnet address', () => {
+    expect(
+      isMlAddressValid(mainnetAddress, AppInfo.NETWORK_TYPES.MAINNET),
+    ).toBe(true)
+  })
+
+  it('should return true for valid testnet address', () => {
+    expect(
+      isMlAddressValid(testnetAddress, AppInfo.NETWORK_TYPES.TESTNET),
+    ).toBe(true)
+  })
+
+  it('should return false for invalid mainnet address', () => {
+    expect(
+      isMlAddressValid(testnetAddress, AppInfo.NETWORK_TYPES.MAINNET),
+    ).toBe(false)
+  })
+
+  it('should return false for invalid testnet address', () => {
+    expect(
+      isMlAddressValid(mainnetAddress, AppInfo.NETWORK_TYPES.TESTNET),
+    ).toBe(false)
   })
 })
