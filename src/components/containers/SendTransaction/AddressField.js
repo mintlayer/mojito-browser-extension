@@ -4,6 +4,7 @@ import { validate } from 'wallet-address-validator'
 import { Input } from '@BasicComponents'
 import TransactionField from './TransactionField'
 import { AppInfo } from '@Constants'
+import { ML } from '@Helpers'
 
 import './errorMessages.css'
 
@@ -23,7 +24,7 @@ const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
   const [message, setMessage] = useState(errorMessage)
   const [isValid, setIsValid] = useState(true)
   const mintlayerAddressPlaceholder =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc...' : 'tmt...'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc1...' : 'tmt1...'
   const bitcoinAddressPlaceholder =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? 'bc1... or 1... or 3...'
@@ -32,14 +33,6 @@ const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
     walletType.name === 'Mintlayer'
       ? mintlayerAddressPlaceholder
       : bitcoinAddressPlaceholder
-
-  const isMlAddressValid = (address, network) => {
-    const mainnetRegex = /^mtc1[a-z0-9]{30,}$/
-    const testnetRegex = /^tmt1[a-z0-9]{30,}$/
-    return network === AppInfo.NETWORK_TYPES.MAINNET
-      ? mainnetRegex.test(address)
-      : testnetRegex.test(address)
-  }
 
   const addressErrorMessage =
     walletType.name === 'Mintlayer'
@@ -50,7 +43,7 @@ const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
     const value = ev.target.value
     const validity =
       walletType.name === 'Mintlayer'
-        ? isMlAddressValid(value, networkType)
+        ? ML.isMlAddressValid(value, networkType)
         : validate(value, 'btc', networkType) && value !== currentBtcAddress
     setIsValid(validity)
     setAddressValidity(validity)

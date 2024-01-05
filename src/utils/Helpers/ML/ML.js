@@ -48,4 +48,17 @@ const getParsedTransactions = (transactions, addresses) => {
   })
 }
 
-export { getParsedTransactions, getAmountInAtoms, getAmountInCoins }
+const isMlAddressValid = (address, network) => {
+  const mainnetRegex = /^mtc1[a-z0-9]{30,}$/
+  const testnetRegex = /^tmt1[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(address)
+    : testnetRegex.test(address)
+}
+
+export {
+  getParsedTransactions,
+  getAmountInAtoms,
+  getAmountInCoins,
+  isMlAddressValid,
+}
