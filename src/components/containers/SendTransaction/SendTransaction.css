@@ -39,10 +39,20 @@
 }
 
 .loading-center {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  top: 50%;
+  left: 50%;
   margin: 0 auto;
 }
 
 .transaction-form input.invalid,
 .transaction-form input.valid {
   padding: 1.8rem 1.685rem;
+}
+
+.result-title {
+  word-wrap: break-word;
 }

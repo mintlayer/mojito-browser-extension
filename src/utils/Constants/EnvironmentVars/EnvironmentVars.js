@@ -3,7 +3,6 @@ const USE_WEB_WORKERS = process.env.NODE_ENV !== 'test'
 const IS_PROD_ENV = process.env.NODE_ENV === 'production'
 const MAINNET_ELECTRUM_SERVERS = process.env.MAINNET_ELECTRUM_SERVERS.split(',')
 const TESTNET_ELECTRUM_SERVERS = process.env.TESTNET_ELECTRUM_SERVERS.split(',')
-// TODO: change ML server list when API is ready
 const MAINNET_MINTLAYER_SERVERS =
   process.env.MAINNET_MINTLAYER_SERVERS.split(',')
 const TESTNET_MINTLAYER_SERVERS =

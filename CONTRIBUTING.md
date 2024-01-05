@@ -132,7 +132,7 @@ Each database `Service` should be on its own folder with its own test file. If a
 
 Blockchain token and encryption functions should be in this directory.
 
-Ex.: BTC, MLT, ETH, AES, PBKDF2...
+Ex.: BTC, ML, ETH, AES, PBKDF2...
 
 Each crypto `Service` should be on its own folder with its own test file. If a WebWorker is needed it should be in this folder as well.
 

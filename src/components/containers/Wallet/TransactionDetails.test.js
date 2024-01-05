@@ -9,7 +9,7 @@ import { BTC } from '@Helpers'
 
 import TransactionDetails from './TransactionDetails'
 import { TransactionDetailsItem } from './TransactionDetails'
-import { SettingsProvider } from '@Contexts'
+import { SettingsProvider, AccountProvider } from '@Contexts'
 import { LocalStorageService } from '@Storage'
 
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
@@ -43,13 +43,16 @@ const TITLESAMPLE = 'title'
 
 test('Render transaction detail item component', () => {
   render(
-    <SettingsProvider>
-      <TransactionDetailsItem
-        title={TITLESAMPLE}
-        content={CONTENTSAMPLE}
-      />
+    <AccountProvider>
+      <SettingsProvider>
+        <TransactionDetailsItem
+          title={TITLESAMPLE}
+          content={CONTENTSAMPLE}
+        />
+        ,
+      </SettingsProvider>
       ,
-    </SettingsProvider>,
+    </AccountProvider>,
   )
   const transactionDetailsItem = screen.getByTestId('transaction-details-item')
   const transactionDetailsItemTitle = screen.getByTestId(
@@ -67,13 +70,16 @@ test('Render transaction detail item component', () => {
 
 test('Render transaction component', () => {
   render(
-    <SettingsProvider>
-      <TransactionDetails
-        transaction={TRANSCTIONSAMPLE}
-        getConfirmations={BTC.getConfirmationsAmount}
-      />
+    <AccountProvider>
+      <SettingsProvider>
+        <TransactionDetails
+          transaction={TRANSCTIONSAMPLE}
+          getConfirmations={BTC.getConfirmationsAmount}
+        />
+        ,
+      </SettingsProvider>
       ,
-    </SettingsProvider>,
+    </AccountProvider>,
   )
   const transactionDetails = screen.getByTestId('transaction-details')
   const transactionDetailsItems = screen.getAllByTestId(
@@ -98,13 +104,16 @@ test('Render transaction component', () => {
 
 test('Render transaction out component', async () => {
   render(
-    <SettingsProvider>
-      <TransactionDetails
-        transaction={TRANSCTIONSAMPLEOUT}
-        getConfirmations={BTC.getConfirmationsAmount}
-      />
+    <AccountProvider>
+      <SettingsProvider>
+        <TransactionDetails
+          transaction={TRANSCTIONSAMPLEOUT}
+          getConfirmations={BTC.getConfirmationsAmount}
+        />
+        ,
+      </SettingsProvider>
       ,
-    </SettingsProvider>,
+    </AccountProvider>,
   )
 
   const transactionDetails = screen.getByTestId('transaction-details')

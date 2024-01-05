@@ -132,3 +132,9 @@
   width: 60%;
   margin: 20%;
 }
+
+.show-address-text {
+  line-height: 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+}

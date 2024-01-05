@@ -48,7 +48,7 @@ describe(
       cy.contains('button', 'Cancel').should('be.visible')
       cy.contains('button', 'Confirm').click()
 
-      cy.contains('Insert your password').should('be.visible')
+      cy.contains('Enter your password').should('be.visible')
 
       cy.get('input[placeholder="Password"]').type(this.password)
       cy.contains('button', 'Send Transaction').click()

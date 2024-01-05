@@ -1,26 +1,30 @@
 import { AppInfo } from '@Constants'
 import { ArrayHelper } from '@Helpers'
 
-const getAmountInCoins = (amointInAtoms, exchangeRate) => {
-  return amointInAtoms / exchangeRate
+const getAmountInCoins = (amointInAtoms) => {
+  return amointInAtoms / AppInfo.ML_ATOMS_PER_COIN
 }
 
-const getParsedTransactions = (transactions) => {
+const getAmountInAtoms = (amountInCoins) => {
+  return Math.round(amountInCoins * AppInfo.ML_ATOMS_PER_COIN)
+}
+
+const getParsedTransactions = (transactions, addresses) => {
   const filteredTransactions = ArrayHelper.removeDublicates(transactions)
   const sortedTransactions = filteredTransactions.sort(
     (a, b) => b.timestamp - a.timestamp,
   )
-  const transactionsIds = sortedTransactions.map(
-    (transaction) => transaction.txid,
-  )
 
   return sortedTransactions.map((transaction) => {
-    const isInputMine = transaction.inputs.some((input) =>
-      transactionsIds.includes(input.Utxo.id.Transaction),
+    const isOutputMine = addresses.some(
+      (address) => transaction.outputs[0].destination === address,
     )
 
-    const direction = isInputMine ? 'out' : 'in'
-    const destAddress = transaction.outputs[1].destination
+    const direction = !isOutputMine ? 'out' : 'in'
+    const destAddress =
+      direction === 'in' && transaction.outputs.length > 1
+        ? transaction.outputs[1].destination
+        : transaction.outputs[0].destination
     const value = getAmountInCoins(
       transaction.outputs[0].value.amount,
       AppInfo.ML_ATOMS_PER_COIN,
@@ -44,4 +48,17 @@ const getParsedTransactions = (transactions) => {
   })
 }
 
-export { getParsedTransactions }
+const isMlAddressValid = (address, network) => {
+  const mainnetRegex = /^mtc1[a-z0-9]{30,}$/
+  const testnetRegex = /^tmt1[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(address)
+    : testnetRegex.test(address)
+}
+
+export {
+  getParsedTransactions,
+  getAmountInAtoms,
+  getAmountInCoins,
+  isMlAddressValid,
+}

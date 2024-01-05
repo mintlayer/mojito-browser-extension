@@ -1,16 +1,19 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useContext } from 'react'
 
 import { Electrum } from '@APIs'
 import { BTC, Format } from '@Helpers'
+import { AccountContext } from '@Contexts'
 
 const useBtcWalletInfo = (address) => {
+  const { walletType } = useContext(AccountContext)
   const effectCalled = useRef(false)
   const [btcTransactionsList, setBtcTransactionsList] = useState([])
   const [btcBalance, setBtcBalance] = useState(0)
+  const isBitcoin = walletType.name === 'Bitcoin'
 
   const getTransactions = useCallback(async () => {
     try {
-      if (!address) return ''
+      if (!address || !isBitcoin) return
       const response = await Electrum.getAddressTransactions(address)
       const transactions = JSON.parse(response)
       const parsedTransactions = BTC.getParsedTransactions(
@@ -21,7 +24,7 @@ const useBtcWalletInfo = (address) => {
     } catch (error) {
       console.error(error)
     }
-  }, [address])
+  }, [address, isBitcoin])
 
   const getBalance = useCallback(async () => {
     try {

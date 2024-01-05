@@ -7,8 +7,6 @@ import {
   requestMintlayer,
 } from './Mintlayer.js'
 
-import { AppInfo } from '@Constants'
-
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage.js'
 
 import { LocalStorageService } from '@Storage'
@@ -98,8 +96,4 @@ test('Mintlayer API request - getAdressTransactions', async () => {
 test('Mintlayer API request - getAddressBalance', async () => {
   const result = await getAddressBalance(TESTNET_WALLET)
   expect(result.balanceInAtoms).toBeGreaterThan(0)
-  expect(result.balanceInCoins).toBeGreaterThan(0)
-  expect(result.balanceInCoins).toBe(
-    result.balanceInAtoms / AppInfo.ML_ATOMS_PER_COIN,
-  )
 })

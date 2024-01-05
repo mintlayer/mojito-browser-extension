@@ -1,5 +1,5 @@
 import React, { useNavigate } from 'react-router-dom'
-import { useState, useContext } from 'react'
+import { useContext } from 'react'
 
 import { Balance, Header, PopUp } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
@@ -14,7 +14,8 @@ import './Wallet.css'
 
 const WalletPage = () => {
   const navigate = useNavigate()
-  const { addresses, walletType } = useContext(AccountContext)
+  const { addresses, walletType, openShowAddressTemp, setOpenShowAddressTemp } =
+    useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const btcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -24,7 +25,8 @@ const WalletPage = () => {
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddress
       : addresses.mlTestnetAddresses
-  const [openShowAddress, setOpenShowAddress] = useState(false)
+  // TODO: revert this after mainnet launch
+  // const [openShowAddress, setOpenShowAddress] = useState(false)
   const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
   const { mlTransactionsList, mlBalance } = useMlWalletInfo(currentMlAddresses)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
@@ -35,16 +37,8 @@ const WalletPage = () => {
   const walletExangeRate =
     walletType.name === 'Mintlayer' ? mlExchangeRate : btcExchangeRate
 
-  const mlMainnetAddress = addresses.mlMainnetAddress
-    ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
-    : false
-  const mlTestnetAddress = addresses.mlTestnetAddresses
-    ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
-    : false
   const mlAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? mlMainnetAddress
-      : mlTestnetAddress
+    currentMlAddresses && currentMlAddresses.mlReceivingAddresses[0]
 
   const walletBalance = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
   const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
@@ -68,10 +62,11 @@ const WalletPage = () => {
             />
             <Wallet.TransactionButton
               title={'Receive'}
-              onClick={() => setOpenShowAddress(true)}
+              onClick={() => setOpenShowAddressTemp(true)}
             />
-            {openShowAddress && (
-              <PopUp setOpen={setOpenShowAddress}>
+            {/* TODO: revert this after mainnet launch */}
+            {openShowAddressTemp && (
+              <PopUp setOpen={setOpenShowAddressTemp}>
                 <Wallet.ShowAddress
                   address={walletAddress}
                 ></Wallet.ShowAddress>

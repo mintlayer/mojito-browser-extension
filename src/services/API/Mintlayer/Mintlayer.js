@@ -7,6 +7,9 @@ const prefix = '/api/v1'
 const MINTLAYER_ENDPOINTS = {
   GET_ADDRESS_DATA: '/address/:address',
   GET_TRANSACTION_DATA: '/transaction/:txid',
+  GET_ADDRESS_UTXO: '/address/:address/available-utxos',
+  POST_TRANSACTION: '/transaction',
+  GET_FEES_ESTIMATES: '/feerate',
 }
 
 const requestMintlayer = async (url, body = null, request = fetch) => {
@@ -59,31 +62,26 @@ const getAddressBalance = async (address) => {
   try {
     const response = await getAddressData(address)
     const data = JSON.parse(response)
-    const balanceInCoins = data.coin_balance / AppInfo.ML_ATOMS_PER_COIN
     const balance = {
       balanceInAtoms: data.coin_balance,
-      balanceInCoins: balanceInCoins,
     }
     return balance
   } catch (error) {
     console.warn(`Failed to get balance for address ${address}: `, error)
-    return { balanceInAtoms: 0, balanceInCoins: 0 }
+    return { balanceInAtoms: 0 }
   }
 }
 
 export const getWalletBalance = async (addresses) => {
-  const receivingBalancePromises = addresses.map((address) =>
-    getAddressBalance(address),
-  )
-  const receivingBalances = await Promise.all(receivingBalancePromises)
-  const totalBalance = receivingBalances.reduce(
+  const balancePromises = addresses.map((address) => getAddressBalance(address))
+  const balances = await Promise.all(balancePromises)
+  const totalBalance = balances.reduce(
     (acc, curr) => {
       return {
         balanceInAtoms: acc.balanceInAtoms + curr.balanceInAtoms,
-        balanceInCoins: acc.balanceInCoins + curr.balanceInCoins,
       }
     },
-    { balanceInAtoms: 0, balanceInCoins: 0 },
+    { balanceInAtoms: 0 },
   )
   return totalBalance
 }
@@ -139,6 +137,21 @@ const getAddressTransactions = async (address) => {
   }
 }
 
+const getAddressUtxo = (address) =>
+  tryServers(MINTLAYER_ENDPOINTS.GET_ADDRESS_UTXO.replace(':address', address))
+
+const getWalletUtxos = (addresses) => {
+  const utxosPromises = addresses.map((address) => getAddressUtxo(address))
+  return Promise.all(utxosPromises)
+}
+
+const getFeesEstimates = async () => {
+  return tryServers(MINTLAYER_ENDPOINTS.GET_FEES_ESTIMATES)
+}
+
+const broadcastTransaction = (transaction) =>
+  tryServers(MINTLAYER_ENDPOINTS.POST_TRANSACTION, transaction)
+
 export {
   getAddressData,
   getAddressBalance,
@@ -148,5 +161,9 @@ export {
   getTransactionData,
   getAddressTransactions,
   requestMintlayer,
+  getAddressUtxo,
+  getWalletUtxos,
+  broadcastTransaction,
+  getFeesEstimates,
   MINTLAYER_ENDPOINTS,
 }

@@ -105,7 +105,10 @@
           "import/no-anonymous-default-export": "off"
         }
       }
-    ]
+    ],
+    "env": {
+      "es2020": true
+    }
   },
   "jest": {
     "transformIgnorePatterns": [

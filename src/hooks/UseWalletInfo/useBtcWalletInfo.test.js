@@ -2,6 +2,20 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 
 import useBtcWalletInfo from './useBtcWalletInfo'
 import { rawTransactions } from '@TestData'
+import { AccountProvider } from '@Contexts'
+
+const Wrapper = ({ children }) => (
+  <AccountProvider
+    value={{
+      balanceLoading: false,
+      walletType: {
+        name: 'Bitcoin',
+      },
+    }}
+  >
+    {children}
+  </AccountProvider>
+)
 
 jest.spyOn(console, 'warn').mockImplementation(() => {
   console.warn.restoreMock()
@@ -50,7 +64,9 @@ test('UseBtcWalletInfo hook', async () => {
 
   let result
   await act(async () => {
-    result = renderHook(() => useBtcWalletInfo(address)).result
+    result = renderHook(() => useBtcWalletInfo(address), {
+      wrapper: Wrapper,
+    }).result
   })
 
   let balance, transactionsList
@@ -95,8 +111,9 @@ test('UseBtcWalletInfo hook, errors', async () => {
       return null
     })
 
-  const { result } = renderHook(() => useBtcWalletInfo('dadadadada'))
-
+  const { result } = renderHook(() => useBtcWalletInfo('dadadadada'), {
+    wrapper: AccountProvider,
+  })
   const { btcBalance, btcTransactionsList } = result.current
 
   expect(btcBalance).toBe(0)

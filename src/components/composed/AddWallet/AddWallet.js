@@ -178,7 +178,7 @@ const AddWallet = ({
         )}
         {step === 3 && (
           <TextField
-            label="Insert your password"
+            label="Enter your password"
             placeHolder="Password"
             password
             validity={passValidity}
