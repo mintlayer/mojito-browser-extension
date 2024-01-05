@@ -192,9 +192,10 @@ const calculateFee = async (
     optUtxos,
     outputs,
   )
-  // const feeEstimates = await Mintlayer.getFeesEstimates()
-  const feeEstimates = '100000000'
+  const feeEstimatesResponse = await Mintlayer.getFeesEstimates()
+  const feeEstimates = JSON.parse(feeEstimatesResponse)
   const fee = (Number(feeEstimates) / 1000) * size
+
   return fee
 }
 
