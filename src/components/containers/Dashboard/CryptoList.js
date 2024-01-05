@@ -44,6 +44,8 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
     idx * 10,
     Number(value),
   ])
+  const symbol =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET ? item.symbol : 'Test'
 
   const onClick = () => {
     onClickItem(item)
@@ -69,7 +71,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
               {item.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
               <div className="name-values">
                 <h5>
-                  {item.name} ({item.symbol})
+                  {item.name} ({symbol})
                 </h5>
                 <div className={`values ${bigValues ? 'big-values' : ''}`}>
                   <dl>
@@ -117,7 +119,10 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
 }
 
 export const ConnectItem = ({ walletType, onClick }) => {
+  const { networkType } = useContext(SettingsContext)
   const isDisabled = walletType.disabled
+  const symbol =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET ? walletType.symbol : 'Test'
 
   const onItemClick = () => {
     if (!isDisabled) onClick(walletType)
@@ -132,7 +137,7 @@ export const ConnectItem = ({ walletType, onClick }) => {
       {walletType.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
       <div className="name-values">
         <h5>
-          {walletType.name} ({walletType.symbol})
+          {walletType.name} ({symbol})
         </h5>
       </div>
       <div className="connect-message">{message}</div>
