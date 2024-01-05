@@ -70,6 +70,12 @@ const DashboardPage = () => {
       balance: NumbersHelper.floatStringToNumber(btcBalance),
       exchangeRate: btcExchangeRate,
     },
+    {
+      name: 'Mintlayer',
+      symbol: 'ML',
+      balance: NumbersHelper.floatStringToNumber(mlBalance),
+      exchangeRate: mlExchangeRate,
+    },
   ]
 
   const cryptosTestnet = [
@@ -82,7 +88,7 @@ const DashboardPage = () => {
     {
       name: 'Mintlayer',
       symbol: 'ML',
-      balance: NumbersHelper.floatStringToNumber(mlBalance),
+      balance: 0,
       exchangeRate: mlExchangeRate,
     },
   ]
@@ -94,7 +100,6 @@ const DashboardPage = () => {
 
   const getCryptoList = (addresses, network) => {
     if (!addresses) return []
-
     const cryptos = []
     // eslint-disable-next-line max-params
     const addCrypto = (name, symbol, balance, exchangeRate, change24h) => {
@@ -108,10 +113,9 @@ const DashboardPage = () => {
       })
     }
 
-    const btcAddress =
-      network === AppInfo.NETWORK_TYPES.MAINNET
-        ? addresses.btcMainnetAddress
-        : addresses.btcTestnetAddress
+    const btcAddress = addresses.btcMainnetAddress
+      ? addresses.btcTestnetAddress
+      : false
     if (btcAddress) {
       const change24h =
         network === AppInfo.NETWORK_TYPES.MAINNET
@@ -119,16 +123,9 @@ const DashboardPage = () => {
           : 0
       addCrypto('Bitcoin', 'BTC', btcBalance, btcExchangeRate, change24h)
     }
-    const mlMainnetAddress = addresses.mlMainnetAddress
+    const mlAddress = addresses.mlMainnetAddress
       ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
       : false
-    const mlTestnetAddress = addresses.mlTestnetAddresses
-      ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
-      : false
-    const mlAddress =
-      network === AppInfo.NETWORK_TYPES.MAINNET
-        ? mlMainnetAddress
-        : mlTestnetAddress
     if (mlAddress) {
       addCrypto('Mintlayer', 'ML', mlBalance, mlExchangeRate, 0)
     }
