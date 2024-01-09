@@ -35,6 +35,7 @@ const CryptoFiatField = ({
   )
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
+  const amountErrorMessage = 'Amount set is bigger than this wallet balance.'
 
   useEffect(() => {
     changeValueHandle &&
@@ -126,12 +127,7 @@ const CryptoFiatField = ({
       : parsedValue < BTC.MAX_BTC
     setValidity(isValid ? 'valid' : 'invalid')
     setAmountValidity && setAmountValidity(isValid)
-    setErrorMessage &&
-      setErrorMessage(
-        isValid
-          ? undefined
-          : 'Amount set is bigger than max available BTC on the blockchain.',
-      )
+    setErrorMessage && setErrorMessage(isValid ? undefined : amountErrorMessage)
     if (!isValid) return
 
     isValid = isTypeFiat()
@@ -140,10 +136,7 @@ const CryptoFiatField = ({
 
     setValidity(isValid ? 'valid' : 'invalid')
     setAmountValidity(isValid)
-    setErrorMessage &&
-      setErrorMessage(
-        isValid ? undefined : 'Amount set is bigger than this wallet balance.',
-      )
+    setErrorMessage && setErrorMessage(isValid ? undefined : amountErrorMessage)
     if (!isValid) return
   }
 
