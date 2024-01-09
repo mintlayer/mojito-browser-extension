@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 
 import './TransactionButton.css'
 
-const TransactionButton = ({ title, up, onClick }) => {
+const TransactionButton = ({ title, up, onClick, disabled }) => {
   const buttonExtraClasses = ['button-transaction']
   const buttonUpExtraClasses = ['button-transaction', 'button-transaction-up']
   return (
@@ -15,6 +15,7 @@ const TransactionButton = ({ title, up, onClick }) => {
       <Button
         extraStyleClasses={up ? buttonUpExtraClasses : buttonExtraClasses}
         onClickHandle={onClick}
+        disabled={disabled}
       >
         <ArrowIcon className="icon-arrow" />
       </Button>
