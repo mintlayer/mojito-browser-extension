@@ -1,6 +1,9 @@
 /* eslint-disable max-params */
 import { ML } from '@Cryptos'
 import { Mintlayer } from '@APIs'
+import { LocalStorageService } from '@Storage'
+import { ML as MLHelpers } from '@Helpers'
+import { AppInfo } from '@Constants'
 
 const getUtxoBalance = (utxo) => {
   return utxo.reduce((sum, item) => sum + Number(item.utxo.value.amount), 0)
@@ -175,9 +178,9 @@ const calculateFee = async (
     throw new Error('Insufficient funds')
   }
   const requireUtxo = getTransactionUtxos(utxos, amountToUse)
-  const TransactionStrings = getUtxoTransactions(requireUtxo)
-  const TransactionBytes = getTransactionsBytes(TransactionStrings)
-  const outpointedSourceIds = await getOutpointedSourceIds(TransactionBytes)
+  const transactionStrings = getUtxoTransactions(requireUtxo)
+  const transactionBytes = getTransactionsBytes(transactionStrings)
+  const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
   const inputs = await getTxInputs(outpointedSourceIds)
   const inputsArray = getArraySpead(inputs)
   const txOutput = await getTxOutput(amountToUse, address, network)
@@ -215,19 +218,22 @@ const sendTransaction = async (
     amountToUse,
     network,
   )
-  if (totalAmount < Number(amountToUse)) {
-    throw new Error('Insufficient funds')
+  let amount = amountToUse
+  if (totalAmount < Number(amountToUse) + fee) {
+    amount = totalAmount - fee
   }
-  const amountToUseAfterFee = (Number(amountToUse) - fee).toString()
-  const requireUtxo = getTransactionUtxos(utxos, amountToUse, fee)
-  const TransactionStrings = getUtxoTransactions(requireUtxo)
-  const TransactionBytes = getTransactionsBytes(TransactionStrings)
-  const outpointedSourceIds = await getOutpointedSourceIds(TransactionBytes)
+
+  const requireUtxo = getTransactionUtxos(utxos, amount, fee)
+  const transactionStrings = getUtxoTransactions(requireUtxo)
+  const transactionBytes = getTransactionsBytes(transactionStrings)
+  const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
   const inputs = await getTxInputs(outpointedSourceIds)
   const inputsArray = getArraySpead(inputs)
-  const txOutput = await getTxOutput(amountToUseAfterFee, address, network)
+  const txOutput = await getTxOutput(amount.toString(), address, network)
   const changeAmount = (
-    totalUtxosAmount(requireUtxo) - Number(amountToUse)
+    totalUtxosAmount(requireUtxo) -
+    Number(amount) -
+    fee
   ).toString()
   const txChangeOutput = await getTxOutput(changeAmount, changeAddress, network)
   const outputs = [...txOutput, ...txChangeOutput]
@@ -248,7 +254,29 @@ const sendTransaction = async (
   const transactionHex = getTransactionHex(encodedSignedTransaction)
   const result = await Mintlayer.broadcastTransaction(transactionHex)
 
-  return JSON.parse(result).tx_id
+  const unconfirmedTransactions = LocalStorageService.getItem(
+    AppInfo.UNCONFIRMED_TRANSACTION_NAME,
+  )
+
+  if (!unconfirmedTransactions) {
+    const transaction = {
+      direction: 'out',
+      destAddress: address,
+      value: MLHelpers.getAmountInCoins(amount),
+      confirmations: 0,
+      date: '',
+      txid: JSON.parse(result).tx_id,
+      fee: fee,
+      isConfirmed: false,
+    }
+    LocalStorageService.setItem(
+      AppInfo.UNCONFIRMED_TRANSACTION_NAME,
+      transaction,
+    )
+    return JSON.parse(result).tx_id
+  } else {
+    return 'Transaction already in progress. You have to wait for confirmation.'
+  }
 }
 
 export {

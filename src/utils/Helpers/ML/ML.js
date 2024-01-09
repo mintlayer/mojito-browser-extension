@@ -1,5 +1,6 @@
 import { AppInfo } from '@Constants'
 import { ArrayHelper } from '@Helpers'
+import { LocalStorageService } from '@Storage'
 
 const getAmountInCoins = (amointInAtoms) => {
   return amointInAtoms / AppInfo.ML_ATOMS_PER_COIN
@@ -10,12 +11,41 @@ const getAmountInAtoms = (amountInCoins) => {
 }
 
 const getParsedTransactions = (transactions, addresses) => {
+  const unconfirmedTransactions = LocalStorageService.getItem(
+    AppInfo.UNCONFIRMED_TRANSACTION_NAME,
+  )
   const filteredTransactions = ArrayHelper.removeDublicates(transactions)
   const sortedTransactions = filteredTransactions.sort(
     (a, b) => b.timestamp - a.timestamp,
   )
 
+  const isUncofermedTransactionInList =
+    unconfirmedTransactions &&
+    sortedTransactions.some(
+      (transaction) => transaction.txid === unconfirmedTransactions.txid,
+    )
+
+  if (unconfirmedTransactions && isUncofermedTransactionInList) {
+    LocalStorageService.removeItem(AppInfo.UNCONFIRMED_TRANSACTION_NAME)
+  }
+
+  if (unconfirmedTransactions && !isUncofermedTransactionInList) {
+    sortedTransactions.unshift(unconfirmedTransactions)
+  }
+
   return sortedTransactions.map((transaction) => {
+    if (!transaction.outputs)
+      return {
+        direction: transaction.direction,
+        destAddress: transaction.destAddress,
+        value: transaction.value,
+        confirmations: transaction.confirmations,
+        date: transaction.date,
+        txid: transaction.txid,
+        fee: transaction.fee,
+        isConfirmed: transaction.isConfirmed,
+      }
+
     const isOutputMine = addresses.some(
       (address) => transaction.outputs[0].destination === address,
     )
