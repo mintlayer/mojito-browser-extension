@@ -9,6 +9,7 @@ import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
+import { LocalStorageService } from '@Storage'
 
 import './Wallet.css'
 
@@ -44,6 +45,9 @@ const WalletPage = () => {
   const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
   const walletTransactionList =
     walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
+  const isUncofermedTransaction = LocalStorageService.getItem(
+    AppInfo.UNCONFIRMED_TRANSACTION_NAME,
+  )
 
   return (
     <div data-testid="wallet-page">
@@ -59,6 +63,7 @@ const WalletPage = () => {
               title={'Send'}
               up
               onClick={setOpenTransactionForm}
+              disabled={isUncofermedTransaction}
             />
             <Wallet.TransactionButton
               title={'Receive'}
