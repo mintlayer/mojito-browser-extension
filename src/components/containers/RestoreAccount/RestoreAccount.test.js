@@ -190,7 +190,7 @@ test('Renders restore account page with step 4', () => {
   const inputs = screen.getAllByTestId('input')
 
   expect(buttons).toHaveLength(2)
-  expect(inputs).toHaveLength(12)
+  expect(inputs).toHaveLength(24)
 
   inputs.forEach((input) => expect(input).toHaveAttribute('type', 'text'))
   inputs.forEach((input) => expect(input).toHaveClass('invalid'))
