@@ -200,7 +200,11 @@ const RestoreAccount = ({
   const genButtonTitle = (currentStep) => titles[currentStep] || 'Continue'
 
   useEffect(() => {
-    const wordsValidity = wordsFields.every((word) => word.validity)
+    const wordsValidity =
+      wordsFields.every((word) => word.validity) ||
+      (wordsFields.slice(0, 12).every((word) => word.validity) &&
+        wordsFields.slice(12, 23).every((word) => !word.validity))
+
     setAccountWordsValid(wordsValidity)
   }, [wordsFields, step])
 
@@ -285,7 +289,7 @@ const RestoreAccount = ({
                 className="words-description"
                 data-testid="description-paragraph"
               >
-                In order to restore the wallet, please enter your 12 Seed
+                In order to restore the wallet, please enter your 12 or 24 Seed
                 Phrase.
               </p>
             </CenteredLayout>
@@ -296,6 +300,7 @@ const RestoreAccount = ({
               setFields={setWordsFields}
               restoreMode
               BIP39DefaultWordList={defaultBTCWordList}
+              amountOfWords={24}
             />
           )}
           {step === 5 && (

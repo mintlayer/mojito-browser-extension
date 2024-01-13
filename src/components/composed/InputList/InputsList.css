@@ -5,6 +5,10 @@
   overflow-y: auto;
 }
 
+.inputs-list-restore {
+  height: 19rem;
+}
+
 .list-item {
   position: relative;
   margin-bottom: 9px;

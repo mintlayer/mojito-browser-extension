@@ -17,6 +17,7 @@ const InputsList = ({
   restoreMode,
   wordsList = [],
   BIP39DefaultWordList,
+  amountOfWords = 12,
 }) => {
   const effectCalled = useRef(false)
 
@@ -34,7 +35,7 @@ const InputsList = ({
         value: restoreMode ? '' : word,
       }))
     } else {
-      newFields = [...new Array(12)].map((word, index) => ({
+      newFields = [...new Array(amountOfWords)].map((word, index) => ({
         order: index,
         validity: false,
         value: '',
@@ -42,7 +43,7 @@ const InputsList = ({
     }
 
     setFields(newFields)
-  }, [wordsList, setFields, restoreMode])
+  }, [wordsList, setFields, restoreMode, amountOfWords])
 
   const getFieldByIndex = (index) => fields[index]
 
@@ -64,7 +65,7 @@ const InputsList = ({
 
   return (
     <ul
-      className="inputs-list"
+      className={`inputs-list ${restoreMode ? 'inputs-list-restore' : ''}`}
       data-testid="inputs-list"
     >
       {fields &&
