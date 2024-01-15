@@ -36,6 +36,7 @@ const CryptoFiatField = ({
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
   const amountErrorMessage = 'Amount set is bigger than this wallet balance.'
+  const amountFormatErrorMessage = 'Amount format is invalid. Use 0,00 instead.'
 
   useEffect(() => {
     changeValueHandle &&
@@ -120,11 +121,19 @@ const CryptoFiatField = ({
   const changeHandler = ({ target: { value, parsedValue } }) => {
     setValue(value || 0)
     updateValue(value || 0)
+    const isDot = value.includes('.')
+
+    if (isDot) {
+      setValidity('invalid')
+      setAmountValidity(false)
+      setErrorMessage(amountFormatErrorMessage)
+      return
+    }
 
     let isValid = isTypeFiat()
       ? NumbersHelper.floatStringToNumber(calculateCryptoValue(parsedValue)) <
-        BTC.MAX_BTC
-      : parsedValue < BTC.MAX_BTC
+          BTC.MAX_BTC && !isDot
+      : parsedValue < BTC.MAX_BTC && !isDot
     setValidity(isValid ? 'valid' : 'invalid')
     setAmountValidity && setAmountValidity(isValid)
     setErrorMessage && setErrorMessage(isValid ? undefined : amountErrorMessage)

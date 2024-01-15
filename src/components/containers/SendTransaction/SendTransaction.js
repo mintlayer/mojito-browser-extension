@@ -34,6 +34,7 @@ const SendTransaction = ({
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(totalFeeCryptoParent)
   const [amountInCrypto, setAmountInCrypto] = useState('0')
   const [amountInFiat, setAmountInFiat] = useState('0.00')
+  const [originalAmount, setOriginalAmount] = useState('0,00')
   const [fee, setFee] = useState('0')
   const [addressTo, setAddressTo] = useState('')
   const [addressValidity, setAddressValidity] = useState(false)
@@ -122,6 +123,7 @@ const SendTransaction = ({
   const amountChanged = (amount) => {
     if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
+      setOriginalAmount(amount.value)
       setAmountInCrypto(Format.BTCValue(amount.value))
       setAmountInFiat(
         Format.fiatValue(
@@ -131,7 +133,7 @@ const SendTransaction = ({
       )
       return
     }
-
+    setOriginalAmount(amount.value)
     setAmountInFiat(Format.fiatValue(amount.value))
     setAmountInCrypto(
       Format.BTCValue(
@@ -175,6 +177,7 @@ const SendTransaction = ({
   )
 
   useEffect(() => {
+    const isDot = originalAmount && originalAmount.includes('.')
     const maxValue = BTC.convertBtcToSatoshi(
       NumbersHelper.floatStringToNumber(maxValueInToken),
     )
@@ -182,14 +185,25 @@ const SendTransaction = ({
       NumbersHelper.floatStringToNumber(amountInCrypto),
     )
     const totalFee = BTC.convertBtcToSatoshi(totalFeeCrypto)
-    if (amount + totalFee > maxValue) {
+    if (isDot) {
+      setAmountValidity(false)
+      return
+    }
+    if (amount + totalFee > maxValue || isDot) {
       setAmountValidity(false)
       setPassErrorMessage('Insufficient funds')
-    } else if (amount + totalFee <= maxValue) {
+    } else if (amount + totalFee <= maxValue && !isDot) {
       setAmountValidity(true)
       setPassErrorMessage('')
     }
-  }, [totalFeeCrypto, amountInCrypto, maxValueInToken, amountInFiat])
+  }, [
+    totalFeeCrypto,
+    amountInCrypto,
+    maxValueInToken,
+    amountInFiat,
+    originalAmount,
+    setAmountValidity,
+  ])
 
   return (
     <div className="transaction-form">
