@@ -64,7 +64,6 @@ const SendTransaction = ({
     setPassErrorMessage('')
     setOpenSendFundConfirmation(state)
   }
-  console.log('amountInCrypto', amountInCrypto)
 
   const openConfirmation = async () => {
     setPopupState(true)
