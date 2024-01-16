@@ -5,6 +5,12 @@ import {
   isMlAddressValid,
 } from './ML.js'
 import { AppInfo } from '@Constants'
+import { LocalStorageService } from '@Storage'
+
+import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+LocalStorageService.setItem('unlockedAccount', { name: 'one' })
 
 describe('ML', () => {
   describe('getAmountInCoins', () => {

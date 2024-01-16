@@ -16,7 +16,7 @@ describe('mojito wallet app', () => {
 
     cy.contains('Mojito').should('be.visible')
     cy.contains('Your Bitcoin, right in your browser.').should('be.visible')
-    cy.contains('©Mintlayer, 2022').should('be.visible')
+    cy.contains('©Mintlayer, 2024').should('be.visible')
     cy.contains('mintlayer.org').should('be.visible')
 
     cy.contains('button', 'Create').should('be.visible')
