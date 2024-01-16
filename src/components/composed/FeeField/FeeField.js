@@ -14,25 +14,6 @@ import { BTC } from '@Helpers'
 
 import './FeeField.css'
 
-const ML_FEE_MOCK = JSON.stringify({
-  1: 30,
-  2: 29,
-  3: 28,
-  4: 27,
-  5: 26,
-  6: 25,
-  7: 24,
-  8: 23,
-  9: 22,
-  10: 21,
-  11: 20,
-  12: 19,
-  13: 18,
-  14: 17,
-  15: 16,
-  16: 15,
-})
-
 const FeeField = ({
   value: parentValue,
   id,
@@ -102,8 +83,7 @@ const FeeField = ({
 
     const populateOptions = async () => {
       const btcFees = await Electrum.getFeesEstimates()
-      const mlFees = ML_FEE_MOCK
-      const fees = walletType.name === 'Mintlayer' ? mlFees : btcFees
+      const fees = btcFees
       const estimates = JSON.parse(fees)
       setEstimatedFees(estimates)
 
@@ -145,6 +125,7 @@ const FeeField = ({
             id={id}
             value={inputValue}
             onChangeHandle={inputChangeHandler}
+            disabled={true}
           />
           <small>{feeType}</small>
         </div>

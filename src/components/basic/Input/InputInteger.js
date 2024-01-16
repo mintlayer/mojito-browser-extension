@@ -38,6 +38,7 @@ const InputInteger = (props) => {
       value={value}
       getMaskedValue={getMaskedValue}
       justNumbers
+      disabled={props.disabled}
     />
   )
 }
