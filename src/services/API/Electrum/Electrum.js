@@ -75,7 +75,9 @@ const getLastBlockHeight = () =>
   tryServers(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HEIGHT)
 
 const getFeesEstimates = async () => {
-  if (!EnvVars.IS_PROD_ENV) {
+  const isTestnet =
+    LocalStorageService.getItem('networkType') === AppInfo.NETWORK_TYPES.TESTNET
+  if (isTestnet) {
     const { fees } = await import('@TestData')
     return JSON.stringify(fees)
   }
