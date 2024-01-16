@@ -34,18 +34,17 @@ const MainnetAddressItem = () => {
 export const CryptoItem = ({ colorList, onClickItem, item }) => {
   const { balanceLoading } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const color = colorList[item.symbol.toLowerCase()]
-  const balance =
-    networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? item.balance
-      : Number(item.balance * item.exchangeRate).toFixed(2)
+  const balance = isTestnet
+    ? item.balance
+    : Number(item.balance * item.exchangeRate).toFixed(2)
   const bigValues = balance.length > 13
   const data = Object.values(item.historyRates).map((value, idx) => [
     idx * 10,
     Number(value),
   ])
-  const symbol =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET ? item.symbol : 'Test'
+  const symbol = networkType === !isTestnet ? item.symbol : 'Test'
 
   const onClick = () => {
     onClickItem(item)
@@ -58,8 +57,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
       ) : (
         <>
           {/* TODO: remove this when mainnet is ready */}
-          {item.name === 'Mintlayer' &&
-          networkType === AppInfo.NETWORK_TYPES.MAINNET ? (
+          {item.name === 'Mintlayer' && !isTestnet ? (
             <MainnetAddressItem />
           ) : (
             <li
@@ -77,7 +75,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
                   <dl>
                     <dt>Value:</dt>
                     <dd>{balance}</dd>
-                    {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
+                    {!isTestnet && (
                       <>
                         <dt>Price:</dt>
                         <dd>{item.exchangeRate.toFixed(2)}</dd>
@@ -93,22 +91,21 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
                       <strong
                         className={item.change24h < 0 ? 'negative' : 'positive'}
                       >
-                        {networkType === AppInfo.NETWORK_TYPES.TESTNET
-                          ? 0
-                          : item.change24h}
-                        %
+                        {isTestnet ? 0 : item.change24h}%
                       </strong>
                       <span>24h</span>
                     </>
                   )}
                 </div>
-                <LineChart
-                  points={data}
-                  height="40px"
-                  width="100%"
-                  lineColor={color}
-                  lineWidth="4px"
-                />
+                {!isTestnet && (
+                  <LineChart
+                    points={data}
+                    height="40px"
+                    width="100%"
+                    lineColor={color}
+                    lineWidth="4px"
+                  />
+                )}
               </div>
             </li>
           )}
