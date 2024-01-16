@@ -8,6 +8,7 @@ const appAccounts = async () => {
 
 const decimalSeparator = ','
 const thousandsSeparator = '.'
+const amountRegex = /^\d+(,\d+)?$/
 const minEntropyLength = 192
 const DEFAULT_WALLETS_TO_CREATE = ['btc']
 const ML_ATOMS_PER_COIN = 100000000000
@@ -34,6 +35,7 @@ export {
   appAccounts,
   decimalSeparator,
   thousandsSeparator,
+  amountRegex,
   minEntropyLength,
   walletTypes,
   DEFAULT_WALLETS_TO_CREATE,
