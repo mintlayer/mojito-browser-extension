@@ -190,6 +190,7 @@ const SendTransaction = ({
       setAmountValidity(false)
       return
     }
+    // TODO with 22-digit numbers, this is not working
     if (amount + totalFee > maxValue || !validity) {
       setAmountValidity(false)
       setPassErrorMessage('Insufficient funds')

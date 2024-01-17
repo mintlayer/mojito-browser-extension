@@ -87,7 +87,9 @@ const RestoreAccount = ({
   const [btcAddressTypeValue, setBtcAddressTypeValue] = useState(undefined)
   const [selectedWallets, setSelectedWallets] = useState([])
 
-  const btcAddressType = btcAddressTypeValue && btcAddressTypeValue.value
+  const btcAddressType = btcAddressTypeValue
+    ? btcAddressTypeValue.value
+    : BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
 
   const navigate = useNavigate()
 

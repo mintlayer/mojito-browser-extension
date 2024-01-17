@@ -2,10 +2,9 @@ import { useState, useContext } from 'react'
 import { Button, Error } from '@BasicComponents'
 import { TextField, InputList } from '@ComposedComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
-import { BTC } from '@Cryptos'
+import { BTC, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 import { AccountContext } from '@Contexts'
-import { Account } from '@Entities'
-import { AccountHelper } from '@Helpers'
+import { Account, AccountHelpers } from '@Entities'
 import { useNavigate } from 'react-router-dom'
 import { wordlists } from 'bip39'
 
@@ -43,6 +42,8 @@ const AddWallet = ({
       return
     }
     const currentAccount = await Account.getAccount(id)
+    const btcWalletType =
+      currentAccount.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
     const currentWallets = currentAccount.walletsToCreate
     const walletToAdd = walletType.value
 
@@ -60,7 +61,7 @@ const AddWallet = ({
         mlMainnetPrivKeyIv,
         mlTestnetPrivKeyTag,
         mlMainnetPrivKeyTag,
-      } = await AccountHelper.getEncryptedPrivateKeys(
+      } = await AccountHelpers.getEncryptedPrivateKeys(
         pass,
         account.salt,
         mnemonic,
@@ -86,6 +87,7 @@ const AddWallet = ({
     }
 
     return await Account.updateAccount(id, {
+      walletType: btcWalletType,
       walletsToCreate: [...currentWallets, walletToAdd],
     })
   }
