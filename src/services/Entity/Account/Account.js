@@ -2,7 +2,7 @@ import { BTC, ML, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
 import { IndexedDB } from '@Databases'
 import * as bitcoin from 'bitcoinjs-lib'
 import { AppInfo } from '@Constants'
-import { AccountHelper } from '@Helpers'
+import { getEncryptedPrivateKeys } from './AccountHelpers'
 
 import loadAccountSubRoutines from './loadWorkers'
 
@@ -20,7 +20,7 @@ const saveAccount = async (data) => {
     mlTestnetPrivKeyTag,
     mlMainnetPrivKeyTag,
     btcTag,
-  } = await AccountHelper.getEncryptedPrivateKeys(password, salt, mnemonic)
+  } = await getEncryptedPrivateKeys(password, salt, mnemonic)
 
   const account = {
     name,

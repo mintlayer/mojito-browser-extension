@@ -1,6 +1,6 @@
-import loadAccountSubRoutines from '../../../services/Entity/Account/loadWorkers'
 import { AppInfo } from '@Constants'
 import { ML } from '@Cryptos'
+import loadAccountSubRoutines from './loadWorkers'
 
 const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
   const { generateSeed, generateEncryptionKey, encryptSeed } =
