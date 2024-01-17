@@ -45,9 +45,13 @@ const WalletPage = () => {
   const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
   const walletTransactionList =
     walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
-  const isUncofermedTransaction = LocalStorageService.getItem(
-    AppInfo.UNCONFIRMED_TRANSACTION_NAME,
-  )
+
+  const account = LocalStorageService.getItem('unlockedAccount')
+  const accountName = account.name
+  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}`
+  const isUncofermedTransaction =
+    LocalStorageService.getItem(unconfirmedTransactionString) &&
+    walletType.name === 'Mintlayer'
 
   return (
     <div data-testid="wallet-page">

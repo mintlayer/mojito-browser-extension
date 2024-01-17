@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react'
 import { Button, InputBTC, InputFloat } from '@BasicComponents'
-import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
+// import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 import { SettingsContext } from '@Contexts'
 
 import './CryptoFiatField.css'
@@ -30,6 +30,7 @@ const CryptoFiatField = ({
   )
 
   const [bottomValue, setBottomValue] = useState('')
+  // eslint-disable-next-line no-unused-vars
   const [currentValueType, setCurrentValueType] = useState(
     transactionData ? transactionData.tokenName : 'Token',
   )
@@ -37,6 +38,7 @@ const CryptoFiatField = ({
   const [validity, setValidity] = useState(parentValidity)
   const amountErrorMessage = 'Amount set is bigger than this wallet balance.'
   const amountFormatErrorMessage = 'Amount format is invalid. Use 0,00 instead.'
+  const zeroErrorMessage = 'Amount must be greater than 0.'
 
   useEffect(() => {
     changeValueHandle &&
@@ -89,21 +91,23 @@ const CryptoFiatField = ({
       : setBottomValue(calculateFiatValue(value))
   }
 
-  const switchCurrency = (
-    currencyName,
-    recalculateValueFn,
-    calculateBottomFn,
-  ) => {
-    setCurrentValueType(currencyName)
-    setBottomValue(calculateBottomFn(value || 0))
-    setValue(recalculateValueFn(value || 0))
-  }
+  // TODO: Discuss the feasibility of this feature after release
+  // const switchCurrency = (
+  //   currencyName,
+  //   recalculateValueFn,
+  //   calculateBottomFn,
+  // ) => {
+  //   setCurrentValueType(currencyName)
+  //   setBottomValue(calculateBottomFn(value || 0))
+  //   setValue(recalculateValueFn(value || 0))
+  // }
 
   const changeButtonClickHandler = () => {
-    if (networkType === AppInfo.NETWORK_TYPES.TESTNET) return
-    isTypeFiat()
-      ? switchCurrency(tokenName, calculateCryptoValue, Format.fiatValue)
-      : switchCurrency(fiatName, calculateFiatValue, Format.BTCValue)
+    return
+    // if (networkType === AppInfo.NETWORK_TYPES.TESTNET) return
+    // isTypeFiat()
+    //   ? switchCurrency(tokenName, calculateCryptoValue, Format.fiatValue)
+    //   : switchCurrency(fiatName, calculateFiatValue, Format.BTCValue)
   }
 
   const maxButtonClickHandler = () => {
@@ -121,19 +125,27 @@ const CryptoFiatField = ({
   const changeHandler = ({ target: { value, parsedValue } }) => {
     setValue(value || 0)
     updateValue(value || 0)
-    const isDot = value.includes('.')
 
-    if (isDot) {
+    const validity = AppInfo.amountRegex.test(value)
+
+    if (!validity) {
       setValidity('invalid')
       setAmountValidity(false)
       setErrorMessage(amountFormatErrorMessage)
       return
     }
 
+    if (parsedValue <= 0) {
+      setValidity('invalid')
+      setAmountValidity(false)
+      setErrorMessage(zeroErrorMessage)
+      return
+    }
+
     let isValid = isTypeFiat()
       ? NumbersHelper.floatStringToNumber(calculateCryptoValue(parsedValue)) <
-          BTC.MAX_BTC && !isDot
-      : parsedValue < BTC.MAX_BTC && !isDot
+        BTC.MAX_BTC
+      : parsedValue < BTC.MAX_BTC
     setValidity(isValid ? 'valid' : 'invalid')
     setAmountValidity && setAmountValidity(isValid)
     setErrorMessage && setErrorMessage(isValid ? undefined : amountErrorMessage)
@@ -180,7 +192,7 @@ const CryptoFiatField = ({
           data-testid="crypto-fiat-switch-button"
           onClick={changeButtonClickHandler}
         >
-          {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
+          {/* {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
             <>
               <ArrowIcon
                 className="crypto-fiat-icon-reverse"
@@ -191,7 +203,7 @@ const CryptoFiatField = ({
                 data-testid="arrow-icon"
               />
             </>
-          )}
+          )} */}
 
           <span className="current-value-type">{currentValueType}</span>
         </button>

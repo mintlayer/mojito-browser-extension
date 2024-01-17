@@ -254,8 +254,11 @@ const sendTransaction = async (
   const transactionHex = getTransactionHex(encodedSignedTransaction)
   const result = await Mintlayer.broadcastTransaction(transactionHex)
 
+  const account = LocalStorageService.getItem('unlockedAccount')
+  const accountName = account.name
+  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}`
   const unconfirmedTransactions = LocalStorageService.getItem(
-    AppInfo.UNCONFIRMED_TRANSACTION_NAME,
+    unconfirmedTransactionString,
   )
 
   if (!unconfirmedTransactions) {
@@ -269,10 +272,7 @@ const sendTransaction = async (
       fee: fee,
       isConfirmed: false,
     }
-    LocalStorageService.setItem(
-      AppInfo.UNCONFIRMED_TRANSACTION_NAME,
-      transaction,
-    )
+    LocalStorageService.setItem(unconfirmedTransactionString, transaction)
     return JSON.parse(result).tx_id
   } else {
     return 'Transaction already in progress. You have to wait for confirmation.'

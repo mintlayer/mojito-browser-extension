@@ -5,6 +5,7 @@ import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
 import { AccountContext } from '@Contexts'
+import { AppInfo } from '@Constants'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
 import AddressField from './AddressField'
@@ -32,7 +33,7 @@ const SendTransaction = ({
   const [fiatName] = useState(transactionData.fiatName)
   const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(totalFeeCryptoParent)
-  const [amountInCrypto, setAmountInCrypto] = useState('0')
+  const [amountInCrypto, setAmountInCrypto] = useState('0.00')
   const [amountInFiat, setAmountInFiat] = useState('0.00')
   const [originalAmount, setOriginalAmount] = useState('0,00')
   const [fee, setFee] = useState('0')
@@ -124,7 +125,7 @@ const SendTransaction = ({
     if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
       setOriginalAmount(amount.value)
-      setAmountInCrypto(Format.BTCValue(amount.value))
+      setAmountInCrypto(amount.value ? Format.BTCValue(amount.value) : '0,00')
       setAmountInFiat(
         Format.fiatValue(
           NumbersHelper.floatStringToNumber(amount.value) *
@@ -177,7 +178,7 @@ const SendTransaction = ({
   )
 
   useEffect(() => {
-    const isDot = originalAmount && originalAmount.includes('.')
+    const validity = originalAmount && AppInfo.amountRegex.test(originalAmount)
     const maxValue = BTC.convertBtcToSatoshi(
       NumbersHelper.floatStringToNumber(maxValueInToken),
     )
@@ -185,14 +186,14 @@ const SendTransaction = ({
       NumbersHelper.floatStringToNumber(amountInCrypto),
     )
     const totalFee = BTC.convertBtcToSatoshi(totalFeeCrypto)
-    if (isDot) {
+    if (!validity || amount <= 0) {
       setAmountValidity(false)
       return
     }
-    if (amount + totalFee > maxValue || isDot) {
+    if (amount + totalFee > maxValue || !validity) {
       setAmountValidity(false)
       setPassErrorMessage('Insufficient funds')
-    } else if (amount + totalFee <= maxValue && !isDot) {
+    } else if (amount + totalFee <= maxValue && validity) {
       setAmountValidity(true)
       setPassErrorMessage('')
     }

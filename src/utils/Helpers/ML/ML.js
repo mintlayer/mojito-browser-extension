@@ -11,8 +11,11 @@ const getAmountInAtoms = (amountInCoins) => {
 }
 
 const getParsedTransactions = (transactions, addresses) => {
+  const account = LocalStorageService.getItem('unlockedAccount')
+  const accountName = account.name
+  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}`
   const unconfirmedTransactions = LocalStorageService.getItem(
-    AppInfo.UNCONFIRMED_TRANSACTION_NAME,
+    unconfirmedTransactionString,
   )
   const filteredTransactions = ArrayHelper.removeDublicates(transactions)
   const sortedTransactions = filteredTransactions.sort(
@@ -26,7 +29,7 @@ const getParsedTransactions = (transactions, addresses) => {
     )
 
   if (unconfirmedTransactions && isUncofermedTransactionInList) {
-    LocalStorageService.removeItem(AppInfo.UNCONFIRMED_TRANSACTION_NAME)
+    LocalStorageService.removeItem(unconfirmedTransactionString)
   }
 
   if (unconfirmedTransactions && !isUncofermedTransactionInList) {
