@@ -55,7 +55,7 @@ export const Data3 = Template.bind({})
 Data3.args = {
   data: [
     { value: 10, asset: 'BTC', color: 'orange' },
-    { value: 40, asset: 'MLT', color: 'blue' },
+    { value: 40, asset: 'ML', color: 'blue' },
     { value: 20, asset: 'ETH', color: 'red' },
   ],
   width: '200px',

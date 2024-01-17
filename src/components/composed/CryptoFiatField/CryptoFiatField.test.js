@@ -1,7 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { getDecimalNumber } from 'src/utils/Helpers/Number/Number'
+// import { getDecimalNumber } from 'src/utils/Helpers/Number/Number'
 
 import CryptoFiatField from './CryptoFiatField'
+import { SettingsProvider, AccountProvider } from '@Contexts'
 
 const TRANSACTIONDATASAMPLE = {
   fiatName: 'USD',
@@ -19,22 +20,28 @@ const [exchangeRate, maxValueInToken, totalFeeCrypto] = [22343.23, 450, 0.00045]
 
 test('Render TextField component', () => {
   render(
-    <CryptoFiatField
-      buttonTitle={PROPSSAMPLE.buttonTitle}
-      placeholder={PROPSSAMPLE.placeholder}
-      inputValue={PROPSSAMPLE.value}
-      transactionData={PROPSSAMPLE.transactionData}
-      exchangeRate={exchangeRate}
-      maxValueInToken={maxValueInToken}
-      setAmountValidity={() => {}}
-      totalFeeInCrypto={totalFeeCrypto}
-    />,
+    <AccountProvider>
+      <SettingsProvider value={{ networkType: 'mainnet' }}>
+        <CryptoFiatField
+          buttonTitle={PROPSSAMPLE.buttonTitle}
+          placeholder={PROPSSAMPLE.placeholder}
+          inputValue={PROPSSAMPLE.value}
+          transactionData={PROPSSAMPLE.transactionData}
+          exchangeRate={exchangeRate}
+          maxValueInToken={maxValueInToken}
+          setAmountValidity={() => {}}
+          totalFeeInCrypto={totalFeeCrypto}
+        />
+        ,
+      </SettingsProvider>
+      ,
+    </AccountProvider>,
   )
 
   const component = screen.getByTestId('crypto-fiat-field')
   const input = screen.getByTestId('input')
-  const switchButton = screen.getByTestId('crypto-fiat-switch-button')
-  const arrowIcons = screen.getAllByTestId('arrow-icon')
+  // const switchButton = screen.getByTestId('crypto-fiat-switch-button')
+  // const arrowIcons = screen.getAllByTestId('arrow-icon')
   const actionButton = screen.getByTestId('button')
   const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
 
@@ -49,8 +56,8 @@ test('Render TextField component', () => {
   expect(input).toHaveValue(maxValueInToken.toString())
   expect(bottomNote).toHaveTextContent('≈ 10054453,50 USD')
 
-  expect(switchButton).toBeInTheDocument()
-  expect(arrowIcons).toHaveLength(2)
+  // expect(switchButton).toBeInTheDocument()
+  // expect(arrowIcons).toHaveLength(2)
 
   expect(actionButton).toBeInTheDocument()
   expect(actionButton).toHaveTextContent(PROPSSAMPLE.buttonTitle)
@@ -60,23 +67,28 @@ test('Render TextField component', () => {
 
 test('Render TextField component fdf', async () => {
   render(
-    <CryptoFiatField
-      label={PROPSSAMPLE.label}
-      buttonTitle={PROPSSAMPLE.buttonTitle}
-      placeholder={PROPSSAMPLE.placeholder}
-      inputValue={PROPSSAMPLE.value}
-      transactionData={PROPSSAMPLE.transactionData}
-      exchangeRate={exchangeRate}
-      maxValueInToken={maxValueInToken}
-      setErrorMessage={() => {}}
-      setAmountValidity={() => {}}
-      totalFeeInCrypto={totalFeeCrypto}
-    />,
+    <AccountProvider>
+      <SettingsProvider>
+        <CryptoFiatField
+          label={PROPSSAMPLE.label}
+          buttonTitle={PROPSSAMPLE.buttonTitle}
+          placeholder={PROPSSAMPLE.placeholder}
+          inputValue={PROPSSAMPLE.value}
+          transactionData={PROPSSAMPLE.transactionData}
+          exchangeRate={exchangeRate}
+          maxValueInToken={maxValueInToken}
+          setErrorMessage={() => {}}
+          setAmountValidity={() => {}}
+          totalFeeInCrypto={totalFeeCrypto}
+        />
+        ,
+      </SettingsProvider>
+    </AccountProvider>,
   )
 
-  const switchButton = screen.getByTestId('crypto-fiat-switch-button')
+  // const switchButton = screen.getByTestId('crypto-fiat-switch-button')
   const actionButton = screen.getByTestId('button')
-  const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
+  // const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
   const cryptoInput = screen.getByTestId('input')
 
   const maxValueInCrypto = maxValueInToken - totalFeeCrypto
@@ -84,23 +96,74 @@ test('Render TextField component fdf', async () => {
   fireEvent.click(actionButton)
   expect(cryptoInput).toHaveValue(maxValueInCrypto.toString().replace('.', ','))
 
-  fireEvent.click(switchButton)
-  const fiatInput = screen.getByTestId('input')
-  expect(fiatInput).toHaveValue(
-    getDecimalNumber(maxValueInCrypto * exchangeRate)
-      .toString()
-      .replace('.', ','),
-  )
+  // fireEvent.click(switchButton)
+  // const fiatInput = screen.getByTestId('input')
+  // expect(fiatInput).toHaveValue(
+  //   getDecimalNumber(maxValueInCrypto * exchangeRate)
+  //     .toString()
+  //     .replace('.', ','),
+  // )
 
-  expect(bottomNote).toHaveTextContent(
-    `≈ ${maxValueInCrypto.toString().replace('.', ',')} BTC`,
-  )
+  // expect(bottomNote).toHaveTextContent(
+  //   `≈ ${maxValueInCrypto.toString().replace('.', ',')} BTC`,
+  // )
 
   fireEvent.change(cryptoInput, { target: { value: '' } })
 })
 
+test('Render TextField when networkType is testnet', () => {
+  render(
+    <AccountProvider>
+      <SettingsProvider value={{ networkType: 'testnet' }}>
+        <CryptoFiatField
+          buttonTitle={PROPSSAMPLE.buttonTitle}
+          placeholder={PROPSSAMPLE.placeholder}
+          inputValue={PROPSSAMPLE.value}
+          transactionData={PROPSSAMPLE.transactionData}
+          exchangeRate={exchangeRate}
+          maxValueInToken={maxValueInToken}
+          setAmountValidity={() => {}}
+          totalFeeInCrypto={totalFeeCrypto}
+        />
+        ,
+      </SettingsProvider>
+      ,
+    </AccountProvider>,
+  )
+
+  const component = screen.getByTestId('crypto-fiat-field')
+  const input = screen.getByTestId('input')
+  // const switchButton = screen.getByTestId('crypto-fiat-switch-button')
+  const actionButton = screen.getByTestId('button')
+  const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
+
+  expect(component).toBeInTheDocument()
+
+  expect(input).toBeInTheDocument()
+
+  fireEvent.change(input, {
+    target: { value: maxValueInToken },
+  })
+
+  expect(input).toHaveValue(maxValueInToken.toString())
+  expect(bottomNote).toHaveTextContent('≈ 0,00 USD')
+
+  // expect(switchButton).toBeInTheDocument()
+
+  expect(actionButton).toBeInTheDocument()
+  expect(actionButton).toHaveTextContent(PROPSSAMPLE.buttonTitle)
+
+  expect(bottomNote).toBeInTheDocument()
+})
+
 test('Render TextField component without transactionData', () => {
-  render(<CryptoFiatField setAmountValidity={() => {}} />)
+  render(
+    <AccountProvider>
+      <SettingsProvider>
+        <CryptoFiatField setAmountValidity={() => {}} />,
+      </SettingsProvider>
+    </AccountProvider>,
+  )
 
   expect(screen.queryByTestId('crypto-fiat-field')).not.toBeInTheDocument()
 })

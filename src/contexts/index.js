@@ -3,4 +3,9 @@ import {
   AccountProvider,
 } from './AccountProvider/AccountProvider'
 
-export { AccountContext, AccountProvider }
+import {
+  SettingsContext,
+  SettingsProvider,
+} from './SettingsProvider/SettingsProvider'
+
+export { AccountContext, AccountProvider, SettingsContext, SettingsProvider }

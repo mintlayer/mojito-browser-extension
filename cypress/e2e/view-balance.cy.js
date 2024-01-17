@@ -25,7 +25,7 @@ describe('View balance page', () => {
     it('checks Empty', function () {
       cy.contains(this.access.name).should('be.visible')
       cy.contains('Bitcoin (BTC)').should('be.visible')
-      cy.contains('Mintlayer (MLT)').should('be.visible')
+      cy.contains('Mintlayer (ML)').should('be.visible')
 
       cy.contains('Bitcoin').should('be.visible')
       cy.contains('Mintlayer').should('be.visible')
@@ -53,7 +53,7 @@ describe('View balance page', () => {
 
     it('checks Sender balance', () => {
       cy.contains('Bitcoin (BTC)').should('be.visible')
-      cy.contains('Mintlayer (MLT)').should('be.visible')
+      cy.contains('Mintlayer (ML)').should('be.visible')
     })
   })
 
@@ -65,7 +65,7 @@ describe('View balance page', () => {
 
     it('checks Receiver balance', () => {
       cy.contains('Bitcoin (BTC)').should('be.visible')
-      cy.contains('Mintlayer (MLT)').should('be.visible')
+      cy.contains('Mintlayer (ML)').should('be.visible')
     })
   })
 })

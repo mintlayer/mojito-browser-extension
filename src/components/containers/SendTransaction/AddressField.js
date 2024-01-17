@@ -3,28 +3,54 @@ import { validate } from 'wallet-address-validator'
 
 import { Input } from '@BasicComponents'
 import TransactionField from './TransactionField'
+import { AppInfo } from '@Constants'
+import { ML } from '@Helpers'
 
 import './errorMessages.css'
 
-import { EnvVars } from '@Constants'
-
-import { AccountContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 
 const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
-  const { btcAddress } = useContext(AccountContext)
+  const { addresses, walletType } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const currentBtcAddress =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? addresses.btcMainnetAddress
+      : addresses.btcTestnetAddress
+  const currentMlAddress =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? addresses.mlMainnetAddress
+      : addresses.mlTestnetAddress
   const [message, setMessage] = useState(errorMessage)
   const [isValid, setIsValid] = useState(true)
+  const mintlayerAddressPlaceholder =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc1...' : 'tmt1...'
+  const bitcoinAddressPlaceholder =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? 'bc1... or 1... or 3...'
+      : 'tb1... or 1... or 3...'
+  const placeholder =
+    walletType.name === 'Mintlayer'
+      ? mintlayerAddressPlaceholder
+      : bitcoinAddressPlaceholder
+
+  const addressErrorMessage =
+    walletType.name === 'Mintlayer'
+      ? 'This is not a valid ML address.'
+      : 'This is not a valid BTC address.'
 
   const changeHandle = (ev) => {
     const value = ev.target.value
     const validity =
-      validate(value, 'btc', EnvVars.BTC_NETWORK) && value !== btcAddress
+      walletType.name === 'Mintlayer'
+        ? ML.isMlAddressValid(value, networkType)
+        : validate(value, 'btc', networkType) && value !== currentBtcAddress
     setIsValid(validity)
     setAddressValidity(validity)
-    if (value === btcAddress) {
+    if (value === currentBtcAddress || value === currentMlAddress) {
       setMessage('Cannot send to yourself')
     } else if (!validity) {
-      setMessage('This is not a valid BTC address.')
+      setMessage(addressErrorMessage)
     } else {
       setMessage(undefined)
     }
@@ -40,7 +66,7 @@ const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
       <label htmlFor="address">Send to:</label>
       <Input
         id="address"
-        placeholder="bc1.... or 1... or 3..."
+        placeholder={placeholder}
         extraStyleClasses={['address-field']}
         onChangeHandle={changeHandle}
         setErrorMessage={setMessage}

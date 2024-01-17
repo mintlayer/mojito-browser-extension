@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import TransactionsList from './TransactionsList'
+import { AccountContext } from '@Contexts'
 
 const TRANSACTIONSSAMPLE = [
   {
@@ -33,7 +34,11 @@ const TRANSACTIONSSAMPLE = [
 ]
 
 test('Render transactions list component', () => {
-  render(<TransactionsList transactionsList={TRANSACTIONSSAMPLE} />)
+  render(
+    <AccountContext.Provider value={{ transactionsLoading: false }}>
+      <TransactionsList transactionsList={TRANSACTIONSSAMPLE} />
+    </AccountContext.Provider>,
+  )
   const transactionsList = screen.getByTestId('transactions-list')
   const transactions = screen.getAllByTestId('transaction')
 
@@ -42,10 +47,27 @@ test('Render transactions list component', () => {
 })
 
 test('Render transactions list component - empty', () => {
-  render(<TransactionsList transactionsList={[]} />)
+  render(
+    <AccountContext.Provider value={{ transactionsLoading: false }}>
+      <TransactionsList transactionsList={[]} />
+    </AccountContext.Provider>,
+  )
   const transactionsList = screen.getByTestId('transactions-list')
   const transactions = screen.getAllByTestId('transaction')
 
   expect(transactionsList).toBeInTheDocument()
   expect(transactions).toHaveLength(1)
+})
+
+test('Render transactions list component - loading', () => {
+  render(
+    <AccountContext.Provider value={{ transactionsLoading: true }}>
+      <TransactionsList transactionsList={TRANSACTIONSSAMPLE} />
+    </AccountContext.Provider>,
+  )
+  const transactionsList = screen.getByTestId('transactions-list')
+  const skeletonLoading = screen.getAllByTestId('card')
+
+  expect(transactionsList).toBeInTheDocument()
+  expect(skeletonLoading).toHaveLength(3)
 })

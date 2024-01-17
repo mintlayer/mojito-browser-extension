@@ -4,19 +4,22 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 
 import RestoreAccount from './RestoreAccount'
 import { Expressions } from '@Constants'
-import { AccountProvider } from '@Contexts'
+import { AccountProvider, SettingsProvider } from '@Contexts'
 import { BTC } from '@Cryptos'
 
 const SETSTEPSAMPLE = jest.fn()
+const ONSTEPSFINISHEDSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
 
 test('Renders restore account page with step 1', () => {
   render(
     <AccountProvider>
-      <RestoreAccount
-        step={1}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <RestoreAccount
+          step={1}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -52,10 +55,12 @@ test('Renders restore account page with step 2', () => {
   const passwordPattern = Expressions.PASSWORD
   render(
     <AccountProvider>
-      <RestoreAccount
-        step={2}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <RestoreAccount
+          step={2}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -132,10 +137,104 @@ test('Renders restore account page with step 2', () => {
 test('Renders set account page with step 3', () => {
   render(
     <AccountProvider>
-      <RestoreAccount
-        step={3}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <RestoreAccount
+          step={3}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
+    </AccountProvider>,
+    { wrapper: MemoryRouter },
+  )
+  const descriptionParagraph = screen.getAllByTestId('description-paragraph')
+  const restoreAccountForm = screen.getByTestId('restore-account-form')
+  const buttons = screen.getAllByTestId('button')
+
+  expect(buttons).toHaveLength(2)
+  expect(descriptionParagraph).toHaveLength(1)
+
+  act(() => {
+    restoreAccountForm.submit()
+  })
+})
+
+test('Renders restore account page with step 4', () => {
+  jest.spyOn(window, 'alert').mockImplementation((message) => {
+    expect(typeof message).toBe('string')
+    window.alert.mockRestore()
+  })
+
+  const onStepsFinishedFn = jest.fn()
+  const validateMnemonicMock = jest
+    .fn()
+    .mockReturnValueOnce(false)
+    .mockReturnValue(true)
+
+  render(
+    <AccountProvider>
+      <SettingsProvider>
+        <RestoreAccount
+          step={4}
+          setStep={SETSTEPSAMPLE}
+          words={WORDSSAMPLE}
+          onStepsFinished={onStepsFinishedFn}
+          validateMnemonicFn={validateMnemonicMock}
+          defaultBTCWordList={BTC.getWordList()}
+        />
+      </SettingsProvider>
+    </AccountProvider>,
+    { wrapper: MemoryRouter },
+  )
+  const restoreAccountForm = screen.getByTestId('restore-account-form')
+  const buttons = screen.getAllByTestId('button')
+  const inputs = screen.getAllByTestId('input')
+
+  expect(buttons).toHaveLength(2)
+  expect(inputs).toHaveLength(24)
+
+  inputs.forEach((input) => expect(input).toHaveAttribute('type', 'text'))
+  inputs.forEach((input) => expect(input).toHaveClass('invalid'))
+  inputs.forEach((input) =>
+    fireEvent.change(input, { target: { value: WORDSSAMPLE[0] } }),
+  )
+  inputs.forEach((input) => expect(input).toHaveClass('valid'))
+
+  act(() => {
+    restoreAccountForm.submit()
+  })
+
+  act(() => {
+    restoreAccountForm.submit()
+  })
+})
+
+test('Renders set account page with step 5', () => {
+  render(
+    <AccountProvider>
+      <SettingsProvider>
+        <RestoreAccount
+          step={5}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
+    </AccountProvider>,
+    { wrapper: MemoryRouter },
+  )
+  const description = screen.getByTestId('wallet-list-description')
+
+  expect(description).toBeInTheDocument()
+})
+
+test('Renders set account page with step 6', () => {
+  render(
+    <AccountProvider>
+      <SettingsProvider>
+        <RestoreAccount
+          step={6}
+          setStep={SETSTEPSAMPLE}
+          onStepsFinished={ONSTEPSFINISHEDSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -150,76 +249,6 @@ test('Renders set account page with step 3', () => {
   expect(legacyRadioButton).toBeInTheDocument()
   act(() => {
     legacyRadioButton.click()
-  })
-
-  act(() => {
-    restoreAccountForm.submit()
-  })
-})
-
-test('Renders set account page with step 4', () => {
-  render(
-    <AccountProvider>
-      <RestoreAccount
-        step={4}
-        setStep={SETSTEPSAMPLE}
-      />
-    </AccountProvider>,
-    { wrapper: MemoryRouter },
-  )
-  const descriptionParagraph = screen.getAllByTestId('description-paragraph')
-  const restoreAccountForm = screen.getByTestId('restore-account-form')
-  const buttons = screen.getAllByTestId('button')
-
-  expect(buttons).toHaveLength(2)
-  expect(descriptionParagraph).toHaveLength(1)
-
-  act(() => {
-    restoreAccountForm.submit()
-  })
-})
-
-test('Renders restore account page with step 5', () => {
-  jest.spyOn(window, 'alert').mockImplementation((message) => {
-    expect(typeof message).toBe('string')
-    window.alert.mockRestore()
-  })
-
-  const onStepsFinishedFn = jest.fn()
-  const validateMnemonicMock = jest
-    .fn()
-    .mockReturnValueOnce(false)
-    .mockReturnValue(true)
-
-  render(
-    <AccountProvider>
-      <RestoreAccount
-        step={5}
-        setStep={SETSTEPSAMPLE}
-        words={WORDSSAMPLE}
-        onStepsFinished={onStepsFinishedFn}
-        validateMnemonicFn={validateMnemonicMock}
-        defaultBTCWordList={BTC.getWordList()}
-      />
-    </AccountProvider>,
-    { wrapper: MemoryRouter },
-  )
-  const restoreAccountForm = screen.getByTestId('restore-account-form')
-  const buttons = screen.getAllByTestId('button')
-  const inputs = screen.getAllByTestId('input')
-
-  expect(buttons).toHaveLength(2)
-  expect(inputs).toHaveLength(12)
-
-  inputs.forEach((input) => expect(input).toHaveAttribute('type', 'text'))
-  inputs.forEach((input) => expect(input).toHaveClass('invalid'))
-  inputs.forEach((input) =>
-    fireEvent.change(input, { target: { value: WORDSSAMPLE[0] } }),
-  )
-  inputs.forEach((input) => expect(input).toHaveClass('valid'))
-
-  act(() => {
-    restoreAccountForm.submit()
   })
 
   act(() => {
@@ -249,19 +278,21 @@ test('Checks back button behavior in a internal navigation component - first ste
 
   render(
     <AccountProvider>
-      <MemoryRouter initialEntries={['/', '/set-account']}>
-        <Routes>
-          <Route
-            path="/set-account"
-            element={<RestoreAccountMock />}
-          />
-          <Route
-            exact
-            path="/"
-            element={<PrevPageMock />}
-          />
-        </Routes>
-      </MemoryRouter>
+      <SettingsProvider>
+        <MemoryRouter initialEntries={['/', '/set-account']}>
+          <Routes>
+            <Route
+              path="/set-account"
+              element={<RestoreAccountMock />}
+            />
+            <Route
+              exact
+              path="/"
+              element={<PrevPageMock />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </SettingsProvider>
     </AccountProvider>,
   )
 

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Expressions } from '@Constants'
+import { AppInfo, Expressions } from '@Constants'
 
 import { Button } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
@@ -10,11 +10,15 @@ import {
   InputList,
   ProgressTracker,
   TextField,
+  Entropy,
+  WalletList,
 } from '@ComposedComponents'
 
 import WordsDescription from './WordsListDescription'
 
 import './CreateAccount.css'
+import { AccountContext } from '@Contexts'
+import { generateEntropy, normalize } from '@mintlayer/entropy-generator'
 
 const CreateAccount = ({
   step,
@@ -24,6 +28,7 @@ const CreateAccount = ({
   validateMnemonicFn,
   defaultBTCWordList,
 }) => {
+  const { setEntropy, lines } = useContext(AccountContext)
   const inputExtraclasses = ['set-account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
@@ -34,16 +39,33 @@ const CreateAccount = ({
 
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
+  const [accountEntropyValid, setAccountEntropyValid] = useState(false)
+  const [accountWalletValid, setAccountWalletValid] = useState(false)
 
   const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
     useState(null)
+  const [showEntropyError, setShowEntropyError] = useState(false)
 
   const [accountNamePristinity, setAccountNamePristinity] = useState(true)
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
+  const [selectedWallets, setSelectedWallets] = useState([])
 
   const navigate = useNavigate()
+
+  const calculateEntropy = useCallback(
+    (size) => {
+      const points = lines.flatMap((line) => line.points)
+      const normalizedPoints = normalize(
+        points.map((point) => Math.round(point)),
+      )
+      return size
+        ? generateEntropy(normalizedPoints, size)
+        : generateEntropy(normalizedPoints)
+    },
+    [lines],
+  )
 
   useEffect(() => {
     const message = !accountNameValid
@@ -64,33 +86,66 @@ const CreateAccount = ({
     setAccountPasswordErrorMessage(message)
   }, [accountPasswordValid])
 
+  const accountEntropyValidity = (lines) => {
+    const points = lines.flatMap((line) => line.points)
+    return points.length >= AppInfo.minEntropyLength
+  }
+
+  const walletValidity = (wallets) => {
+    setAccountWalletValid(wallets.length > 0)
+  }
+
+  const onSelectWallet = (wallets) => {
+    setSelectedWallets(wallets)
+    walletValidity(wallets)
+  }
+
+  useEffect(() => {
+    if (!lines) return
+    const isEntropyValid = accountEntropyValidity(lines)
+    setAccountEntropyValid(isEntropyValid)
+    if (step < 3 || isEntropyValid) {
+      setShowEntropyError(false)
+    }
+  }, [lines, step, accountEntropyValid])
+
+  const thirdStepSubmitHandler = () => {
+    if (!accountEntropyValid) {
+      setShowEntropyError(true)
+    }
+    setEntropy(calculateEntropy())
+  }
+
   const goToNextStep = () =>
-    step < 5
+    step < 7
       ? setStep(step + 1)
-      : onStepsFinished(accountNameValue, accountPasswordValue)
+      : onStepsFinished(accountNameValue, accountPasswordValue, selectedWallets)
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
     { name: 'Account Name', active: step === 1 },
     { name: 'Account Password', active: step === 2 },
+    { name: 'Entropy Generation', active: step === 3 },
     {
       name: 'Seed Phrases',
-      active: step > 2,
+      active: step > 3,
     },
   ]
 
   const stepsValidations = {
     1: accountNameValid,
     2: accountPasswordValid,
-    3: true,
+    3: accountEntropyValid,
     4: true,
-    5: accountWordsValid,
+    5: true,
+    6: accountWordsValid,
+    7: accountWalletValid,
   }
 
   const titles = {
-    3: 'I understand',
-    4: 'Backup done!',
-    5: 'Create account',
+    4: 'I understand',
+    5: 'Backup done!',
+    7: 'Create account',
   }
 
   const nameFieldValidity = (value) => {
@@ -119,10 +174,15 @@ const CreateAccount = ({
   }, [wordsFields, step])
 
   const handleError = (step) => {
-    if (step < 5) return
-    alert(
-      'These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order',
-    )
+    if (step < 6) return
+    if (step === 6) {
+      alert(
+        'These words do not match the previously generated mnemonic. Check if you had any typos or if you inserted them in a different order',
+      )
+    }
+    if (step === 7) {
+      alert('You must select at least one wallet')
+    }
   }
 
   const isMnemonicValid = () => {
@@ -137,9 +197,10 @@ const CreateAccount = ({
 
     if (step === 1) setAccountNamePristinity(false)
     if (step === 2) setAccountPasswordPristinity(false)
+    if (step === 3) thirdStepSubmitHandler()
 
     let validForm = stepsValidations[step]
-    if (step === 5) validForm = validForm && isMnemonicValid()
+    if (step === 7) validForm = validForm && isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
   }
@@ -149,14 +210,14 @@ const CreateAccount = ({
       <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
-        className={`set-account-form ${step > 3 && 'set-account-form-words'}`}
+        className={`set-account-form ${step > 4 && 'set-account-form-words'}`}
         method="POST"
         data-testid="set-account-form"
         onSubmit={handleSubmit}
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step < 5}
+          bigGap={step !== 6 && step !== 7 && !showEntropyError}
         >
           {step === 1 && (
             <CenteredLayout>
@@ -190,8 +251,9 @@ const CreateAccount = ({
               />
             </CenteredLayout>
           )}
-          {step === 3 && <WordsDescription />}
-          {step === 4 && (
+          {step === 3 && <Entropy isError={showEntropyError} />}
+          {step === 4 && <WordsDescription />}
+          {step === 5 && (
             <InputList
               wordsList={words}
               fields={wordsFields}
@@ -200,13 +262,20 @@ const CreateAccount = ({
               BIP39DefaultWordList={defaultBTCWordList}
             />
           )}
-          {step === 5 && (
+          {step === 6 && (
             <InputList
               wordsList={words}
               fields={wordsFields}
               setFields={setWordsFields}
               restoreMode={true}
               BIP39DefaultWordList={defaultBTCWordList}
+            />
+          )}
+          {step === 7 && (
+            <WalletList
+              selectedWallets={selectedWallets}
+              setSelectedWallets={onSelectWallet}
+              walletTypes={AppInfo.walletTypes}
             />
           )}
           <CenteredLayout>

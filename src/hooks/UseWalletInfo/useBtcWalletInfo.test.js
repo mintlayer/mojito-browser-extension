@@ -1,13 +1,27 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 
-import useWalletInfo from './useWalletInfo'
+import useBtcWalletInfo from './useBtcWalletInfo'
 import { rawTransactions } from '@TestData'
+import { AccountProvider } from '@Contexts'
+
+const Wrapper = ({ children }) => (
+  <AccountProvider
+    value={{
+      balanceLoading: false,
+      walletType: {
+        name: 'Bitcoin',
+      },
+    }}
+  >
+    {children}
+  </AccountProvider>
+)
 
 jest.spyOn(console, 'warn').mockImplementation(() => {
   console.warn.restoreMock()
 })
 
-test('UseWalletInfo hook', async () => {
+test('UseBtcWalletInfo hook', async () => {
   const returnTxs = {
     ok: true,
     text: async () => JSON.stringify(rawTransactions),
@@ -50,21 +64,23 @@ test('UseWalletInfo hook', async () => {
 
   let result
   await act(async () => {
-    result = renderHook(() => useWalletInfo(address)).result
+    result = renderHook(() => useBtcWalletInfo(address), {
+      wrapper: Wrapper,
+    }).result
   })
 
   let balance, transactionsList
 
   await waitFor(() => {
-    balance = result.current.balance
-    transactionsList = result.current.transactionsList
+    balance = result.current.btcBalance
+    transactionsList = result.current.btcTransactionsList
   })
 
   expect(balance).toBe('0,02881771')
   expect(transactionsList.length).toBe(rawTransactions.length)
 })
 
-test('UseWalletInfo hook, errors', async () => {
+test('UseBtcWalletInfo hook, errors', async () => {
   jest
     .spyOn(window, 'fetch')
     .mockImplementationOnce(async () => {
@@ -95,10 +111,11 @@ test('UseWalletInfo hook, errors', async () => {
       return null
     })
 
-  const { result } = renderHook(() => useWalletInfo('dadadadada'))
+  const { result } = renderHook(() => useBtcWalletInfo('dadadadada'), {
+    wrapper: AccountProvider,
+  })
+  const { btcBalance, btcTransactionsList } = result.current
 
-  const { balance, transactionsList } = result.current
-
-  expect(balance).toBe(0)
-  expect(transactionsList).toStrictEqual([])
+  expect(btcBalance).toBe(0)
+  expect(btcTransactionsList).toStrictEqual([])
 })

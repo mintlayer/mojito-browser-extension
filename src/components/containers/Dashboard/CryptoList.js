@@ -1,79 +1,180 @@
+import { useContext } from 'react'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
-import Logo from '@Assets/images/logo96_white.png'
+import { LogoRound, SkeletonLoader } from '@BasicComponents'
 import { LineChart } from '@ComposedComponents'
+import { AppInfo } from '@Constants'
+import { SettingsContext, AccountContext } from '@Contexts'
 
 import './CryptoList.css'
 
-const CryptoItem = (colorList, onClickItem, item) => {
-  const color = colorList[item.symbol.toLowerCase()]
-  const balance = Number(item.balance * item.exchangeRate).toFixed(2)
-  const bigValues = balance.length > 13
-  const data = Object.values(item.historyRates).map((value, idx) => [
-    idx * 10,
-    Number(value),
-  ])
-
+//TODO: remove this when mainnet is ready
+const MainnetAddressItem = () => {
+  const { setOpenShowAddressTemp } = useContext(AccountContext)
+  const onItemClick = () => {
+    setOpenShowAddressTemp(true)
+  }
   return (
     <li
-      key={item.symbol}
-      className="crypto-item"
-      onClick={onClickItem}
+      className="crypto-item coming-soon"
+      onClick={onItemClick}
     >
-      <BtcLogo />
-      <div className="name-values">
-        <h5>
-          {item.name} ({item.symbol})
-        </h5>
-        <div className={`values ${bigValues ? 'big-values' : ''}`}>
-          <dl>
-            <dt>Value:</dt>
-            <dd>{balance}</dd>
-            <dt>Price:</dt>
-            <dd>{item.exchangeRate.toFixed(2)}</dd>
-          </dl>
-        </div>
+      <div className="mlt-logo">
+        <LogoRound />
       </div>
-      <div className="crypto-stats">
-        <div className="crypto-stats-numbers">
-          {Number(balance) > 0 && (
-            <>
-              <strong className={item.change24h < 0 ? 'negative' : 'positive'}>
-                {item.change24h}%
-              </strong>
-              <span>24h</span>
-            </>
-          )}
-        </div>
-        <LineChart
-          points={data}
-          height="40px"
-          width="100%"
-          lineColor={color}
-          lineWidth="4px"
-        />
+      <div className="name-values">
+        <h5>Mintlayer (ML)</h5>
+        <p className="show-address-text">
+          Click here to get your Mainnet address
+        </p>
       </div>
     </li>
   )
 }
 
-const CryptoList = ({ cryptoList, colorList, onClickItem }) => {
+export const CryptoItem = ({ colorList, onClickItem, item }) => {
+  const { balanceLoading } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
+  const color = colorList[item.symbol.toLowerCase()]
+  const balance = isTestnet
+    ? item.balance
+    : Number(item.balance * item.exchangeRate).toFixed(2)
+  const bigValues = balance.length > 13
+  const data = Object.values(item.historyRates).map((value, idx) => [
+    idx * 10,
+    Number(value),
+  ])
+  const symbol = networkType === !isTestnet ? item.symbol : 'Test'
+
+  const onClick = () => {
+    onClickItem(item)
+  }
+
   return (
     <>
-      <ul>
-        {cryptoList.length &&
-          cryptoList.map(CryptoItem.bind(null, colorList, onClickItem))}
-        <li className="crypto-item coming-soon">
-          <div className="mlt-logo">
-            <img
-              src={Logo}
-              alt="MLT"
-            />
-          </div>
-          <div className="name-values">
-            <h5>Mintlayer (MLT)</h5>
-          </div>
-          <div>Coming Soon</div>
-        </li>
+      {balanceLoading ? (
+        <SkeletonLoader />
+      ) : (
+        <>
+          {/* TODO: remove this when mainnet is ready */}
+          {item.name === 'Mintlayer' && !isTestnet ? (
+            <MainnetAddressItem />
+          ) : (
+            <li
+              key={item.symbol}
+              className="crypto-item"
+              onClick={onClick}
+              data-testid="crypto-item"
+            >
+              {item.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
+              <div className="name-values">
+                <h5>
+                  {item.name} ({symbol})
+                </h5>
+                <div className={`values ${bigValues ? 'big-values' : ''}`}>
+                  <dl>
+                    <dt>Value:</dt>
+                    <dd>{balance}</dd>
+                    {!isTestnet && (
+                      <>
+                        <dt>Price:</dt>
+                        <dd>{item.exchangeRate.toFixed(2)}</dd>
+                      </>
+                    )}
+                  </dl>
+                </div>
+              </div>
+              <div className="crypto-stats">
+                <div className="crypto-stats-numbers">
+                  {Number(balance) > 0 && (
+                    <>
+                      <strong
+                        className={item.change24h < 0 ? 'negative' : 'positive'}
+                      >
+                        {isTestnet ? 0 : item.change24h}%
+                      </strong>
+                      <span>24h</span>
+                    </>
+                  )}
+                </div>
+                {!isTestnet && (
+                  <LineChart
+                    points={data}
+                    height="40px"
+                    width="100%"
+                    lineColor={color}
+                    lineWidth="4px"
+                  />
+                )}
+              </div>
+            </li>
+          )}
+        </>
+      )}
+    </>
+  )
+}
+
+export const ConnectItem = ({ walletType, onClick }) => {
+  const { networkType } = useContext(SettingsContext)
+  const isDisabled = walletType.disabled
+  const symbol =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET ? walletType.symbol : 'Test'
+
+  const onItemClick = () => {
+    if (!isDisabled) onClick(walletType)
+  }
+  const message = isDisabled ? 'Coming soon' : 'Add wallet'
+  return (
+    <li
+      className={`crypto-item add-item ${isDisabled ? 'disabled' : ''}`}
+      onClick={onItemClick}
+      data-testid="connect-item"
+    >
+      {walletType.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
+      <div className="name-values">
+        <h5>
+          {walletType.name} ({symbol})
+        </h5>
+      </div>
+      <div className="connect-message">{message}</div>
+    </li>
+  )
+}
+
+const CryptoList = ({
+  cryptoList,
+  colorList,
+  onWalletItemClick,
+  onConnectItemClick,
+}) => {
+  const missingWalletTypes = AppInfo.walletTypes.filter(
+    (walletType) =>
+      !cryptoList.find((crypto) => crypto.name === walletType.name),
+  )
+  return (
+    <>
+      <ul data-testid="crypto-list">
+        {cryptoList.length
+          ? cryptoList.map((crypto) => (
+              <CryptoItem
+                key={crypto.symbol}
+                colorList={colorList}
+                item={crypto}
+                onClickItem={onWalletItemClick}
+              />
+            ))
+          : null}
+
+        {missingWalletTypes.length
+          ? missingWalletTypes.map((walletType) => (
+              <ConnectItem
+                key={walletType.name}
+                walletType={walletType}
+                onClick={onConnectItemClick}
+              />
+            ))
+          : null}
       </ul>
     </>
   )

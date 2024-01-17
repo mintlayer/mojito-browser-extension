@@ -1,0 +1,56 @@
+.card {
+  display: flex;
+  background-color: rgb(var(--color-extra-light-gray));
+  padding: 0.75rem 1.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton {
+  animation: skeleton-loading 1s linear infinite alternate;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-color: hsl(200, 20%, 80%);
+  }
+  100% {
+    background-color: hsl(200, 20%, 95%);
+  }
+}
+
+.cardHeader {
+  display: flex;
+  border-radius: 50%;
+  height: 72px;
+  width: 72px;
+  min-width: 72px;
+  min-height: 72px;
+}
+
+.cardBodyWrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-left: 1.25rem;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.cardBodyLeft {
+  width: 70%;
+  margin-right: 20px;
+}
+
+.cardBodyRight {
+  width: 30%;
+}
+
+.skeletonText {
+  height: 0.35rem;
+  margin-bottom: 0.5rem;
+  border-radius: 5px;
+}

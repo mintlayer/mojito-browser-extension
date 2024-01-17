@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
 import SendFundConfirmation from './SendTransactionConfirmation'
+import { SettingsProvider, AccountProvider } from '@Contexts'
 
 const _data = {
   address: '43c5n73485v73894cm43mr98',
@@ -16,7 +17,13 @@ const _data = {
 }
 
 const setup = ({ data = _data } = {}) => {
-  render(<SendFundConfirmation {...data} />)
+  render(
+    <AccountProvider>
+      <SettingsProvider>
+        <SendFundConfirmation {...data} />
+      </SettingsProvider>
+    </AccountProvider>,
+  )
   const address = screen.getByText(data.address)
   const amountInFiat = screen.getByText(data.amountInFiat)
   const amountInCrypto = screen.getByText(data.amountInCrypto)

@@ -21,18 +21,26 @@ const RestoreAccountPage = () => {
     accountName,
     accountPassword,
     mnemonic,
-    walletType,
+    btcAddressType,
+    selectedWallets,
     // eslint-disable-next-line max-params
   ) => {
     setCreatingWallet(true)
     let accountID = null
-    Account.saveAccount(accountName, accountPassword, mnemonic, walletType)
+    const data = {
+      name: accountName,
+      password: accountPassword,
+      mnemonic,
+      walletType: btcAddressType,
+      walletsToCreate: selectedWallets,
+    }
+    Account.saveAccount(data)
       .then((id) => {
         accountID = id
         return Account.unlockAccount(id, accountPassword)
       })
-      .then(({ address }) => {
-        setWalletInfo(address, accountID, accountName)
+      .then(({ addresses }) => {
+        setWalletInfo(addresses, accountID, accountName)
         navigate('/dashboard')
       })
   }

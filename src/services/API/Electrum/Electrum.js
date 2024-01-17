@@ -1,4 +1,6 @@
 import { EnvVars } from '@Constants'
+import { AppInfo } from '@Constants'
+import { LocalStorageService } from '@Storage'
 
 const ELECTRUM_ENDPOINTS = {
   GET_LAST_BLOCK_HASH: '/blocks/tip/hash',
@@ -28,19 +30,20 @@ const requestElectrum = async (url, body = null, request = fetch) => {
 }
 
 const tryServers = async (endpoint, body = null) => {
-  for (let i = 0; i < EnvVars.ELECTRUM_SERVERS.length; i++) {
+  const networkType = LocalStorageService.getItem('networkType')
+  const electrumServes =
+    networkType === AppInfo.NETWORK_TYPES.TESTNET
+      ? EnvVars.TESTNET_ELECTRUM_SERVERS
+      : EnvVars.MAINNET_ELECTRUM_SERVERS
+  for (let i = 0; i < electrumServes.length; i++) {
     try {
-      const response = await requestElectrum(
-        EnvVars.ELECTRUM_SERVERS[i] + endpoint,
-        body,
-      )
+      const response = await requestElectrum(electrumServes[i] + endpoint, body)
       return response
     } catch (error) {
-      console.warn(
-        `${EnvVars.ELECTRUM_SERVERS[i] + endpoint} request failed: `,
-        error,
-      )
-      throw error
+      console.warn(`${electrumServes[i] + endpoint} request failed: `, error)
+      if (i === electrumServes.length - 1) {
+        throw error
+      }
     }
   }
 }
@@ -72,7 +75,9 @@ const getLastBlockHeight = () =>
   tryServers(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HEIGHT)
 
 const getFeesEstimates = async () => {
-  if (!EnvVars.IS_PROD_ENV) {
+  const isTestnet =
+    LocalStorageService.getItem('networkType') === AppInfo.NETWORK_TYPES.TESTNET
+  if (isTestnet) {
     const { fees } = await import('@TestData')
     return JSON.stringify(fees)
   }

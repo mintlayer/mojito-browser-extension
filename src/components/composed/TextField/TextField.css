@@ -14,10 +14,3 @@
   display: block;
   color: rgb(var(--color-black));
 }
-
-.errorMessage,
-.errorMessage * {
-  color: rgb(var(--color-red));
-  text-align: center;
-  font-weight: bold;
-}

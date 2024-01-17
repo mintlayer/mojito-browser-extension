@@ -1,9 +1,9 @@
-.radio-buttons {
+.option-buttons {
   display: flex;
   width: 100%;
 }
 
-.radio-button {
+.option-button {
   display: flex;
   color: rgb(var(--text-black));
   background-color: rgb(var(--color-extra-light-gray));
@@ -13,21 +13,21 @@
   align-items: center;
 }
 
-.radio-button.alternate {
+.option-button.alternate {
   border: none !important;
   font-weight: bold;
   color: rgb(var(--color-white));
   background-color: rgb(var(--color-green));
 }
 
-.radio-button.alternate:hover {
+.option-button.alternate:hover {
   border: none;
 }
 
-.radio-buttons-column {
+.option-buttons-column {
   flex-direction: column;
 }
 
-.radio-buttons-column .radio-button {
+.option-buttons-column .option-button {
   margin-bottom: 0.3rem;
 }

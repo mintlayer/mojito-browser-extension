@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 
 import { ReactComponent as BackImg } from '@Assets/images/back-button.svg'
 import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
-import Logo from '@Assets/images/logo96.png'
+import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
 
-import { Button } from '@BasicComponents'
+import { Button, Logo } from '@BasicComponents'
 import { AccountContext } from '@Contexts'
 
 import './Header.css'
@@ -18,13 +18,18 @@ const Header = ({ customBackAction, noBackButton = false }) => {
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
     setUnlocked(accountUnlocked)
-  }, [isAccountUnlocked])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const goBack = () => (customBackAction ? customBackAction() : navigate(-1))
 
   const logoutHandle = () => {
     logout()
     navigate('/')
+  }
+
+  const goSettings = () => {
+    navigate('/settings')
   }
 
   return (
@@ -40,23 +45,24 @@ const Header = ({ customBackAction, noBackButton = false }) => {
       )}
 
       {unlocked && (
-        <Button
-          alternate
-          extraStyleClasses={['logout']}
-          onClickHandle={logoutHandle}
-        >
-          <LogoutImg />
-        </Button>
+        <>
+          <Button
+            alternate
+            extraStyleClasses={['settings']}
+            onClickHandle={goSettings}
+          >
+            <SettingsImg />
+          </Button>
+          <Button
+            alternate
+            extraStyleClasses={['logout']}
+            onClickHandle={logoutHandle}
+          >
+            <LogoutImg />
+          </Button>
+        </>
       )}
-
-      <div className="logoContainer">
-        <img
-          src={Logo}
-          alt="Mojito Logo"
-          className="logo"
-        />
-        <h1 className="mojitoLettering">Mojito</h1>
-      </div>
+      <Logo />
     </header>
   )
 }

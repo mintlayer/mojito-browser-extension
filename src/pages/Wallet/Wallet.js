@@ -1,25 +1,57 @@
 import React, { useNavigate } from 'react-router-dom'
-import { useState, useContext } from 'react'
+import { useContext } from 'react'
 
 import { Balance, Header, PopUp } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 
-import { useExchangeRates, useWalletInfo } from '@Hooks'
-import { AccountContext } from '@Contexts'
+import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
+import { AccountContext, SettingsContext } from '@Contexts'
 import { BTC } from '@Helpers'
+import { AppInfo } from '@Constants'
+import { LocalStorageService } from '@Storage'
 
 import './Wallet.css'
 
 const WalletPage = () => {
   const navigate = useNavigate()
-  const { btcAddress } = useContext(AccountContext)
-
-  const [openShowAddress, setOpenShowAddress] = useState(false)
-  const { transactionsList, balance } = useWalletInfo(btcAddress)
-  const { exchangeRate } = useExchangeRates('btc', 'usd')
+  const { addresses, walletType, openShowAddressTemp, setOpenShowAddressTemp } =
+    useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const btcAddress =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? addresses.btcMainnetAddress
+      : addresses.btcTestnetAddress
+  const currentMlAddresses =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? addresses.mlMainnetAddress
+      : addresses.mlTestnetAddresses
+  // TODO: revert this after mainnet launch
+  // const [openShowAddress, setOpenShowAddress] = useState(false)
+  const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
+  const { mlTransactionsList, mlBalance } = useMlWalletInfo(currentMlAddresses)
+  const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
+  const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
 
   const setOpenTransactionForm = () => navigate('/send-transaction')
+
+  const walletExangeRate =
+    walletType.name === 'Mintlayer' ? mlExchangeRate : btcExchangeRate
+
+  const mlAddress =
+    currentMlAddresses && currentMlAddresses.mlReceivingAddresses[0]
+
+  const walletBalance = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
+  const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
+  const walletTransactionList =
+    walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
+
+  const account = LocalStorageService.getItem('unlockedAccount')
+  const accountName = account.name
+  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}`
+  const isUncofermedTransaction =
+    LocalStorageService.getItem(unconfirmedTransactionString) &&
+    walletType.name === 'Mintlayer'
 
   return (
     <div data-testid="wallet-page">
@@ -27,28 +59,32 @@ const WalletPage = () => {
         <Header />
         <div className="balance-transactions-wrapper">
           <Balance
-            balance={balance}
-            exchangeRate={exchangeRate}
+            balance={walletBalance}
+            exchangeRate={walletExangeRate}
           />
           <div className="transactions-buttons-wrapper">
             <Wallet.TransactionButton
               title={'Send'}
               up
               onClick={setOpenTransactionForm}
+              disabled={isUncofermedTransaction}
             />
             <Wallet.TransactionButton
               title={'Receive'}
-              onClick={() => setOpenShowAddress(true)}
+              onClick={() => setOpenShowAddressTemp(true)}
             />
-            {openShowAddress && (
-              <PopUp setOpen={setOpenShowAddress}>
-                <Wallet.ShowAddress address={btcAddress}></Wallet.ShowAddress>
+            {/* TODO: revert this after mainnet launch */}
+            {openShowAddressTemp && (
+              <PopUp setOpen={setOpenShowAddressTemp}>
+                <Wallet.ShowAddress
+                  address={walletAddress}
+                ></Wallet.ShowAddress>
               </PopUp>
             )}
           </div>
         </div>
         <Wallet.TransactionsList
-          transactionsList={transactionsList}
+          transactionsList={walletTransactionList}
           getConfirmations={BTC.getConfirmationsAmount}
         />
       </VerticalGroup>

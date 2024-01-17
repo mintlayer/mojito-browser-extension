@@ -1,35 +1,46 @@
 import React, { createContext, useEffect, useState } from 'react'
 import differenceInMinutes from 'date-fns/differenceInMinutes'
+import { LocalStorageService } from '@Storage'
 
 const AccountContext = createContext()
 
 const AccountProvider = ({ value: propValue, children }) => {
-  const [btcAddress, setBtcAddress] = useState('')
+  const [addresses, setAddresses] = useState('')
   const [accountID, setAccountID] = useState('')
   const [accountName, setAccountName] = useState('')
+  const [walletType, setWalletType] = useState('')
+  const [lines, setLines] = useState([])
+  const [entropy, setEntropy] = useState([])
+  const [balanceLoading, setBalanceLoading] = useState(false)
+  const [transactionsLoading, setTransactionsLoading] = useState(false)
+  const [feeLoading, setFeeLoading] = useState(false)
+
+  //TODO: remove this after mainnet launch
+  const [openShowAddressTemp, setOpenShowAddressTemp] = useState(false)
+
   const accountRegistryName = 'unlockedAccount'
   const loginTimeoutInMinutes = 30
 
   const setId = (id) => id && setAccountID(id)
   const setName = (name) => name && setAccountName(name)
-  const unlockAccount = (address, id, name) => {
-    const account = { address, id, name }
-    localStorage.setItem(accountRegistryName, JSON.stringify(account))
+  const unlockAccount = (addresses, id, name) => {
+    const account = { addresses, id, name }
+    LocalStorageService.setItem(accountRegistryName, account)
   }
 
-  const unlockAccountAndSaveParams = (address, id, name) => {
-    unlockAccount(address, id, name)
-    setBtcAddress(address)
+  const unlockAccountAndSaveParams = (addresses, id, name) => {
+    unlockAccount(addresses, id, name)
+    setAddresses(addresses)
     setName(name)
     setId(id)
   }
 
   const checkAccountLockState = () => {
-    const registry = localStorage.getItem(accountRegistryName)
+    const registry = LocalStorageService.getItem(accountRegistryName)
     if (!registry) return false
 
-    const account = JSON.parse(registry)
-    setBtcAddress(account.address)
+    const account = registry
+    setAddresses(account.addresses)
     setId(account.id)
     setName(account.name)
 
@@ -44,8 +55,8 @@ const AccountProvider = ({ value: propValue, children }) => {
     const isUnlocked = timeSinceClosed < loginTimeoutInMinutes
 
     !isUnlocked
-      ? localStorage.removeItem(accountRegistryName)
-      : setBtcAddress(account.address) &&
+      ? LocalStorageService.removeItem(accountRegistryName)
+      : setAddresses(account.addresses) &&
         setId(account.id) &&
         setName(account.name)
 
@@ -53,26 +64,40 @@ const AccountProvider = ({ value: propValue, children }) => {
   }
 
   const setLoginTimeoutLimit = () => {
-    const registry = localStorage.getItem(accountRegistryName)
+    const registry = LocalStorageService.getItem(accountRegistryName)
     if (!registry) return false
 
-    const account = JSON.parse(registry)
+    const account = registry
     account.logoutDate = new Date().getTime()
-    localStorage.setItem(accountRegistryName, JSON.stringify(account))
+    LocalStorageService.setItem(accountRegistryName, account)
   }
 
-  const logout = () => localStorage.removeItem(accountRegistryName)
+  const logout = () => LocalStorageService.removeItem(accountRegistryName)
 
   const value = {
     accountRegistryName,
-    btcAddress,
+    addresses,
     accountName,
+    lines,
+    setLines,
+    entropy,
+    setEntropy,
     setWalletInfo: unlockAccountAndSaveParams,
     isAccountUnlocked: checkAccountLockState,
     setLoginTimeoutLimit,
     logout,
     accountID,
     setAccountID: setId,
+    walletType,
+    setWalletType,
+    balanceLoading,
+    setBalanceLoading,
+    transactionsLoading,
+    setTransactionsLoading,
+    feeLoading,
+    setFeeLoading,
+    openShowAddressTemp,
+    setOpenShowAddressTemp,
   }
 
   useEffect(() => {

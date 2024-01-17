@@ -4,7 +4,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 
 import SetAccount from './CreateAccount'
 import { Expressions } from '@Constants'
-import { AccountProvider } from '@Contexts'
+import { AccountProvider, SettingsProvider } from '@Contexts'
 
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
@@ -12,10 +12,12 @@ const WORDSSAMPLE = ['car', 'house', 'cat']
 test('Renders set account page with step 1', () => {
   render(
     <AccountProvider>
-      <SetAccount
-        step={1}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <SetAccount
+          step={1}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -47,10 +49,12 @@ test('Renders set account page with step 2', async () => {
   const passwordPattern = Expressions.PASSWORD
   render(
     <AccountProvider>
-      <SetAccount
-        step={2}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <SetAccount
+          step={2}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -124,13 +128,15 @@ test('Renders set account page with step 2', async () => {
   })
 })
 
-test('Renders set account page with step 3', () => {
+test('Renders set account page with step 4', () => {
   render(
     <AccountProvider>
-      <SetAccount
-        step={3}
-        setStep={SETSTEPSAMPLE}
-      />
+      <SettingsProvider>
+        <SetAccount
+          step={4}
+          setStep={SETSTEPSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -146,14 +152,16 @@ test('Renders set account page with step 3', () => {
   })
 })
 
-test('Renders set account page with step 4', () => {
+test('Renders set account page with step 5', () => {
   render(
     <AccountProvider>
-      <SetAccount
-        step={4}
-        setStep={SETSTEPSAMPLE}
-        words={WORDSSAMPLE}
-      />
+      <SettingsProvider>
+        <SetAccount
+          step={5}
+          setStep={SETSTEPSAMPLE}
+          words={WORDSSAMPLE}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -170,7 +178,7 @@ test('Renders set account page with step 4', () => {
   expect(input).toBeDisabled()
 })
 
-test('Renders set account page with step 5', () => {
+test('Renders set account page with step 6', () => {
   jest.spyOn(window, 'alert').mockImplementation((message) => {
     window.alert.mockRestore()
   })
@@ -183,13 +191,15 @@ test('Renders set account page with step 5', () => {
 
   render(
     <AccountProvider>
-      <SetAccount
-        step={5}
-        setStep={SETSTEPSAMPLE}
-        words={WORDSSAMPLE}
-        onStepsFinished={onStepsFinishedFn}
-        validateMnemonicFn={validateMnemonicMock}
-      />
+      <SettingsProvider>
+        <SetAccount
+          step={6}
+          setStep={SETSTEPSAMPLE}
+          words={WORDSSAMPLE}
+          onStepsFinished={onStepsFinishedFn}
+          validateMnemonicFn={validateMnemonicMock}
+        />
+      </SettingsProvider>
     </AccountProvider>,
     { wrapper: MemoryRouter },
   )
@@ -239,19 +249,21 @@ test('Checks back button behavior in a internal navigation component - first ste
 
   render(
     <AccountProvider>
-      <MemoryRouter initialEntries={['/', '/set-account']}>
-        <Routes>
-          <Route
-            path="/set-account"
-            element={<SetAccountMock />}
-          />
-          <Route
-            exact
-            path="/"
-            element={<PrevPageMock />}
-          />
-        </Routes>
-      </MemoryRouter>
+      <SettingsProvider>
+        <MemoryRouter initialEntries={['/', '/set-account']}>
+          <Routes>
+            <Route
+              path="/set-account"
+              element={<SetAccountMock />}
+            />
+            <Route
+              exact
+              path="/"
+              element={<PrevPageMock />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </SettingsProvider>
     </AccountProvider>,
   )
 

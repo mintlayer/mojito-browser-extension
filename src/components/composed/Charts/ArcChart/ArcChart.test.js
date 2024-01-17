@@ -3,7 +3,7 @@ import ArcChart from './ArcChart'
 
 const ArcData = [
   { value: 10, asset: 'BTC', color: 'orange' },
-  { value: 40, asset: 'MLT', color: 'blue' },
+  { value: 40, asset: 'ML', color: 'blue' },
   { value: 20, asset: 'ETH', color: 'red' },
 ]
 

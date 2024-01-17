@@ -1,0 +1,10 @@
+.crate-wallet-button {
+  padding: 2.5rem 0;
+}
+
+.wallet-list-description {
+  font-size: 1.5rem;
+  color: rgb(var(--color-dark-gray));
+  margin-bottom: 20px;
+  text-align: center;
+}

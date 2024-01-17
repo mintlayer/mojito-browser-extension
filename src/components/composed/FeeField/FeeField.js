@@ -1,7 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useContext,
+} from 'react'
 
+import { AccountContext } from '@Contexts'
 import { InputInteger } from '@BasicComponents'
-import { RadioButtons } from '@ComposedComponents'
+import { OptionButtons } from '@ComposedComponents'
 import { Electrum } from '@APIs'
 import { BTC } from '@Helpers'
 
@@ -13,6 +20,7 @@ const FeeField = ({
   changeValueHandle,
   setFeeValidity,
 }) => {
+  const { walletType } = useContext(AccountContext)
   const effectCalled = useRef(false)
   const [options, setOptions] = useState([])
   const [inputValue, setInputValue] = useState(0)
@@ -20,6 +28,7 @@ const FeeField = ({
   const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
     useState('15 minutes')
   const [estimatedFees, setEstimatedFees] = useState([])
+  const feeType = walletType.name === 'Mintlayer' ? 'atoms/B' : 'sat/B'
 
   const blocksToConfirm = useCallback(
     (value) => {
@@ -73,7 +82,8 @@ const FeeField = ({
     effectCalled.current = true
 
     const populateOptions = async () => {
-      const fees = await Electrum.getFeesEstimates()
+      const btcFees = await Electrum.getFeesEstimates()
+      const fees = btcFees
       const estimates = JSON.parse(fees)
       setEstimatedFees(estimates)
 
@@ -87,7 +97,7 @@ const FeeField = ({
     }
 
     populateOptions()
-  }, [])
+  }, [walletType.name])
 
   useEffect(() => {
     if (Number(parentValue)) {
@@ -110,13 +120,16 @@ const FeeField = ({
   return (
     <div className="fee-field-wrapper">
       <div className="fee-field">
-        <InputInteger
-          id={id}
-          value={inputValue}
-          onChangeHandle={inputChangeHandler}
-        />
-        <small>sat/B</small>
-        <RadioButtons
+        <div className="fee-input-wrapper">
+          <InputInteger
+            id={id}
+            value={inputValue}
+            onChangeHandle={inputChangeHandler}
+            disabled={true}
+          />
+          <small>{feeType}</small>
+        </div>
+        <OptionButtons
           value={radioButtonValue}
           options={options}
           onSelect={optionSelectHandle}

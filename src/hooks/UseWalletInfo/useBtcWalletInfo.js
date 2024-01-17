@@ -1,34 +1,39 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useContext } from 'react'
 
 import { Electrum } from '@APIs'
 import { BTC, Format } from '@Helpers'
+import { AccountContext } from '@Contexts'
 
-const useWalletInfo = (address) => {
+const useBtcWalletInfo = (address) => {
+  const { walletType } = useContext(AccountContext)
   const effectCalled = useRef(false)
-  const [transactionsList, setTransactionsList] = useState([])
-  const [balance, setBalance] = useState(0)
+  const [btcTransactionsList, setBtcTransactionsList] = useState([])
+  const [btcBalance, setBtcBalance] = useState(0)
+  const isBitcoin = walletType.name === 'Bitcoin'
 
   const getTransactions = useCallback(async () => {
     try {
+      if (!address || !isBitcoin) return
       const response = await Electrum.getAddressTransactions(address)
       const transactions = JSON.parse(response)
       const parsedTransactions = BTC.getParsedTransactions(
         transactions,
         address,
       )
-      setTransactionsList(parsedTransactions)
+      setBtcTransactionsList(parsedTransactions)
     } catch (error) {
       console.error(error)
     }
-  }, [address])
+  }, [address, isBitcoin])
 
   const getBalance = useCallback(async () => {
     try {
+      if (!address) return ''
       const utxos = await Electrum.getAddressUtxo(address)
       const satoshiBalance = BTC.calculateBalanceFromUtxoList(JSON.parse(utxos))
       const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
       const formattedBalance = Format.BTCValue(balanceConvertedToBTC)
-      setBalance(formattedBalance)
+      setBtcBalance(formattedBalance)
     } catch (error) {
       console.error(error)
     }
@@ -43,7 +48,7 @@ const useWalletInfo = (address) => {
     getBalance()
   }, [getBalance, getTransactions])
 
-  return { transactionsList, balance }
+  return { btcTransactionsList, btcBalance }
 }
 
-export default useWalletInfo
+export default useBtcWalletInfo

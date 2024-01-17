@@ -1,9 +1,9 @@
 import React from 'react'
-import RadioButtons from './RadioButtons'
+import OptionButtons from './OptionButtons'
 
 export default {
-  title: 'Components/Composed/RadioButtons',
-  component: RadioButtons,
+  title: 'Components/Composed/OptionButtons',
+  component: OptionButtons,
   args: {
     options: [],
   },
@@ -48,7 +48,7 @@ export default {
   },
 }
 
-const Template = (args) => <RadioButtons {...args} />
+const Template = (args) => <OptionButtons {...args} />
 
 export const LowNormHigh = Template.bind({})
 LowNormHigh.args = {

@@ -1,0 +1,12 @@
+.logo-round {
+  background: rgb(var(--color-green));
+  border-radius: 50%;
+  height: 72px;
+  width: 72px;
+}
+
+.logo-round img {
+  height: 60%;
+  width: 60%;
+  margin: 20%;
+}

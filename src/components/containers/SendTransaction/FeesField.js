@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 
 import { FeeField } from '@ComposedComponents'
 import TransactionField from './TransactionField'
+import { AccountContext } from '@Contexts'
 
 import './errorMessages.css'
 
 const FeesField = ({ feeChanged, value, errorMessage, setFeeValidity }) => {
+  const { walletType } = useContext(AccountContext)
   const [message, setMessage] = useState(errorMessage)
 
   useEffect(() => {
@@ -15,13 +17,19 @@ const FeesField = ({ feeChanged, value, errorMessage, setFeeValidity }) => {
   return (
     <TransactionField>
       <label htmlFor="fee">Fee:</label>
-      <FeeField
-        id="fee"
-        changeValueHandle={feeChanged}
-        value={value}
-        setErrorMessage={setMessage}
-        setFeeValidity={setFeeValidity}
-      />
+
+      {walletType && walletType.name === 'Bitcoin' ? (
+        <FeeField
+          id="fee"
+          changeValueHandle={feeChanged}
+          value={value}
+          setErrorMessage={setMessage}
+          setFeeValidity={setFeeValidity}
+        />
+      ) : (
+        <p>The final fee will be calculated at the next step</p>
+      )}
+
       <p className="error-message">{message}</p>
     </TransactionField>
   )

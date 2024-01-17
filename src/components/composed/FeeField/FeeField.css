@@ -4,20 +4,25 @@
 
 .fee-field {
   display: flex;
-  flex-direction:row;
+  flex-direction: row;
   width: 100%;
   position: relative;
 }
 
-.fee-field > *:nth-child(1) {
+.fee-input-wrapper {
+  position: relative;
+  width: 100%;
   margin-right: 0.5rem;
-  padding-right: 100px;
+}
+
+.fee-input-wrapper > *:nth-child(1) {
+  padding-right: 10px;
 }
 
 .fee-field small {
   position: absolute;
   top: 50%;
-  left: 240px;
+  right: 15px;
   font-weight: bold;
   font-size: 1.5rem;
   transform: translateY(-50%);

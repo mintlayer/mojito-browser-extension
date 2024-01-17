@@ -1,4 +1,7 @@
 import { Electrum } from '@APIs'
+import * as bitcoin from 'bitcoinjs-lib'
+import { AppInfo } from '@Constants'
+import { LocalStorageService } from '@Storage'
 
 const AVERAGE_MIN_PER_BLOCK = 15
 const SATOSHI_BTC_CONVERSION_FACTOR = 100_000_000
@@ -103,6 +106,102 @@ const getParsedTransactions = (rawTransactions, baseAddress) => {
   return parsedTransactions
 }
 
+const getYesterdayFiatBalances = (cryptos, yesterdayExchangeRateList) => {
+  const btcCrypto = cryptos.find((crypto) => crypto.symbol === 'BTC')
+  const mlCrypto = cryptos.find((crypto) => crypto.symbol === 'ML')
+
+  const btcYesterdayBalance = btcCrypto
+    ? btcCrypto.balance * yesterdayExchangeRateList.btc
+    : 0
+  const mlYesterdayBalance = mlCrypto
+    ? mlCrypto.balance * yesterdayExchangeRateList.ml
+    : 0
+  const totalYesterdayBalance = btcYesterdayBalance + mlYesterdayBalance
+
+  return { btcYesterdayBalance, mlYesterdayBalance, totalYesterdayBalance }
+}
+
+const getCurrentFiatBalances = (cryptos) => {
+  const btcCrypto = cryptos.find((crypto) => crypto.symbol === 'BTC')
+  const mlCrypto = cryptos.find((crypto) => crypto.symbol === 'ML')
+
+  const btcCurrentBalance = btcCrypto
+    ? btcCrypto.balance * btcCrypto.exchangeRate
+    : 0
+  const mlCurrentBalance = mlCrypto
+    ? mlCrypto.balance * mlCrypto.exchangeRate
+    : 0
+  const totalCurrentBalance =
+    cryptos.reduce(
+      (acc, crypto) => acc + crypto.balance * crypto.exchangeRate,
+      0,
+    ) || 0
+
+  return { btcCurrentBalance, mlCurrentBalance, totalCurrentBalance }
+}
+
+const calculateBalances = (cryptos, yesterdayExchangeRates) => {
+  const { btcYesterdayBalance, mlYesterdayBalance, totalYesterdayBalance } =
+    getYesterdayFiatBalances(cryptos, yesterdayExchangeRates)
+
+  const { btcCurrentBalance, mlCurrentBalance, totalCurrentBalance } =
+    getCurrentFiatBalances(cryptos)
+
+  const currentBalances = {
+    btc: btcCurrentBalance,
+    ml: mlCurrentBalance,
+    total: totalCurrentBalance,
+  }
+
+  const yesterdayBalances = {
+    btc: btcYesterdayBalance,
+    ml: mlYesterdayBalance,
+    total: totalYesterdayBalance,
+  }
+
+  const proportionDiffs = {
+    btc: currentBalances.btc / yesterdayBalances.btc,
+    ml: currentBalances.ml / yesterdayBalances.ml,
+    total: currentBalances.total / yesterdayBalances.total,
+  }
+
+  const balanceDiffs = {
+    btc: currentBalances.btc - btcYesterdayBalance,
+    ml: currentBalances.ml - mlYesterdayBalance,
+    total: currentBalances.total - yesterdayBalances.total,
+  }
+
+  return { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs }
+}
+
+const getStats = (proportionDiffs, balanceDiffs, networkType) => {
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
+  const percentValue = isTestnet
+    ? 0
+    : Number((proportionDiffs.total - 1) * 100).toFixed(2)
+  const fiatValue = isTestnet ? 0 : balanceDiffs.total.toFixed(2)
+  return [
+    {
+      name: '24h percent',
+      value: percentValue,
+      unit: '%',
+    },
+    {
+      name: '24h fiat',
+      value: fiatValue,
+      unit: 'USD',
+    },
+  ]
+}
+
+const getNetwork = () => {
+  const networkType =
+    LocalStorageService.getItem('networkType') === 'testnet'
+      ? 'testnet'
+      : 'bitcoin'
+  return bitcoin.networks[networkType]
+}
+
 export {
   parseFeesEstimates,
   calculateBalanceFromUtxoList,
@@ -110,6 +209,10 @@ export {
   getParsedTransactions,
   getConfirmationsAmount,
   convertBtcToSatoshi,
+  getYesterdayFiatBalances,
+  calculateBalances,
+  getStats,
+  getNetwork,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
   MAX_BTC,

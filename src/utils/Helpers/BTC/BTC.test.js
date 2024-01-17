@@ -7,33 +7,21 @@ import {
   convertBtcToSatoshi,
 } from './BTC'
 
+import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
+import { LocalStorageService } from '@Storage'
+
 import { fees, rawTransactions, utxos } from '@TestData'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+const mockId = 'networkType'
+const mockValue = 'testnet'
+LocalStorageService.setItem(mockId, mockValue)
 
 test('Parse Fees Estimates', () => {
   const estimates = parseFeesEstimates(fees)
   expect(estimates.LOW).toBeLessThan(estimates.MEDIUM)
   expect(estimates.MEDIUM).toBeLessThan(estimates.HIGH)
 })
-
-// test('BTC helpers', () => {
-//   let value = 0.6
-//   expect(formatBTCValue(value)).toBe('0.6')
-
-//   value = 0.60000001
-//   expect(formatBTCValue(value)).toBe('0.60000001')
-
-//   value = 6
-//   expect(formatBTCValue(value)).toBe('6')
-
-//   value = 6.3
-//   expect(formatBTCValue(value)).toBe('6.3')
-
-//   value = 6.324
-//   expect(formatBTCValue(value)).toBe('6.324')
-
-//   value = 6.30000001
-//   expect(formatBTCValue(value)).toBe('6.30000001')
-// })
 
 test('Calculate Balance From Utxo List', () => {
   const balance = 2075724

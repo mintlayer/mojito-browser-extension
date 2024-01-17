@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { format } from 'date-fns'
 
 import { Format } from '@Helpers'
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
-import { EnvVars } from '@Constants'
+import { AccountContext, SettingsContext } from '@Contexts'
+import { AppInfo } from '@Constants'
 
 import './TransactionDetails.css'
 
@@ -26,23 +27,33 @@ const TransactionDetailsItem = ({ title, content }) => {
 }
 
 const TransactionDetails = ({ transaction, getConfirmations }) => {
+  const { networkType } = useContext(SettingsContext)
+  const { walletType } = useContext(AccountContext)
   const [confirmations, setConfirmations] = useState(null)
-  const isTestnet = EnvVars.BTC_NETWORK === 'testnet'
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
   const date = transaction.date
     ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
   const buttonExtraStyles = ['transaction-details-button']
   const addressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
-  const transactionAddress = [...new Set(transaction?.otherPart)].join('; ')
+  const transactionAddress =
+    transaction.destAddress || [...new Set(transaction?.otherPart)].join('; ')
   const externalBtcLink = `https://blockstream.info${
     isTestnet ? '/testnet' : ''
   }/tx/${transaction?.txid}`
-  // TODO: add Mintlayer explorer link
+
+  const externalMlLink = `https://explorer.mintlayer.org${
+    isTestnet ? '/lovelace' : ''
+  }/tx/${transaction?.txid}`
+
+  const explorerLink =
+    walletType.name === 'Mintlayer' ? externalMlLink : externalBtcLink
 
   useEffect(() => {
     const getConfirmationAmount = async () => {
-      const amount = await getConfirmations(transaction)
+      const amount =
+        (await getConfirmations(transaction)) || transaction.confirmations
       setConfirmations(amount)
     }
     getConfirmationAmount()
@@ -79,7 +90,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
         />
       </div>
       <a
-        href={externalBtcLink}
+        href={explorerLink}
         target="_blank"
       >
         <Button extraStyleClasses={buttonExtraStyles}>

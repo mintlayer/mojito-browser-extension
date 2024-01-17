@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { Button, InputBTC, InputFloat } from '@BasicComponents'
-import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
+// import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
+import { SettingsContext } from '@Contexts'
 
 import './CryptoFiatField.css'
 import { BTC, Format, NumbersHelper } from '@Helpers'
+import { AppInfo } from '@Constants'
 
 const CryptoFiatField = ({
   placeholder,
@@ -19,6 +21,7 @@ const CryptoFiatField = ({
   setAmountValidity,
   totalFeeInCrypto,
 }) => {
+  const { networkType } = useContext(SettingsContext)
   const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
   const finalMaxValue = parsedValueInToken - totalFeeInCrypto
   const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
@@ -27,11 +30,15 @@ const CryptoFiatField = ({
   )
 
   const [bottomValue, setBottomValue] = useState('')
+  // eslint-disable-next-line no-unused-vars
   const [currentValueType, setCurrentValueType] = useState(
     transactionData ? transactionData.tokenName : 'Token',
   )
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
+  const amountErrorMessage = 'Amount set is bigger than this wallet balance.'
+  const amountFormatErrorMessage = 'Amount format is invalid. Use 0,00 instead.'
+  const zeroErrorMessage = 'Amount must be greater than 0.'
 
   useEffect(() => {
     changeValueHandle &&
@@ -62,6 +69,12 @@ const CryptoFiatField = ({
     bottomValue ? bottomValue : Format.fiatValue(0)
   } ${isTypeFiat() ? tokenName : fiatName}`
 
+  // Consider the correct format for 0,00 that might also be 0.00
+  const displayedBottomValue =
+    networkType === AppInfo.NETWORK_TYPES.TESTNET
+      ? `≈ 0,00 ${fiatName}`
+      : formattedBottomValue
+
   const calculateFiatValue = (value) => {
     const parsedValue = NumbersHelper.floatStringToNumber(value)
     return Format.fiatValue(parsedValue * exchangeRate)
@@ -78,20 +91,23 @@ const CryptoFiatField = ({
       : setBottomValue(calculateFiatValue(value))
   }
 
-  const switchCurrency = (
-    currencyName,
-    recalculateValueFn,
-    calculateBottomFn,
-  ) => {
-    setCurrentValueType(currencyName)
-    setBottomValue(calculateBottomFn(value || 0))
-    setValue(recalculateValueFn(value || 0))
-  }
+  // TODO: Discuss the feasibility of this feature after release
+  // const switchCurrency = (
+  //   currencyName,
+  //   recalculateValueFn,
+  //   calculateBottomFn,
+  // ) => {
+  //   setCurrentValueType(currencyName)
+  //   setBottomValue(calculateBottomFn(value || 0))
+  //   setValue(recalculateValueFn(value || 0))
+  // }
 
   const changeButtonClickHandler = () => {
-    isTypeFiat()
-      ? switchCurrency(tokenName, calculateCryptoValue, Format.fiatValue)
-      : switchCurrency(fiatName, calculateFiatValue, Format.BTCValue)
+    return
+    // if (networkType === AppInfo.NETWORK_TYPES.TESTNET) return
+    // isTypeFiat()
+    //   ? switchCurrency(tokenName, calculateCryptoValue, Format.fiatValue)
+    //   : switchCurrency(fiatName, calculateFiatValue, Format.BTCValue)
   }
 
   const maxButtonClickHandler = () => {
@@ -110,18 +126,29 @@ const CryptoFiatField = ({
     setValue(value || 0)
     updateValue(value || 0)
 
+    const validity = AppInfo.amountRegex.test(value)
+
+    if (!validity) {
+      setValidity('invalid')
+      setAmountValidity(false)
+      setErrorMessage(amountFormatErrorMessage)
+      return
+    }
+
+    if (parsedValue <= 0) {
+      setValidity('invalid')
+      setAmountValidity(false)
+      setErrorMessage(zeroErrorMessage)
+      return
+    }
+
     let isValid = isTypeFiat()
       ? NumbersHelper.floatStringToNumber(calculateCryptoValue(parsedValue)) <
         BTC.MAX_BTC
       : parsedValue < BTC.MAX_BTC
     setValidity(isValid ? 'valid' : 'invalid')
     setAmountValidity && setAmountValidity(isValid)
-    setErrorMessage &&
-      setErrorMessage(
-        isValid
-          ? undefined
-          : 'Amount set is bigger than max available BTC on the blockchain.',
-      )
+    setErrorMessage && setErrorMessage(isValid ? undefined : amountErrorMessage)
     if (!isValid) return
 
     isValid = isTypeFiat()
@@ -130,10 +157,7 @@ const CryptoFiatField = ({
 
     setValidity(isValid ? 'valid' : 'invalid')
     setAmountValidity(isValid)
-    setErrorMessage &&
-      setErrorMessage(
-        isValid ? undefined : 'Amount set is bigger than this wallet balance.',
-      )
+    setErrorMessage && setErrorMessage(isValid ? undefined : amountErrorMessage)
     if (!isValid) return
   }
 
@@ -168,14 +192,19 @@ const CryptoFiatField = ({
           data-testid="crypto-fiat-switch-button"
           onClick={changeButtonClickHandler}
         >
-          <ArrowIcon
-            className="crypto-fiat-icon-reverse"
-            data-testid="arrow-icon"
-          />
-          <ArrowIcon
-            className="crypto-fiat-icon"
-            data-testid="arrow-icon"
-          />
+          {/* {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
+            <>
+              <ArrowIcon
+                className="crypto-fiat-icon-reverse"
+                data-testid="arrow-icon"
+              />
+              <ArrowIcon
+                className="crypto-fiat-icon"
+                data-testid="arrow-icon"
+              />
+            </>
+          )} */}
+
           <span className="current-value-type">{currentValueType}</span>
         </button>
       </div>
@@ -191,7 +220,7 @@ const CryptoFiatField = ({
         className="crypto-fiat-bottom-text"
         data-testid="crypto-fiat-bottom-text"
       >
-        {formattedBottomValue}
+        {displayedBottomValue}
       </p>
     </div>
   )

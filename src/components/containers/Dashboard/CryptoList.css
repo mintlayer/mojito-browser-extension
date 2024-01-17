@@ -62,19 +62,19 @@
   font-weight: bold;
 }
 
-.crypto-item.coming-soon {
-  cursor: default;
-}
-
-.crypto-item.coming-soon:hover {
-  transform: scale(1);
-}
-
-.crypto-item.coming-soon h5 {
+.crypto-item.add-item h5 {
   margin-top: 0.85rem;
 }
 
-.crypto-item.coming-soon div:nth-child(3) {
+.crypto-item.add-item.disabled {
+  cursor: default;
+}
+
+.crypto-item.add-item.disabled:hover {
+  transform: scale(1);
+}
+
+.connect-message {
   background: rgb(var(--color-green));
   border-radius: 20px;
   color: rgb(var(--color-white));
@@ -120,15 +120,21 @@
   width: 72px;
 }
 
-.crypto-item .mlt-logo {
+.crypto-item .connect-logo {
   background: rgb(var(--color-green));
   border-radius: 50%;
   height: 72px;
   width: 72px;
 }
 
-.crypto-item .mlt-logo img {
+.crypto-item .connect-logo img {
   height: 60%;
   width: 60%;
   margin: 20%;
+}
+
+.show-address-text {
+  line-height: 2rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
