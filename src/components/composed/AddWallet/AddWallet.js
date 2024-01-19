@@ -35,7 +35,9 @@ const AddWallet = ({
   }
 
   const connectWalletHandle = async (id, walletType, mnemonic) => {
-    if (!pass) {
+    //TODO: refactor this
+    const unlockedAccount = await Account.unlockAccount(id, pass)
+    if (!pass || !unlockedAccount) {
       setPassPristinity(false)
       setPassValidity(false)
       setPassErrorMessage('Password must be set.')
