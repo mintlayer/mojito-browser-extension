@@ -44,7 +44,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
     idx * 10,
     Number(value),
   ])
-  const symbol = networkType === !isTestnet ? item.symbol : 'Test'
+  const symbol = !isTestnet ? item.symbol : 'Test'
 
   const onClick = () => {
     onClickItem(item)

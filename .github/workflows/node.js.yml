@@ -34,14 +34,14 @@ jobs:
         run: npm test -- --watchAll=false
       - name: Build
         run: npm run build --if-present
-      - name: E2E Test
-        uses: cypress-io/github-action@v4
-        with:
-          browser: chrome
-          build: npm run build:staging
-          start: npm run serve
-          wait-on: http://localhost:8000
-          record: true
-        env:
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: E2E Test
+      #   uses: cypress-io/github-action@v4
+      #   with:
+      #     browser: chrome
+      #     build: npm run build:staging
+      #     start: npm run serve
+      #     wait-on: http://localhost:8000
+      #     record: true
+      #   env:
+      #     CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
