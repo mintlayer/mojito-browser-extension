@@ -24,29 +24,28 @@ const NETWORKS = {
   signet: 3,
 }
 
-export const getPrivateKeyFromMnemonic = async (mnemonic, networkType) => {
+export const initWasm = async () => {
   await init()
+}
+
+export const getPrivateKeyFromMnemonic = async (mnemonic, networkType) => {
   const networkIndex = NETWORKS[networkType]
   return make_default_account_privkey(mnemonic, networkIndex)
 }
 
 export const getReceivingAddress = async (defAccPrivateKey, keyIndex) => {
-  await init()
   return make_receiving_address(defAccPrivateKey, keyIndex)
 }
 
 export const getChangeAddress = async (defAccPrivateKey, keyIndex) => {
-  await init()
   return make_change_address(defAccPrivateKey, keyIndex)
 }
 
 export const getPublicKeyFromPrivate = async (privateKey) => {
-  await init()
   return public_key_from_private_key(privateKey)
 }
 
 export const getPubKeyString = async (pubkey, network) => {
-  await init()
   return pubkey_to_string(pubkey, network)
 }
 
@@ -156,23 +155,19 @@ export const getUnusedAddress = async (addresses) => {
 }
 
 export const getEncodedOutpointSourceId = async (txId) => {
-  await init()
   return encode_outpoint_source_id(txId, SourceId.Transaction)
 }
 
 export const getTxInput = async (outpointSourceId, index) => {
-  await init()
   return encode_input_for_utxo(outpointSourceId, index)
 }
 
 export const getOutputs = async (amount, address, networkType) => {
-  await init()
   const networkIndex = NETWORKS[networkType]
   return encode_output_transfer(amount, address, networkIndex)
 }
 
 export const getTransaction = async (inputs, outputs) => {
-  await init()
   const flags = BigInt(0)
   return encode_transaction(inputs, outputs, flags)
 }
@@ -186,7 +181,6 @@ export const getEncodedWitness = async (
   networkType,
   // eslint-disable-next-line max-params
 ) => {
-  await init()
   const networkIndex = NETWORKS[networkType]
   return encode_witness(
     SignatureHashType.ALL,
@@ -200,11 +194,9 @@ export const getEncodedWitness = async (
 }
 
 export const getEncodedSignedTransaction = async (transaction, witness) => {
-  await init()
   return encode_signed_transaction(transaction, witness)
 }
 
 export const getEstimatetransactionSize = async (inputs, optUtxos, outputs) => {
-  await init()
   return estimate_transaction_size(inputs, optUtxos, outputs)
 }
