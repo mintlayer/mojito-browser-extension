@@ -1,7 +1,7 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Mojito - A Mintlayer Wallet",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "short_name": "Mojito",
   "description": "Mojito is a non-custodial decentralized crypto wallet that lets you send and receive BTC and ML from any other address.",
   "homepage_url": "https://www.mintlayer.org/",
@@ -13,8 +13,10 @@
     "192": "logo192.png",
     "512": "logo512.png"
   },
-  "content_security_policy": "script-src 'self' 'wasm-eval' 'unsafe-eval'; object-src 'self'",
-  "browser_action": {
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; img-src 'self' data:; style-src 'self' https://fonts.cdnfonts.com https://fonts.googleapis.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://fonts.cdnfonts.com; style-src-elem 'self' https://fonts.googleapis.com"
+  },
+  "action": {
     "default_icon": "logo192.png",
     "default_title": "Mojito",
     "default_popup": "index.html"
@@ -22,7 +24,15 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "browserextension@mintlayer",
-      "strict_min_version": "42.0"
+      "strict_min_version": "109.0"
+    }
+  },
+  "host_permissions": ["https://www.mintlayer.org/"],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y"
+      }
     }
   }
 }
