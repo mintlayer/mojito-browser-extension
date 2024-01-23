@@ -23,7 +23,6 @@ import {
 } from '@Pages'
 
 import { AccountContext, AccountProvider, SettingsProvider } from '@Contexts'
-import { LocalStorageService } from '@Storage'
 import { ML } from '@Cryptos'
 
 import reportWebVitals from './utils/reportWebVitals'
@@ -49,7 +48,6 @@ const App = () => {
         console.log(error)
         setErrorPopupOpen(true)
         logout()
-        LocalStorageService.removeItem('isInitCalled')
         navigate('/')
       }
     }
