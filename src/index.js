@@ -23,6 +23,7 @@ import {
 } from '@Pages'
 
 import { AccountContext, AccountProvider, SettingsProvider } from '@Contexts'
+import { ML } from '@Cryptos'
 
 import reportWebVitals from './utils/reportWebVitals'
 
@@ -51,6 +52,13 @@ const App = () => {
       }
     }
   }
+
+  useEffect(() => {
+    const asyncInit = async () => {
+      await ML.initWasm()
+    }
+    asyncInit()
+  }, [])
 
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
