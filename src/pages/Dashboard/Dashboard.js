@@ -1,8 +1,8 @@
+/* eslint-disable max-params */
 import { useContext, useState, useEffect } from 'react'
 import { Header, PopUp, AddWallet } from '@ComposedComponents'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { Account } from '@Entities'
-import { Wallet } from '@ContainerComponents'
 
 import {
   useExchangeRates,
@@ -20,14 +20,8 @@ import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 const DashboardPage = () => {
-  const {
-    addresses,
-    accountName,
-    setWalletType,
-    accountID,
-    openShowAddressTemp,
-    setOpenShowAddressTemp,
-  } = useContext(AccountContext)
+  const { addresses, accountName, setWalletType, accountID } =
+    useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -50,7 +44,8 @@ const DashboardPage = () => {
     useOneDayAgoExchangeRates('btc', 'usd')
   const { yesterdayExchangeRate: mlYesterdayExchangeRate } =
     useOneDayAgoExchangeRates('ml', 'usd')
-  const { historyRates } = useOneDayAgoHist('btc', 'usd')
+  const { historyRates: btcHistoryRates } = useOneDayAgoHist('btc', 'usd')
+  const { historyRates: mlHistoryrates } = useOneDayAgoHist('ml', 'usd')
   const navigate = useNavigate()
 
   const yesterdayExchangeRateList = {
@@ -82,7 +77,7 @@ const DashboardPage = () => {
     {
       name: 'Bitcoin',
       symbol: 'BTC',
-      balance: NumbersHelper.floatStringToNumber(btcBalance),
+      balance: 0,
       exchangeRate: btcExchangeRate,
     },
     {
@@ -101,15 +96,21 @@ const DashboardPage = () => {
   const getCryptoList = (addresses, network) => {
     if (!addresses) return []
     const cryptos = []
-    // eslint-disable-next-line max-params
-    const addCrypto = (name, symbol, balance, exchangeRate, change24h) => {
+    const addCrypto = (
+      name,
+      symbol,
+      balance,
+      exchangeRate,
+      change24h,
+      historyRates,
+    ) => {
       cryptos.push({
         name,
         symbol,
         balance: NumbersHelper.floatStringToNumber(balance),
         exchangeRate,
-        historyRates,
         change24h,
+        historyRates,
       })
     }
 
@@ -121,13 +122,31 @@ const DashboardPage = () => {
         network === AppInfo.NETWORK_TYPES.MAINNET
           ? Number((proportionDiffs.btc - 1) * 100).toFixed(2)
           : 0
-      addCrypto('Bitcoin', 'BTC', btcBalance, btcExchangeRate, change24h)
+      addCrypto(
+        'Bitcoin',
+        'BTC',
+        btcBalance,
+        btcExchangeRate,
+        change24h,
+        btcHistoryRates,
+      )
     }
     const mlAddress = addresses.mlMainnetAddress
       ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
       : false
     if (mlAddress) {
-      addCrypto('Mintlayer', 'ML', mlBalance, mlExchangeRate, 0)
+      const change24h =
+        network === AppInfo.NETWORK_TYPES.MAINNET
+          ? Number((proportionDiffs.ml - 1) * 100).toFixed(2)
+          : 0
+      addCrypto(
+        'Mintlayer',
+        'ML',
+        mlBalance,
+        mlExchangeRate,
+        change24h,
+        mlHistoryrates,
+      )
     }
 
     return cryptos
@@ -189,15 +208,6 @@ const DashboardPage = () => {
             setAllowClosing={setAllowClosing}
             setOpenConnectConfirmation={setOpenConnectConfirmation}
           />
-        </PopUp>
-      )}
-
-      {/* //TODO: remove this after mainnet launch */}
-      {openShowAddressTemp && (
-        <PopUp setOpen={setOpenShowAddressTemp}>
-          <Wallet.ShowAddress
-            address={currentMlAddresses.mlReceivingAddresses[0]}
-          ></Wallet.ShowAddress>
         </PopUp>
       )}
     </>

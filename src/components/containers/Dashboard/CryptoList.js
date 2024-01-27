@@ -8,28 +8,28 @@ import { SettingsContext, AccountContext } from '@Contexts'
 import './CryptoList.css'
 
 //TODO: remove this when mainnet is ready
-const MainnetAddressItem = () => {
-  const { setOpenShowAddressTemp } = useContext(AccountContext)
-  const onItemClick = () => {
-    setOpenShowAddressTemp(true)
-  }
-  return (
-    <li
-      className="crypto-item coming-soon"
-      onClick={onItemClick}
-    >
-      <div className="mlt-logo">
-        <LogoRound />
-      </div>
-      <div className="name-values">
-        <h5>Mintlayer (ML)</h5>
-        <p className="show-address-text">
-          Click here to get your Mainnet address
-        </p>
-      </div>
-    </li>
-  )
-}
+// const MainnetAddressItem = () => {
+//   const { setOpenShowAddressTemp } = useContext(AccountContext)
+//   const onItemClick = () => {
+//     setOpenShowAddressTemp(true)
+//   }
+//   return (
+//     <li
+//       className="crypto-item coming-soon"
+//       onClick={onItemClick}
+//     >
+//       <div className="mlt-logo">
+//         <LogoRound />
+//       </div>
+//       <div className="name-values">
+//         <h5>Mintlayer (ML)</h5>
+//         <p className="show-address-text">
+//           Click here to get your Mainnet address
+//         </p>
+//       </div>
+//     </li>
+//   )
+// }
 
 export const CryptoItem = ({ colorList, onClickItem, item }) => {
   const { balanceLoading } = useContext(AccountContext)
@@ -40,7 +40,13 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
     ? item.balance
     : Number(item.balance * item.exchangeRate).toFixed(2)
   const bigValues = balance.length > 13
-  const data = Object.values(item.historyRates).map((value, idx) => [
+  const mergedObj = Object.entries(item.historyRates).reduce(
+    (acc, [key, value]) => {
+      return { ...acc, ...value }
+    },
+    {},
+  )
+  const data = Object.values(mergedObj).map((value, idx) => [
     idx * 10,
     Number(value),
   ])
@@ -55,61 +61,54 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
       {balanceLoading ? (
         <SkeletonLoader />
       ) : (
-        <>
-          {/* TODO: remove this when mainnet is ready */}
-          {item.name === 'Mintlayer' && !isTestnet ? (
-            <MainnetAddressItem />
-          ) : (
-            <li
-              key={item.symbol}
-              className="crypto-item"
-              onClick={onClick}
-              data-testid="crypto-item"
-            >
-              {item.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
-              <div className="name-values">
-                <h5>
-                  {item.name} ({symbol})
-                </h5>
-                <div className={`values ${bigValues ? 'big-values' : ''}`}>
-                  <dl>
-                    <dt>Value:</dt>
-                    <dd>{balance}</dd>
-                    {!isTestnet && (
-                      <>
-                        <dt>Price:</dt>
-                        <dd>{item.exchangeRate.toFixed(2)}</dd>
-                      </>
-                    )}
-                  </dl>
-                </div>
-              </div>
-              <div className="crypto-stats">
-                <div className="crypto-stats-numbers">
-                  {Number(balance) > 0 && (
-                    <>
-                      <strong
-                        className={item.change24h < 0 ? 'negative' : 'positive'}
-                      >
-                        {isTestnet ? 0 : item.change24h}%
-                      </strong>
-                      <span>24h</span>
-                    </>
-                  )}
-                </div>
+        <li
+          key={item.symbol}
+          className="crypto-item"
+          onClick={onClick}
+          data-testid="crypto-item"
+        >
+          {item.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
+          <div className="name-values">
+            <h5>
+              {item.name} ({symbol})
+            </h5>
+            <div className={`values ${bigValues ? 'big-values' : ''}`}>
+              <dl>
+                <dt>Value:</dt>
+                <dd>{balance}</dd>
                 {!isTestnet && (
-                  <LineChart
-                    points={data}
-                    height="40px"
-                    width="100%"
-                    lineColor={color}
-                    lineWidth="4px"
-                  />
+                  <>
+                    <dt>Price:</dt>
+                    <dd>{item.exchangeRate.toFixed(2)}</dd>
+                  </>
                 )}
-              </div>
-            </li>
-          )}
-        </>
+              </dl>
+            </div>
+          </div>
+          <div className="crypto-stats">
+            <div className="crypto-stats-numbers">
+              {Number(balance) > 0 && (
+                <>
+                  <strong
+                    className={item.change24h < 0 ? 'negative' : 'positive'}
+                  >
+                    {isTestnet ? 0 : item.change24h}%
+                  </strong>
+                  <span>24h</span>
+                </>
+              )}
+            </div>
+            {(!isTestnet || !data.length) && (
+              <LineChart
+                points={data}
+                height="40px"
+                width="100%"
+                lineColor={color}
+                lineWidth="4px"
+              />
+            )}
+          </div>
+        </li>
       )}
     </>
   )
