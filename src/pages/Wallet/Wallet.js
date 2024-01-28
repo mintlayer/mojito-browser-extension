@@ -1,5 +1,5 @@
 import React, { useNavigate } from 'react-router-dom'
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 
 import { Balance, Header, PopUp } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
@@ -15,8 +15,7 @@ import './Wallet.css'
 
 const WalletPage = () => {
   const navigate = useNavigate()
-  const { addresses, walletType, openShowAddressTemp, setOpenShowAddressTemp } =
-    useContext(AccountContext)
+  const { addresses, walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const btcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -26,8 +25,7 @@ const WalletPage = () => {
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddress
       : addresses.mlTestnetAddresses
-  // TODO: revert this after mainnet launch
-  // const [openShowAddress, setOpenShowAddress] = useState(false)
+  const [openShowAddress, setOpenShowAddress] = useState(false)
   const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
   const { mlTransactionsList, mlBalance } = useMlWalletInfo(currentMlAddresses)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
@@ -48,7 +46,7 @@ const WalletPage = () => {
 
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}`
+  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
   const isUncofermedTransaction =
     LocalStorageService.getItem(unconfirmedTransactionString) &&
     walletType.name === 'Mintlayer'
@@ -71,11 +69,10 @@ const WalletPage = () => {
             />
             <Wallet.TransactionButton
               title={'Receive'}
-              onClick={() => setOpenShowAddressTemp(true)}
+              onClick={() => setOpenShowAddress(true)}
             />
-            {/* TODO: revert this after mainnet launch */}
-            {openShowAddressTemp && (
-              <PopUp setOpen={setOpenShowAddressTemp}>
+            {openShowAddress && (
+              <PopUp setOpen={setOpenShowAddress}>
                 <Wallet.ShowAddress
                   address={walletAddress}
                 ></Wallet.ShowAddress>

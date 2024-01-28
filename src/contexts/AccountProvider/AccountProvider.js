@@ -15,9 +15,6 @@ const AccountProvider = ({ value: propValue, children }) => {
   const [transactionsLoading, setTransactionsLoading] = useState(false)
   const [feeLoading, setFeeLoading] = useState(false)
 
-  //TODO: remove this after mainnet launch
-  const [openShowAddressTemp, setOpenShowAddressTemp] = useState(false)
-
   const accountRegistryName = 'unlockedAccount'
   const loginTimeoutInMinutes = 30
 
@@ -96,8 +93,6 @@ const AccountProvider = ({ value: propValue, children }) => {
     setTransactionsLoading,
     feeLoading,
     setFeeLoading,
-    openShowAddressTemp,
-    setOpenShowAddressTemp,
   }
 
   useEffect(() => {
