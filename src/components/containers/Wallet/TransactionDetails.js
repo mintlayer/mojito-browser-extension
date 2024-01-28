@@ -43,9 +43,9 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
     isTestnet ? '/testnet' : ''
   }/tx/${transaction?.txid}`
 
-  const externalMlLink = `https://explorer.mintlayer.org${
-    isTestnet ? '/lovelace' : ''
-  }/tx/${transaction?.txid}`
+  const externalMlLink = `https://${
+    isTestnet ? 'lovelace.' : ''
+  }explorer.mintlayer.org/tx/${transaction?.txid}`
 
   const explorerLink =
     walletType.name === 'Mintlayer' ? externalMlLink : externalBtcLink

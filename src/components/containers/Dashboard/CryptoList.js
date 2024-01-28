@@ -40,13 +40,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
     ? item.balance
     : Number(item.balance * item.exchangeRate).toFixed(2)
   const bigValues = balance.length > 13
-  const mergedObj = Object.entries(item.historyRates).reduce(
-    (acc, [key, value]) => {
-      return { ...acc, ...value }
-    },
-    {},
-  )
-  const data = Object.values(mergedObj).map((value, idx) => [
+  const data = Object.values(item.historyRates).map((value, idx) => [
     idx * 10,
     Number(value),
   ])
