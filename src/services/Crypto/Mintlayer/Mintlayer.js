@@ -150,8 +150,10 @@ export const getUnusedAddress = async (addresses) => {
     if (!isUsed) {
       return addresses[i]
     }
+    if (i === addresses.length - 1) {
+      return addresses[i]
+    }
   }
-  return null
 }
 
 export const getEncodedOutpointSourceId = async (txId) => {

@@ -256,7 +256,7 @@ const sendTransaction = async (
 
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}`
+  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
   const unconfirmedTransactions = LocalStorageService.getItem(
     unconfirmedTransactionString,
   )
