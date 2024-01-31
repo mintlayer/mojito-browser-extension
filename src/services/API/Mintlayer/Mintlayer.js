@@ -78,7 +78,8 @@ export const getWalletBalance = async (addresses) => {
   const totalBalance = balances.reduce(
     (acc, curr) => {
       return {
-        balanceInAtoms: acc.balanceInAtoms + curr.balanceInAtoms,
+        balanceInAtoms:
+          +parseInt(acc.balanceInAtoms) + parseInt(curr.balanceInAtoms),
       }
     },
     { balanceInAtoms: 0 },
