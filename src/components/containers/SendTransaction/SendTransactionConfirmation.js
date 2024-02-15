@@ -1,5 +1,5 @@
-import { useContext } from 'react'
-import { Button } from '@BasicComponents'
+import React, { useContext } from 'react'
+import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
@@ -12,6 +12,7 @@ const SendFundConfirmation = ({
   amountInCrypto,
   cryptoName,
   fiatName,
+  txErrorMessage,
   totalFeeFiat,
   totalFeeCrypto,
   fee,
@@ -62,6 +63,8 @@ const SendFundConfirmation = ({
       </dl>
 
       <VerticalGroup>
+        {txErrorMessage ? <Error error={txErrorMessage} /> : <></>}
+
         <Button onClickHandle={onConfirm}>Confirm</Button>
         <Button
           dark

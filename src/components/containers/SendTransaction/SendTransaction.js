@@ -44,6 +44,7 @@ const SendTransaction = ({
   const [passValidity, setPassValidity] = useState(false)
   const [passPristinity, setPassPristinity] = useState(true)
   const [passErrorMessage, setPassErrorMessage] = useState('')
+  const [txErrorMessage, setTxErrorMessage] = useState('')
   const [sendingTransaction, setSendingTransaction] = useState(false)
   const [transactionTxid, setTransactionTxid] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
@@ -90,14 +91,26 @@ const SendTransaction = ({
       setTransactionTxid(txid)
       setPassValidity(true)
       setPassErrorMessage('')
+      setTxErrorMessage('')
       setAskPassword(false)
     } catch (e) {
-      console.error(e)
-      setPassPristinity(false)
-      setPassValidity(false)
-      setPass('')
-      setPassErrorMessage('Incorrect password. Account could not be unlocked')
-      setAllowClosing(true)
+      console.log('=========000========')
+      if (e.address && e.address === '') {
+        // password is not correct
+        setPassErrorMessage('Incorrect password. Account could not be unlocked')
+        setPassPristinity(false)
+        setPassValidity(false)
+        setPass('')
+        setAllowClosing(true)
+      } else {
+        // handle other errors
+        setAskPassword(false)
+        setPassPristinity(false)
+        setPassValidity(false)
+        setPass('')
+        setTxErrorMessage(e.message)
+        setAllowClosing(true)
+      }
     } finally {
       setSendingTransaction(false)
     }
@@ -270,6 +283,7 @@ const SendTransaction = ({
                 fiatName={fiatName}
                 totalFeeFiat={totalFeeFiat}
                 totalFeeCrypto={totalFeeCrypto}
+                txErrorMessage={txErrorMessage}
                 fee={fee}
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
