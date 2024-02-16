@@ -63,6 +63,7 @@ const SendTransaction = ({
     setPassValidity(false)
     setPass('')
     setPassErrorMessage('')
+    // setTxErrorMessage('')
     setOpenSendFundConfirmation(state)
   }
 
@@ -94,10 +95,9 @@ const SendTransaction = ({
       setTxErrorMessage('')
       setAskPassword(false)
     } catch (e) {
-      console.log('=========000========')
-      if (e.address && e.address === '') {
+      if (e.address === '') {
         // password is not correct
-        setPassErrorMessage('Incorrect password. Account could not be unlocked')
+        setPassErrorMessage('Incorrect password')
         setPassPristinity(false)
         setPassValidity(false)
         setPass('')
@@ -110,6 +110,7 @@ const SendTransaction = ({
         setPass('')
         setTxErrorMessage(e.message)
         setAllowClosing(true)
+        setPopupState(false)
       }
     } finally {
       setSendingTransaction(false)
@@ -247,7 +248,14 @@ const SendTransaction = ({
             feeChanged={feeChanged}
             value="norm"
             setFeeValidity={setFeeValidity}
+            errorMessage={txErrorMessage}
           />
+
+          {txErrorMessage ? (
+            <p align="center">Try to send again with new fees</p>
+          ) : (
+            <></>
+          )}
 
           <CenteredLayout>
             <Button
@@ -269,7 +277,7 @@ const SendTransaction = ({
           {!transactionTxid ? (
             sendingTransaction ? (
               <VerticalGroup bigGap>
-                <h2>Your transaction is being created and sent.</h2>
+                <h2>Your transaction broadcasting to network.</h2>
                 <div className="loading-center">
                   <Loading />
                 </div>
@@ -283,7 +291,7 @@ const SendTransaction = ({
                 fiatName={fiatName}
                 totalFeeFiat={totalFeeFiat}
                 totalFeeCrypto={totalFeeCrypto}
-                txErrorMessage={txErrorMessage}
+                // txErrorMessage={txErrorMessage} // TODO move update on confirmation stage
                 fee={fee}
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
