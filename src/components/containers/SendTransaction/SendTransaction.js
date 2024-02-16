@@ -13,6 +13,7 @@ import AmountField from './AmountField'
 import FeesField from './FeesField'
 
 import './SendTransaction.css'
+import { Error } from '@BasicComponents'
 
 const SendTransaction = ({
   totalFeeFiat: totalFeeFiatParent,
@@ -249,11 +250,12 @@ const SendTransaction = ({
             feeChanged={feeChanged}
             value="norm"
             setFeeValidity={setFeeValidity}
-            errorMessage={txErrorMessage}
           />
 
           {txErrorMessage ? (
-            <p align="center">Try to send again with new fees</p>
+            <>
+              <Error error={txErrorMessage} />
+            </>
           ) : (
             <></>
           )}
