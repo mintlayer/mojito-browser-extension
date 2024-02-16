@@ -244,6 +244,7 @@ const SendTransaction = ({
             totalFeeInCrypto={totalFeeCrypto}
           />
 
+          {/* TODO style error from transaction */}
           <FeesField
             feeChanged={feeChanged}
             value="norm"
