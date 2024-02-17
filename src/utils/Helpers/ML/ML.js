@@ -50,19 +50,50 @@ const getParsedTransactions = (transactions, addresses) => {
         isConfirmed: transaction.isConfirmed,
       }
 
-    const isOutputMine = addresses.some(
-      (address) => transaction.outputs[0].destination === address,
+    const isInputMine = addresses.some(
+      (address) => transaction.inputs[0].utxo.destination === address,
     )
 
-    const direction = !isOutputMine ? 'out' : 'in'
-    const destAddress =
-      direction === 'in' && transaction.outputs.length > 1
-        ? transaction.outputs[1].destination
-        : transaction.outputs[0].destination
-    const value = getAmountInCoins(
-      transaction.outputs[0].value.amount,
-      AppInfo.ML_ATOMS_PER_COIN,
-    )
+    const direction = isInputMine ? 'out' : 'in'
+
+    let destAddress
+    let value
+
+    if (direction === 'out' && transaction.inputs.length > 0) {
+      destAddress = transaction.outputs.find((output) => {
+        return !addresses.includes(output.destination)
+      }).destination
+
+      const totalValue = transaction.outputs.reduce((acc, output) => {
+        if (!addresses.includes(output.destination)) {
+          if (output.type === 'Transfer') {
+            return acc + output.value.amount
+          }
+          if (output.type === 'LockThenTransfer') {
+            return acc + Number(output.value.amount)
+          }
+        }
+        return acc
+      }, 0)
+      value = getAmountInCoins(totalValue, AppInfo.ML_ATOMS_PER_COIN)
+    }
+
+    if (direction === 'in' && transaction.outputs.length > 0) {
+      destAddress = transaction.inputs[0].utxo.destination
+      const totalValue = transaction.outputs.reduce((acc, output) => {
+        if (addresses.includes(output.destination)) {
+          if (output.type === 'Transfer') {
+            return acc + output.value.amount
+          }
+          if (output.type === 'LockThenTransfer') {
+            return acc + Number(output.value.amount)
+          }
+        }
+        return acc
+      }, 0)
+      value = getAmountInCoins(totalValue, AppInfo.ML_ATOMS_PER_COIN)
+    }
+
     const confirmations = transaction.confirmations
     const date = transaction.timestamp
     const txid = transaction.txid
