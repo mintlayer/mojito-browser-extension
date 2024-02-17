@@ -197,7 +197,7 @@ const calculateFee = async (
   )
   const feeEstimatesResponse = await Mintlayer.getFeesEstimates()
   const feeEstimates = JSON.parse(feeEstimatesResponse)
-  const fee = (Number(feeEstimates) / 1000) * size
+  const fee = Math.ceil((Number(feeEstimates) / 1000) * size)
 
   return fee
 }

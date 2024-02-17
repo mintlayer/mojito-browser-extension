@@ -61,7 +61,7 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
       <Header />
       <div className="content">
         <CenteredLayout>
-          <form>
+          <form onSubmit={doLogin}>
             <VerticalGroup bigGap>
               {!unlockingAccount ? (
                 <>

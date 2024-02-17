@@ -17,7 +17,24 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
 
   try {
     const result = await request(url, { method, body })
-    if (!result.ok) throw new Error('Request not successful')
+    if (!result.ok) {
+      const error = await result.json()
+      if (error.error === 'Address not found') {
+        return Promise.resolve(
+          JSON.stringify({ coin_balance: 0, transaction_history: [] }),
+        )
+      }
+
+      // handle RPC error
+      if (error.error.includes('Mempool error:')) {
+        const errorMessage = error.error
+          .split('Mempool error: ')[1]
+          .split('(')[0]
+        throw new Error(errorMessage)
+      }
+
+      throw new Error('Request not successful')
+    }
     const content = await result.text()
     return Promise.resolve(content)
   } catch (error) {
