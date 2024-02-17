@@ -6,7 +6,18 @@ import { ML as MLHelpers } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 const getUtxoBalance = (utxo) => {
-  return utxo.reduce((sum, item) => sum + Number(item.utxo.value.amount), 0)
+  return utxo.reduce((sum, item) => {
+    if (item.utxo.type === 'Transfer') {
+      return sum + Number(item.utxo.value.amount)
+    }
+    if (item.utxo.type === 'LockThenTransfer') {
+      if (item.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
+        return sum + Number(item.utxo.value.amount)
+      }
+      return sum
+    }
+    return sum
+  }, 0)
 }
 
 const getUtxoTransaction = (utxo) => {
@@ -163,7 +174,18 @@ const getArraySpead = (inputs) => {
 const totalUtxosAmount = (utxosToSpend) => {
   return utxosToSpend
     .flatMap((utxo) => [...utxo])
-    .reduce((acc, utxo) => acc + Number(utxo.utxo.value.amount), 0)
+    .reduce((sum, item) => {
+      if (item.utxo.type === 'Transfer') {
+        return sum + Number(item.utxo.value.amount)
+      }
+      if (item.utxo.type === 'LockThenTransfer') {
+        if (item.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
+          return sum + Number(item.utxo.value.amount)
+        }
+        return sum
+      }
+      return sum
+    }, 0)
 }
 
 const calculateFee = async (

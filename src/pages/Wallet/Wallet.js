@@ -27,7 +27,8 @@ const WalletPage = () => {
       : addresses.mlTestnetAddresses
   const [openShowAddress, setOpenShowAddress] = useState(false)
   const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
-  const { mlTransactionsList, mlBalance } = useMlWalletInfo(currentMlAddresses)
+  const { mlTransactionsList, mlBalance, mlBalanceLocked } =
+    useMlWalletInfo(currentMlAddresses)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
 
@@ -40,6 +41,8 @@ const WalletPage = () => {
     currentMlAddresses && currentMlAddresses.mlReceivingAddresses[0]
 
   const walletBalance = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
+  const walletBalanceLocked =
+    walletType.name === 'Mintlayer' ? mlBalanceLocked : 0
   const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
   const walletTransactionList =
     walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
@@ -58,6 +61,7 @@ const WalletPage = () => {
         <div className="balance-transactions-wrapper">
           <Balance
             balance={walletBalance}
+            balanceLocked={walletBalanceLocked}
             exchangeRate={walletExangeRate}
           />
           <div className="transactions-buttons-wrapper">

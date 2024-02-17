@@ -16,6 +16,8 @@
 
 .balance {
   margin-left: 17px;
+  position: relative;
+  overflow: visible;
 }
 
 .balance-btc {
@@ -37,4 +39,14 @@
 .balance-usd span {
   font-weight: 500;
   font-size: 1.5rem;
+}
+
+.balance-locked {
+  position: absolute;
+  bottom: -25px;
+  opacity: 0.2;
+}
+
+.balance-locked:hover {
+  opacity: 1;
 }
