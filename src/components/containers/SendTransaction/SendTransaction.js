@@ -13,6 +13,7 @@ import AmountField from './AmountField'
 import FeesField from './FeesField'
 
 import './SendTransaction.css'
+import { Error } from '@BasicComponents'
 
 const SendTransaction = ({
   totalFeeFiat: totalFeeFiatParent,
@@ -44,6 +45,7 @@ const SendTransaction = ({
   const [passValidity, setPassValidity] = useState(false)
   const [passPristinity, setPassPristinity] = useState(true)
   const [passErrorMessage, setPassErrorMessage] = useState('')
+  const [txErrorMessage, setTxErrorMessage] = useState('')
   const [sendingTransaction, setSendingTransaction] = useState(false)
   const [transactionTxid, setTransactionTxid] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
@@ -62,6 +64,7 @@ const SendTransaction = ({
     setPassValidity(false)
     setPass('')
     setPassErrorMessage('')
+    // setTxErrorMessage('')
     setOpenSendFundConfirmation(state)
   }
 
@@ -90,14 +93,26 @@ const SendTransaction = ({
       setTransactionTxid(txid)
       setPassValidity(true)
       setPassErrorMessage('')
+      setTxErrorMessage('')
       setAskPassword(false)
     } catch (e) {
-      console.error(e)
-      setPassPristinity(false)
-      setPassValidity(false)
-      setPass('')
-      setPassErrorMessage('Incorrect password. Account could not be unlocked')
-      setAllowClosing(true)
+      if (e.address === '') {
+        // password is not correct
+        setPassErrorMessage('Incorrect password')
+        setPassPristinity(false)
+        setPassValidity(false)
+        setPass('')
+        setAllowClosing(true)
+      } else {
+        // handle other errors
+        setAskPassword(false)
+        setPassPristinity(false)
+        setPassValidity(false)
+        setPass('')
+        setTxErrorMessage(e.message)
+        setAllowClosing(true)
+        setPopupState(false)
+      }
     } finally {
       setSendingTransaction(false)
     }
@@ -230,11 +245,20 @@ const SendTransaction = ({
             totalFeeInCrypto={totalFeeCrypto}
           />
 
+          {/* TODO style error from transaction */}
           <FeesField
             feeChanged={feeChanged}
             value="norm"
             setFeeValidity={setFeeValidity}
           />
+
+          {txErrorMessage ? (
+            <>
+              <Error error={txErrorMessage} />
+            </>
+          ) : (
+            <></>
+          )}
 
           <CenteredLayout>
             <Button
@@ -256,7 +280,7 @@ const SendTransaction = ({
           {!transactionTxid ? (
             sendingTransaction ? (
               <VerticalGroup bigGap>
-                <h2>Your transaction is being created and sent.</h2>
+                <h2>Your transaction broadcasting to network.</h2>
                 <div className="loading-center">
                   <Loading />
                 </div>
@@ -270,6 +294,7 @@ const SendTransaction = ({
                 fiatName={fiatName}
                 totalFeeFiat={totalFeeFiat}
                 totalFeeCrypto={totalFeeCrypto}
+                // txErrorMessage={txErrorMessage} // TODO move update on confirmation stage
                 fee={fee}
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}

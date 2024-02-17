@@ -69,7 +69,7 @@ const FIRST_TX_ID =
 test('getAddressData', async () => {
   const result = await getAddressData(TESTNET_WALLET)
   const data = JSON.parse(result)
-  expect(data.coin_balance).toBeGreaterThan(0)
+  expect(Number(data.coin_balance)).toBeGreaterThan(0)
   const firstTransactionId =
     data.transaction_history[data.transaction_history.length - 1]
   expect(data.transaction_history.length).toBeGreaterThan(0)
@@ -95,5 +95,5 @@ test('Mintlayer API request - getAdressTransactions', async () => {
 
 test('Mintlayer API request - getAddressBalance', async () => {
   const result = await getAddressBalance(TESTNET_WALLET)
-  expect(result.balanceInAtoms).toBeGreaterThan(0)
+  expect(Number(result.balanceInAtoms)).toBeGreaterThan(0)
 })
