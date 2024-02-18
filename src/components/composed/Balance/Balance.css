@@ -45,6 +45,7 @@
   position: absolute;
   bottom: -25px;
   opacity: 0.2;
+  white-space: nowrap;
 }
 
 .balance-locked:hover {
