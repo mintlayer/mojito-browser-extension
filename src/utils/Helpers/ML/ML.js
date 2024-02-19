@@ -50,19 +50,104 @@ const getParsedTransactions = (transactions, addresses) => {
         isConfirmed: transaction.isConfirmed,
       }
 
-    const isOutputMine = addresses.some(
-      (address) => transaction.outputs[0].destination === address,
-    )
+    let withInputUTXO = true
 
-    const direction = !isOutputMine ? 'out' : 'in'
-    const destAddress =
-      direction === 'in' && transaction.outputs.length > 1
-        ? transaction.outputs[1].destination
-        : transaction.outputs[0].destination
-    const value = getAmountInCoins(
-      transaction.outputs[0].value.amount,
-      AppInfo.ML_ATOMS_PER_COIN,
-    )
+    if (!transaction.inputs[0].utxo) {
+      withInputUTXO = false
+    }
+
+    const isInputMine = withInputUTXO
+      ? addresses.some((address) =>
+          transaction.inputs.find(
+            (input) => input.utxo.destination === address,
+          ),
+        ) // if at least one input is mine
+      : addresses.some(
+          (address) => transaction.outputs[0].destination === address,
+        )
+
+    const direction = isInputMine ? 'out' : 'in'
+
+    let type = 'Transfer'
+    let destAddress
+    let value
+    let sameWalletTransaction = false
+
+    if (direction === 'out' && transaction.inputs.length > 0) {
+      const destAddressOutput = transaction.outputs.find((output) => {
+        return !addresses.includes(output.destination)
+      })
+
+      if (!destAddressOutput) {
+        destAddress = transaction.outputs[0].destination
+        sameWalletTransaction = true
+      } else {
+        destAddress = destAddressOutput.destination
+      }
+
+      const totalValue = transaction.outputs.reduce((acc, output) => {
+        if (!addresses.includes(output.destination)) {
+          if (output.type === 'Transfer') {
+            return acc + output.value.amount
+          }
+          if (output.type === 'LockThenTransfer') {
+            return acc + Number(output.value.amount)
+          }
+          if (output.type === 'CreateStakePool') {
+            type = 'CreateStakePool'
+            destAddress = output.pool_id
+            return acc + Number(output.data.amount)
+          }
+          if (output.type === 'DelegateStaking') {
+            type = 'DelegateStaking'
+            destAddress = output.delegation_id
+            return acc + Number(output.amount)
+          }
+        }
+        return acc
+      }, 0)
+      value = getAmountInCoins(totalValue, AppInfo.ML_ATOMS_PER_COIN)
+    }
+
+    if (withInputUTXO && direction === 'in' && transaction.outputs.length > 0) {
+      destAddress = transaction.inputs[0].utxo.destination
+      const totalValue = transaction.outputs.reduce((acc, output) => {
+        if (addresses.includes(output.destination)) {
+          if (output.type === 'Transfer') {
+            return acc + output.value.amount
+          }
+          if (output.type === 'LockThenTransfer') {
+            return acc + Number(output.value.amount)
+          }
+        }
+        return acc
+      }, 0)
+      value = getAmountInCoins(totalValue, AppInfo.ML_ATOMS_PER_COIN)
+    }
+
+    if (
+      !withInputUTXO &&
+      direction === 'in' &&
+      transaction.outputs.length > 1
+    ) {
+      destAddress = transaction.outputs.find(
+        (output) => !addresses.includes(output.destination),
+      ).destination
+
+      const totalValue = transaction.outputs.reduce((acc, output) => {
+        if (addresses.includes(output.destination)) {
+          if (output.type === 'Transfer') {
+            return acc + output.value.amount
+          }
+          if (output.type === 'LockThenTransfer') {
+            return acc + Number(output.value.amount)
+          }
+        }
+        return acc
+      }, 0)
+      value = getAmountInCoins(totalValue, AppInfo.ML_ATOMS_PER_COIN)
+    }
+
     const confirmations = transaction.confirmations
     const date = transaction.timestamp
     const txid = transaction.txid
@@ -78,6 +163,8 @@ const getParsedTransactions = (transactions, addresses) => {
       txid,
       fee,
       isConfirmed,
+      type,
+      sameWalletTransaction,
     }
   })
 }

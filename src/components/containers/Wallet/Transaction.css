@@ -7,6 +7,7 @@
   background: rgb(var(--color-extra-light-gray));
   word-break: break-all;
   cursor: pointer;
+  position: relative;
 }
 
 .transaction-logo-type {
@@ -18,6 +19,21 @@
   height: 72px;
   background: rgb(var(--color-light-green));
   border-radius: 50%;
+  position: relative;
+  z-index: 5;
+}
+
+.transaction-logo-type-same {
+  position: absolute;
+  z-index: 10;
+  left: 30px;
+  background: rgb(var(--color-dark-gray));
+}
+
+.transaction-logo-type-same .loop-icon {
+  transform: rotate(90deg);
+  width: 45px;
+  height: 45px;
 }
 
 .transaction-detail {
@@ -29,9 +45,31 @@
   background: rgb(var(--color-black));
 }
 
+.transaction-logo-type-stake {
+  background: rgb(var(--color-dark-gray));
+}
+
+.transaction-logo-type-delegate {
+  background: rgb(var(--color-dark-gray));
+}
+
 .arrow-icon {
   width: 30px;
   height: 36px;
+}
+
+.stake-icon {
+  width: 40px;
+  height: 40px;
+  color: #fff;
+}
+
+.delegation-icon {
+  width: 40px;
+  height: 40px;
+  margin-left: 5px;
+  margin-top: -5px;
+  color: #fff;
 }
 
 .arrow-icon-out {
