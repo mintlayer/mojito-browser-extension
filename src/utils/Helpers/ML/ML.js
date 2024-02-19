@@ -59,7 +59,7 @@ const getParsedTransactions = (transactions, addresses) => {
     const isInputMine = withInputUTXO
       ? addresses.some((address) =>
           transaction.inputs.find(
-            (input) => input.utxo.destination === address,
+            (input) => input?.utxo?.destination === address,
           ),
         ) // if at least one input is mine
       : addresses.some(
