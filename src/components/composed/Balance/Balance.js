@@ -8,7 +8,7 @@ import { AppInfo } from '@Constants'
 
 import './Balance.css'
 
-const Balance = ({ balance, exchangeRate }) => {
+const Balance = ({ balance, balanceLocked, exchangeRate }) => {
   const { walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   // TODO Consider the correct format for 0,00 that might also be 0.00
@@ -38,6 +38,13 @@ const Balance = ({ balance, exchangeRate }) => {
         >
           <span>{Format.fiatValue(balanceInUSD)}</span> USD
         </p>
+        {parseFloat(balanceLocked) > 0 ? (
+          <div className="balance-locked">
+            Locked: {balanceLocked} {symbol}
+          </div>
+        ) : (
+          <></>
+        )}
       </div>
     </div>
   )
