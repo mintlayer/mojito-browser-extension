@@ -19,9 +19,12 @@ const generateMnemonic = (entropy) => {
   return mnemonic
 }
 
-const generateKeysFromMnemonic = (mnemonic) => {
+const generateKeysFromMnemonic = (
+  mnemonic,
+  algoType = BTC_ADDRESS_TYPE_MAP.legacy,
+) => {
   const seed = getSeedFromMnemonic(mnemonic)
-  return getKeysFromSeed(seed)
+  return getKeysFromSeed(seed, algoType)
 }
 
 const generateAddr = (

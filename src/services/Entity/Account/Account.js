@@ -101,7 +101,10 @@ const unlockAccount = async (id, password) => {
     // this error just exists if the jobe was run in a worker
     /* istanbul ignore next */
     if (seed.error) throw new Error(seed.error)
-    const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed))
+    const [pubKey, WIF] = BTC.getKeysFromSeed(
+      Buffer.from(seed),
+      BTC_ADDRESS_TYPE_MAP[account.walletType],
+    )
 
     if (walletsToCreate.includes('btc')) {
       addresses.btcMainnetAddress = BTC_ADDRESS_TYPE_MAP[
