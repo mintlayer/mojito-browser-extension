@@ -56,7 +56,7 @@ const useMlWalletInfo = (addresses) => {
         .flatMap((utxo) => [...utxo])
         .reduce((acc, utxo) => {
           if (utxo.utxo.type === 'LockThenTransfer') {
-            if (utxo.utxo.lock.UntilTime.timestamp > Date.now() / 1000) {
+            if (utxo.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
               return acc + Number(utxo.utxo.value.amount)
             }
           }
@@ -70,7 +70,7 @@ const useMlWalletInfo = (addresses) => {
         .flatMap((utxo) => [...utxo])
         .reduce((acc, utxo) => {
           if (utxo.utxo.type === 'LockThenTransfer') {
-            if (utxo.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
+            if (utxo.utxo.lock.UntilTime.timestamp > Date.now() / 1000) {
               return acc + Number(utxo.utxo.value.amount)
             }
           }
