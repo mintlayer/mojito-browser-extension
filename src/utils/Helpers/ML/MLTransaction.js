@@ -12,7 +12,6 @@ const getUtxoBalance = (utxo) => {
 const getUtxoAvailable = (utxo) => {
   return utxo.map((item) => {
     return item.reduce((acc, item) => {
-      console.log(item, 'item')
       if (item.utxo.type === 'Transfer') {
         acc.push(item)
       }
@@ -110,7 +109,7 @@ const getTxInputs = async (outpointSourceIds) => {
 }
 
 const getTxOutput = async (amount, address, networkType) => {
-  const txOutput = await ML.getOutputs(amount, address, networkType)
+  const txOutput = await ML.getOutputs({ amount, address, networkType })
   return txOutput
 }
 
@@ -124,11 +123,13 @@ const getTransactionHex = (encodedSignedTransaction) => {
 const getOptUtxos = async (utxos, network) => {
   const opt_utxos = await Promise.all(
     utxos.map((item) => {
-      return ML.getOutputs(
-        item.utxo.value.amount,
-        item.utxo.destination,
-        network,
-      )
+      return ML.getOutputs({
+        amount: item.utxo.value.amount,
+        address: item.utxo.destination,
+        networkType: network,
+        type: item.utxo.type,
+        lock: item.utxo.lock,
+      })
     }),
   )
 
@@ -262,7 +263,7 @@ const sendTransaction = async (
     requireUtxo,
     keysList,
     transaction,
-    optUtxos,
+    optUtxos, // in fact that is transaction inputs
     network,
   )
   const finalWitnesses = getArraySpead(encodedWitnesses)

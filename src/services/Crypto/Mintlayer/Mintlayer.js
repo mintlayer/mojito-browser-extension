@@ -11,6 +11,8 @@ import init, {
   encode_witness,
   encode_signed_transaction,
   estimate_transaction_size,
+  encode_lock_until_time,
+  encode_output_lock_then_transfer,
   SignatureHashType,
   SourceId,
 } from './@mintlayerlib-js/wasm_crypto.js'
@@ -164,9 +166,30 @@ export const getTxInput = async (outpointSourceId, index) => {
   return encode_input_for_utxo(outpointSourceId, index)
 }
 
-export const getOutputs = async (amount, address, networkType) => {
+export const getOutputs = async ({
+  amount,
+  address,
+  networkType,
+  type = 'Transfer',
+  lock,
+}) => {
+  if (type === 'LockThenTransfer' && !lock) {
+    throw new Error('LockThenTransfer requires a lock')
+  }
+
   const networkIndex = NETWORKS[networkType]
-  return encode_output_transfer(amount, address, networkIndex)
+  if (type === 'Transfer') {
+    return encode_output_transfer(amount, address, networkIndex)
+  }
+  if (type === 'LockThenTransfer') {
+    const lockEncoded = encode_lock_until_time(BigInt(lock.UntilTime.timestamp))
+    return encode_output_lock_then_transfer(
+      amount,
+      address,
+      lockEncoded,
+      networkIndex,
+    )
+  }
 }
 
 export const getTransaction = async (inputs, outputs) => {
