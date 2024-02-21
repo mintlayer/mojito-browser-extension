@@ -13,6 +13,7 @@ import init, {
   estimate_transaction_size,
   encode_lock_until_time,
   encode_output_lock_then_transfer,
+  encode_lock_until_height,
   SignatureHashType,
   SourceId,
 } from './@mintlayerlib-js/wasm_crypto.js'
@@ -182,7 +183,13 @@ export const getOutputs = async ({
     return encode_output_transfer(amount, address, networkIndex)
   }
   if (type === 'LockThenTransfer') {
-    const lockEncoded = encode_lock_until_time(BigInt(lock.UntilTime.timestamp))
+    let lockEncoded
+    if(lock.UntilTime){
+      lockEncoded = encode_lock_until_time(BigInt(lock.UntilTime.timestamp))
+    }
+    if(lock.ForBlockCount){
+      lockEncoded = encode_lock_until_height(BigInt(lock.ForBlockCount))
+    }
     return encode_output_lock_then_transfer(
       amount,
       address,
