@@ -6,18 +6,24 @@ import { ML as MLHelpers } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 const getUtxoBalance = (utxo) => {
-  return utxo.reduce((sum, item) => {
-    if (item.utxo.type === 'Transfer') {
-      return sum + Number(item.utxo.value.amount)
-    }
-    if (item.utxo.type === 'LockThenTransfer') {
-      if (item.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
-        return sum + Number(item.utxo.value.amount)
+  return utxo.reduce((sum, item) => sum + Number(item.utxo.value.amount), 0)
+}
+
+const getUtxoAvailable = (utxo) => {
+  return utxo.map((item) => {
+    return item.reduce((acc, item) => {
+      console.log(item, 'item')
+      if (item.utxo.type === 'Transfer') {
+        acc.push(item)
       }
-      return sum
-    }
-    return sum
-  }, 0)
+      if (item.utxo.type === 'LockThenTransfer') {
+        if (item.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
+          acc.push(item)
+        }
+      }
+      return acc
+    }, [])
+  })
 }
 
 const getUtxoTransaction = (utxo) => {
@@ -174,27 +180,17 @@ const getArraySpead = (inputs) => {
 const totalUtxosAmount = (utxosToSpend) => {
   return utxosToSpend
     .flatMap((utxo) => [...utxo])
-    .reduce((sum, item) => {
-      if (item.utxo.type === 'Transfer') {
-        return sum + Number(item.utxo.value.amount)
-      }
-      if (item.utxo.type === 'LockThenTransfer') {
-        if (item.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
-          return sum + Number(item.utxo.value.amount)
-        }
-        return sum
-      }
-      return sum
-    }, 0)
+    .reduce((acc, utxo) => acc + Number(utxo.utxo.value.amount), 0)
 }
 
 const calculateFee = async (
-  utxos,
+  utxosTotal,
   address,
   changeAddress,
   amountToUse,
   network,
 ) => {
+  const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = totalUtxosAmount(utxos)
   if (totalAmount < Number(amountToUse)) {
     throw new Error('Insufficient funds')
@@ -225,13 +221,14 @@ const calculateFee = async (
 }
 
 const sendTransaction = async (
-  utxos,
+  utxosTotal,
   keysList,
   address,
   changeAddress,
   amountToUse,
   network,
 ) => {
+  const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = totalUtxosAmount(utxos)
   const fee = await calculateFee(
     utxos,
