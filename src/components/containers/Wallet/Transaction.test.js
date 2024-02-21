@@ -10,6 +10,7 @@ const TRANSCTIONSAMPLE = {
   txid: 'txid',
   value: 1,
   direction: 'in',
+  type: 'Transfer',
   date: 1588888888,
   otherPart: ['2MvTz52JfiHsDgbjRJLEY44hz8aebHGQZyb'],
 }
