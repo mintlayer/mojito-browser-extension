@@ -137,7 +137,8 @@ const SendTransaction = ({
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
-    if (!exchangeRate) return
+    // TODO process this when/if we will have currency switcher
+    // if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
       setOriginalAmount(amount.value)
       setAmountInCrypto(amount.value ? Format.BTCValue(amount.value) : '0,00')
