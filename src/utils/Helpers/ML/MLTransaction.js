@@ -10,8 +10,9 @@ const getUtxoBalance = (utxo) => {
 }
 
 const getUtxoAvailable = (utxo) => {
-  return utxo.map((item) => {
-    return item.reduce((acc, item) => {
+  const available = utxo
+    .flatMap((utxo) => [...utxo])
+    .reduce((acc, item) => {
       if (item.utxo.type === 'Transfer') {
         acc.push(item)
       }
@@ -22,7 +23,8 @@ const getUtxoAvailable = (utxo) => {
       }
       return acc
     }, [])
-  })
+
+  return available.map((item) => [item])
 }
 
 const getUtxoTransaction = (utxo) => {
@@ -191,7 +193,9 @@ const calculateFee = async (
   amountToUse,
   network,
 ) => {
+  console.log('utxosTotal', utxosTotal)
   const utxos = getUtxoAvailable(utxosTotal)
+  console.log('utxos', utxos)
   const totalAmount = totalUtxosAmount(utxos)
   if (totalAmount < Number(amountToUse)) {
     throw new Error('Insufficient funds')
