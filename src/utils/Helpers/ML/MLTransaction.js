@@ -193,9 +193,7 @@ const calculateFee = async (
   amountToUse,
   network,
 ) => {
-  console.log('utxosTotal', utxosTotal)
   const utxos = getUtxoAvailable(utxosTotal)
-  console.log('utxos', utxos)
   const totalAmount = totalUtxosAmount(utxos)
   if (totalAmount < Number(amountToUse)) {
     throw new Error('Insufficient funds')
@@ -288,6 +286,7 @@ const sendTransaction = async (
   if (!unconfirmedTransactions) {
     const transaction = {
       direction: 'out',
+      type: 'Unconfirmed',
       destAddress: address,
       value: MLHelpers.getAmountInCoins(amount),
       confirmations: 0,
