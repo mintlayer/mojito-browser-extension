@@ -5,6 +5,7 @@ import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 import { ReactComponent as LoopIcon } from '@Assets/images/icon-loop.svg'
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
 import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
+import { ReactComponent as UnconfirmedIcon } from '@Assets/images/icon-sand.svg'
 import { Format } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
 
@@ -34,7 +35,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
       data-testid="transaction"
       onClick={() => setDetailPopupOpen(true)}
     >
-      {transaction.type === 'Transfer' ? (
+      {transaction.type === 'Transfer' || !transaction.type ? (
         <div
           className={`transaction-logo-type ${
             transaction.direction === 'out' && 'transaction-logo-out'
@@ -56,6 +57,16 @@ const Transaction = ({ transaction, getConfirmations }) => {
           data-testid="transaction-icon"
         >
           <LoopIcon className="loop-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.type === 'Unconfirmed' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-unconfirmed"
+          data-testid="transaction-icon"
+        >
+          <UnconfirmedIcon className="unconfirmed-icon" />
         </div>
       ) : (
         <></>

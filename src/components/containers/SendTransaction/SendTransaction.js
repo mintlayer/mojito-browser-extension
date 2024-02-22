@@ -20,7 +20,7 @@ const SendTransaction = ({
   totalFeeCrypto: totalFeeCryptoParent,
   setTotalFeeCrypto: setTotalFeeCryptoParent,
   transactionData,
-  exchangeRate,
+  exchangeRate = 0,
   maxValueInToken,
   onSendTransaction,
   calculateTotalFee,

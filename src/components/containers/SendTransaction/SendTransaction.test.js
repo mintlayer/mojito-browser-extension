@@ -13,7 +13,7 @@ const TRANSACTIONDATASAMPLE = {
 
 test('Send Transaction', async () => {
   await act(async () => {
-    await render(
+    render(
       <AccountProvider>
         <SettingsProvider>
           <SendTransaction

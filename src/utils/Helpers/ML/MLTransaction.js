@@ -6,18 +6,25 @@ import { ML as MLHelpers } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 const getUtxoBalance = (utxo) => {
-  return utxo.reduce((sum, item) => {
-    if (item.utxo.type === 'Transfer') {
-      return sum + Number(item.utxo.value.amount)
-    }
-    if (item.utxo.type === 'LockThenTransfer') {
-      if (item.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
-        return sum + Number(item.utxo.value.amount)
+  return utxo.reduce((sum, item) => sum + Number(item.utxo.value.amount), 0)
+}
+
+const getUtxoAvailable = (utxo) => {
+  const available = utxo
+    .flatMap((utxo) => [...utxo])
+    .reduce((acc, item) => {
+      if (item.utxo.type === 'Transfer') {
+        acc.push(item)
       }
-      return sum
-    }
-    return sum
-  }, 0)
+      if (item.utxo.type === 'LockThenTransfer') {
+        if (item.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
+          acc.push(item)
+        }
+      }
+      return acc
+    }, [])
+
+  return available.map((item) => [item])
 }
 
 const getUtxoTransaction = (utxo) => {
@@ -104,7 +111,7 @@ const getTxInputs = async (outpointSourceIds) => {
 }
 
 const getTxOutput = async (amount, address, networkType) => {
-  const txOutput = await ML.getOutputs(amount, address, networkType)
+  const txOutput = await ML.getOutputs({ amount, address, networkType })
   return txOutput
 }
 
@@ -118,11 +125,13 @@ const getTransactionHex = (encodedSignedTransaction) => {
 const getOptUtxos = async (utxos, network) => {
   const opt_utxos = await Promise.all(
     utxos.map((item) => {
-      return ML.getOutputs(
-        item.utxo.value.amount,
-        item.utxo.destination,
-        network,
-      )
+      return ML.getOutputs({
+        amount: item.utxo.value.amount,
+        address: item.utxo.destination,
+        networkType: network,
+        type: item.utxo.type,
+        lock: item.utxo.lock,
+      })
     }),
   )
 
@@ -174,27 +183,17 @@ const getArraySpead = (inputs) => {
 const totalUtxosAmount = (utxosToSpend) => {
   return utxosToSpend
     .flatMap((utxo) => [...utxo])
-    .reduce((sum, item) => {
-      if (item.utxo.type === 'Transfer') {
-        return sum + Number(item.utxo.value.amount)
-      }
-      if (item.utxo.type === 'LockThenTransfer') {
-        if (item.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
-          return sum + Number(item.utxo.value.amount)
-        }
-        return sum
-      }
-      return sum
-    }, 0)
+    .reduce((acc, utxo) => acc + Number(utxo.utxo.value.amount), 0)
 }
 
 const calculateFee = async (
-  utxos,
+  utxosTotal,
   address,
   changeAddress,
   amountToUse,
   network,
 ) => {
+  const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = totalUtxosAmount(utxos)
   if (totalAmount < Number(amountToUse)) {
     throw new Error('Insufficient funds')
@@ -225,13 +224,14 @@ const calculateFee = async (
 }
 
 const sendTransaction = async (
-  utxos,
+  utxosTotal,
   keysList,
   address,
   changeAddress,
   amountToUse,
   network,
 ) => {
+  const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = totalUtxosAmount(utxos)
   const fee = await calculateFee(
     utxos,
@@ -265,7 +265,7 @@ const sendTransaction = async (
     requireUtxo,
     keysList,
     transaction,
-    optUtxos,
+    optUtxos, // in fact that is transaction inputs
     network,
   )
   const finalWitnesses = getArraySpead(encodedWitnesses)
@@ -286,6 +286,7 @@ const sendTransaction = async (
   if (!unconfirmedTransactions) {
     const transaction = {
       direction: 'out',
+      type: 'Unconfirmed',
       destAddress: address,
       value: MLHelpers.getAmountInCoins(amount),
       confirmations: 0,

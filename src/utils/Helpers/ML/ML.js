@@ -48,6 +48,7 @@ const getParsedTransactions = (transactions, addresses) => {
         txid: transaction.txid,
         fee: transaction.fee,
         isConfirmed: transaction.isConfirmed,
+        type: transaction.type,
       }
 
     let withInputUTXO = true
