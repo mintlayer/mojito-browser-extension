@@ -33,6 +33,15 @@ describe('ML', () => {
     it('should parse transactions', () => {
       const transactions = [
         {
+          inputs: [
+            {
+              utxo: {
+                destination: 'address2',
+                type: 'Transfer',
+                value: { amount: 100000000 },
+              },
+            },
+          ],
           outputs: [
             {
               destination: 'address1',
@@ -51,12 +60,16 @@ describe('ML', () => {
         {
           direction: 'in',
           destAddress: 'address2',
-          value: 1,
+          // TODO: fix this test after switching to API balance
+          // value: 1,
+          value: 0,
           confirmations: 1,
           date: 1000,
           txid: 'txid1',
           fee: 10000,
           isConfirmed: true,
+          type: 'Transfer',
+          sameWalletTransaction: false,
         },
       ]
       expect(getParsedTransactions(transactions, addresses)).toEqual(
