@@ -58,14 +58,16 @@ const SendTransactionPage = () => {
     return
   }
 
-  const mlAddressList = [
+  const mlAddressList = currentMlAddresses && [
     ...currentMlAddresses.mlReceivingAddresses,
     ...currentMlAddresses.mlChangeAddresses,
   ]
 
-  const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
+  const changeAddressesLength =
+    currentMlAddresses && currentMlAddresses.mlChangeAddresses.length
 
-  const changeAddress = currentMlAddresses.mlChangeAddresses
+  const changeAddress =
+    currentMlAddresses && currentMlAddresses.mlChangeAddresses
 
   const calculateBtcTotalFee = async (transactionInfo) => {
     const transactionSize =

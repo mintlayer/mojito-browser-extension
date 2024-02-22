@@ -2,6 +2,10 @@ import React, { useState } from 'react'
 import { format } from 'date-fns'
 
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
+import { ReactComponent as LoopIcon } from '@Assets/images/icon-loop.svg'
+import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
+import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
+import { ReactComponent as UnconfirmedIcon } from '@Assets/images/icon-sand.svg'
 import { Format } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
 
@@ -31,18 +35,62 @@ const Transaction = ({ transaction, getConfirmations }) => {
       data-testid="transaction"
       onClick={() => setDetailPopupOpen(true)}
     >
-      <div
-        className={`transaction-logo-type ${
-          transaction.direction === 'out' && 'transaction-logo-out'
-        }`}
-        data-testid="transaction-icon"
-      >
-        <ArrowIcon
-          className={`arrow-icon ${
-            transaction.direction === 'out' && 'arrow-icon-out'
+      {transaction.type === 'Transfer' || !transaction.type ? (
+        <div
+          className={`transaction-logo-type ${
+            transaction.direction === 'out' && 'transaction-logo-out'
           }`}
-        />
-      </div>
+          data-testid="transaction-icon"
+        >
+          <ArrowIcon
+            className={`arrow-icon ${
+              transaction.direction === 'out' && 'arrow-icon-out'
+            }`}
+          />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.sameWalletTransaction ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-same"
+          data-testid="transaction-icon"
+        >
+          <LoopIcon className="loop-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.type === 'Unconfirmed' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-unconfirmed"
+          data-testid="transaction-icon"
+        >
+          <UnconfirmedIcon className="unconfirmed-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.type === 'CreateStakePool' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          data-testid="transaction-icon"
+        >
+          <StakeIcon className="stake-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.type === 'DelegateStaking' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-delegate transaction-logo-type-stake"
+          data-testid="transaction-icon"
+        >
+          <DelegationIcon className="delegation-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
       <div className="transaction-detail">
         <p
           className="transaction-id"
