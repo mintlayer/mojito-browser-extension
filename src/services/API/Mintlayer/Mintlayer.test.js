@@ -95,5 +95,5 @@ test('Mintlayer API request - getAdressTransactions', async () => {
 
 test('Mintlayer API request - getAddressBalance', async () => {
   const result = await getAddressBalance(TESTNET_WALLET)
-  expect(Number(result.balanceInAtoms)).toBeGreaterThan(0)
+  expect(Number(result.balance.balanceInAtoms)).toBeGreaterThan(0)
 })

@@ -82,10 +82,16 @@ const getAddressBalance = async (address) => {
     const balance = {
       balanceInAtoms: data.coin_balance,
     }
-    return balance
+    const balanceLocked = {
+      balanceInAtoms: data.locked_coin_balance || 0,
+    }
+    return { balance, balanceLocked }
   } catch (error) {
     console.warn(`Failed to get balance for address ${address}: `, error)
-    return { balanceInAtoms: 0 }
+    return {
+      balance: { balanceInAtoms: 0 },
+      balanceLocked: { balanceInAtoms: 0 },
+    }
   }
 }
 
@@ -96,12 +102,22 @@ export const getWalletBalance = async (addresses) => {
     (acc, curr) => {
       return {
         balanceInAtoms:
-          +parseInt(acc.balanceInAtoms) + parseInt(curr.balanceInAtoms),
+          +parseInt(acc.balanceInAtoms) + parseInt(curr.balance.balanceInAtoms),
       }
     },
     { balanceInAtoms: 0 },
   )
-  return totalBalance
+  const lockedBalance = balances.reduce(
+    (acc, curr) => {
+      return {
+        balanceInAtoms:
+          +parseInt(acc.balanceInAtoms) +
+          parseInt(curr.balanceLocked.balanceInAtoms),
+      }
+    },
+    { balanceInAtoms: 0 },
+  )
+  return { totalBalance, lockedBalance }
 }
 
 const getAddressTransactionIds = async (address) => {
