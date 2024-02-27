@@ -13,14 +13,7 @@ const getUtxoAvailable = (utxo) => {
   const available = utxo
     .flatMap((utxo) => [...utxo])
     .reduce((acc, item) => {
-      if (item.utxo.type === 'Transfer') {
-        acc.push(item)
-      }
-      if (item.utxo.type === 'LockThenTransfer') {
-        if (item.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
-          acc.push(item)
-        }
-      }
+      acc.push(item)
       return acc
     }, [])
 
