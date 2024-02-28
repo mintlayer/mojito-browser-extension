@@ -12,6 +12,7 @@ const getUtxoBalance = (utxo) => {
 const getUtxoAvailable = (utxo) => {
   const available = utxo
     .flatMap((utxo) => [...utxo])
+    .filter((item) => item.utxo.value)
     .reduce((acc, item) => {
       acc.push(item)
       return acc
