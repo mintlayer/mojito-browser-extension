@@ -45,41 +45,10 @@ const useMlWalletInfo = (addresses) => {
         ...addresses.mlChangeAddresses,
       ]
 
-      // UTXO approach until api-server will provide both balances
-      const utxos = await Mintlayer.getWalletUtxos(addressList)
+      const balanceResult = await Mintlayer.getWalletBalance(addressList)
 
-      const parsedUtxos = utxos
-        .map((utxo) => JSON.parse(utxo))
-        .filter((utxo) => utxo.length > 0)
-
-      const availableAmount = parsedUtxos
-        .flatMap((utxo) => [...utxo])
-        .reduce((acc, utxo) => {
-          if (utxo.utxo.type === 'LockThenTransfer') {
-            if (utxo.utxo.lock.UntilTime.timestamp < Date.now() / 1000) {
-              return acc + Number(utxo.utxo.value.amount)
-            }
-          }
-          if (utxo.utxo.type === 'Transfer') {
-            return acc + Number(utxo.utxo.value.amount)
-          }
-          return acc
-        }, 0)
-
-      const lockedAmount = parsedUtxos
-        .flatMap((utxo) => [...utxo])
-        .reduce((acc, utxo) => {
-          if (utxo.utxo.type === 'LockThenTransfer') {
-            if (utxo.utxo.lock.UntilTime.timestamp > Date.now() / 1000) {
-              return acc + Number(utxo.utxo.value.amount)
-            }
-          }
-          return acc
-        }, 0)
-
-      // const balance = await Mintlayer.getWalletBalance(addressList)
-      const balance = { balanceInAtoms: availableAmount }
-      const balanceLocked = { balanceInAtoms: lockedAmount }
+      const balance = balanceResult.totalBalance
+      const balanceLocked = balanceResult.lockedBalance
       const balanceInCoins = ML.getAmountInCoins(balance.balanceInAtoms)
       const balanceLockedInCoins = ML.getAmountInCoins(
         balanceLocked.balanceInAtoms,
