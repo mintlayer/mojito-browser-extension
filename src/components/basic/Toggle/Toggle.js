@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './Toggle.css'
 
-const Toggle = ({ label, toggled, onClick }) => {
+const Toggle = ({ label, name = 'toggleInput', toggled, onClick }) => {
   const [isToggled, toggle] = useState(toggled)
 
   const callback = () => {
@@ -12,7 +12,7 @@ const Toggle = ({ label, toggled, onClick }) => {
   return (
     <label
       className="toggleWrapper"
-      htmlFor="toggleInput"
+      htmlFor={name}
       data-testid="toggle"
     >
       <input
@@ -20,7 +20,7 @@ const Toggle = ({ label, toggled, onClick }) => {
         type="checkbox"
         checked={isToggled}
         onChange={callback}
-        id="toggleInput"
+        id={name}
         role="switch"
         aria-checked={isToggled}
         data-testid="toggle-input"
