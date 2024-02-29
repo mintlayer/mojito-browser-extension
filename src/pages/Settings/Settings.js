@@ -1,13 +1,17 @@
 import { Header } from '@ComposedComponents'
-import { SettingsTestnet } from '@ComposedComponents'
+import { SettingsTestnet, SettingsRestoreBtcMode } from '@ComposedComponents'
 import { useNavigate } from 'react-router-dom'
 
 import './Settings.css'
 
 const SettingsList = [
   {
-    conmponent: <SettingsTestnet />,
+    component: <SettingsTestnet />,
     value: 'testnet',
+  },
+  {
+    component: <SettingsRestoreBtcMode />,
+    value: 'restoreBtcMode',
   },
 ]
 
@@ -25,7 +29,7 @@ const SettingsPage = () => {
             className="settingsItem"
             key={item.value}
           >
-            {item.conmponent}
+            {item.component}
             <div className="divider" />
           </li>
         ))}

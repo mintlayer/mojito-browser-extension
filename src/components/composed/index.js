@@ -15,6 +15,7 @@ import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import Entropy from './Entropy/Entropy'
 import WalletList from './WalletList/WalletList'
 import SettingsTestnet from './SettingsTestnet/SettingsTestnet'
+import SettingsRestoreBtcMode from './SettingsRestoreBtcMode/SettingsRestoreBtcMode'
 import AddWallet from './AddWallet/AddWallet'
 
 export {
@@ -35,5 +36,6 @@ export {
   Entropy,
   WalletList,
   SettingsTestnet,
+  SettingsRestoreBtcMode,
   AddWallet,
 }
