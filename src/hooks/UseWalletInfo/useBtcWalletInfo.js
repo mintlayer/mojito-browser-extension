@@ -20,6 +20,15 @@ const useBtcWalletInfo = (address) => {
         transactions,
         address,
       )
+      // TODO: This has been made to let users restore their btc wallet with old incorrect path
+      const mesageTransaction = {
+        date: 1709206827,
+        direction: 'info',
+        otherPart:
+          'Having problems with your balance? Go to Settings to obtain further information.',
+      }
+      parsedTransactions.unshift(mesageTransaction)
+      // ----------------------------------------------------------------------------
       setBtcTransactionsList(parsedTransactions)
     } catch (error) {
       console.error(error)

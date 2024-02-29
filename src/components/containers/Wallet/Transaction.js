@@ -8,10 +8,37 @@ import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation
 import { ReactComponent as UnconfirmedIcon } from '@Assets/images/icon-sand.svg'
 import { Format } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
+import { useNavigate } from 'react-router-dom'
 
 import TransactionDetails from './TransactionDetails'
 
 import './Transaction.css'
+
+const Info = ({ transaction }) => {
+  const navigate = useNavigate()
+  return (
+    <li
+      className="transaction"
+      data-testid="transaction"
+      onClick={() => navigate('/settings')}
+    >
+      <div
+        className="transaction-logo-type transaction-logo-type-info"
+        data-testid="transaction-icon"
+      >
+        !
+      </div>
+      <div className="transaction-detail">
+        <p
+          className="transaction-id-info"
+          data-testid="transaction-otherPart"
+        >
+          {transaction.otherPart && transaction.otherPart}
+        </p>
+      </div>
+    </li>
+  )
+}
 
 const Transaction = ({ transaction, getConfirmations }) => {
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
@@ -29,7 +56,9 @@ const Transaction = ({ transaction, getConfirmations }) => {
     return `${firstPart}...${lastPart}`
   }
 
-  return (
+  return transaction.direction === 'info' ? (
+    <Info transaction={transaction} />
+  ) : (
     <li
       className="transaction"
       data-testid="transaction"
