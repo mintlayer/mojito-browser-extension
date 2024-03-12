@@ -20,9 +20,15 @@ import {
   SendTransactionPage,
   DashboardPage,
   SettingsPage,
+  StakingPage,
 } from '@Pages'
 
-import { AccountContext, AccountProvider, SettingsProvider } from '@Contexts'
+import {
+  AccountContext,
+  AccountProvider,
+  SettingsProvider,
+  TransactionProvider,
+} from '@Contexts'
 import { ML } from '@Cryptos'
 
 import reportWebVitals from './utils/reportWebVitals'
@@ -93,6 +99,10 @@ const App = () => {
           element={<SendTransactionPage />}
         />
         <Route
+          path="/staking"
+          element={<StakingPage />}
+        />
+        <Route
           path="/wallet"
           element={<WalletPage />}
         />
@@ -122,9 +132,11 @@ root.render(
   <React.StrictMode>
     <AccountProvider>
       <SettingsProvider>
-        <MemoryRouter>
-          <App />
-        </MemoryRouter>
+        <TransactionProvider>
+          <MemoryRouter>
+            <App />
+          </MemoryRouter>
+        </TransactionProvider>
       </SettingsProvider>
     </AccountProvider>
   </React.StrictMode>,

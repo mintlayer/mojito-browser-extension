@@ -6,7 +6,7 @@ import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
-import { AccountContext, SettingsContext } from '@Contexts'
+import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 import { LocalStorageService } from '@Storage'
@@ -17,6 +17,7 @@ const WalletPage = () => {
   const navigate = useNavigate()
   const { addresses, walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
+  const { setTransactionMode } = useContext(TransactionContext)
   const btcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
@@ -32,7 +33,14 @@ const WalletPage = () => {
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
 
-  const setOpenTransactionForm = () => navigate('/send-transaction')
+  const setOpenTransactionForm = () => {
+    setTransactionMode(AppInfo.ML_TRANSACTION_MODES.TRANSACTION)
+    navigate('/send-transaction')
+  }
+  const setOpenStaking = () => {
+    setTransactionMode(AppInfo.ML_TRANSACTION_MODES.DELEGATION)
+    navigate('/staking')
+  }
 
   const walletExangeRate =
     walletType.name === 'Mintlayer' ? mlExchangeRate : btcExchangeRate
@@ -65,9 +73,17 @@ const WalletPage = () => {
             exchangeRate={walletExangeRate}
           />
           <div className="transactions-buttons-wrapper">
+            {walletType.name === 'Mintlayer' && (
+              <Wallet.TransactionButton
+                title={'Staking'}
+                mode={'staking'}
+                onClick={setOpenStaking}
+                disabled={isUncofermedTransaction}
+              />
+            )}
             <Wallet.TransactionButton
               title={'Send'}
-              up
+              mode={'up'}
               onClick={setOpenTransactionForm}
               disabled={isUncofermedTransaction}
             />

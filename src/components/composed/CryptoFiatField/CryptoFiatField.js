@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react'
 import { Button, InputBTC, InputFloat } from '@BasicComponents'
 // import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
-import { SettingsContext } from '@Contexts'
+import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
 
 import './CryptoFiatField.css'
 import { BTC, Format, NumbersHelper } from '@Helpers'
@@ -21,7 +21,9 @@ const CryptoFiatField = ({
   setAmountValidity,
   totalFeeInCrypto,
 }) => {
+  const { walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
+  const { transactionMode } = useContext(TransactionContext)
   const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
   const finalMaxValue = parsedValueInToken - totalFeeInCrypto
   const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
@@ -39,6 +41,10 @@ const CryptoFiatField = ({
   const amountErrorMessage = 'Amount set is bigger than this wallet balance.'
   const amountFormatErrorMessage = 'Amount format is invalid. Use 0,00 instead.'
   const zeroErrorMessage = 'Amount must be greater than 0.'
+  // TODO add check wallet types
+  const isDelegationMode =
+    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+    walletType.name === 'Mintlayer'
 
   useEffect(() => {
     changeValueHandle &&
@@ -111,6 +117,12 @@ const CryptoFiatField = ({
   }
 
   const maxButtonClickHandler = () => {
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+      walletType.name === 'Mintlayer'
+    ) {
+      return
+    }
     if (isTypeFiat()) {
       setValue(Format.fiatValue(maxFiatValue))
       setBottomValue(Format.BTCValue(maxFiatValue / exchangeRate))
@@ -123,6 +135,13 @@ const CryptoFiatField = ({
   }
 
   const changeHandler = ({ target: { value, parsedValue } }) => {
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+      walletType.name === 'Mintlayer'
+    ) {
+      setAmountValidity(true)
+      setValidity('valid')
+    }
     setValue(value || 0)
     updateValue(value || 0)
 
@@ -212,6 +231,7 @@ const CryptoFiatField = ({
       <Button
         extraStyleClasses={buttonExtraClasses}
         onClickHandle={maxButtonClickHandler}
+        disabled={isDelegationMode}
       >
         {buttonTitle}
       </Button>

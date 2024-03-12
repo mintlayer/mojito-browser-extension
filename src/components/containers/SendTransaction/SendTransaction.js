@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
-import { AccountContext } from '@Contexts'
+import { AccountContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
@@ -29,7 +29,9 @@ const SendTransaction = ({
   confirmTransaction,
   goBackToWallet,
 }) => {
-  const { walletType, balanceLoading, feeLoading } = useContext(AccountContext)
+  const { walletType, balanceLoading } = useContext(AccountContext)
+  const { feeLoading, transactionMode, currentDelegationInfo } =
+    useContext(TransactionContext)
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
   const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
@@ -110,6 +112,7 @@ const SendTransaction = ({
         setPassValidity(false)
         setPass('')
         setTxErrorMessage(e.message)
+        console.error(e)
         setAllowClosing(true)
         setPopupState(false)
       }
@@ -160,6 +163,10 @@ const SendTransaction = ({
   }
 
   const addressChanged = (e) => {
+    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING) {
+      setAddressTo(currentDelegationInfo.delegation_id)
+      return
+    }
     setAddressTo(e.target.value)
   }
 
@@ -168,7 +175,22 @@ const SendTransaction = ({
   }
 
   useEffect(() => {
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING &&
+      currentDelegationInfo.delegation_id
+    ) {
+      setAddressTo(currentDelegationInfo.delegation_id)
+    }
+  }, [currentDelegationInfo, transactionMode])
+
+  useEffect(() => {
     if (!isBitcoinWallet) setFeeValidity(true)
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+      walletType.name === 'Mintlayer'
+    ) {
+      setAmountValidity(true)
+    }
     setFormValidity(!!(addressValidity && amountValidity && feeValidity))
   }, [
     addressValidity,
@@ -176,6 +198,8 @@ const SendTransaction = ({
     feeValidity,
     setFormValidity,
     isBitcoinWallet,
+    transactionMode,
+    walletType,
   ])
 
   useEffect(
@@ -221,6 +245,7 @@ const SendTransaction = ({
     amountInFiat,
     originalAmount,
     setAmountValidity,
+    transactionMode,
   ])
 
   return (
