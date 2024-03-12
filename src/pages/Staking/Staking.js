@@ -79,6 +79,7 @@ const StakingPage = () => {
       transactionInfo.amount,
     ).toString()
     const unusedChangeAddress = await ML.getUnusedAddress(changeAddresses)
+    const unusedReceivingAddress = await ML.getUnusedAddress(receivingAddresses)
     const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
     const parsedUtxos = utxos
       .map((utxo) => JSON.parse(utxo))
@@ -103,10 +104,11 @@ const StakingPage = () => {
           )
         : await MLTransaction.calculateFee(
             parsedUtxos,
-            address,
+            unusedReceivingAddress,
             unusedChangeAddress,
             amountToSend,
             networkType,
+            address,
           )
     const feeInCoins = MLHelpers.getAmountInCoins(fee)
     setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
@@ -146,7 +148,6 @@ const StakingPage = () => {
     const parsedUtxos = utxos
       .map((utxo) => JSON.parse(utxo))
       .filter((utxo) => utxo.length > 0)
-    console.log('transactionMode', transactionMode)
 
     const result =
       transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING
