@@ -100,7 +100,7 @@ describe(
           expect(text.toString().trim()).contains(_amount)
         })
 
-      cy.contains('button', 'Open In Blockchain').should('be.visible')
+      cy.contains('button', 'Open In Block Explorer').should('be.visible')
       cy.get('button[class="btn popupCloseButton alternate"]').click()
     })
   },

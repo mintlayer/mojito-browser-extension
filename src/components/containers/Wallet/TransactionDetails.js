@@ -94,7 +94,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
         target="_blank"
       >
         <Button extraStyleClasses={buttonExtraStyles}>
-          Open In Blockchain
+          Open In Block Explorer
         </Button>
       </a>
     </div>
