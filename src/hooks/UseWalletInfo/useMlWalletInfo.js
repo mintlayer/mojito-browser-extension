@@ -1,13 +1,20 @@
 import { useEffect, useState, useRef, useCallback, useContext } from 'react'
 import { Mintlayer } from '@APIs'
 import { Format, ML } from '@Helpers'
-import { AccountContext } from '@Contexts'
+import { AccountContext, TransactionContext } from '@Contexts'
+import { useLocation } from 'react-router-dom'
 
 const useMlWalletInfo = (addresses) => {
-  const { walletType, setTransactionsLoading, setBalanceLoading } =
-    useContext(AccountContext)
+  const location = useLocation()
+  const isWalletPage = location.pathname === '/wallet'
+  const isStakingPage = location.pathname === '/staking'
+  const { walletType, setBalanceLoading } = useContext(AccountContext)
+  const { setTransactionsLoading, setDelegationsLoading } =
+    useContext(TransactionContext)
   const effectCalled = useRef(false)
   const [mlTransactionsList, setMlTransactionsList] = useState([])
+  const [mlDelegationList, setMlDelegationList] = useState([])
+  const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
   const [mlBalance, setMlBalance] = useState(0)
   const [mlBalanceLocked, setMlBalanceLocked] = useState(0)
   const [mlUnformattedBalance, setMlUnformattedBalance] = useState(0)
@@ -17,13 +24,14 @@ const useMlWalletInfo = (addresses) => {
 
   const getTransactions = useCallback(async () => {
     try {
-      if (!addresses || !isMintlayer) return
+      if (!addresses || !isMintlayer || !isWalletPage) return
       setTransactionsLoading(true)
       const addressList = [
         ...addresses.mlReceivingAddresses,
         ...addresses.mlChangeAddresses,
       ]
       const transactions = await Mintlayer.getWalletTransactions(addressList)
+
       const parsedTransactions = ML.getParsedTransactions(
         transactions,
         addressList,
@@ -34,7 +42,7 @@ const useMlWalletInfo = (addresses) => {
       console.error(error)
       setTransactionsLoading(false)
     }
-  }, [addresses, setTransactionsLoading, isMintlayer])
+  }, [addresses, setTransactionsLoading, isMintlayer, isWalletPage])
 
   const getBalance = useCallback(async () => {
     try {
@@ -74,21 +82,47 @@ const useMlWalletInfo = (addresses) => {
     }
   }, [addresses, setBalanceLoading])
 
+  const getDelegations = useCallback(async () => {
+    try {
+      if (!addresses || !isMintlayer || !isStakingPage) return
+      setDelegationsLoading(true)
+      const addressList = [
+        ...addresses.mlReceivingAddresses,
+        ...addresses.mlChangeAddresses,
+      ]
+      // console.log(addressList, 'addressListDelegation')
+      const delegations = await Mintlayer.getWalletDelegations(addressList)
+      const totalDelegationBalance = delegations.reduce(
+        (acc, delegation) => acc + Number(delegation.balance),
+        0,
+      )
+      setMlDelegationsBalance(totalDelegationBalance)
+      setMlDelegationList(delegations)
+      setDelegationsLoading(false)
+    } catch (error) {
+      console.error(error)
+      setDelegationsLoading(false)
+    }
+  }, [addresses, setDelegationsLoading, isMintlayer, isStakingPage])
+
   useEffect(() => {
     /* istanbul ignore next */
     if (effectCalled.current) return
     effectCalled.current = true
 
     getTransactions()
+    getDelegations()
     getBalance()
-  }, [getBalance, getTransactions])
+  }, [getBalance, getTransactions, getDelegations])
 
   return {
     mlTransactionsList,
+    mlDelegationList,
     mlBalance,
     mlBalanceLocked,
     mlUnformattedBalance,
     mlUnformattedBalanceLocked,
+    mlDelegationsBalance,
   }
 }
 
