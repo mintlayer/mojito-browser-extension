@@ -10,7 +10,7 @@ const DelegationList = ({ delegationsList }) => {
   const renderSkeletonLoaders = () =>
     Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
 
-  const renderTransactions = () => {
+  const renderDelegations = () => {
     if (!delegationsList || !delegationsList.length) {
       return (
         <li
@@ -35,7 +35,7 @@ const DelegationList = ({ delegationsList }) => {
       className="delegation-list"
       data-testid={'delegation-list'}
     >
-      {delegationsLoading ? renderSkeletonLoaders() : renderTransactions()}
+      {delegationsLoading ? renderSkeletonLoaders() : renderDelegations()}
     </ul>
   )
 }

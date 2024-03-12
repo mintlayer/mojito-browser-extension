@@ -34,33 +34,33 @@ const Delegation = ({ delegation }) => {
   return (
     <li
       className="transaction"
-      data-testid="transaction"
+      data-testid="delegation"
       onClick={() => setDetailPopupOpen(true)}
     >
       <div
         className={'transaction-logo-type transaction-logo-out'}
-        data-testid="transaction-icon"
+        data-testid="delegation-icon"
       >
         <ArrowIcon className={'arrow-icon arrow-icon-out'} />
       </div>
       <div className="transaction-detail">
         <p
           className="transaction-id"
-          data-testid="transaction-otherPart"
+          data-testid="delegation-otherPart"
         >
           {delegation && formatAddress(delegation.delegation_id)}
         </p>
         <div className="transaction-date-amount">
           <p
             className="transaction-date"
-            data-testid="transaction-date"
+            data-testid="delegation-date"
           >
             {/* TODO: update date when available from API */}
             Date: <span>12.02.2024</span>
           </p>
           <p
             className="transaction-amount"
-            data-testid="transaction-amount"
+            data-testid="delegation-amount"
           >
             Amount: <span>{delegation && Format.BTCValue(value)}</span>
           </p>

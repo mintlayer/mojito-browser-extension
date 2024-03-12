@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import TransactionsList from './TransactionsList'
-import { AccountContext } from '@Contexts'
+import { TransactionContext } from '@Contexts'
 
 const TRANSACTIONSSAMPLE = [
   {
@@ -35,9 +35,9 @@ const TRANSACTIONSSAMPLE = [
 
 test('Render transactions list component', () => {
   render(
-    <AccountContext.Provider value={{ transactionsLoading: false }}>
+    <TransactionContext.Provider value={{ transactionsLoading: false }}>
       <TransactionsList transactionsList={TRANSACTIONSSAMPLE} />
-    </AccountContext.Provider>,
+    </TransactionContext.Provider>,
   )
   const transactionsList = screen.getByTestId('transactions-list')
   const transactions = screen.getAllByTestId('transaction')
@@ -48,9 +48,9 @@ test('Render transactions list component', () => {
 
 test('Render transactions list component - empty', () => {
   render(
-    <AccountContext.Provider value={{ transactionsLoading: false }}>
+    <TransactionContext.Provider value={{ transactionsLoading: false }}>
       <TransactionsList transactionsList={[]} />
-    </AccountContext.Provider>,
+    </TransactionContext.Provider>,
   )
   const transactionsList = screen.getByTestId('transactions-list')
   const transactions = screen.getAllByTestId('transaction')
@@ -61,9 +61,9 @@ test('Render transactions list component - empty', () => {
 
 test('Render transactions list component - loading', () => {
   render(
-    <AccountContext.Provider value={{ transactionsLoading: true }}>
+    <TransactionContext.Provider value={{ transactionsLoading: true }}>
       <TransactionsList transactionsList={TRANSACTIONSSAMPLE} />
-    </AccountContext.Provider>,
+    </TransactionContext.Provider>,
   )
   const transactionsList = screen.getByTestId('transactions-list')
   const skeletonLoading = screen.getAllByTestId('card')

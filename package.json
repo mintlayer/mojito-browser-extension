@@ -118,6 +118,7 @@
       "@Assets/(.*)": "<rootDir>/src/assets/$1",
       "@BasicComponents": "<rootDir>/src/components/basic/index.js",
       "@ComposedComponents": "<rootDir>/src/components/composed/index.js",
+      "@ContainerComponents": "<rootDir>/src/components/containers/index.js",
       "@LayoutComponents": "<rootDir>/src/components/layouts/index.js",
       "@Constants": "<rootDir>/src/utils/Constants/index.js",
       "@Helpers": "<rootDir>/src/utils/Helpers/index.js",
