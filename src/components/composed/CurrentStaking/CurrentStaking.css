@@ -1,0 +1,22 @@
+.staking-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.total-staked {
+  font-size: 1rem;
+}
+
+.staking-title-wrapper {
+  margin: 30px 0 0;
+}
+
+.delegation-button-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.delegation-button {
+  width: 508px;
+}
