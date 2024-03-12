@@ -104,8 +104,18 @@ const getTxInputs = async (outpointSourceIds) => {
   return txInputs
 }
 
-const getTxOutput = async (amount, address, networkType) => {
-  const txOutput = await ML.getOutputs({ amount, address, networkType })
+const getTxOutput = async (
+  amount,
+  address,
+  networkType,
+  poolId,
+  delegationId,
+) => {
+  const txOutput = poolId
+    ? ML.getDelegationOutput(poolId, address, networkType)
+    : delegationId
+    ? ML.getStakingOutput(amount, delegationId, networkType)
+    : await ML.getOutputs({ amount, address, networkType })
   return txOutput
 }
 
@@ -177,7 +187,17 @@ const getArraySpead = (inputs) => {
 const totalUtxosAmount = (utxosToSpend) => {
   return utxosToSpend
     .flatMap((utxo) => [...utxo])
-    .reduce((acc, utxo) => acc + Number(utxo.utxo.value.amount), 0)
+    .reduce(
+      (acc, utxo) =>
+        acc + utxo.utxo.value ? Number(utxo.utxo.value.amount) : 0,
+      0,
+    )
+}
+
+const getUtxoAddress = (utxosToSpend) => {
+  return utxosToSpend
+    .flatMap((utxo) => [...utxo])
+    .map((utxo) => utxo.utxo.destination)
 }
 
 const calculateFee = async (
@@ -186,29 +206,70 @@ const calculateFee = async (
   changeAddress,
   amountToUse,
   network,
+  poolId,
+  delegationId,
 ) => {
+  const amountToUseFinale = Number(amountToUse) <= 0 ? 1 : amountToUse
   const utxos = getUtxoAvailable(utxosTotal)
-  const totalAmount = totalUtxosAmount(utxos)
-  if (totalAmount < Number(amountToUse)) {
+  const totalAmount = !poolId ? totalUtxosAmount(utxos) : 0
+  if (totalAmount < Number(amountToUse) && !poolId) {
     throw new Error('Insufficient funds')
   }
-  const requireUtxo = getTransactionUtxos(utxos, amountToUse)
+  const requireUtxo = getTransactionUtxos(utxos, amountToUseFinale)
   const transactionStrings = getUtxoTransactions(requireUtxo)
+  const addressList = getUtxoAddress(requireUtxo)
   const transactionBytes = getTransactionsBytes(transactionStrings)
   const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
   const inputs = await getTxInputs(outpointedSourceIds)
   const inputsArray = getArraySpead(inputs)
-  const txOutput = await getTxOutput(amountToUse, address, network)
+  const txOutput = await getTxOutput(
+    amountToUseFinale.toString(),
+    address,
+    network,
+    poolId,
+    delegationId,
+  )
   const changeAmount = (
-    totalUtxosAmount(requireUtxo) - Number(amountToUse)
+    totalUtxosAmount(requireUtxo) - Number(amountToUseFinale)
   ).toString()
   const txChangeOutput = await getTxOutput(changeAmount, changeAddress, network)
   const outputs = [...txOutput, ...txChangeOutput]
-  const optUtxos = await getOptUtxos(requireUtxo.flat(), network)
-  const size = await ML.getEstimatetransactionSize(
+  // const optUtxos = await getOptUtxos(requireUtxo.flat(), network)
+  const size = ML.getEstimatetransactionSize(
     inputsArray,
-    optUtxos,
+    addressList,
     outputs,
+    network,
+  )
+  const feeEstimatesResponse = await Mintlayer.getFeesEstimates()
+  const feeEstimates = JSON.parse(feeEstimatesResponse)
+  const fee = Math.ceil((Number(feeEstimates) / 1000) * size)
+
+  return fee
+}
+
+const calculateSpenDelegFee = async (address, amount, network, delegation) => {
+  const input = ML.getAccountOutpointInput(
+    delegation.delegation_id,
+    amount.toString(),
+    delegation.next_nonce,
+    network,
+  )
+  const inputsArray = [...input]
+
+  const spendÒutput = await ML.getOutputs({
+    amount: amount.toString(),
+    address: address,
+    networkType: network,
+    type: 'spendFromDelegation',
+    lock: undefined,
+  })
+  const outputs = [...spendÒutput]
+  const size = ML.getEstimatetransactionSize(
+    inputsArray,
+    [address],
+    outputs,
+    network,
   )
   const feeEstimatesResponse = await Mintlayer.getFeesEstimates()
   const feeEstimates = JSON.parse(feeEstimatesResponse)
@@ -224,6 +285,8 @@ const sendTransaction = async (
   changeAddress,
   amountToUse,
   network,
+  poolId,
+  delegationId,
 ) => {
   const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = totalUtxosAmount(utxos)
@@ -233,7 +296,14 @@ const sendTransaction = async (
     changeAddress,
     amountToUse,
     network,
+    poolId,
+    delegationId,
   )
+
+  if (fee > AppInfo.MAX_ML_FEE) {
+    throw new Error('Fee is too high, please try again later.')
+  }
+
   let amount = amountToUse
   if (totalAmount < Number(amountToUse) + fee) {
     amount = totalAmount - fee
@@ -245,7 +315,13 @@ const sendTransaction = async (
   const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
   const inputs = await getTxInputs(outpointedSourceIds)
   const inputsArray = getArraySpead(inputs)
-  const txOutput = await getTxOutput(amount.toString(), address, network)
+  const txOutput = await getTxOutput(
+    amount.toString(),
+    address,
+    network,
+    poolId,
+    delegationId,
+  )
   const changeAmount = (
     totalUtxosAmount(requireUtxo) -
     Number(amount) -
@@ -263,6 +339,85 @@ const sendTransaction = async (
     network,
   )
   const finalWitnesses = getArraySpead(encodedWitnesses)
+  const encodedSignedTransaction = await ML.getEncodedSignedTransaction(
+    transaction,
+    finalWitnesses,
+  )
+  const transactionHex = getTransactionHex(encodedSignedTransaction)
+  const result = await Mintlayer.broadcastTransaction(transactionHex)
+
+  const account = LocalStorageService.getItem('unlockedAccount')
+  const accountName = account.name
+  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
+  const unconfirmedTransactions = LocalStorageService.getItem(
+    unconfirmedTransactionString,
+  )
+
+  if (!unconfirmedTransactions) {
+    const transaction = {
+      direction: 'out',
+      type: 'Unconfirmed',
+      destAddress: address || delegationId,
+      value: MLHelpers.getAmountInCoins(amount),
+      confirmations: 0,
+      date: '',
+      txid: JSON.parse(result).tx_id,
+      fee: fee,
+      isConfirmed: false,
+    }
+    LocalStorageService.setItem(unconfirmedTransactionString, transaction)
+    return JSON.parse(result).tx_id
+  } else {
+    return 'Transaction already in progress. You have to wait for confirmation.'
+  }
+}
+
+const spendFromDelegation = async (
+  keysList,
+  address,
+  amount,
+  network,
+  delegation,
+) => {
+  const fee = await calculateSpenDelegFee(address, amount, network, delegation)
+  if (fee > AppInfo.MAX_ML_FEE) {
+    throw new Error('Fee is too high, please try again later.')
+  }
+  const amountToUse = Number(amount) + fee
+
+  if (amountToUse > Number(delegation.balance)) {
+    throw new Error('Insufficient funds')
+  }
+
+  const input = ML.getAccountOutpointInput(
+    delegation.delegation_id,
+    amountToUse.toString(),
+    delegation.next_nonce,
+    network,
+  )
+  const inputsArray = [...input]
+
+  const spendÒutput = await ML.getOutputs({
+    amount: amount.toString(),
+    address: address,
+    networkType: network,
+    type: 'spendFromDelegation',
+    lock: undefined,
+  })
+  const outputs = [...spendÒutput]
+  const optUtxos = [0]
+
+  const transaction = ML.getTransaction(inputsArray, outputs)
+
+  const encodedWitnesses = ML.getEncodedWitness(
+    keysList[address],
+    address,
+    transaction,
+    optUtxos,
+    0,
+    network,
+  )
+  const finalWitnesses = [...encodedWitnesses]
   const encodedSignedTransaction = await ML.getEncodedSignedTransaction(
     transaction,
     finalWitnesses,
@@ -311,5 +466,7 @@ export {
   getOptUtxos,
   getEncodedWitnesses,
   calculateFee,
+  calculateSpenDelegFee,
   sendTransaction,
+  spendFromDelegation,
 }

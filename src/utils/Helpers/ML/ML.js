@@ -178,9 +178,27 @@ const isMlAddressValid = (address, network) => {
     : testnetRegex.test(address)
 }
 
+const isMlPoolIdValid = (poolId, network) => {
+  const mainnetRegex = /^mpool[a-z0-9]{30,}$/
+  const testnetRegex = /^tpool[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(poolId)
+    : testnetRegex.test(poolId)
+}
+
+const isMlDelegationIdValid = (delegationId, network) => {
+  const mainnetRegex = /^mdelg[a-z0-9]{30,}$/
+  const testnetRegex = /^tdelg[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(delegationId)
+    : testnetRegex.test(delegationId)
+}
+
 export {
   getParsedTransactions,
   getAmountInAtoms,
   getAmountInCoins,
   isMlAddressValid,
+  isMlPoolIdValid,
+  isMlDelegationIdValid,
 }
