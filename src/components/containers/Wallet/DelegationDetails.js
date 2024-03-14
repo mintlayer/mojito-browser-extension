@@ -36,7 +36,7 @@ const DelegationDetails = ({ delegation }) => {
   //   ? format(new Date(delegation.date * 1000), 'dd/MM/yyyy HH:mm')
   //   : 'not confirmed'
   // TODO: replace with actual date
-  const date = '12.02.2024'
+  // const date = '12.02.2024'
   const balance = Format.BTCValue(ML.getAmountInCoins(delegation.balance))
   const buttonExtraStyles = ['delegation-details-button']
   const addressTitle = 'Spend address:'
@@ -64,10 +64,11 @@ const DelegationDetails = ({ delegation }) => {
       data-testid="delegation-details"
     >
       <div className="delegation-details-items-wrapper">
-        <DelegationDetailsItem
+        {/* TODO: update date when available from API */}
+        {/* <DelegationDetailsItem
           title={'Date:'}
           content={date}
-        />
+        /> */}
         <DelegationDetailsItem
           title={'Amount:'}
           content={balance}

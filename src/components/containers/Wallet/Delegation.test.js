@@ -29,10 +29,10 @@ describe('Delegation', () => {
     expect(screen.getByTestId('delegation-otherPart')).toHaveTextContent(
       'test_id',
     )
-    expect(screen.getByTestId('delegation-date')).toHaveTextContent(
-      // TODO: change that after API data ready
-      'Date: 12.02.2024',
-    )
+    // expect(screen.getByTestId('delegation-date')).toHaveTextContent(
+    //   // TODO: change that after API data ready
+    //   'Date: 12.02.2024',
+    // )
     expect(screen.getByTestId('delegation-amount')).toHaveTextContent(
       'Amount: 0,001',
     )

@@ -56,7 +56,7 @@ const Delegation = ({ delegation }) => {
             data-testid="delegation-date"
           >
             {/* TODO: update date when available from API */}
-            Date: <span>12.02.2024</span>
+            {/* Date: <span>12.02.2024</span> */}
           </p>
           <p
             className="transaction-amount"
