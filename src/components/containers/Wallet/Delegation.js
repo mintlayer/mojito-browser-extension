@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 // import { format } from 'date-fns'
 
-import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
+import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
 import { Format } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
 import { ML } from '@Helpers'
@@ -41,14 +41,14 @@ const Delegation = ({ delegation }) => {
         className={'transaction-logo-type transaction-logo-out'}
         data-testid="delegation-icon"
       >
-        <ArrowIcon className={'arrow-icon arrow-icon-out'} />
+        <StakeIcon className={'delegation-staking-icon'} />
       </div>
       <div className="transaction-detail">
         <p
           className="transaction-id"
           data-testid="delegation-otherPart"
         >
-          {delegation && formatAddress(delegation.delegation_id)}
+          {delegation && formatAddress(delegation.pool_id)}
         </p>
         <div className="transaction-date-amount">
           <p

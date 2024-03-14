@@ -10,7 +10,7 @@ describe('Delegation', () => {
   const mockDelegation = {
     date: 1645113600,
     balance: 100000000,
-    delegation_id: 'test_id',
+    pool_id: 'test_id',
   }
 
   it('renders correctly', () => {
@@ -27,7 +27,7 @@ describe('Delegation', () => {
     expect(screen.getByTestId('delegation')).toBeInTheDocument()
     expect(screen.getByTestId('delegation-icon')).toBeInTheDocument()
     expect(screen.getByTestId('delegation-otherPart')).toHaveTextContent(
-      'test_id',
+      'pool_id',
     )
     // expect(screen.getByTestId('delegation-date')).toHaveTextContent(
     //   // TODO: change that after API data ready
