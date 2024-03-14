@@ -18,6 +18,7 @@ import SettingsTestnet from './SettingsTestnet/SettingsTestnet'
 import SettingsRestoreBtcMode from './SettingsRestoreBtcMode/SettingsRestoreBtcMode'
 import AddWallet from './AddWallet/AddWallet'
 import CurrentStaking from './CurrentStaking/CurrentStaking'
+import HelpTooltip from './HelpTooltip/HelpTooltip'
 
 export {
   Balance,
@@ -40,4 +41,5 @@ export {
   SettingsRestoreBtcMode,
   AddWallet,
   CurrentStaking,
+  HelpTooltip,
 }

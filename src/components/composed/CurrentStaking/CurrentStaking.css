@@ -1,7 +1,6 @@
 .staking-title {
   font-size: 1.3rem;
   font-weight: 600;
-  margin-bottom: 10px;
 }
 
 .total-staked {
@@ -19,4 +18,10 @@
 
 .delegation-button {
   width: 508px;
+}
+
+.guide-wraper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
 }

@@ -1,5 +1,6 @@
 import { useContext } from 'react'
 import { Button } from '@BasicComponents'
+import { HelpTooltip } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 import { useMlWalletInfo } from '@Hooks'
@@ -17,11 +18,20 @@ const CurrentStaking = ({ addressList }) => {
   const onNextButtonClick = () => {
     setDelegationStep(2)
   }
+  const stakingGuideLink =
+    'https://mintlayer.info/en/Guides/Staking/browser-extension'
 
   return (
     <VerticalGroup>
       <div className="staking-title-wrapper">
-        <h1 className="staking-title">Your current staking</h1>
+        <div className="guide-wraper">
+          <h1 className="staking-title">Your current staking</h1>
+          <HelpTooltip
+            message="Staking guide"
+            link={stakingGuideLink}
+          />
+        </div>
+
         <p className="total-staked">
           Total staked: {ML.getAmountInCoins(mlDelegationsBalance)} ML
         </p>
