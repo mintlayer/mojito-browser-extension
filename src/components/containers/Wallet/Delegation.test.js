@@ -27,7 +27,7 @@ describe('Delegation', () => {
     expect(screen.getByTestId('delegation')).toBeInTheDocument()
     expect(screen.getByTestId('delegation-icon')).toBeInTheDocument()
     expect(screen.getByTestId('delegation-otherPart')).toHaveTextContent(
-      'pool_id',
+      'test_id',
     )
     // expect(screen.getByTestId('delegation-date')).toHaveTextContent(
     //   // TODO: change that after API data ready
