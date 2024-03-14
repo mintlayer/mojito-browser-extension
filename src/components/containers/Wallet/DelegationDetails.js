@@ -70,6 +70,10 @@ const DelegationDetails = ({ delegation }) => {
           content={date}
         /> */}
         <DelegationDetailsItem
+          title={'Pool id:'}
+          content={delegation.pool_id}
+        />
+        <DelegationDetailsItem
           title={'Amount:'}
           content={balance}
         />
