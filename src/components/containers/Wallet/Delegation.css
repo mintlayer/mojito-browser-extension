@@ -67,3 +67,14 @@
   height: 40px;
   color: #fff;
 }
+
+.delegation-actions {
+  display: flex;
+  margin-top: 10px;
+}
+
+.delegation-action-button {
+  margin-right: 10px;
+  padding: 0.8rem 0;
+  font-size: 1.2rem;
+}
