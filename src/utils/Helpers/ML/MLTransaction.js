@@ -187,11 +187,10 @@ const getArraySpead = (inputs) => {
 const totalUtxosAmount = (utxosToSpend) => {
   return utxosToSpend
     .flatMap((utxo) => [...utxo])
-    .reduce(
-      (acc, utxo) =>
-        acc + utxo.utxo.value ? Number(utxo.utxo.value.amount) : 0,
-      0,
-    )
+    .reduce((acc, utxo) => {
+      const amount = utxo.utxo.value ? Number(utxo.utxo.value.amount) : 0
+      return acc + amount
+    }, 0)
 }
 
 const getUtxoAddress = (utxosToSpend) => {

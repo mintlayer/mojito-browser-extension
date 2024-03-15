@@ -351,7 +351,14 @@ const SendTransaction = ({
             <VerticalGroup bigGap>
               <h2>Your transaction was sent.</h2>
               <h3 className="result-title">Txid: {transactionTxid}</h3>
-              <Button onClickHandle={goBackToWallet}>Back to Wallet</Button>
+              {transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW && (
+                <p>
+                  {
+                    'Your unstaked tokens will be available to use after cooling period (7,200 blocks or ~10 days)'
+                  }
+                </p>
+              )}
+              <Button onClickHandle={goBackToWallet}>Back to Dashboard</Button>
             </VerticalGroup>
           )}
         </PopUp>
