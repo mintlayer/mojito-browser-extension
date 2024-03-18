@@ -10,6 +10,8 @@ import {
 import { Electrum, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup } from '@ComposedComponents'
 
+/* global chrome */
+
 import {
   HomePage,
   CreateAccountPage,
@@ -42,7 +44,7 @@ const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout, isAccountUnlocked } = useContext(AccountContext)
+  const { logout, isAccountUnlocked, addresses } = useContext(AccountContext)
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
@@ -71,6 +73,36 @@ const App = () => {
     accountUnlocked && isConnectionAvailable(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, navigate])
+
+  // subscribe to chrome runtime messages
+  useEffect(() => {
+    const accountUnlocked = isAccountUnlocked()
+    const onMessageListener = (request, sender, sendResponse) => {
+      if (request.action === 'createDelegate') {
+        if (!accountUnlocked) {
+          return
+        }
+        // change route to staking page
+        navigate('/staking', {
+          state: { action: 'createDelegate', pool_id: request.data.pool_id },
+        })
+      }
+
+      if (request.action === 'getAddresses') {
+        // respond with addresses
+        sendResponse({
+          addresses: {
+            mainnet: addresses.mlMainnetAddress,
+            testnet: addresses.mlTestnetAddress,
+          },
+        })
+      }
+    }
+    chrome.runtime.onMessage.addListener(onMessageListener)
+    return () => {
+      chrome.runtime.onMessage.removeListener(onMessageListener)
+    }
+  }, [addresses, isAccountUnlocked])
 
   const popupButtonClickHandler = () => {
     setErrorPopupOpen(false)

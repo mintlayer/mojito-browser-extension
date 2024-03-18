@@ -10,7 +10,12 @@ import './errorMessages.css'
 
 import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
 
-const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
+const AddressField = ({
+  addressChanged,
+  errorMessage,
+  setAddressValidity,
+  preEnterAddress,
+}) => {
   const { addresses, walletType } = useContext(AccountContext)
   const { transactionMode, currentDelegationInfo } =
     useContext(TransactionContext)
@@ -20,6 +25,8 @@ const AddressField = ({ addressChanged, errorMessage, setAddressValidity }) => {
       ? currentDelegationInfo.delegation_id
       : transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
       ? currentDelegationInfo.spend_destination
+      : preEnterAddress
+      ? preEnterAddress
       : ''
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
