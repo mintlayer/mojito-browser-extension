@@ -248,6 +248,11 @@ const SendTransaction = ({
     transactionMode,
   ])
 
+  const sendTransactionButtonTitle =
+    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
+      ? 'Create'
+      : 'Send'
+
   return (
     <div className="transaction-form">
       {balanceLoading ? (
@@ -292,7 +297,7 @@ const SendTransaction = ({
               onClickHandle={openConfirmation}
               disabled={!isFormValid}
             >
-              Send
+              {sendTransactionButtonTitle}
             </Button>
           </CenteredLayout>
         </>
