@@ -10,7 +10,7 @@ chrome.runtime.onMessageExternal.addListener(function (
   if (request) {
     if (request.message) {
       if (request.message === 'version') {
-        sendResponse({ version: '1.1.8' })
+        sendResponse({ version: chrome.runtime.getManifest().version })
       }
 
       if (request.message === 'delegate') {
@@ -30,6 +30,37 @@ chrome.runtime.onMessageExternal.addListener(function (
                 chrome.runtime.sendMessage({
                   action: 'createDelegate',
                   data: { pool_id: request.pool_id },
+                })
+              }, 1000)
+            },
+          )
+        } else if (typeof popupWindowId === 'number') {
+          //The window is open, and the user clicked the button.
+          //  Focus the window.
+          chrome.windows.update(popupWindowId, { focused: true })
+        }
+      }
+
+      if (request.message === 'stake') {
+        if (popupWindowId === false) {
+          popupWindowId = true
+          chrome.windows.create(
+            {
+              url: chrome.runtime.getURL('index.html'),
+              type: 'popup',
+              width: 800,
+              height: 600,
+              focused: true,
+            },
+            function (win) {
+              popupWindowId = win.id
+              setTimeout(function () {
+                chrome.runtime.sendMessage({
+                  action: 'addStake',
+                  data: {
+                    delegation_id: request.delegation_id,
+                    amount: request.amount,
+                  },
                 })
               }, 1000)
             },

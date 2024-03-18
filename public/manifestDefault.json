@@ -26,7 +26,23 @@
     "type": "module"
   },
   "externally_connectable": {
-    "matches": ["*://localhost/*", "*://explorer.mintlayer.org/*"]
+    "matches": [
+      "*://localhost/*",
+      "*://explorer.mintlayer.org/*",
+      "*://lovelace.explorer.mintlayer.org/*",
+      "*://blockexplorer-staging.mintlayer.org/*"
+    ]
   },
-  "permissions": ["externally_connectable"]
+  "permissions": ["externally_connectable"],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://localhost/*",
+        "*://explorer.mintlayer.org/*",
+        "*://lovelace.explorer.mintlayer.org/*",
+        "*://blockexplorer-staging.mintlayer.org/*"
+      ],
+      "js": ["explorer/content-script.js"]
+    }
+  ]
 }

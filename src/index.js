@@ -88,6 +88,16 @@ const App = () => {
         })
       }
 
+      if (request.action === 'createDelegate') {
+        if (!accountUnlocked) {
+          return
+        }
+        // change route to staking page
+        navigate('/staking', {
+          state: { action: 'createDelegate', pool_id: request.data.pool_id },
+        })
+      }
+
       if (request.action === 'getAddresses') {
         // respond with addresses
         sendResponse({
