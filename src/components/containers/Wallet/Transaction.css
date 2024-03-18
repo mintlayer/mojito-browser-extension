@@ -30,6 +30,13 @@
   background: rgb(var(--color-dark-gray));
 }
 
+.transaction-logo-type-widthdrawal {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgb(var(--color-dark-gray));
+}
+
 .transaction-logo-type-same {
   position: absolute;
   z-index: 10;
