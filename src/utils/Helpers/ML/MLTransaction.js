@@ -382,10 +382,12 @@ const spendFromDelegation = async (
   if (fee > AppInfo.MAX_ML_FEE) {
     throw new Error('Fee is too high, please try again later.')
   }
-  const amountToUse = Number(amount) + fee
+  let amountToUse = Number(amount) + fee
+  let outputAmount = Number(amount)
 
   if (amountToUse > Number(delegation.balance)) {
-    throw new Error('Insufficient funds')
+    amountToUse = Number(delegation.balance)
+    outputAmount = amountToUse - fee
   }
 
   const input = ML.getAccountOutpointInput(
@@ -397,7 +399,7 @@ const spendFromDelegation = async (
   const inputsArray = [...input]
 
   const spendÒutput = await ML.getOutputs({
-    amount: amount.toString(),
+    amount: outputAmount.toString(),
     address: address,
     networkType: network,
     type: 'spendFromDelegation',
