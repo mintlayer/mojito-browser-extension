@@ -9,6 +9,7 @@ import SendTransactionPage from './SendTransaction/SendTransaction'
 import DashboardPage from './Dashboard/Dashboard'
 import SettingsPage from './Settings/Settings'
 import StakingPage from './Staking/Staking'
+import ConnectionPage from './ConnectionPage/ConnectionPage'
 
 export {
   CreateAccountPage,
@@ -22,4 +23,5 @@ export {
   DashboardPage,
   SettingsPage,
   StakingPage,
+  ConnectionPage,
 }

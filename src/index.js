@@ -23,6 +23,7 @@ import {
   DashboardPage,
   SettingsPage,
   StakingPage,
+  ConnectionPage,
 } from '@Pages'
 
 import {
@@ -45,6 +46,7 @@ const App = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { logout, isAccountUnlocked, addresses } = useContext(AccountContext)
+  const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
@@ -56,7 +58,7 @@ const App = () => {
         console.log(error)
         setErrorPopupOpen(true)
         logout()
-        navigate('/')
+        navigate('/', {state: {next: nextAfterUnlock || '/dashboard'}})
       }
     }
   }
@@ -78,6 +80,16 @@ const App = () => {
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
     const onMessageListener = (request, sender, sendResponse) => {
+      if (request.action === 'connect') {
+        if (!accountUnlocked) {
+          setNextAfterUnlock('/connect')
+          return
+        }
+        sendResponse({ connected: true })
+        // change route to staking page
+        navigate('/connect')
+      }
+
       if (request.action === 'createDelegate') {
         if (!accountUnlocked) {
           return
@@ -159,6 +171,10 @@ const App = () => {
         <Route
           path="/settings"
           element={<SettingsPage />}
+        />
+        <Route
+          path="/connect"
+          element={<ConnectionPage />}
         />
         <Route
           exact
