@@ -20,5 +20,29 @@
     "default_icon": "logo192.png",
     "default_title": "Mojito",
     "default_popup": "index.html"
-  }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "externally_connectable": {
+    "matches": [
+      "*://localhost/*",
+      "*://explorer.mintlayer.org/*",
+      "*://lovelace.explorer.mintlayer.org/*",
+      "*://blockexplorer-staging.mintlayer.org/*"
+    ]
+  },
+  "permissions": ["externally_connectable"],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://localhost/*",
+        "*://explorer.mintlayer.org/*",
+        "*://lovelace.explorer.mintlayer.org/*",
+        "*://blockexplorer-staging.mintlayer.org/*"
+      ],
+      "js": ["explorer/content-script.js"]
+    }
+  ]
 }

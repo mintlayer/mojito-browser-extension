@@ -1,5 +1,5 @@
-import { useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useContext, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { Header, CurrentStaking } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
@@ -16,13 +16,16 @@ import { Mintlayer } from '@APIs'
 import './Staking.css'
 
 const StakingPage = () => {
-  const { addresses, accountID } = useContext(AccountContext)
+  const { state } = useLocation()
+
+  const { addresses, accountID, setWalletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const {
     setFeeLoading,
     transactionMode,
     delegationStep,
     setDelegationStep,
+    setTransactionMode,
     currentDelegationInfo,
   } = useContext(TransactionContext)
   const currentMlAddresses =
@@ -31,6 +34,7 @@ const StakingPage = () => {
       : addresses.mlTestnetAddresses
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
+  const [preEnterAddress, setPreEnterAddress] = useState(null)
   const navigate = useNavigate()
   const tokenName = 'ML'
   const fiatName = 'USD'
@@ -58,6 +62,17 @@ const StakingPage = () => {
     setDelegationStep(1)
     navigate('/wallet')
   }
+
+  useEffect(() => {
+    if (state && state.action === 'createDelegate') {
+      setDelegationStep(2)
+      setTransactionMode(AppInfo.ML_TRANSACTION_MODES.DELEGATION)
+      setWalletType({ name: 'Mintlayer' })
+      setPreEnterAddress(state.pool_id)
+    } else {
+      setPreEnterAddress('')
+    }
+  }, [])
 
   if (!accountID) {
     console.log('No account id.')
@@ -209,6 +224,7 @@ const StakingPage = () => {
               isFormValid={isFormValid}
               confirmTransaction={confirmMlTransaction}
               goBackToWallet={goBackToWallet}
+              preEnterAddress={preEnterAddress}
             />
           </VerticalGroup>
         </div>

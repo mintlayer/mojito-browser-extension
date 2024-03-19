@@ -6,13 +6,17 @@ import { Login } from '@ContainerComponents'
 import { Account } from '@Entities'
 import { AccountContext } from '@Contexts'
 
-const SetAccountPasswordPage = () => {
+const SetAccountPasswordPage = ({ nextAfterUnlock }) => {
   const { setWalletInfo } = useContext(AccountContext)
   const navigate = useNavigate()
 
   const login = (addresses, id, name) => {
     setWalletInfo(addresses, id, name)
-    navigate('/dashboard')
+    if (nextAfterUnlock) {
+      navigate(nextAfterUnlock.route, { state: nextAfterUnlock.state })
+    } else {
+      navigate('/dashboard')
+    }
   }
 
   return (

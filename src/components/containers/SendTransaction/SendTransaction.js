@@ -28,6 +28,7 @@ const SendTransaction = ({
   isFormValid,
   confirmTransaction,
   goBackToWallet,
+  preEnterAddress,
 }) => {
   const { walletType, balanceLoading } = useContext(AccountContext)
   const { feeLoading, transactionMode, currentDelegationInfo } =
@@ -184,6 +185,15 @@ const SendTransaction = ({
   }, [currentDelegationInfo, transactionMode])
 
   useEffect(() => {
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+      preEnterAddress
+    ) {
+      setAddressTo(preEnterAddress)
+    }
+  }, [preEnterAddress, transactionMode])
+
+  useEffect(() => {
     if (!isBitcoinWallet) setFeeValidity(true)
     if (
       transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
@@ -263,6 +273,7 @@ const SendTransaction = ({
         <>
           <AddressField
             addressChanged={addressChanged}
+            preEnterAddress={preEnterAddress}
             setAddressValidity={setAddressValidity}
           />
 

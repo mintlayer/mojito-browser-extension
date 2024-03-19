@@ -10,6 +10,8 @@ import {
 import { Electrum, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup } from '@ComposedComponents'
 
+/* global chrome */
+
 import {
   HomePage,
   CreateAccountPage,
@@ -21,6 +23,7 @@ import {
   DashboardPage,
   SettingsPage,
   StakingPage,
+  ConnectionPage,
 } from '@Pages'
 
 import {
@@ -42,7 +45,8 @@ const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout, isAccountUnlocked } = useContext(AccountContext)
+  const { logout, isAccountUnlocked, addresses } = useContext(AccountContext)
+  const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
@@ -71,6 +75,50 @@ const App = () => {
     accountUnlocked && isConnectionAvailable(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, navigate])
+
+  // subscribe to chrome runtime messages
+  useEffect(() => {
+    const accountUnlocked = isAccountUnlocked()
+    const onMessageListener = (request, sender, sendResponse) => {
+      if (request.action === 'connect') {
+        if (!accountUnlocked) {
+          setNextAfterUnlock({ route: '/connect' })
+          return
+        }
+        sendResponse({ connected: true })
+        // change route to staking page
+        navigate('/connect')
+      }
+
+      if (request.action === 'createDelegate') {
+        if (!accountUnlocked) {
+          setNextAfterUnlock({
+            route: '/staking',
+            state: { action: 'createDelegate', pool_id: request.data.pool_id },
+          })
+          return
+        }
+        // change route to staking page
+        navigate('/staking', {
+          state: { action: 'createDelegate', pool_id: request.data.pool_id },
+        })
+      }
+
+      if (request.action === 'getAddresses') {
+        // respond with addresses
+        sendResponse({
+          addresses: {
+            mainnet: addresses.mlMainnetAddress,
+            testnet: addresses.mlTestnetAddress,
+          },
+        })
+      }
+    }
+    chrome.runtime.onMessage.addListener(onMessageListener)
+    return () => {
+      chrome.runtime.onMessage.removeListener(onMessageListener)
+    }
+  }, [addresses, isAccountUnlocked])
 
   const popupButtonClickHandler = () => {
     setErrorPopupOpen(false)
@@ -108,7 +156,7 @@ const App = () => {
         />
         <Route
           path="/set-account-password"
-          element={<SetAccountPasswordPage />}
+          element={<SetAccountPasswordPage nextAfterUnlock={nextAfterUnlock} />}
         />
         <Route
           path="/create-restore"
@@ -117,6 +165,10 @@ const App = () => {
         <Route
           path="/settings"
           element={<SettingsPage />}
+        />
+        <Route
+          path="/connect"
+          element={<ConnectionPage />}
         />
         <Route
           exact
