@@ -78,47 +78,63 @@ const App = () => {
 
   // subscribe to chrome runtime messages
   useEffect(() => {
-    const accountUnlocked = isAccountUnlocked()
-    const onMessageListener = (request, sender, sendResponse) => {
-      if (request.action === 'connect') {
-        if (!accountUnlocked) {
-          setNextAfterUnlock({ route: '/connect' })
-          return
+    try {
+      const accountUnlocked = isAccountUnlocked()
+      const onMessageListener = (request, sender, sendResponse) => {
+        if (request.action === 'connect') {
+          if (!accountUnlocked) {
+            setNextAfterUnlock({ route: '/connect' })
+            return
+          }
+          sendResponse({ connected: true })
+          // change route to staking page
+          navigate('/connect')
         }
-        sendResponse({ connected: true })
-        // change route to staking page
-        navigate('/connect')
-      }
 
-      if (request.action === 'createDelegate') {
-        if (!accountUnlocked) {
-          setNextAfterUnlock({
-            route: '/staking',
+        if (request.action === 'createDelegate') {
+          if (!accountUnlocked) {
+            setNextAfterUnlock({
+              route: '/staking',
+              state: {
+                action: 'createDelegate',
+                pool_id: request.data.pool_id,
+              },
+            })
+            return
+          }
+          // change route to staking page
+          navigate('/staking', {
             state: { action: 'createDelegate', pool_id: request.data.pool_id },
           })
-          return
         }
-        // change route to staking page
-        navigate('/staking', {
-          state: { action: 'createDelegate', pool_id: request.data.pool_id },
-        })
-      }
 
-      if (request.action === 'getAddresses') {
-        // respond with addresses
-        sendResponse({
-          addresses: {
-            mainnet: addresses.mlMainnetAddress,
-            testnet: addresses.mlTestnetAddress,
-          },
-        })
+        if (request.action === 'getAddresses') {
+          // respond with addresses
+          sendResponse({
+            addresses: {
+              mainnet: addresses.mlMainnetAddress,
+              testnet: addresses.mlTestnetAddress,
+            },
+          })
+        }
       }
+      chrome.runtime.onMessage.addListener(onMessageListener)
+      return () => {
+        chrome.runtime.onMessage.removeListener(onMessageListener)
+      }
+    } catch (e) {
+      if (
+        e.message ===
+        'Cannot read properties of undefined (reading \'addListener\')'
+      ) {
+        // not extension env
+        console.log('not extension env')
+        return
+      }
+      // other error throw further
+      throw e
     }
-    chrome.runtime.onMessage.addListener(onMessageListener)
-    return () => {
-      chrome.runtime.onMessage.removeListener(onMessageListener)
-    }
-  }, [addresses, isAccountUnlocked])
+  }, [addresses, isAccountUnlocked, navigate])
 
   const popupButtonClickHandler = () => {
     setErrorPopupOpen(false)
