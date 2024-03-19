@@ -58,7 +58,7 @@ const App = () => {
         console.log(error)
         setErrorPopupOpen(true)
         logout()
-        navigate('/', {state: {next: nextAfterUnlock || '/dashboard'}})
+        navigate('/')
       }
     }
   }
@@ -82,7 +82,7 @@ const App = () => {
     const onMessageListener = (request, sender, sendResponse) => {
       if (request.action === 'connect') {
         if (!accountUnlocked) {
-          setNextAfterUnlock('/connect')
+          setNextAfterUnlock({ route: '/connect' })
           return
         }
         sendResponse({ connected: true })
@@ -92,16 +92,10 @@ const App = () => {
 
       if (request.action === 'createDelegate') {
         if (!accountUnlocked) {
-          return
-        }
-        // change route to staking page
-        navigate('/staking', {
-          state: { action: 'createDelegate', pool_id: request.data.pool_id },
-        })
-      }
-
-      if (request.action === 'createDelegate') {
-        if (!accountUnlocked) {
+          setNextAfterUnlock({
+            route: '/staking',
+            state: { action: 'createDelegate', pool_id: request.data.pool_id },
+          })
           return
         }
         // change route to staking page
@@ -162,7 +156,7 @@ const App = () => {
         />
         <Route
           path="/set-account-password"
-          element={<SetAccountPasswordPage />}
+          element={<SetAccountPasswordPage nextAfterUnlock={nextAfterUnlock} />}
         />
         <Route
           path="/create-restore"

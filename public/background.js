@@ -3,18 +3,6 @@
 var popupWindowId = false
 var connectWindowId = false
 
-// long-lived connection
-chrome.runtime.onConnect.addListener(function (port) {
-  port.onMessage.addListener(function (msg) {
-    if (msg.action === 'connect') {
-      console.log('background connect')
-      chrome.runtime.sendMessage({
-        action: 'connect',
-      })
-    }
-  })
-})
-
 chrome.runtime.onMessageExternal.addListener(function (
   request,
   sender,
@@ -40,11 +28,14 @@ chrome.runtime.onMessageExternal.addListener(function (
             function (win) {
               connectWindowId = win.id
               setTimeout(function () {
-                chrome.runtime.sendMessage({
-                  action: 'connect',
-                }, function (response) {
-                  sendResponse(response)
-                })
+                chrome.runtime.sendMessage(
+                  {
+                    action: 'connect',
+                  },
+                  function (response) {
+                    sendResponse(response)
+                  },
+                )
               }, 1000)
             },
           )
