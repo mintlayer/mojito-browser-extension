@@ -363,7 +363,11 @@ const SendTransaction = ({
                   }
                 </p>
               )}
-              <Button onClickHandle={goBackToWallet}>Back to Dashboard</Button>
+              <Button onClickHandle={goBackToWallet}>
+                {transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
+                  ? 'Back to Staking'
+                  : 'Back to Dashboard'}
+              </Button>
             </VerticalGroup>
           )}
         </PopUp>

@@ -25,7 +25,7 @@ import './SendTransaction.css'
 const SendTransactionPage = () => {
   const { addresses, accountID, walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { setFeeLoading } = useContext(TransactionContext)
+  const { setFeeLoading, transactionMode } = useContext(TransactionContext)
   const currentBtcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
@@ -184,7 +184,9 @@ const SendTransactionPage = () => {
     return result
   }
 
-  const goBackToWallet = () => navigate('/wallet')
+  const goBackToWallet = () => {
+    transactionMode === 'delegation' ? navigate('/staking') : navigate('/wallet')
+  }
 
   return (
     <>
