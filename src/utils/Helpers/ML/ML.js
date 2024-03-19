@@ -64,7 +64,7 @@ const getParsedTransactions = (transactions, addresses) => {
             (input) => input?.utxo?.destination === address,
           ),
         ) // if at least one input is mine
-      : addresses.some(
+      : !addresses.some(
           (address) => transaction.outputs[0].destination === address,
         )
 
@@ -130,11 +130,11 @@ const getParsedTransactions = (transactions, addresses) => {
     if (
       !withInputUTXO &&
       direction === 'in' &&
-      transaction.outputs.length > 1
+      transaction.outputs.length > 0
     ) {
       destAddress = transaction.outputs.find(
         (output) => !addresses.includes(output.destination),
-      ).destination
+      )?.destination
 
       const totalValue = transaction.outputs.reduce((acc, output) => {
         if (addresses.includes(output.destination)) {
@@ -142,6 +142,16 @@ const getParsedTransactions = (transactions, addresses) => {
             return acc + output.value.amount
           }
           if (output.type === 'LockThenTransfer') {
+            if (
+              transaction.inputs[0].input?.Account?.account
+                ?.DelegationBalance[0]
+            ) {
+              type = 'Delegate Withdrawal'
+              destAddress =
+                transaction.inputs[0].input?.Account?.account
+                  ?.DelegationBalance[0]
+            }
+
             return acc + Number(output.value.amount)
           }
         }
