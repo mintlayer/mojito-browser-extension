@@ -365,7 +365,7 @@ const SendTransaction = ({
               )}
               <Button onClickHandle={goBackToWallet}>
                 {transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
-                  ? 'Back to Staking'
+                  ? 'Go to Staking'
                   : 'Back to Dashboard'}
               </Button>
             </VerticalGroup>
