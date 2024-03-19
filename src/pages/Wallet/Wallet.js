@@ -17,7 +17,8 @@ const WalletPage = () => {
   const navigate = useNavigate()
   const { addresses, walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { setTransactionMode } = useContext(TransactionContext)
+  const { setTransactionMode, setDelegationStep } =
+    useContext(TransactionContext)
   const btcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
@@ -38,6 +39,7 @@ const WalletPage = () => {
     navigate('/send-transaction')
   }
   const setOpenStaking = () => {
+    setDelegationStep(1)
     setTransactionMode(AppInfo.ML_TRANSACTION_MODES.DELEGATION)
     navigate('/staking')
   }

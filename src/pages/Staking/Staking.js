@@ -38,7 +38,10 @@ const StakingPage = () => {
     fiatName,
     tokenName,
   })
-  const goBackToWallet = () => navigate('/wallet')
+  const goBackToWallet = () => {
+    setDelegationStep(1)
+    navigate('/staking')
+  }
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
 
