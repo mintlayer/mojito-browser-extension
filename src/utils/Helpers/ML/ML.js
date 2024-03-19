@@ -38,7 +38,7 @@ const getParsedTransactions = (transactions, addresses) => {
   }
 
   return sortedTransactions.map((transaction) => {
-    if (!transaction.outputs)
+    if (!transaction.outputs) {
       return {
         direction: transaction.direction,
         destAddress: transaction.destAddress,
@@ -50,6 +50,7 @@ const getParsedTransactions = (transactions, addresses) => {
         isConfirmed: transaction.isConfirmed,
         type: transaction.type,
       }
+    }
 
     let withInputUTXO = true
 

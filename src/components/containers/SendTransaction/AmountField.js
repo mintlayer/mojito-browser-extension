@@ -31,14 +31,7 @@ const AmountField = ({
   return (
     <TransactionField>
       <label htmlFor="amount">{isDelegationMode ? '' : 'Amount:'}</label>
-      {isDelegationMode ? (
-        <p className="delegation-description">
-          To create a new delegation, you first need to send a zero-sum
-          transaction to the blockchain. After the transaction is complete,
-          please return to the "Staking" section and add funds to your newly
-          created delegation.
-        </p>
-      ) : (
+      {!isDelegationMode && (
         <CryptoFiatField
           id="amount"
           buttonTitle="Max"

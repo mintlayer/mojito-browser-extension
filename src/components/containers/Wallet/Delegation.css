@@ -78,3 +78,8 @@
   padding: 0.8rem 0;
   font-size: 1.2rem;
 }
+
+.unconfirmed-delegation-message {
+  margin-top: 10px;
+  word-break: normal;
+}

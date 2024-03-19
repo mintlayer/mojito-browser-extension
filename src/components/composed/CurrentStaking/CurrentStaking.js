@@ -5,16 +5,27 @@ import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 import { useMlWalletInfo } from '@Hooks'
 import { ML } from '@Helpers'
+import { LocalStorageService } from '@Storage'
+import { AppInfo } from '@Constants'
 
-import { TransactionContext, SettingsContext } from '@Contexts'
+import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
 
 import './CurrentStaking.css'
 
 const CurrentStaking = ({ addressList }) => {
   const { networkType } = useContext(SettingsContext)
   const { setDelegationStep } = useContext(TransactionContext)
-  const { mlDelegationList, mlDelegationsBalance } =
-    useMlWalletInfo(addressList)
+  const { walletType } = useContext(AccountContext)
+  const account = LocalStorageService.getItem('unlockedAccount')
+  const accountName = account.name
+  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
+  const isUncofermedTransaction =
+    LocalStorageService.getItem(unconfirmedTransactionString) &&
+    walletType.name === 'Mintlayer'
+
+  const revalidate = isUncofermedTransaction
+  const { mlDelegationList, mlDelegationsBalance, mlTransactionsList } =
+    useMlWalletInfo(addressList, revalidate)
 
   const onNextButtonClick = () => {
     setDelegationStep(2)
@@ -50,11 +61,15 @@ const CurrentStaking = ({ addressList }) => {
         </a>
       </div>
 
-      <Wallet.DelegationList delegationsList={mlDelegationList} />
+      <Wallet.DelegationList
+        delegationsList={mlDelegationList}
+        transactionList={mlTransactionsList}
+      />
       <div className="delegation-button-wrapper">
         <Button
           onClickHandle={onNextButtonClick}
           extraStyleClasses={['delegation-button']}
+          disabled={isUncofermedTransaction}
         >
           Create new delegation
         </Button>

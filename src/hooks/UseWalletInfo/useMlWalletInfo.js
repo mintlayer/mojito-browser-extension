@@ -1,16 +1,18 @@
 import { useEffect, useState, useRef, useCallback, useContext } from 'react'
 import { Mintlayer } from '@APIs'
 import { Format, ML } from '@Helpers'
-import { AccountContext, TransactionContext } from '@Contexts'
+import { AccountContext, TransactionContext, SettingsContext } from '@Contexts'
 import { useLocation } from 'react-router-dom'
+import { LocalStorageService } from '@Storage'
 
-const useMlWalletInfo = (addresses) => {
+const useMlWalletInfo = (addresses, revalidate) => {
   const location = useLocation()
-  const isWalletPage = location.pathname === '/wallet'
+  // const isWalletPage = location.pathname === '/wallet'
   const isStakingPage = location.pathname === '/staking'
   const { walletType, setBalanceLoading } = useContext(AccountContext)
   const { setTransactionsLoading, setDelegationsLoading } =
     useContext(TransactionContext)
+  const { networkType } = useContext(SettingsContext)
   const effectCalled = useRef(false)
   const [mlTransactionsList, setMlTransactionsList] = useState([])
   const [mlDelegationList, setMlDelegationList] = useState([])
@@ -24,7 +26,7 @@ const useMlWalletInfo = (addresses) => {
 
   const getTransactions = useCallback(async () => {
     try {
-      if (!addresses || !isMintlayer || !isWalletPage) return
+      if (!addresses || !isMintlayer) return
       setTransactionsLoading(true)
       const addressList = [
         ...addresses.mlReceivingAddresses,
@@ -42,7 +44,7 @@ const useMlWalletInfo = (addresses) => {
       console.error(error)
       setTransactionsLoading(false)
     }
-  }, [addresses, setTransactionsLoading, isMintlayer, isWalletPage])
+  }, [addresses, setTransactionsLoading, isMintlayer])
 
   const getBalance = useCallback(async () => {
     try {
@@ -90,8 +92,25 @@ const useMlWalletInfo = (addresses) => {
         ...addresses.mlReceivingAddresses,
         ...addresses.mlChangeAddresses,
       ]
-      // console.log(addressList, 'addressListDelegation')
       const delegations = await Mintlayer.getWalletDelegations(addressList)
+
+      //TODO remove this after API provide the timestamp
+      const account = LocalStorageService.getItem('unlockedAccount')
+      const accountName = account.name
+      const lastDelegationIdString = `${'lastDelegationId'}_${accountName}_${networkType}`
+      const lastDelegationPoolID = LocalStorageService.getItem(
+        lastDelegationIdString,
+      )
+      const specifiedDelegationIndex = delegations.findIndex(
+        (delegation) => delegation.pool_id === lastDelegationPoolID,
+      )
+      const specifiedDelegation = delegations.splice(
+        specifiedDelegationIndex,
+        1,
+      )[0]
+      delegations.unshift(specifiedDelegation)
+      //----------------------------------------------
+
       const totalDelegationBalance = delegations.reduce(
         (acc, delegation) => acc + Number(delegation.balance),
         0,
@@ -103,7 +122,27 @@ const useMlWalletInfo = (addresses) => {
       console.error(error)
       setDelegationsLoading(false)
     }
-  }, [addresses, setDelegationsLoading, isMintlayer, isStakingPage])
+  }, [
+    addresses,
+    setDelegationsLoading,
+    isMintlayer,
+    isStakingPage,
+    networkType,
+  ])
+
+  useEffect(() => {
+    if (isStakingPage && revalidate) {
+      getTransactions()
+      getDelegations()
+      const delegЕimer = setInterval(getDelegations, 30000)
+      const transTimer = setInterval(getTransactions, 30000)
+      return () => {
+        clearInterval(delegЕimer)
+        clearInterval(transTimer)
+      }
+    }
+    return
+  }, [getDelegations, getBalance, getTransactions, isStakingPage, revalidate])
 
   useEffect(() => {
     /* istanbul ignore next */
@@ -123,6 +162,7 @@ const useMlWalletInfo = (addresses) => {
     mlUnformattedBalance,
     mlUnformattedBalanceLocked,
     mlDelegationsBalance,
+    getDelegations,
   }
 }
 

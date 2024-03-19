@@ -3,9 +3,10 @@ import { useContext } from 'react'
 
 import { Format } from '@Helpers'
 import { Button } from '@BasicComponents'
-import { SettingsContext, TransactionContext } from '@Contexts'
+import { SettingsContext, TransactionContext, AccountContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import { ML } from '@Helpers'
+import { LocalStorageService } from '@Storage'
 
 import './DelegationDetails.css'
 
@@ -29,8 +30,15 @@ const DelegationDetailsItem = ({ title, content }) => {
 const DelegationDetails = ({ delegation }) => {
   const { setDelegationStep, setTransactionMode, setCurrentDelegationInfo } =
     useContext(TransactionContext)
+  const { walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
+  const account = LocalStorageService.getItem('unlockedAccount')
+  const accountName = account.name
+  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
+  const isUncofermedTransaction =
+    LocalStorageService.getItem(unconfirmedTransactionString) &&
+    walletType.name === 'Mintlayer'
 
   // const date = delegation.date
   //   ? format(new Date(delegation.date * 1000), 'dd/MM/yyyy HH:mm')
@@ -47,12 +55,14 @@ const DelegationDetails = ({ delegation }) => {
   }explorer.mintlayer.org/delegation/${delegation?.delegation_id}`
 
   const addFundsClickHandle = () => {
+    if (isUncofermedTransaction) return
     setCurrentDelegationInfo(delegation)
     setTransactionMode(AppInfo.ML_TRANSACTION_MODES.STAKING)
     setDelegationStep(2)
   }
 
   const withdrawClickHandle = () => {
+    if (isUncofermedTransaction) return
     setCurrentDelegationInfo(delegation)
     setTransactionMode(AppInfo.ML_TRANSACTION_MODES.WITHDRAW)
     setDelegationStep(2)
@@ -88,20 +98,24 @@ const DelegationDetails = ({ delegation }) => {
         />
       </div>
       <div>
-        <div className="delegation-action-wrapper">
-          <Button
-            extraStyleClasses={buttonExtraStyles}
-            onClickHandle={addFundsClickHandle}
-          >
-            Add funds
-          </Button>
-          <Button
-            extraStyleClasses={buttonExtraStyles}
-            onClickHandle={withdrawClickHandle}
-          >
-            Withdraw
-          </Button>
-        </div>
+        {delegation.type !== 'Unconfirmed' && (
+          <div className="delegation-action-wrapper">
+            <Button
+              extraStyleClasses={buttonExtraStyles}
+              onClickHandle={addFundsClickHandle}
+              disabled={isUncofermedTransaction}
+            >
+              Add funds
+            </Button>
+            <Button
+              extraStyleClasses={buttonExtraStyles}
+              onClickHandle={withdrawClickHandle}
+              disabled={isUncofermedTransaction}
+            >
+              Withdraw
+            </Button>
+          </div>
+        )}
         <a
           href={explorerLink}
           target="_blank"

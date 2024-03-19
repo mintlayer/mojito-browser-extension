@@ -178,6 +178,7 @@ const StakingPage = () => {
             networkType,
             transactionInformation.to,
             undefined,
+            transactionMode,
           )
 
     return result

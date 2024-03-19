@@ -286,6 +286,7 @@ const sendTransaction = async (
   network,
   poolId,
   delegationId,
+  transactionMode,
 ) => {
   const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = totalUtxosAmount(utxos)
@@ -347,6 +348,12 @@ const sendTransaction = async (
 
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
+  // TODO: remove this after API data is available
+  if (transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION) {
+    const lastDelegationIdString = `${'lastDelegationId'}_${accountName}_${network}`
+    LocalStorageService.setItem(lastDelegationIdString, poolId)
+  }
+  // -------------------------------------
   const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
   const unconfirmedTransactions = LocalStorageService.getItem(
     unconfirmedTransactionString,
@@ -363,6 +370,9 @@ const sendTransaction = async (
       txid: JSON.parse(result).tx_id,
       fee: fee,
       isConfirmed: false,
+      mode: transactionMode,
+      poolId: poolId,
+      delegationId: delegationId,
     }
     LocalStorageService.setItem(unconfirmedTransactionString, transaction)
     return JSON.parse(result).tx_id

@@ -78,7 +78,7 @@ const WalletPage = () => {
                 title={'Staking'}
                 mode={'staking'}
                 onClick={setOpenStaking}
-                disabled={isUncofermedTransaction}
+                // disabled={isUncofermedTransaction}
               />
             )}
             <Wallet.TransactionButton
