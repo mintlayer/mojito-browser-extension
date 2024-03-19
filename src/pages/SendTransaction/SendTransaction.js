@@ -185,7 +185,9 @@ const SendTransactionPage = () => {
   }
 
   const goBackToWallet = () => {
-    transactionMode === 'delegation' ? navigate('/staking') : navigate('/wallet')
+    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
+      ? navigate('/staking')
+      : navigate('/wallet')
   }
 
   return (
