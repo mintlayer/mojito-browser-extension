@@ -1,15 +1,13 @@
 import { useEffect, useState, useRef, useCallback, useContext } from 'react'
 import { Mintlayer } from '@APIs'
 import { Format, ML } from '@Helpers'
-import { AccountContext, TransactionContext, SettingsContext } from '@Contexts'
-import { LocalStorageService } from '@Storage'
+import { AccountContext, TransactionContext } from '@Contexts'
 
 const useMlWalletInfo = (addresses) => {
   // const isWalletPage = location.pathname === '/wallet'
   const { walletType, setBalanceLoading } = useContext(AccountContext)
   const { setTransactionsLoading, setDelegationsLoading } =
     useContext(TransactionContext)
-  const { networkType } = useContext(SettingsContext)
   const effectCalled = useRef(false)
   const [mlTransactionsList, setMlTransactionsList] = useState([])
   const [mlDelegationList, setMlDelegationList] = useState([])
@@ -92,50 +90,30 @@ const useMlWalletInfo = (addresses) => {
         ...addresses.mlChangeAddresses,
       ]
       const delegations = await Mintlayer.getWalletDelegations(addressList)
+      console.log(delegations, 'delegations')
       const delegation_details = await Mintlayer.getDelegationDetails(
         delegations.map((delegation) => delegation.delegation_id),
       )
 
-      delegations.forEach((delegation, index) => {
-        delegation.creation_time =
-          delegation_details[index].creation_time.timestamp
+      const mergedDelegations = delegations.map((delegation, index) => {
+        return {
+          ...delegation,
+          creation_time: delegation_details[index].creation_time.timestamp,
+        }
       })
 
-      //TODO remove this after API provide the timestamp
-      const account = LocalStorageService.getItem('unlockedAccount')
-      const accountName = account.name
-      const lastDelegationIdString = `${'lastDelegationId'}_${accountName}_${networkType}`
-      const lastDelegationPoolID = LocalStorageService.getItem(
-        lastDelegationIdString,
-      )
-      const specifiedDelegationIndex = delegations.findIndex(
-        (delegation) => delegation.pool_id === lastDelegationPoolID,
-      )
-      const specifiedDelegation = delegations.splice(
-        specifiedDelegationIndex,
-        1,
-      )[0]
-      delegations.unshift(specifiedDelegation)
-      //----------------------------------------------
-
-      const totalDelegationBalance = delegations.reduce(
+      const totalDelegationBalance = mergedDelegations.reduce(
         (acc, delegation) => acc + Number(delegation.balance),
         0,
       )
       setMlDelegationsBalance(totalDelegationBalance)
-      setMlDelegationList(delegations)
+      setMlDelegationList(mergedDelegations)
       setDelegationsLoading(false)
     } catch (error) {
       console.error(error)
       setDelegationsLoading(false)
     }
-  }, [
-    addresses,
-    setDelegationsLoading,
-    isMintlayer,
-    networkType,
-    mlDelegationList,
-  ])
+  }, [addresses, setDelegationsLoading, isMintlayer, mlDelegationList])
 
   useEffect(() => {
     /* istanbul ignore next */

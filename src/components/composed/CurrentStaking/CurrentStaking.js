@@ -29,13 +29,12 @@ const CurrentStaking = ({ addressList }) => {
     unconfirmedTransactionString,
   )
 
-  console.log(unconfirmedTransactions, 'unconfirmedTransactions')
   const revalidate =
-    isUncofermedTransaction && unconfirmedTransactions.mode === 'delegate'
+    isUncofermedTransaction &&
+    unconfirmedTransactions.mode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
   const {
     mlDelegationList,
     mlDelegationsBalance,
-    mlTransactionsList,
     getDelegations,
     getTransactions,
   } = useMlWalletInfo(addressList)
@@ -86,10 +85,7 @@ const CurrentStaking = ({ addressList }) => {
         </a>
       </div>
 
-      <Wallet.DelegationList
-        delegationsList={mlDelegationList}
-        transactionList={mlTransactionsList}
-      />
+      <Wallet.DelegationList delegationsList={mlDelegationList} />
       <div className="delegation-button-wrapper">
         <Button
           onClickHandle={onNextButtonClick}
