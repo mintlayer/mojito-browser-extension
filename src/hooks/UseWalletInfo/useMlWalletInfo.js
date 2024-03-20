@@ -90,7 +90,6 @@ const useMlWalletInfo = (addresses) => {
         ...addresses.mlChangeAddresses,
       ]
       const delegations = await Mintlayer.getWalletDelegations(addressList)
-      console.log(delegations, 'delegations')
       const delegation_details = await Mintlayer.getDelegationDetails(
         delegations.map((delegation) => delegation.delegation_id),
       )

@@ -7,7 +7,6 @@ import { AppInfo } from '@Constants'
 import './DelegationList.css'
 
 const DelegationList = ({ delegationsList }) => {
-  console.log('DelegationList', delegationsList)
   const { accountName } = useContext(AccountContext)
   const { delegationsLoading } = useContext(TransactionContext)
   const { networkType } = useContext(SettingsContext)
@@ -25,7 +24,9 @@ const DelegationList = ({ delegationsList }) => {
     )
 
   if (unconfirmedTransactions && !isUncofermedTransactionInList) {
-    if (unconfirmedTransactions.mode === AppInfo.ML_TRANSACTION_MODES.DELEGATION) {
+    if (
+      unconfirmedTransactions.mode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
+    ) {
       delegationsList.unshift(unconfirmedTransactions)
     }
   }
