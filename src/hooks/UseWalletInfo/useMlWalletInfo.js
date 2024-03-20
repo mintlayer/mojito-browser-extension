@@ -2,13 +2,10 @@ import { useEffect, useState, useRef, useCallback, useContext } from 'react'
 import { Mintlayer } from '@APIs'
 import { Format, ML } from '@Helpers'
 import { AccountContext, TransactionContext, SettingsContext } from '@Contexts'
-import { useLocation } from 'react-router-dom'
 import { LocalStorageService } from '@Storage'
 
-const useMlWalletInfo = (addresses, revalidate) => {
-  const location = useLocation()
+const useMlWalletInfo = (addresses) => {
   // const isWalletPage = location.pathname === '/wallet'
-  const isStakingPage = location.pathname === '/staking'
   const { walletType, setBalanceLoading } = useContext(AccountContext)
   const { setTransactionsLoading, setDelegationsLoading } =
     useContext(TransactionContext)
@@ -86,13 +83,23 @@ const useMlWalletInfo = (addresses, revalidate) => {
 
   const getDelegations = useCallback(async () => {
     try {
-      if (!addresses || !isMintlayer || !isStakingPage) return
-      setDelegationsLoading(true)
+      if (!addresses || !isMintlayer) return
+      if (mlDelegationList.length === 0) {
+        setDelegationsLoading(true)
+      }
       const addressList = [
         ...addresses.mlReceivingAddresses,
         ...addresses.mlChangeAddresses,
       ]
       const delegations = await Mintlayer.getWalletDelegations(addressList)
+      const delegation_details = await Mintlayer.getDelegationDetails(
+        delegations.map((delegation) => delegation.delegation_id),
+      )
+
+      delegations.forEach((delegation, index) => {
+        delegation.creation_time =
+          delegation_details[index].creation_time.timestamp
+      })
 
       //TODO remove this after API provide the timestamp
       const account = LocalStorageService.getItem('unlockedAccount')
@@ -126,23 +133,9 @@ const useMlWalletInfo = (addresses, revalidate) => {
     addresses,
     setDelegationsLoading,
     isMintlayer,
-    isStakingPage,
     networkType,
+    mlDelegationList,
   ])
-
-  useEffect(() => {
-    if (isStakingPage && revalidate) {
-      getTransactions()
-      getDelegations()
-      const delegЕimer = setInterval(getDelegations, 30000)
-      const transTimer = setInterval(getTransactions, 30000)
-      return () => {
-        clearInterval(delegЕimer)
-        clearInterval(transTimer)
-      }
-    }
-    return
-  }, [getDelegations, getBalance, getTransactions, isStakingPage, revalidate])
 
   useEffect(() => {
     /* istanbul ignore next */
@@ -163,6 +156,7 @@ const useMlWalletInfo = (addresses, revalidate) => {
     mlUnformattedBalanceLocked,
     mlDelegationsBalance,
     getDelegations,
+    getTransactions,
   }
 }
 

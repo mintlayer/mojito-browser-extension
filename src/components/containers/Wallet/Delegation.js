@@ -1,9 +1,9 @@
-import { useState, useContext } from 'react'
+import React, { useState, useContext } from 'react'
 // import { format } from 'date-fns'
 
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
 import { Format } from '@Helpers'
-import { PopUp } from '@ComposedComponents'
+import { Loading, PopUp } from '@ComposedComponents'
 import { ML } from '@Helpers'
 import { AppInfo } from '@Constants'
 import { Button } from '@BasicComponents'
@@ -14,6 +14,7 @@ import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
 import DelegationDetails from './DelegationDetails'
 
 import './Delegation.css'
+import { format } from 'date-fns'
 
 const Delegation = ({ delegation }) => {
   const { setDelegationStep, setTransactionMode, setCurrentDelegationInfo } =
@@ -73,12 +74,42 @@ const Delegation = ({ delegation }) => {
     LocalStorageService.getItem(unconfirmedTransactionString) &&
     walletType.name === 'Mintlayer'
 
+  const date = delegationOject.creation_time
+    ? format(new Date(delegationOject.creation_time * 1000), 'dd/MM/yyyy HH:mm')
+    : 'not confirmed'
+
   return (
     <li
       className="transaction"
       data-testid="delegation"
       onClick={() => setDetailPopupOpen(true)}
     >
+      {delegation.type === 'Unconfirmed' && delegation.mode === 'delegation' && (
+        <>
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              height: '3px',
+              width: '40px',
+              backgroundColor: 'rgb(17, 150, 127)',
+              animation: 'grow 60s cubic-bezier(0.4, 0, 1, 1) forwards',
+            }}
+          ></div>
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              marginTop: '-38px',
+              marginLeft: '-2px',
+              transform: 'scale(1.2)',
+            }}
+          >
+            <Loading />
+          </div>
+        </>
+      )}
       <div
         className={'transaction-logo-type transaction-logo-out'}
         data-testid="delegation-icon"
@@ -91,16 +122,31 @@ const Delegation = ({ delegation }) => {
             className="transaction-id"
             data-testid="delegation-otherPart"
           >
-            {delegation && formatAddress(delegationOject.pool_id)}
+            {delegation && delegationOject.pool_id
+              ? formatAddress(delegationOject.pool_id)
+              : ''}
           </p>
           <div className="transaction-date-amount">
-            {/* <p
-            className="transaction-date"
-            data-testid="delegation-date"
-          > */}
-            {/* TODO: update date when available from API */}
-            {/* Date: <span>12.02.2024</span> */}
-            {/* </p> */}
+            {delegationOject.creation_time && (
+              <p
+                className="transaction-date"
+                data-testid="delegation-date"
+              >
+                {/* TODO: update date when available from API */}
+                Date: <span>{date}</span>
+              </p>
+            )}
+
+            {delegation.type === 'Unconfirmed' &&
+              delegation.mode === 'delegation' && (
+                <p
+                  className="transaction-date"
+                  data-testid="delegation-date"
+                >
+                  Preparing delegation for staking
+                </p>
+              )}
+
             <p
               className="transaction-amount"
               data-testid="delegation-amount"
@@ -126,15 +172,23 @@ const Delegation = ({ delegation }) => {
               </Button>
             </div>
           )}
-          {delegation.type === 'Unconfirmed' && (
-            <>
-              <p className="unconfirmed-delegation-message">
-                The delegation hasn't been confirmed yet. Kindly wait for the
-                transaction to finalize. The page will refresh every 30 seconds
-                until confirmation.
-              </p>
-            </>
-          )}
+          {delegation.type === 'Unconfirmed' &&
+            delegation.mode === 'delegation' && (
+              <div className="delegation-actions">
+                <Button
+                  extraStyleClasses={buttonExtraStyles}
+                  disabled={true}
+                >
+                  Add funds
+                </Button>
+                <Button
+                  extraStyleClasses={buttonExtraStyles}
+                  disabled={true}
+                >
+                  Withdraw
+                </Button>
+              </div>
+            )}
         </div>
       </div>
       {detailPopupOpen && (

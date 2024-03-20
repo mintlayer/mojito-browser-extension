@@ -11,6 +11,7 @@ const MINTLAYER_ENDPOINTS = {
   POST_TRANSACTION: '/transaction',
   GET_FEES_ESTIMATES: '/feerate',
   GET_ADDRESS_DELEGATIONS: '/address/:address/delegations',
+  GET_DELEGATION: '/delegation/:delegation',
   GET_CHAIN_TIP: '/chain/tip',
 }
 
@@ -186,9 +187,22 @@ const getAddressDelegations = (address) =>
     MINTLAYER_ENDPOINTS.GET_ADDRESS_DELEGATIONS.replace(':address', address),
   )
 
+const getDelegation = (delegation) =>
+  tryServers(
+    MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(':delegation', delegation),
+  )
+
 const getWalletDelegations = (addresses) => {
   const delegationsPromises = addresses.map((address) =>
     getAddressDelegations(address),
+  )
+  return Promise.all(delegationsPromises).then((results) =>
+    results.flatMap(JSON.parse),
+  )
+}
+const getDelegationDetails = (delegations) => {
+  const delegationsPromises = delegations.map((delegation) =>
+    getDelegation(delegation),
   )
   return Promise.all(delegationsPromises).then((results) =>
     results.flatMap(JSON.parse),
@@ -219,6 +233,7 @@ export {
   getWalletUtxos,
   getAddressDelegations,
   getWalletDelegations,
+  getDelegationDetails,
   getChainTip,
   broadcastTransaction,
   getFeesEstimates,

@@ -19,7 +19,8 @@ const DelegationList = ({ delegationsList }) => {
   const isUncofermedTransactionInList =
     unconfirmedTransactions &&
     delegationsList.some(
-      (delegation) => delegation.txid === unconfirmedTransactions.txid,
+      (delegation) =>
+        delegation.delegation_id === unconfirmedTransactions.delegationId,
     )
 
   if (unconfirmedTransactions && !isUncofermedTransactionInList) {
@@ -40,6 +41,8 @@ const DelegationList = ({ delegationsList }) => {
         </li>
       )
     }
+
+    delegationsList.sort((a, b) => b.creation_time - a.creation_time)
 
     return delegationsList.map((delegation, index) => (
       <Delegation

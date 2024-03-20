@@ -11,11 +11,13 @@ import { AppInfo } from '@Constants'
 import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
 
 import './CurrentStaking.css'
+import Timer from '../../basic/Timer/Timer'
 
 const CurrentStaking = ({ addressList }) => {
   const { networkType } = useContext(SettingsContext)
   const { setDelegationStep } = useContext(TransactionContext)
   const { walletType } = useContext(AccountContext)
+
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
   const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
@@ -23,9 +25,20 @@ const CurrentStaking = ({ addressList }) => {
     LocalStorageService.getItem(unconfirmedTransactionString) &&
     walletType.name === 'Mintlayer'
 
-  const revalidate = isUncofermedTransaction
-  const { mlDelegationList, mlDelegationsBalance, mlTransactionsList } =
-    useMlWalletInfo(addressList, revalidate)
+  const unconfirmedTransactions = LocalStorageService.getItem(
+    unconfirmedTransactionString,
+  )
+
+  console.log(unconfirmedTransactions, 'unconfirmedTransactions')
+  const revalidate =
+    isUncofermedTransaction && unconfirmedTransactions.mode === 'delegate'
+  const {
+    mlDelegationList,
+    mlDelegationsBalance,
+    mlTransactionsList,
+    getDelegations,
+    getTransactions,
+  } = useMlWalletInfo(addressList)
 
   const onNextButtonClick = () => {
     setDelegationStep(2)
@@ -52,6 +65,18 @@ const CurrentStaking = ({ addressList }) => {
           <p className="total-staked">
             Total staked: {ML.getAmountInCoins(mlDelegationsBalance)} ML
           </p>
+        </div>
+        <div>
+          {revalidate && (
+            <Timer
+              onTimerEnd={() => {
+                getDelegations()
+                getTransactions()
+              }}
+              duration={10000}
+              repeat={revalidate}
+            />
+          )}
         </div>
         <a
           href={poolListLink}

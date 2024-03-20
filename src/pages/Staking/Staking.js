@@ -72,6 +72,7 @@ const StakingPage = () => {
     } else {
       setPreEnterAddress('')
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (!accountID) {

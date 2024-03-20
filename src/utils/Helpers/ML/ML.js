@@ -105,6 +105,30 @@ const getParsedTransactions = (transactions, addresses) => {
             destAddress = output.delegation_id
             return acc + Number(output.amount)
           }
+          if (output.type === 'CreateDelegationId') {
+            type = 'CreateDelegationId'
+            destAddress = output.pool_id
+            sameWalletTransaction = false
+            return acc + Number(output.amount)
+          }
+        }
+        if (addresses.includes(output.destination)) {
+          if (output.type === 'CreateStakePool') {
+            type = 'CreateStakePool'
+            destAddress = output.pool_id
+            return acc + Number(output.data.amount)
+          }
+          if (output.type === 'DelegateStaking') {
+            type = 'DelegateStaking'
+            destAddress = output.delegation_id
+            return acc + Number(output.amount)
+          }
+          if (output.type === 'CreateDelegationId') {
+            type = 'CreateDelegationId'
+            destAddress = output.pool_id
+            sameWalletTransaction = false
+            return acc + Number(0)
+          }
         }
         return acc
       }, 0)

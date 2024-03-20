@@ -83,3 +83,12 @@
   margin-top: 10px;
   word-break: normal;
 }
+
+@keyframes grow {
+  from {
+    width: 0;
+  }
+  to {
+    width: 95%;
+  }
+}

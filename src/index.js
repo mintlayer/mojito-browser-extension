@@ -10,8 +10,6 @@ import {
 import { Electrum, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup } from '@ComposedComponents'
 
-/* global chrome */
-
 import {
   HomePage,
   CreateAccountPage,
@@ -79,6 +77,7 @@ const App = () => {
   // subscribe to chrome runtime messages
   useEffect(() => {
     try {
+      const browser = require('webextension-polyfill')
       const accountUnlocked = isAccountUnlocked()
       const onMessageListener = (request, sender, sendResponse) => {
         if (request.action === 'connect') {
@@ -118,14 +117,14 @@ const App = () => {
           })
         }
       }
-      chrome.runtime.onMessage.addListener(onMessageListener)
+      browser.runtime.onMessage.addListener(onMessageListener)
       return () => {
-        chrome.runtime.onMessage.removeListener(onMessageListener)
+        browser.runtime.onMessage.removeListener(onMessageListener)
       }
     } catch (e) {
       if (
         e.message ===
-        'Cannot read properties of undefined (reading \'addListener\')'
+        'This script should only be loaded in a browser extension.'
       ) {
         // not extension env
         console.log('not extension env')
