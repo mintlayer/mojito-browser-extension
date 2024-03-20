@@ -30,21 +30,21 @@
   background: rgb(var(--color-dark-gray));
 }
 
-.transaction-logo-type-widthdrawal {
+.transaction-logo-type.transaction-logo-type-widthdrawal {
   font-size: 2.5rem;
   font-weight: 600;
   color: #fff;
   background: rgb(var(--color-dark-gray));
 }
 
-.transaction-logo-type-same {
+.transaction-logo-type.transaction-logo-type-same {
   position: absolute;
   z-index: 10;
   left: 30px;
   background: rgb(var(--color-dark-gray));
 }
 
-.transaction-logo-type-same .loop-icon {
+.transaction-logo-type.transaction-logo-type-same .loop-icon {
   transform: rotate(90deg);
   width: 45px;
   height: 45px;
@@ -55,19 +55,19 @@
   flex-grow: 1;
 }
 
-.transaction-logo-out {
+.transaction-logo-type.transaction-logo-out {
   background: rgb(var(--color-black));
 }
 
-.transaction-logo-type-stake {
+.transaction-logo-type.transaction-logo-type-stake {
   background: rgb(var(--color-dark-gray));
 }
 
-.transaction-logo-type-delegate {
+.transaction-logo-type.transaction-logo-type-delegate {
   background: rgb(var(--color-dark-gray));
 }
 
-.transaction-logo-type-unconfirmed {
+.transaction-logo-type.transaction-logo-type-unconfirmed {
   background: rgb(var(--color-dark-gray));
 }
 

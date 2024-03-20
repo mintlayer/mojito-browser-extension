@@ -38,7 +38,7 @@ const getParsedTransactions = (transactions, addresses) => {
   }
 
   return sortedTransactions.map((transaction) => {
-    if (!transaction.outputs)
+    if (!transaction.outputs) {
       return {
         direction: transaction.direction,
         destAddress: transaction.destAddress,
@@ -50,6 +50,7 @@ const getParsedTransactions = (transactions, addresses) => {
         isConfirmed: transaction.isConfirmed,
         type: transaction.type,
       }
+    }
 
     let withInputUTXO = true
 
@@ -103,6 +104,30 @@ const getParsedTransactions = (transactions, addresses) => {
             type = 'DelegateStaking'
             destAddress = output.delegation_id
             return acc + Number(output.amount)
+          }
+          if (output.type === 'CreateDelegationId') {
+            type = 'CreateDelegationId'
+            destAddress = output.pool_id
+            sameWalletTransaction = false
+            return acc + Number(output.amount)
+          }
+        }
+        if (addresses.includes(output.destination)) {
+          if (output.type === 'CreateStakePool') {
+            type = 'CreateStakePool'
+            destAddress = output.pool_id
+            return acc + Number(output.data.amount)
+          }
+          if (output.type === 'DelegateStaking') {
+            type = 'DelegateStaking'
+            destAddress = output.delegation_id
+            return acc + Number(output.amount)
+          }
+          if (output.type === 'CreateDelegationId') {
+            type = 'CreateDelegationId'
+            destAddress = output.pool_id
+            sameWalletTransaction = false
+            return acc + Number(0)
           }
         }
         return acc
@@ -188,9 +213,27 @@ const isMlAddressValid = (address, network) => {
     : testnetRegex.test(address)
 }
 
+const isMlPoolIdValid = (poolId, network) => {
+  const mainnetRegex = /^mpool[a-z0-9]{30,}$/
+  const testnetRegex = /^tpool[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(poolId)
+    : testnetRegex.test(poolId)
+}
+
+const isMlDelegationIdValid = (delegationId, network) => {
+  const mainnetRegex = /^mdelg[a-z0-9]{30,}$/
+  const testnetRegex = /^tdelg[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(delegationId)
+    : testnetRegex.test(delegationId)
+}
+
 export {
   getParsedTransactions,
   getAmountInAtoms,
   getAmountInCoins,
   isMlAddressValid,
+  isMlPoolIdValid,
+  isMlDelegationIdValid,
 }

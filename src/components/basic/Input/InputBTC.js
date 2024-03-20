@@ -1,9 +1,12 @@
+import { useEffect, useState, useContext } from 'react'
 import { AppInfo, Expressions } from '@Constants'
 import { NumbersHelper } from '@Helpers'
-import { useEffect, useState } from 'react'
 import Input from './Input'
 
+import { TransactionContext } from '@Contexts'
+
 const InputBTC = (props) => {
+  const { transactionMode } = useContext(TransactionContext)
   const mask = Expressions.FIELDS.BTC.getExpression(
     AppInfo.decimalSeparator,
     AppInfo.thousandsSeparator,
@@ -87,6 +90,7 @@ const InputBTC = (props) => {
       mask={mask}
       getMaskedValue={getMaskedValue}
       justNumbers
+      disabled={transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION}
     />
   )
 }

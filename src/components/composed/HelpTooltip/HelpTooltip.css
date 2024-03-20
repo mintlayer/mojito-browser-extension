@@ -1,0 +1,23 @@
+.help-link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 0 0 5px;
+  width: 25px;
+  height: 25px;
+  background: black;
+  color: wheat;
+  border-radius: 50%;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.help-link.no-link {
+  cursor: default;
+}
+
+.link-wrapper {
+  display: flex;
+  position: relative;
+  overflow: visible;
+}

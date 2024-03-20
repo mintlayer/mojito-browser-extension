@@ -61,7 +61,7 @@ describe('View transactions page', () => {
         .click()
         .then(() => {
           cy.wait(1000)
-          cy.contains('button', 'Open In Blockchain').should('be.visible')
+          cy.contains('button', 'Open In Block Explorer').should('be.visible')
           cy.get('button.btn.popupCloseButton.alternate').click()
         })
     })

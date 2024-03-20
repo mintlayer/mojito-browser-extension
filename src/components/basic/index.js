@@ -11,6 +11,7 @@ import Toggle from './Toggle/Toggle'
 import Logo from './Logo/Logo'
 import LogoRound from './LogoRound/LogoRound'
 import SkeletonLoader from './SkeletonLoader/SkeletonLoader'
+import Tooltip from './Tooltip/Tooltip'
 
 export {
   Arc,
@@ -26,4 +27,5 @@ export {
   Logo,
   LogoRound,
   SkeletonLoader,
+  Tooltip,
 }

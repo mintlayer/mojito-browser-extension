@@ -1,11 +1,12 @@
 import init, {
   public_key_from_private_key,
   make_receiving_address,
-  pubkey_to_string,
+  pubkey_to_pubkeyhash_address,
   make_default_account_privkey,
   make_change_address,
   encode_outpoint_source_id,
   encode_input_for_utxo,
+  encode_input_for_withdraw_from_delegation,
   encode_output_transfer,
   encode_transaction,
   encode_witness,
@@ -14,9 +15,14 @@ import init, {
   encode_lock_until_time,
   encode_output_lock_then_transfer,
   encode_lock_until_height,
+  encode_lock_for_block_count,
+  encode_output_create_delegation,
+  encode_output_delegate_staking,
+  staking_pool_spend_maturity_block_count,
   SignatureHashType,
   SourceId,
-} from './@mintlayerlib-js/wasm_crypto.js'
+  Amount,
+} from './@mintlayerlib-js/wasm_wrappers.js'
 
 import { Mintlayer } from '@APIs'
 
@@ -31,25 +37,25 @@ export const initWasm = async () => {
   await init()
 }
 
-export const getPrivateKeyFromMnemonic = async (mnemonic, networkType) => {
+export const getPrivateKeyFromMnemonic = (mnemonic, networkType) => {
   const networkIndex = NETWORKS[networkType]
   return make_default_account_privkey(mnemonic, networkIndex)
 }
 
-export const getReceivingAddress = async (defAccPrivateKey, keyIndex) => {
+export const getReceivingAddress = (defAccPrivateKey, keyIndex) => {
   return make_receiving_address(defAccPrivateKey, keyIndex)
 }
 
-export const getChangeAddress = async (defAccPrivateKey, keyIndex) => {
+export const getChangeAddress = (defAccPrivateKey, keyIndex) => {
   return make_change_address(defAccPrivateKey, keyIndex)
 }
 
-export const getPublicKeyFromPrivate = async (privateKey) => {
+export const getPublicKeyFromPrivate = (privateKey) => {
   return public_key_from_private_key(privateKey)
 }
 
-export const getPubKeyString = async (pubkey, network) => {
-  return pubkey_to_string(pubkey, network)
+export const getPubKeyString = (pubkey, network) => {
+  return pubkey_to_pubkeyhash_address(pubkey, network)
 }
 
 export const getAddressFromPubKey = (pubKey, networkType) => {
@@ -57,24 +63,18 @@ export const getAddressFromPubKey = (pubKey, networkType) => {
   return getPubKeyString(pubKey, networkIndex)
 }
 
-export const getWalletPrivKeysList = async (
-  mlPrivateKey,
-  network,
-  offset = 21,
-) => {
-  const generatePrivKeys = async (addressGenerator) => {
-    const privKeys = await Promise.all(
-      Array.from({ length: offset }, (_, i) =>
-        addressGenerator(mlPrivateKey, i),
-      ),
+export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
+  const generatePrivKeys = (addressGenerator) => {
+    const privKeys = Array.from({ length: offset }, (_, i) =>
+      addressGenerator(mlPrivateKey, i),
     )
 
-    const publicKeys = await Promise.all(
-      privKeys.map((privKey) => getPublicKeyFromPrivate(privKey)),
+    const publicKeys = privKeys.map((privKey) =>
+      getPublicKeyFromPrivate(privKey),
     )
 
-    const addresses = await Promise.all(
-      publicKeys.map((pubKey) => getAddressFromPubKey(pubKey, network)),
+    const addresses = publicKeys.map((pubKey) =>
+      getAddressFromPubKey(pubKey, network),
     )
 
     const addressPrivKeyPairs = addresses.reduce((acc, address, index) => {
@@ -85,10 +85,10 @@ export const getWalletPrivKeysList = async (
     return addressPrivKeyPairs
   }
 
-  const [mlReceivingPrivKeys, mlChangePrivKeys] = await Promise.all([
+  const [mlReceivingPrivKeys, mlChangePrivKeys] = [
     generatePrivKeys(getReceivingAddress),
     generatePrivKeys(getChangeAddress),
-  ])
+  ]
 
   return { mlReceivingPrivKeys, mlChangePrivKeys }
 }
@@ -106,31 +106,27 @@ export const getWalletAddresses = async (
   network,
   offset = 21,
 ) => {
-  const generateAddresses = async (addressGenerator) => {
-    const privKeys = await Promise.all(
-      Array.from({ length: offset }, (_, i) =>
-        addressGenerator(mlPrivateKey, i),
-      ),
+  const generateAddresses = (addressGenerator) => {
+    const privKeys = Array.from({ length: offset }, (_, i) =>
+      addressGenerator(mlPrivateKey, i),
     )
 
-    const publicKeys = await Promise.all(
-      privKeys.map((address) => getPublicKeyFromPrivate(address)),
+    const publicKeys = privKeys.map((address) =>
+      getPublicKeyFromPrivate(address),
     )
 
-    return Promise.all(
-      publicKeys.map((pubKey) => getAddressFromPubKey(pubKey, network)),
-    )
+    return publicKeys.map((pubKey) => getAddressFromPubKey(pubKey, network))
   }
 
   const checkAndGenerateAddresses = async (addressGenerator) => {
-    let addresses = await generateAddresses(addressGenerator)
+    let addresses = generateAddresses(addressGenerator)
     let allUsed = await Promise.all(
       addresses.map((address) => checkIfAddressUsed(address)),
     )
 
     while (allUsed.every((used) => used)) {
       offset += 20
-      addresses = await generateAddresses(addressGenerator)
+      addresses = generateAddresses(addressGenerator)
       allUsed = await Promise.all(
         addresses.map((address) => checkIfAddressUsed(address)),
       )
@@ -159,11 +155,11 @@ export const getUnusedAddress = async (addresses) => {
   }
 }
 
-export const getEncodedOutpointSourceId = async (txId) => {
+export const getEncodedOutpointSourceId = (txId) => {
   return encode_outpoint_source_id(txId, SourceId.Transaction)
 }
 
-export const getTxInput = async (outpointSourceId, index) => {
+export const getTxInput = (outpointSourceId, index) => {
   return encode_input_for_utxo(outpointSourceId, index)
 }
 
@@ -177,34 +173,49 @@ export const getOutputs = async ({
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')
   }
+  const amountInstace = Amount.from_atoms(amount)
 
   const networkIndex = NETWORKS[networkType]
   if (type === 'Transfer') {
-    return encode_output_transfer(amount, address, networkIndex)
+    return encode_output_transfer(amountInstace, address, networkIndex)
   }
   if (type === 'LockThenTransfer') {
     let lockEncoded
-    if(lock.UntilTime){
+    if (lock.UntilTime) {
       lockEncoded = encode_lock_until_time(BigInt(lock.UntilTime.timestamp))
     }
-    if(lock.ForBlockCount){
+    if (lock.ForBlockCount) {
       lockEncoded = encode_lock_until_height(BigInt(lock.ForBlockCount))
     }
     return encode_output_lock_then_transfer(
-      amount,
+      amountInstace,
       address,
       lockEncoded,
       networkIndex,
     )
   }
+  if (type === 'spendFromDelegation') {
+    const chainTip = await Mintlayer.getChainTip()
+    const stakingMaturity = getStakingMaturity(
+      JSON.parse(chainTip).block_height,
+      networkType,
+    )
+    const encodedLockForBlock = encode_lock_for_block_count(stakingMaturity)
+    return encode_output_lock_then_transfer(
+      amountInstace,
+      address,
+      encodedLockForBlock,
+      networkIndex,
+    )
+  }
 }
 
-export const getTransaction = async (inputs, outputs) => {
+export const getTransaction = (inputs, outputs) => {
   const flags = BigInt(0)
   return encode_transaction(inputs, outputs, flags)
 }
 
-export const getEncodedWitness = async (
+export const getEncodedWitness = (
   privateKey,
   address,
   transaction,
@@ -225,10 +236,60 @@ export const getEncodedWitness = async (
   )
 }
 
-export const getEncodedSignedTransaction = async (transaction, witness) => {
+export const getEncodedSignedTransaction = (transaction, witness) => {
   return encode_signed_transaction(transaction, witness)
 }
 
-export const getEstimatetransactionSize = async (inputs, optUtxos, outputs) => {
-  return estimate_transaction_size(inputs, optUtxos, outputs)
+export const getEstimatetransactionSize = (
+  inputs,
+  inputAddresses,
+  outputs,
+  networkType,
+) => {
+  const networkIndex = NETWORKS[networkType]
+  return estimate_transaction_size(
+    inputs,
+    inputAddresses,
+    outputs,
+    networkIndex,
+  )
+}
+
+export const getDelegationOutput = (poolId, address, networkType) => {
+  const networkIndex = NETWORKS[networkType]
+  return encode_output_create_delegation(poolId, address, networkIndex)
+}
+
+export const getStakingOutput = (amount, delegationId, networkType) => {
+  const networkIndex = NETWORKS[networkType]
+  const amountInstace = Amount.from_atoms(amount)
+  return encode_output_delegate_staking(
+    amountInstace,
+    delegationId,
+    networkIndex,
+  )
+}
+
+export const getStakingMaturity = (blockHeight, networkType) => {
+  const networkIndex = NETWORKS[networkType]
+  return staking_pool_spend_maturity_block_count(
+    BigInt(Number(blockHeight)),
+    networkIndex,
+  )
+}
+
+export const getAccountOutpointInput = (
+  delegationId,
+  amount,
+  nonce,
+  networType,
+) => {
+  const networkIndex = NETWORKS[networType]
+  const amountInstace = Amount.from_atoms(amount)
+  return encode_input_for_withdraw_from_delegation(
+    delegationId,
+    amountInstace,
+    BigInt(Number(nonce)),
+    networkIndex,
+  )
 }

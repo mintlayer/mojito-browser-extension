@@ -18,6 +18,17 @@ const NETWORK_TYPES = {
   MAINNET: 'mainnet',
   TESTNET: 'testnet',
 }
+const ML_TRANSACTION_TYPES = {
+  TRANSACTION: 'Transfer',
+  CREATE_DELEGATION: 'CreateDelegationId',
+  STAKING: 'DelegateStaking',
+}
+const ML_TRANSACTION_MODES = {
+  TRANSACTION: 'transaction',
+  DELEGATION: 'delegation',
+  STAKING: 'staking',
+  WITHDRAW: 'withdraw',
+}
 const walletTypes = [
   {
     name: 'Bitcoin',
@@ -31,6 +42,8 @@ const walletTypes = [
   },
 ]
 
+const MAX_ML_FEE = 500000000000
+
 export {
   appAccounts,
   decimalSeparator,
@@ -43,4 +56,7 @@ export {
   ML_ATOMS_PER_COIN,
   DEFAULT_ML_WALLET_OFFSET,
   UNCONFIRMED_TRANSACTION_NAME,
+  ML_TRANSACTION_TYPES,
+  ML_TRANSACTION_MODES,
+  MAX_ML_FEE,
 }

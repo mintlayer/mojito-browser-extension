@@ -1,6 +1,15 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory
+export function __wbg_amount_free(a: number): void
+export function amount_from_atoms(a: number, b: number): number
+export function amount_atoms(a: number, b: number): void
+export function encode_outpoint_source_id(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+): void
 export function make_private_key(a: number): void
 export function make_default_account_privkey(
   a: number,
@@ -20,7 +29,7 @@ export function make_change_address(
   c: number,
   d: number,
 ): void
-export function pubkey_to_string(
+export function pubkey_to_pubkeyhash_address(
   a: number,
   b: number,
   c: number,
@@ -31,14 +40,14 @@ export function public_key_from_private_key(
   b: number,
   c: number,
 ): void
-export function sign_message(
+export function sign_message_for_spending(
   a: number,
   b: number,
   c: number,
   d: number,
   e: number,
 ): void
-export function verify_signature(
+export function verify_signature_for_spending(
   a: number,
   b: number,
   c: number,
@@ -53,8 +62,11 @@ export function encode_output_transfer(
   c: number,
   d: number,
   e: number,
-  f: number,
 ): void
+export function staking_pool_spend_maturity_block_count(
+  a: number,
+  b: number,
+): number
 export function encode_lock_for_block_count(a: number, b: number): void
 export function encode_lock_for_seconds(a: number, b: number): void
 export function encode_lock_until_time(a: number, b: number): void
@@ -67,9 +79,8 @@ export function encode_output_lock_then_transfer(
   e: number,
   f: number,
   g: number,
-  h: number,
 ): void
-export function encode_output_burn(a: number, b: number, c: number): void
+export function encode_output_coin_burn(a: number, b: number): void
 export function encode_output_create_delegation(
   a: number,
   b: number,
@@ -84,7 +95,6 @@ export function encode_output_delegate_staking(
   c: number,
   d: number,
   e: number,
-  f: number,
 ): void
 export function encode_stake_pool_data(
   a: number,
@@ -98,8 +108,6 @@ export function encode_stake_pool_data(
   i: number,
   j: number,
   k: number,
-  l: number,
-  m: number,
 ): void
 export function encode_output_create_stake_pool(
   a: number,
@@ -122,18 +130,11 @@ export function encode_output_issue_fungible_token(
   j: number,
   k: number,
   l: number,
-  m: number,
 ): void
 export function encode_output_data_deposit(
   a: number,
   b: number,
   c: number,
-): void
-export function encode_outpoint_source_id(
-  a: number,
-  b: number,
-  c: number,
-  d: number,
 ): void
 export function encode_input_for_utxo(
   a: number,
@@ -141,14 +142,13 @@ export function encode_input_for_utxo(
   c: number,
   d: number,
 ): void
-export function encode_input_for_account_outpoint(
+export function encode_input_for_withdraw_from_delegation(
   a: number,
   b: number,
   c: number,
   d: number,
   e: number,
   f: number,
-  g: number,
 ): void
 export function estimate_transaction_size(
   a: number,
@@ -158,6 +158,7 @@ export function estimate_transaction_size(
   e: number,
   f: number,
   g: number,
+  h: number,
 ): void
 export function encode_transaction(
   a: number,
@@ -189,18 +190,22 @@ export function encode_signed_transaction(
   d: number,
   e: number,
 ): void
-export function rustsecp256k1_v0_9_0_context_create(a: number): number
-export function rustsecp256k1_v0_9_0_context_destroy(a: number): void
-export function rustsecp256k1_v0_9_0_default_illegal_callback_fn(
+export function effective_pool_balance(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+): void
+export function rustsecp256k1_v0_9_2_context_create(a: number): number
+export function rustsecp256k1_v0_9_2_context_destroy(a: number): void
+export function rustsecp256k1_v0_9_2_default_illegal_callback_fn(
   a: number,
   b: number,
 ): void
-export function rustsecp256k1_v0_9_0_default_error_callback_fn(
+export function rustsecp256k1_v0_9_2_default_error_callback_fn(
   a: number,
   b: number,
 ): void
-export function __wbindgen_add_to_stack_pointer(a: number): number
-export function __wbindgen_free(a: number, b: number, c: number): void
 export function __wbindgen_malloc(a: number, b: number): number
 export function __wbindgen_realloc(
   a: number,
@@ -208,4 +213,6 @@ export function __wbindgen_realloc(
   c: number,
   d: number,
 ): number
+export function __wbindgen_add_to_stack_pointer(a: number): number
+export function __wbindgen_free(a: number, b: number, c: number): void
 export function __wbindgen_exn_store(a: number): void

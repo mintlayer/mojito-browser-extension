@@ -125,6 +125,16 @@ const Transaction = ({ transaction, getConfirmations }) => {
       ) : (
         <></>
       )}
+      {transaction.type === 'CreateDelegationId' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          data-testid="transaction-icon"
+        >
+          <StakeIcon className="stake-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
       {transaction.type === 'DelegateStaking' ? (
         <div
           className="transaction-logo-type transaction-logo-type-delegate transaction-logo-type-stake"

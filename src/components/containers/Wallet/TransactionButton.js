@@ -1,10 +1,11 @@
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
+import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
 
 import { Button } from '@BasicComponents'
 
 import './TransactionButton.css'
 
-const TransactionButton = ({ title, up, onClick, disabled }) => {
+const TransactionButton = ({ title, mode, onClick, disabled }) => {
   const buttonExtraClasses = ['button-transaction']
   const buttonUpExtraClasses = ['button-transaction', 'button-transaction-up']
   return (
@@ -13,11 +14,17 @@ const TransactionButton = ({ title, up, onClick, disabled }) => {
       data-testid={'transaction-button-container'}
     >
       <Button
-        extraStyleClasses={up ? buttonUpExtraClasses : buttonExtraClasses}
+        extraStyleClasses={
+          mode === 'up' ? buttonUpExtraClasses : buttonExtraClasses
+        }
         onClickHandle={onClick}
         disabled={disabled}
       >
-        <ArrowIcon className="icon-arrow" />
+        {mode === 'staking' ? (
+          <DelegationIcon className="staking-icon" />
+        ) : (
+          <ArrowIcon className="icon-arrow" />
+        )}
       </Button>
       {title && <span data-testid={'transaction-button-title'}>{title}</span>}
     </div>

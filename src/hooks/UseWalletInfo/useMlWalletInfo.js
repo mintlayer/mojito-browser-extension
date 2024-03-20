@@ -1,13 +1,17 @@
 import { useEffect, useState, useRef, useCallback, useContext } from 'react'
 import { Mintlayer } from '@APIs'
 import { Format, ML } from '@Helpers'
-import { AccountContext } from '@Contexts'
+import { AccountContext, TransactionContext } from '@Contexts'
 
 const useMlWalletInfo = (addresses) => {
-  const { walletType, setTransactionsLoading, setBalanceLoading } =
-    useContext(AccountContext)
+  // const isWalletPage = location.pathname === '/wallet'
+  const { walletType, setBalanceLoading } = useContext(AccountContext)
+  const { setTransactionsLoading, setDelegationsLoading } =
+    useContext(TransactionContext)
   const effectCalled = useRef(false)
   const [mlTransactionsList, setMlTransactionsList] = useState([])
+  const [mlDelegationList, setMlDelegationList] = useState([])
+  const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
   const [mlBalance, setMlBalance] = useState(0)
   const [mlBalanceLocked, setMlBalanceLocked] = useState(0)
   const [mlUnformattedBalance, setMlUnformattedBalance] = useState(0)
@@ -24,6 +28,7 @@ const useMlWalletInfo = (addresses) => {
         ...addresses.mlChangeAddresses,
       ]
       const transactions = await Mintlayer.getWalletTransactions(addressList)
+
       const parsedTransactions = ML.getParsedTransactions(
         transactions,
         addressList,
@@ -74,21 +79,61 @@ const useMlWalletInfo = (addresses) => {
     }
   }, [addresses, setBalanceLoading])
 
+  const getDelegations = useCallback(async () => {
+    try {
+      if (!addresses || !isMintlayer) return
+      if (mlDelegationList.length === 0) {
+        setDelegationsLoading(true)
+      }
+      const addressList = [
+        ...addresses.mlReceivingAddresses,
+        ...addresses.mlChangeAddresses,
+      ]
+      const delegations = await Mintlayer.getWalletDelegations(addressList)
+      const delegation_details = await Mintlayer.getDelegationDetails(
+        delegations.map((delegation) => delegation.delegation_id),
+      )
+
+      const mergedDelegations = delegations.map((delegation, index) => {
+        return {
+          ...delegation,
+          creation_time: delegation_details[index].creation_time.timestamp,
+        }
+      })
+
+      const totalDelegationBalance = mergedDelegations.reduce(
+        (acc, delegation) => acc + Number(delegation.balance),
+        0,
+      )
+      setMlDelegationsBalance(totalDelegationBalance)
+      setMlDelegationList(mergedDelegations)
+      setDelegationsLoading(false)
+    } catch (error) {
+      console.error(error)
+      setDelegationsLoading(false)
+    }
+  }, [addresses, setDelegationsLoading, isMintlayer, mlDelegationList])
+
   useEffect(() => {
     /* istanbul ignore next */
     if (effectCalled.current) return
     effectCalled.current = true
 
     getTransactions()
+    getDelegations()
     getBalance()
-  }, [getBalance, getTransactions])
+  }, [getBalance, getTransactions, getDelegations])
 
   return {
     mlTransactionsList,
+    mlDelegationList,
     mlBalance,
     mlBalanceLocked,
     mlUnformattedBalance,
     mlUnformattedBalanceLocked,
+    mlDelegationsBalance,
+    getDelegations,
+    getTransactions,
   }
 }
 

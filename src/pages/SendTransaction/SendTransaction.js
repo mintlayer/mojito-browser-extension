@@ -5,7 +5,7 @@ import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
-import { AccountContext, SettingsContext } from '@Contexts'
+import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
 import { BTCTransaction } from '@Cryptos'
 import { Account } from '@Entities'
 import {
@@ -23,9 +23,9 @@ import { Mintlayer } from '@APIs'
 import './SendTransaction.css'
 
 const SendTransactionPage = () => {
-  const { addresses, accountID, walletType, setFeeLoading } =
-    useContext(AccountContext)
+  const { addresses, accountID, walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
+  const { setFeeLoading } = useContext(TransactionContext)
   const currentBtcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress

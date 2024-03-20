@@ -97,7 +97,7 @@ test('Render transaction component', () => {
   expect(transactionDetailsTitles).toHaveLength(5)
   expect(transactionDetailsTitles[0]).toHaveTextContent('From:')
 
-  expect(transactionDetailsButton).toHaveTextContent('Open In Blockchain')
+  expect(transactionDetailsButton).toHaveTextContent('Open In Block Explorer')
 
   transactionDetailsButton.click()
 })
