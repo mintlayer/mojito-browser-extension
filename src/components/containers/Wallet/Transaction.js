@@ -100,7 +100,32 @@ const Transaction = ({ transaction, getConfirmations }) => {
       ) : (
         <></>
       )}
+      {transaction.type === 'Delegate Withdrawal' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-withdrawal"
+          data-testid="transaction-icon"
+        >
+          <StakeIcon className="stake-icon" />
+          <ArrowIcon
+            className={`arrow-icon ${
+              transaction.direction === 'out' && 'arrow-icon-out'
+            }`}
+          />
+        </div>
+      ) : (
+        <></>
+      )}
       {transaction.type === 'CreateStakePool' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          data-testid="transaction-icon"
+        >
+          <StakeIcon className="stake-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.type === 'CreateDelegationId' ? (
         <div
           className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
           data-testid="transaction-icon"

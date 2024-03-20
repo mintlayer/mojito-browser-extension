@@ -10,6 +10,9 @@ import TransactionButton from './Wallet/TransactionButton'
 import TransactionDetails from './Wallet/TransactionDetails'
 import TransactionsList from './Wallet/TransactionsList'
 
+import DelegationList from './Wallet/DelegationList'
+import DelegationDetails from './Wallet/DelegationDetails'
+
 import SendTransaction from './SendTransaction/SendTransaction'
 
 import CryptoSharesChart from './Dashboard/CryptoSharesChart'
@@ -23,6 +26,8 @@ const Wallet = {
   TransactionButton,
   TransactionDetails,
   TransactionsList,
+  DelegationList,
+  DelegationDetails,
 }
 
 /* istanbul ignore next */

@@ -16,7 +16,7 @@ test('Render transaction button', () => {
 })
 
 test('Render transaction button with UP prop', () => {
-  render(<TransactionButton up />)
+  render(<TransactionButton mode={'up'} />)
   const transactionButtonComponent = screen.getByTestId(
     'transaction-button-container',
   )

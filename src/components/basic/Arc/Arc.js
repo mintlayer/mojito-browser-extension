@@ -13,7 +13,7 @@ const createTooltip = () =>
   d3
     .select('body')
     .append('div')
-    .attr('class', 'tooltip')
+    .attr('class', 'chart-tooltip')
     .attr('data-testid', 'tooltip-container')
     .style('opacity', 0)
 
@@ -28,7 +28,9 @@ const mouseOverHandle = (tooltip, _, item) => {
     .duration(200)
     .style('opacity', 0.9)
 
-  tooltip.html(`${item.data.asset} <br />${item.data.value} ${item.data.valueSymbol} `)
+  tooltip.html(
+    `${item.data.asset} <br />${item.data.value} ${item.data.valueSymbol} `,
+  )
 }
 
 const mouseOutHandle = (tooltip) => {

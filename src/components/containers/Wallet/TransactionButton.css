@@ -22,8 +22,8 @@
   align-items: center;
 }
 
-.transaction-item:nth-child(1) {
-  margin-right: 45px;
+.transaction-item:not(:last-child) {
+  margin-right: 15px;
 }
 
 .button-transaction-up svg {
@@ -33,4 +33,11 @@
 .icon-arrow {
   width: 30px;
   height: 36px;
+}
+
+.staking-icon {
+  width: 50px;
+  height: 50px;
+  margin-left: 5px;
+  margin-top: -10px;
 }

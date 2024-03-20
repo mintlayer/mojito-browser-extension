@@ -2,7 +2,11 @@ import { render, screen, act, fireEvent } from '@testing-library/react'
 
 import SendTransaction from './SendTransaction'
 
-import { AccountProvider, SettingsProvider } from '@Contexts'
+import {
+  AccountProvider,
+  SettingsProvider,
+  TransactionProvider,
+} from '@Contexts'
 
 const TRANSACTIONDATASAMPLE = {
   fiatName: 'USD',
@@ -16,12 +20,14 @@ test('Send Transaction', async () => {
     render(
       <AccountProvider>
         <SettingsProvider>
-          <SendTransaction
-            transactionData={TRANSACTIONDATASAMPLE}
-            setFormValidity={() => {}}
-            calculateTotalFee={() => {}}
-          />
-          ,
+          <TransactionProvider>
+            <SendTransaction
+              transactionData={TRANSACTIONDATASAMPLE}
+              setFormValidity={() => {}}
+              calculateTotalFee={() => {}}
+            />
+            ,
+          </TransactionProvider>
         </SettingsProvider>
       </AccountProvider>,
     )

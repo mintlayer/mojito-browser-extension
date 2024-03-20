@@ -10,6 +10,9 @@ const MINTLAYER_ENDPOINTS = {
   GET_ADDRESS_UTXO: '/address/:address/available-utxos',
   POST_TRANSACTION: '/transaction',
   GET_FEES_ESTIMATES: '/feerate',
+  GET_ADDRESS_DELEGATIONS: '/address/:address/delegations',
+  GET_DELEGATION: '/delegation/:delegation',
+  GET_CHAIN_TIP: '/chain/tip',
 }
 
 const requestMintlayer = async (url, body = null, request = fetch) => {
@@ -179,6 +182,37 @@ const getWalletUtxos = (addresses) => {
   return Promise.all(utxosPromises)
 }
 
+const getAddressDelegations = (address) =>
+  tryServers(
+    MINTLAYER_ENDPOINTS.GET_ADDRESS_DELEGATIONS.replace(':address', address),
+  )
+
+const getDelegation = (delegation) =>
+  tryServers(
+    MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(':delegation', delegation),
+  )
+
+const getWalletDelegations = (addresses) => {
+  const delegationsPromises = addresses.map((address) =>
+    getAddressDelegations(address),
+  )
+  return Promise.all(delegationsPromises).then((results) =>
+    results.flatMap(JSON.parse),
+  )
+}
+const getDelegationDetails = (delegations) => {
+  const delegationsPromises = delegations.map((delegation) =>
+    getDelegation(delegation),
+  )
+  return Promise.all(delegationsPromises).then((results) =>
+    results.flatMap(JSON.parse),
+  )
+}
+
+const getChainTip = async () => {
+  return tryServers(MINTLAYER_ENDPOINTS.GET_CHAIN_TIP)
+}
+
 const getFeesEstimates = async () => {
   return tryServers(MINTLAYER_ENDPOINTS.GET_FEES_ESTIMATES)
 }
@@ -197,6 +231,10 @@ export {
   requestMintlayer,
   getAddressUtxo,
   getWalletUtxos,
+  getAddressDelegations,
+  getWalletDelegations,
+  getDelegationDetails,
+  getChainTip,
   broadcastTransaction,
   getFeesEstimates,
   MINTLAYER_ENDPOINTS,

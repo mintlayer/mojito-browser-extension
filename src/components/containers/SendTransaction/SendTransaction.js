@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
-import { AccountContext } from '@Contexts'
+import { AccountContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
@@ -28,8 +28,11 @@ const SendTransaction = ({
   isFormValid,
   confirmTransaction,
   goBackToWallet,
+  preEnterAddress,
 }) => {
-  const { walletType, balanceLoading, feeLoading } = useContext(AccountContext)
+  const { walletType, balanceLoading } = useContext(AccountContext)
+  const { feeLoading, transactionMode, currentDelegationInfo } =
+    useContext(TransactionContext)
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
   const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
@@ -110,6 +113,7 @@ const SendTransaction = ({
         setPassValidity(false)
         setPass('')
         setTxErrorMessage(e.message)
+        console.error(e)
         setAllowClosing(true)
         setPopupState(false)
       }
@@ -160,6 +164,10 @@ const SendTransaction = ({
   }
 
   const addressChanged = (e) => {
+    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING) {
+      setAddressTo(currentDelegationInfo.delegation_id)
+      return
+    }
     setAddressTo(e.target.value)
   }
 
@@ -168,7 +176,31 @@ const SendTransaction = ({
   }
 
   useEffect(() => {
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING &&
+      currentDelegationInfo.delegation_id
+    ) {
+      setAddressTo(currentDelegationInfo.delegation_id)
+    }
+  }, [currentDelegationInfo, transactionMode])
+
+  useEffect(() => {
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+      preEnterAddress
+    ) {
+      setAddressTo(preEnterAddress)
+    }
+  }, [preEnterAddress, transactionMode])
+
+  useEffect(() => {
     if (!isBitcoinWallet) setFeeValidity(true)
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+      walletType.name === 'Mintlayer'
+    ) {
+      setAmountValidity(true)
+    }
     setFormValidity(!!(addressValidity && amountValidity && feeValidity))
   }, [
     addressValidity,
@@ -176,6 +208,8 @@ const SendTransaction = ({
     feeValidity,
     setFormValidity,
     isBitcoinWallet,
+    transactionMode,
+    walletType,
   ])
 
   useEffect(
@@ -221,7 +255,13 @@ const SendTransaction = ({
     amountInFiat,
     originalAmount,
     setAmountValidity,
+    transactionMode,
   ])
+
+  const sendTransactionButtonTitle =
+    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
+      ? 'Create'
+      : 'Send'
 
   return (
     <div className="transaction-form">
@@ -233,6 +273,7 @@ const SendTransaction = ({
         <>
           <AddressField
             addressChanged={addressChanged}
+            preEnterAddress={preEnterAddress}
             setAddressValidity={setAddressValidity}
           />
 
@@ -267,7 +308,7 @@ const SendTransaction = ({
               onClickHandle={openConfirmation}
               disabled={!isFormValid}
             >
-              Send
+              {sendTransactionButtonTitle}
             </Button>
           </CenteredLayout>
         </>
@@ -326,7 +367,18 @@ const SendTransaction = ({
             <VerticalGroup bigGap>
               <h2>Your transaction was sent.</h2>
               <h3 className="result-title">Txid: {transactionTxid}</h3>
-              <Button onClickHandle={goBackToWallet}>Back to Wallet</Button>
+              {transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW && (
+                <p>
+                  {
+                    'Your unstaked tokens will be available to use after cooling period (7,200 blocks or ~10 days)'
+                  }
+                </p>
+              )}
+              <Button onClickHandle={goBackToWallet}>
+                {transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
+                  ? 'Go to Staking'
+                  : 'Back to Dashboard'}
+              </Button>
             </VerticalGroup>
           )}
         </PopUp>

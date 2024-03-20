@@ -2,7 +2,11 @@ import { render, screen, fireEvent } from '@testing-library/react'
 // import { getDecimalNumber } from 'src/utils/Helpers/Number/Number'
 
 import CryptoFiatField from './CryptoFiatField'
-import { SettingsProvider, AccountProvider } from '@Contexts'
+import {
+  SettingsProvider,
+  AccountProvider,
+  TransactionProvider,
+} from '@Contexts'
 
 const TRANSACTIONDATASAMPLE = {
   fiatName: 'USD',
@@ -22,17 +26,19 @@ test('Render TextField component', () => {
   render(
     <AccountProvider>
       <SettingsProvider value={{ networkType: 'mainnet' }}>
-        <CryptoFiatField
-          buttonTitle={PROPSSAMPLE.buttonTitle}
-          placeholder={PROPSSAMPLE.placeholder}
-          inputValue={PROPSSAMPLE.value}
-          transactionData={PROPSSAMPLE.transactionData}
-          exchangeRate={exchangeRate}
-          maxValueInToken={maxValueInToken}
-          setAmountValidity={() => {}}
-          totalFeeInCrypto={totalFeeCrypto}
-        />
-        ,
+        <TransactionProvider>
+          <CryptoFiatField
+            buttonTitle={PROPSSAMPLE.buttonTitle}
+            placeholder={PROPSSAMPLE.placeholder}
+            inputValue={PROPSSAMPLE.value}
+            transactionData={PROPSSAMPLE.transactionData}
+            exchangeRate={exchangeRate}
+            maxValueInToken={maxValueInToken}
+            setAmountValidity={() => {}}
+            totalFeeInCrypto={totalFeeCrypto}
+          />
+          ,
+        </TransactionProvider>
       </SettingsProvider>
       ,
     </AccountProvider>,
@@ -69,19 +75,21 @@ test('Render TextField component fdf', async () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <CryptoFiatField
-          label={PROPSSAMPLE.label}
-          buttonTitle={PROPSSAMPLE.buttonTitle}
-          placeholder={PROPSSAMPLE.placeholder}
-          inputValue={PROPSSAMPLE.value}
-          transactionData={PROPSSAMPLE.transactionData}
-          exchangeRate={exchangeRate}
-          maxValueInToken={maxValueInToken}
-          setErrorMessage={() => {}}
-          setAmountValidity={() => {}}
-          totalFeeInCrypto={totalFeeCrypto}
-        />
-        ,
+        <TransactionProvider>
+          <CryptoFiatField
+            label={PROPSSAMPLE.label}
+            buttonTitle={PROPSSAMPLE.buttonTitle}
+            placeholder={PROPSSAMPLE.placeholder}
+            inputValue={PROPSSAMPLE.value}
+            transactionData={PROPSSAMPLE.transactionData}
+            exchangeRate={exchangeRate}
+            maxValueInToken={maxValueInToken}
+            setErrorMessage={() => {}}
+            setAmountValidity={() => {}}
+            totalFeeInCrypto={totalFeeCrypto}
+          />
+          ,
+        </TransactionProvider>
       </SettingsProvider>
     </AccountProvider>,
   )
@@ -115,17 +123,19 @@ test('Render TextField when networkType is testnet', () => {
   render(
     <AccountProvider>
       <SettingsProvider value={{ networkType: 'testnet' }}>
-        <CryptoFiatField
-          buttonTitle={PROPSSAMPLE.buttonTitle}
-          placeholder={PROPSSAMPLE.placeholder}
-          inputValue={PROPSSAMPLE.value}
-          transactionData={PROPSSAMPLE.transactionData}
-          exchangeRate={exchangeRate}
-          maxValueInToken={maxValueInToken}
-          setAmountValidity={() => {}}
-          totalFeeInCrypto={totalFeeCrypto}
-        />
-        ,
+        <TransactionProvider>
+          <CryptoFiatField
+            buttonTitle={PROPSSAMPLE.buttonTitle}
+            placeholder={PROPSSAMPLE.placeholder}
+            inputValue={PROPSSAMPLE.value}
+            transactionData={PROPSSAMPLE.transactionData}
+            exchangeRate={exchangeRate}
+            maxValueInToken={maxValueInToken}
+            setAmountValidity={() => {}}
+            totalFeeInCrypto={totalFeeCrypto}
+          />
+          ,
+        </TransactionProvider>
       </SettingsProvider>
       ,
     </AccountProvider>,
@@ -160,7 +170,9 @@ test('Render TextField component without transactionData', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <CryptoFiatField setAmountValidity={() => {}} />,
+        <TransactionProvider>
+          <CryptoFiatField setAmountValidity={() => {}} />,
+        </TransactionProvider>
       </SettingsProvider>
     </AccountProvider>,
   )

@@ -1,0 +1,44 @@
+.delegation-details {
+  width: 100%;
+  height: 100%;
+  max-width: 510px;
+  height: 500px;
+}
+
+.delegation-details-items-wrapper {
+  height: 336px;
+  width: 100%;
+  padding: 10px;
+  overflow: auto;
+}
+
+.delegation-details-item {
+  margin-bottom: 1.5rem;
+}
+
+.delegation-details-item h2 {
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.delegation-details-content {
+  font-size: 1.5rem;
+  font-weight: 600;
+  word-break: break-all;
+  cursor: auto;
+}
+
+.delegation-details-buttonn {
+  margin-top: 1.3rem;
+}
+
+.delegation-action-wrapper {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.delegation-action-wrapper .delegation-details-button {
+  margin-right: 5px;
+  padding: 1.1rem 0;
+}

@@ -8,4 +8,16 @@ import {
   SettingsProvider,
 } from './SettingsProvider/SettingsProvider'
 
-export { AccountContext, AccountProvider, SettingsContext, SettingsProvider }
+import {
+  TransactionContext,
+  TransactionProvider,
+} from './TransactionProvider/TransactionProvider'
+
+export {
+  AccountContext,
+  AccountProvider,
+  SettingsContext,
+  SettingsProvider,
+  TransactionContext,
+  TransactionProvider,
+}

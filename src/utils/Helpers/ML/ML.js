@@ -38,7 +38,7 @@ const getParsedTransactions = (transactions, addresses) => {
   }
 
   return sortedTransactions.map((transaction) => {
-    if (!transaction.outputs)
+    if (!transaction.outputs) {
       return {
         direction: transaction.direction,
         destAddress: transaction.destAddress,
@@ -50,6 +50,7 @@ const getParsedTransactions = (transactions, addresses) => {
         isConfirmed: transaction.isConfirmed,
         type: transaction.type,
       }
+    }
 
     let withInputUTXO = true
 
@@ -63,7 +64,7 @@ const getParsedTransactions = (transactions, addresses) => {
             (input) => input?.utxo?.destination === address,
           ),
         ) // if at least one input is mine
-      : addresses.some(
+      : !addresses.some(
           (address) => transaction.outputs[0].destination === address,
         )
 
@@ -104,6 +105,30 @@ const getParsedTransactions = (transactions, addresses) => {
             destAddress = output.delegation_id
             return acc + Number(output.amount)
           }
+          if (output.type === 'CreateDelegationId') {
+            type = 'CreateDelegationId'
+            destAddress = output.pool_id
+            sameWalletTransaction = false
+            return acc + Number(output.amount)
+          }
+        }
+        if (addresses.includes(output.destination)) {
+          if (output.type === 'CreateStakePool') {
+            type = 'CreateStakePool'
+            destAddress = output.pool_id
+            return acc + Number(output.data.amount)
+          }
+          if (output.type === 'DelegateStaking') {
+            type = 'DelegateStaking'
+            destAddress = output.delegation_id
+            return acc + Number(output.amount)
+          }
+          if (output.type === 'CreateDelegationId') {
+            type = 'CreateDelegationId'
+            destAddress = output.pool_id
+            sameWalletTransaction = false
+            return acc + Number(0)
+          }
         }
         return acc
       }, 0)
@@ -129,11 +154,11 @@ const getParsedTransactions = (transactions, addresses) => {
     if (
       !withInputUTXO &&
       direction === 'in' &&
-      transaction.outputs.length > 1
+      transaction.outputs.length > 0
     ) {
       destAddress = transaction.outputs.find(
         (output) => !addresses.includes(output.destination),
-      ).destination
+      )?.destination
 
       const totalValue = transaction.outputs.reduce((acc, output) => {
         if (addresses.includes(output.destination)) {
@@ -141,6 +166,16 @@ const getParsedTransactions = (transactions, addresses) => {
             return acc + output.value.amount
           }
           if (output.type === 'LockThenTransfer') {
+            if (
+              transaction.inputs[0].input?.Account?.account
+                ?.DelegationBalance[0]
+            ) {
+              type = 'Delegate Withdrawal'
+              destAddress =
+                transaction.inputs[0].input?.Account?.account
+                  ?.DelegationBalance[0]
+            }
+
             return acc + Number(output.value.amount)
           }
         }
@@ -178,9 +213,27 @@ const isMlAddressValid = (address, network) => {
     : testnetRegex.test(address)
 }
 
+const isMlPoolIdValid = (poolId, network) => {
+  const mainnetRegex = /^mpool[a-z0-9]{30,}$/
+  const testnetRegex = /^tpool[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(poolId)
+    : testnetRegex.test(poolId)
+}
+
+const isMlDelegationIdValid = (delegationId, network) => {
+  const mainnetRegex = /^mdelg[a-z0-9]{30,}$/
+  const testnetRegex = /^tdelg[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(delegationId)
+    : testnetRegex.test(delegationId)
+}
+
 export {
   getParsedTransactions,
   getAmountInAtoms,
   getAmountInCoins,
   isMlAddressValid,
+  isMlPoolIdValid,
+  isMlDelegationIdValid,
 }

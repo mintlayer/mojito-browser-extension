@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@BasicComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 
+import './CreateRestore.css'
+
 const CreateRestorePage = () => {
   const navigate = useNavigate()
 
@@ -13,7 +15,7 @@ const CreateRestorePage = () => {
   return (
     <div data-testid="create-restore">
       <h1 className="center-text title-create">
-        Your Bitcoin, right in your browser.
+        Your Mintlayer, right in your browser.
       </h1>
       <CenteredLayout>
         <VerticalGroup>
@@ -41,6 +43,12 @@ const CreateRestorePage = () => {
         >
           mintlayer.org
         </a>
+        <small
+          className="footnote-version"
+          data-testid="footnote-name"
+        >
+          v1.2.0
+        </small>
       </div>
     </div>
   )

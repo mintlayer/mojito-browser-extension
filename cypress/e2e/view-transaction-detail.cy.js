@@ -20,7 +20,7 @@ describe('View transaction detail page', () => {
       cy.contains('Date:').should('be.visible')
       cy.contains('Amount:').should('be.visible')
       cy.contains('Tx:').should('be.visible')
-      cy.contains('button', 'Open In Blockchain').should('be.visible')
+      cy.contains('button', 'Open In Block Explorer').should('be.visible')
 
       cy.get('button[class="btn popupCloseButton alternate"]').click()
     })
@@ -43,7 +43,7 @@ describe('View transaction detail page', () => {
       cy.contains('Date:').should('be.visible')
       cy.contains('Amount:').should('be.visible')
       cy.contains('Tx:').should('be.visible')
-      cy.contains('button', 'Open In Blockchain').should('be.visible')
+      cy.contains('button', 'Open In Block Explorer').should('be.visible')
 
       cy.get('button[class="btn popupCloseButton alternate"]').click()
     })

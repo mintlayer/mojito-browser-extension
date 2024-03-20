@@ -21,3 +21,8 @@
   color: rgb(var(--color-green));
   text-decoration: none;
 }
+
+.footnote-version {
+  font-size: 15px;
+  margin-top: 5px;
+}
