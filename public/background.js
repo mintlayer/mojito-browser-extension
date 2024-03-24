@@ -1,3 +1,4 @@
+/* eslint-disable max-depth */
 /* global chrome */
 
 var popupWindowId = false
