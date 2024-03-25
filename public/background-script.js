@@ -85,7 +85,7 @@ browser.runtime.onConnect.addListener((port) => {
           url: browser.runtime.getURL(url),
           type: 'popup',
           width: 800,
-          height: 600,
+          height: 630,
           focused: true,
         })
         .then((win) => {

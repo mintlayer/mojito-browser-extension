@@ -83,7 +83,7 @@ chrome.runtime.onMessageExternal.addListener(function (
               url: chrome.runtime.getURL('index.html'),
               type: 'popup',
               width: 800,
-              height: 600,
+              height: 630,
               focused: true,
             },
             function (win) {

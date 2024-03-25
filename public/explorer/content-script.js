@@ -20,7 +20,8 @@ function start() {
       if (
         event.source == window &&
         event.data &&
-        event.data.direction == 'from-page-script'
+        event.data.direction == 'from-page-script' &&
+        typeof browser !== 'undefined'
       ) {
         const port = browser.runtime.connect({ name: 'my-connection' })
         port.postMessage({ myProperty: event.data })
