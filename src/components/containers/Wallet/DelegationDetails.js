@@ -7,6 +7,7 @@ import { SettingsContext, TransactionContext, AccountContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import { ML } from '@Helpers'
 import { LocalStorageService } from '@Storage'
+import { format } from 'date-fns'
 
 import './DelegationDetails.css'
 
@@ -40,11 +41,9 @@ const DelegationDetails = ({ delegation }) => {
     LocalStorageService.getItem(unconfirmedTransactionString) &&
     walletType.name === 'Mintlayer'
 
-  // const date = delegation.date
-  //   ? format(new Date(delegation.date * 1000), 'dd/MM/yyyy HH:mm')
-  //   : 'not confirmed'
-  // TODO: replace with actual date
-  // const date = '12.02.2024'
+  const date = delegation.creation_time
+    ? format(new Date(delegation.creation_time * 1000), 'dd/MM/yyyy HH:mm')
+    : 'not confirmed'
   const balance = Format.BTCValue(ML.getAmountInCoins(delegation.balance))
   const buttonExtraStyles = ['delegation-details-button']
   const addressTitle = 'Spend address:'
@@ -74,11 +73,10 @@ const DelegationDetails = ({ delegation }) => {
       data-testid="delegation-details"
     >
       <div className="delegation-details-items-wrapper">
-        {/* TODO: update date when available from API */}
-        {/* <DelegationDetailsItem
+        <DelegationDetailsItem
           title={'Date:'}
           content={date}
-        /> */}
+        />
         <DelegationDetailsItem
           title={'Pool id:'}
           content={delegation.pool_id}

@@ -41,7 +41,6 @@ const CryptoFiatField = ({
   const amountErrorMessage = 'Amount set is bigger than this wallet balance.'
   const amountFormatErrorMessage = 'Amount format is invalid. Use 0,00 instead.'
   const zeroErrorMessage = 'Amount must be greater than 0.'
-  // TODO add check wallet types
   const isDelegationMode =
     transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
     walletType.name === 'Mintlayer'

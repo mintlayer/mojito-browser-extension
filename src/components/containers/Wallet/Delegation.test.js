@@ -5,10 +5,15 @@ import {
   SettingsProvider,
   TransactionProvider,
 } from '@Contexts'
+import { LocalStorageService } from '@Storage'
+import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+LocalStorageService.setItem('unlockedAccount', { name: 'test' })
 
 describe('Delegation', () => {
   const mockDelegation = {
-    date: 1645113600,
+    creation_time: 1645113600,
     balance: 100000000,
     pool_id: 'test_id',
   }
@@ -29,10 +34,9 @@ describe('Delegation', () => {
     expect(screen.getByTestId('delegation-otherPart')).toHaveTextContent(
       'test_id',
     )
-    // expect(screen.getByTestId('delegation-date')).toHaveTextContent(
-    //   // TODO: change that after API data ready
-    //   'Date: 12.02.2024',
-    // )
+    expect(screen.getByTestId('delegation-date')).toHaveTextContent(
+      'Date: 17/02/2022 17:00',
+    )
     expect(screen.getByTestId('delegation-amount')).toHaveTextContent(
       'Amount: 0,001',
     )
