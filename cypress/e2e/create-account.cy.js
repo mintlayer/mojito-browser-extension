@@ -96,7 +96,7 @@ describe('create account page ', () => {
       'Write down each of the words (seed phrases) that are shown on the next screen.',
     ).should('be.visible')
     cy.contains(
-      'Store them in a safe place as they are the only way to restore your account.',
+      'Store them in a safe place as they are the only way to restore your wallet.',
     ).should('be.visible')
     cy.contains('button', 'I understand').should('be.visible')
 

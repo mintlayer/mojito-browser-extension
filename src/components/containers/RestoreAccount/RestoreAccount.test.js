@@ -34,7 +34,7 @@ test('Renders restore account page with step 1', () => {
   expect(restoreAccountForm).toBeInTheDocument()
   expect(restoreAccountForm).toHaveAttribute('method', 'POST')
   expect(inputComponent).toHaveAttribute('type', 'text')
-  expect(inputComponent).toHaveAttribute('placeholder', 'Account Name')
+  expect(inputComponent).toHaveAttribute('placeholder', 'Wallet Name')
   fireEvent.change(inputComponent, { target: { value: '1' } })
   expect(inputComponent).not.toHaveClass('invalid')
   expect(inputComponent).not.toHaveClass('valid')

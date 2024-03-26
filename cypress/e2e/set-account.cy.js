@@ -13,14 +13,14 @@ describe('set Account page', () => {
     cy.contains('button', 'Create').click()
   })
 
-  it('check and click on button Account Name', function () {
-    cy.contains('li.step.active', 'Account Name').should('be.visible')
-    cy.contains('Create a name for your account').should('be.visible')
+  it('check and click on button Wallet Name', function () {
+    cy.contains('li.step.active', 'Wallet Name').should('be.visible')
+    cy.contains('Create a name for your wallet').should('be.visible')
     cy.contains('Mojito').should('be.visible')
 
     cy.setAccount(this.access.name)
     cy.contains('button', 'Continue').should('be.visible')
 
-    cy.contains('li.step.false', 'Account Name').should('be.visible')
+    cy.contains('li.step.false', 'Wallet Name').should('be.visible')
   })
 })

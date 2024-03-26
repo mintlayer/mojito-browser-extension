@@ -26,11 +26,11 @@ describe('mojito wallet app', () => {
   it('click on Create and navigate', () => {
     cy.contains('button', 'Create').click()
 
-    cy.contains('Create a name for your account').should('be.visible')
+    cy.contains('Create a name for your wallet').should('be.visible')
   })
 
   it('click on Restore and navigate', () => {
     cy.contains('button', 'Restore').click()
-    cy.contains('Create a name for your account').should('be.visible')
+    cy.contains('Create a name for your wallet').should('be.visible')
   })
 })
