@@ -69,7 +69,7 @@ const CreateAccount = ({
 
   useEffect(() => {
     const message = !accountNameValid
-      ? 'The account name should have at least 4 characteres.'
+      ? 'The wallet name should have at least 4 characteres.'
       : null
 
     setAccountNameErrorMessage(message)
@@ -225,8 +225,8 @@ const CreateAccount = ({
                 value={accountNameValue}
                 onChangeHandle={accountNameChangeHandler}
                 validity={accountNameValid}
-                placeHolder={'Account Name'}
-                label={'Create a name for your account'}
+                placeHolder={'Wallet Name'}
+                label={'Create a name for your wallet'}
                 extraStyleClasses={inputExtraclasses}
                 errorMessages={accountNameErrorMessage}
                 pristinity={accountNamePristinity}
@@ -242,7 +242,7 @@ const CreateAccount = ({
                 validity={accountPasswordValid}
                 pattern={passwordPattern}
                 password
-                label={'Create a password for your account'}
+                label={'Create a password for your wallet'}
                 placeHolder={'Password'}
                 extraStyleClasses={inputExtraclasses}
                 errorMessages={accountPasswordErrorMessage}

@@ -17,7 +17,7 @@ const WordsDescription = () => {
         data-testid="description-paragraph"
       >
         Store them in a safe place as they are the only way to restore your
-        account.
+        wallet.
       </p>
     </CenteredLayout>
   )
