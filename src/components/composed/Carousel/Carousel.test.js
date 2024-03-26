@@ -34,10 +34,10 @@ test('Render Carousel', () => {
 test('Render Carousel onClick', () => {
   render(<Carousel {...data} />)
 
-  fireEvent.click(screen.getByText('Account Wallet'))
+  fireEvent.click(screen.getByText('Account Name'))
   expect(data.onClick).toHaveBeenCalled()
-  screen.getByText('Wallet Name')
-  expect(screen.getByText('Wallet Name')).toHaveClass('selected')
+  screen.getByText('Account Name')
+  expect(screen.getByText('Account Name')).toHaveClass('selected')
 })
 
 test('Render Carousel previousSlide', () => {
