@@ -5,13 +5,23 @@ import {
   SettingsProvider,
   TransactionProvider,
 } from '@Contexts'
+import { LocalStorageService } from '@Storage'
+import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
+import { format } from 'date-fns'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+LocalStorageService.setItem('unlockedAccount', { name: 'test' })
 
 describe('Delegation', () => {
   const mockDelegation = {
-    date: 1645113600,
+    creation_time: 1645113600,
     balance: 100000000,
     pool_id: 'test_id',
   }
+
+  const date = mockDelegation.creation_time
+    ? format(new Date(mockDelegation.creation_time * 1000), 'dd/MM/yyyy HH:mm')
+    : 'not confirmed'
 
   it('renders correctly', () => {
     render(
@@ -29,10 +39,7 @@ describe('Delegation', () => {
     expect(screen.getByTestId('delegation-otherPart')).toHaveTextContent(
       'test_id',
     )
-    // expect(screen.getByTestId('delegation-date')).toHaveTextContent(
-    //   // TODO: change that after API data ready
-    //   'Date: 12.02.2024',
-    // )
+    expect(screen.getByTestId('delegation-date')).toHaveTextContent(date)
     expect(screen.getByTestId('delegation-amount')).toHaveTextContent(
       'Amount: 0,001',
     )

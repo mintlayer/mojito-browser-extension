@@ -1,6 +1,11 @@
 import { render, fireEvent, screen } from '@testing-library/react'
-import { TransactionContext, SettingsContext } from '@Contexts'
+import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
 import DelegationDetails, { DelegationDetailsItem } from './DelegationDetails'
+import { LocalStorageService } from '@Storage'
+import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+LocalStorageService.setItem('unlockedAccount', { name: 'test' })
 
 describe('DelegationDetailsItem', () => {
   it('renders correctly', () => {
@@ -34,8 +39,14 @@ describe('DelegationDetails', () => {
     networkType: 'testnet',
   }
 
+  const mockAccountContext = {
+    walletType: {
+      name: 'test',
+    },
+  }
+
   const mockDelegation = {
-    date: 1645113600,
+    creation_time: 1645113600,
     balance: 100000000,
     spend_destination: 'test_address',
     delegation_id: 'test_id',
@@ -43,11 +54,14 @@ describe('DelegationDetails', () => {
 
   it('renders correctly', () => {
     render(
-      <TransactionContext.Provider value={mockTransactionContext}>
-        <SettingsContext.Provider value={mockSettingsContext}>
-          <DelegationDetails delegation={mockDelegation} />
-        </SettingsContext.Provider>
-      </TransactionContext.Provider>,
+      <AccountContext.Provider value={mockAccountContext}>
+        <TransactionContext.Provider value={mockTransactionContext}>
+          <SettingsContext.Provider value={mockSettingsContext}>
+            <DelegationDetails delegation={mockDelegation} />
+          </SettingsContext.Provider>
+        </TransactionContext.Provider>
+        ,
+      </AccountContext.Provider>,
     )
 
     expect(screen.getByTestId('delegation-details')).toBeInTheDocument()
@@ -55,11 +69,14 @@ describe('DelegationDetails', () => {
 
   it('calls correct functions on button click', () => {
     render(
-      <TransactionContext.Provider value={mockTransactionContext}>
-        <SettingsContext.Provider value={mockSettingsContext}>
-          <DelegationDetails delegation={mockDelegation} />
-        </SettingsContext.Provider>
-      </TransactionContext.Provider>,
+      <AccountContext.Provider value={mockAccountContext}>
+        <TransactionContext.Provider value={mockTransactionContext}>
+          <SettingsContext.Provider value={mockSettingsContext}>
+            <DelegationDetails delegation={mockDelegation} />
+          </SettingsContext.Provider>
+        </TransactionContext.Provider>
+        ,
+      </AccountContext.Provider>,
     )
 
     fireEvent.click(screen.getByText('Add funds'))

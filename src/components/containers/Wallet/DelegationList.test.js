@@ -1,6 +1,11 @@
 import { render, screen } from '@testing-library/react'
-import { TransactionContext } from '@Contexts'
+import { TransactionContext, AccountContext, SettingsContext } from '@Contexts'
 import DelegationList from './DelegationList'
+import { LocalStorageService } from '@Storage'
+import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+LocalStorageService.setItem('unlockedAccount', { name: 'test' })
 
 describe('DelegationList', () => {
   const mockDelegationsList = [
@@ -18,9 +23,15 @@ describe('DelegationList', () => {
 
   it('renders correctly when delegations are loading', () => {
     render(
-      <TransactionContext.Provider value={{ delegationsLoading: true }}>
-        <DelegationList delegationsList={mockDelegationsList} />
-      </TransactionContext.Provider>,
+      <AccountContext.Provider value={{ accountName: 'test' }}>
+        <SettingsContext.Provider value={{ networkType: 'testnet' }}>
+          <TransactionContext.Provider value={{ delegationsLoading: true }}>
+            <DelegationList delegationsList={mockDelegationsList} />
+          </TransactionContext.Provider>
+          ,
+        </SettingsContext.Provider>
+        ,
+      </AccountContext.Provider>,
     )
 
     expect(screen.getByTestId('delegation-list')).toBeInTheDocument()
@@ -29,9 +40,15 @@ describe('DelegationList', () => {
 
   it('renders correctly when there are no delegations', () => {
     render(
-      <TransactionContext.Provider value={{ delegationsLoading: false }}>
-        <DelegationList delegationsList={[]} />
-      </TransactionContext.Provider>,
+      <AccountContext.Provider value={{ accountName: 'test' }}>
+        <SettingsContext.Provider value={{ networkType: 'testnet' }}>
+          <TransactionContext.Provider value={{ delegationsLoading: false }}>
+            <DelegationList delegationsList={[]} />
+          </TransactionContext.Provider>
+          ,
+        </SettingsContext.Provider>
+        ,
+      </AccountContext.Provider>,
     )
 
     expect(screen.getByTestId('delegation-list')).toBeInTheDocument()
@@ -42,9 +59,15 @@ describe('DelegationList', () => {
 
   it('renders correctly when there are delegations', () => {
     render(
-      <TransactionContext.Provider value={{ delegationsLoading: false }}>
-        <DelegationList delegationsList={mockDelegationsList} />
-      </TransactionContext.Provider>,
+      <AccountContext.Provider value={{ accountName: 'test' }}>
+        <SettingsContext.Provider value={{ networkType: 'testnet' }}>
+          <TransactionContext.Provider value={{ delegationsLoading: false }}>
+            <DelegationList delegationsList={mockDelegationsList} />
+          </TransactionContext.Provider>
+          ,
+        </SettingsContext.Provider>
+        ,
+      </AccountContext.Provider>,
     )
 
     expect(screen.getByTestId('delegation-list')).toBeInTheDocument()
