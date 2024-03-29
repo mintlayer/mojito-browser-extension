@@ -15,9 +15,7 @@ test('Renders List Accounts page', () => {
   expect(
     screen.getByRole('button', { name: 'Account Name' }),
   ).toBeInTheDocument()
-  expect(
-    screen.getByRole('button', { name: 'Create Wallet' }),
-  ).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Add Wallet' })).toBeInTheDocument()
 })
 
 test('Render Carousel onSelect', () => {
@@ -30,6 +28,6 @@ test('Render Carousel onSelect', () => {
 test('Render button onCreate', () => {
   render(<ListAccounts {...data} />)
 
-  fireEvent.click(screen.getByText('Create Wallet'))
+  fireEvent.click(screen.getByText('Add Wallet'))
   expect(data.onCreate).toHaveBeenCalled()
 })
