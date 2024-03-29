@@ -28,7 +28,7 @@ const AddWallet = ({
   const getMnemonics = () =>
     wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
 
-  const submitButtonTitle = step === 3 ? 'Create Wallet' : 'Next'
+  const submitButtonTitle = step === 3 ? 'Add Wallet' : 'Next'
 
   const changePassHandle = (value) => {
     setPass(value)

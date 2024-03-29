@@ -69,7 +69,7 @@ const CreateAccountPage = () => {
 
   return creatingWallet ? (
     <>
-      <Header noBackButton={true} />
+      <Header noBackButton />
       <CenteredLayout>
         <VerticalGroup bigGap>
           <h1 className="loadingText">
