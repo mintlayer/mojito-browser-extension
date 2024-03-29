@@ -7,7 +7,7 @@ const getAmountInCoins = (amointInAtoms) => {
 }
 
 const getAmountInAtoms = (amountInCoins) => {
-  return Math.round(amountInCoins * AppInfo.ML_ATOMS_PER_COIN)
+  return BigInt(amountInCoins * AppInfo.ML_ATOMS_PER_COIN)
 }
 
 const getParsedTransactions = (transactions, addresses) => {
@@ -90,38 +90,38 @@ const getParsedTransactions = (transactions, addresses) => {
       const totalValue = transaction.outputs.reduce((acc, output) => {
         if (!addresses.includes(output.destination)) {
           if (output.type === 'Transfer') {
-            return acc + output.value.amount
+            return acc + output.value.amount.decimal
           }
           if (output.type === 'LockThenTransfer') {
-            return acc + Number(output.value.amount)
+            return acc + Number(output.value.amount.decimal)
           }
           if (output.type === 'CreateStakePool') {
             type = 'CreateStakePool'
             destAddress = output.pool_id
-            return acc + Number(output.data.amount)
+            return acc + Number(output.data.amount.decimal)
           }
           if (output.type === 'DelegateStaking') {
             type = 'DelegateStaking'
             destAddress = output.delegation_id
-            return acc + Number(output.amount)
+            return acc + Number(output.amount.decimal)
           }
           if (output.type === 'CreateDelegationId') {
             type = 'CreateDelegationId'
             destAddress = output.pool_id
             sameWalletTransaction = false
-            return acc + Number(output.amount)
+            return acc + Number(output.amount.decimal)
           }
         }
         if (addresses.includes(output.destination)) {
           if (output.type === 'CreateStakePool') {
             type = 'CreateStakePool'
             destAddress = output.pool_id
-            return acc + Number(output.data.amount)
+            return acc + Number(output.data.amount.decimal)
           }
           if (output.type === 'DelegateStaking') {
             type = 'DelegateStaking'
             destAddress = output.delegation_id
-            return acc + Number(output.amount)
+            return acc + Number(output.amount.decimal)
           }
           if (output.type === 'CreateDelegationId') {
             type = 'CreateDelegationId'
@@ -132,7 +132,7 @@ const getParsedTransactions = (transactions, addresses) => {
         }
         return acc
       }, 0)
-      value = getAmountInCoins(totalValue, AppInfo.ML_ATOMS_PER_COIN)
+      value = totalValue
     }
 
     if (withInputUTXO && direction === 'in' && transaction.outputs.length > 0) {
@@ -140,15 +140,15 @@ const getParsedTransactions = (transactions, addresses) => {
       const totalValue = transaction.outputs.reduce((acc, output) => {
         if (addresses.includes(output.destination)) {
           if (output.type === 'Transfer') {
-            return acc + output.value.amount
+            return acc + output.value.amount.decimal
           }
           if (output.type === 'LockThenTransfer') {
-            return acc + Number(output.value.amount)
+            return acc + Number(output.value.amount.decimal)
           }
         }
         return acc
       }, 0)
-      value = getAmountInCoins(totalValue, AppInfo.ML_ATOMS_PER_COIN)
+      value = totalValue
     }
 
     if (
@@ -163,7 +163,7 @@ const getParsedTransactions = (transactions, addresses) => {
       const totalValue = transaction.outputs.reduce((acc, output) => {
         if (addresses.includes(output.destination)) {
           if (output.type === 'Transfer') {
-            return acc + output.value.amount
+            return acc + output.value.amount.decimal
           }
           if (output.type === 'LockThenTransfer') {
             if (
@@ -176,18 +176,18 @@ const getParsedTransactions = (transactions, addresses) => {
                   ?.DelegationBalance[0]
             }
 
-            return acc + Number(output.value.amount)
+            return acc + Number(output.value.amount.decimal)
           }
         }
         return acc
       }, 0)
-      value = getAmountInCoins(totalValue, AppInfo.ML_ATOMS_PER_COIN)
+      value = totalValue
     }
 
     const confirmations = transaction.confirmations
     const date = transaction.timestamp
     const txid = transaction.txid
-    const fee = transaction.fee
+    const fee = transaction.fee.decimal
     const isConfirmed = confirmations > 0
 
     return {

@@ -68,7 +68,6 @@ const saveAccounts = async (accounts, onError, DB = IDB) => {
     for (const account of accounts) {
       await update(oldAccounts, account)
     }
-    console.log('Accounts saved successfully')
 
     db.close()
   } catch (error) {

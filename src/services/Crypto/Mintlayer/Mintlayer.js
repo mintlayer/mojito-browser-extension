@@ -173,6 +173,7 @@ export const getOutputs = async ({
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')
   }
+
   const amountInstace = Amount.from_atoms(amount)
 
   const networkIndex = NETWORKS[networkType]

@@ -14,6 +14,7 @@ import { ML } from '@Cryptos'
 import { Mintlayer } from '@APIs'
 
 import './Staking.css'
+import { useEffectOnce } from '../../hooks/etc/useEffectOnce'
 
 const StakingPage = () => {
   const { state } = useLocation()
@@ -50,7 +51,7 @@ const StakingPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, getBalance } = useMlWalletInfo(currentMlAddresses)
   const delegationBalance = Format.BTCValue(
     MLHelpers.getAmountInCoins(currentDelegationInfo.balance),
   )
@@ -62,6 +63,10 @@ const StakingPage = () => {
     setDelegationStep(1)
     navigate('/wallet')
   }
+
+  useEffectOnce(()=>{
+    getBalance()
+  })
 
   useEffect(() => {
     if (state && state.action === 'createDelegate') {
@@ -96,7 +101,7 @@ const StakingPage = () => {
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(
       transactionInfo.amount,
-    ).toString()
+    )
     const unusedChangeAddress = await ML.getUnusedAddress(changeAddresses)
     const unusedReceivingAddress = await ML.getUnusedAddress(receivingAddresses)
     const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
@@ -105,15 +110,13 @@ const StakingPage = () => {
       .filter((utxo) => utxo.length > 0)
     const fee =
       transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING
-        ? await MLTransaction.calculateFee(
-            parsedUtxos,
-            undefined,
-            unusedChangeAddress,
-            amountToSend,
-            networkType,
-            undefined,
-            address,
-          )
+        ? await MLTransaction.calculateFee({
+          utxosTotal: parsedUtxos,
+          changeAddress: unusedChangeAddress,
+          amountToUse: amountToSend,
+          network: networkType,
+          delegationId: address,
+        })
         : transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
         ? await MLTransaction.calculateSpenDelegFee(
             address,
@@ -121,15 +124,15 @@ const StakingPage = () => {
             networkType,
             currentDelegationInfo,
           )
-        : await MLTransaction.calculateFee(
-            parsedUtxos,
-            unusedReceivingAddress,
-            unusedChangeAddress,
-            amountToSend,
-            networkType,
-            address,
-          )
-    const feeInCoins = MLHelpers.getAmountInCoins(fee)
+        : await MLTransaction.calculateFee({
+            utxosTotal: parsedUtxos,
+            address: unusedReceivingAddress,
+            changeAddress: unusedChangeAddress,
+            amountToUse: BigInt(0),
+            network: networkType,
+            poolId: address,
+      })
+    const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
     setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
     setTotalFeeCrypto(feeInCoins)
     setFeeLoading(false)
@@ -144,7 +147,7 @@ const StakingPage = () => {
   const confirmMlTransaction = async (password) => {
     const amountToSend = MLHelpers.getAmountInAtoms(
       transactionInformation.amount,
-    ).toString()
+    )
     const { mlPrivKeys } = await Account.unlockAccount(accountID, password)
     const privKey =
       networkType === 'mainnet'
@@ -170,16 +173,14 @@ const StakingPage = () => {
 
     const result =
       transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING
-        ? await MLTransaction.sendTransaction(
-            parsedUtxos,
-            keysList,
-            undefined,
-            unusedChageAddress,
-            amountToSend,
-            networkType,
-            undefined,
-            transactionInformation.to,
-          )
+        ? await MLTransaction.sendTransaction({
+          utxosTotal: parsedUtxos,
+          keysList: keysList,
+          changeAddress: unusedChageAddress,
+          amountToUse: amountToSend,
+          network: networkType,
+          delegationId: transactionInformation.to,
+        })
         : transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
         ? await MLTransaction.spendFromDelegation(
             keysList,
@@ -188,17 +189,16 @@ const StakingPage = () => {
             networkType,
             currentDelegationInfo,
           )
-        : await MLTransaction.sendTransaction(
-            parsedUtxos,
-            keysList,
-            unusedReceivingAddress,
-            unusedChageAddress,
-            '0',
-            networkType,
-            transactionInformation.to,
-            undefined,
-            transactionMode,
-          )
+        : await MLTransaction.sendTransaction({
+            utxosTotal: parsedUtxos,
+            keysList: keysList,
+            address: unusedReceivingAddress,
+            changeAddress: unusedChageAddress,
+            amountToUse: BigInt('0'),
+            network: networkType,
+            poolId: transactionInformation.to,
+            transactionMode: transactionMode,
+          })
 
     return result
   }

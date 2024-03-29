@@ -18,6 +18,7 @@ import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router-dom'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
+import { useEffectOnce } from 'src/hooks/etc/useEffectOnce'
 
 const DashboardPage = () => {
   const { addresses, accountName, setWalletType, accountID } =
@@ -37,7 +38,7 @@ const DashboardPage = () => {
 
   const [connectedWalletType, setConnectedWalletType] = useState('')
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, getBalance } = useMlWalletInfo(currentMlAddresses)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
   const { yesterdayExchangeRate: btcYesterdayExchangeRate } =
@@ -171,6 +172,10 @@ const DashboardPage = () => {
   useEffect(() => {
     getCurrentAccount(accountID).then((account) => setAccount(account))
   }, [accountID])
+
+  useEffectOnce(() => {
+    getBalance()
+  }, [])
 
   return (
     <>

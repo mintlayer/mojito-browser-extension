@@ -127,7 +127,6 @@ const App = () => {
         'This script should only be loaded in a browser extension.'
       ) {
         // not extension env
-        console.log('not extension env')
         return
       }
       // other error throw further

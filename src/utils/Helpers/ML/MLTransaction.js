@@ -6,7 +6,10 @@ import { ML as MLHelpers } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 const getUtxoBalance = (utxo) => {
-  return utxo.reduce((sum, item) => sum + Number(item.utxo.value.amount), 0)
+  return utxo.reduce(
+    (sum, item) => sum + BigInt(item.utxo.value.amount.atoms),
+    BigInt(0),
+  )
 }
 
 const getUtxoAvailable = (utxo) => {
@@ -23,7 +26,7 @@ const getUtxoAvailable = (utxo) => {
 
 const getUtxoTransaction = (utxo) => {
   return utxo.map((item) => ({
-    transaction: item.outpoint.id.Transaction,
+    transaction: item.outpoint.source_id,
     index: item.outpoint.index,
   }))
 }
@@ -56,13 +59,13 @@ const getTxInput = async (outpointSourceId) => {
   )
 }
 
-const getTransactionUtxos = (utxos, amountToUse, fee = 0) => {
-  let balance = 0
+const getTransactionUtxos = (utxos, amountToUse, fee = BigInt(0)) => {
+  let balance = BigInt(0)
   const utxosToSpend = []
 
   for (let i = 0; i < utxos.length; i++) {
     const utxoBalance = getUtxoBalance(utxos[i])
-    if (balance < Number(amountToUse) + fee) {
+    if (balance < BigInt(amountToUse) + fee) {
       balance += utxoBalance
       utxosToSpend.push(utxos[i])
     } else {
@@ -130,7 +133,7 @@ const getOptUtxos = async (utxos, network) => {
   const opt_utxos = await Promise.all(
     utxos.map((item) => {
       return ML.getOutputs({
-        amount: item.utxo.value.amount,
+        amount: item.utxo.value.amount.atoms,
         address: item.utxo.destination,
         networkType: network,
         type: item.utxo.type,
@@ -188,9 +191,9 @@ const totalUtxosAmount = (utxosToSpend) => {
   return utxosToSpend
     .flatMap((utxo) => [...utxo])
     .reduce((acc, utxo) => {
-      const amount = utxo.utxo.value ? Number(utxo.utxo.value.amount) : 0
+      const amount = utxo?.utxo?.value?.amount ? BigInt(utxo.utxo.value.amount.atoms) : 0
       return acc + amount
-    }, 0)
+    }, BigInt(0))
 }
 
 const getUtxoAddress = (utxosToSpend) => {
@@ -199,7 +202,7 @@ const getUtxoAddress = (utxosToSpend) => {
     .map((utxo) => utxo.utxo.destination)
 }
 
-const calculateFee = async (
+const calculateFee = async ({
   utxosTotal,
   address,
   changeAddress,
@@ -207,11 +210,11 @@ const calculateFee = async (
   network,
   poolId,
   delegationId,
-) => {
-  const amountToUseFinale = Number(amountToUse) <= 0 ? 1 : amountToUse
+}) => {
+  const amountToUseFinale = amountToUse <= 0 ? BigInt(1) : amountToUse
   const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = !poolId ? totalUtxosAmount(utxos) : 0
-  if (totalAmount < Number(amountToUse) && !poolId) {
+  if (totalAmount < BigInt(amountToUse) && !poolId) {
     throw new Error('Insufficient funds')
   }
   const requireUtxo = getTransactionUtxos(utxos, amountToUseFinale)
@@ -229,7 +232,7 @@ const calculateFee = async (
     delegationId,
   )
   const changeAmount = (
-    totalUtxosAmount(requireUtxo) - Number(amountToUseFinale)
+    totalUtxosAmount(requireUtxo) - amountToUseFinale
   ).toString()
   const txChangeOutput = await getTxOutput(changeAmount, changeAddress, network)
   const outputs = [...txOutput, ...txChangeOutput]
@@ -244,7 +247,7 @@ const calculateFee = async (
   const feeEstimates = JSON.parse(feeEstimatesResponse)
   const fee = Math.ceil((Number(feeEstimates) / 1000) * size)
 
-  return fee
+  return BigInt(fee)
 }
 
 const calculateSpenDelegFee = async (address, amount, network, delegation) => {
@@ -277,7 +280,7 @@ const calculateSpenDelegFee = async (address, amount, network, delegation) => {
   return fee
 }
 
-const sendTransaction = async (
+const sendTransaction = async ({
   utxosTotal,
   keysList,
   address,
@@ -287,25 +290,27 @@ const sendTransaction = async (
   poolId,
   delegationId,
   transactionMode,
-) => {
+  adjustedFee,
+}) => {
   const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = totalUtxosAmount(utxos)
-  const fee = await calculateFee(
-    utxos,
+
+  const fee = adjustedFee || await calculateFee({
+    utxosTotal: utxos,
     address,
     changeAddress,
     amountToUse,
     network,
     poolId,
     delegationId,
-  )
+  })
 
-  if (fee > AppInfo.MAX_ML_FEE) {
+  if (fee > BigInt(AppInfo.MAX_ML_FEE)) {
     throw new Error('Fee is too high, please try again later.')
   }
 
   let amount = amountToUse
-  if (totalAmount < Number(amountToUse) + fee) {
+  if (totalAmount < amountToUse + fee) {
     amount = totalAmount - fee
   }
 
@@ -322,11 +327,8 @@ const sendTransaction = async (
     poolId,
     delegationId,
   )
-  const changeAmount = (
-    totalUtxosAmount(requireUtxo) -
-    Number(amount) -
-    fee
-  ).toString()
+
+  const changeAmount = (totalUtxosAmount(requireUtxo) - amount - fee).toString()
   const txChangeOutput = await getTxOutput(changeAmount, changeAddress, network)
   const outputs = [...txOutput, ...txChangeOutput]
   const optUtxos = await getOptUtxos(requireUtxo.flat(), network)
@@ -364,11 +366,11 @@ const sendTransaction = async (
       direction: 'out',
       type: 'Unconfirmed',
       destAddress: address || delegationId,
-      value: MLHelpers.getAmountInCoins(amount),
+      value: MLHelpers.getAmountInCoins(Number(amount)),
       confirmations: 0,
       date: '',
       txid: JSON.parse(result).tx_id,
-      fee: fee,
+      fee: fee.toString(),
       isConfirmed: false,
       mode: transactionMode,
       poolId: poolId,
@@ -448,7 +450,7 @@ const spendFromDelegation = async (
       direction: 'out',
       type: 'Unconfirmed',
       destAddress: address,
-      value: MLHelpers.getAmountInCoins(amount),
+      value: MLHelpers.getAmountInCoins(Number(amount)),
       confirmations: 0,
       date: '',
       txid: JSON.parse(result).tx_id,
