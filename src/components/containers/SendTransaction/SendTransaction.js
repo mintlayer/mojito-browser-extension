@@ -259,10 +259,10 @@ const SendTransaction = ({
     // TODO with 22-digit numbers, this is not working
     if (amount + totalFee > maxValue || !validity) {
       setAmountValidity(false)
-      setPassErrorMessage('Insufficient funds')
+      setTxErrorMessage('Insufficient funds')
     } else if (amount + totalFee <= maxValue && validity) {
       setAmountValidity(true)
-      setPassErrorMessage('')
+      setTxErrorMessage('')
     }
   }, [
     totalFeeCrypto,
