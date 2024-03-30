@@ -59,11 +59,24 @@ const getTxInput = async (outpointSourceId) => {
   )
 }
 
+/**
+ * Get utxos to spend
+ * NOTE: This function require optimization to get UTXOs with the lowest amounts first or 50% lowest and 50% highest, see: https://arxiv.org/pdf/2311.01113.pdf
+ * At this point there is a risk of not having enough UTXOs to spend because first picked UTXOs is equal to the amount to spend without fee
+ * In that case backend will return error with proper fee amount wich is parsed and passed as override fee value.
+ * Need to add some "backup" additional UTXO is AMOUNT is equal of UTXOs amount so that server error less likely to happen but I'm leaving it just to be sure
+ * @param utxos
+ * @param amountToUse
+ * @param fee
+ * @returns {*[]}
+ */
 const getTransactionUtxos = (utxos, amountToUse, fee = BigInt(0)) => {
   let balance = BigInt(0)
   const utxosToSpend = []
+  let lastIndex = 0
 
   for (let i = 0; i < utxos.length; i++) {
+    lastIndex = i
     const utxoBalance = getUtxoBalance(utxos[i])
     if (balance < BigInt(amountToUse) + fee) {
       balance += utxoBalance
@@ -72,6 +85,14 @@ const getTransactionUtxos = (utxos, amountToUse, fee = BigInt(0)) => {
       break
     }
   }
+
+  if (balance === BigInt(amountToUse)) {
+    // pick up extra UTXO
+    if (utxos[lastIndex + 1]) {
+      utxosToSpend.push(utxos[lastIndex + 1])
+    }
+  }
+
   return utxosToSpend
 }
 
@@ -191,7 +212,9 @@ const totalUtxosAmount = (utxosToSpend) => {
   return utxosToSpend
     .flatMap((utxo) => [...utxo])
     .reduce((acc, utxo) => {
-      const amount = utxo?.utxo?.value?.amount ? BigInt(utxo.utxo.value.amount.atoms) : 0
+      const amount = utxo?.utxo?.value?.amount
+        ? BigInt(utxo.utxo.value.amount.atoms)
+        : 0
       return acc + amount
     }, BigInt(0))
 }
@@ -295,15 +318,17 @@ const sendTransaction = async ({
   const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = totalUtxosAmount(utxos)
 
-  const fee = adjustedFee || await calculateFee({
-    utxosTotal: utxos,
-    address,
-    changeAddress,
-    amountToUse,
-    network,
-    poolId,
-    delegationId,
-  })
+  const fee =
+    adjustedFee ||
+    (await calculateFee({
+      utxosTotal: utxos,
+      address,
+      changeAddress,
+      amountToUse,
+      network,
+      poolId,
+      delegationId,
+    }))
 
   if (fee > BigInt(AppInfo.MAX_ML_FEE)) {
     throw new Error('Fee is too high, please try again later.')
