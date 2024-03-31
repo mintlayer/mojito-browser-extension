@@ -60,3 +60,17 @@ header {
 .expand-wrapped-unlocked {
   right: 40px;
 }
+
+@media screen and (min-width: 801px) {
+  .expand {
+    display: none;
+  }
+
+  .expand-wrapped {
+    display: none;
+  }
+
+  .expand-wrapped-unlocked {
+    display: flex;
+  }
+}

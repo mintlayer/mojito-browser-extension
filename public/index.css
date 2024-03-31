@@ -1,0 +1,7 @@
+@media screen and (min-width: 801px) {
+  html {
+    display: flex;
+    justify-content: center;
+    padding: 30px 0 0 0;
+  }
+}
