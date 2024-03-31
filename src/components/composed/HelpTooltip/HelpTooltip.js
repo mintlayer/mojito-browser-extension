@@ -36,6 +36,7 @@ const HelpTooltip = ({ message, link }) => {
       <Tooltip
         message={message}
         visible={tooltipVisible}
+        position="right"
       />
     </div>
   )

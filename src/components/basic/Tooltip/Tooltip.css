@@ -1,20 +1,70 @@
 .tooltip {
   position: absolute;
-  top: 0;
-  left: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 110px;
+  width: max-content;
+  max-width: 110px;
+  max-height: fit-content;
   padding: 4px 8px;
   background: rgb(var(--color-green));
   border-radius: 5px;
   color: rgb(var(--color-white));
   font-size: 0.8rem;
-  opacity: 0;
+  transition: opacity 0.7s ease;
 }
 
-.tooltip.visible {
-  opacity: 1;
-  transition: opacity 0.7s ease;
+.top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bottom {
+  top: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.left {
+  top: 50%;
+  right: 110%;
+  transform: translateY(-50%);
+}
+
+.right {
+  top: 50%;
+  left: 110%;
+  transform: translateY(-50%);
+}
+
+.topLeft {
+  bottom: 100%;
+  right: 100%;
+}
+
+.topRight {
+  bottom: 100%;
+  left: 100%;
+}
+
+.bottomLeft {
+  top: 110%;
+  right: 100%;
+}
+
+.bottomRight {
+  top: 110%;
+  left: 100%;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
 }
