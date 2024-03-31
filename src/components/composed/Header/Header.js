@@ -7,13 +7,15 @@ import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
 import { ReactComponent as ExpandImg } from '@Assets/images/icon-expand.svg'
 import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
 
-import { Button, Logo } from '@BasicComponents'
+import { Button, Logo, Tooltip } from '@BasicComponents'
 import { AccountContext } from '@Contexts'
 
 import './Header.css'
 
 const Header = ({ customBackAction, noBackButton = false }) => {
   const [unlocked, setUnlocked] = useState(false)
+  const [tooltipVisible, setTooltipVisible] = useState(false)
+  const tooltipMessage = 'Expand view'
   const navigate = useNavigate()
   const location = useLocation()
   const { isAccountUnlocked, logout } = useContext(AccountContext)
@@ -52,6 +54,10 @@ const Header = ({ customBackAction, noBackButton = false }) => {
     )
   }
 
+  const toggleTooltip = () => {
+    setTooltipVisible(!tooltipVisible)
+  }
+
   return (
     <header data-testid="header-container">
       {!noBackButton && (
@@ -66,26 +72,44 @@ const Header = ({ customBackAction, noBackButton = false }) => {
 
       {!unlocked && (
         <div className="expand-wrapped">
-          <Button
-            alternate
-            extraStyleClasses={['settings']}
-            onClickHandle={expandHandler}
-          >
-            <ExpandImg />
-          </Button>
+          <div className="tooltipWrapper">
+            <Button
+              alternate
+              extraStyleClasses={['settings']}
+              onClickHandle={expandHandler}
+              onMouseEnter={toggleTooltip}
+              onMouseLeave={toggleTooltip}
+            >
+              <ExpandImg />
+            </Button>
+            <Tooltip
+              message={tooltipMessage}
+              visible={tooltipVisible}
+              position="left"
+            />
+          </div>
         </div>
       )}
 
       {unlocked && (
         <>
           <div className="expand-wrapped expand-wrapped-unlocked">
-            <Button
-              alternate
-              extraStyleClasses={['settings']}
-              onClickHandle={expandHandler}
-            >
-              <ExpandImg />
-            </Button>
+            <div className="tooltipWrapper">
+              <Button
+                alternate
+                extraStyleClasses={['settings']}
+                onClickHandle={expandHandler}
+                onMouseEnter={toggleTooltip}
+                onMouseLeave={toggleTooltip}
+              >
+                <ExpandImg />
+              </Button>
+              <Tooltip
+                message={tooltipMessage}
+                visible={tooltipVisible}
+                position="left"
+              />
+            </div>
             <Button
               alternate
               extraStyleClasses={['settings']}

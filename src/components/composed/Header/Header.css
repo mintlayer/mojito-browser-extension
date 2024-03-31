@@ -55,10 +55,16 @@ header {
   display: flex;
   top: 0.5rem;
   right: 0;
+  overflow: visible;
 }
 
 .expand-wrapped-unlocked {
   right: 40px;
+}
+
+.tooltipWrapper {
+  position: relative;
+  overflow: visible;
 }
 
 @media screen and (min-width: 801px) {

@@ -12,6 +12,8 @@ const Button = ({
   extraStyleClasses = [],
   disabled = false,
   buttonType = 'button',
+  onMouseEnter,
+  onMouseLeave,
 }) => {
   const classesList = ['btn', ...extraStyleClasses]
   alternate && classesList.push('alternate')
@@ -32,6 +34,8 @@ const Button = ({
         data-testid="button"
         disabled={disabled}
         type={buttonType}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
       >
         {children}
       </button>
