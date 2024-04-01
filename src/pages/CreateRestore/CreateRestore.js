@@ -19,8 +19,8 @@ const CreateRestorePage = () => {
           browser.runtime.getURL('popup.html')
         : // eslint-disable-next-line no-undef
           chrome.runtime.getURL('popup.html'),
-      LocalStorageService.setItem('extendPath', dest),
       '_blank',
+      LocalStorageService.setItem('extendPath', dest),
     )
   }
 
