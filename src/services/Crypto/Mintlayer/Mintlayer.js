@@ -14,7 +14,6 @@ import init, {
   estimate_transaction_size,
   encode_lock_until_time,
   encode_output_lock_then_transfer,
-  encode_lock_until_height,
   encode_lock_for_block_count,
   encode_output_create_delegation,
   encode_output_delegate_staking,
@@ -186,7 +185,7 @@ export const getOutputs = async ({
       lockEncoded = encode_lock_until_time(BigInt(lock.UntilTime.timestamp))
     }
     if (lock.ForBlockCount) {
-      lockEncoded = encode_lock_until_height(lock.ForBlockCount)
+      lockEncoded = encode_lock_for_block_count(lock.ForBlockCount)
     }
     return encode_output_lock_then_transfer(
       amountInstace,
