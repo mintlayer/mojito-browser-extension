@@ -167,13 +167,10 @@ const getParsedTransactions = (transactions, addresses) => {
           }
           if (output.type === 'LockThenTransfer') {
             if (
-              transaction.inputs[0].input?.Account?.account
-                ?.DelegationBalance[0]
+              transaction.inputs[0].input?.account_type === 'DelegationBalance'
             ) {
               type = 'Delegate Withdrawal'
-              destAddress =
-                transaction.inputs[0].input?.Account?.account
-                  ?.DelegationBalance[0]
+              destAddress = transaction.inputs[0].input?.delegation_id
             }
 
             return acc + Number(output.value.amount.decimal)
