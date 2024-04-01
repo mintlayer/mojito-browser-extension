@@ -96,26 +96,30 @@ const SendTransactionPage = () => {
   const calculateMlTotalFee = async (transactionInfo) => {
     setFeeLoading(true)
     const address = transactionInfo.to
-    const amountToSend = MLHelpers.getAmountInAtoms(
-      transactionInfo.amount,
-    )
+    const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
     const unusedChangeAddress = await ML.getUnusedAddress(changeAddress)
     const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
     const parsedUtxos = utxos
       .map((utxo) => JSON.parse(utxo))
       .filter((utxo) => utxo.length > 0)
-    const fee = await MLTransaction.calculateFee({
-      utxosTotal: parsedUtxos,
-      address: address,
-      changeAddress: unusedChangeAddress,
-      amountToUse: amountToSend,
-      network: networkType,
-    })
-    const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
-    setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
-    setTotalFeeCrypto(feeInCoins)
-    setFeeLoading(false)
-    return feeInCoins
+    try {
+      const fee = await MLTransaction.calculateFee({
+        utxosTotal: parsedUtxos,
+        address: address,
+        changeAddress: unusedChangeAddress,
+        amountToUse: amountToSend,
+        network: networkType,
+      })
+      const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
+      setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
+      setTotalFeeCrypto(feeInCoins)
+      setFeeLoading(false)
+      return feeInCoins
+    } catch (e) {
+      console.error('Error calculating fee:', e)
+      goBackToWallet()
+      setFeeLoading(false)
+    }
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -186,7 +190,9 @@ const SendTransactionPage = () => {
       changeAddress: unusedChageAddress,
       amountToUse: amountToSend,
       network: networkType,
-      ...(adjustedFee && { adjustedFee: MLHelpers.getAmountInAtoms(adjustedFee) })
+      ...(adjustedFee && {
+        adjustedFee: MLHelpers.getAmountInAtoms(adjustedFee),
+      }),
     })
     return result
   }

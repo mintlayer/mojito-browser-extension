@@ -7,7 +7,7 @@ const getAmountInCoins = (amointInAtoms) => {
 }
 
 const getAmountInAtoms = (amountInCoins) => {
-  return BigInt(amountInCoins * AppInfo.ML_ATOMS_PER_COIN)
+  return BigInt(Math.round(amountInCoins * AppInfo.ML_ATOMS_PER_COIN))
 }
 
 const getParsedTransactions = (transactions, addresses) => {
