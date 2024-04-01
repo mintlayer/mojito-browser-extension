@@ -48,8 +48,8 @@ const Header = ({ customBackAction, noBackButton = false }) => {
     window.open(
       typeof browser !== 'undefined'
         ? // eslint-disable-next-line no-undef
-          browser.runtime.getURL('index.html')
-        : chrome.runtime.getURL('index.html'),
+          browser.runtime.getURL('popup.html')
+        : chrome.runtime.getURL('popup.html'),
       '_blank',
     )
   }

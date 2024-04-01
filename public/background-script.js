@@ -27,7 +27,7 @@ browser.runtime.onConnect.addListener((port) => {
 
   async function handleConnect(request, port) {
     if (connectWindowId === null) {
-      await createPopup('index.html', async (win) => {
+      await createPopup('popup.html', async (win) => {
         connectWindowId = win.id
         setTimeout(async () => {
           const response = await browser.runtime.sendMessage({
@@ -44,7 +44,7 @@ browser.runtime.onConnect.addListener((port) => {
   async function handleDelegate(request) {
     if (popupWindowId === null && !isPopupOpening) {
       isPopupOpening = true
-      await createPopup('index.html', async (win) => {
+      await createPopup('popup.html', async (win) => {
         popupWindowId = win.id
         isPopupOpening = false
         setTimeout(async () => {
@@ -61,7 +61,7 @@ browser.runtime.onConnect.addListener((port) => {
 
   async function handleStake(request) {
     if (popupWindowId === null) {
-      await createPopup('index.html', async (win) => {
+      await createPopup('popup.html', async (win) => {
         popupWindowId = win.id
         setTimeout(async () => {
           await browser.runtime.sendMessage({
