@@ -18,7 +18,7 @@ const Header = ({ customBackAction, noBackButton = false }) => {
   const tooltipMessage = 'Expand view'
   const navigate = useNavigate()
   const location = useLocation()
-  const { isAccountUnlocked, logout } = useContext(AccountContext)
+  const { isAccountUnlocked, logout, isExtended } = useContext(AccountContext)
   const isWalletPage = location.pathname === '/wallet'
 
   useEffect(() => {
@@ -70,7 +70,7 @@ const Header = ({ customBackAction, noBackButton = false }) => {
         </Button>
       )}
 
-      {!unlocked && (
+      {!unlocked && !isExtended && (
         <div className="expand-wrapped">
           <div className="tooltipWrapper">
             <Button
@@ -94,22 +94,24 @@ const Header = ({ customBackAction, noBackButton = false }) => {
       {unlocked && (
         <>
           <div className="expand-wrapped expand-wrapped-unlocked">
-            <div className="tooltipWrapper">
-              <Button
-                alternate
-                extraStyleClasses={['settings']}
-                onClickHandle={expandHandler}
-                onMouseEnter={toggleTooltip}
-                onMouseLeave={toggleTooltip}
-              >
-                <ExpandImg />
-              </Button>
-              <Tooltip
-                message={tooltipMessage}
-                visible={tooltipVisible}
-                position="left"
-              />
-            </div>
+            {!isExtended && (
+              <div className="tooltipWrapper">
+                <Button
+                  alternate
+                  extraStyleClasses={['settings']}
+                  onClickHandle={expandHandler}
+                  onMouseEnter={toggleTooltip}
+                  onMouseLeave={toggleTooltip}
+                >
+                  <ExpandImg />
+                </Button>
+                <Tooltip
+                  message={tooltipMessage}
+                  visible={tooltipVisible}
+                  position="left"
+                />
+              </div>
+            )}
             <Button
               alternate
               extraStyleClasses={['settings']}
