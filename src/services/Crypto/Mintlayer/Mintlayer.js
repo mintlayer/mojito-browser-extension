@@ -185,7 +185,7 @@ export const getOutputs = async ({
       lockEncoded = encode_lock_until_time(BigInt(lock.UntilTime.timestamp))
     }
     if (lock.ForBlockCount) {
-      lockEncoded = encode_lock_for_block_count(lock.ForBlockCount)
+      lockEncoded = encode_lock_for_block_count(BigInt(lock.ForBlockCount))
     }
     return encode_output_lock_then_transfer(
       amountInstace,
