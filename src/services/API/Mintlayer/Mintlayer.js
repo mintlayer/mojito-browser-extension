@@ -2,17 +2,19 @@ import { EnvVars } from '@Constants'
 import { LocalStorageService } from '@Storage'
 import { AppInfo } from '@Constants'
 
-const prefix = '/api/v1'
+const prefix = '/api/v2'
 
 const MINTLAYER_ENDPOINTS = {
   GET_ADDRESS_DATA: '/address/:address',
   GET_TRANSACTION_DATA: '/transaction/:txid',
-  GET_ADDRESS_UTXO: '/address/:address/available-utxos',
+  GET_ADDRESS_UTXO: '/address/:address/spendable-utxos',
   POST_TRANSACTION: '/transaction',
   GET_FEES_ESTIMATES: '/feerate',
   GET_ADDRESS_DELEGATIONS: '/address/:address/delegations',
   GET_DELEGATION: '/delegation/:delegation',
   GET_CHAIN_TIP: '/chain/tip',
+  GET_BLOCK_HASH: '/chain/:height',
+  GET_BLOCK_DATA: '/block/:hash',
 }
 
 const requestMintlayer = async (url, body = null, request = fetch) => {
@@ -26,6 +28,20 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
         return Promise.resolve(
           JSON.stringify({ coin_balance: 0, transaction_history: [] }),
         )
+      }
+
+      // handle RPC error
+      if (
+        error.error.includes(
+          'Mempool error: Transaction does not pay sufficient fees to be relayed',
+        )
+      ) {
+        const errorMessage = error.error
+          .split('Mempool error: ')[1]
+          .split(')')[0]
+          .replace('(tx_fee:', '. estimated fee')
+          .replace('min_relay_fee:', 'minimum fee')
+        throw new Error(errorMessage)
       }
 
       // handle RPC error
@@ -83,10 +99,10 @@ const getAddressBalance = async (address) => {
     const response = await getAddressData(address)
     const data = JSON.parse(response)
     const balance = {
-      balanceInAtoms: data.coin_balance,
+      balanceInAtoms: data.coin_balance.atoms,
     }
     const balanceLocked = {
-      balanceInAtoms: data.locked_coin_balance || 0,
+      balanceInAtoms: data.locked_coin_balance.atoms || 0,
     }
     return { balance, balanceLocked }
   } catch (error) {
@@ -192,6 +208,18 @@ const getDelegation = (delegation) =>
     MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(':delegation', delegation),
   )
 
+const getBlockDataByHeight = (height) => {
+  return tryServers(
+    MINTLAYER_ENDPOINTS.GET_BLOCK_HASH.replace(':height', height),
+  )
+    .then(JSON.parse)
+    .then((response) => {
+      return tryServers(
+        MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':hash', response),
+      )
+    })
+}
+
 const getWalletDelegations = (addresses) => {
   const delegationsPromises = addresses.map((address) =>
     getAddressDelegations(address),
@@ -205,6 +233,12 @@ const getDelegationDetails = (delegations) => {
     getDelegation(delegation),
   )
   return Promise.all(delegationsPromises).then((results) =>
+    results.flatMap(JSON.parse),
+  )
+}
+const getBlocksData = (heights) => {
+  const heightsPromises = heights.map((height) => getBlockDataByHeight(height))
+  return Promise.all(heightsPromises).then((results) =>
     results.flatMap(JSON.parse),
   )
 }
@@ -237,5 +271,6 @@ export {
   getChainTip,
   broadcastTransaction,
   getFeesEstimates,
+  getBlocksData,
   MINTLAYER_ENDPOINTS,
 }

@@ -8,51 +8,60 @@ import {
 const UTXSOS_MOCK = [
   {
     outpoint: {
-      id: {
-        Transaction:
-          '0cd5de5319de96f7c967a24a51224f4eab7882e6dbe336ab6837b15e1b68dace',
-      },
-      index: 1,
+      source_id:
+        '0cd5de5319de96f7c967a24a51224f4eab7882e6dbe336ab6837b15e1b68dace',
+      source_type: 'Transaction',
+      input_type: 'UTXO',
+      index: 0,
     },
     utxo: {
       destination: 'tmt1qylgafccyyy26zrtqk8gjvcwzut26taruuyzmcr6',
       type: 'Transfer',
       value: {
-        amount: '200',
+        amount: {
+          atoms: '200',
+          decimals: '0.000000002',
+        },
         type: 'Coin',
       },
     },
   },
   {
     outpoint: {
-      id: {
-        Transaction:
-          '0cd5de5319de96f7c967a24a51224f4eab7882e6dbe336ab6837b15e1b68dace',
-      },
+      source_id:
+        '0cd5de5319de96f7c967a24a51224f4eab7882e6dbe336ab6837b15e1b68dace',
+      source_type: 'Transaction',
+      input_type: 'UTXO',
       index: 1,
     },
     utxo: {
       destination: 'tmt1qylgafccyyy26zrtqk8gjvcwzut26taruuyzmcr6',
       type: 'Transfer',
       value: {
-        amount: '200',
+        amount: {
+          atoms: '200',
+          decimals: '0.000000002',
+        },
         type: 'Coin',
       },
     },
   },
   {
     outpoint: {
-      id: {
-        Transaction:
-          '0cd5de5319de96f7c967a24a51224f4eab7882e6dbe336ab6837b15e1b68dace',
-      },
-      index: 1,
+      source_id:
+        '0cd5de5319de96f7c967a24a51224f4eab7882e6dbe336ab6837b15e1b68dace',
+      source_type: 'Transaction',
+      input_type: 'UTXO',
+      index: 2,
     },
     utxo: {
       destination: 'tmt1qylgafccyyy26zrtqk8gjvcwzut26taruuyzmcr6',
       type: 'Transfer',
       value: {
-        amount: '200',
+        amount: {
+          atoms: '200',
+          decimals: '0.000000002',
+        },
         type: 'Coin',
       },
     },

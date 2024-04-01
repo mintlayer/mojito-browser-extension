@@ -29,6 +29,7 @@ const SendTransaction = ({
   confirmTransaction,
   goBackToWallet,
   preEnterAddress,
+  setAdjustedFee,
 }) => {
   const { walletType, balanceLoading } = useContext(AccountContext)
   const { feeLoading, transactionMode, currentDelegationInfo } =
@@ -72,7 +73,9 @@ const SendTransaction = ({
   }
 
   const openConfirmation = async () => {
+    if (!isFormValid) return
     setPopupState(true)
+    setTxErrorMessage('')
     onSendTransaction &&
       onSendTransaction({
         to: addressTo,
@@ -106,6 +109,19 @@ const SendTransaction = ({
         setPassValidity(false)
         setPass('')
         setAllowClosing(true)
+      } else if (e.message.includes('minimum fee')) {
+        // need to adjust fee
+        setAskPassword(false)
+        setPassPristinity(false)
+        setPassValidity(false)
+        setPass('')
+        setFee(e.message.split('minimum fee ')[1]) // Override fee with minimum fee
+        setTotalFeeCryptoParent(e.message.split('minimum fee ')[1])
+        setAdjustedFee(e.message.split('minimum fee ')[1])
+        setTxErrorMessage('Transaction fee adjusted')
+        console.error(e)
+        setAllowClosing(true)
+        setPopupState(true)
       } else {
         // handle other errors
         setAskPassword(false)
@@ -336,7 +352,7 @@ const SendTransaction = ({
                 fiatName={fiatName}
                 totalFeeFiat={totalFeeFiat}
                 totalFeeCrypto={totalFeeCrypto}
-                // txErrorMessage={txErrorMessage} // TODO move update on confirmation stage
+                txErrorMessage={txErrorMessage} // TODO move update on confirmation stage
                 fee={fee}
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
