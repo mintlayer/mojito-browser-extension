@@ -60,7 +60,7 @@ test('Render TextField component', () => {
   })
 
   expect(input).toHaveValue(maxValueInToken.toString())
-  expect(bottomNote).toHaveTextContent('≈ 10054453,50 USD')
+  expect(bottomNote).toHaveTextContent('≈ 10054453.50 USD')
 
   // expect(switchButton).toBeInTheDocument()
   // expect(arrowIcons).toHaveLength(2)
@@ -102,7 +102,7 @@ test('Render TextField component fdf', async () => {
   const maxValueInCrypto = maxValueInToken - totalFeeCrypto
 
   fireEvent.click(actionButton)
-  expect(cryptoInput).toHaveValue(maxValueInCrypto.toString().replace('.', ','))
+  expect(cryptoInput).toHaveValue(maxValueInCrypto.toString())
 
   // fireEvent.click(switchButton)
   // const fiatInput = screen.getByTestId('input')
@@ -156,7 +156,7 @@ test('Render TextField when networkType is testnet', () => {
   })
 
   expect(input).toHaveValue(maxValueInToken.toString())
-  expect(bottomNote).toHaveTextContent('≈ 0,00 USD')
+  expect(bottomNote).toHaveTextContent('≈ 0.00 USD')
 
   // expect(switchButton).toBeInTheDocument()
 

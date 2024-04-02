@@ -102,7 +102,7 @@ describe('AddWallet', () => {
 
     const submitButton = screen.getByTestId('button')
     expect(submitButton).toBeInTheDocument()
-    expect(submitButton).toHaveTextContent('Create Wallet')
+    expect(submitButton).toHaveTextContent('Add Wallet')
   })
 
   test('changes step on submit button click', () => {

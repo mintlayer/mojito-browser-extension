@@ -41,7 +41,7 @@ describe('Delegation', () => {
     )
     expect(screen.getByTestId('delegation-date')).toHaveTextContent(date)
     expect(screen.getByTestId('delegation-amount')).toHaveTextContent(
-      'Amount: 0,001',
+      'Amount: 0.001',
     )
   })
 

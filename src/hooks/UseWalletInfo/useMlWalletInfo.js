@@ -93,11 +93,22 @@ const useMlWalletInfo = (addresses) => {
       const delegation_details = await Mintlayer.getDelegationDetails(
         delegations.map((delegation) => delegation.delegation_id),
       )
+      const blocks_data = await Mintlayer.getBlocksData(
+        delegation_details.map(
+          (delegation) => delegation.creation_block_height,
+        ),
+      )
 
       const mergedDelegations = delegations.map((delegation, index) => {
         return {
           ...delegation,
-          creation_time: delegation_details[index].creation_time.timestamp,
+          balance: delegation.balance.atoms,
+          creation_block_height:
+            delegation_details[index].creation_block_height,
+          creation_time: blocks_data.find(
+            ({ height }) =>
+              height === delegation_details[index].creation_block_height,
+          ).header.timestamp.timestamp,
         }
       })
 
@@ -119,9 +130,9 @@ const useMlWalletInfo = (addresses) => {
     if (effectCalled.current) return
     effectCalled.current = true
 
-    getTransactions()
-    getDelegations()
-    getBalance()
+    // getTransactions()
+    // getDelegations()
+    // getBalance()
   }, [getBalance, getTransactions, getDelegations])
 
   return {
@@ -134,6 +145,7 @@ const useMlWalletInfo = (addresses) => {
     mlDelegationsBalance,
     getDelegations,
     getTransactions,
+    getBalance,
   }
 }
 

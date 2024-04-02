@@ -28,7 +28,7 @@ test('Renders restore account page with step 1', () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
 
   expect(RestoreAccountComponent).toBeInTheDocument()
   expect(restoreAccountForm).toBeInTheDocument()
@@ -69,7 +69,7 @@ test('Renders restore account page with step 2', () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
 
   expect(RestoreAccountComponent).toBeInTheDocument()
   expect(restoreAccountForm).toBeInTheDocument()
@@ -150,7 +150,7 @@ test('Renders set account page with step 3', () => {
   const restoreAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
   expect(descriptionParagraph).toHaveLength(1)
 
   act(() => {
@@ -189,7 +189,7 @@ test('Renders restore account page with step 4', () => {
   const buttons = screen.getAllByTestId('button')
   const inputs = screen.getAllByTestId('input')
 
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
   expect(inputs).toHaveLength(24)
 
   inputs.forEach((input) => expect(input).toHaveAttribute('type', 'text'))
@@ -243,7 +243,7 @@ test('Renders set account page with step 6', () => {
   const buttons = screen.getAllByTestId('button')
   const legacyRadioButton = screen.getByRole('button', { name: /Legacy/i })
 
-  expect(buttons).toHaveLength(5)
+  expect(buttons).toHaveLength(6)
   expect(descriptionParagraph).toHaveLength(1)
 
   expect(legacyRadioButton).toBeInTheDocument()

@@ -12,6 +12,7 @@ import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
 
 import './CurrentStaking.css'
 import Timer from '../../basic/Timer/Timer'
+import { useEffectOnce } from '../../../hooks/etc/useEffectOnce'
 
 const CurrentStaking = ({ addressList }) => {
   const { networkType } = useContext(SettingsContext)
@@ -38,6 +39,10 @@ const CurrentStaking = ({ addressList }) => {
     getDelegations,
     getTransactions,
   } = useMlWalletInfo(addressList)
+
+  useEffectOnce(() => {
+    getDelegations()
+  })
 
   const onNextButtonClick = () => {
     setDelegationStep(2)

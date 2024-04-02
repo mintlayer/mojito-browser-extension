@@ -20,7 +20,7 @@ chrome.runtime.onMessageExternal.addListener(function (
           popupWindowId = true
           chrome.windows.create(
             {
-              url: chrome.runtime.getURL('index.html'),
+              url: chrome.runtime.getURL('popup.html'),
               type: 'popup',
               width: 800,
               height: 600,
@@ -52,7 +52,7 @@ chrome.runtime.onMessageExternal.addListener(function (
           popupWindowId = true
           chrome.windows.create(
             {
-              url: chrome.runtime.getURL('index.html'),
+              url: chrome.runtime.getURL('popup.html'),
               type: 'popup',
               width: 800,
               height: 600,
@@ -80,7 +80,7 @@ chrome.runtime.onMessageExternal.addListener(function (
           popupWindowId = true
           chrome.windows.create(
             {
-              url: chrome.runtime.getURL('index.html'),
+              url: chrome.runtime.getURL('popup.html'),
               type: 'popup',
               width: 800,
               height: 630,

@@ -25,7 +25,7 @@ test('Render account balance with ML', () => {
 
   expect(balanceParagraphs[0].textContent).toBe(BALANCE_SAMPLE + ' ML')
   expect(balanceParagraphs[1].textContent).toBe(
-    BALANCE_SAMPLE * EXCHANGE_RATE_SAMPLE + ',00 USD',
+    BALANCE_SAMPLE * EXCHANGE_RATE_SAMPLE + '.00 USD',
   )
 })
 
@@ -49,7 +49,7 @@ test('Render account balance with BTC', () => {
 
   expect(balanceParagraphs[0].textContent).toBe(BALANCE_SAMPLE + ' BTC')
   expect(balanceParagraphs[1].textContent).toBe(
-    BALANCE_SAMPLE * EXCHANGE_RATE_SAMPLE + ',00 USD',
+    BALANCE_SAMPLE * EXCHANGE_RATE_SAMPLE + '.00 USD',
   )
 })
 
@@ -73,5 +73,5 @@ test('renders balance with zero value when networkType is testnet', () => {
   expect(currantBalanceComponent).toBeInTheDocument()
 
   expect(balanceParagraphs[0].textContent).toBe(BALANCE_SAMPLE + ' BTC')
-  expect(balanceParagraphs[1].textContent).toBe('0,00 USD')
+  expect(balanceParagraphs[1].textContent).toBe('0.00 USD')
 })

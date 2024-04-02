@@ -21,6 +21,7 @@ import { ML } from '@Cryptos'
 import { Mintlayer } from '@APIs'
 
 import './SendTransaction.css'
+import { useEffectOnce } from '../../hooks/etc/useEffectOnce'
 
 const SendTransactionPage = () => {
   const { addresses, accountID, walletType } = useContext(AccountContext)
@@ -36,6 +37,7 @@ const SendTransactionPage = () => {
       : addresses.mlTestnetAddresses
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
+  const [adjustedFee, setAdjustedFee] = useState(0)
   const navigate = useNavigate()
   const tokenName = walletType.name === 'Mintlayer' ? 'ML' : 'BTC'
   const fiatName = 'USD'
@@ -48,7 +50,11 @@ const SendTransactionPage = () => {
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, getBalance } = useMlWalletInfo(currentMlAddresses)
+
+  useEffectOnce(() => {
+    getBalance()
+  })
 
   const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
 
@@ -90,26 +96,30 @@ const SendTransactionPage = () => {
   const calculateMlTotalFee = async (transactionInfo) => {
     setFeeLoading(true)
     const address = transactionInfo.to
-    const amountToSend = MLHelpers.getAmountInAtoms(
-      transactionInfo.amount,
-    ).toString()
+    const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
     const unusedChangeAddress = await ML.getUnusedAddress(changeAddress)
     const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
     const parsedUtxos = utxos
       .map((utxo) => JSON.parse(utxo))
       .filter((utxo) => utxo.length > 0)
-    const fee = await MLTransaction.calculateFee(
-      parsedUtxos,
-      address,
-      unusedChangeAddress,
-      amountToSend,
-      networkType,
-    )
-    const feeInCoins = MLHelpers.getAmountInCoins(fee)
-    setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
-    setTotalFeeCrypto(feeInCoins)
-    setFeeLoading(false)
-    return feeInCoins
+    try {
+      const fee = await MLTransaction.calculateFee({
+        utxosTotal: parsedUtxos,
+        address: address,
+        changeAddress: unusedChangeAddress,
+        amountToUse: amountToSend,
+        network: networkType,
+      })
+      const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
+      setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
+      setTotalFeeCrypto(feeInCoins)
+      setFeeLoading(false)
+      return feeInCoins
+    } catch (e) {
+      console.error('Error calculating fee:', e)
+      goBackToWallet()
+      setFeeLoading(false)
+    }
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -151,7 +161,7 @@ const SendTransactionPage = () => {
   const confirmMlTransaction = async (password) => {
     const amountToSend = MLHelpers.getAmountInAtoms(
       transactionInformation.amount,
-    ).toString()
+    )
     const { mlPrivKeys } = await Account.unlockAccount(accountID, password)
     const privKey =
       networkType === 'mainnet'
@@ -173,14 +183,17 @@ const SendTransactionPage = () => {
     const parsedUtxos = utxos
       .map((utxo) => JSON.parse(utxo))
       .filter((utxo) => utxo.length > 0)
-    const result = await MLTransaction.sendTransaction(
-      parsedUtxos,
-      keysList,
-      transactionInformation.to,
-      unusedChageAddress,
-      amountToSend,
-      networkType,
-    )
+    const result = await MLTransaction.sendTransaction({
+      utxosTotal: parsedUtxos,
+      keysList: keysList,
+      address: transactionInformation.to,
+      changeAddress: unusedChageAddress,
+      amountToUse: amountToSend,
+      network: networkType,
+      ...(adjustedFee && {
+        adjustedFee: MLHelpers.getAmountInAtoms(adjustedFee),
+      }),
+    })
     return result
   }
 
@@ -195,6 +208,7 @@ const SendTransactionPage = () => {
             totalFeeFiat={totalFeeFiat}
             totalFeeCrypto={totalFeeCrypto}
             setTotalFeeCrypto={setTotalFeeCrypto}
+            setAdjustedFee={setAdjustedFee}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueToken}

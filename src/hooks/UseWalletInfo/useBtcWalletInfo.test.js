@@ -76,7 +76,7 @@ test('UseBtcWalletInfo hook', async () => {
     transactionsList = result.current.btcTransactionsList
   })
 
-  expect(balance).toBe('0,02881771')
+  expect(balance).toBe('0.02881771')
   // TODO: +1 because of the message transaction. This is a temporary solution
   expect(transactionsList.length).toBe(rawTransactions.length + 1)
 })

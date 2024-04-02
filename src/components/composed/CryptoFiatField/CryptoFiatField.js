@@ -39,7 +39,7 @@ const CryptoFiatField = ({
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
   const amountErrorMessage = 'Amount set is bigger than this wallet balance.'
-  const amountFormatErrorMessage = 'Amount format is invalid. Use 0,00 instead.'
+  const amountFormatErrorMessage = 'Amount format is invalid. Use 0.00 instead.'
   const zeroErrorMessage = 'Amount must be greater than 0.'
   const isDelegationMode =
     transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
@@ -77,10 +77,13 @@ const CryptoFiatField = ({
   // Consider the correct format for 0,00 that might also be 0.00
   const displayedBottomValue =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? `≈ 0,00 ${fiatName}`
+      ? `≈ 0.00 ${fiatName}`
       : formattedBottomValue
 
   const calculateFiatValue = (value) => {
+    if (!value) {
+      return Format.fiatValue(0)
+    }
     const parsedValue = NumbersHelper.floatStringToNumber(value)
     return Format.fiatValue(parsedValue * exchangeRate)
   }
@@ -141,12 +144,12 @@ const CryptoFiatField = ({
       setAmountValidity(true)
       setValidity('valid')
     }
-    setValue(value || 0)
-    updateValue(value || 0)
+    setValue(value || '')
+    updateValue(value || '')
 
     const validity = AppInfo.amountRegex.test(value)
 
-    if (!validity) {
+    if (parsedValue > 0 && !validity) {
       setValidity('invalid')
       setAmountValidity(false)
       setErrorMessage(amountFormatErrorMessage)

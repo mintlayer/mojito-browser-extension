@@ -105,7 +105,7 @@ test('Header component, renders a page before, navigate to Header and logout', a
   expect(nextPageComponent).toBeInTheDocument()
 
   act(() => {
-    buttons[2].click()
+    buttons[3].click()
   })
 
   await waitFor(async () => {

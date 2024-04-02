@@ -14,7 +14,6 @@ import init, {
   estimate_transaction_size,
   encode_lock_until_time,
   encode_output_lock_then_transfer,
-  encode_lock_until_height,
   encode_lock_for_block_count,
   encode_output_create_delegation,
   encode_output_delegate_staking,
@@ -173,6 +172,7 @@ export const getOutputs = async ({
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')
   }
+
   const amountInstace = Amount.from_atoms(amount)
 
   const networkIndex = NETWORKS[networkType]
@@ -185,7 +185,7 @@ export const getOutputs = async ({
       lockEncoded = encode_lock_until_time(BigInt(lock.UntilTime.timestamp))
     }
     if (lock.ForBlockCount) {
-      lockEncoded = encode_lock_until_height(BigInt(lock.ForBlockCount))
+      lockEncoded = encode_lock_for_block_count(BigInt(lock.ForBlockCount))
     }
     return encode_output_lock_then_transfer(
       amountInstace,

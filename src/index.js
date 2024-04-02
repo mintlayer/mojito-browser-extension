@@ -31,6 +31,7 @@ import {
   TransactionProvider,
 } from '@Contexts'
 import { ML } from '@Cryptos'
+import { LocalStorageService } from '@Storage'
 
 import reportWebVitals from './utils/reportWebVitals'
 
@@ -43,7 +44,8 @@ const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout, isAccountUnlocked, addresses } = useContext(AccountContext)
+  const { logout, isAccountUnlocked, addresses, isExtended } =
+    useContext(AccountContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
 
   const isConnectionAvailable = async (accountUnlocked) => {
@@ -127,13 +129,20 @@ const App = () => {
         'This script should only be loaded in a browser extension.'
       ) {
         // not extension env
-        console.log('not extension env')
         return
       }
       // other error throw further
       throw e
     }
   }, [addresses, isAccountUnlocked, navigate])
+
+  useEffect(() => {
+    const extendPath = LocalStorageService.getItem('extendPath')
+    if (isExtended && extendPath) {
+      navigate(extendPath)
+      LocalStorageService.removeItem('extendPath')
+    }
+  }, [isExtended, navigate])
 
   const popupButtonClickHandler = () => {
     setErrorPopupOpen(false)

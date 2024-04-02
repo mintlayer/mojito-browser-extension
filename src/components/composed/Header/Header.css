@@ -29,6 +29,16 @@ header {
   height: 40px;
   width: 40px;
   padding: 0.2rem;
+  /* position: absolute; */
+  top: 0.5rem;
+  right: 45px;
+  outline: none;
+}
+
+.expand {
+  height: 40px;
+  width: 40px;
+  padding: 0.2rem;
   position: absolute;
   top: 0.5rem;
   right: 45px;
@@ -38,4 +48,21 @@ header {
 .settings svg {
   width: 100%;
   height: 100%;
+}
+
+.expand-wrapped {
+  position: absolute;
+  display: flex;
+  top: 0.5rem;
+  right: 0;
+  overflow: visible;
+}
+
+.expand-wrapped-unlocked {
+  right: 40px;
+}
+
+.tooltipWrapper {
+  position: relative;
+  overflow: visible;
 }
