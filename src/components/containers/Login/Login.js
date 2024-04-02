@@ -25,7 +25,7 @@ const Login = ({ accounts, onSelect, onCreate }) => {
           />
         </div>
         <CenteredLayout>
-          <Button onClickHandle={onCreateAccount}>Create Wallet</Button>
+          <Button onClickHandle={onCreateAccount}>Add Wallet</Button>
         </CenteredLayout>
       </VerticalGroup>
     </div>

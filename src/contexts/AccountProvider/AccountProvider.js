@@ -12,6 +12,7 @@ const AccountProvider = ({ value: propValue, children }) => {
   const [lines, setLines] = useState([])
   const [entropy, setEntropy] = useState([])
   const [balanceLoading, setBalanceLoading] = useState(false)
+  const isExtended = window.location.href.includes('popup.html')
 
   const accountRegistryName = 'unlockedAccount'
   const loginTimeoutInMinutes = 30
@@ -87,6 +88,7 @@ const AccountProvider = ({ value: propValue, children }) => {
     setWalletType,
     balanceLoading,
     setBalanceLoading,
+    isExtended,
   }
 
   useEffect(() => {

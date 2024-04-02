@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react'
 import { SettingsContext, AccountContext } from '@Contexts'
-import LogoIcon from '@Assets/images/logo96.png'
+import LogoIcon from '@Assets/images/logo.svg'
 import { AppInfo } from '@Constants'
 import './Logo.css'
 

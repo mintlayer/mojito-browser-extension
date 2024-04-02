@@ -5,7 +5,7 @@ import { AccountContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import { Loading } from '@ComposedComponents'
 import { CreateRestorePage, LoginPage } from '@Pages'
-import Logo from '@Assets/images/logo96.png'
+import { Header } from '@ComposedComponents'
 
 import './Home.css'
 
@@ -50,14 +50,7 @@ const HomePage = () => {
   return (
     !unlocked && (
       <>
-        <div className="homeLogoContainer">
-          <img
-            src={Logo}
-            alt="Mojito Logo"
-            className="logo"
-          />
-          <h1 className="mojitoLettering">Mojito</h1>
-        </div>
+        <Header noBackButton />
         <Home />
       </>
     )

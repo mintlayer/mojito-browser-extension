@@ -1,16 +1,37 @@
-import React from 'react'
+import { useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@BasicComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
+import { AccountContext } from '@Contexts'
 
 import './CreateRestore.css'
+import { LocalStorageService } from '@Storage'
 
 const CreateRestorePage = () => {
+  const { isExtended } = useContext(AccountContext)
   const navigate = useNavigate()
 
-  const goToSetAccountPage = () => navigate('/set-account')
-  const goToRestoreAccountPage = () => navigate('/restore-account')
+  const expandHandler = (dest) => {
+    window.open(
+      typeof browser !== 'undefined'
+        ? // eslint-disable-next-line no-undef
+          browser.runtime.getURL('popup.html')
+        : // eslint-disable-next-line no-undef
+          chrome.runtime.getURL('popup.html'),
+      '_blank',
+      LocalStorageService.setItem('extendPath', dest),
+    )
+  }
+
+  const goToSetAccountPage = () => {
+    isExtended ? navigate('/set-account') : expandHandler('/set-account')
+  }
+  const goToRestoreAccountPage = () => {
+    isExtended
+      ? navigate('/restore-account')
+      : expandHandler('/restore-account')
+  }
 
   return (
     <div data-testid="create-restore">

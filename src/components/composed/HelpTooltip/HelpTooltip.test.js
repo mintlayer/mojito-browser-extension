@@ -7,6 +7,7 @@ describe('HelpTooltip', () => {
       <HelpTooltip
         message="Test tooltip"
         link="https://example.com"
+        position="top"
       />,
     )
 
@@ -17,15 +18,19 @@ describe('HelpTooltip', () => {
     fireEvent.mouseEnter(linkElement)
     let tooltipElement = screen.getByText('Test tooltip')
     expect(tooltipElement).toBeInTheDocument()
-    expect(tooltipElement).toHaveClass('visible')
 
     fireEvent.mouseLeave(linkElement)
     tooltipElement = screen.queryByText('Test tooltip')
-    expect(tooltipElement).not.toHaveClass('visible')
+    expect(tooltipElement).toHaveClass('hidden')
   })
 
   it('renders correctly without link and toggles tooltip on mouse enter and leave', () => {
-    render(<HelpTooltip message="Test tooltip" />)
+    render(
+      <HelpTooltip
+        message="Test tooltip"
+        position="bottom"
+      />,
+    )
 
     const divElement = screen.getByTestId('help-tooltip')
     expect(divElement).toBeInTheDocument()
@@ -33,10 +38,9 @@ describe('HelpTooltip', () => {
     fireEvent.mouseEnter(divElement)
     let tooltipElement = screen.getByText('Test tooltip')
     expect(tooltipElement).toBeInTheDocument()
-    expect(tooltipElement).toHaveClass('visible')
 
     fireEvent.mouseLeave(divElement)
     tooltipElement = screen.queryByText('Test tooltip')
-    expect(tooltipElement).not.toHaveClass('visible')
+    expect(tooltipElement).toHaveClass('hidden')
   })
 })

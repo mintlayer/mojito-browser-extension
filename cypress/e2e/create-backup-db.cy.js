@@ -17,7 +17,7 @@ describe('stuff IndexedDB', () => {
       return a.then(() =>
         cy.wrap(null).then(() => {
           cy.restoreWallet(x)
-          cy.contains('button', 'Create Wallet').click()
+          cy.contains('button', 'Add Wallet').click()
         }),
       )
     }, cy.wrap(null))
