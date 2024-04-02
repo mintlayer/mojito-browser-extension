@@ -73,5 +73,5 @@ test('renders balance with zero value when networkType is testnet', () => {
   expect(currantBalanceComponent).toBeInTheDocument()
 
   expect(balanceParagraphs[0].textContent).toBe(BALANCE_SAMPLE + ' BTC')
-  expect(balanceParagraphs[1].textContent).toBe('0,00 USD')
+  expect(balanceParagraphs[1].textContent).toBe('0.00 USD')
 })

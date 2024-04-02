@@ -71,7 +71,7 @@ const UTXSOS_MOCK = [
 describe('getUtxoBalance', () => {
   it('should return the sum of the utxo values', () => {
     const result = getUtxoBalance(UTXSOS_MOCK)
-    expect(result).toBe(600)
+    expect(result.toString()).toBe('600')
   })
 })
 
@@ -81,7 +81,7 @@ describe('getUtxoTransaction', () => {
 
     result.forEach((item, index) => {
       expect(item.transaction).toEqual(
-        UTXSOS_MOCK[index].outpoint.id.Transaction,
+        UTXSOS_MOCK[index].outpoint.source_id,
       )
       expect(item.index).toEqual(UTXSOS_MOCK[index].outpoint.index)
     })

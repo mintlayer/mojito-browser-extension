@@ -25,7 +25,9 @@ describe('ML', () => {
     it('should convert amount in coins to atoms', () => {
       const coins = 1
       const expectedAtoms = AppInfo.ML_ATOMS_PER_COIN
-      expect(getAmountInAtoms(coins)).toEqual(expectedAtoms)
+      expect(getAmountInAtoms(coins).toString()).toEqual(
+        expectedAtoms.toString(),
+      )
     })
   })
 
@@ -38,7 +40,10 @@ describe('ML', () => {
               utxo: {
                 destination: 'address2',
                 type: 'Transfer',
-                value: { amount: 100000000 },
+                value: { amount: {
+                  atoms: '100000000',
+                  decimal: '0.001'
+                } },
               },
             },
           ],
@@ -47,12 +52,14 @@ describe('ML', () => {
               destination: 'address1',
               value: { amount: AppInfo.ML_ATOMS_PER_COIN },
             },
-            { destination: 'address2', value: { amount: 200000000 } },
+            { destination: 'address2', value: { amount: {
+              atoms: '200000000', decimal: '0.002'
+                } } },
           ],
           timestamp: 1000,
           confirmations: 1,
           txid: 'txid1',
-          fee: 10000,
+          fee: { atoms: '10000', decimal: '0.0000001' },
         },
       ]
       const addresses = ['address1']
@@ -66,7 +73,7 @@ describe('ML', () => {
           confirmations: 1,
           date: 1000,
           txid: 'txid1',
-          fee: 10000,
+          fee: '0.0000001',
           isConfirmed: true,
           type: 'Transfer',
           sameWalletTransaction: false,
