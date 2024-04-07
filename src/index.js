@@ -29,6 +29,7 @@ import {
   AccountProvider,
   SettingsProvider,
   TransactionProvider,
+  NetworkProvider,
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
@@ -208,11 +209,13 @@ root.render(
   <React.StrictMode>
     <AccountProvider>
       <SettingsProvider>
-        <TransactionProvider>
-          <MemoryRouter>
-            <App />
-          </MemoryRouter>
-        </TransactionProvider>
+        <NetworkProvider>
+          <TransactionProvider>
+            <MemoryRouter>
+              <App />
+            </MemoryRouter>
+          </TransactionProvider>
+        </NetworkProvider>
       </SettingsProvider>
     </AccountProvider>
   </React.StrictMode>,

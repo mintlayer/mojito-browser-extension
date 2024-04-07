@@ -21,7 +21,6 @@ import { ML } from '@Cryptos'
 import { Mintlayer } from '@APIs'
 
 import './SendTransaction.css'
-import { useEffectOnce } from '../../hooks/etc/useEffectOnce'
 
 const SendTransactionPage = () => {
   const { addresses, accountID, walletType } = useContext(AccountContext)
@@ -50,11 +49,7 @@ const SendTransactionPage = () => {
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance, getBalance } = useMlWalletInfo(currentMlAddresses)
-
-  useEffectOnce(() => {
-    getBalance()
-  })
+  const { mlBalance } = useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
 
