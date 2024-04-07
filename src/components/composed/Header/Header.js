@@ -8,11 +8,12 @@ import { ReactComponent as ExpandImg } from '@Assets/images/icon-expand.svg'
 import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
 
 import { Button, Logo, Tooltip } from '@BasicComponents'
-import { AccountContext } from '@Contexts'
+import { AccountContext, NetworkContext } from '@Contexts'
 
 import './Header.css'
 
 const Header = ({ customBackAction, noBackButton = false }) => {
+  const network = useContext(NetworkContext)
   const [unlocked, setUnlocked] = useState(false)
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const tooltipMessage = 'Expand view'
@@ -60,6 +61,10 @@ const Header = ({ customBackAction, noBackButton = false }) => {
 
   return (
     <header data-testid="header-container">
+      <pre style={{ position: 'absolute', top: 1, left: 1 }}>
+        {JSON.stringify(network)}
+      </pre>
+
       {!noBackButton && (
         <Button
           alternate
