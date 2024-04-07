@@ -11,6 +11,7 @@ const getAmountInAtoms = (amountInCoins) => {
 }
 
 const getParsedTransactions = (transactions, addresses) => {
+  console.log('transactions', transactions)
   const account = LocalStorageService.getItem('unlockedAccount')
   const networkType = LocalStorageService.getItem('networkType')
   const accountName = account.name

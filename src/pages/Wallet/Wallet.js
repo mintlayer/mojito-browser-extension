@@ -12,7 +12,6 @@ import { AppInfo } from '@Constants'
 import { LocalStorageService } from '@Storage'
 
 import './Wallet.css'
-import { useEffectOnce } from '../../hooks/etc/useEffectOnce'
 
 const WalletPage = () => {
   const navigate = useNavigate()
@@ -30,13 +29,8 @@ const WalletPage = () => {
       : addresses.mlTestnetAddresses
   const [openShowAddress, setOpenShowAddress] = useState(false)
   const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
-  const {
-    mlTransactionsList,
-    mlBalance,
-    mlBalanceLocked,
-    getTransactions,
-    getBalance,
-  } = useMlWalletInfo(currentMlAddresses)
+  const { mlTransactionsList, mlBalance, mlBalanceLocked } =
+    useMlWalletInfo(currentMlAddresses)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
 
@@ -69,11 +63,6 @@ const WalletPage = () => {
   const isUncofermedTransaction =
     LocalStorageService.getItem(unconfirmedTransactionString) &&
     walletType.name === 'Mintlayer'
-
-  useEffectOnce(() => {
-    getTransactions()
-    getBalance()
-  })
 
   return (
     <div data-testid="wallet-page">
