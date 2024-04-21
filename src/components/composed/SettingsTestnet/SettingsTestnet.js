@@ -30,6 +30,7 @@ const SettingsTestnet = () => {
       <Toggle
         toggled={isTestnetEnabled}
         onClick={onToggle}
+        label={'testnet switcher'}
       />
     </div>
   )

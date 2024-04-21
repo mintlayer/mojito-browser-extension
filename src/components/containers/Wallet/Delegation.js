@@ -22,20 +22,6 @@ const Delegation = ({ delegation }) => {
   const { walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
-  // const date = delegation.date
-  //   ? format(new Date(delegation.date * 1000), 'dd/MM/yyyy HH:mm')
-  //   : 'not confirmed'
-
-  const formatAddress = (address) => {
-    if (!address) {
-      return 'Wrong address'
-    }
-    const limitSize = 24
-    const halfLimit = limitSize / 2
-    const firstPart = address.slice(0, halfLimit)
-    const lastPart = address.slice(address.length - halfLimit, address.length)
-    return `${firstPart}...${lastPart}`
-  }
 
   const addFundsClickHandle = () => {
     if (isUncofermedTransaction) return
@@ -123,7 +109,7 @@ const Delegation = ({ delegation }) => {
             data-testid="delegation-otherPart"
           >
             {delegation && delegationOject.pool_id
-              ? formatAddress(delegationOject.pool_id)
+              ? ML.formatAddress(delegationOject.pool_id)
               : ''}
           </p>
           <div className="transaction-date-amount">

@@ -143,8 +143,8 @@ const RestoreAccount = ({
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
-    { name: 'Account Name', active: step === 1 },
-    { name: 'Account Password', active: step === 2 },
+    { name: 'Wallet Name', active: step === 1 },
+    { name: 'Wallet Password', active: step === 2 },
     {
       name: 'Seed Phrases',
       active: step === 3 || step === 4,

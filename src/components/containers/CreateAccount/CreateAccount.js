@@ -123,8 +123,8 @@ const CreateAccount = ({
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
   const steps = [
-    { name: 'Account Name', active: step === 1 },
-    { name: 'Account Password', active: step === 2 },
+    { name: 'Wallet Name', active: step === 1 },
+    { name: 'Wallet Password', active: step === 2 },
     { name: 'Entropy Generation', active: step === 3 },
     {
       name: 'Seed Phrases',
@@ -145,7 +145,7 @@ const CreateAccount = ({
   const titles = {
     4: 'I understand',
     5: 'Backup done!',
-    7: 'Create account',
+    7: 'Create Wallet',
   }
 
   const nameFieldValidity = (value) => {
