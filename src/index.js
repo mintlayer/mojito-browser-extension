@@ -22,6 +22,9 @@ import {
   SettingsPage,
   StakingPage,
   ConnectionPage,
+  CreateDelegationPage,
+  DelegationStakePage,
+  DelegationWithdrawPage,
 } from '@Pages'
 
 import {
@@ -168,18 +171,6 @@ const App = () => {
           element={<RestoreAccountPage />}
         />
         <Route
-          path="/send-transaction"
-          element={<SendTransactionPage />}
-        />
-        <Route
-          path="/staking"
-          element={<StakingPage />}
-        />
-        <Route
-          path="/wallet"
-          element={<WalletPage />}
-        />
-        <Route
           path="/set-account-password"
           element={<SetAccountPasswordPage nextAfterUnlock={nextAfterUnlock} />}
         />
@@ -194,6 +185,30 @@ const App = () => {
         <Route
           path="/connect"
           element={<ConnectionPage />}
+        />
+        <Route
+          path="/wallet/:coinType"
+          element={<WalletPage />}
+        />
+        <Route
+          path="/wallet/:coinType/send-transaction"
+          element={<SendTransactionPage />}
+        />
+        <Route
+          path="/wallet/:coinType/staking"
+          element={<StakingPage />}
+        />
+        <Route
+          path="/wallet/:coinType/staking/:delegationId/add-funds"
+          element={<DelegationStakePage />}
+        />
+        <Route
+          path="/wallet/:coinType/staking/:delegationId/withdraw"
+          element={<DelegationWithdrawPage />}
+        />
+        <Route
+          path="/wallet/:coinType/staking/create-delegation"
+          element={<CreateDelegationPage />}
         />
         <Route
           exact

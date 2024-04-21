@@ -204,6 +204,22 @@ const getWalletUtxos = (addresses) => {
   return Promise.all(utxosPromises)
 }
 
+const getTokensData = async (tokens) => {
+  const tokensData = {}
+  tokens.forEach((token) => {
+    tokensData[token] = {}
+  })
+  const tokensPromises = tokens.map((token) => {
+    return tryServers(`/token/${token}`)
+      .then(JSON.parse)
+      .then((data) => {
+        tokensData[token] = data
+      })
+  })
+  await Promise.all(tokensPromises)
+  return tokensData
+}
+
 const getAddressDelegations = (address) =>
   tryServers(
     MINTLAYER_ENDPOINTS.GET_ADDRESS_DELEGATIONS.replace(':address', address),
@@ -278,5 +294,6 @@ export {
   broadcastTransaction,
   getFeesEstimates,
   getBlocksData,
+  getTokensData,
   MINTLAYER_ENDPOINTS,
 }

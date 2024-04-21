@@ -34,7 +34,7 @@ const DashboardPage = () => {
 
   const [connectedWalletType, setConnectedWalletType] = useState('')
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance } = useMlWalletInfo()
+  const { mlBalance, tokenBalances } = useMlWalletInfo()
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
   const { yesterdayExchangeRate: btcYesterdayExchangeRate } =
@@ -90,7 +90,7 @@ const DashboardPage = () => {
 
   const stats = BTC.getStats(proportionDiffs, balanceDiffs, networkType)
 
-  const getCryptoList = (addresses, network) => {
+  const getCryptoList = (addresses, network, tokenBalances) => {
     if (!addresses) return []
     const cryptos = []
     const addCrypto = (
@@ -100,6 +100,7 @@ const DashboardPage = () => {
       exchangeRate,
       change24h,
       historyRates,
+      network,
     ) => {
       cryptos.push({
         name,
@@ -108,6 +109,7 @@ const DashboardPage = () => {
         exchangeRate,
         change24h,
         historyRates,
+        network,
       })
     }
 
@@ -126,6 +128,7 @@ const DashboardPage = () => {
         btcExchangeRate,
         change24h,
         btcHistoryRates,
+        'bitcoin'
       )
     }
     const mlAddress = addresses.mlMainnetAddress
@@ -143,7 +146,22 @@ const DashboardPage = () => {
         mlExchangeRate,
         change24h,
         mlHistoryrates,
+        'mintlayer'
       )
+    }
+
+    if(tokenBalances) {
+      Object.keys(tokenBalances).forEach((token) => {
+        addCrypto(
+          tokenBalances[token].token_info.token_ticker.string,
+          tokenBalances[token].token_info.token_ticker.string,
+          tokenBalances[token].balance,
+          undefined,
+          0,
+          [],
+          'mintlayer'
+        )
+      })
     }
 
     return cryptos
@@ -151,7 +169,7 @@ const DashboardPage = () => {
 
   const goToWallet = (walletType) => {
     setWalletType(walletType)
-    navigate('/wallet')
+    navigate('/wallet/' + walletType.name)
   }
 
   const onConnectItemClick = (walletType) => {
@@ -189,7 +207,7 @@ const DashboardPage = () => {
         />
       </div>
       <Dashboard.CryptoList
-        cryptoList={getCryptoList(addresses, networkType)}
+        cryptoList={getCryptoList(addresses, networkType, tokenBalances)}
         colorList={colorList}
         onWalletItemClick={goToWallet}
         onConnectItemClick={onConnectItemClick}

@@ -30,9 +30,11 @@ const SendTransaction = ({
   goBackToWallet,
   preEnterAddress,
   setAdjustedFee,
+  transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
+  currentDelegationInfo,
 }) => {
   const { walletType, balanceLoading } = useContext(AccountContext)
-  const { feeLoading, transactionMode, currentDelegationInfo } =
+  const { feeLoading } =
     useContext(TransactionContext)
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
@@ -291,6 +293,8 @@ const SendTransaction = ({
             addressChanged={addressChanged}
             preEnterAddress={preEnterAddress}
             setAddressValidity={setAddressValidity}
+            transactionMode={transactionMode}
+            currentDelegationInfo={currentDelegationInfo}
           />
 
           <AmountField

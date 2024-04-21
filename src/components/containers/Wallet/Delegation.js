@@ -9,33 +9,19 @@ import { AppInfo } from '@Constants'
 import { Button } from '@BasicComponents'
 import { LocalStorageService } from '@Storage'
 
-import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
+import { SettingsContext, AccountContext } from '@Contexts'
 
 import DelegationDetails from './DelegationDetails'
 
 import './Delegation.css'
 import { format } from 'date-fns'
+import { useNavigate } from 'react-router-dom'
 
 const Delegation = ({ delegation }) => {
-  const { setDelegationStep, setTransactionMode, setCurrentDelegationInfo } =
-    useContext(TransactionContext)
+  const navigate = useNavigate()
   const { walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
-
-  const addFundsClickHandle = () => {
-    if (isUncofermedTransaction) return
-    setCurrentDelegationInfo(delegation)
-    setTransactionMode(AppInfo.ML_TRANSACTION_MODES.STAKING)
-    setDelegationStep(2)
-  }
-
-  const withdrawClickHandle = () => {
-    if (isUncofermedTransaction) return
-    setCurrentDelegationInfo(delegation)
-    setTransactionMode(AppInfo.ML_TRANSACTION_MODES.WITHDRAW)
-    setDelegationStep(2)
-  }
 
   let delegationOject = delegation
 
@@ -59,6 +45,16 @@ const Delegation = ({ delegation }) => {
   const isUncofermedTransaction =
     LocalStorageService.getItem(unconfirmedTransactionString) &&
     walletType.name === 'Mintlayer'
+
+  const addFundsClickHandle = () => {
+    if (isUncofermedTransaction) return
+    navigate('/wallet/' + walletType.name + '/staking/' + delegation.delegation_id + '/add-funds')
+  }
+
+  const withdrawClickHandle = () => {
+    if (isUncofermedTransaction) return
+    navigate('/wallet/' + walletType.name + '/staking/' + delegation.delegation_id + '/withdraw')
+  }
 
   const date = delegationOject.creation_time
     ? format(new Date(delegationOject.creation_time * 1000), 'dd/MM/yyyy HH:mm')
