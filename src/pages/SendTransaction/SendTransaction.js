@@ -192,7 +192,7 @@ const SendTransactionPage = () => {
     return result
   }
 
-  const goBackToWallet = () => navigate('/wallet')
+  const goBackToWallet = () => navigate('/wallet/' + walletType.name.toLowerCase())
 
   return (
     <>

@@ -1,4 +1,4 @@
-import React, { useNavigate } from 'react-router-dom'
+import React, { useNavigate, useParams } from 'react-router-dom'
 import { useContext, useState } from 'react'
 
 import { Balance, Header, PopUp } from '@ComposedComponents'
@@ -6,7 +6,7 @@ import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
-import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 import { LocalStorageService } from '@Storage'
@@ -15,10 +15,14 @@ import './Wallet.css'
 
 const WalletPage = () => {
   const navigate = useNavigate()
-  const { addresses, walletType } = useContext(AccountContext)
+  const { coinType} = useParams()
+  const walletType = {
+    name: coinType,
+    ticker: coinType === 'Mintlayer' ? 'ML' : 'BTC',
+    network: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
+  }
+  const { addresses } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { setTransactionMode, setDelegationStep } =
-    useContext(TransactionContext)
   const btcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
@@ -29,23 +33,16 @@ const WalletPage = () => {
       : addresses.mlTestnetAddresses
   const [openShowAddress, setOpenShowAddress] = useState(false)
   const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
-  const { mlTransactionsList, mlBalance, mlBalanceLocked } =
-    useMlWalletInfo(currentMlAddresses)
-  const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
-  const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
+  const { mlTransactionsList, mlBalance, mlBalanceLocked } = useMlWalletInfo(currentMlAddresses)
 
   const setOpenTransactionForm = () => {
-    setTransactionMode(AppInfo.ML_TRANSACTION_MODES.TRANSACTION)
-    navigate('/send-transaction')
+    navigate('/wallet/' + walletType.name + '/send-transaction')
   }
   const setOpenStaking = () => {
-    setDelegationStep(1)
-    setTransactionMode(AppInfo.ML_TRANSACTION_MODES.DELEGATION)
-    navigate('/staking')
+    navigate('/wallet/' + walletType.name + '/staking')
   }
 
-  const walletExangeRate =
-    walletType.name === 'Mintlayer' ? mlExchangeRate : btcExchangeRate
+  const walletExangeRate = useExchangeRates(walletType.ticker.toLowerCase(), 'usd')
 
   const mlAddress =
     currentMlAddresses && currentMlAddresses.mlReceivingAddresses[0]
@@ -64,10 +61,14 @@ const WalletPage = () => {
     LocalStorageService.getItem(unconfirmedTransactionString) &&
     walletType.name === 'Mintlayer'
 
+  const backToDashboard = () => {
+    navigate('/dashboard')
+  }
+
   return (
     <div data-testid="wallet-page">
       <VerticalGroup bigGap>
-        <Header />
+        <Header customBackAction={backToDashboard} />
         <div className="balance-transactions-wrapper">
           <Balance
             balance={walletBalance}

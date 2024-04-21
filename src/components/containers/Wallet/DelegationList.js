@@ -1,14 +1,13 @@
 import { useContext } from 'react'
 import Delegation from './Delegation'
-import { TransactionContext, AccountContext, SettingsContext } from '@Contexts'
-import { SkeletonLoader } from '@BasicComponents'
+import { AccountContext, SettingsContext } from '@Contexts'
+// import { SkeletonLoader } from '@BasicComponents'
 import { LocalStorageService } from '@Storage'
 import { AppInfo } from '@Constants'
 import './DelegationList.css'
 
 const DelegationList = ({ delegationsList }) => {
   const { accountName } = useContext(AccountContext)
-  const { delegationsLoading } = useContext(TransactionContext)
   const { networkType } = useContext(SettingsContext)
 
   const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
@@ -31,8 +30,8 @@ const DelegationList = ({ delegationsList }) => {
     }
   }
 
-  const renderSkeletonLoaders = () =>
-    Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
+  // const renderSkeletonLoaders = () =>
+  //   Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
 
   const renderDelegations = () => {
     if (!delegationsList || !delegationsList.length) {
@@ -61,7 +60,7 @@ const DelegationList = ({ delegationsList }) => {
       className="delegation-list"
       data-testid={'delegation-list'}
     >
-      {delegationsLoading ? renderSkeletonLoaders() : renderDelegations()}
+      {renderDelegations()}
     </ul>
   )
 }

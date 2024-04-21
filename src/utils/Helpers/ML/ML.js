@@ -11,7 +11,6 @@ const getAmountInAtoms = (amountInCoins) => {
 }
 
 const getParsedTransactions = (transactions, addresses) => {
-  console.log('transactions', transactions)
   const account = LocalStorageService.getItem('unlockedAccount')
   const networkType = LocalStorageService.getItem('networkType')
   const accountName = account.name
@@ -203,6 +202,23 @@ const getParsedTransactions = (transactions, addresses) => {
   })
 }
 
+const getTokenBalances = (utxos) => {
+  const tokenBalances = {}
+  utxos.forEach((utxo) => {
+    utxo.forEach((item) => {
+      if (item.utxo.value.token_id && item.utxo.value.type === 'TokenV1') {
+        const token = item.utxo.value.token_id
+        if (tokenBalances[token]) {
+          tokenBalances[token] += parseFloat(item.utxo.value.amount.decimal)
+        } else {
+          tokenBalances[token] = parseFloat(item.utxo.value.amount.decimal)
+        }
+      }
+    })
+  })
+  return tokenBalances
+}
+
 const isMlAddressValid = (address, network) => {
   const mainnetRegex = /^mtc1[a-z0-9]{30,}$/
   const testnetRegex = /^tmt1[a-z0-9]{30,}$/
@@ -245,5 +261,6 @@ export {
   isMlAddressValid,
   isMlPoolIdValid,
   isMlDelegationIdValid,
+  getTokenBalances,
   formatAddress,
 }

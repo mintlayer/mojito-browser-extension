@@ -50,6 +50,17 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
     onClickItem(item)
   }
 
+  const logo = () => {
+    if (item.name === 'Mintlayer') {
+      return <LogoRound />
+    } else if (item.name === 'Bitcoin') {
+      return <BtcLogo />
+    } else {
+      // TODO: logo for token
+      return <LogoRound />
+    }
+  }
+
   return (
     <>
       {balanceLoading ? (
@@ -61,7 +72,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
           onClick={onClick}
           data-testid="crypto-item"
         >
-          {item.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
+          {logo()}
           <div className="name-values">
             <h5>
               {item.name} ({symbol})

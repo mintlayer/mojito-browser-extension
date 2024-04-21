@@ -8,17 +8,17 @@ import { ML } from '@Helpers'
 
 import './errorMessages.css'
 
-import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 
 const AddressField = ({
   addressChanged,
   errorMessage,
   setAddressValidity,
   preEnterAddress,
+  transactionMode,
+  currentDelegationInfo = {},
 }) => {
   const { addresses, walletType } = useContext(AccountContext)
-  const { transactionMode, currentDelegationInfo } =
-    useContext(TransactionContext)
   const inputValue =
     walletType.name === 'Mintlayer' &&
     transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING

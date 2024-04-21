@@ -10,6 +10,9 @@ import DashboardPage from './Dashboard/Dashboard'
 import SettingsPage from './Settings/Settings'
 import StakingPage from './Staking/Staking'
 import ConnectionPage from './ConnectionPage/ConnectionPage'
+import CreateDelegationPage from './CreateDelegation/CreateDelegation'
+import DelegationStakePage from './DelegationStake/DelegationStake'
+import DelegationWithdrawPage from './DelegationWithdraw/DelegationWithdraw'
 
 export {
   CreateAccountPage,
@@ -24,4 +27,7 @@ export {
   SettingsPage,
   StakingPage,
   ConnectionPage,
+  CreateDelegationPage,
+  DelegationStakePage,
+  DelegationWithdrawPage,
 }
