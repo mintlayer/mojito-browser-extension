@@ -3,7 +3,7 @@ import { CryptoFiatField } from '@ComposedComponents'
 import TransactionField from './TransactionField'
 import { AppInfo } from '@Constants'
 
-import { TransactionContext, AccountContext } from '@Contexts'
+import { AccountContext } from '@Contexts'
 
 import './errorMessages.css'
 
@@ -16,9 +16,9 @@ const AmountField = ({
   maxValueInToken,
   setAmountValidity,
   totalFeeInCrypto,
+  transactionMode,
 }) => {
   const { walletType } = useContext(AccountContext)
-  const { transactionMode } = useContext(TransactionContext)
   const isDelegationMode =
     transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
     walletType.name === 'Mintlayer'

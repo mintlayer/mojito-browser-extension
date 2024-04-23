@@ -305,6 +305,7 @@ const SendTransaction = ({
             setAmountValidity={setAmountValidity}
             errorMessage={passErrorMessage}
             totalFeeInCrypto={totalFeeCrypto}
+            transactionMode={transactionMode}
           />
 
           {/* TODO style error from transaction */}
