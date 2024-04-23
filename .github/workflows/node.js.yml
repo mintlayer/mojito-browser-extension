@@ -34,10 +34,11 @@ jobs:
         run: npm test -- --watchAll=false
       - name: Build
         run: npm run build --if-present
+      # Run E2E tests with Playwright
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install chromium --with-deps
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npx playwright test --browser=chromium
       - uses: actions/upload-artifact@v4
         if: always()
         with:
