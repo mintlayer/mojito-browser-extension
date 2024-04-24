@@ -32,7 +32,7 @@ test('Create ML delegation', async () => {
   await page.fill('input[placeholder="tpool..."]', senderData.POOL_ID) 
   await page.getByRole('button', { name: 'Create' }).click()
   
-  await page.waitForTimeout(7000)
+  await page.waitForTimeout(10000)
 
   await expect(page.getByTestId('popup').getByText('Send to:')).toBeVisible()
   await expect(

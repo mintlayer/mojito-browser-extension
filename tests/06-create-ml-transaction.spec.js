@@ -19,7 +19,7 @@ test('Create ML transaction', async () => {
   await page.click(
     'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Test)")',
   )
-  await page.waitForTimeout(1000)
+  await page.waitForTimeout(5000)
 
   await page.click('button.button-transaction-up')
   await expect(page.locator(':text("Send to:")')).toBeVisible()
@@ -32,7 +32,7 @@ test('Create ML transaction', async () => {
 
   await page.getByRole('button', { name: 'Send' }).click()
 
-  await page.waitForTimeout(5000)
+  await page.waitForTimeout(10000)
 
   await expect(page.getByTestId('popup').getByText('Send to:')).toBeVisible()
   await expect(

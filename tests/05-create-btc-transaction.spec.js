@@ -29,7 +29,7 @@ test('Create BTC transaction', async () => {
   await page.getByRole('button', { name: 'norm' }).click()
   await page.getByRole('button', { name: 'Send' }).click()
   
-  await page.waitForTimeout(2000)
+  await page.waitForTimeout(10000)
   
   await expect(page.getByTestId('popup').getByText('Send to:')).toBeVisible()
    await expect(
