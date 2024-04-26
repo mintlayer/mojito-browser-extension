@@ -26,7 +26,7 @@ const DelegationList = ({ delegationsList }) => {
     if (
       unconfirmedTransactions.mode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
     ) {
-      delegationsList.unshift(unconfirmedTransactions)
+      delegationsList.unshift(...unconfirmedTransactions)
     }
   }
 

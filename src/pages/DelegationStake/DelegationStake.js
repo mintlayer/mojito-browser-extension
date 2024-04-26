@@ -11,7 +11,6 @@ import { Format } from '@Helpers'
 import { AppInfo } from '@Constants'
 import { MLTransaction, ML as MLHelpers } from '@Helpers'
 import { ML } from '@Cryptos'
-import { Mintlayer } from '@APIs'
 
 import './DelegationStake.css'
 
@@ -31,10 +30,7 @@ const DelegationStakePage = () => {
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const {
-    setFeeLoading,
-    setDelegationStep,
-  } = useContext(TransactionContext)
+  const { setFeeLoading, setDelegationStep } = useContext(TransactionContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddress
@@ -56,7 +52,7 @@ const DelegationStakePage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, utxos } = useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = mlBalance
 
@@ -65,11 +61,6 @@ const DelegationStakePage = () => {
     navigate('/wallet')
     return
   }
-
-  const mlAddressList = [
-    ...currentMlAddresses.mlReceivingAddresses,
-    ...currentMlAddresses.mlChangeAddresses,
-  ]
 
   const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
 
@@ -80,12 +71,8 @@ const DelegationStakePage = () => {
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
     const unusedChangeAddress = await ML.getUnusedAddress(changeAddresses)
-    const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
-    const parsedUtxos = utxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
     const fee = await MLTransaction.calculateFee({
-      utxosTotal: parsedUtxos,
+      utxosTotal: utxos,
       changeAddress: unusedChangeAddress,
       amountToUse: amountToSend,
       network: networkType,
@@ -124,13 +111,9 @@ const DelegationStakePage = () => {
     }
 
     const unusedChageAddress = await ML.getUnusedAddress(changeAddresses)
-    const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
-    const parsedUtxos = utxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
 
     const result = await MLTransaction.sendTransaction({
-      utxosTotal: parsedUtxos,
+      utxosTotal: utxos,
       keysList: keysList,
       changeAddress: unusedChageAddress,
       amountToUse: amountToSend,

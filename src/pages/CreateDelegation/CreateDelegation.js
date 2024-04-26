@@ -11,7 +11,6 @@ import { Format } from '@Helpers'
 import { AppInfo } from '@Constants'
 import { MLTransaction, ML as MLHelpers } from '@Helpers'
 import { ML } from '@Cryptos'
-import { Mintlayer } from '@APIs'
 
 import './CreateDelegation.css'
 
@@ -27,11 +26,8 @@ const CreateDelegationPage = () => {
 
   const { addresses, accountID, setWalletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const {
-    setFeeLoading,
-    setDelegationStep,
-    setTransactionMode,
-  } = useContext(TransactionContext)
+  const { setFeeLoading, setDelegationStep, setTransactionMode } =
+    useContext(TransactionContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddress
@@ -54,7 +50,7 @@ const CreateDelegationPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, utxos } = useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
   // const customBackAction = () => {
   //   setDelegationStep(1)
@@ -79,11 +75,6 @@ const CreateDelegationPage = () => {
     return
   }
 
-  const mlAddressList = [
-    ...currentMlAddresses.mlReceivingAddresses,
-    ...currentMlAddresses.mlChangeAddresses,
-  ]
-
   const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
 
   const changeAddresses = currentMlAddresses.mlChangeAddresses
@@ -94,12 +85,8 @@ const CreateDelegationPage = () => {
     const address = transactionInfo.to
     const unusedChangeAddress = await ML.getUnusedAddress(changeAddresses)
     const unusedReceivingAddress = await ML.getUnusedAddress(receivingAddresses)
-    const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
-    const parsedUtxos = utxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
     const fee = await MLTransaction.calculateFee({
-      utxosTotal: parsedUtxos,
+      utxosTotal: utxos,
       address: unusedReceivingAddress,
       changeAddress: unusedChangeAddress,
       amountToUse: BigInt(0),
@@ -137,13 +124,9 @@ const CreateDelegationPage = () => {
 
     const unusedChageAddress = await ML.getUnusedAddress(changeAddresses)
     const unusedReceivingAddress = await ML.getUnusedAddress(receivingAddresses)
-    const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
-    const parsedUtxos = utxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
 
     const result = await MLTransaction.sendTransaction({
-      utxosTotal: parsedUtxos,
+      utxosTotal: utxos,
       keysList: keysList,
       address: unusedReceivingAddress,
       changeAddress: unusedChageAddress,

@@ -18,7 +18,6 @@ import { Electrum } from '@APIs'
 import { AppInfo } from '@Constants'
 import { MLTransaction, ML as MLHelpers } from '@Helpers'
 import { ML } from '@Cryptos'
-import { Mintlayer } from '@APIs'
 
 import './SendTransaction.css'
 
@@ -49,7 +48,7 @@ const SendTransactionPage = () => {
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, utxos } = useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
 
@@ -58,11 +57,6 @@ const SendTransactionPage = () => {
     navigate('/wallet')
     return
   }
-
-  const mlAddressList = currentMlAddresses && [
-    ...currentMlAddresses.mlReceivingAddresses,
-    ...currentMlAddresses.mlChangeAddresses,
-  ]
 
   const changeAddressesLength =
     currentMlAddresses && currentMlAddresses.mlChangeAddresses.length
@@ -93,13 +87,9 @@ const SendTransactionPage = () => {
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
     const unusedChangeAddress = await ML.getUnusedAddress(changeAddress)
-    const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
-    const parsedUtxos = utxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
     try {
       const fee = await MLTransaction.calculateFee({
-        utxosTotal: parsedUtxos,
+        utxosTotal: utxos,
         address: address,
         changeAddress: unusedChangeAddress,
         amountToUse: amountToSend,
@@ -174,12 +164,8 @@ const SendTransactionPage = () => {
     }
 
     const unusedChageAddress = await ML.getUnusedAddress(changeAddress)
-    const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
-    const parsedUtxos = utxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
     const result = await MLTransaction.sendTransaction({
-      utxosTotal: parsedUtxos,
+      utxosTotal: utxos,
       keysList: keysList,
       address: transactionInformation.to,
       changeAddress: unusedChageAddress,
@@ -192,7 +178,7 @@ const SendTransactionPage = () => {
     return result
   }
 
-  const goBackToWallet = () => navigate('/wallet/' + walletType.name.toLowerCase())
+  const goBackToWallet = () => navigate('/wallet/' + walletType.name)
 
   return (
     <>

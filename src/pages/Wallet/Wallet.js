@@ -9,13 +9,12 @@ import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
-import { LocalStorageService } from '@Storage'
 
 import './Wallet.css'
 
 const WalletPage = () => {
   const navigate = useNavigate()
-  const { coinType} = useParams()
+  const { coinType } = useParams()
   const walletType = {
     name: coinType,
     ticker: coinType === 'Mintlayer' ? 'ML' : 'BTC',
@@ -33,7 +32,8 @@ const WalletPage = () => {
       : addresses.mlTestnetAddresses
   const [openShowAddress, setOpenShowAddress] = useState(false)
   const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
-  const { mlTransactionsList, mlBalance, mlBalanceLocked } = useMlWalletInfo(currentMlAddresses)
+  const { mlTransactionsList, mlBalance, mlBalanceLocked } =
+    useMlWalletInfo(currentMlAddresses)
 
   const setOpenTransactionForm = () => {
     navigate('/wallet/' + walletType.name + '/send-transaction')
@@ -42,7 +42,10 @@ const WalletPage = () => {
     navigate('/wallet/' + walletType.name + '/staking')
   }
 
-  const walletExangeRate = useExchangeRates(walletType.ticker.toLowerCase(), 'usd')
+  const { exchangeRate } = useExchangeRates(
+    walletType.ticker.toLowerCase(),
+    'usd',
+  )
 
   const mlAddress =
     currentMlAddresses && currentMlAddresses.mlReceivingAddresses[0]
@@ -53,13 +56,6 @@ const WalletPage = () => {
   const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
   const walletTransactionList =
     walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
-
-  const account = LocalStorageService.getItem('unlockedAccount')
-  const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
-  const isUncofermedTransaction =
-    LocalStorageService.getItem(unconfirmedTransactionString) &&
-    walletType.name === 'Mintlayer'
 
   const backToDashboard = () => {
     navigate('/dashboard')
@@ -73,7 +69,7 @@ const WalletPage = () => {
           <Balance
             balance={walletBalance}
             balanceLocked={walletBalanceLocked}
-            exchangeRate={walletExangeRate}
+            exchangeRate={exchangeRate}
           />
           <div className="transactions-buttons-wrapper">
             {walletType.name === 'Mintlayer' && (
@@ -87,7 +83,6 @@ const WalletPage = () => {
               title={'Send'}
               mode={'up'}
               onClick={setOpenTransactionForm}
-              disabled={isUncofermedTransaction}
             />
             <Wallet.TransactionButton
               title={'Receive'}
