@@ -26,15 +26,29 @@ const getParsedTransactions = (transactions, addresses) => {
   const isUncofermedTransactionInList =
     unconfirmedTransactions &&
     sortedTransactions.some(
-      (transaction) => transaction.txid === unconfirmedTransactions.txid,
+      (transaction) =>
+        unconfirmedTransactions.filter(
+          (unconfirmedTransaction) =>
+            unconfirmedTransaction.txid === transaction.txid,
+        ).length > 0,
     )
 
   if (unconfirmedTransactions && isUncofermedTransactionInList) {
-    LocalStorageService.removeItem(unconfirmedTransactionString)
+    const unconfirmedTransactionsWithoutConfirmed =
+      unconfirmedTransactions.filter(
+        (unconfirmedTransaction) =>
+          !sortedTransactions.some(
+            (transaction) => transaction.txid === unconfirmedTransaction.txid,
+          ),
+      )
+    LocalStorageService.setItem(
+      unconfirmedTransactionString,
+      unconfirmedTransactionsWithoutConfirmed,
+    )
   }
 
   if (unconfirmedTransactions && !isUncofermedTransactionInList) {
-    sortedTransactions.unshift(unconfirmedTransactions)
+    sortedTransactions.unshift(...unconfirmedTransactions)
   }
 
   return sortedTransactions.map((transaction) => {

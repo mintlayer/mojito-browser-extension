@@ -5,8 +5,6 @@ import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 import { useMlWalletInfo } from '@Hooks'
 import { ML } from '@Helpers'
-import { LocalStorageService } from '@Storage'
-import { AppInfo } from '@Constants'
 
 import { SettingsContext } from '@Contexts'
 
@@ -24,17 +22,8 @@ const CurrentStaking = ({ addressList }) => {
     network: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
   }
 
-  const account = LocalStorageService.getItem('unlockedAccount')
-  const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
-  const isUncofermedTransaction =
-    LocalStorageService.getItem(unconfirmedTransactionString) &&
-    walletType.name === 'Mintlayer'
-
-  const {
-    mlDelegationList,
-    mlDelegationsBalance,
-  } = useMlWalletInfo(addressList)
+  const { mlDelegationList, mlDelegationsBalance } =
+    useMlWalletInfo(addressList)
 
   const onDelegationCreateButtonClick = () => {
     navigate('/wallet/' + walletType.name + '/staking/create-delegation')
@@ -75,7 +64,6 @@ const CurrentStaking = ({ addressList }) => {
         <Button
           onClickHandle={onDelegationCreateButtonClick}
           extraStyleClasses={['delegation-button']}
-          disabled={isUncofermedTransaction}
         >
           Create new delegation
         </Button>

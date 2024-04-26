@@ -9,6 +9,8 @@ const useMlWalletInfo = (addresses) => {
     tokenBalances,
     mlDelegationList,
     mlDelegationsBalance,
+    utxos,
+    fetchAllData,
   } = useContext(NetworkContext)
 
   return {
@@ -18,6 +20,8 @@ const useMlWalletInfo = (addresses) => {
     mlBalanceLocked,
     mlDelegationsBalance,
     tokenBalances,
+    utxos,
+    fetchAllData,
   }
 }
 

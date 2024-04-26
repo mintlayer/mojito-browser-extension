@@ -7,9 +7,8 @@ import { Loading, PopUp } from '@ComposedComponents'
 import { ML } from '@Helpers'
 import { AppInfo } from '@Constants'
 import { Button } from '@BasicComponents'
-import { LocalStorageService } from '@Storage'
 
-import { SettingsContext, AccountContext } from '@Contexts'
+import { AccountContext } from '@Contexts'
 
 import DelegationDetails from './DelegationDetails'
 
@@ -20,7 +19,6 @@ import { useNavigate } from 'react-router-dom'
 const Delegation = ({ delegation }) => {
   const navigate = useNavigate()
   const { walletType } = useContext(AccountContext)
-  const { networkType } = useContext(SettingsContext)
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
 
   let delegationOject = delegation
@@ -39,21 +37,25 @@ const Delegation = ({ delegation }) => {
     : 0
 
   const buttonExtraStyles = ['delegation-action-button']
-  const account = LocalStorageService.getItem('unlockedAccount')
-  const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
-  const isUncofermedTransaction =
-    LocalStorageService.getItem(unconfirmedTransactionString) &&
-    walletType.name === 'Mintlayer'
 
   const addFundsClickHandle = () => {
-    if (isUncofermedTransaction) return
-    navigate('/wallet/' + walletType.name + '/staking/' + delegation.delegation_id + '/add-funds')
+    navigate(
+      '/wallet/' +
+        walletType.name +
+        '/staking/' +
+        delegation.delegation_id +
+        '/add-funds',
+    )
   }
 
   const withdrawClickHandle = () => {
-    if (isUncofermedTransaction) return
-    navigate('/wallet/' + walletType.name + '/staking/' + delegation.delegation_id + '/withdraw')
+    navigate(
+      '/wallet/' +
+        walletType.name +
+        '/staking/' +
+        delegation.delegation_id +
+        '/withdraw',
+    )
   }
 
   const date = delegationOject.creation_time
@@ -140,14 +142,12 @@ const Delegation = ({ delegation }) => {
               <Button
                 extraStyleClasses={buttonExtraStyles}
                 onClickHandle={addFundsClickHandle}
-                disabled={isUncofermedTransaction}
               >
                 Add funds
               </Button>
               <Button
                 extraStyleClasses={buttonExtraStyles}
                 onClickHandle={withdrawClickHandle}
-                disabled={isUncofermedTransaction}
               >
                 Withdraw
               </Button>

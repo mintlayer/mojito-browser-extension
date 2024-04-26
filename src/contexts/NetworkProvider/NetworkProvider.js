@@ -1,5 +1,6 @@
 import React, {
-  createContext, useCallback,
+  createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -15,6 +16,7 @@ import { AppInfo } from '@Constants'
 import { ML_ATOMS_PER_COIN } from '../../utils/Constants/AppInfo/AppInfo'
 import { ML } from '@Helpers'
 import { Mintlayer } from '@APIs'
+import { LocalStorageService } from '@Storage'
 
 const NetworkContext = createContext()
 
@@ -80,6 +82,14 @@ const NetworkProvider = ({ value: propValue, children }) => {
       setTransactions(parsedTransactions)
 
       // fetch utxos
+      const account = LocalStorageService.getItem('unlockedAccount')
+      const networkType = LocalStorageService.getItem('networkType')
+      const accountName = account.name
+      const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
+      const unconfirmedTransactions = LocalStorageService.getItem(
+        unconfirmedTransactionString,
+      )
+
       const utxos = await Mintlayer.getWalletUtxos(addressList)
       const parsedUtxos = utxos
         .map((utxo) => JSON.parse(utxo))
@@ -87,6 +97,20 @@ const NetworkProvider = ({ value: propValue, children }) => {
       const available = parsedUtxos
         .flatMap((utxo) => [...utxo])
         .filter((item) => item.utxo.value)
+        .filter((item) => {
+          if (unconfirmedTransactions) {
+            return !unconfirmedTransactions.some(
+              (unconfirmedTransaction) =>
+                unconfirmedTransaction.usedUtxosOutpoints &&
+                unconfirmedTransaction.usedUtxosOutpoints.filter(
+                  (utxo) =>
+                    utxo.source_id === item.outpoint.source_id &&
+                    utxo.index === item.outpoint.index,
+                ).length > 0,
+            )
+          }
+          return true
+        })
         .reduce((acc, item) => {
           acc.push(item)
           return acc
@@ -97,7 +121,9 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
       // Extract Token balances from UTXOs
       const tokenBalances = ML.getTokenBalances(availableUtxos)
-      const tokensData = await Mintlayer.getTokensData(Object.keys(tokenBalances))
+      const tokensData = await Mintlayer.getTokensData(
+        Object.keys(tokenBalances),
+      )
       const merged = Object.keys(tokenBalances).reduce((acc, key) => {
         acc[key] = {
           balance: tokenBalances[key],
@@ -139,7 +165,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
           ...delegation,
           balance: delegation.balance.atoms,
           creation_block_height:
-          delegation_details[index].creation_block_height,
+            delegation_details[index].creation_block_height,
           creation_time: blocks_data.find(
             ({ height }) =>
               height === delegation_details[index].creation_block_height,
@@ -190,6 +216,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
     onlineHeight,
     mlDelegationsBalance,
     mlDelegationList,
+
+    fetchAllData,
   }
 
   return (

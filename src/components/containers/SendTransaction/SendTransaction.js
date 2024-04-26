@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
-import { AccountContext, TransactionContext } from '@Contexts'
+import { AccountContext, NetworkContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
@@ -34,8 +34,7 @@ const SendTransaction = ({
   currentDelegationInfo,
 }) => {
   const { walletType, balanceLoading } = useContext(AccountContext)
-  const { feeLoading } =
-    useContext(TransactionContext)
+  const { feeLoading } = useContext(TransactionContext)
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
   const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
@@ -58,6 +57,7 @@ const SendTransaction = ({
   const [askPassword, setAskPassword] = useState(false)
   const [pass, setPass] = useState(null)
   const isBitcoinWallet = walletType.name === 'Bitcoin'
+  const { fetchAllData } = useContext(NetworkContext)
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -98,6 +98,7 @@ const SendTransaction = ({
     setAllowClosing(false)
     try {
       const txid = await confirmTransaction(pass)
+      await fetchAllData()
       setTransactionTxid(txid)
       setPassValidity(true)
       setPassErrorMessage('')
