@@ -99,10 +99,16 @@ const getAddressBalance = async (address) => {
     const response = await getAddressData(address)
     const data = JSON.parse(response)
     const balance = {
-      balanceInAtoms: data.coin_balance.atoms,
+      balanceInAtoms:
+        data && data.coin_balance && data.coin_balance.atoms
+          ? data.coin_balance.atoms
+          : 0,
     }
     const balanceLocked = {
-      balanceInAtoms: data.locked_coin_balance.atoms || 0,
+      balanceInAtoms:
+        data && data.locked_coin_balance && data.locked_coin_balance.atoms
+          ? data.locked_coin_balance.atoms
+          : 0,
     }
     return { balance, balanceLocked }
   } catch (error) {

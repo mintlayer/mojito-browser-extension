@@ -6,7 +6,7 @@ import { ReactComponent as LoopIcon } from '@Assets/images/icon-loop.svg'
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
 import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
 import { ReactComponent as UnconfirmedIcon } from '@Assets/images/icon-sand.svg'
-import { Format } from '@Helpers'
+import { Format, ML } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
 import { useNavigate } from 'react-router-dom'
 
@@ -45,16 +45,6 @@ const Transaction = ({ transaction, getConfirmations }) => {
   const date = transaction.date
     ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
-  const formatAddress = (address) => {
-    if (!address) {
-      return 'Wrong address'
-    }
-    const limitSize = 24
-    const halfLimit = limitSize / 2
-    const firstPart = address.slice(0, halfLimit)
-    const lastPart = address.slice(address.length - halfLimit, address.length)
-    return `${firstPart}...${lastPart}`
-  }
 
   return transaction.direction === 'info' ? (
     <Info transaction={transaction} />
@@ -150,11 +140,11 @@ const Transaction = ({ transaction, getConfirmations }) => {
           className="transaction-id"
           data-testid="transaction-otherPart"
         >
-          {transaction.otherPart && formatAddress(transaction.otherPart[0])}
+          {transaction.otherPart && ML.formatAddress(transaction.otherPart[0])}
           {transaction.otherPart &&
             [...new Set(transaction.otherPart)].length > 1 &&
             ` (+${transaction.otherPart.length - 1})`}
-          {transaction.destAddress && formatAddress(transaction.destAddress)}
+          {transaction.destAddress && ML.formatAddress(transaction.destAddress)}
         </p>
         <div className="transaction-date-amount">
           <p

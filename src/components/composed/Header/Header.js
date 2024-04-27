@@ -98,7 +98,7 @@ const Header = ({ customBackAction, noBackButton = false }) => {
               <div className="tooltipWrapper">
                 <Button
                   alternate
-                  extraStyleClasses={['settings']}
+                  extraStyleClasses={['expand']}
                   onClickHandle={expandHandler}
                   onMouseEnter={toggleTooltip}
                   onMouseLeave={toggleTooltip}
