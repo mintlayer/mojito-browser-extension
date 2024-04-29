@@ -6,7 +6,6 @@ import {
   AccountProvider,
   SettingsProvider,
   TransactionProvider,
-  NetworkProvider,
 } from '@Contexts'
 
 const TRANSACTIONDATASAMPLE = {
@@ -21,16 +20,14 @@ test('Send Transaction', async () => {
     render(
       <AccountProvider>
         <SettingsProvider>
-          <NetworkProvider>
-            <TransactionProvider>
-              <SendTransaction
-                transactionData={TRANSACTIONDATASAMPLE}
-                setFormValidity={() => {}}
-                calculateTotalFee={() => {}}
-              />
-              ,
-            </TransactionProvider>
-          </NetworkProvider>
+          <TransactionProvider>
+            <SendTransaction
+              transactionData={TRANSACTIONDATASAMPLE}
+              setFormValidity={() => {}}
+              calculateTotalFee={() => {}}
+            />
+            ,
+          </TransactionProvider>
         </SettingsProvider>
       </AccountProvider>,
     )

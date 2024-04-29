@@ -57,7 +57,7 @@ const SendTransaction = ({
   const [askPassword, setAskPassword] = useState(false)
   const [pass, setPass] = useState(null)
   const isBitcoinWallet = walletType.name === 'Bitcoin'
-  const { fetchAllData } = useContext(NetworkContext)
+  const NC = useContext(NetworkContext)
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -98,7 +98,9 @@ const SendTransaction = ({
     setAllowClosing(false)
     try {
       const txid = await confirmTransaction(pass)
-      await fetchAllData()
+      if (NC && NC.fetchAllData) {
+        await NC.fetchAllData()
+      }
       setTransactionTxid(txid)
       setPassValidity(true)
       setPassErrorMessage('')
