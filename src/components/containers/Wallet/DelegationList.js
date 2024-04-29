@@ -6,8 +6,6 @@ const DelegationList = ({ delegationsList }) => {
   // const renderSkeletonLoaders = () =>
   //   Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
 
-  console.log('delegationsList:', delegationsList)
-
   const renderDelegations = () => {
     if (!delegationsList || !delegationsList.length) {
       return (
