@@ -467,27 +467,25 @@ const spendFromDelegation = async (
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
   const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
-  const unconfirmedTransactions = LocalStorageService.getItem(
-    unconfirmedTransactionString,
-  )
+  const unconfirmedTransactions =
+    LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-  if (!unconfirmedTransactions) {
-    const transaction = {
-      direction: 'out',
-      type: 'Unconfirmed',
-      destAddress: address,
-      value: MLHelpers.getAmountInCoins(Number(amount)),
-      confirmations: 0,
-      date: '',
-      txid: JSON.parse(result).tx_id,
-      fee: fee,
-      isConfirmed: false,
-    }
-    LocalStorageService.setItem(unconfirmedTransactionString, transaction)
-    return JSON.parse(result).tx_id
-  } else {
-    return 'Transaction already in progress. You have to wait for confirmation.'
-  }
+  unconfirmedTransactions.push({
+    direction: 'out',
+    type: 'Unconfirmed',
+    destAddress: address,
+    value: MLHelpers.getAmountInCoins(Number(amount)),
+    confirmations: 0,
+    date: '',
+    txid: JSON.parse(result).tx_id,
+    fee: fee,
+    isConfirmed: false,
+  })
+  LocalStorageService.setItem(
+    unconfirmedTransactionString,
+    unconfirmedTransactions,
+  )
+  return JSON.parse(result).tx_id
 }
 
 export {

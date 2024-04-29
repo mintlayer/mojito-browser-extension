@@ -23,7 +23,7 @@ const NetworkContext = createContext()
 const REFRESH_INTERVAL = 1000
 
 const NetworkProvider = ({ value: propValue, children }) => {
-  const { addresses, accountID } = useContext(AccountContext)
+  const { addresses, accountID, accountName } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
   const currentMlAddresses =
@@ -86,9 +86,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
       const networkType = LocalStorageService.getItem('networkType')
       const accountName = account.name
       const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
-      const unconfirmedTransactions = LocalStorageService.getItem(
-        unconfirmedTransactionString,
-      )
+      const unconfirmedTransactions =
+        LocalStorageService.getItem(unconfirmedTransactionString) || []
 
       const utxos = await Mintlayer.getWalletUtxos(addressList)
       const parsedUtxos = utxos
@@ -173,8 +172,23 @@ const NetworkProvider = ({ value: propValue, children }) => {
         }
       })
 
+      const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
+      const unconfirmedTransactions =
+        LocalStorageService.getItem(unconfirmedTransactionString) || []
+
+      const delegationTransactions = unconfirmedTransactions.filter(
+        (unconfirmedTransaction) =>
+          unconfirmedTransaction.mode ===
+          AppInfo.ML_TRANSACTION_MODES.DELEGATION,
+      )
+
+      if (delegationTransactions.length > 0) {
+        mergedDelegations.unshift(...delegationTransactions)
+      }
+
       const totalDelegationBalance = mergedDelegations.reduce(
-        (acc, delegation) => acc + Number(delegation.balance),
+        (acc, delegation) =>
+          acc + (delegation.balance ? Number(delegation.balance) : 0),
         0,
       )
       setMlDelegationsBalance(totalDelegationBalance)
@@ -218,6 +232,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
     mlDelegationList,
 
     fetchAllData,
+    fetchDelegations,
   }
 
   return (
