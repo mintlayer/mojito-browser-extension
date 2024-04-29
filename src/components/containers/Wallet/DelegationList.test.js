@@ -3,6 +3,7 @@ import { TransactionContext, AccountContext, SettingsContext } from '@Contexts'
 import DelegationList from './DelegationList'
 import { LocalStorageService } from '@Storage'
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
+import { BrowserRouter as Router } from 'react-router-dom'
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
@@ -26,7 +27,9 @@ describe('DelegationList', () => {
       <AccountContext.Provider value={{ accountName: 'test' }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
           <TransactionContext.Provider value={{ delegationsLoading: true }}>
-            <DelegationList delegationsList={mockDelegationsList} />
+            <Router>
+              <DelegationList delegationsList={mockDelegationsList} />
+            </Router>
           </TransactionContext.Provider>
           ,
         </SettingsContext.Provider>
@@ -43,7 +46,9 @@ describe('DelegationList', () => {
       <AccountContext.Provider value={{ accountName: 'test' }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
           <TransactionContext.Provider value={{ delegationsLoading: false }}>
-            <DelegationList delegationsList={[]} />
+            <Router>
+              <DelegationList delegationsList={[]} />
+            </Router>
           </TransactionContext.Provider>
           ,
         </SettingsContext.Provider>
@@ -62,7 +67,9 @@ describe('DelegationList', () => {
       <AccountContext.Provider value={{ accountName: 'test' }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
           <TransactionContext.Provider value={{ delegationsLoading: false }}>
-            <DelegationList delegationsList={mockDelegationsList} />
+            <Router>
+              <DelegationList delegationsList={mockDelegationsList} />
+            </Router>
           </TransactionContext.Provider>
           ,
         </SettingsContext.Provider>
