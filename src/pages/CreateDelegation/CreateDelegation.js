@@ -50,7 +50,8 @@ const CreateDelegationPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance, utxos } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, utxos, fetchDelegations } =
+    useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
   // const customBackAction = () => {
   //   setDelegationStep(1)
@@ -135,6 +136,10 @@ const CreateDelegationPage = () => {
       poolId: transactionInformation.to,
       transactionMode: transactionMode,
     })
+
+    if (result) {
+      await fetchDelegations()
+    }
 
     return result
   }
