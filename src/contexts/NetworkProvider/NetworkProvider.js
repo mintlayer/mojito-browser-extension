@@ -46,10 +46,12 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const fetchAllData = useMemo(
     () => async () => {
       // fetch addresses
-      const addressList = [
-        ...currentMlAddresses.mlReceivingAddresses,
-        ...currentMlAddresses.mlChangeAddresses,
-      ]
+      const addressList = currentMlAddresses
+        ? [
+            ...currentMlAddresses.mlReceivingAddresses,
+            ...currentMlAddresses.mlChangeAddresses,
+          ]
+        : []
       const addresses = addressList.map((address) => getAddressData(address))
       const addresses_data = await Promise.all(addresses)
       let available_balance = BigInt(0)
