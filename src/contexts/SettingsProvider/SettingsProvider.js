@@ -7,9 +7,6 @@ const SettingsContext = createContext()
 
 const SettingsProvider = ({ value: propValue, children }) => {
   const [networkType, setNetworkType] = useState(NetworkTypeEntity.get())
-  const [restoreBtcMode, setRestoreBtcMode] = useState(
-    LocalStorageService.getItem('restoreBtcMode') || false,
-  )
 
   useEffect(() => {
     try {
@@ -23,31 +20,6 @@ const SettingsProvider = ({ value: propValue, children }) => {
       console.error('Error accessing localStorage:', error)
     }
   }, [])
-
-  // TODO: This has been made to let users restore their btc wallet with old incorrect path
-  useEffect(() => {
-    try {
-      const storedRestoreBtcMode = LocalStorageService.getItem('restoreBtcMode')
-      if (storedRestoreBtcMode === null) {
-        LocalStorageService.setItem('restoreBtcMode', false)
-      } else {
-        setRestoreBtcMode(storedRestoreBtcMode)
-      }
-    } catch (error) {
-      console.error('Error accessing localStorage:', error)
-    }
-  }, [])
-
-  const toggleRestoreBtcMode = () => {
-    try {
-      const newRestoreBtcMode = !restoreBtcMode
-      setRestoreBtcMode(newRestoreBtcMode)
-      LocalStorageService.setItem('restoreBtcMode', newRestoreBtcMode)
-    } catch (error) {
-      console.error('Error accessing localStorage:', error)
-    }
-  }
-  // ----------------------------------------------------------------------------
 
   const toggleNetworkType = () => {
     try {
@@ -65,8 +37,6 @@ const SettingsProvider = ({ value: propValue, children }) => {
   const value = {
     networkType,
     toggleNetworkType,
-    restoreBtcMode,
-    toggleRestoreBtcMode,
   }
 
   return (
