@@ -29,10 +29,10 @@ test('Create ML delegation', async () => {
   await page.waitForTimeout(1000)
   await expect(page.locator(':text("Pool id:")')).toBeVisible()
 
-  await page.fill('input[placeholder="tpool..."]', senderData.POOL_ID) 
+  await page.fill('input[placeholder="tpool..."]', senderData.POOL_ID)
   await page.getByRole('button', { name: 'Create' }).click()
-  
-  await page.waitForTimeout(10000)
+
+  await page.waitForTimeout(1000)
 
   await expect(page.getByTestId('popup').getByText('Send to:')).toBeVisible()
   await expect(
@@ -52,7 +52,7 @@ test('Create ML delegation', async () => {
   await page.fill('input[placeholder="Password"]', senderData.WALLET_PASSWORD)
 
   await page.getByRole('button', { name: 'Send Transaction' }).click()
-  
+
   await page.route(
     'https://api-server-lovelace.mintlayer.org/api/v2/transaction',
     (route) =>
@@ -65,9 +65,9 @@ test('Create ML delegation', async () => {
         }),
       }),
   )
-   
+
   await page.waitForTimeout(2000)
-  
+
   await page.waitForSelector(':text("Your transaction was sent.")')
 
   const resultTitleText = await page.textContent('h3.result-title')
