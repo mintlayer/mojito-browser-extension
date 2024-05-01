@@ -114,6 +114,16 @@ const SendTransaction = ({
         setPassValidity(false)
         setPass('')
         setAllowClosing(true)
+      } else if (e.includes('Invalid amount')) {
+        // need to adjust fee
+        setAskPassword(false)
+        setPassPristinity(false)
+        setPassValidity(false)
+        setPass('')
+        setTxErrorMessage('Balance is not enough to cover the transaction')
+        console.error(e)
+        setAllowClosing(true)
+        setPopupState(false)
       } else if (e.message.includes('minimum fee')) {
         // need to adjust fee
         setAskPassword(false)

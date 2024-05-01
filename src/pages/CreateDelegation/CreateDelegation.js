@@ -86,6 +86,11 @@ const CreateDelegationPage = () => {
     const address = transactionInfo.to
     const unusedChangeAddress = await ML.getUnusedAddress(changeAddresses)
     const unusedReceivingAddress = await ML.getUnusedAddress(receivingAddresses)
+    if (utxos.length === 0) {
+      setFeeLoading(false)
+      throw new Error('No UTXOs available')
+      return false
+    }
     const fee = await MLTransaction.calculateFee({
       utxosTotal: utxos,
       address: unusedReceivingAddress,

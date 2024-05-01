@@ -37,7 +37,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const [tokenBalances, setTokenBalances] = useState({})
   const [lockedBalance, setLockedBalance] = useState(0)
   // const [addresses, setAddresses] = useState({})
-  const [utxos, setUtxos] = useState({})
+  const [utxos, setUtxos] = useState([])
   const [transactions, setTransactions] = useState([])
 
   const [mlDelegationList, setMlDelegationList] = useState([])
