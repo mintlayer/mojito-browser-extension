@@ -131,9 +131,14 @@ const DashboardPage = () => {
         'bitcoin'
       )
     }
-    const mlAddress = addresses.mlMainnetAddress
-      ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
-      : false
+
+    const currentMlAddresses =
+      networkType === AppInfo.NETWORK_TYPES.MAINNET
+        ? addresses.mlMainnetAddress
+        : addresses.mlTestnetAddresses
+
+    const mlAddress = currentMlAddresses && currentMlAddresses.mlReceivingAddresses && currentMlAddresses.mlReceivingAddresses[0]
+
     if (mlAddress) {
       const change24h =
         network === AppInfo.NETWORK_TYPES.MAINNET
