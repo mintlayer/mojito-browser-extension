@@ -114,7 +114,7 @@ const SendTransaction = ({
         setPassValidity(false)
         setPass('')
         setAllowClosing(true)
-      } else if (e.includes('Invalid amount')) {
+      } else if (typeof e === 'string' && e.includes('Invalid amount')) {
         // need to adjust fee
         setAskPassword(false)
         setPassPristinity(false)
