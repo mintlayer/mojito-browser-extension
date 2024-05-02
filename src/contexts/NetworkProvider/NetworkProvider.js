@@ -40,12 +40,17 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const [unusedAddresses, setUnusedAddresses] = useState({})
   const [utxos, setUtxos] = useState([])
   const [transactions, setTransactions] = useState([])
+  const [feerate, setFeerate] = useState(0)
 
   const [mlDelegationList, setMlDelegationList] = useState([])
   const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
 
   const fetchAllData = useMemo(
     () => async () => {
+      // fetch fee rate
+      const feerate = await Mintlayer.getFeesEstimates()
+      setFeerate(parseInt(JSON.parse(feerate)))
+
       // fetch addresses
       const addressList = currentMlAddresses
         ? [
@@ -282,6 +287,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
     unusedAddresses,
 
     balanceLoading,
+    feerate,
   }
 
   return (

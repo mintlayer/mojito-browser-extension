@@ -273,6 +273,51 @@ const calculateFee = async ({
   return BigInt(fee)
 }
 
+const calculateTransactionSizeInBytes = async ({
+  utxosTotal,
+  address,
+  changeAddress,
+  amountToUse,
+  network,
+  poolId,
+  delegationId,
+}) => {
+  const amountToUseFinale = amountToUse <= 0 ? BigInt(1) : amountToUse
+  const utxos = getUtxoAvailable(utxosTotal)
+  const totalAmount = !poolId ? totalUtxosAmount(utxos) : 0
+  if (totalAmount < BigInt(amountToUse) && !poolId) {
+    throw new Error('Insufficient funds')
+  }
+  const requireUtxo = getTransactionUtxos(utxos, amountToUseFinale)
+  const transactionStrings = getUtxoTransactions(requireUtxo)
+  const addressList = getUtxoAddress(requireUtxo)
+  const transactionBytes = getTransactionsBytes(transactionStrings)
+  const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
+  const inputs = await getTxInputs(outpointedSourceIds)
+  const inputsArray = getArraySpead(inputs)
+  const txOutput = await getTxOutput(
+    amountToUseFinale.toString(),
+    address,
+    network,
+    poolId,
+    delegationId,
+  )
+  const changeAmount = (
+    totalUtxosAmount(requireUtxo) - amountToUseFinale
+  ).toString()
+  const txChangeOutput = await getTxOutput(changeAmount, changeAddress, network)
+  const outputs = [...txOutput, ...txChangeOutput]
+  // const optUtxos = await getOptUtxos(requireUtxo.flat(), network)
+  const size = ML.getEstimatetransactionSize(
+    inputsArray,
+    addressList,
+    outputs,
+    network,
+  )
+
+  return size
+}
+
 const calculateSpenDelegFee = async (address, amount, network, delegation) => {
   const input = ML.getAccountOutpointInput(
     delegation.delegation_id,
@@ -506,4 +551,5 @@ export {
   calculateSpenDelegFee,
   sendTransaction,
   spendFromDelegation,
+  calculateTransactionSizeInBytes,
 }

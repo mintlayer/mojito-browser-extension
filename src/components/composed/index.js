@@ -11,6 +11,7 @@ import ProgressTracker from './ProgressTracker/ProgressTracker'
 import TextField from './TextField/TextField'
 import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 import FeeField from './FeeField/FeeField'
+import FeeFieldML from './FeeField/FeeFieldML'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import Entropy from './Entropy/Entropy'
 import WalletList from './WalletList/WalletList'
@@ -33,6 +34,7 @@ export {
   TextField,
   CryptoFiatField,
   FeeField,
+  FeeFieldML,
   ConnectionErrorPopup,
   Entropy,
   WalletList,
