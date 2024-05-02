@@ -50,7 +50,7 @@ const CreateDelegationPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance, utxos, fetchDelegations } =
+  const { mlBalance, utxos, fetchDelegations, unusedAddresses } =
     useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
   // const customBackAction = () => {
@@ -78,14 +78,11 @@ const CreateDelegationPage = () => {
 
   const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
 
-  const changeAddresses = currentMlAddresses.mlChangeAddresses
-  const receivingAddresses = currentMlAddresses.mlReceivingAddresses
-
   const calculateMlTotalFee = async (transactionInfo) => {
     setFeeLoading(true)
     const address = transactionInfo.to
-    const unusedChangeAddress = await ML.getUnusedAddress(changeAddresses)
-    const unusedReceivingAddress = await ML.getUnusedAddress(receivingAddresses)
+    const unusedChangeAddress = unusedAddresses.change
+    const unusedReceivingAddress = unusedAddresses.receive
     if (utxos.length === 0) {
       setFeeLoading(false)
       throw new Error('No UTXOs available')
@@ -128,8 +125,8 @@ const CreateDelegationPage = () => {
       ...walletPrivKeys.mlChangePrivKeys,
     }
 
-    const unusedChageAddress = await ML.getUnusedAddress(changeAddresses)
-    const unusedReceivingAddress = await ML.getUnusedAddress(receivingAddresses)
+    const unusedChageAddress = unusedAddresses.change
+    const unusedReceivingAddress = unusedAddresses.receive
 
     const result = await MLTransaction.sendTransaction({
       utxosTotal: utxos,

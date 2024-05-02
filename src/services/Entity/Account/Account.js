@@ -119,19 +119,24 @@ const unlockAccount = async (id, password) => {
     }
 
     if (walletsToCreate.includes('ml')) {
-      const mlTestnetWalletAddresses = await ML.getWalletAddresses(
-        mlTestnetPrivateKey,
-        AppInfo.NETWORK_TYPES.TESTNET,
-        AppInfo.DEFAULT_ML_WALLET_OFFSET,
-      )
-      const mlMainnetWalletAddresses = await ML.getWalletAddresses(
-        mlMainnetPrivateKey,
-        AppInfo.NETWORK_TYPES.MAINNET,
-        AppInfo.DEFAULT_ML_WALLET_OFFSET,
-      )
-
-      addresses.mlMainnetAddress = mlMainnetWalletAddresses
-      addresses.mlTestnetAddresses = mlTestnetWalletAddresses
+      const storedNetworkType = LocalStorageService.getItem('networkType')
+      if(storedNetworkType === AppInfo.NETWORK_TYPES.TESTNET) {
+        const mlTestnetWalletAddresses = await ML.getWalletAddresses(
+          mlTestnetPrivateKey,
+          AppInfo.NETWORK_TYPES.TESTNET,
+          AppInfo.DEFAULT_ML_WALLET_OFFSET,
+        )
+        addresses.mlTestnetAddresses = mlTestnetWalletAddresses
+        addresses.mlMainnetAddress = []
+      } else {
+        const mlMainnetWalletAddresses = await ML.getWalletAddresses(
+          mlMainnetPrivateKey,
+          AppInfo.NETWORK_TYPES.MAINNET,
+          AppInfo.DEFAULT_ML_WALLET_OFFSET,
+        )
+        addresses.mlMainnetAddress = mlMainnetWalletAddresses
+        addresses.mlTestnetAddresses = []
+      }
     }
 
     return {

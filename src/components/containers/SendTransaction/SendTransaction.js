@@ -98,14 +98,14 @@ const SendTransaction = ({
     setAllowClosing(false)
     try {
       const txid = await confirmTransaction(pass)
-      if (NC && NC.fetchAllData) {
-        await NC.fetchAllData()
-      }
       setTransactionTxid(txid)
       setPassValidity(true)
       setPassErrorMessage('')
       setTxErrorMessage('')
       setAskPassword(false)
+      if (NC && NC.fetchAllData) {
+        await NC.fetchAllData()
+      }
     } catch (e) {
       if (e.address === '') {
         // password is not correct

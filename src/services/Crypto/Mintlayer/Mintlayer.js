@@ -93,21 +93,26 @@ export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
 }
 
 const checkIfAddressUsed = async (address) => {
-  const addressTransaction = await Mintlayer.getWalletTransactions([address])
-  if (addressTransaction.length > 0) {
-    return true
+  try {
+    const addressData = await Mintlayer.getAddressData(address)
+    const data = JSON.parse(addressData)
+    if (data.transaction_history.length > 0) {
+      return true
+    }
+    return false
+  } catch (e) {
+    return false
   }
-  return false
 }
 
 export const getWalletAddresses = async (
   mlPrivateKey,
   network,
-  offset = 21,
+  batch = 20,
 ) => {
-  const generateAddresses = (addressGenerator) => {
-    const privKeys = Array.from({ length: offset }, (_, i) =>
-      addressGenerator(mlPrivateKey, i),
+  const generateAddresses = (addressGenerator, length, offset) => {
+    const privKeys = Array.from({ length }, (_, i) =>
+      addressGenerator(mlPrivateKey, i + offset),
     )
 
     const publicKeys = privKeys.map((address) =>
@@ -118,14 +123,13 @@ export const getWalletAddresses = async (
   }
 
   const checkAndGenerateAddresses = async (addressGenerator) => {
-    let addresses = generateAddresses(addressGenerator)
+    const addresses = generateAddresses(addressGenerator, batch, 0)
     let allUsed = await Promise.all(
       addresses.map((address) => checkIfAddressUsed(address)),
     )
 
     while (allUsed.every((used) => used)) {
-      offset += 20
-      addresses = generateAddresses(addressGenerator)
+      addresses.push(...generateAddresses(addressGenerator, batch, addresses.length))
       allUsed = await Promise.all(
         addresses.map((address) => checkIfAddressUsed(address)),
       )
@@ -140,18 +144,6 @@ export const getWalletAddresses = async (
   ])
 
   return { mlReceivingAddresses, mlChangeAddresses }
-}
-
-export const getUnusedAddress = async (addresses) => {
-  for (let i = 0; i < addresses.length; i++) {
-    const isUsed = await checkIfAddressUsed(addresses[i])
-    if (!isUsed) {
-      return addresses[i]
-    }
-    if (i === addresses.length - 1) {
-      return addresses[i]
-    }
-  }
 }
 
 export const getEncodedOutpointSourceId = (txId) => {
