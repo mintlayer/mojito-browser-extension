@@ -48,7 +48,8 @@ const SendTransactionPage = () => {
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance, utxos } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, utxos, unusedAddresses } =
+    useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
 
@@ -60,9 +61,6 @@ const SendTransactionPage = () => {
 
   const changeAddressesLength =
     currentMlAddresses && currentMlAddresses.mlChangeAddresses.length
-
-  const changeAddress =
-    currentMlAddresses && currentMlAddresses.mlChangeAddresses
 
   const calculateBtcTotalFee = async (transactionInfo) => {
     const transactionSize =
@@ -86,7 +84,7 @@ const SendTransactionPage = () => {
     setFeeLoading(true)
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
-    const unusedChangeAddress = await ML.getUnusedAddress(changeAddress)
+    const unusedChangeAddress = unusedAddresses.change
     try {
       const fee = await MLTransaction.calculateFee({
         utxosTotal: utxos,
@@ -163,12 +161,12 @@ const SendTransactionPage = () => {
       ...walletPrivKeys.mlChangePrivKeys,
     }
 
-    const unusedChageAddress = await ML.getUnusedAddress(changeAddress)
+    const unusedChangeAddress = unusedAddresses.change
     const result = await MLTransaction.sendTransaction({
       utxosTotal: utxos,
       keysList: keysList,
       address: transactionInformation.to,
-      changeAddress: unusedChageAddress,
+      changeAddress: unusedChangeAddress,
       amountToUse: amountToSend,
       network: networkType,
       ...(adjustedFee && {

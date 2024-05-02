@@ -26,7 +26,11 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
       const error = await result.json()
       if (error.error === 'Address not found') {
         return Promise.resolve(
-          JSON.stringify({ coin_balance: 0, transaction_history: [] }),
+          JSON.stringify({
+            unused: true,
+            coin_balance: 0,
+            transaction_history: [],
+          }),
         )
       }
 
