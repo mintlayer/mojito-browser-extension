@@ -111,6 +111,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
       )
       setTransactions(parsedTransactions)
 
+      setCurrentAccountId(accountID)
+
       // fetch utxos
       const account = LocalStorageService.getItem('unlockedAccount')
       const networkType = LocalStorageService.getItem('networkType')
@@ -165,11 +167,11 @@ const NetworkProvider = ({ value: propValue, children }) => {
       }, {})
 
       setTokenBalances(merged)
-
-      setCurrentAccountId(accountID)
     },
     [currentMlAddresses],
   )
+
+  const balanceLoading = currentAccountId !== accountID
 
   const fetchDelegations = useCallback(async () => {
     try {
@@ -268,6 +270,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
     currentAccountId,
     unusedAddresses,
+
+    balanceLoading,
   }
 
   return (
