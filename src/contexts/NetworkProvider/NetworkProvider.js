@@ -31,12 +31,13 @@ const NetworkProvider = ({ value: propValue, children }) => {
       ? addresses.mlMainnetAddress
       : addresses.mlTestnetAddresses
 
+  const [currentAccountId, setCurrentAccountId] = useState('')
   const [onlineHeight, setOnlineHeight] = useState(0)
   const [currentHeight, setCurrentHeight] = useState(0)
   const [balance, setBalance] = useState(0)
   const [tokenBalances, setTokenBalances] = useState({})
   const [lockedBalance, setLockedBalance] = useState(0)
-  // const [addresses, setAddresses] = useState({})
+  const [unusedAddresses, setUnusedAddresses] = useState({})
   const [utxos, setUtxos] = useState([])
   const [transactions, setTransactions] = useState([])
 
@@ -52,8 +53,35 @@ const NetworkProvider = ({ value: propValue, children }) => {
             ...currentMlAddresses.mlChangeAddresses,
           ]
         : []
-      const addresses = addressList.map((address) => getAddressData(address))
-      const addresses_data = await Promise.all(addresses)
+      const addresses_data_receive = await Promise.all(
+        currentMlAddresses.mlReceivingAddresses.map((address) =>
+          getAddressData(address),
+        ),
+      )
+      const addresses_data_change = await Promise.all(
+        currentMlAddresses.mlChangeAddresses.map((address) =>
+          getAddressData(address),
+        ),
+      )
+      const addresses_data = [
+        ...addresses_data_receive,
+        ...addresses_data_change,
+      ]
+
+      const first_unused_change_address_index = addresses_data_change.findIndex(
+        (address_data) => {
+          const { unused } = JSON.parse(address_data)
+          return unused === true
+        },
+      )
+
+      const first_unused_change_address =
+        currentMlAddresses.mlChangeAddresses[first_unused_change_address_index]
+
+      setUnusedAddresses({
+        change: first_unused_change_address,
+      })
+
       let available_balance = BigInt(0)
       let locked_balance = BigInt(0)
       const transaction_ids = []
@@ -137,6 +165,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
       }, {})
 
       setTokenBalances(merged)
+
+      setCurrentAccountId(accountID)
     },
     [currentMlAddresses],
   )
@@ -235,6 +265,9 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
     fetchAllData,
     fetchDelegations,
+
+    currentAccountId,
+    unusedAddresses,
   }
 
   return (

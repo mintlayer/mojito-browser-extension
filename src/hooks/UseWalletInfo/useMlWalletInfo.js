@@ -12,6 +12,7 @@ const useMlWalletInfo = (addresses) => {
     utxos,
     fetchAllData,
     fetchDelegations,
+    unusedAddresses,
   } = useContext(NetworkContext)
 
   return {
@@ -24,6 +25,7 @@ const useMlWalletInfo = (addresses) => {
     utxos,
     fetchAllData,
     fetchDelegations,
+    unusedAddresses,
   }
 }
 
