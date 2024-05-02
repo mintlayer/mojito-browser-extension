@@ -52,7 +52,7 @@ const DelegationStakePage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance, utxos, unusedAddresses } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, utxos, unusedAddresses, feerate } = useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = mlBalance
 
@@ -69,13 +69,14 @@ const DelegationStakePage = () => {
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
     const unusedChangeAddress = unusedAddresses.change
-    const fee = await MLTransaction.calculateFee({
+    const transactionSize = await MLTransaction.calculateTransactionSizeInBytes({
       utxosTotal: utxos,
       changeAddress: unusedChangeAddress,
       amountToUse: amountToSend,
       network: networkType,
       delegationId: address,
     })
+    const fee = feerate * (transactionSize / 1000)
     const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
     setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
     setTotalFeeCrypto(feeInCoins)

@@ -48,7 +48,7 @@ const SendTransactionPage = () => {
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance, utxos, unusedAddresses } =
+  const { mlBalance, utxos, unusedAddresses, feerate } =
     useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
@@ -86,13 +86,14 @@ const SendTransactionPage = () => {
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
     const unusedChangeAddress = unusedAddresses.change
     try {
-      const fee = await MLTransaction.calculateFee({
+      const transactionSize = await MLTransaction.calculateTransactionSizeInBytes({
         utxosTotal: utxos,
         address: address,
         changeAddress: unusedChangeAddress,
         amountToUse: amountToSend,
         network: networkType,
       })
+      const fee = feerate * (transactionSize / 1000)
       const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
       setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
       setTotalFeeCrypto(feeInCoins)
@@ -162,6 +163,16 @@ const SendTransactionPage = () => {
     }
 
     const unusedChangeAddress = unusedAddresses.change
+
+    const transactionSize = await MLTransaction.calculateTransactionSizeInBytes({
+      utxosTotal: utxos,
+      address: transactionInformation.to,
+      changeAddress: unusedChangeAddress,
+      amountToUse: amountToSend,
+      network: networkType,
+    })
+    const fee = feerate * (transactionSize / 1000)
+
     const result = await MLTransaction.sendTransaction({
       utxosTotal: utxos,
       keysList: keysList,
@@ -169,8 +180,10 @@ const SendTransactionPage = () => {
       changeAddress: unusedChangeAddress,
       amountToUse: amountToSend,
       network: networkType,
-      ...(adjustedFee && {
+      ...(adjustedFee ? {
         adjustedFee: MLHelpers.getAmountInAtoms(adjustedFee),
+      } : {
+        adjustedFee: BigInt(Math.ceil(fee))
       }),
     })
     return result

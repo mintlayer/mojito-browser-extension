@@ -13,6 +13,7 @@ const useMlWalletInfo = (addresses) => {
     fetchAllData,
     fetchDelegations,
     unusedAddresses,
+    feerate,
   } = useContext(NetworkContext)
 
   return {
@@ -26,6 +27,7 @@ const useMlWalletInfo = (addresses) => {
     fetchAllData,
     fetchDelegations,
     unusedAddresses,
+    feerate,
   }
 }
 

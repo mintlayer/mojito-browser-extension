@@ -50,7 +50,7 @@ const CreateDelegationPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance, utxos, fetchDelegations, unusedAddresses } =
+  const { mlBalance, utxos, fetchDelegations, unusedAddresses, feerate } =
     useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
   // const customBackAction = () => {
@@ -88,7 +88,7 @@ const CreateDelegationPage = () => {
       throw new Error('No UTXOs available')
       return false
     }
-    const fee = await MLTransaction.calculateFee({
+    const transactionSize = await MLTransaction.calculateTransactionSizeInBytes({
       utxosTotal: utxos,
       address: unusedReceivingAddress,
       changeAddress: unusedChangeAddress,
@@ -96,6 +96,7 @@ const CreateDelegationPage = () => {
       network: networkType,
       poolId: address,
     })
+    const fee = feerate * (transactionSize / 1000)
     const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
     setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
     setTotalFeeCrypto(feeInCoins)
