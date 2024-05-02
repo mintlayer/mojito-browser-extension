@@ -78,8 +78,18 @@ const NetworkProvider = ({ value: propValue, children }) => {
       const first_unused_change_address =
         currentMlAddresses.mlChangeAddresses[first_unused_change_address_index]
 
+      const first_unused_receive_address_index = addresses_data_receive.findIndex(
+        (address_data) => {
+          const { unused } = JSON.parse(address_data)
+          return unused === true
+        },
+      )
+
+      const first_unused_receive_address = currentMlAddresses.mlReceivingAddresses[first_unused_receive_address_index]
+
       setUnusedAddresses({
         change: first_unused_change_address,
+        receive: first_unused_receive_address,
       })
 
       let available_balance = BigInt(0)

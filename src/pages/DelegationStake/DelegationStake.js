@@ -52,7 +52,7 @@ const DelegationStakePage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance, utxos } = useMlWalletInfo(currentMlAddresses)
+  const { mlBalance, utxos, unusedAddresses } = useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = mlBalance
 
@@ -64,13 +64,11 @@ const DelegationStakePage = () => {
 
   const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
 
-  const changeAddresses = currentMlAddresses.mlChangeAddresses
-
   const calculateMlTotalFee = async (transactionInfo) => {
     setFeeLoading(true)
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
-    const unusedChangeAddress = await ML.getUnusedAddress(changeAddresses)
+    const unusedChangeAddress = unusedAddresses.change
     const fee = await MLTransaction.calculateFee({
       utxosTotal: utxos,
       changeAddress: unusedChangeAddress,
@@ -110,12 +108,12 @@ const DelegationStakePage = () => {
       ...walletPrivKeys.mlChangePrivKeys,
     }
 
-    const unusedChageAddress = await ML.getUnusedAddress(changeAddresses)
+    const unusedChangeAddress = unusedAddresses.change
 
     const result = await MLTransaction.sendTransaction({
       utxosTotal: utxos,
       keysList: keysList,
-      changeAddress: unusedChageAddress,
+      changeAddress: unusedChangeAddress,
       amountToUse: amountToSend,
       network: networkType,
       delegationId: transactionInformation.to,
