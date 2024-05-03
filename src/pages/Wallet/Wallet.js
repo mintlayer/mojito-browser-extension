@@ -1,7 +1,7 @@
 import React, { useNavigate, useParams } from 'react-router-dom'
 import { useContext, useState } from 'react'
 
-import { Balance, Header, PopUp } from '@ComposedComponents'
+import { Balance, PopUp } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 
@@ -57,14 +57,9 @@ const WalletPage = () => {
   const walletTransactionList =
     walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
 
-  const backToDashboard = () => {
-    navigate('/dashboard')
-  }
-
   return (
     <div data-testid="wallet-page">
       <VerticalGroup bigGap>
-        <Header customBackAction={backToDashboard} />
         <div className="balance-transactions-wrapper">
           <Balance
             balance={walletBalance}

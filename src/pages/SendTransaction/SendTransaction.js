@@ -1,7 +1,6 @@
 import { useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
@@ -193,7 +192,6 @@ const SendTransactionPage = () => {
 
   return (
     <>
-      <Header />
       <div className="page">
         <VerticalGroup smallGap>
           <SendTransaction

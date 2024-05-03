@@ -8,7 +8,7 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import { Electrum, ExchangeRates } from '@APIs'
-import { ConnectionErrorPopup } from '@ComposedComponents'
+import { ConnectionErrorPopup, Header } from '@ComposedComponents'
 
 import {
   HomePage,
@@ -154,6 +154,7 @@ const App = () => {
 
   return (
     <main className="App">
+      <Header />
       {errorPopupOpen && (
         <ConnectionErrorPopup onClickHandle={popupButtonClickHandler} />
       )}
