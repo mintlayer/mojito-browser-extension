@@ -127,7 +127,7 @@ const unlockAccount = async (id, password) => {
         AppInfo.NETWORK_TYPES.MAINNET,
         AppInfo.DEFAULT_ML_WALLET_OFFSET,
       )
-      addresses.mlMainnetAddress = mlMainnetWalletAddresses
+      addresses.mlMainnetAddresses = mlMainnetWalletAddresses
     }
 
     return {

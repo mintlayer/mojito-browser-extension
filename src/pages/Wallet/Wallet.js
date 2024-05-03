@@ -14,14 +14,22 @@ import './Wallet.css'
 
 const WalletPage = () => {
   const navigate = useNavigate()
+
   const { coinType } = useParams()
   const walletType = {
     name: coinType,
-    ticker: coinType === 'Mintlayer' ? 'ML' : 'BTC',
-    network: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
+    ticker: coinType === 'Bitcoin' ? 'BTC' : 'ML',
+    chain: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
   }
+
+  console.log('coinType', coinType)
+
+  const datahook =
+    walletType.chain === 'bitcoin' ? useBtcWalletInfo : useMlWalletInfo
+
   const { addresses } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
+
   const btcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
@@ -30,10 +38,16 @@ const WalletPage = () => {
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddress
       : addresses.mlTestnetAddresses
+
+  const checkAddresses =
+    walletType.chain === 'bitcoin' ? btcAddress : currentMlAddresses
+
   const [openShowAddress, setOpenShowAddress] = useState(false)
-  const { btcTransactionsList, btcBalance } = useBtcWalletInfo(btcAddress)
-  const { mlTransactionsList, mlBalance, mlBalanceLocked } =
-    useMlWalletInfo(currentMlAddresses)
+
+  const { transactions, balance, lockedBalance } = datahook(
+    checkAddresses,
+    coinType,
+  )
 
   const setOpenTransactionForm = () => {
     navigate('/wallet/' + walletType.name + '/send-transaction')
@@ -50,12 +64,10 @@ const WalletPage = () => {
   const mlAddress =
     currentMlAddresses && currentMlAddresses.mlReceivingAddresses[0]
 
-  const walletBalance = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
-  const walletBalanceLocked =
-    walletType.name === 'Mintlayer' ? mlBalanceLocked : 0
+  const walletBalance = balance
+  const walletBalanceLocked = lockedBalance || 0
   const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
-  const walletTransactionList =
-    walletType.name === 'Mintlayer' ? mlTransactionsList : btcTransactionsList
+  const walletTransactionList = transactions
 
   return (
     <div data-testid="wallet-page">
@@ -65,6 +77,7 @@ const WalletPage = () => {
             balance={walletBalance}
             balanceLocked={walletBalanceLocked}
             exchangeRate={exchangeRate}
+            walletType={walletType}
           />
           <div className="transactions-buttons-wrapper">
             {walletType.name === 'Mintlayer' && (

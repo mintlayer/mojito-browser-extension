@@ -6,7 +6,7 @@ import React, {
   useContext,
 } from 'react'
 
-import { AccountContext, NetworkContext } from '@Contexts'
+import { NetworkContext } from '@Contexts'
 import { InputInteger } from '@BasicComponents'
 import { OptionButtons } from '@ComposedComponents'
 import { BTC } from '@Helpers'
@@ -19,7 +19,6 @@ const FeeFieldML = ({
   changeValueHandle,
   setFeeValidity,
 }) => {
-  const { walletType } = useContext(AccountContext)
   const { feerate } = useContext(NetworkContext)
   const effectCalled = useRef(false)
   const [options, setOptions] = useState([])
@@ -101,7 +100,7 @@ const FeeFieldML = ({
     }
 
     populateOptions()
-  }, [walletType.name])
+  }, [])
 
   useEffect(() => {
     if (Number(parentValue)) {

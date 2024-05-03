@@ -7,30 +7,6 @@ import { SettingsContext, NetworkContext } from '@Contexts'
 
 import './CryptoList.css'
 
-//TODO: remove this when mainnet is ready
-// const MainnetAddressItem = () => {
-//   const { setOpenShowAddressTemp } = useContext(AccountContext)
-//   const onItemClick = () => {
-//     setOpenShowAddressTemp(true)
-//   }
-//   return (
-//     <li
-//       className="crypto-item coming-soon"
-//       onClick={onItemClick}
-//     >
-//       <div className="mlt-logo">
-//         <LogoRound />
-//       </div>
-//       <div className="name-values">
-//         <h5>Mintlayer (ML)</h5>
-//         <p className="show-address-text">
-//           Click here to get your Mainnet address
-//         </p>
-//       </div>
-//     </li>
-//   )
-// }
-
 export const CryptoItem = ({ colorList, onClickItem, item }) => {
   const { networkType } = useContext(SettingsContext)
   const { balanceLoading } = useContext(NetworkContext)
@@ -40,10 +16,12 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
     ? item.balance
     : Number(item.balance * item.exchangeRate).toFixed(2)
   const bigValues = balance.length > 13
-  const data = item.historyRates && Object.values(item.historyRates).map((value, idx) => [
-    idx * 10,
-    Number(value),
-  ])
+  const data =
+    item.historyRates &&
+    Object.values(item.historyRates).map((value, idx) => [
+      idx * 10,
+      Number(value),
+    ])
   const symbol = !isTestnet ? item.symbol : 'Test'
 
   const onClick = () => {

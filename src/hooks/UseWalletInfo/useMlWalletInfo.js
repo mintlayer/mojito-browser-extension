@@ -1,11 +1,11 @@
 import { useContext } from 'react'
 import { NetworkContext } from '@Contexts'
 
-const useMlWalletInfo = (addresses) => {
+const useMlWalletInfo = (addresses, token) => {
   const {
-    balance: mlBalance,
-    lockedBalance: mlBalanceLocked,
-    transactions: mlTransactionsList,
+    balance,
+    lockedBalance,
+    transactions,
     tokenBalances,
     mlDelegationList,
     mlDelegationsBalance,
@@ -16,11 +16,28 @@ const useMlWalletInfo = (addresses) => {
     feerate,
   } = useContext(NetworkContext)
 
+  // const nativecoins
+  const nativecoins = ['Mintlayer', 'Bitcoin']
+  console.log(token)
+
+  if (token && !nativecoins.includes(token)) {
+    console.log('tokenBalances', tokenBalances)
+    const tokenBalance = tokenBalances[token].balance || 0
+
+    return {
+      transactions: [],
+      balance: tokenBalance,
+      utxos,
+      unusedAddresses,
+      feerate,
+    }
+  }
+
   return {
-    mlTransactionsList,
+    transactions,
     mlDelegationList,
-    mlBalance,
-    mlBalanceLocked,
+    balance,
+    lockedBalance,
     mlDelegationsBalance,
     tokenBalances,
     utxos,

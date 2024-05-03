@@ -24,13 +24,10 @@ const DelegationWithdrawPage = () => {
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const {
-    setFeeLoading,
-    setDelegationStep,
-  } = useContext(TransactionContext)
+  const { setFeeLoading, setDelegationStep } = useContext(TransactionContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
+      ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
@@ -73,7 +70,7 @@ const DelegationWithdrawPage = () => {
     setFeeLoading(true)
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
-    const fee =await MLTransaction.calculateSpenDelegFee(
+    const fee = await MLTransaction.calculateSpenDelegFee(
       address,
       amountToSend,
       networkType,

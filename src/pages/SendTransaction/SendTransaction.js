@@ -30,7 +30,7 @@ const SendTransactionPage = () => {
       : addresses.btcTestnetAddress
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
+      ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
@@ -85,13 +85,14 @@ const SendTransactionPage = () => {
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
     const unusedChangeAddress = unusedAddresses.change
     try {
-      const transactionSize = await MLTransaction.calculateTransactionSizeInBytes({
-        utxosTotal: utxos,
-        address: address,
-        changeAddress: unusedChangeAddress,
-        amountToUse: amountToSend,
-        network: networkType,
-      })
+      const transactionSize =
+        await MLTransaction.calculateTransactionSizeInBytes({
+          utxosTotal: utxos,
+          address: address,
+          changeAddress: unusedChangeAddress,
+          amountToUse: amountToSend,
+          network: networkType,
+        })
       const fee = feerate * (transactionSize / 1000)
       const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
       setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
@@ -163,13 +164,15 @@ const SendTransactionPage = () => {
 
     const unusedChangeAddress = unusedAddresses.change
 
-    const transactionSize = await MLTransaction.calculateTransactionSizeInBytes({
-      utxosTotal: utxos,
-      address: transactionInformation.to,
-      changeAddress: unusedChangeAddress,
-      amountToUse: amountToSend,
-      network: networkType,
-    })
+    const transactionSize = await MLTransaction.calculateTransactionSizeInBytes(
+      {
+        utxosTotal: utxos,
+        address: transactionInformation.to,
+        changeAddress: unusedChangeAddress,
+        amountToUse: amountToSend,
+        network: networkType,
+      },
+    )
     const fee = feerate * (transactionSize / 1000)
 
     const result = await MLTransaction.sendTransaction({
@@ -179,11 +182,13 @@ const SendTransactionPage = () => {
       changeAddress: unusedChangeAddress,
       amountToUse: amountToSend,
       network: networkType,
-      ...(adjustedFee ? {
-        adjustedFee: MLHelpers.getAmountInAtoms(adjustedFee),
-      } : {
-        adjustedFee: BigInt(Math.ceil(fee))
-      }),
+      ...(adjustedFee
+        ? {
+            adjustedFee: MLHelpers.getAmountInAtoms(adjustedFee),
+          }
+        : {
+            adjustedFee: BigInt(Math.ceil(fee)),
+          }),
     })
     return result
   }

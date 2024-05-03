@@ -8,7 +8,6 @@ const AccountProvider = ({ value: propValue, children }) => {
   const [addresses, setAddresses] = useState('')
   const [accountID, setAccountID] = useState('')
   const [accountName, setAccountName] = useState('')
-  const [walletType, setWalletType] = useState('')
   const [lines, setLines] = useState([])
   const [entropy, setEntropy] = useState([])
   const [balanceLoading, setBalanceLoading] = useState(false)
@@ -84,8 +83,6 @@ const AccountProvider = ({ value: propValue, children }) => {
     logout,
     accountID,
     setAccountID: setId,
-    walletType,
-    setWalletType,
     balanceLoading,
     setBalanceLoading,
     isExtended,
