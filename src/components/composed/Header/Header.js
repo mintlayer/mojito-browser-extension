@@ -30,7 +30,7 @@ const Header = ({ customBackAction }) => {
     const accountUnlocked = isAccountUnlocked()
     setUnlocked(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [location.pathname])
 
   if(hideWithoutCustomBack.includes(location.pathname) && !customBackAction) {
     return null
