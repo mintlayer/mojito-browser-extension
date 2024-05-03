@@ -1,5 +1,5 @@
 import { Header } from '@ComposedComponents'
-import { SettingsTestnet, SettingsRestoreBtcMode } from '@ComposedComponents'
+import { SettingsTestnet } from '@ComposedComponents'
 import { useNavigate } from 'react-router-dom'
 
 import './Settings.css'
@@ -8,10 +8,6 @@ const SettingsList = [
   {
     component: <SettingsTestnet />,
     value: 'testnet',
-  },
-  {
-    component: <SettingsRestoreBtcMode />,
-    value: 'restoreBtcMode',
   },
 ]
 

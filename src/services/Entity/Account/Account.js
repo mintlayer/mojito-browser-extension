@@ -3,7 +3,6 @@ import { IndexedDB } from '@Databases'
 import * as bitcoin from 'bitcoinjs-lib'
 import { AppInfo } from '@Constants'
 import { getEncryptedPrivateKeys } from './AccountHelpers'
-import { LocalStorageService } from '@Storage'
 
 import loadAccountSubRoutines from './loadWorkers'
 
@@ -101,11 +100,7 @@ const unlockAccount = async (id, password) => {
 
     // this error just exists if the jobe was run in a worker
     /* istanbul ignore next */
-    //TODO: This is a temporary solution to ley users restore their btc wallet with old incorrect path
-    const btcAddressType =
-      LocalStorageService.getItem('restoreBtcMode') === true
-        ? undefined
-        : BTC_ADDRESS_TYPE_MAP[account.walletType]
+    const btcAddressType = BTC_ADDRESS_TYPE_MAP[account.walletType]
     if (seed.error) throw new Error(seed.error)
     const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed), btcAddressType)
 
