@@ -33,6 +33,7 @@ import {
   SettingsProvider,
   TransactionProvider,
   NetworkProvider,
+  ExchangeRatesProvider
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
@@ -226,11 +227,13 @@ root.render(
     <AccountProvider>
       <SettingsProvider>
         <NetworkProvider>
-          <TransactionProvider>
-            <MemoryRouter>
-              <App />
-            </MemoryRouter>
-          </TransactionProvider>
+          <ExchangeRatesProvider>
+            <TransactionProvider>
+              <MemoryRouter>
+                <App />
+              </MemoryRouter>
+            </TransactionProvider>
+          </ExchangeRatesProvider>
         </NetworkProvider>
       </SettingsProvider>
     </AccountProvider>

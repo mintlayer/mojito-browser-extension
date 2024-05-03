@@ -40,7 +40,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
     ? item.balance
     : Number(item.balance * item.exchangeRate).toFixed(2)
   const bigValues = balance.length > 13
-  const data = Object.values(item.historyRates).map((value, idx) => [
+  const data = item.historyRates && Object.values(item.historyRates).map((value, idx) => [
     idx * 10,
     Number(value),
   ])

@@ -20,7 +20,7 @@ import { LocalStorageService } from '@Storage'
 
 const NetworkContext = createContext()
 
-const REFRESH_INTERVAL = 1000
+const REFRESH_INTERVAL = 1000 * 60 // one per minute
 
 const NetworkProvider = ({ value: propValue, children }) => {
   const { addresses, accountID, accountName } = useContext(AccountContext)
@@ -58,20 +58,16 @@ const NetworkProvider = ({ value: propValue, children }) => {
             ...currentMlAddresses.mlChangeAddresses,
           ]
         : []
-      const addresses_data_receive = currentMlAddresses
-        ? await Promise.all(
+      const addresses_data_receive = await Promise.all(
             currentMlAddresses.mlReceivingAddresses.map((address) =>
               getAddressData(address),
             ),
           )
-        : []
-      const addresses_data_change = currentMlAddresses
-        ? await Promise.all(
+      const addresses_data_change = await Promise.all(
             currentMlAddresses.mlChangeAddresses.map((address) =>
               getAddressData(address),
             ),
           )
-        : []
       const addresses_data = [
         ...addresses_data_receive,
         ...addresses_data_change,
@@ -261,15 +257,13 @@ const NetworkProvider = ({ value: propValue, children }) => {
   }, [onlineHeight, accountID])
 
   useEffect(() => {
-    const data = setInterval(() => {
-      // fetch current network height
-      const getData = async () => {
-        const result = await getChainTip()
-        const { block_height } = JSON.parse(result)
-        setOnlineHeight(block_height)
-      }
-      getData()
-    }, REFRESH_INTERVAL)
+    const getData = async () => {
+      const result = await getChainTip()
+      const { block_height } = JSON.parse(result)
+      setOnlineHeight(block_height)
+    }
+    getData()
+    const data = setInterval(getData, REFRESH_INTERVAL)
 
     return () => clearInterval(data)
   }, [])
