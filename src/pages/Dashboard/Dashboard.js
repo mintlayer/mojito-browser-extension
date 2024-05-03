@@ -1,6 +1,6 @@
 /* eslint-disable max-params */
 import { useContext, useState, useEffect } from 'react'
-import { Header, PopUp, AddWallet } from '@ComposedComponents'
+import { PopUp, AddWallet } from '@ComposedComponents'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { Account } from '@Entities'
 
@@ -194,7 +194,6 @@ const DashboardPage = () => {
 
   return (
     <>
-      <Header noBackButton />
       <div className="stats">
         <Dashboard.CryptoSharesChart
           cryptos={

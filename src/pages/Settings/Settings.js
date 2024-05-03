@@ -1,6 +1,4 @@
-import { Header } from '@ComposedComponents'
 import { SettingsTestnet, SettingsRestoreBtcMode } from '@ComposedComponents'
-import { useNavigate } from 'react-router-dom'
 
 import './Settings.css'
 
@@ -16,13 +14,8 @@ const SettingsList = [
 ]
 
 const SettingsPage = () => {
-  const navigate = useNavigate()
-  const goToDashboard = () => {
-    navigate('/')
-  }
   return (
     <>
-      <Header customBackAction={goToDashboard} />
       <ul className="settingsWrapper">
         {SettingsList.map((item) => (
           <li

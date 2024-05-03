@@ -5,7 +5,6 @@ import { AccountContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import { Loading } from '@ComposedComponents'
 import { CreateRestorePage, LoginPage } from '@Pages'
-import { Header } from '@ComposedComponents'
 
 import './Home.css'
 
@@ -50,7 +49,6 @@ const HomePage = () => {
   return (
     !unlocked && (
       <>
-        <Header noBackButton />
         <Home />
       </>
     )

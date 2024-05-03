@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
@@ -149,7 +148,6 @@ const CreateDelegationPage = () => {
 
   return (
     <>
-      <Header />
       <div className="page">
         <VerticalGroup>
           <SendTransaction

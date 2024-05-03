@@ -1,7 +1,6 @@
 import { useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
@@ -125,7 +124,6 @@ const DelegationStakePage = () => {
 
   return (
     <>
-      <Header />
       <div className="page">
         <VerticalGroup>
           <SendTransaction

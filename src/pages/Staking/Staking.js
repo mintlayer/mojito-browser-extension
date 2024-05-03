@@ -1,14 +1,13 @@
 import { useContext } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
-import { Header, CurrentStaking } from '@ComposedComponents'
+import { CurrentStaking } from '@ComposedComponents'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './Staking.css'
 
 const StakingPage = () => {
-  const { coinType } = useParams()
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
@@ -24,13 +23,8 @@ const StakingPage = () => {
     return
   }
 
-  const backToWallet = () => {
-    navigate('/wallet/' + coinType)
-  }
-
   return (
     <>
-      <Header customBackAction={backToWallet} />
       <CurrentStaking addressList={currentMlAddresses} />
     </>
   )
