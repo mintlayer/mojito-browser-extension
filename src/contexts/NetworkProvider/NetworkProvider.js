@@ -58,16 +58,20 @@ const NetworkProvider = ({ value: propValue, children }) => {
             ...currentMlAddresses.mlChangeAddresses,
           ]
         : []
-      const addresses_data_receive = await Promise.all(
-        currentMlAddresses.mlReceivingAddresses.map((address) =>
-          getAddressData(address),
-        ),
-      )
-      const addresses_data_change = await Promise.all(
-        currentMlAddresses.mlChangeAddresses.map((address) =>
-          getAddressData(address),
-        ),
-      )
+      const addresses_data_receive = currentMlAddresses
+        ? await Promise.all(
+            currentMlAddresses.mlReceivingAddresses.map((address) =>
+              getAddressData(address),
+            ),
+          )
+        : []
+      const addresses_data_change = currentMlAddresses
+        ? await Promise.all(
+            currentMlAddresses.mlChangeAddresses.map((address) =>
+              getAddressData(address),
+            ),
+          )
+        : []
       const addresses_data = [
         ...addresses_data_receive,
         ...addresses_data_change,
@@ -83,14 +87,16 @@ const NetworkProvider = ({ value: propValue, children }) => {
       const first_unused_change_address =
         currentMlAddresses.mlChangeAddresses[first_unused_change_address_index]
 
-      const first_unused_receive_address_index = addresses_data_receive.findIndex(
-        (address_data) => {
+      const first_unused_receive_address_index =
+        addresses_data_receive.findIndex((address_data) => {
           const { unused } = JSON.parse(address_data)
           return unused === true
-        },
-      )
+        })
 
-      const first_unused_receive_address = currentMlAddresses.mlReceivingAddresses[first_unused_receive_address_index]
+      const first_unused_receive_address =
+        currentMlAddresses.mlReceivingAddresses[
+          first_unused_receive_address_index
+        ]
 
       setUnusedAddresses({
         change: first_unused_change_address,

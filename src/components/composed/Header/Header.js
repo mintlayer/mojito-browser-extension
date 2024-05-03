@@ -32,17 +32,18 @@ const Header = ({ customBackAction }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname])
 
-  if(hideWithoutCustomBack.includes(location.pathname) && !customBackAction) {
+  if (hideWithoutCustomBack.includes(location.pathname) && !customBackAction) {
     return null
   }
 
   const goBack = () => {
     const isWalletPage = location.pathname === '/wallet/' + coinType
     const isSettingsPage = location.pathname === '/settings'
-    const isStakingPage = location.pathname === '/wallet/' + coinType + '/staking'
+    const isStakingPage =
+      location.pathname === '/wallet/' + coinType + '/staking'
 
     if (isWalletPage) {
-      navigate('/')
+      navigate('/dashboard')
       return
     }
     if (isSettingsPage) {
@@ -81,7 +82,7 @@ const Header = ({ customBackAction }) => {
 
   return (
     <header data-testid="header-container">
-      <div style={{visibility: !noBackButton ? 'visible' : 'hidden'}}>
+      <div style={{ visibility: !noBackButton ? 'visible' : 'hidden' }}>
         <Button
           alternate
           extraStyleClasses={['backButton']}
