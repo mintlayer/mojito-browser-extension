@@ -172,7 +172,6 @@ const SendTransaction = ({
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
-    console.log(amount)
     // TODO process this when/if we will have currency switcher
     // if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
