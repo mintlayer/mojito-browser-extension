@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react'
+import React, { useState } from 'react'
 // import { format } from 'date-fns'
 
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
@@ -8,8 +8,6 @@ import { ML } from '@Helpers'
 import { AppInfo } from '@Constants'
 import { Button } from '@BasicComponents'
 
-import { AccountContext } from '@Contexts'
-
 import DelegationDetails from './DelegationDetails'
 
 import './Delegation.css'
@@ -18,7 +16,14 @@ import { useNavigate } from 'react-router-dom'
 
 const Delegation = ({ delegation }) => {
   const navigate = useNavigate()
-  const { walletType } = useContext(AccountContext)
+
+  // staking only for Mintlayer
+  const walletType = {
+    name: 'Mintlayer',
+    ticker: 'ML',
+    chain: 'mintlayer',
+  }
+
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
 
   let delegationOject = delegation

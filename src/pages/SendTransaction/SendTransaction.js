@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
@@ -21,7 +21,18 @@ import { ML } from '@Cryptos'
 import './SendTransaction.css'
 
 const SendTransactionPage = () => {
-  const { addresses, accountID, walletType } = useContext(AccountContext)
+  const { addresses, accountID } = useContext(AccountContext)
+
+  const { coinType } = useParams()
+  const walletType = {
+    name: coinType,
+    ticker: coinType === 'Bitcoin' ? 'BTC' : 'ML',
+    chain: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
+  }
+
+  const datahook =
+    walletType.chain === 'bitcoin' ? useBtcWalletInfo : useMlWalletInfo
+
   const { networkType } = useContext(SettingsContext)
   const { setFeeLoading } = useContext(TransactionContext)
   const currentBtcAddress =
@@ -46,11 +57,13 @@ const SendTransactionPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance, utxos, unusedAddresses, feerate } =
-    useMlWalletInfo(currentMlAddresses)
 
-  const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
+  const checkAddresses =
+    walletType.chain === 'bitcoin' ? currentBtcAddress : currentMlAddresses
+
+  const { balance, utxos, unusedAddresses, feerate } = datahook(checkAddresses, coinType)
+
+  const maxValueToken = balance
 
   if (!accountID) {
     console.log('No account id.')
@@ -221,6 +234,7 @@ const SendTransactionPage = () => {
                 : confirmBtcTransaction
             }
             goBackToWallet={goBackToWallet}
+            walletType={walletType}
           />
         </VerticalGroup>
       </div>

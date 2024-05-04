@@ -14,10 +14,13 @@ import { ML } from '@Cryptos'
 import './DelegationStake.css'
 
 const DelegationStakePage = () => {
-  const { coinType, delegationId } = useParams()
+  const { delegationId } = useParams()
 
+  // staking only for Mintlayer
   const walletType = {
-    name: coinType,
+    name: 'Mintlayer',
+    ticker: 'ML',
+    chain: 'mintlayer',
   }
 
   const currentDelegationInfo = {
@@ -144,6 +147,7 @@ const DelegationStakePage = () => {
             goBackToWallet={goBackToWallet}
             transactionMode={transactionMode}
             currentDelegationInfo={currentDelegationInfo}
+            walletType={walletType}
           />
         </VerticalGroup>
       </div>

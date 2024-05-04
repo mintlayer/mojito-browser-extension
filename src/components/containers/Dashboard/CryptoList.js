@@ -22,7 +22,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
       idx * 10,
       Number(value),
     ])
-  const symbol = !isTestnet ? item.symbol : 'Test'
+  const symbol = !isTestnet ? item.symbol : 'Testnet'
 
   const onClick = () => {
     onClickItem(item)
@@ -101,7 +101,7 @@ export const ConnectItem = ({ walletType, onClick }) => {
   const { networkType } = useContext(SettingsContext)
   const isDisabled = walletType.disabled
   const symbol =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET ? walletType.symbol : 'Test'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET ? walletType.symbol : 'Testnet'
 
   const onItemClick = () => {
     if (!isDisabled) onClick(walletType)

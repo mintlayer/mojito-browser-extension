@@ -14,10 +14,13 @@ import { ML } from '@Cryptos'
 import './DelegationWithdraw.css'
 
 const DelegationWithdrawPage = () => {
-  const { coinType, delegationId } = useParams()
+  const { delegationId } = useParams()
 
+  // staking only for Mintlayer
   const walletType = {
-    name: coinType,
+    name: 'Mintlayer',
+    ticker: 'ML',
+    chain: 'mintlayer',
   }
 
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.WITHDRAW
@@ -138,6 +141,7 @@ const DelegationWithdrawPage = () => {
             goBackToWallet={goBackToWallet}
             transactionMode={transactionMode}
             currentDelegationInfo={currentDelegationInfo}
+            walletType={walletType}
           />
         </VerticalGroup>
       </div>

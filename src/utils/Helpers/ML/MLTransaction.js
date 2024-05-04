@@ -420,12 +420,6 @@ const sendTransaction = async ({
 
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
-  // TODO: remove this after API data is available
-  if (transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION) {
-    const lastDelegationIdString = `${'lastDelegationId'}_${accountName}_${network}`
-    LocalStorageService.setItem(lastDelegationIdString, poolId)
-  }
-  // -------------------------------------
   const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
   const unconfirmedTransactions =
     LocalStorageService.getItem(unconfirmedTransactionString) || []

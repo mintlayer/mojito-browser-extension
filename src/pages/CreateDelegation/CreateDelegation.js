@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
@@ -15,17 +15,19 @@ import './CreateDelegation.css'
 
 const CreateDelegationPage = () => {
   const { state } = useLocation()
-  const { coinType } = useParams()
 
+  // staking only for Mintlayer
   const walletType = {
-    name: coinType,
+    name: 'Mintlayer',
+    ticker: 'ML',
+    chain: 'mintlayer',
   }
 
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.DELEGATION
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { setFeeLoading, setDelegationStep, setTransactionMode } =
+  const { setFeeLoading } =
     useContext(TransactionContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -42,7 +44,6 @@ const CreateDelegationPage = () => {
     tokenName,
   })
   const goBackToWallet = () => {
-    setDelegationStep(1)
     navigate('/wallet/' + walletType.name + '/staking')
   }
   const [isFormValid, setFormValid] = useState(false)
@@ -52,15 +53,9 @@ const CreateDelegationPage = () => {
   const { mlBalance, utxos, fetchDelegations, unusedAddresses, feerate } =
     useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
-  // const customBackAction = () => {
-  //   setDelegationStep(1)
-  //   navigate('/wallet')
-  // }
 
   useEffect(() => {
     if (state && state.action === 'createDelegate') {
-      setDelegationStep(2)
-      setTransactionMode(AppInfo.ML_TRANSACTION_MODES.DELEGATION)
       setPreEnterAddress(state.pool_id)
     } else {
       setPreEnterAddress('')
@@ -166,6 +161,7 @@ const CreateDelegationPage = () => {
             goBackToWallet={goBackToWallet}
             preEnterAddress={preEnterAddress}
             transactionMode={transactionMode}
+            walletType={walletType}
           />
         </VerticalGroup>
       </div>

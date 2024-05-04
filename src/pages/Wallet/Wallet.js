@@ -44,10 +44,7 @@ const WalletPage = () => {
 
   const [openShowAddress, setOpenShowAddress] = useState(false)
 
-  const { transactions, balance, lockedBalance } = datahook(
-    checkAddresses,
-    coinType,
-  )
+  const { transactions, balance, lockedBalance } = datahook(checkAddresses, coinType)
 
   const setOpenTransactionForm = () => {
     navigate('/wallet/' + walletType.name + '/send-transaction')

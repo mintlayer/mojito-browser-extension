@@ -32,8 +32,9 @@ const SendTransaction = ({
   setAdjustedFee,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
   currentDelegationInfo,
+  walletType,
 }) => {
-  const { walletType, balanceLoading } = useContext(AccountContext)
+  const { balanceLoading } = useContext(AccountContext)
   const { feeLoading } = useContext(TransactionContext)
   const [cryptoName] = useState(transactionData.tokenName)
   const [fiatName] = useState(transactionData.fiatName)
@@ -308,18 +309,23 @@ const SendTransaction = ({
             setAddressValidity={setAddressValidity}
             transactionMode={transactionMode}
             currentDelegationInfo={currentDelegationInfo}
+            walletType={walletType}
           />
 
-          <AmountField
-            transactionData={transactionData}
-            amountChanged={amountChanged}
-            exchangeRate={exchangeRate}
-            maxValueInToken={maxValueInToken}
-            setAmountValidity={setAmountValidity}
-            errorMessage={passErrorMessage}
-            totalFeeInCrypto={totalFeeCrypto}
-            transactionMode={transactionMode}
-          />
+          {
+            transactionMode !== AppInfo.ML_TRANSACTION_MODES.DELEGATION && (
+              <AmountField
+                transactionData={transactionData}
+                amountChanged={amountChanged}
+                exchangeRate={exchangeRate}
+                maxValueInToken={maxValueInToken}
+                setAmountValidity={setAmountValidity}
+                errorMessage={passErrorMessage}
+                totalFeeInCrypto={totalFeeCrypto}
+                transactionMode={transactionMode}
+              />
+            )
+          }
 
           {/* TODO style error from transaction */}
           <FeesField
@@ -374,6 +380,7 @@ const SendTransaction = ({
                 fee={fee}
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
+                walletType={walletType}
               ></SendTransactionConfirmation>
             ) : feeLoading ? (
               <div className="loading-center">

@@ -17,8 +17,9 @@ const AddressField = ({
   preEnterAddress,
   transactionMode,
   currentDelegationInfo = {},
+  walletType,
 }) => {
-  const { addresses, walletType } = useContext(AccountContext)
+  const { addresses } = useContext(AccountContext)
   const inputValue =
     walletType.name === 'Mintlayer' &&
     transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING

@@ -18,7 +18,6 @@ const useMlWalletInfo = (addresses, token) => {
 
   // const nativecoins
   const nativecoins = ['Mintlayer', 'Bitcoin']
-  console.log(token)
 
   if (token && !nativecoins.includes(token)) {
     console.log('tokenBalances', tokenBalances)
