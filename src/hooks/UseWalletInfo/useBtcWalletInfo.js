@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, useContext } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 
 import { Electrum } from '@APIs'
 import { BTC, Format } from '@Helpers'

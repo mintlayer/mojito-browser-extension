@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import React, { useContext } from 'react'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 import { LogoRound, SkeletonLoader } from '@BasicComponents'
 import { LineChart } from '@ComposedComponents'
@@ -6,10 +6,11 @@ import { AppInfo } from '@Constants'
 import { SettingsContext, NetworkContext } from '@Contexts'
 
 import './CryptoList.css'
+import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
 
 export const CryptoItem = ({ colorList, onClickItem, item }) => {
   const { networkType } = useContext(SettingsContext)
-  const { balanceLoading } = useContext(NetworkContext)
+  const { balanceLoading, tokenBalances } = useContext(NetworkContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const color = colorList[item.symbol.toLowerCase()]
   const balance = isTestnet
@@ -35,7 +36,14 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
       return <BtcLogo />
     } else {
       // TODO: logo for token
-      return <LogoRound />
+      return (
+        <TokenLogoRound
+          text={tokenBalances[item.id].token_info.token_ticker.string.substring(
+            0,
+            3,
+          )}
+        />
+      )
     }
   }
 
@@ -101,7 +109,9 @@ export const ConnectItem = ({ walletType, onClick }) => {
   const { networkType } = useContext(SettingsContext)
   const isDisabled = walletType.disabled
   const symbol =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET ? walletType.symbol : 'Testnet'
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? walletType.symbol
+      : 'Testnet'
 
   const onItemClick = () => {
     if (!isDisabled) onClick(walletType)

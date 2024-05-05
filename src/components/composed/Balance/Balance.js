@@ -3,33 +3,59 @@ import React, { useContext } from 'react'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 import { LogoRound } from '@BasicComponents'
 import { Format, NumbersHelper } from '@Helpers'
-import { SettingsContext } from '@Contexts'
+import { NetworkContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './Balance.css'
+import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
 
 const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
   const { networkType } = useContext(SettingsContext)
+  const { tokenBalances } = useContext(NetworkContext)
   // TODO Consider the correct format for 0,00 that might also be 0.00
   const balanceInUSD =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? '0,00'
       : NumbersHelper.floatStringToNumber(balance) * exchangeRate
 
-  const symbol = walletType.ticker
+  const symbol = () => {
+    if (walletType.name === 'Mintlayer') {
+      return 'ML'
+    }
+    if (walletType.name === 'Bitcoin') {
+      return 'BTC'
+    }
+    return tokenBalances[walletType.name].token_info.token_ticker.string
+  }
+
+  const logo = () => {
+    if (walletType.name === 'Mintlayer') {
+      return <LogoRound />
+    }
+    if (walletType.name === 'Bitcoin') {
+      return <BtcLogo />
+    }
+    return (
+      <TokenLogoRound
+        text={tokenBalances[
+          walletType.name
+        ].token_info.token_ticker.string.substring(0, 3)}
+      />
+    )
+  }
 
   return (
     <div
       className="balance-wrapper"
       data-testid="current-balance"
     >
-      {walletType.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
+      {logo()}
       <div className="balance">
         <p
           className="balance-btc"
           data-testid="balance-paragraph"
         >
-          <span>{Format.BTCValue(balance)}</span> {symbol}
+          <span>{Format.BTCValue(balance)}</span> {symbol()}
         </p>
         <p
           className="balance-usd"
@@ -39,7 +65,7 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
         </p>
         {parseFloat(balanceLocked) > 0 ? (
           <div className="balance-locked">
-            Locked: {balanceLocked} {symbol}
+            Locked: {balanceLocked} {symbol()}
           </div>
         ) : (
           <></>

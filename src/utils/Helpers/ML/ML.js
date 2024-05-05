@@ -23,7 +23,7 @@ const getParsedTransactions = (transactions, addresses) => {
     (a, b) => b.timestamp - a.timestamp,
   )
 
-  const isUncofermedTransactionInList =
+  const isUncofirmedTransactionInList =
     unconfirmedTransactions &&
     sortedTransactions.some(
       (transaction) =>
@@ -33,7 +33,7 @@ const getParsedTransactions = (transactions, addresses) => {
         ).length > 0,
     )
 
-  if (unconfirmedTransactions && isUncofermedTransactionInList) {
+  if (unconfirmedTransactions && isUncofirmedTransactionInList) {
     const unconfirmedTransactionsWithoutConfirmed =
       unconfirmedTransactions.filter(
         (unconfirmedTransaction) =>
@@ -47,7 +47,7 @@ const getParsedTransactions = (transactions, addresses) => {
     )
   }
 
-  if (unconfirmedTransactions && !isUncofermedTransactionInList) {
+  if (unconfirmedTransactions && !isUncofirmedTransactionInList) {
     sortedTransactions.unshift(...unconfirmedTransactions)
   }
 
@@ -89,6 +89,11 @@ const getParsedTransactions = (transactions, addresses) => {
     let value
     let sameWalletTransaction = false
 
+    const token_id = transaction.outputs.find((output) => output.value.token_id)
+      ?.value?.token_id
+    console.log('token_id', token_id)
+
+    // outbound transaction
     if (direction === 'out' && transaction.inputs.length > 0) {
       const destAddressOutput = transaction.outputs.find((output) => {
         return !addresses.includes(output.destination)
@@ -149,22 +154,31 @@ const getParsedTransactions = (transactions, addresses) => {
       value = totalValue
     }
 
+    // inbound transaction
     if (withInputUTXO && direction === 'in' && transaction.outputs.length > 0) {
       destAddress = transaction.inputs[0].utxo.destination
-      const totalValue = transaction.outputs.reduce((acc, output) => {
-        if (addresses.includes(output.destination)) {
-          if (output.type === 'Transfer') {
-            return acc + output.value.amount.decimal
+      const totalValue = transaction.outputs
+        .filter(({ destination }) => addresses.includes(destination))
+        .reduce((acc, output) => {
+          if (token_id) {
+            if (output.value.token_id === token_id) {
+              return acc + output.value.amount.decimal
+            }
+          } else {
+            if (output.value.type === 'Coin') {
+              if (output.type === 'Transfer') {
+                return acc + output.value.amount.decimal
+              }
+              if (output.type === 'LockThenTransfer') {
+                return acc + Number(output.value.amount.decimal)
+              }
+            }
           }
-          if (output.type === 'LockThenTransfer') {
-            return acc + Number(output.value.amount.decimal)
-          }
-        }
-        return acc
-      }, 0)
+        }, 0)
       value = totalValue
     }
 
+    // if there is no input utxo, that is staking reward
     if (
       !withInputUTXO &&
       direction === 'in' &&
@@ -212,6 +226,7 @@ const getParsedTransactions = (transactions, addresses) => {
       isConfirmed,
       type,
       sameWalletTransaction,
+      token_id,
     }
   })
 }

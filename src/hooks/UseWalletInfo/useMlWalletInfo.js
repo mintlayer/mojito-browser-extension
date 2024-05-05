@@ -20,11 +20,10 @@ const useMlWalletInfo = (addresses, token) => {
   const nativecoins = ['Mintlayer', 'Bitcoin']
 
   if (token && !nativecoins.includes(token)) {
-    console.log('tokenBalances', tokenBalances)
     const tokenBalance = tokenBalances[token].balance || 0
 
     return {
-      transactions: [],
+      transactions: transactions.filter((tx) => tx.token_id === token),
       balance: tokenBalance,
       utxos,
       unusedAddresses,
@@ -33,7 +32,7 @@ const useMlWalletInfo = (addresses, token) => {
   }
 
   return {
-    transactions,
+    transactions: transactions.filter((tx) => tx.token_id === undefined),
     mlDelegationList,
     balance,
     lockedBalance,

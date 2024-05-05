@@ -180,7 +180,6 @@ const DashboardPage = () => {
   }
 
   const goToWallet = (walletType) => {
-    console.log(walletType, 'walletType')
     navigate('/wallet/' + walletType.id)
   }
 

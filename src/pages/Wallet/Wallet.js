@@ -22,8 +22,6 @@ const WalletPage = () => {
     chain: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
   }
 
-  console.log('coinType', coinType)
-
   const datahook =
     walletType.chain === 'bitcoin' ? useBtcWalletInfo : useMlWalletInfo
 
@@ -44,7 +42,10 @@ const WalletPage = () => {
 
   const [openShowAddress, setOpenShowAddress] = useState(false)
 
-  const { transactions, balance, lockedBalance } = datahook(checkAddresses, coinType)
+  const { transactions, balance, lockedBalance } = datahook(
+    checkAddresses,
+    coinType,
+  )
 
   const setOpenTransactionForm = () => {
     navigate('/wallet/' + walletType.name + '/send-transaction')
