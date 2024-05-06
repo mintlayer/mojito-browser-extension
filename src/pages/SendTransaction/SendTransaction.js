@@ -47,7 +47,26 @@ const SendTransactionPage = () => {
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [adjustedFee, setAdjustedFee] = useState(0)
   const navigate = useNavigate()
-  const tokenName = walletType.name === 'Mintlayer' ? 'ML' : 'BTC'
+
+  const checkAddresses =
+    walletType.chain === 'bitcoin' ? currentBtcAddress : currentMlAddresses
+
+  const { balance, utxos, unusedAddresses, feerate, tokenBalances } = datahook(
+    checkAddresses,
+    coinType,
+  )
+
+  const symbol = () => {
+    if (walletType.name === 'Mintlayer') {
+      return 'ML'
+    }
+    if (walletType.name === 'Bitcoin') {
+      return 'BTC'
+    }
+    return tokenBalances[walletType.name].token_info.token_ticker.string
+  }
+
+  const tokenName = symbol()
   const fiatName = 'USD'
   const [transactionData] = useState({
     fiatName,
@@ -57,11 +76,6 @@ const SendTransactionPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-
-  const checkAddresses =
-    walletType.chain === 'bitcoin' ? currentBtcAddress : currentMlAddresses
-
-  const { balance, utxos, unusedAddresses, feerate } = datahook(checkAddresses, coinType)
 
   const maxValueToken = balance
 
@@ -104,6 +118,7 @@ const SendTransactionPage = () => {
           address: address,
           changeAddress: unusedChangeAddress,
           amountToUse: amountToSend,
+          tokenId: coinType,
           network: networkType,
         })
       const fee = feerate * (transactionSize / 1000)

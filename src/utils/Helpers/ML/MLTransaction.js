@@ -281,7 +281,9 @@ const calculateTransactionSizeInBytes = async ({
   network,
   poolId,
   delegationId,
+  tokenId,
 }) => {
+  console.log('tokenId', tokenId)
   const amountToUseFinale = amountToUse <= 0 ? BigInt(1) : amountToUse
   const utxos = getUtxoAvailable(utxosTotal)
   const totalAmount = !poolId ? totalUtxosAmount(utxos) : 0

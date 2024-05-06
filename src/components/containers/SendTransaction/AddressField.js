@@ -8,7 +8,7 @@ import { ML } from '@Helpers'
 
 import './errorMessages.css'
 
-import { AccountContext, SettingsContext } from '@Contexts'
+import { SettingsContext } from '@Contexts'
 
 const AddressField = ({
   addressChanged,
@@ -19,87 +19,69 @@ const AddressField = ({
   currentDelegationInfo = {},
   walletType,
 }) => {
-  const { addresses } = useContext(AccountContext)
-  const inputValue =
-    walletType.name === 'Mintlayer' &&
-    transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING
-      ? currentDelegationInfo.delegation_id
-      : transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
-      ? currentDelegationInfo.spend_destination
-      : preEnterAddress
-      ? preEnterAddress
-      : ''
   const { networkType } = useContext(SettingsContext)
-  const currentBtcAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.btcMainnetAddress
-      : addresses.btcTestnetAddress
-  const currentMlAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
-      : addresses.mlTestnetAddress
+
+  console.log('walletType', walletType)
+
+  let inputValue = ''
+  let placeholder = ''
+  let addressErrorMessage = ''
+  let label = 'Send to:'
+  let validity = true
+
+  if (walletType.chain === 'bitcoin') {
+    placeholder =
+      networkType === AppInfo.NETWORK_TYPES.MAINNET
+        ? 'bc1... or 1... or 3...'
+        : 'tb1... or 1... or 3...'
+    addressErrorMessage = 'This is not a valid BTC address.'
+    validity = validate(inputValue, 'btc', networkType)
+  }
+
+  if (walletType.chain === 'mintlayer') {
+    placeholder =
+      networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc1...' : 'tmt1...'
+    addressErrorMessage = 'This is not a valid ML address.'
+    validity = ML.isMlAddressValid(inputValue, networkType)
+
+    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION) {
+      placeholder =
+        networkType === AppInfo.NETWORK_TYPES.MAINNET
+          ? 'mpool1...'
+          : 'tpool1...'
+      inputValue = currentDelegationInfo.pool_id
+      addressErrorMessage = 'This is not a valid ML pool id.'
+      label = 'Pool id:'
+      validity = ML.isMlPoolIdValid(inputValue, networkType)
+    }
+
+    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING) {
+      placeholder =
+        networkType === AppInfo.NETWORK_TYPES.MAINNET
+          ? 'mdelg1...'
+          : 'tdelg1...'
+      inputValue = currentDelegationInfo.delegation_id
+      addressErrorMessage = 'This is not a valid ML delegation id.'
+      label = 'Deleg id:'
+      validity = ML.isMlDelegationIdValid(inputValue, networkType)
+    }
+
+    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW) {
+      inputValue = currentDelegationInfo.spend_destination
+    }
+  }
+
+  if (preEnterAddress) {
+    inputValue = preEnterAddress
+  }
+
   const [message, setMessage] = useState(errorMessage)
   const [isValid, setIsValid] = useState(true)
-  const mintlayerAddressPlaceholder =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc1...' : 'tmt1...'
-  const bitcoinAddressPlaceholder =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? 'bc1... or 1... or 3...'
-      : 'tb1... or 1... or 3...'
-  const mintlayerPoolIdPlaceholder =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mpool...' : 'tpool...'
-
-  const mintlayerDelegIdPlaceholder =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mdelg...' : 'tdelg...'
-
-  const placeholder =
-    walletType.name === 'Mintlayer' &&
-    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
-      ? mintlayerPoolIdPlaceholder
-      : walletType.name === 'Mintlayer' &&
-        transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING
-      ? mintlayerDelegIdPlaceholder
-      : walletType.name === 'Mintlayer'
-      ? mintlayerAddressPlaceholder
-      : bitcoinAddressPlaceholder
-
-  const addressErrorMessage =
-    walletType.name === 'Mintlayer' &&
-    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
-      ? 'This is not a valid ML pool id.'
-      : walletType.name === 'Mintlayer' &&
-        transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING
-      ? 'This is not a valid ML delegation id.'
-      : walletType.name === 'Mintlayer'
-      ? 'This is not a valid ML address.'
-      : 'This is not a valid BTC address.'
-
-  const label =
-    walletType.name === 'Mintlayer' &&
-    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
-      ? 'Pool id:'
-      : walletType.name === 'Mintlayer' &&
-        transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING
-      ? 'Deleg id:'
-      : 'Send to:'
 
   const changeHandle = (ev) => {
-    const value = ev.target.value || inputValue
-    const validity =
-      walletType.name === 'Mintlayer' &&
-      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
-        ? ML.isMlPoolIdValid(value, networkType)
-        : walletType.name === 'Mintlayer' &&
-          transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING
-        ? ML.isMlDelegationIdValid(value, networkType)
-        : walletType.name === 'Mintlayer'
-        ? ML.isMlAddressValid(value, networkType)
-        : validate(value, 'btc', networkType) && value !== currentBtcAddress
     setIsValid(validity)
     setAddressValidity(validity)
-    if (value === currentBtcAddress || value === currentMlAddress) {
-      setMessage('Cannot send to yourself')
-    } else if (!validity) {
+    if (!validity) {
       setMessage(addressErrorMessage)
     } else {
       setMessage(undefined)

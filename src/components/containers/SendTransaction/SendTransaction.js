@@ -36,8 +36,8 @@ const SendTransaction = ({
 }) => {
   const { balanceLoading } = useContext(AccountContext)
   const { feeLoading } = useContext(TransactionContext)
-  const [cryptoName] = useState(transactionData.tokenName)
-  const [fiatName] = useState(transactionData.fiatName)
+  const cryptoName = transactionData.tokenName
+  const fiatName = transactionData.fiatName
   const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(totalFeeCryptoParent)
   const [amountInCrypto, setAmountInCrypto] = useState('0.00')
@@ -312,20 +312,18 @@ const SendTransaction = ({
             walletType={walletType}
           />
 
-          {
-            transactionMode !== AppInfo.ML_TRANSACTION_MODES.DELEGATION && (
-              <AmountField
-                transactionData={transactionData}
-                amountChanged={amountChanged}
-                exchangeRate={exchangeRate}
-                maxValueInToken={maxValueInToken}
-                setAmountValidity={setAmountValidity}
-                errorMessage={passErrorMessage}
-                totalFeeInCrypto={totalFeeCrypto}
-                transactionMode={transactionMode}
-              />
-            )
-          }
+          {transactionMode !== AppInfo.ML_TRANSACTION_MODES.DELEGATION && (
+            <AmountField
+              transactionData={transactionData}
+              amountChanged={amountChanged}
+              exchangeRate={exchangeRate}
+              maxValueInToken={maxValueInToken}
+              setAmountValidity={setAmountValidity}
+              errorMessage={passErrorMessage}
+              totalFeeInCrypto={totalFeeCrypto}
+              transactionMode={transactionMode}
+            />
+          )}
 
           {/* TODO style error from transaction */}
           <FeesField

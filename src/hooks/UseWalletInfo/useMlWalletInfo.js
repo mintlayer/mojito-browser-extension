@@ -28,6 +28,7 @@ const useMlWalletInfo = (addresses, token) => {
       utxos,
       unusedAddresses,
       feerate,
+      tokenBalances,
     }
   }
 
