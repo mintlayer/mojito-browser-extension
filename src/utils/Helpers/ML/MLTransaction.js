@@ -128,18 +128,19 @@ const getTxInputs = async (outpointSourceIds) => {
   return txInputs
 }
 
-const getTxOutput = async (
+const getTxOutput = (
   amount,
   address,
   networkType,
   poolId,
   delegationId,
+  chainTip
 ) => {
   const txOutput = poolId
     ? ML.getDelegationOutput(poolId, address, networkType)
     : delegationId
     ? ML.getStakingOutput(amount, delegationId, networkType)
-    : await ML.getOutputs({ amount, address, networkType })
+    : ML.getOutputs({ amount, address, networkType, chainTip })
   return txOutput
 }
 
@@ -233,6 +234,7 @@ const calculateFee = async ({
   network,
   poolId,
   delegationId,
+  chainTip,
 }) => {
   const amountToUseFinale = amountToUse <= 0 ? BigInt(1) : amountToUse
   const utxos = getUtxoAvailable(utxosTotal)
@@ -320,7 +322,7 @@ const calculateTransactionSizeInBytes = async ({
   return size
 }
 
-const calculateSpenDelegFee = async (address, amount, network, delegation) => {
+const calculateSpenDelegFee = async (address, amount, network, delegation, chainTip) => {
   const input = ML.getAccountOutpointInput(
     delegation.delegation_id,
     amount.toString(),
@@ -329,12 +331,13 @@ const calculateSpenDelegFee = async (address, amount, network, delegation) => {
   )
   const inputsArray = [...input]
 
-  const spendÒutput = await ML.getOutputs({
+  const spendÒutput = ML.getOutputs({
     amount: amount.toString(),
     address: address,
     networkType: network,
     type: 'spendFromDelegation',
     lock: undefined,
+    chainTip
   })
   const outputs = [...spendÒutput]
   const size = ML.getEstimatetransactionSize(
@@ -456,8 +459,9 @@ const spendFromDelegation = async (
   amount,
   network,
   delegation,
+  chainTip,
 ) => {
-  const fee = await calculateSpenDelegFee(address, amount, network, delegation)
+  const fee = await calculateSpenDelegFee(address, amount, network, delegation, chainTip)
   if (fee > AppInfo.MAX_ML_FEE) {
     throw new Error('Fee is too high, please try again later.')
   }

@@ -20,6 +20,7 @@ const AddressField = ({
   walletType,
 }) => {
   const { networkType } = useContext(SettingsContext)
+  const [value, setValue] = useState('')
 
   let inputValue = ''
   let placeholder = ''
@@ -33,14 +34,14 @@ const AddressField = ({
         ? 'bc1... or 1... or 3...'
         : 'tb1... or 1... or 3...'
     addressErrorMessage = 'This is not a valid BTC address.'
-    validity = validate(inputValue, 'btc', networkType)
+    validity = (val) => validate(val, 'btc', networkType)
   }
 
   if (walletType.chain === 'mintlayer') {
     placeholder =
       networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc1...' : 'tmt1...'
     addressErrorMessage = 'This is not a valid ML address.'
-    validity = ML.isMlAddressValid(inputValue, networkType)
+    validity = (val) => ML.isMlAddressValid(val, networkType)
 
     if (transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION) {
       placeholder =
@@ -50,7 +51,7 @@ const AddressField = ({
       inputValue = currentDelegationInfo.pool_id
       addressErrorMessage = 'This is not a valid ML pool id.'
       label = 'Pool id:'
-      validity = ML.isMlPoolIdValid(inputValue, networkType)
+      validity = (val) => ML.isMlPoolIdValid(val, networkType)
     }
 
     if (transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING) {
@@ -61,7 +62,7 @@ const AddressField = ({
       inputValue = currentDelegationInfo.delegation_id
       addressErrorMessage = 'This is not a valid ML delegation id.'
       label = 'Deleg id:'
-      validity = ML.isMlDelegationIdValid(inputValue, networkType)
+      validity = (val) => ML.isMlDelegationIdValid(val, networkType)
     }
 
     if (transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW) {
@@ -77,8 +78,9 @@ const AddressField = ({
   const [isValid, setIsValid] = useState(true)
 
   const changeHandle = (ev) => {
-    setIsValid(validity)
-    setAddressValidity(validity)
+    setValue(ev.target.value)
+    setIsValid(validity(ev.target.value))
+    setAddressValidity(validity(ev.target.value))
     if (!validity) {
       setMessage(addressErrorMessage)
     } else {
@@ -105,7 +107,7 @@ const AddressField = ({
         onChangeHandle={changeHandle}
         setErrorMessage={setMessage}
         validity={isValid}
-        value={inputValue}
+        value={value}
         disabled={
           walletType.name === 'Mintlayer' &&
           transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW

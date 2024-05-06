@@ -154,12 +154,13 @@ export const getTxInput = (outpointSourceId, index) => {
   return encode_input_for_utxo(outpointSourceId, index)
 }
 
-export const getOutputs = async ({
+export const getOutputs = ({
   amount,
   address,
   networkType,
   type = 'Transfer',
   lock,
+  chainTip,
 }) => {
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')
@@ -187,9 +188,8 @@ export const getOutputs = async ({
     )
   }
   if (type === 'spendFromDelegation') {
-    const chainTip = await Mintlayer.getChainTip()
     const stakingMaturity = getStakingMaturity(
-      JSON.parse(chainTip).block_height,
+      chainTip,
       networkType,
     )
     const encodedLockForBlock = encode_lock_for_block_count(stakingMaturity)
