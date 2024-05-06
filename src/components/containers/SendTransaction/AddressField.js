@@ -21,8 +21,6 @@ const AddressField = ({
 }) => {
   const { networkType } = useContext(SettingsContext)
 
-  console.log('walletType', walletType)
-
   let inputValue = ''
   let placeholder = ''
   let addressErrorMessage = ''
