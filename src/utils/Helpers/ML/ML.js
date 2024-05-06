@@ -89,9 +89,9 @@ const getParsedTransactions = (transactions, addresses) => {
     let value
     let sameWalletTransaction = false
 
-    const token_id = transaction.outputs.find((output) => output.value.token_id)
-      ?.value?.token_id
-    console.log('token_id', token_id)
+    const token_id = transaction.outputs.find(
+      (output) => output?.value?.token_id,
+    )?.value?.token_id
 
     // outbound transaction
     if (direction === 'out' && transaction.inputs.length > 0) {
