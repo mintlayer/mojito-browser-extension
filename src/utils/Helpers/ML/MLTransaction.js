@@ -336,7 +336,9 @@ const calculateSpenDelegFee = async (address, amount, network, delegation, chain
     address: address,
     networkType: network,
     type: 'spendFromDelegation',
-    lock: undefined,
+    lock: {
+      ForBlockCount: 7200,
+    },
     chainTip
   })
   const outputs = [...spendÒutput]
@@ -486,7 +488,10 @@ const spendFromDelegation = async (
     address: address,
     networkType: network,
     type: 'spendFromDelegation',
-    lock: undefined,
+    lock: {
+      ForBlockCount: 7200,
+    },
+    chainTip,
   })
   const outputs = [...spendÒutput]
   const optUtxos = [0]

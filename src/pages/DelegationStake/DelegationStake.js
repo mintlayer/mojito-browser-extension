@@ -54,7 +54,7 @@ const DelegationStakePage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance, utxos, unusedAddresses, feerate } =
+  const { balance: mlBalance, utxos, unusedAddresses, feerate } =
     useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = mlBalance
@@ -128,6 +128,8 @@ const DelegationStakePage = () => {
     return result
   }
 
+  console.log('maxValueToken', maxValueToken)
+
   return (
     <>
       <div className="page">
@@ -148,6 +150,7 @@ const DelegationStakePage = () => {
             transactionMode={transactionMode}
             currentDelegationInfo={currentDelegationInfo}
             walletType={walletType}
+            preEnterAddress={delegationId}
           />
         </VerticalGroup>
       </div>

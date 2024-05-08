@@ -173,6 +173,12 @@ const SendTransaction = ({
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
+    calculateTotalFee({
+      to: addressTo,
+      amount: amount.value,
+      fee,
+    })
+
     // TODO process this when/if we will have currency switcher
     // if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
@@ -201,6 +207,13 @@ const SendTransaction = ({
       return
     }
     setAddressTo(e.target.value)
+
+    // trigger calculation of total fee
+    calculateTotalFee({
+      to: e.target.value,
+      amount: NumbersHelper.floatStringToNumber(amountInCrypto),
+      fee,
+    })
   }
 
   const changePassHandle = (value) => {
@@ -226,6 +239,9 @@ const SendTransaction = ({
   }, [preEnterAddress, transactionMode])
 
   useEffect(() => {
+    console.log('addressValidity', addressValidity)
+    console.log('amountValidity', amountValidity)
+    console.log('feeValidity', feeValidity)
     if (!isBitcoinWallet) setFeeValidity(true)
     if (
       transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&

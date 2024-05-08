@@ -263,6 +263,7 @@ export const getStakingOutput = (amount, delegationId, networkType) => {
 }
 
 export const getStakingMaturity = (blockHeight, networkType) => {
+  console.log('blockHeight', blockHeight)
   const networkIndex = NETWORKS[networkType]
   return staking_pool_spend_maturity_block_count(
     BigInt(Number(blockHeight)),

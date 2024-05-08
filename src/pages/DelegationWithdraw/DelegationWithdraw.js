@@ -59,7 +59,7 @@ const DelegationWithdrawPage = () => {
     MLHelpers.getAmountInCoins(currentDelegationInfo.balance),
   )
 
-  const maxValueToken = delegationBalance
+  const maxValueToken = delegationBalance - totalFeeCrypto
 
   if (!accountID) {
     console.log('No account id.')
@@ -70,6 +70,7 @@ const DelegationWithdrawPage = () => {
   const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
 
   const calculateMlTotalFee = async (transactionInfo) => {
+    console.log('transactionInfo', transactionInfo)
     setFeeLoading(true)
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
@@ -144,6 +145,7 @@ const DelegationWithdrawPage = () => {
             transactionMode={transactionMode}
             currentDelegationInfo={currentDelegationInfo}
             walletType={walletType}
+            preEnterAddress={currentDelegationInfo.spend_destination}
           />
         </VerticalGroup>
       </div>

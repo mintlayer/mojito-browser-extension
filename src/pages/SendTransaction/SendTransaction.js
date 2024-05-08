@@ -129,7 +129,6 @@ const SendTransactionPage = () => {
       return feeInCoins
     } catch (e) {
       console.error('Error calculating fee:', e)
-      goBackToWallet()
       setFeeLoading(false)
     }
   }
