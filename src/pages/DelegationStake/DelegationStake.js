@@ -39,6 +39,7 @@ const DelegationStakePage = () => {
       : addresses.mlTestnetAddresses
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
+  const [totalFee, setTotalFee] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
   const fiatName = 'USD'
@@ -83,14 +84,27 @@ const DelegationStakePage = () => {
         amountToUse: amountToSend,
         network: networkType,
         delegationId: address,
+        approximateFee: 0,
       },
     )
-    const fee = feerate * (transactionSize / 1000)
-    const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
-    setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
-    setTotalFeeCrypto(feeInCoins)
+    const fee = Math.ceil(feerate * (transactionSize / 1000))
+
+    const newTransactionSize =
+      await MLTransaction.calculateTransactionSizeInBytes({
+        utxos: utxos,
+        changeAddress: unusedChangeAddress,
+        amountToUse: amountToSend,
+        network: networkType,
+        delegationId: address,
+        approximateFee: fee,
+      })
+    const newFee = Math.ceil(feerate * (newTransactionSize / 1000))
+    const newFeeInCoins = MLHelpers.getAmountInCoins(Number(newFee))
+    setTotalFeeFiat(Format.fiatValue(newFeeInCoins * exchangeRate))
+    setTotalFeeCrypto(newFeeInCoins)
+    setTotalFee(newFee)
     setFeeLoading(false)
-    return feeInCoins
+    return newFeeInCoins
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -127,6 +141,7 @@ const DelegationStakePage = () => {
       amountToUse: amountToSend,
       network: networkType,
       delegationId: transactionInformation.to,
+      adjustedFee: totalFee,
     })
 
     return result
