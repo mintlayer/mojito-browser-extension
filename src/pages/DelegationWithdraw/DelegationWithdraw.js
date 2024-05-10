@@ -49,7 +49,8 @@ const DelegationWithdrawPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlDelegationList, currentHeight } = useMlWalletInfo(currentMlAddresses)
+  const { mlDelegationList, currentHeight } =
+    useMlWalletInfo(currentMlAddresses)
 
   const currentDelegationInfo = mlDelegationList.find(
     (delegation) => delegation.delegation_id === delegationId,
@@ -70,7 +71,6 @@ const DelegationWithdrawPage = () => {
   const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
 
   const calculateMlTotalFee = async (transactionInfo) => {
-    console.log('transactionInfo', transactionInfo)
     setFeeLoading(true)
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)

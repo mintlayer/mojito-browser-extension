@@ -54,8 +54,12 @@ const DelegationStakePage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { balance: mlBalance, utxos, unusedAddresses, feerate } =
-    useMlWalletInfo(currentMlAddresses)
+  const {
+    balance: mlBalance,
+    utxos,
+    unusedAddresses,
+    feerate,
+  } = useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = mlBalance
 
@@ -74,7 +78,7 @@ const DelegationStakePage = () => {
     const unusedChangeAddress = unusedAddresses.change
     const transactionSize = await MLTransaction.calculateTransactionSizeInBytes(
       {
-        utxosTotal: utxos,
+        utxos: utxos,
         changeAddress: unusedChangeAddress,
         amountToUse: amountToSend,
         network: networkType,
@@ -117,7 +121,7 @@ const DelegationStakePage = () => {
     const unusedChangeAddress = unusedAddresses.change
 
     const result = await MLTransaction.sendTransaction({
-      utxosTotal: utxos,
+      utxos: utxos,
       keysList: keysList,
       changeAddress: unusedChangeAddress,
       amountToUse: amountToSend,
@@ -127,8 +131,6 @@ const DelegationStakePage = () => {
 
     return result
   }
-
-  console.log('maxValueToken', maxValueToken)
 
   return (
     <>

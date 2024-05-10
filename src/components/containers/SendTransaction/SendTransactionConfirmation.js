@@ -46,13 +46,11 @@ const SendFundConfirmation = ({
         <dt>Total fee:</dt>
         <dd>
           <strong>{totalFeeCrypto}</strong>
-          {cryptoName}
-
+          ML
           <span>
             (<strong>{feeFiat}</strong>
             {fiatName})
           </span>
-
           {walletType.name !== 'Mintlayer' && (
             <span>
               (<strong>{fee}</strong>

@@ -27,8 +27,7 @@ const CreateDelegationPage = () => {
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { setFeeLoading } =
-    useContext(TransactionContext)
+  const { setFeeLoading } = useContext(TransactionContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddresses
@@ -83,7 +82,7 @@ const CreateDelegationPage = () => {
     }
     const transactionSize = await MLTransaction.calculateTransactionSizeInBytes(
       {
-        utxosTotal: utxos,
+        utxos: utxos,
         address: unusedReceivingAddress,
         changeAddress: unusedChangeAddress,
         amountToUse: BigInt(0),
@@ -125,7 +124,7 @@ const CreateDelegationPage = () => {
     const unusedReceivingAddress = unusedAddresses.receive
 
     const result = await MLTransaction.sendTransaction({
-      utxosTotal: utxos,
+      utxos: utxos,
       keysList: keysList,
       address: unusedReceivingAddress,
       changeAddress: unusedChageAddress,

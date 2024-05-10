@@ -21,6 +21,7 @@ import init, {
   SignatureHashType,
   SourceId,
   Amount,
+  encode_output_token_transfer,
 } from './@mintlayerlib-js/wasm_wrappers.js'
 
 import { Mintlayer } from '@APIs'
@@ -105,11 +106,7 @@ const checkIfAddressUsed = async (address) => {
   }
 }
 
-export const getWalletAddresses = async (
-  mlPrivateKey,
-  network,
-  batch = 20,
-) => {
+export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
   const generateAddresses = (addressGenerator, length, offset) => {
     const privKeys = Array.from({ length }, (_, i) =>
       addressGenerator(mlPrivateKey, i + offset),
@@ -129,7 +126,9 @@ export const getWalletAddresses = async (
     )
 
     while (allUsed.every((used) => used)) {
-      addresses.push(...generateAddresses(addressGenerator, batch, addresses.length))
+      addresses.push(
+        ...generateAddresses(addressGenerator, batch, addresses.length),
+      )
       allUsed = await Promise.all(
         addresses.map((address) => checkIfAddressUsed(address)),
       )
@@ -161,6 +160,7 @@ export const getOutputs = ({
   type = 'Transfer',
   lock,
   chainTip,
+  tokenId,
 }) => {
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')
@@ -170,7 +170,16 @@ export const getOutputs = ({
 
   const networkIndex = NETWORKS[networkType]
   if (type === 'Transfer') {
-    return encode_output_transfer(amountInstace, address, networkIndex)
+    if (tokenId) {
+      return encode_output_token_transfer(
+        amountInstace,
+        address,
+        tokenId,
+        networkIndex,
+      )
+    } else {
+      return encode_output_transfer(amountInstace, address, networkIndex)
+    }
   }
   if (type === 'LockThenTransfer') {
     let lockEncoded
@@ -188,10 +197,7 @@ export const getOutputs = ({
     )
   }
   if (type === 'spendFromDelegation') {
-    const stakingMaturity = getStakingMaturity(
-      chainTip,
-      networkType,
-    )
+    const stakingMaturity = getStakingMaturity(chainTip, networkType)
     const encodedLockForBlock = encode_lock_for_block_count(stakingMaturity)
     return encode_output_lock_then_transfer(
       amountInstace,
@@ -263,7 +269,6 @@ export const getStakingOutput = (amount, delegationId, networkType) => {
 }
 
 export const getStakingMaturity = (blockHeight, networkType) => {
-  console.log('blockHeight', blockHeight)
   const networkIndex = NETWORKS[networkType]
   return staking_pool_spend_maturity_block_count(
     BigInt(Number(blockHeight)),

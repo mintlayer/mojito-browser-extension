@@ -239,9 +239,6 @@ const SendTransaction = ({
   }, [preEnterAddress, transactionMode])
 
   useEffect(() => {
-    console.log('addressValidity', addressValidity)
-    console.log('amountValidity', amountValidity)
-    console.log('feeValidity', feeValidity)
     if (!isBitcoinWallet) setFeeValidity(true)
     if (
       transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&

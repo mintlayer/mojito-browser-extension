@@ -2,12 +2,18 @@ import { AppInfo } from '@Constants'
 import { ArrayHelper } from '@Helpers'
 import { LocalStorageService } from '@Storage'
 
-const getAmountInCoins = (amointInAtoms) => {
-  return amointInAtoms / AppInfo.ML_ATOMS_PER_COIN
+const getAmountInCoins = (
+  amointInAtoms,
+  atomsPerCoin = AppInfo.ML_ATOMS_PER_COIN,
+) => {
+  return amointInAtoms / atomsPerCoin
 }
 
-const getAmountInAtoms = (amountInCoins) => {
-  return BigInt(Math.round(amountInCoins * AppInfo.ML_ATOMS_PER_COIN))
+const getAmountInAtoms = (
+  amountInCoins,
+  atomsPerCoin = AppInfo.ML_ATOMS_PER_COIN,
+) => {
+  return BigInt(Math.round(amountInCoins * atomsPerCoin))
 }
 
 const getParsedTransactions = (transactions, addresses) => {
@@ -233,18 +239,17 @@ const getParsedTransactions = (transactions, addresses) => {
 
 const getTokenBalances = (utxos) => {
   const tokenBalances = {}
-  utxos.forEach((utxo) => {
-    utxo.forEach((item) => {
-      if (item.utxo.value.token_id && item.utxo.value.type === 'TokenV1') {
-        const token = item.utxo.value.token_id
-        if (tokenBalances[token]) {
-          tokenBalances[token] += parseFloat(item.utxo.value.amount.decimal)
-        } else {
-          tokenBalances[token] = parseFloat(item.utxo.value.amount.decimal)
-        }
+  utxos.forEach((item) => {
+    if (item.utxo.value.token_id && item.utxo.value.type === 'TokenV1') {
+      const token = item.utxo.value.token_id
+      if (tokenBalances[token]) {
+        tokenBalances[token] += parseFloat(item.utxo.value.amount.decimal)
+      } else {
+        tokenBalances[token] = parseFloat(item.utxo.value.amount.decimal)
       }
-    })
+    }
   })
+
   return tokenBalances
 }
 
