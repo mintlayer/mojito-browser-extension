@@ -10,7 +10,7 @@ import {
   ProgressTracker,
   Header,
   TextField,
-  InputList,
+  RestoreSeedField,
   OptionButtons,
   WalletList,
 } from '@ComposedComponents'
@@ -112,8 +112,7 @@ const RestoreAccount = ({
     setAccountPasswordErrorMessage(message)
   }, [accountPasswordValid])
 
-  const getMnemonics = () =>
-    wordsFields.reduce((acc, word) => `${acc} ${word.value}`, '').trim()
+  const getMnemonics = () => wordsFields.join(' ').trim()
 
   const goToNextStep = () => {
     const mnemonics = getMnemonics()
@@ -200,15 +199,6 @@ const RestoreAccount = ({
   }
 
   const genButtonTitle = (currentStep) => titles[currentStep] || 'Continue'
-
-  useEffect(() => {
-    const wordsValidity =
-      wordsFields.every((word) => word.validity) ||
-      (wordsFields.slice(0, 12).every((word) => word.validity) &&
-        wordsFields.slice(12, 23).every((word) => !word.validity))
-
-    setAccountWordsValid(wordsValidity)
-  }, [wordsFields, step])
 
   const handleError = (step) => {
     if (step === 6) alert('Please select a wallet type')
@@ -297,12 +287,11 @@ const RestoreAccount = ({
             </CenteredLayout>
           )}
           {step === 4 && (
-            <InputList
-              fields={wordsFields}
+            <RestoreSeedField
               setFields={setWordsFields}
-              restoreMode
               BIP39DefaultWordList={defaultBTCWordList}
-              amountOfWords={24}
+              accountWordsValid={accountWordsValid}
+              setAccountWordsValid={setAccountWordsValid}
             />
           )}
           {step === 5 && (
