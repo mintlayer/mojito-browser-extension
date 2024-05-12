@@ -18,6 +18,7 @@ import SettingsTestnet from './SettingsTestnet/SettingsTestnet'
 import AddWallet from './AddWallet/AddWallet'
 import CurrentStaking from './CurrentStaking/CurrentStaking'
 import HelpTooltip from './HelpTooltip/HelpTooltip'
+import RestoreSeedField from './RestoreSeedField/RestoreSeedField'
 
 export {
   Balance,
@@ -40,4 +41,5 @@ export {
   AddWallet,
   CurrentStaking,
   HelpTooltip,
+  RestoreSeedField,
 }
