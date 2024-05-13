@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
 import SendFundConfirmation from './SendTransactionConfirmation'
-import { SettingsProvider, AccountProvider } from '@Contexts'
+import { SettingsProvider, AccountProvider, NetworkContext } from '@Contexts'
 
 const _data = {
   address: '43c5n73485v73894cm43mr98',
@@ -15,9 +15,9 @@ const _data = {
   onConfirm: jest.fn(),
   onCancel: jest.fn(),
   walletType: {
-    name: 'Mintlayer',
-    ticker: 'ML',
-    chain: 'mintlayer',
+    name: 'Bitcoin',
+    ticker: 'BTC',
+    chain: 'bitcoin',
     tokenId: null,
   }
 }
@@ -26,7 +26,9 @@ const setup = ({ data = _data } = {}) => {
   render(
     <AccountProvider>
       <SettingsProvider>
+      <NetworkContext.Provider value={{feerate: 1}}>
         <SendFundConfirmation {...data} />
+      </NetworkContext.Provider>
       </SettingsProvider>
     </AccountProvider>,
   )
