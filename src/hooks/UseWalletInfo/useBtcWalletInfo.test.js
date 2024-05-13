@@ -72,8 +72,8 @@ test('UseBtcWalletInfo hook', async () => {
   let balance, transactionsList
 
   await waitFor(() => {
-    balance = result.current.btcBalance
-    transactionsList = result.current.btcTransactionsList
+    balance = result.current.balance
+    transactionsList = result.current.transactions
   })
 
   expect(balance).toBe('0.02881771')
@@ -115,7 +115,7 @@ test('UseBtcWalletInfo hook, errors', async () => {
   const { result } = renderHook(() => useBtcWalletInfo('dadadadada'), {
     wrapper: AccountProvider,
   })
-  const { btcBalance, btcTransactionsList } = result.current
+  const { balance: btcBalance, transactions: btcTransactionsList } = result.current
 
   expect(btcBalance).toBe(0)
   expect(btcTransactionsList).toStrictEqual([])
