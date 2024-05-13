@@ -14,6 +14,12 @@ const _data = {
   fee: 2,
   onConfirm: jest.fn(),
   onCancel: jest.fn(),
+  walletType: {
+    name: 'Mintlayer',
+    ticker: 'ML',
+    chain: 'mintlayer',
+    tokenId: null,
+  }
 }
 
 const setup = ({ data = _data } = {}) => {
