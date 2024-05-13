@@ -25,59 +25,19 @@ const UTXSOS_MOCK = [
         type: 'Coin',
       },
     },
-  },
-  {
-    outpoint: {
-      source_id:
-        '0cd5de5319de96f7c967a24a51224f4eab7882e6dbe336ab6837b15e1b68dace',
-      source_type: 'Transaction',
-      input_type: 'UTXO',
-      index: 1,
-    },
-    utxo: {
-      destination: 'tmt1qylgafccyyy26zrtqk8gjvcwzut26taruuyzmcr6',
-      type: 'Transfer',
-      value: {
-        amount: {
-          atoms: '200',
-          decimals: '0.000000002',
-        },
-        type: 'Coin',
-      },
-    },
-  },
-  {
-    outpoint: {
-      source_id:
-        '0cd5de5319de96f7c967a24a51224f4eab7882e6dbe336ab6837b15e1b68dace',
-      source_type: 'Transaction',
-      input_type: 'UTXO',
-      index: 2,
-    },
-    utxo: {
-      destination: 'tmt1qylgafccyyy26zrtqk8gjvcwzut26taruuyzmcr6',
-      type: 'Transfer',
-      value: {
-        amount: {
-          atoms: '200',
-          decimals: '0.000000002',
-        },
-        type: 'Coin',
-      },
-    },
-  },
+  }
 ]
 
 describe('getUtxoBalance', () => {
   it('should return the sum of the utxo values', () => {
-    const result = getUtxoBalance(UTXSOS_MOCK)
-    expect(result.toString()).toBe('600')
+    const result = getUtxoBalance(UTXSOS_MOCK[0]) // in fact this function just for single utxo
+    expect(result.toString()).toBe('200')
   })
 })
 
 describe('getUtxoTransaction', () => {
   it('should return the transaction id and index', () => {
-    const result = getUtxoTransaction(UTXSOS_MOCK)
+    const result = getUtxoTransaction(UTXSOS_MOCK[0]) // in fact this function just for single item
 
     result.forEach((item, index) => {
       expect(item.transaction).toEqual(
@@ -90,7 +50,7 @@ describe('getUtxoTransaction', () => {
 
 describe('getUtxoTransactionsBytes', () => {
   it('should return the transaction bytes and index', () => {
-    const getUtxoTransactionResult = getUtxoTransaction(UTXSOS_MOCK)
+    const getUtxoTransactionResult = getUtxoTransaction(UTXSOS_MOCK) // in fact this function just for single item
     const result = getUtxoTransactionsBytes(getUtxoTransactionResult)
 
     result.forEach((item, index) => {
