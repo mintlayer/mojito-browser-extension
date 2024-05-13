@@ -1,12 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useContext,
-} from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
-import { AccountContext } from '@Contexts'
 import { InputInteger } from '@BasicComponents'
 import { OptionButtons } from '@ComposedComponents'
 import { Electrum } from '@APIs'
@@ -20,7 +13,6 @@ const FeeField = ({
   changeValueHandle,
   setFeeValidity,
 }) => {
-  const { walletType } = useContext(AccountContext)
   const effectCalled = useRef(false)
   const [options, setOptions] = useState([])
   const [inputValue, setInputValue] = useState(0)
@@ -28,7 +20,7 @@ const FeeField = ({
   const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
     useState('15 minutes')
   const [estimatedFees, setEstimatedFees] = useState([])
-  const feeType = walletType.name === 'Mintlayer' ? 'atoms/B' : 'sat/B'
+  const feeType = 'atoms/B'
 
   const blocksToConfirm = useCallback(
     (value) => {
@@ -97,7 +89,7 @@ const FeeField = ({
     }
 
     populateOptions()
-  }, [walletType.name])
+  }, [])
 
   useEffect(() => {
     if (Number(parentValue)) {

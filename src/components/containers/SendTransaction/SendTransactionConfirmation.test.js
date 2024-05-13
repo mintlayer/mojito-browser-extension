@@ -14,6 +14,12 @@ const _data = {
   fee: 2,
   onConfirm: jest.fn(),
   onCancel: jest.fn(),
+  walletType: {
+    name: 'Bitcoin',
+    ticker: 'BTC',
+    chain: 'bitcoin',
+    tokenId: null,
+  }
 }
 
 const setup = ({ data = _data } = {}) => {

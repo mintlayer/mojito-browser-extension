@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { Button } from '@BasicComponents'
-import { Header, Loading, TextField } from '@ComposedComponents'
+import { Loading, TextField } from '@ComposedComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 
 import './SetPassword.css'
@@ -58,7 +58,6 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
 
   return (
     <div>
-      <Header />
       <div className="content">
         <CenteredLayout>
           <form onSubmit={doLogin}>

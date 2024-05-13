@@ -15,6 +15,10 @@
   margin-right: 0.5rem;
 }
 
+.fee-input-wrapper.ml {
+  width: 200%;
+}
+
 .fee-input-wrapper > *:nth-child(1) {
   padding-right: 10px;
 }

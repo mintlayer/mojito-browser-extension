@@ -114,19 +114,20 @@ const unlockAccount = async (id, password) => {
     }
 
     if (walletsToCreate.includes('ml')) {
+      // TODO: use only network-related addresses
       const mlTestnetWalletAddresses = await ML.getWalletAddresses(
         mlTestnetPrivateKey,
         AppInfo.NETWORK_TYPES.TESTNET,
         AppInfo.DEFAULT_ML_WALLET_OFFSET,
       )
+      addresses.mlTestnetAddresses = mlTestnetWalletAddresses
+
       const mlMainnetWalletAddresses = await ML.getWalletAddresses(
         mlMainnetPrivateKey,
         AppInfo.NETWORK_TYPES.MAINNET,
         AppInfo.DEFAULT_ML_WALLET_OFFSET,
       )
-
-      addresses.mlMainnetAddress = mlMainnetWalletAddresses
-      addresses.mlTestnetAddresses = mlTestnetWalletAddresses
+      addresses.mlMainnetAddresses = mlMainnetWalletAddresses
     }
 
     return {

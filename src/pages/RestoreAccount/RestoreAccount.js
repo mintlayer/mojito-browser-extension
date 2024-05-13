@@ -5,7 +5,7 @@ import { AccountContext } from '@Contexts'
 import { Account } from '@Entities'
 import { BTC } from '@Cryptos'
 
-import { Header, Loading } from '@ComposedComponents'
+import { Loading } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { RestoreAccount } from '@ContainerComponents'
 
@@ -47,7 +47,6 @@ const RestoreAccountPage = () => {
 
   return creatingWallet ? (
     <>
-      <Header noBackButton={true} />
       <CenteredLayout>
         <VerticalGroup bigGap>
           <h1 className="loadingText">

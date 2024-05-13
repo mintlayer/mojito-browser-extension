@@ -1,0 +1,28 @@
+.token-logo-round {
+  background: rgb(var(--color-green));
+  border-radius: 50%;
+  height: 72px;
+  width: 72px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: visible;
+  color: #fff;
+  font-size: 27px;
+  font-weight: bold;
+}
+
+.token-logo-round img {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  height: 15px;
+  width: 15px;
+  background: rgb(var(--color-green));
+  border: 2px solid white;
+  border-radius: 50%;
+  padding: 5px;
+  box-sizing: content-box;
+}

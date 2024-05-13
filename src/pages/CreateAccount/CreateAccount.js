@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Header, Loading } from '@ComposedComponents'
+import { Loading } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { CreateAccount } from '@ContainerComponents'
 
@@ -69,7 +69,6 @@ const CreateAccountPage = () => {
 
   return creatingWallet ? (
     <>
-      <Header noBackButton />
       <CenteredLayout>
         <VerticalGroup bigGap>
           <h1 className="loadingText">

@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import React, { useContext, useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 
 import { ReactComponent as BackImg } from '@Assets/images/back-button.svg'
 import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
@@ -12,24 +12,45 @@ import { AccountContext } from '@Contexts'
 
 import './Header.css'
 
-const Header = ({ customBackAction, noBackButton = false }) => {
+const Header = ({ customBackAction }) => {
+  const { coinType } = useParams()
   const [unlocked, setUnlocked] = useState(false)
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const tooltipMessage = 'Expand view'
   const navigate = useNavigate()
   const location = useLocation()
   const { isAccountUnlocked, logout, isExtended } = useContext(AccountContext)
-  const isWalletPage = location.pathname === '/wallet'
+
+  const isWalletPage = location.pathname === '/wallet/' + coinType
+  const isSettingsPage = location.pathname === '/settings'
+  const isStakingPage = location.pathname === '/wallet/' + coinType + '/staking'
+
+  const noBackButtonPages = ['/dashboard', '/']
+  const noBackButton = noBackButtonPages.includes(location.pathname)
+
+  const hideWithoutCustomBack = ['/set-account', '/restore-account']
 
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
     setUnlocked(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [location.pathname])
+
+  if (hideWithoutCustomBack.includes(location.pathname) && !customBackAction) {
+    return null
+  }
 
   const goBack = () => {
     if (isWalletPage) {
+      navigate('/dashboard')
+      return
+    }
+    if (isSettingsPage) {
       navigate('/')
+      return
+    }
+    if (isStakingPage) {
+      navigate('/wallet/' + coinType)
       return
     }
     return customBackAction ? customBackAction() : navigate(-1)
@@ -60,7 +81,7 @@ const Header = ({ customBackAction, noBackButton = false }) => {
 
   return (
     <header data-testid="header-container">
-      {!noBackButton && (
+      <div style={{ visibility: !noBackButton ? 'visible' : 'hidden' }}>
         <Button
           alternate
           extraStyleClasses={['backButton']}
@@ -68,7 +89,7 @@ const Header = ({ customBackAction, noBackButton = false }) => {
         >
           <BackImg />
         </Button>
-      )}
+      </div>
 
       {!unlocked && !isExtended && (
         <div className="expand-wrapped">

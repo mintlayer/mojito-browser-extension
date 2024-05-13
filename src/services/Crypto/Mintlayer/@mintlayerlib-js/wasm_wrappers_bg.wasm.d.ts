@@ -63,6 +63,15 @@ export function encode_output_transfer(
   d: number,
   e: number,
 ): void
+export function encode_output_token_transfer(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+): void
 export function staking_pool_spend_maturity_block_count(
   a: number,
   b: number,
@@ -80,7 +89,25 @@ export function encode_output_lock_then_transfer(
   f: number,
   g: number,
 ): void
+export function encode_output_token_lock_then_transfer(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+): void
 export function encode_output_coin_burn(a: number, b: number): void
+export function encode_output_token_burn(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+): void
 export function encode_output_create_delegation(
   a: number,
   b: number,
@@ -117,6 +144,11 @@ export function encode_output_create_stake_pool(
   e: number,
   f: number,
 ): void
+export function fungible_token_issuance_fee(a: number, b: number): number
+export function nft_issuance_fee(a: number, b: number): number
+export function token_supply_change_fee(a: number, b: number): number
+export function token_freeze_fee(a: number, b: number): number
+export function token_change_authority_fee(a: number, b: number): number
 export function encode_output_issue_fungible_token(
   a: number,
   b: number,
@@ -130,6 +162,32 @@ export function encode_output_issue_fungible_token(
   j: number,
   k: number,
   l: number,
+  m: number,
+): void
+export function encode_output_issue_nft(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: number,
+  l: number,
+  m: number,
+  n: number,
+  o: number,
+  p: number,
+  q: number,
+  r: number,
+  s: number,
+  t: number,
+  u: number,
+  v: number,
+  w: number,
 ): void
 export function encode_output_data_deposit(
   a: number,
@@ -190,19 +248,25 @@ export function encode_signed_transaction(
   d: number,
   e: number,
 ): void
+export function get_transaction_id(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+): void
 export function effective_pool_balance(
   a: number,
   b: number,
   c: number,
   d: number,
 ): void
-export function rustsecp256k1_v0_9_2_context_create(a: number): number
-export function rustsecp256k1_v0_9_2_context_destroy(a: number): void
-export function rustsecp256k1_v0_9_2_default_illegal_callback_fn(
+export function rustsecp256k1_v0_10_0_context_create(a: number): number
+export function rustsecp256k1_v0_10_0_context_destroy(a: number): void
+export function rustsecp256k1_v0_10_0_default_illegal_callback_fn(
   a: number,
   b: number,
 ): void
-export function rustsecp256k1_v0_9_2_default_error_callback_fn(
+export function rustsecp256k1_v0_10_0_default_error_callback_fn(
   a: number,
   b: number,
 ): void

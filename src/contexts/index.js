@@ -13,6 +13,17 @@ import {
   TransactionProvider,
 } from './TransactionProvider/TransactionProvider'
 
+import {
+  NetworkContext,
+  NetworkProvider,
+} from './NetworkProvider/NetworkProvider'
+
+import {
+  ExchangeRatesContext,
+  ExchangeRatesProvider,
+} from './ExchangeRatesProvider/ExchangeRatesProvider'
+
+
 export {
   AccountContext,
   AccountProvider,
@@ -20,4 +31,8 @@ export {
   SettingsProvider,
   TransactionContext,
   TransactionProvider,
+  NetworkContext,
+  NetworkProvider,
+  ExchangeRatesContext,
+  ExchangeRatesProvider,
 }
