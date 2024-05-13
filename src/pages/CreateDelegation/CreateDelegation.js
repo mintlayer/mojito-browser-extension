@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
@@ -15,24 +15,26 @@ import './CreateDelegation.css'
 
 const CreateDelegationPage = () => {
   const { state } = useLocation()
-  const { coinType } = useParams()
 
+  // staking only for Mintlayer
   const walletType = {
-    name: coinType,
+    name: 'Mintlayer',
+    ticker: 'ML',
+    chain: 'mintlayer',
   }
 
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.DELEGATION
 
-  const { addresses, accountID, setWalletType } = useContext(AccountContext)
+  const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { setFeeLoading, setDelegationStep, setTransactionMode } =
-    useContext(TransactionContext)
+  const { setFeeLoading } = useContext(TransactionContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
+      ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
+  const [totalFee, setTotalFee] = useState(0)
   const [preEnterAddress, setPreEnterAddress] = useState(null)
   const navigate = useNavigate()
   const tokenName = 'ML'
@@ -42,7 +44,6 @@ const CreateDelegationPage = () => {
     tokenName,
   })
   const goBackToWallet = () => {
-    setDelegationStep(1)
     navigate('/wallet/' + walletType.name + '/staking')
   }
   const [isFormValid, setFormValid] = useState(false)
@@ -52,16 +53,9 @@ const CreateDelegationPage = () => {
   const { mlBalance, utxos, fetchDelegations, unusedAddresses, feerate } =
     useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
-  // const customBackAction = () => {
-  //   setDelegationStep(1)
-  //   navigate('/wallet')
-  // }
 
   useEffect(() => {
     if (state && state.action === 'createDelegate') {
-      setDelegationStep(2)
-      setTransactionMode(AppInfo.ML_TRANSACTION_MODES.DELEGATION)
-      setWalletType({ name: 'Mintlayer' })
       setPreEnterAddress(state.pool_id)
     } else {
       setPreEnterAddress('')
@@ -87,20 +81,35 @@ const CreateDelegationPage = () => {
       throw new Error('No UTXOs available')
       return false
     }
-    const transactionSize = await MLTransaction.calculateTransactionSizeInBytes({
-      utxosTotal: utxos,
-      address: unusedReceivingAddress,
-      changeAddress: unusedChangeAddress,
-      amountToUse: BigInt(0),
-      network: networkType,
-      poolId: address,
-    })
-    const fee = feerate * (transactionSize / 1000)
-    const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
-    setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
-    setTotalFeeCrypto(feeInCoins)
+    const transactionSize = await MLTransaction.calculateTransactionSizeInBytes(
+      {
+        utxos: utxos,
+        address: unusedReceivingAddress,
+        changeAddress: unusedChangeAddress,
+        amountToUse: BigInt(0),
+        network: networkType,
+        poolId: address,
+        approximateFee: 0,
+      },
+    )
+    const fee = Math.ceil(feerate * (transactionSize / 1000))
+    const newTransactionSize =
+      await MLTransaction.calculateTransactionSizeInBytes({
+        utxos: utxos,
+        address: unusedReceivingAddress,
+        changeAddress: unusedChangeAddress,
+        amountToUse: BigInt(0),
+        network: networkType,
+        poolId: address,
+        approximateFee: fee,
+      })
+    const newFee = Math.ceil(feerate * (newTransactionSize / 1000))
+    const newFeeInCoins = MLHelpers.getAmountInCoins(Number(newFee))
+    setTotalFeeFiat(Format.fiatValue(newFeeInCoins * exchangeRate))
+    setTotalFeeCrypto(newFeeInCoins)
+    setTotalFee(newFee)
     setFeeLoading(false)
-    return feeInCoins
+    return newFeeInCoins
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -129,7 +138,7 @@ const CreateDelegationPage = () => {
     const unusedReceivingAddress = unusedAddresses.receive
 
     const result = await MLTransaction.sendTransaction({
-      utxosTotal: utxos,
+      utxos: utxos,
       keysList: keysList,
       address: unusedReceivingAddress,
       changeAddress: unusedChageAddress,
@@ -137,6 +146,7 @@ const CreateDelegationPage = () => {
       network: networkType,
       poolId: transactionInformation.to,
       transactionMode: transactionMode,
+      adjustedFee: totalFee,
     })
 
     if (result) {
@@ -165,6 +175,7 @@ const CreateDelegationPage = () => {
             goBackToWallet={goBackToWallet}
             preEnterAddress={preEnterAddress}
             transactionMode={transactionMode}
+            walletType={walletType}
           />
         </VerticalGroup>
       </div>

@@ -21,6 +21,10 @@ const Header = ({ customBackAction }) => {
   const location = useLocation()
   const { isAccountUnlocked, logout, isExtended } = useContext(AccountContext)
 
+  const isWalletPage = location.pathname === '/wallet/' + coinType
+  const isSettingsPage = location.pathname === '/settings'
+  const isStakingPage = location.pathname === '/wallet/' + coinType + '/staking'
+
   const noBackButtonPages = ['/dashboard', '/']
   const noBackButton = noBackButtonPages.includes(location.pathname)
 
@@ -37,11 +41,6 @@ const Header = ({ customBackAction }) => {
   }
 
   const goBack = () => {
-    const isWalletPage = location.pathname === '/wallet/' + coinType
-    const isSettingsPage = location.pathname === '/settings'
-    const isStakingPage =
-      location.pathname === '/wallet/' + coinType + '/staking'
-
     if (isWalletPage) {
       navigate('/dashboard')
       return

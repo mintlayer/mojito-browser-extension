@@ -14,23 +14,23 @@ import { ML } from '@Cryptos'
 import './DelegationWithdraw.css'
 
 const DelegationWithdrawPage = () => {
-  const { coinType, delegationId } = useParams()
+  const { delegationId } = useParams()
 
+  // staking only for Mintlayer
   const walletType = {
-    name: coinType,
+    name: 'Mintlayer',
+    ticker: 'ML',
+    chain: 'mintlayer',
   }
 
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.WITHDRAW
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const {
-    setFeeLoading,
-    setDelegationStep,
-  } = useContext(TransactionContext)
+  const { setFeeLoading, setDelegationStep } = useContext(TransactionContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
+      ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
@@ -49,7 +49,8 @@ const DelegationWithdrawPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlDelegationList } = useMlWalletInfo(currentMlAddresses)
+  const { mlDelegationList, currentHeight } =
+    useMlWalletInfo(currentMlAddresses)
 
   const currentDelegationInfo = mlDelegationList.find(
     (delegation) => delegation.delegation_id === delegationId,
@@ -59,7 +60,7 @@ const DelegationWithdrawPage = () => {
     MLHelpers.getAmountInCoins(currentDelegationInfo.balance),
   )
 
-  const maxValueToken = delegationBalance
+  const maxValueToken = delegationBalance - totalFeeCrypto
 
   if (!accountID) {
     console.log('No account id.')
@@ -73,11 +74,12 @@ const DelegationWithdrawPage = () => {
     setFeeLoading(true)
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
-    const fee =await MLTransaction.calculateSpenDelegFee(
+    const fee = await MLTransaction.calculateSpenDelegFee(
       address,
       amountToSend,
       networkType,
       currentDelegationInfo,
+      currentHeight,
     )
     const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
     setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
@@ -117,6 +119,7 @@ const DelegationWithdrawPage = () => {
       amountToSend,
       networkType,
       currentDelegationInfo,
+      currentHeight,
     )
 
     return result
@@ -141,6 +144,8 @@ const DelegationWithdrawPage = () => {
             goBackToWallet={goBackToWallet}
             transactionMode={transactionMode}
             currentDelegationInfo={currentDelegationInfo}
+            walletType={walletType}
+            preEnterAddress={currentDelegationInfo.spend_destination}
           />
         </VerticalGroup>
       </div>

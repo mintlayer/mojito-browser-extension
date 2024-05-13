@@ -14,10 +14,13 @@ import { ML } from '@Cryptos'
 import './DelegationStake.css'
 
 const DelegationStakePage = () => {
-  const { coinType, delegationId } = useParams()
+  const { delegationId } = useParams()
 
+  // staking only for Mintlayer
   const walletType = {
-    name: coinType,
+    name: 'Mintlayer',
+    ticker: 'ML',
+    chain: 'mintlayer',
   }
 
   const currentDelegationInfo = {
@@ -32,10 +35,11 @@ const DelegationStakePage = () => {
   const { setFeeLoading, setDelegationStep } = useContext(TransactionContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
+      ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
+  const [totalFee, setTotalFee] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
   const fiatName = 'USD'
@@ -51,7 +55,12 @@ const DelegationStakePage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance, utxos, unusedAddresses, feerate } = useMlWalletInfo(currentMlAddresses)
+  const {
+    balance: mlBalance,
+    utxos,
+    unusedAddresses,
+    feerate,
+  } = useMlWalletInfo(currentMlAddresses)
 
   const maxValueToken = mlBalance
 
@@ -68,19 +77,34 @@ const DelegationStakePage = () => {
     const address = transactionInfo.to
     const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
     const unusedChangeAddress = unusedAddresses.change
-    const transactionSize = await MLTransaction.calculateTransactionSizeInBytes({
-      utxosTotal: utxos,
-      changeAddress: unusedChangeAddress,
-      amountToUse: amountToSend,
-      network: networkType,
-      delegationId: address,
-    })
-    const fee = feerate * (transactionSize / 1000)
-    const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
-    setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
-    setTotalFeeCrypto(feeInCoins)
+    const transactionSize = await MLTransaction.calculateTransactionSizeInBytes(
+      {
+        utxos: utxos,
+        changeAddress: unusedChangeAddress,
+        amountToUse: amountToSend,
+        network: networkType,
+        delegationId: address,
+        approximateFee: 0,
+      },
+    )
+    const fee = Math.ceil(feerate * (transactionSize / 1000))
+
+    const newTransactionSize =
+      await MLTransaction.calculateTransactionSizeInBytes({
+        utxos: utxos,
+        changeAddress: unusedChangeAddress,
+        amountToUse: amountToSend,
+        network: networkType,
+        delegationId: address,
+        approximateFee: fee,
+      })
+    const newFee = Math.ceil(feerate * (newTransactionSize / 1000))
+    const newFeeInCoins = MLHelpers.getAmountInCoins(Number(newFee))
+    setTotalFeeFiat(Format.fiatValue(newFeeInCoins * exchangeRate))
+    setTotalFeeCrypto(newFeeInCoins)
+    setTotalFee(newFee)
     setFeeLoading(false)
-    return feeInCoins
+    return newFeeInCoins
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -111,12 +135,13 @@ const DelegationStakePage = () => {
     const unusedChangeAddress = unusedAddresses.change
 
     const result = await MLTransaction.sendTransaction({
-      utxosTotal: utxos,
+      utxos: utxos,
       keysList: keysList,
       changeAddress: unusedChangeAddress,
       amountToUse: amountToSend,
       network: networkType,
       delegationId: transactionInformation.to,
+      adjustedFee: totalFee,
     })
 
     return result
@@ -141,6 +166,8 @@ const DelegationStakePage = () => {
             goBackToWallet={goBackToWallet}
             transactionMode={transactionMode}
             currentDelegationInfo={currentDelegationInfo}
+            walletType={walletType}
+            preEnterAddress={delegationId}
           />
         </VerticalGroup>
       </div>

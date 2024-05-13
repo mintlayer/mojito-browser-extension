@@ -21,6 +21,7 @@ import init, {
   SignatureHashType,
   SourceId,
   Amount,
+  encode_output_token_transfer,
 } from './@mintlayerlib-js/wasm_wrappers.js'
 
 import { Mintlayer } from '@APIs'
@@ -105,11 +106,7 @@ const checkIfAddressUsed = async (address) => {
   }
 }
 
-export const getWalletAddresses = async (
-  mlPrivateKey,
-  network,
-  batch = 20,
-) => {
+export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
   const generateAddresses = (addressGenerator, length, offset) => {
     const privKeys = Array.from({ length }, (_, i) =>
       addressGenerator(mlPrivateKey, i + offset),
@@ -129,7 +126,9 @@ export const getWalletAddresses = async (
     )
 
     while (allUsed.every((used) => used)) {
-      addresses.push(...generateAddresses(addressGenerator, batch, addresses.length))
+      addresses.push(
+        ...generateAddresses(addressGenerator, batch, addresses.length),
+      )
       allUsed = await Promise.all(
         addresses.map((address) => checkIfAddressUsed(address)),
       )
@@ -154,12 +153,14 @@ export const getTxInput = (outpointSourceId, index) => {
   return encode_input_for_utxo(outpointSourceId, index)
 }
 
-export const getOutputs = async ({
+export const getOutputs = ({
   amount,
   address,
   networkType,
   type = 'Transfer',
   lock,
+  chainTip,
+  tokenId,
 }) => {
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')
@@ -169,7 +170,16 @@ export const getOutputs = async ({
 
   const networkIndex = NETWORKS[networkType]
   if (type === 'Transfer') {
-    return encode_output_transfer(amountInstace, address, networkIndex)
+    if (tokenId) {
+      return encode_output_token_transfer(
+        amountInstace,
+        address,
+        tokenId,
+        networkIndex,
+      )
+    } else {
+      return encode_output_transfer(amountInstace, address, networkIndex)
+    }
   }
   if (type === 'LockThenTransfer') {
     let lockEncoded
@@ -187,11 +197,7 @@ export const getOutputs = async ({
     )
   }
   if (type === 'spendFromDelegation') {
-    const chainTip = await Mintlayer.getChainTip()
-    const stakingMaturity = getStakingMaturity(
-      JSON.parse(chainTip).block_height,
-      networkType,
-    )
+    const stakingMaturity = getStakingMaturity(chainTip, networkType)
     const encodedLockForBlock = encode_lock_for_block_count(stakingMaturity)
     return encode_output_lock_then_transfer(
       amountInstace,

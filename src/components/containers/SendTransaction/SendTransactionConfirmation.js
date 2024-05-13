@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
 import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
-import { AccountContext, SettingsContext } from '@Contexts'
+import { SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './SendTransactionConfirmation.css'
@@ -18,9 +18,9 @@ const SendFundConfirmation = ({
   fee,
   onConfirm,
   onCancel,
+  walletType,
 }) => {
   const { networkType } = useContext(SettingsContext)
-  const { walletType } = useContext(AccountContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const amountFiat = isTestnet ? '0,00' : amountInFiat
   const feeFiat = isTestnet ? '0,00' : totalFeeFiat
@@ -46,13 +46,11 @@ const SendFundConfirmation = ({
         <dt>Total fee:</dt>
         <dd>
           <strong>{totalFeeCrypto}</strong>
-          {cryptoName}
-
+          ML
           <span>
             (<strong>{feeFiat}</strong>
             {fiatName})
           </span>
-
           {walletType.name !== 'Mintlayer' && (
             <span>
               (<strong>{fee}</strong>

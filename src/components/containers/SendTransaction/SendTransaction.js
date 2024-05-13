@@ -32,11 +32,12 @@ const SendTransaction = ({
   setAdjustedFee,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
   currentDelegationInfo,
+  walletType,
 }) => {
-  const { walletType, balanceLoading } = useContext(AccountContext)
+  const { balanceLoading } = useContext(AccountContext)
   const { feeLoading } = useContext(TransactionContext)
-  const [cryptoName] = useState(transactionData.tokenName)
-  const [fiatName] = useState(transactionData.fiatName)
+  const cryptoName = transactionData.tokenName
+  const fiatName = transactionData.fiatName
   const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(totalFeeCryptoParent)
   const [amountInCrypto, setAmountInCrypto] = useState('0.00')
@@ -172,6 +173,12 @@ const SendTransaction = ({
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
+    calculateTotalFee({
+      to: addressTo,
+      amount: amount.value,
+      fee,
+    })
+
     // TODO process this when/if we will have currency switcher
     // if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
@@ -200,6 +207,13 @@ const SendTransaction = ({
       return
     }
     setAddressTo(e.target.value)
+
+    // trigger calculation of total fee
+    calculateTotalFee({
+      to: e.target.value,
+      amount: NumbersHelper.floatStringToNumber(amountInCrypto),
+      fee,
+    })
   }
 
   const changePassHandle = (value) => {
@@ -308,18 +322,21 @@ const SendTransaction = ({
             setAddressValidity={setAddressValidity}
             transactionMode={transactionMode}
             currentDelegationInfo={currentDelegationInfo}
+            walletType={walletType}
           />
 
-          <AmountField
-            transactionData={transactionData}
-            amountChanged={amountChanged}
-            exchangeRate={exchangeRate}
-            maxValueInToken={maxValueInToken}
-            setAmountValidity={setAmountValidity}
-            errorMessage={passErrorMessage}
-            totalFeeInCrypto={totalFeeCrypto}
-            transactionMode={transactionMode}
-          />
+          {transactionMode !== AppInfo.ML_TRANSACTION_MODES.DELEGATION && (
+            <AmountField
+              transactionData={transactionData}
+              amountChanged={amountChanged}
+              exchangeRate={exchangeRate}
+              maxValueInToken={maxValueInToken}
+              setAmountValidity={setAmountValidity}
+              errorMessage={passErrorMessage}
+              totalFeeInCrypto={totalFeeCrypto}
+              transactionMode={transactionMode}
+            />
+          )}
 
           {/* TODO style error from transaction */}
           <FeesField
@@ -374,6 +391,7 @@ const SendTransaction = ({
                 fee={fee}
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
+                walletType={walletType}
               ></SendTransactionConfirmation>
             ) : feeLoading ? (
               <div className="loading-center">

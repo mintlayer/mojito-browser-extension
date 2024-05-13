@@ -2,12 +2,18 @@ import { AppInfo } from '@Constants'
 import { ArrayHelper } from '@Helpers'
 import { LocalStorageService } from '@Storage'
 
-const getAmountInCoins = (amointInAtoms) => {
-  return amointInAtoms / AppInfo.ML_ATOMS_PER_COIN
+const getAmountInCoins = (
+  amointInAtoms,
+  atomsPerCoin = AppInfo.ML_ATOMS_PER_COIN,
+) => {
+  return amointInAtoms / atomsPerCoin
 }
 
-const getAmountInAtoms = (amountInCoins) => {
-  return BigInt(Math.round(amountInCoins * AppInfo.ML_ATOMS_PER_COIN))
+const getAmountInAtoms = (
+  amountInCoins,
+  atomsPerCoin = AppInfo.ML_ATOMS_PER_COIN,
+) => {
+  return BigInt(Math.round(amountInCoins * atomsPerCoin))
 }
 
 const getParsedTransactions = (transactions, addresses) => {
@@ -23,7 +29,7 @@ const getParsedTransactions = (transactions, addresses) => {
     (a, b) => b.timestamp - a.timestamp,
   )
 
-  const isUncofermedTransactionInList =
+  const isUncofirmedTransactionInList =
     unconfirmedTransactions &&
     sortedTransactions.some(
       (transaction) =>
@@ -33,7 +39,7 @@ const getParsedTransactions = (transactions, addresses) => {
         ).length > 0,
     )
 
-  if (unconfirmedTransactions && isUncofermedTransactionInList) {
+  if (unconfirmedTransactions && isUncofirmedTransactionInList) {
     const unconfirmedTransactionsWithoutConfirmed =
       unconfirmedTransactions.filter(
         (unconfirmedTransaction) =>
@@ -47,7 +53,7 @@ const getParsedTransactions = (transactions, addresses) => {
     )
   }
 
-  if (unconfirmedTransactions && !isUncofermedTransactionInList) {
+  if (unconfirmedTransactions && !isUncofirmedTransactionInList) {
     sortedTransactions.unshift(...unconfirmedTransactions)
   }
 
@@ -89,6 +95,11 @@ const getParsedTransactions = (transactions, addresses) => {
     let value
     let sameWalletTransaction = false
 
+    const token_id = transaction.outputs.find(
+      (output) => output?.value?.token_id,
+    )?.value?.token_id
+
+    // outbound transaction
     if (direction === 'out' && transaction.inputs.length > 0) {
       const destAddressOutput = transaction.outputs.find((output) => {
         return !addresses.includes(output.destination)
@@ -149,22 +160,31 @@ const getParsedTransactions = (transactions, addresses) => {
       value = totalValue
     }
 
+    // inbound transaction
     if (withInputUTXO && direction === 'in' && transaction.outputs.length > 0) {
       destAddress = transaction.inputs[0].utxo.destination
-      const totalValue = transaction.outputs.reduce((acc, output) => {
-        if (addresses.includes(output.destination)) {
-          if (output.type === 'Transfer') {
-            return acc + output.value.amount.decimal
+      const totalValue = transaction.outputs
+        .filter(({ destination }) => addresses.includes(destination))
+        .reduce((acc, output) => {
+          if (token_id) {
+            if (output.value.token_id === token_id) {
+              return acc + output.value.amount.decimal
+            }
+          } else {
+            if (output.value.type === 'Coin') {
+              if (output.type === 'Transfer') {
+                return acc + output.value.amount.decimal
+              }
+              if (output.type === 'LockThenTransfer') {
+                return acc + Number(output.value.amount.decimal)
+              }
+            }
           }
-          if (output.type === 'LockThenTransfer') {
-            return acc + Number(output.value.amount.decimal)
-          }
-        }
-        return acc
-      }, 0)
+        }, 0)
       value = totalValue
     }
 
+    // if there is no input utxo, that is staking reward
     if (
       !withInputUTXO &&
       direction === 'in' &&
@@ -212,24 +232,24 @@ const getParsedTransactions = (transactions, addresses) => {
       isConfirmed,
       type,
       sameWalletTransaction,
+      token_id,
     }
   })
 }
 
 const getTokenBalances = (utxos) => {
   const tokenBalances = {}
-  utxos.forEach((utxo) => {
-    utxo.forEach((item) => {
-      if (item.utxo.value.token_id && item.utxo.value.type === 'TokenV1') {
-        const token = item.utxo.value.token_id
-        if (tokenBalances[token]) {
-          tokenBalances[token] += parseFloat(item.utxo.value.amount.decimal)
-        } else {
-          tokenBalances[token] = parseFloat(item.utxo.value.amount.decimal)
-        }
+  utxos.forEach((item) => {
+    if (item.utxo.value.token_id && item.utxo.value.type === 'TokenV1') {
+      const token = item.utxo.value.token_id
+      if (tokenBalances[token]) {
+        tokenBalances[token] += parseFloat(item.utxo.value.amount.decimal)
+      } else {
+        tokenBalances[token] = parseFloat(item.utxo.value.amount.decimal)
       }
-    })
+    }
   })
+
   return tokenBalances
 }
 

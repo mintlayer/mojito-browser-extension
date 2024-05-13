@@ -13,7 +13,7 @@ const StakingPage = () => {
 
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
+      ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
   const navigate = useNavigate()
 

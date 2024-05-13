@@ -28,7 +28,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
+      ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
 
   const [currentAccountId, setCurrentAccountId] = useState('')
@@ -59,15 +59,15 @@ const NetworkProvider = ({ value: propValue, children }) => {
           ]
         : []
       const addresses_data_receive = await Promise.all(
-            currentMlAddresses.mlReceivingAddresses.map((address) =>
-              getAddressData(address),
-            ),
-          )
+        currentMlAddresses.mlReceivingAddresses.map((address) =>
+          getAddressData(address),
+        ),
+      )
       const addresses_data_change = await Promise.all(
-            currentMlAddresses.mlChangeAddresses.map((address) =>
-              getAddressData(address),
-            ),
-          )
+        currentMlAddresses.mlChangeAddresses.map((address) =>
+          getAddressData(address),
+        ),
+      )
       const addresses_data = [
         ...addresses_data_receive,
         ...addresses_data_change,
@@ -164,7 +164,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
           return acc
         }, [])
 
-      const availableUtxos = available.map((item) => [item])
+      const availableUtxos = available.map((item) => item)
       setUtxos(availableUtxos)
 
       // Extract Token balances from UTXOs
@@ -176,6 +176,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
         acc[key] = {
           balance: tokenBalances[key],
           token_info: {
+            number_of_decimals: tokensData[key].number_of_decimals,
             token_ticker: tokensData[key].token_ticker,
             token_id: key,
           },

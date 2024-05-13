@@ -1,11 +1,11 @@
 import { useContext } from 'react'
 import { NetworkContext } from '@Contexts'
 
-const useMlWalletInfo = (addresses) => {
+const useMlWalletInfo = (addresses, token) => {
   const {
-    balance: mlBalance,
-    lockedBalance: mlBalanceLocked,
-    transactions: mlTransactionsList,
+    balance,
+    lockedBalance,
+    transactions,
     tokenBalances,
     mlDelegationList,
     mlDelegationsBalance,
@@ -14,13 +14,30 @@ const useMlWalletInfo = (addresses) => {
     fetchDelegations,
     unusedAddresses,
     feerate,
+    currentHeight,
   } = useContext(NetworkContext)
 
+  // const nativecoins
+  const nativecoins = ['Mintlayer', 'Bitcoin']
+
+  if (token && !nativecoins.includes(token)) {
+    const tokenBalance = tokenBalances[token].balance || 0
+
+    return {
+      transactions: transactions.filter((tx) => tx.token_id === token),
+      balance: tokenBalance,
+      utxos,
+      unusedAddresses,
+      feerate,
+      tokenBalances,
+    }
+  }
+
   return {
-    mlTransactionsList,
+    transactions: transactions.filter((tx) => tx.token_id === undefined),
     mlDelegationList,
-    mlBalance,
-    mlBalanceLocked,
+    balance,
+    lockedBalance,
     mlDelegationsBalance,
     tokenBalances,
     utxos,
@@ -28,6 +45,7 @@ const useMlWalletInfo = (addresses) => {
     fetchDelegations,
     unusedAddresses,
     feerate,
+    currentHeight,
   }
 }
 

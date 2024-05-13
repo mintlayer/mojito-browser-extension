@@ -20,8 +20,7 @@ import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 const DashboardPage = () => {
-  const { addresses, accountName, setWalletType, accountID } =
-    useContext(AccountContext)
+  const { addresses, accountName, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -33,8 +32,8 @@ const DashboardPage = () => {
   const [account, setAccount] = useState(null)
 
   const [connectedWalletType, setConnectedWalletType] = useState('')
-  const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance, tokenBalances } = useMlWalletInfo()
+  const { balance: btcBalance } = useBtcWalletInfo(currentBtcAddress)
+  const { balance: mlBalance, tokenBalances } = useMlWalletInfo()
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
   const { yesterdayExchangeRate: btcYesterdayExchangeRate } =
@@ -101,8 +100,10 @@ const DashboardPage = () => {
       change24h,
       historyRates,
       network,
+      id,
     ) => {
       cryptos.push({
+        id,
         name,
         symbol,
         balance: NumbersHelper.floatStringToNumber(balance),
@@ -128,16 +129,20 @@ const DashboardPage = () => {
         btcExchangeRate,
         change24h,
         btcHistoryRates,
-        'bitcoin'
+        'bitcoin',
+        'Bitcoin',
       )
     }
 
     const currentMlAddresses =
       networkType === AppInfo.NETWORK_TYPES.MAINNET
-        ? addresses.mlMainnetAddress
+        ? addresses.mlMainnetAddresses
         : addresses.mlTestnetAddresses
 
-    const mlAddress = currentMlAddresses && currentMlAddresses.mlReceivingAddresses && currentMlAddresses.mlReceivingAddresses[0]
+    const mlAddress =
+      currentMlAddresses &&
+      currentMlAddresses.mlReceivingAddresses &&
+      currentMlAddresses.mlReceivingAddresses[0]
 
     if (mlAddress) {
       const change24h =
@@ -151,11 +156,12 @@ const DashboardPage = () => {
         mlExchangeRate,
         change24h,
         mlHistoryrates,
-        'mintlayer'
+        'mintlayer',
+        'Mintlayer',
       )
     }
 
-    if(tokenBalances) {
+    if (tokenBalances) {
       Object.keys(tokenBalances).forEach((token) => {
         addCrypto(
           tokenBalances[token].token_info.token_ticker.string,
@@ -164,7 +170,8 @@ const DashboardPage = () => {
           undefined,
           0,
           [],
-          'mintlayer'
+          'mintlayer',
+          token,
         )
       })
     }
@@ -173,8 +180,7 @@ const DashboardPage = () => {
   }
 
   const goToWallet = (walletType) => {
-    setWalletType(walletType)
-    navigate('/wallet/' + walletType.name)
+    navigate('/wallet/' + walletType.id)
   }
 
   const onConnectItemClick = (walletType) => {
