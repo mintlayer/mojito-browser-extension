@@ -25,6 +25,7 @@ test('Send Transaction', async () => {
               transactionData={TRANSACTIONDATASAMPLE}
               setFormValidity={() => {}}
               calculateTotalFee={() => {}}
+              walletType={{ name: 'Mintlayer' }}
             />
             ,
           </TransactionProvider>

@@ -1,21 +1,22 @@
 import { render, screen } from '@testing-library/react'
 import Balance from './Balance'
-import { AccountProvider, SettingsProvider } from '@Contexts'
+import { SettingsProvider, NetworkContext } from '@Contexts'
 
 const BALANCE_SAMPLE = 1
 const EXCHANGE_RATE_SAMPLE = 25000
 
 test('Render account balance with ML', () => {
   render(
-    <AccountProvider value={{ walletType: { name: 'Mintlayer' } }}>
       <SettingsProvider>
-        <Balance
-          balance={BALANCE_SAMPLE}
-          exchangeRate={EXCHANGE_RATE_SAMPLE}
-        />
+        <NetworkContext.Provider value={{ balanceLoading: false, tokenBalances: [] }}>
+          <Balance
+            balance={BALANCE_SAMPLE}
+            exchangeRate={EXCHANGE_RATE_SAMPLE}
+            walletType={{ name: 'Mintlayer' }}
+          />
+        </NetworkContext.Provider>
         ,
       </SettingsProvider>
-    </AccountProvider>,
   )
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
@@ -31,15 +32,16 @@ test('Render account balance with ML', () => {
 
 test('Render account balance with BTC', () => {
   render(
-    <AccountProvider value={{ walletType: { name: 'Bitcoin' } }}>
       <SettingsProvider>
-        <Balance
-          balance={BALANCE_SAMPLE}
-          exchangeRate={EXCHANGE_RATE_SAMPLE}
-        />
+        <NetworkContext.Provider value={{ balanceLoading: false, tokenBalances: [] }}>
+          <Balance
+            balance={BALANCE_SAMPLE}
+            exchangeRate={EXCHANGE_RATE_SAMPLE}
+            walletType={{ name: 'Bitcoin' }}
+          />
+        </NetworkContext.Provider>
         ,
       </SettingsProvider>
-    </AccountProvider>,
   )
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
@@ -55,15 +57,16 @@ test('Render account balance with BTC', () => {
 
 test('renders balance with zero value when networkType is testnet', () => {
   render(
-    <AccountProvider value={{ walletType: { name: 'Bitcoin' } }}>
       <SettingsProvider value={{ networkType: 'testnet' }}>
-        <Balance
-          balance={BALANCE_SAMPLE}
-          exchangeRate={EXCHANGE_RATE_SAMPLE}
-        />
+        <NetworkContext.Provider value={{ balanceLoading: false, tokenBalances: [] }}>
+          <Balance
+            balance={BALANCE_SAMPLE}
+            exchangeRate={EXCHANGE_RATE_SAMPLE}
+            walletType={{ name: 'Bitcoin' }}
+          />
+        </NetworkContext.Provider>
         ,
       </SettingsProvider>
-    </AccountProvider>,
   )
 
   const currantBalanceComponent = screen.getByTestId('current-balance')
