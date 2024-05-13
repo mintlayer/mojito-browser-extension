@@ -77,6 +77,8 @@ describe('DelegationDetails', () => {
   })
 
   it('calls correct functions on button click', () => {
+    mockDelegation.addFundsClickHandle = jest.fn()
+    mockDelegation.withdrawClickHandle = jest.fn()
     render(
       <AccountContext.Provider value={mockAccountContext}>
         <TransactionContext.Provider value={mockTransactionContext}>
@@ -92,14 +94,10 @@ describe('DelegationDetails', () => {
 
     fireEvent.click(screen.getByText('Add funds'))
     expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
-    expect(mockedUsedNavigate).toHaveBeenCalledWith(
-      '/wallet/test/staking/test_id/add-funds',
-    )
+    expect(mockDelegation.addFundsClickHandle).toHaveBeenCalled()
 
     fireEvent.click(screen.getByText('Withdraw'))
     expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
-    expect(mockedUsedNavigate).toHaveBeenCalledWith(
-      '/wallet/test/staking/test_id/withdraw',
-    )
+    expect(mockDelegation.withdrawClickHandle).toHaveBeenCalled()
   })
 })
