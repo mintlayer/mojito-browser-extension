@@ -45,14 +45,6 @@ const CryptoFiatField = ({
     transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
     walletType.name === 'Mintlayer'
 
-  // useEffect(() => {
-  //   changeValueHandle &&
-  //     changeValueHandle({
-  //       currency: currentValueType,
-  //       value,
-  //     })
-  // }, [changeValueHandle, currentValueType, value])
-
   useEffect(() => {
     setMaxFiatValue(maxCryptoValue * exchangeRate)
   }, [exchangeRate, setMaxFiatValue, maxCryptoValue])
@@ -137,10 +129,11 @@ const CryptoFiatField = ({
   }
 
   const changeHandler = ({ target: { value, parsedValue } }) => {
-    changeValueHandle({
-      currency: currentValueType,
-      value,
-    })
+    changeValueHandle &&
+      changeValueHandle({
+        currency: currentValueType,
+        value,
+      })
 
     if (
       transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
