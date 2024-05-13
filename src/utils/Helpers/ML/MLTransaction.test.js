@@ -37,27 +37,23 @@ describe('getUtxoBalance', () => {
 
 describe('getUtxoTransaction', () => {
   it('should return the transaction id and index', () => {
-    const result = getUtxoTransaction(UTXSOS_MOCK[0]) // in fact this function just for single item
+    const item = getUtxoTransaction(UTXSOS_MOCK[0]) // in fact this function just for single item
 
-    result.forEach((item, index) => {
-      expect(item.transaction).toEqual(
-        UTXSOS_MOCK[index].outpoint.source_id,
-      )
-      expect(item.index).toEqual(UTXSOS_MOCK[index].outpoint.index)
-    })
+    expect(item.transaction).toEqual(
+      UTXSOS_MOCK[0].outpoint.source_id,
+    )
+    expect(item.index).toEqual(UTXSOS_MOCK[0].outpoint.index)
   })
 })
 
 describe('getUtxoTransactionsBytes', () => {
   it('should return the transaction bytes and index', () => {
-    const getUtxoTransactionResult = getUtxoTransaction(UTXSOS_MOCK) // in fact this function just for single item
-    const result = getUtxoTransactionsBytes(getUtxoTransactionResult)
+    const getUtxoTransactionResult = getUtxoTransaction(UTXSOS_MOCK[0]) // in fact this function just for single item
+    const item = getUtxoTransactionsBytes(getUtxoTransactionResult)
 
-    result.forEach((item, index) => {
-      expect(item.bytes).toEqual(
-        Buffer.from(getUtxoTransactionResult[index].transaction, 'hex'),
-      )
-      expect(item.index).toEqual(getUtxoTransactionResult[index].index)
-    })
+    expect(item.bytes).toEqual(
+      Buffer.from(getUtxoTransactionResult.transaction, 'hex'),
+    )
+    expect(item.index).toEqual(getUtxoTransactionResult.index)
   })
 })
