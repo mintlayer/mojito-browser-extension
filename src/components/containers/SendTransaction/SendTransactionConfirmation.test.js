@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
 import SendFundConfirmation from './SendTransactionConfirmation'
-import { SettingsProvider, AccountProvider, NetworkContext } from '@Contexts'
+import { SettingsProvider, AccountProvider } from '@Contexts'
 
 const _data = {
   address: '43c5n73485v73894cm43mr98',
@@ -26,9 +26,7 @@ const setup = ({ data = _data } = {}) => {
   render(
     <AccountProvider>
       <SettingsProvider>
-      <NetworkContext.Provider value={{feerate: 1}}>
         <SendFundConfirmation {...data} />
-      </NetworkContext.Provider>
       </SettingsProvider>
     </AccountProvider>,
   )
