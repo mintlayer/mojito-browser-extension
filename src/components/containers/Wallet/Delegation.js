@@ -63,6 +63,9 @@ const Delegation = ({ delegation }) => {
     )
   }
 
+  delegationOject.addFundsClickHandle = addFundsClickHandle
+  delegationOject.withdrawClickHandle = withdrawClickHandle
+
   const date = delegationOject.creation_time
     ? format(new Date(delegationOject.creation_time * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
