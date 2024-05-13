@@ -14,10 +14,10 @@ export const useRestoreWallet = async (page, walletType) => {
 
   await page.waitForTimeout(1000)
 
-  const backupInputs = await page.$$('input[type="text"]')
-  for (let i = 0; i < backupInputs.length - 12; i++) {
-    await backupInputs[i].fill(wallet.MNEMONIC[i])
-  }
+  const textarea = await page.$$('textarea')
+  const mnemonicString = wallet.MNEMONIC.join(' ')
+
+  await textarea[0].fill(mnemonicString)
   await page.getByRole('button', { name: 'Continue' }).click()
 
   await page.getByRole('button', { name: 'Bitcoin (BTC)' }).click()

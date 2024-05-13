@@ -39,29 +39,29 @@ const restoreAccountTest = async ({ page }) => {
 
   await page.waitForTimeout(1000)
 
-  const backupInputs = await page.$$('input[type="text"]')
-  expect(backupInputs.length).toBe(24)
-  for (let i = 0; i < backupInputs.length - 12; i++) {
-    await backupInputs[i].fill(MNEMONIC[i])
-  }
+  const textarea = await page.$$('textarea')
+  expect(textarea.length).toBe(1)
+
+  const mnemonicString = MNEMONIC.join(' ')
+  await textarea[0].fill(mnemonicString)
 
   await page.getByRole('button', { name: 'Continue' }).click()
 
-   await page.getByRole('button', { name: 'Bitcoin (BTC)' }).click()
-   await page.getByRole('button', { name: 'Mintlayer (ML)' }).click()
-   
-   await page.getByRole('button', { name: 'Confirm' }).click()
-   
-   await page.getByRole('button', { name: 'Segwit' }).click()
-   
-   await page.getByRole('button', { name: 'Confirm' }).click()
+  await page.getByRole('button', { name: 'Bitcoin (BTC)' }).click()
+  await page.getByRole('button', { name: 'Mintlayer (ML)' }).click()
 
-   await page.waitForSelector(`:text("${WALLET_NAME}")`)
-   await expect(page.locator(`:text("${WALLET_NAME}")`)).toBeVisible()
+  await page.getByRole('button', { name: 'Confirm' }).click()
 
-   await page.waitForSelector(':text("Mintlayer (ML)")')
-   await expect(page.locator(':text("Bitcoin (BTC)")')).toBeVisible()
-   await expect(page.locator(':text("Mintlayer (ML)")')).toBeVisible()
+  await page.getByRole('button', { name: 'Segwit' }).click()
+
+  await page.getByRole('button', { name: 'Confirm' }).click()
+
+  await page.waitForSelector(`:text("${WALLET_NAME}")`)
+  await expect(page.locator(`:text("${WALLET_NAME}")`)).toBeVisible()
+
+  await page.waitForSelector(':text("Mintlayer (ML)")')
+  await expect(page.locator(':text("Bitcoin (BTC)")')).toBeVisible()
+  await expect(page.locator(':text("Mintlayer (ML)")')).toBeVisible()
 }
 
 test('Restore account', restoreAccountTest)

@@ -10,6 +10,8 @@ import { BTC } from '@Cryptos'
 const SETSTEPSAMPLE = jest.fn()
 const ONSTEPSFINISHEDSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
+const SAMPLE_MNEMONIC =
+  'pave defy issue grant pear balance mad scatter summer weasel spend metal'
 
 test('Renders restore account page with step 1', () => {
   render(
@@ -187,17 +189,31 @@ test('Renders restore account page with step 4', () => {
   )
   const restoreAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
-  const inputs = screen.getAllByTestId('input')
+  const inputs = screen.getAllByTestId('restore-seed-textarea')
 
   expect(buttons).toHaveLength(3)
-  expect(inputs).toHaveLength(24)
+  expect(inputs).toHaveLength(1)
+  inputs.forEach((input) =>
+    expect(input).not.toHaveClass('seed-textarea seed-invalid'),
+  )
+  inputs.forEach((input) =>
+    expect(input).not.toHaveClass('seed-textarea seed-valid'),
+  )
 
-  inputs.forEach((input) => expect(input).toHaveAttribute('type', 'text'))
-  inputs.forEach((input) => expect(input).toHaveClass('invalid'))
   inputs.forEach((input) =>
     fireEvent.change(input, { target: { value: WORDSSAMPLE[0] } }),
   )
-  inputs.forEach((input) => expect(input).toHaveClass('valid'))
+
+  inputs.forEach((input) =>
+    expect(input).toHaveClass('seed-textarea seed-invalid'),
+  )
+
+  inputs.forEach((input) =>
+    fireEvent.change(input, { target: { value: SAMPLE_MNEMONIC } }),
+  )
+  inputs.forEach((input) =>
+    expect(input).toHaveClass('seed-textarea seed-valid'),
+  )
 
   act(() => {
     restoreAccountForm.submit()
