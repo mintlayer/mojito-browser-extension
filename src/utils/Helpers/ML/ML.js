@@ -109,7 +109,7 @@ const getParsedTransactions = (transactions, addresses) => {
             type = 'CreateDelegationId'
             destAddress = output.pool_id
             sameWalletTransaction = false
-            return acc + Number(output.amount.decimal)
+            return acc + Number(0)
           }
         }
         if (addresses.includes(output.destination)) {
