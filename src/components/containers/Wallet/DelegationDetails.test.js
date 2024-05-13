@@ -5,6 +5,14 @@ import { LocalStorageService } from '@Storage'
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
 import { BrowserRouter as Router } from 'react-router-dom'
 
+// pay attention to write it at the top level of your file
+const mockedUsedNavigate = jest.fn()
+
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockedUsedNavigate,
+}))
+
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
 
@@ -86,12 +94,10 @@ describe('DelegationDetails', () => {
 
     fireEvent.click(screen.getByText('Add funds'))
     expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
-    expect(mockSetTransactionMode).toHaveBeenCalledWith('staking')
-    expect(mockSetDelegationStep).toHaveBeenCalledWith(2)
+    expect(mockedUsedNavigate).toHaveBeenCalledWith('/wallet/test/staking/test_id/add-funds')
 
     fireEvent.click(screen.getByText('Withdraw'))
     expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
-    expect(mockSetTransactionMode).toHaveBeenCalledWith('withdraw')
-    expect(mockSetDelegationStep).toHaveBeenCalledWith(2)
+    expect(mockedUsedNavigate).toHaveBeenCalledWith('/wallet/test/staking/test_id/withdraw')
   })
 })
