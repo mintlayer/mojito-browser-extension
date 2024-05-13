@@ -3,29 +3,23 @@ import React, { useState } from 'react'
 
 import './RestoreSeedField.css'
 
-const isInputValid = (words, DefaultWordList = []) => {
-  if (words.length !== 12 && words.length !== 24) {
-    return false
-  }
-  return words?.length > 0
-    ? words.every((word) => DefaultWordList.includes(word))
-    : false
-}
-
-const RestoreSeedField = ({
-  setFields,
-  BIP39DefaultWordList,
-  accountWordsValid,
-  setAccountWordsValid,
-}) => {
+const RestoreSeedField = ({ setFields, accountWordsValid }) => {
   const [textareaValue, setTextareaValue] = useState('')
 
   const onChangeHandler = ({ target }) => {
     setTextareaValue(target.value)
     const words = target.value.trim().split(' ')
-    const isValid = isInputValid(words, BIP39DefaultWordList)
-    setAccountWordsValid(isValid)
     setFields(words)
+  }
+
+  const getExtraClasses = () => {
+    if (textareaValue && accountWordsValid) {
+      return 'seed-valid'
+    } else if (textareaValue && !accountWordsValid) {
+      return 'seed-invalid'
+    } else {
+      return ''
+    }
   }
 
   return (
@@ -33,13 +27,7 @@ const RestoreSeedField = ({
       data-testid="restore-seed-textarea"
       value={textareaValue}
       onChange={onChangeHandler}
-      className={`seed-textarea ${
-        textareaValue && accountWordsValid
-          ? 'seed-valid'
-          : textareaValue && !accountWordsValid
-          ? 'seed-invalid'
-          : ''
-      }`}
+      className={`seed-textarea ${getExtraClasses()}`}
       name="textarea-seed"
       id="textarea-seed"
       cols="80"

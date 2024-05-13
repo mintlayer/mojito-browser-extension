@@ -93,6 +93,20 @@ const RestoreAccount = ({
 
   const navigate = useNavigate()
 
+  const isSeedValid = (words, DefaultWordList = []) => {
+    if (words.length !== 12 && words.length !== 24) {
+      return false
+    }
+    return words?.length > 0
+      ? words.every((word) => DefaultWordList.includes(word))
+      : false
+  }
+
+  useEffect(() => {
+    const isValid = isSeedValid(wordsFields, defaultBTCWordList)
+    setAccountWordsValid(isValid)
+  }, [wordsFields, defaultBTCWordList])
+
   useEffect(() => {
     const message = !accountNameValid
       ? 'The wallet name should have at least 4 characteres.'
