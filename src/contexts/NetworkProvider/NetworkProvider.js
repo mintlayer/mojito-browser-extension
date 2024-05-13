@@ -116,6 +116,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
       setBalance(Number(available_balance) / ML_ATOMS_PER_COIN)
       setLockedBalance(Number(locked_balance) / ML_ATOMS_PER_COIN)
 
+      setCurrentAccountId(accountID)
+
       // fetch transactions data
       const transactions = transaction_ids.map((txid) =>
         getTransactionData(txid),
@@ -127,8 +129,6 @@ const NetworkProvider = ({ value: propValue, children }) => {
         addressList,
       )
       setTransactions(parsedTransactions)
-
-      setCurrentAccountId(accountID)
 
       // fetch utxos
       const account = LocalStorageService.getItem('unlockedAccount')

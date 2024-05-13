@@ -146,7 +146,7 @@ const CryptoList = ({
   )
   return (
     <>
-      <ul data-testid="crypto-list">
+      <ul data-testid="crypto-list" className="crypto-list">
         {cryptoList.length
           ? cryptoList.map((crypto) => (
               <CryptoItem

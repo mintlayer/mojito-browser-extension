@@ -1,3 +1,8 @@
+.crypto-list {
+  height: 240px;
+  overflow: scroll;
+}
+
 .crypto-item {
   background-color: rgb(var(--color-extra-light-gray));
   display: flex;
