@@ -224,7 +224,7 @@ const getParsedTransactions = (transactions, addresses) => {
     return {
       direction,
       destAddress,
-      value,
+      value: value || 0,
       confirmations,
       date,
       txid,
