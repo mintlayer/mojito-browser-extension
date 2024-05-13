@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, fireEvent, screen } from '@testing-library/react'
-import { SettingsContext, AccountContext } from '@Contexts'
+import { SettingsContext, AccountContext, NetworkContext } from '@Contexts'
 import { CryptoItem, ConnectItem } from './CryptoList'
 import CryptoList from './CryptoList'
 
@@ -27,16 +27,16 @@ describe('CryptoItem', () => {
 
   const renderComponent = (networkType, balanceLoading = false) =>
     render(
-      <AccountContext.Provider value={{ balanceLoading: balanceLoading }}>
         <SettingsContext.Provider value={{ networkType }}>
-          <CryptoItem
-            colorList={colorList}
-            onClickItem={onClickItem}
-            item={item}
-          />
+          <NetworkContext.Provider value={{ balanceLoading: balanceLoading, tokenBalances: [] }}>
+            <CryptoItem
+              colorList={colorList}
+              onClickItem={onClickItem}
+              item={item}
+            />
+          </NetworkContext.Provider>
         </SettingsContext.Provider>
         ,
-      </AccountContext.Provider>,
     )
 
   it('renders the crypto item correctly', () => {
