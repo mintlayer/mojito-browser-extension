@@ -41,8 +41,6 @@ const Header = ({ customBackAction }) => {
   }
 
   const goBack = () => {
-    console.log('FROM location.pathname', location.pathname)
-
     if (isWalletPage) {
       navigate('/dashboard')
       return
@@ -52,7 +50,6 @@ const Header = ({ customBackAction }) => {
       return
     }
     if (isStakingPage) {
-      console.log('from staking page')
       navigate('/wallet/' + coinType)
       return
     }
