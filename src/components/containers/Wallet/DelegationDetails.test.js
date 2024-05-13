@@ -4,14 +4,7 @@ import DelegationDetails, { DelegationDetailsItem } from './DelegationDetails'
 import { LocalStorageService } from '@Storage'
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
 import { BrowserRouter as Router } from 'react-router-dom'
-
-// pay attention to write it at the top level of your file
-const mockedUsedNavigate = jest.fn()
-
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => mockedUsedNavigate,
-}))
+import * as router from 'react-router'
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
@@ -79,6 +72,9 @@ describe('DelegationDetails', () => {
   })
 
   it('calls correct functions on button click', () => {
+    const mockedNavigate = jest.fn()
+    jest.spyOn(router, 'useNavigate').mockImplementation(() => mockedNavigate)
+
     render(
       <AccountContext.Provider value={mockAccountContext}>
         <TransactionContext.Provider value={mockTransactionContext}>
@@ -94,10 +90,10 @@ describe('DelegationDetails', () => {
 
     fireEvent.click(screen.getByText('Add funds'))
     expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
-    expect(mockedUsedNavigate).toHaveBeenCalledWith('/wallet/test/staking/test_id/add-funds')
+    expect(mockedNavigate).toHaveBeenCalledWith('/wallet/test/staking/test_id/add-funds')
 
     fireEvent.click(screen.getByText('Withdraw'))
     expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
-    expect(mockedUsedNavigate).toHaveBeenCalledWith('/wallet/test/staking/test_id/withdraw')
+    expect(mockedNavigate).toHaveBeenCalledWith('/wallet/test/staking/test_id/withdraw')
   })
 })
