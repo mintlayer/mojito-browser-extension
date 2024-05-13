@@ -64,16 +64,16 @@ describe('CryptoItem', () => {
     }
 
     render(
-      <AccountContext.Provider value={{ walletDataLoading: false }}>
         <SettingsContext.Provider value={{ networkType: 'mainnet' }}>
-          <CryptoItem
-            colorList={colorList}
-            onClickItem={onClickItem}
-            item={mintlayerItem}
-          />
+          <NetworkContext.Provider value={{ balanceLoading: false, tokenBalances: [] }}>
+            <CryptoItem
+              colorList={colorList}
+              onClickItem={onClickItem}
+              item={mintlayerItem}
+            />
+          </NetworkContext.Provider>
         </SettingsContext.Provider>
         ,
-      </AccountContext.Provider>,
     )
 
     expect(screen.getByTestId('logo-round')).toBeInTheDocument()
@@ -113,15 +113,15 @@ describe('ConnectItem', () => {
 
   const renderComponent = (networkType) =>
     render(
-      <AccountContext.Provider value={{ walletDataLoading: false }}>
         <SettingsContext.Provider value={{ networkType }}>
-          <ConnectItem
-            walletType={walletType}
-            onClick={onClick}
-          />
+          <NetworkContext.Provider value={{ balanceLoading: false, tokenBalances: [] }}>
+            <ConnectItem
+              walletType={walletType}
+              onClick={onClick}
+            />
+          </NetworkContext.Provider>
         </SettingsContext.Provider>
         ,
-      </AccountContext.Provider>,
     )
 
   it('renders the connect item correctly', () => {
@@ -139,15 +139,15 @@ describe('ConnectItem', () => {
     }
 
     render(
-      <AccountContext.Provider value={{ walletDataLoading: false }}>
         <SettingsContext.Provider value={{ networkType: 'mainnet' }}>
-          <ConnectItem
-            walletType={mintlayerWalletType}
-            onClick={onClick}
-          />
+          <NetworkContext.Provider value={{ balanceLoading: false, tokenBalances: [] }}>
+            <ConnectItem
+              walletType={mintlayerWalletType}
+              onClick={onClick}
+            />
+          </NetworkContext.Provider>
         </SettingsContext.Provider>
         ,
-      </AccountContext.Provider>,
     )
 
     expect(screen.getByTestId('logo-round')).toBeInTheDocument()
@@ -170,15 +170,15 @@ describe('ConnectItem', () => {
     }
 
     render(
-      <AccountContext.Provider value={{ walletDataLoading: false }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
-          <ConnectItem
-            walletType={otherWalletType}
-            onClick={onClick}
-          />
+          <NetworkContext.Provider value={{ balanceLoading: false, tokenBalances: [] }}>
+            <ConnectItem
+              walletType={otherWalletType}
+              onClick={onClick}
+            />
+          </NetworkContext.Provider>
         </SettingsContext.Provider>
         ,
-      </AccountContext.Provider>,
     )
 
     expect(screen.getByText('Add wallet')).toBeInTheDocument()
@@ -242,17 +242,17 @@ describe('CryptoList', () => {
 
   const renderEmptyComponent = (networkType) =>
     render(
-      <AccountContext.Provider value={{ balanceLoading: false }}>
         <SettingsContext.Provider value={{ networkType }}>
-          <CryptoList
-            cryptoList={[]}
-            colorList={colorList}
-            onWalletItemClick={onWalletItemClick}
-            onConnectItemClick={onConnectItemClick}
-          />
+          <NetworkContext.Provider value={{ balanceLoading: false, tokenBalances: [] }}>
+            <CryptoList
+              cryptoList={[]}
+              colorList={colorList}
+              onWalletItemClick={onWalletItemClick}
+              onConnectItemClick={onConnectItemClick}
+            />
+          </NetworkContext.Provider>
         </SettingsContext.Provider>
         ,
-      </AccountContext.Provider>,
     )
 
   //TDOO: enable this test when mainnet is ready
