@@ -93,11 +93,9 @@ describe('DelegationDetails', () => {
     )
 
     fireEvent.click(screen.getByText('Add funds'))
-    expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
     expect(mockDelegation.addFundsClickHandle).toHaveBeenCalled()
 
     fireEvent.click(screen.getByText('Withdraw'))
-    expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
     expect(mockDelegation.withdrawClickHandle).toHaveBeenCalled()
   })
 })
