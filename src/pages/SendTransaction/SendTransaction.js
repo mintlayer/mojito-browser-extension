@@ -113,7 +113,7 @@ const SendTransactionPage = () => {
     const address = transactionInfo.to
     const atoms = walletType.tokenId
       ? tokenBalances[walletType.tokenId].token_info.number_of_decimals
-      : null
+      : 11
     const amountToSend = MLHelpers.getAmountInAtoms(
       transactionInfo.amount,
       Math.pow(10, atoms),
@@ -196,7 +196,7 @@ const SendTransactionPage = () => {
   const confirmMlTransaction = async (password) => {
     const atoms = walletType.tokenId
       ? tokenBalances[walletType.tokenId].token_info.number_of_decimals
-      : null
+      : 11
     const amountToSend = MLHelpers.getAmountInAtoms(
       transactionInformation.amount,
       Math.pow(10, atoms),
