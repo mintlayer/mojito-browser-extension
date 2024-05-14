@@ -3,7 +3,7 @@ import { useContext } from 'react'
 
 import { Format } from '@Helpers'
 import { Button } from '@BasicComponents'
-import { SettingsContext, TransactionContext } from '@Contexts'
+import { SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import { ML } from '@Helpers'
 import { format } from 'date-fns'
@@ -28,9 +28,6 @@ const DelegationDetailsItem = ({ title, content }) => {
 }
 
 const DelegationDetails = ({ delegation }) => {
-  const { setCurrentDelegationInfo } =
-    useContext(TransactionContext)
-
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
@@ -47,11 +44,11 @@ const DelegationDetails = ({ delegation }) => {
   }explorer.mintlayer.org/delegation/${delegation?.delegation_id}`
 
   const addFundsClickHandle = () => {
-    setCurrentDelegationInfo(delegation)
+    delegation.addFundsClickHandle()
   }
 
   const withdrawClickHandle = () => {
-    setCurrentDelegationInfo(delegation)
+    delegation.withdrawClickHandle()
   }
 
   return (
