@@ -6,11 +6,18 @@ import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 
 import './ShowAddress.css'
 
-const ShowAddress = ({ address, onCopy }) => {
+const ShowAddress = ({ address: defaultAddress, onCopy, unusedAddress }) => {
   const [toCopyLabel, afterCopyLabel] = ['Copy Address', 'Copied!']
   const copiedTimeoutInMs = 2 * 1_000
   const [label, setLabel] = useState(toCopyLabel)
   const [disabled, setDisabled] = useState(false)
+  const [showUnused, setShowUnused] = useState(false)
+
+  const address = showUnused ? unusedAddress : defaultAddress
+
+  const addressLabel = showUnused
+    ? 'Show first address'
+    : 'Generate new address'
 
   const copyAddress = () => {
     setDisabled(true)
@@ -21,6 +28,10 @@ const ShowAddress = ({ address, onCopy }) => {
       setDisabled(false)
     }, copiedTimeoutInMs)
     onCopy && onCopy(address)
+  }
+
+  const toggleUnused = () => {
+    setShowUnused(!showUnused)
   }
 
   return (
@@ -37,7 +48,25 @@ const ShowAddress = ({ address, onCopy }) => {
             <p>Address:</p>
             <p>
               <strong>{address}</strong>
+
+              {unusedAddress &&
+                (showUnused ? (
+                  <span className="unused-address"> (new)</span>
+                ) : (
+                  <span className="used-address"> (used)</span>
+                ))}
             </p>
+
+            {unusedAddress ? (
+              <button
+                className="show-unused"
+                onClick={toggleUnused}
+              >
+                {addressLabel}
+              </button>
+            ) : (
+              <></>
+            )}
           </div>
           <Button
             extraStyleClasses={['press']}

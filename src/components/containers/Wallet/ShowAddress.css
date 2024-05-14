@@ -19,3 +19,20 @@
   top: 1px;
   background-color: rgb(var(--color-dark-gray));
 }
+
+.show-unused {
+  cursor: pointer;
+  background: rgb(var(--color-green), var(--nearly-opaque-alpha));
+  padding: 2px 5px;
+  border-radius: 5px;
+  color: #fff;
+}
+
+.used-address {
+  color: rgb(var(--color-dark-gray));
+}
+
+.unused-address {
+  color: rgb(var(--color-green));
+  font-weight: bold;
+}
