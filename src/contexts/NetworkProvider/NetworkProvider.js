@@ -34,6 +34,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const [currentAccountId, setCurrentAccountId] = useState('')
   const [onlineHeight, setOnlineHeight] = useState(0)
   const [currentHeight, setCurrentHeight] = useState(0)
+  const [currentNetworkType, setCurrentNetworkType] = useState(networkType)
   const [balance, setBalance] = useState(0)
   const [tokenBalances, setTokenBalances] = useState({})
   const [lockedBalance, setLockedBalance] = useState(0)
@@ -164,6 +165,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
           return acc
         }, [])
 
+      setCurrentNetworkType(networkType)
+
       const availableUtxos = available.map((item) => item)
       setUtxos(availableUtxos)
 
@@ -189,7 +192,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
     [currentMlAddresses],
   )
 
-  const balanceLoading = currentAccountId !== accountID
+  const balanceLoading =
+    currentAccountId !== accountID || networkType !== currentNetworkType
 
   const fetchDelegations = useCallback(async () => {
     try {
@@ -255,7 +259,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
     // fetch addresses, utxos, transactions
     fetchAllData()
     fetchDelegations()
-  }, [onlineHeight, accountID])
+  }, [onlineHeight, accountID, networkType])
 
   useEffect(() => {
     const getData = async () => {
