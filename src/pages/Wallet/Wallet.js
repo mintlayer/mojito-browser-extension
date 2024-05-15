@@ -34,7 +34,7 @@ const WalletPage = () => {
       : addresses.btcTestnetAddress
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
+      ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
 
   const checkAddresses =
@@ -42,7 +42,7 @@ const WalletPage = () => {
 
   const [openShowAddress, setOpenShowAddress] = useState(false)
 
-  const { transactions, balance, lockedBalance } = datahook(
+  const { transactions, balance, lockedBalance, unusedAddresses } = datahook(
     checkAddresses,
     coinType,
   )
@@ -98,6 +98,7 @@ const WalletPage = () => {
               <PopUp setOpen={setOpenShowAddress}>
                 <Wallet.ShowAddress
                   address={walletAddress}
+                  unusedAddress={unusedAddresses?.receive}
                 ></Wallet.ShowAddress>
               </PopUp>
             )}
