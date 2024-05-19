@@ -214,7 +214,7 @@ const calculateTransactionSizeInBytes = async ({
   tokenId,
   approximateFee,
 }) => {
-  const isToken = tokenId !== undefined
+  const isToken = !!tokenId
   const amountToUseFinaleCoin = !isToken
     ? BigInt(amountToUse) + BigInt(approximateFee)
     : BigInt(approximateFee)
@@ -349,7 +349,7 @@ const sendTransaction = async ({
   adjustedFee,
   tokenId,
 }) => {
-  const isToken = tokenId !== undefined
+  const isToken = !!tokenId
   const fee = adjustedFee
   if (fee > BigInt(AppInfo.MAX_ML_FEE)) {
     throw new Error('Fee is too high, please try again later.')
