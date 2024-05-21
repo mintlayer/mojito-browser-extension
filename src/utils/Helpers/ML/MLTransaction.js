@@ -53,7 +53,7 @@ const getTransactionUtxos = ({ utxos, amount, tokenId }) => {
   for (let i = 0; i < utxos.length; i++) {
     lastIndex = i
     const utxoBalance = getUtxoBalance(utxos[i], tokenId)
-    if (utxoBalance && balance < BigInt(amount)) {
+    if (balance < BigInt(amount)) {
       balance += utxoBalance
       utxosToSpend.push(utxos[i])
     } else {
