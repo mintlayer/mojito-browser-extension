@@ -1,39 +1,12 @@
-import { useState, useEffect, useContext } from 'react'
-import { SettingsContext, AccountContext } from '@Contexts'
+import { useContext } from 'react'
+import { SettingsContext } from '@Contexts'
 import LogoIcon from '@Assets/images/logo.svg'
 import { AppInfo } from '@Constants'
 import './Logo.css'
 
-const Title = () => {
+const Logo = ({ unlocked }) => {
   const { networkType } = useContext(SettingsContext)
-  return (
-    <>
-      Moji
-      {networkType === AppInfo.NETWORK_TYPES.TESTNET ? (
-        <span
-          className="testnetMark"
-          data-testid="testnet-mark"
-        >
-          t
-        </span>
-      ) : (
-        't'
-      )}
-      o
-    </>
-  )
-}
 
-const Logo = () => {
-  const [unlocked, setUnlocked] = useState(false)
-  const { networkType } = useContext(SettingsContext)
-  const { isAccountUnlocked } = useContext(AccountContext)
-
-  useEffect(() => {
-    const accountUnlocked = isAccountUnlocked()
-    setUnlocked(accountUnlocked)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
   return (
     <div className="logoContainer">
       <img
@@ -45,9 +18,20 @@ const Logo = () => {
         className="mojitoLettering"
         data-testid="logo-name"
       >
-        {unlocked ? <Title /> : 'Mojito'}
+        Moji
+        {networkType === AppInfo.NETWORK_TYPES.TESTNET && unlocked ? (
+          <span
+            className="testnetMark"
+            data-testid="testnet-mark"
+          >
+            t
+          </span>
+        ) : (
+          't'
+        )}
+        o
       </h1>
-      {unlocked && networkType === AppInfo.NETWORK_TYPES.TESTNET && (
+      {networkType === AppInfo.NETWORK_TYPES.TESTNET  && unlocked && (
         <div
           className="testnetMessage"
           data-testid="testnet-message"

@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import React, { useContext, useEffect, useState } from 'react'
-import { useNavigate, useLocation, useParams } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 import { ReactComponent as BackImg } from '@Assets/images/back-button.svg'
 import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
@@ -13,13 +13,16 @@ import { AccountContext } from '@Contexts'
 import './Header.css'
 
 const Header = ({ customBackAction }) => {
-  const { coinType } = useParams()
   const [unlocked, setUnlocked] = useState(false)
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const tooltipMessage = 'Expand view'
   const navigate = useNavigate()
   const location = useLocation()
   const { isAccountUnlocked, logout, isExtended } = useContext(AccountContext)
+
+  const coinType = location.pathname.includes('/wallet/')
+    ? location.pathname.split('/wallet/')[1].split('/')[0]
+    : ''
 
   const isWalletPage = location.pathname === '/wallet/' + coinType
   const isSettingsPage = location.pathname === '/settings'
@@ -150,7 +153,7 @@ const Header = ({ customBackAction }) => {
           </Button>
         </>
       )}
-      <Logo />
+      <Logo unlocked={unlocked} />
     </header>
   )
 }

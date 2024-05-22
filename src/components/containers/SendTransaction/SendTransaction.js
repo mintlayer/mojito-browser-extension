@@ -16,9 +16,9 @@ import './SendTransaction.css'
 import { Error } from '@BasicComponents'
 
 const SendTransaction = ({
-  totalFeeFiat: totalFeeFiatParent,
-  totalFeeCrypto: totalFeeCryptoParent,
-  setTotalFeeCrypto: setTotalFeeCryptoParent,
+  totalFeeFiat,
+  totalFeeCrypto,
+  setTotalFeeCrypto,
   transactionData,
   exchangeRate = 0,
   maxValueInToken,
@@ -38,8 +38,6 @@ const SendTransaction = ({
   const { feeLoading } = useContext(TransactionContext)
   const cryptoName = transactionData.tokenName
   const fiatName = transactionData.fiatName
-  const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
-  const [totalFeeCrypto, setTotalFeeCrypto] = useState(totalFeeCryptoParent)
   const [amountInCrypto, setAmountInCrypto] = useState('0.00')
   const [amountInFiat, setAmountInFiat] = useState('0.00')
   const [originalAmount, setOriginalAmount] = useState('0,00')
@@ -132,7 +130,7 @@ const SendTransaction = ({
         setPassValidity(false)
         setPass('')
         setFee(e.message.split('minimum fee ')[1]) // Override fee with minimum fee
-        setTotalFeeCryptoParent(e.message.split('minimum fee ')[1])
+        setTotalFeeCrypto(e.message.split('minimum fee ')[1])
         setAdjustedFee(e.message.split('minimum fee ')[1])
         setTxErrorMessage('Transaction fee adjusted')
         console.error(e)
@@ -160,16 +158,7 @@ const SendTransaction = ({
 
   const handleCancel = () => {
     setPopupState(false)
-    if (walletType.name === 'Mintlayer') {
-      setTotalFeeCryptoParent(0)
-    }
   }
-
-  useEffect(() => setTotalFeeFiat(totalFeeFiatParent), [totalFeeFiatParent])
-  useEffect(
-    () => setTotalFeeCrypto(totalFeeCryptoParent),
-    [totalFeeCryptoParent],
-  )
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {

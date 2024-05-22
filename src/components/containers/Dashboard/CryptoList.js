@@ -13,9 +13,8 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
   const { balanceLoading, tokenBalances } = useContext(NetworkContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const color = colorList[item.symbol.toLowerCase()]
-  const balance = isTestnet
-    ? item.balance
-    : Number(item.balance * item.exchangeRate).toFixed(2)
+  const balance = item.balance
+  const fiatBalance = Number(item.balance * item.exchangeRate)?.toFixed(2)
   const bigValues = balance.length > 13
   const data =
     item.historyRates &&
@@ -66,7 +65,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
             <div className={`values ${bigValues ? 'big-values' : ''}`}>
               <dl>
                 <dt>Value:</dt>
-                <dd>{balance}</dd>
+                <dd>{isTestnet ? balance : fiatBalance}</dd>
                 {!isTestnet && (
                   <>
                     <dt>Price:</dt>
@@ -146,7 +145,10 @@ const CryptoList = ({
   )
   return (
     <>
-      <ul data-testid="crypto-list" className="crypto-list">
+      <ul
+        data-testid="crypto-list"
+        className="crypto-list"
+      >
         {cryptoList.length
           ? cryptoList.map((crypto) => (
               <CryptoItem
