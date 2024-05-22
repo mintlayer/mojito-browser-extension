@@ -4,7 +4,7 @@ import LogoIcon from '@Assets/images/logo.svg'
 import { AppInfo } from '@Constants'
 import './Logo.css'
 
-const Logo = () => {
+const Logo = ({ unlocked }) => {
   const { networkType } = useContext(SettingsContext)
 
   return (
@@ -19,7 +19,7 @@ const Logo = () => {
         data-testid="logo-name"
       >
         Moji
-        {networkType === AppInfo.NETWORK_TYPES.TESTNET ? (
+        {networkType === AppInfo.NETWORK_TYPES.TESTNET && unlocked ? (
           <span
             className="testnetMark"
             data-testid="testnet-mark"
@@ -31,7 +31,7 @@ const Logo = () => {
         )}
         o
       </h1>
-      {networkType === AppInfo.NETWORK_TYPES.TESTNET && (
+      {networkType === AppInfo.NETWORK_TYPES.TESTNET  && unlocked && (
         <div
           className="testnetMessage"
           data-testid="testnet-message"

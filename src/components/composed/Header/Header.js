@@ -153,7 +153,7 @@ const Header = ({ customBackAction }) => {
           </Button>
         </>
       )}
-      <Logo />
+      <Logo unlocked={unlocked} />
     </header>
   )
 }
