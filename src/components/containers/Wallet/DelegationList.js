@@ -1,14 +1,8 @@
 import Delegation from './Delegation'
 import { SkeletonLoader } from '@BasicComponents'
 import './DelegationList.css'
-import { useContext } from 'react'
-import { NetworkContext } from '@Contexts'
 
-const DelegationList = ({ delegationsList }) => {
-  const { fetchingDelegations } = useContext(NetworkContext)
-
-  const delegationsLoading = fetchingDelegations && delegationsList.length === 0
-
+const DelegationList = ({ delegationsList, delegationsLoading }) => {
   const renderSkeletonLoaders = () =>
     Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
 

@@ -2,7 +2,6 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react'
 import {
@@ -50,18 +49,17 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const [fetchingTransactions, setFetchingTransactions] = useState(true)
   const [fetchingDelegations, setFetchingDelegations] = useState(true)
 
-  const fetchAllData = useMemo(
-    () => async () => {
+  const fetchAllData = async () => {
       // fetch fee rate
       const feerate = await Mintlayer.getFeesEstimates()
       setFeerate(parseInt(JSON.parse(feerate)))
 
       const account = LocalStorageService.getItem('unlockedAccount')
-      const networkType = LocalStorageService.getItem('networkType')
 
       setFetchingTransactions(true)
       setFetchingBalances(true)
       setFetchingUtxos(true)
+      setFetchingDelegations(true)
 
       if (
         currentAccountId !== accountID ||
@@ -75,7 +73,6 @@ const NetworkProvider = ({ value: propValue, children }) => {
         setUtxos([])
         setMlDelegationList([])
         setMlDelegationsBalance(0)
-        setFetchingDelegations(true)
       }
 
       // fetch addresses
@@ -218,15 +215,12 @@ const NetworkProvider = ({ value: propValue, children }) => {
       }, {})
 
       setTokenBalances(merged)
-    },
-    [currentMlAddresses, currentHeight],
-  )
+    }
 
   const balanceLoading =
     currentAccountId !== accountID || networkType !== currentNetworkType
 
-  const fetchDelegations = useMemo(
-    () => async () => {
+  const fetchDelegations = async () => {
       try {
         if (!addresses) return
         // if (mlDelegationList.length === 0) {
@@ -287,9 +281,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
         console.error(error)
         setFetchingDelegations(false)
       }
-    },
-    [addresses, currentHeight],
-  )
+    }
 
   useEffect(() => {
     setCurrentHeight(onlineHeight)
