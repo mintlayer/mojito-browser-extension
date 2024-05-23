@@ -239,7 +239,6 @@ const calculateTransactionSizeInBytes = async ({
     utxos: utxoCoin,
     amount: amountToUseFinaleCoin,
   })
-
   const requireUtxoToken = isToken
     ? getTransactionUtxos({
         utxos: utxoToken,
