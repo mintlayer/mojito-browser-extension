@@ -45,11 +45,35 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const [mlDelegationList, setMlDelegationList] = useState([])
   const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
 
+  const [fetchingBalances, setFetchingBalances] = useState(false)
+  const [fetchingUtxos, setFetchingUtxos] = useState(false)
+  const [fetchingTransactions, setFetchingTransactions] = useState(false)
+  const [fetchingDelegations, setFetchingDelegations] = useState(false)
+
   const fetchAllData = useMemo(
     () => async () => {
       // fetch fee rate
       const feerate = await Mintlayer.getFeesEstimates()
       setFeerate(parseInt(JSON.parse(feerate)))
+
+      const account = LocalStorageService.getItem('unlockedAccount')
+      const networkType = LocalStorageService.getItem('networkType')
+
+      setFetchingTransactions(true)
+      setFetchingBalances(true)
+      setFetchingUtxos(true)
+
+      if (
+        currentAccountId !== accountID ||
+        networkType !== currentNetworkType
+      ) {
+        // reset data if account or network changed
+        setTransactions([])
+        setBalance(0)
+        setLockedBalance(0)
+        setTokenBalances({})
+        setUtxos([])
+      }
 
       // fetch addresses
       const addressList = currentMlAddresses
@@ -116,6 +140,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
       setBalance(Number(available_balance) / ML_ATOMS_PER_COIN)
       setLockedBalance(Number(locked_balance) / ML_ATOMS_PER_COIN)
 
+      setFetchingBalances(false)
+
       setCurrentAccountId(accountID)
 
       // fetch transactions data
@@ -130,9 +156,9 @@ const NetworkProvider = ({ value: propValue, children }) => {
       )
       setTransactions(parsedTransactions)
 
+      setFetchingTransactions(false)
+
       // fetch utxos
-      const account = LocalStorageService.getItem('unlockedAccount')
-      const networkType = LocalStorageService.getItem('networkType')
       const accountName = account.name
       const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
       const unconfirmedTransactions =
@@ -169,6 +195,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
       const availableUtxos = available.map((item) => item)
       setUtxos(availableUtxos)
 
+      setFetchingUtxos(false)
+
       // Extract Token balances from UTXOs
       const tokenBalances = ML.getTokenBalances(availableUtxos)
       const tokensData = await Mintlayer.getTokensData(
@@ -201,6 +229,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
         // if (mlDelegationList.length === 0) {
         //   setDelegationsLoading(true)
         // }
+        setFetchingDelegations(true)
         const addressList = [
           ...currentMlAddresses.mlReceivingAddresses,
           ...currentMlAddresses.mlChangeAddresses,
@@ -249,6 +278,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
         )
         setMlDelegationsBalance(totalDelegationBalance)
         setMlDelegationList(mergedDelegations)
+
+        setFetchingDelegations(false)
       } catch (error) {
         console.error(error)
       }
@@ -299,6 +330,11 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
     balanceLoading,
     feerate,
+
+    fetchingBalances,
+    fetchingUtxos,
+    fetchingTransactions,
+    fetchingDelegations,
   }
 
   return (
