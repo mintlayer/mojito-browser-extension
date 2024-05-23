@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -189,76 +188,83 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
       setTokenBalances(merged)
     },
-    [currentMlAddresses],
+    [currentMlAddresses, currentHeight],
   )
 
   const balanceLoading =
     currentAccountId !== accountID || networkType !== currentNetworkType
 
-  const fetchDelegations = useCallback(async () => {
-    try {
-      if (!addresses) return
-      // if (mlDelegationList.length === 0) {
-      //   setDelegationsLoading(true)
-      // }
-      const addressList = [
-        ...currentMlAddresses.mlReceivingAddresses,
-        ...currentMlAddresses.mlChangeAddresses,
-      ]
-      const delegations = await Mintlayer.getWalletDelegations(addressList)
-      const delegation_details = await Mintlayer.getDelegationDetails(
-        delegations.map((delegation) => delegation.delegation_id),
-      )
-      const blocks_data = await Mintlayer.getBlocksData(
-        delegation_details.map(
-          (delegation) => delegation.creation_block_height,
-        ),
-      )
+  const fetchDelegations = useMemo(
+    () => async () => {
+      try {
+        if (!addresses) return
+        // if (mlDelegationList.length === 0) {
+        //   setDelegationsLoading(true)
+        // }
+        const addressList = [
+          ...currentMlAddresses.mlReceivingAddresses,
+          ...currentMlAddresses.mlChangeAddresses,
+        ]
+        const delegations = await Mintlayer.getWalletDelegations(addressList)
+        const delegation_details = await Mintlayer.getDelegationDetails(
+          delegations.map((delegation) => delegation.delegation_id),
+        )
+        const blocks_data = await Mintlayer.getBlocksData(
+          delegation_details.map(
+            (delegation) => delegation.creation_block_height,
+          ),
+        )
 
-      const mergedDelegations = delegations.map((delegation, index) => {
-        return {
-          ...delegation,
-          balance: delegation.balance.atoms,
-          creation_block_height:
-            delegation_details[index].creation_block_height,
-          creation_time: blocks_data.find(
-            ({ height }) =>
-              height === delegation_details[index].creation_block_height,
-          ).header.timestamp.timestamp,
+        const mergedDelegations = delegations.map((delegation, index) => {
+          return {
+            ...delegation,
+            balance: delegation.balance.atoms,
+            creation_block_height:
+              delegation_details[index].creation_block_height,
+            creation_time: blocks_data.find(
+              ({ height }) =>
+                height === delegation_details[index].creation_block_height,
+            ).header.timestamp.timestamp,
+          }
+        })
+
+        const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
+        const unconfirmedTransactions =
+          LocalStorageService.getItem(unconfirmedTransactionString) || []
+
+        const delegationTransactions = unconfirmedTransactions.filter(
+          (unconfirmedTransaction) =>
+            unconfirmedTransaction.mode ===
+            AppInfo.ML_TRANSACTION_MODES.DELEGATION,
+        )
+
+        if (delegationTransactions.length > 0) {
+          mergedDelegations.unshift(...delegationTransactions)
         }
-      })
 
-      const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
-      const unconfirmedTransactions =
-        LocalStorageService.getItem(unconfirmedTransactionString) || []
-
-      const delegationTransactions = unconfirmedTransactions.filter(
-        (unconfirmedTransaction) =>
-          unconfirmedTransaction.mode ===
-          AppInfo.ML_TRANSACTION_MODES.DELEGATION,
-      )
-
-      if (delegationTransactions.length > 0) {
-        mergedDelegations.unshift(...delegationTransactions)
+        const totalDelegationBalance = mergedDelegations.reduce(
+          (acc, delegation) =>
+            acc + (delegation.balance ? Number(delegation.balance) : 0),
+          0,
+        )
+        setMlDelegationsBalance(totalDelegationBalance)
+        setMlDelegationList(mergedDelegations)
+      } catch (error) {
+        console.error(error)
       }
-
-      const totalDelegationBalance = mergedDelegations.reduce(
-        (acc, delegation) =>
-          acc + (delegation.balance ? Number(delegation.balance) : 0),
-        0,
-      )
-      setMlDelegationsBalance(totalDelegationBalance)
-      setMlDelegationList(mergedDelegations)
-    } catch (error) {
-      console.error(error)
-    }
-  }, [addresses])
+    },
+    [addresses, currentHeight],
+  )
 
   useEffect(() => {
     setCurrentHeight(onlineHeight)
     // fetch addresses, utxos, transactions
-    fetchAllData()
-    fetchDelegations()
+    // fetch data one by one
+    const getData = async () => {
+      await fetchAllData()
+      await fetchDelegations()
+    }
+    getData()
   }, [onlineHeight, accountID, networkType])
 
   useEffect(() => {
