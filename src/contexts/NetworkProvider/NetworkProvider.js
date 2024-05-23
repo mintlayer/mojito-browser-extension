@@ -45,10 +45,10 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const [mlDelegationList, setMlDelegationList] = useState([])
   const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
 
-  const [fetchingBalances, setFetchingBalances] = useState(false)
-  const [fetchingUtxos, setFetchingUtxos] = useState(false)
-  const [fetchingTransactions, setFetchingTransactions] = useState(false)
-  const [fetchingDelegations, setFetchingDelegations] = useState(false)
+  const [fetchingBalances, setFetchingBalances] = useState(true)
+  const [fetchingUtxos, setFetchingUtxos] = useState(true)
+  const [fetchingTransactions, setFetchingTransactions] = useState(true)
+  const [fetchingDelegations, setFetchingDelegations] = useState(true)
 
   const fetchAllData = useMemo(
     () => async () => {
@@ -282,6 +282,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
         setFetchingDelegations(false)
       } catch (error) {
         console.error(error)
+        setFetchingDelegations(false)
       }
     },
     [addresses, currentHeight],
