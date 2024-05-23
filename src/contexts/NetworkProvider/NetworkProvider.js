@@ -73,6 +73,9 @@ const NetworkProvider = ({ value: propValue, children }) => {
         setLockedBalance(0)
         setTokenBalances({})
         setUtxos([])
+        setMlDelegationList([])
+        setMlDelegationsBalance(0)
+        setFetchingDelegations(true)
       }
 
       // fetch addresses
