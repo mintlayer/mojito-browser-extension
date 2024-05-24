@@ -1,11 +1,14 @@
 import { useContext } from 'react'
 import Transaction from './Transaction'
-import { TransactionContext } from '@Contexts'
+import { NetworkContext } from '@Contexts'
 import { SkeletonLoader } from '@BasicComponents'
 import './TransactionsList.css'
 
 const TransactionsList = ({ transactionsList, getConfirmations }) => {
-  const { transactionsLoading } = useContext(TransactionContext)
+  const { fetchingTransactions } = useContext(NetworkContext)
+
+  const transactionsLoading =
+    fetchingTransactions && transactionsList.length === 0
 
   const renderSkeletonLoaders = () =>
     Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)

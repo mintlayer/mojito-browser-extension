@@ -22,9 +22,10 @@ const CurrentStaking = ({ addressList }) => {
     network: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
   }
 
-  const { mlDelegationList, mlDelegationsBalance } =
+  const { mlDelegationList, mlDelegationsBalance, fetchingDelegations } =
     useMlWalletInfo(addressList)
 
+  const delegationsLoading = fetchingDelegations && mlDelegationList.length === 0
   const onDelegationCreateButtonClick = () => {
     navigate('/wallet/' + walletType.name + '/staking/create-delegation')
   }
@@ -59,7 +60,10 @@ const CurrentStaking = ({ addressList }) => {
         </a>
       </div>
 
-      <Wallet.DelegationList delegationsList={mlDelegationList} />
+      <Wallet.DelegationList
+        delegationsList={mlDelegationList}
+        delegationsLoading={delegationsLoading}
+      />
       <div className="delegation-button-wrapper">
         <Button
           onClickHandle={onDelegationCreateButtonClick}

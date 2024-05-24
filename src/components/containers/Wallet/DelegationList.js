@@ -1,10 +1,10 @@
 import Delegation from './Delegation'
-// import { SkeletonLoader } from '@BasicComponents'
+import { SkeletonLoader } from '@BasicComponents'
 import './DelegationList.css'
 
-const DelegationList = ({ delegationsList }) => {
-  // const renderSkeletonLoaders = () =>
-  //   Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
+const DelegationList = ({ delegationsList, delegationsLoading }) => {
+  const renderSkeletonLoaders = () =>
+    Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
 
   const renderDelegations = () => {
     if (!delegationsList || !delegationsList.length) {
@@ -33,7 +33,7 @@ const DelegationList = ({ delegationsList }) => {
       className="delegation-list"
       data-testid={'delegation-list'}
     >
-      {renderDelegations()}
+      {delegationsLoading ? renderSkeletonLoaders() : renderDelegations()}
     </ul>
   )
 }

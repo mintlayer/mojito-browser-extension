@@ -1,9 +1,7 @@
 import React, {
   createContext,
-  useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react'
 import {
@@ -34,6 +32,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const [currentAccountId, setCurrentAccountId] = useState('')
   const [onlineHeight, setOnlineHeight] = useState(0)
   const [currentHeight, setCurrentHeight] = useState(0)
+  const [currentNetworkType, setCurrentNetworkType] = useState(networkType)
   const [balance, setBalance] = useState(0)
   const [tokenBalances, setTokenBalances] = useState({})
   const [lockedBalance, setLockedBalance] = useState(0)
@@ -45,11 +44,36 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const [mlDelegationList, setMlDelegationList] = useState([])
   const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
 
-  const fetchAllData = useMemo(
-    () => async () => {
+  const [fetchingBalances, setFetchingBalances] = useState(true)
+  const [fetchingUtxos, setFetchingUtxos] = useState(true)
+  const [fetchingTransactions, setFetchingTransactions] = useState(true)
+  const [fetchingDelegations, setFetchingDelegations] = useState(true)
+
+  const fetchAllData = async () => {
       // fetch fee rate
       const feerate = await Mintlayer.getFeesEstimates()
       setFeerate(parseInt(JSON.parse(feerate)))
+
+      const account = LocalStorageService.getItem('unlockedAccount')
+
+      setFetchingTransactions(true)
+      setFetchingBalances(true)
+      setFetchingUtxos(true)
+      setFetchingDelegations(true)
+
+      if (
+        currentAccountId !== accountID ||
+        networkType !== currentNetworkType
+      ) {
+        // reset data if account or network changed
+        setTransactions([])
+        setBalance(0)
+        setLockedBalance(0)
+        setTokenBalances({})
+        setUtxos([])
+        setMlDelegationList([])
+        setMlDelegationsBalance(0)
+      }
 
       // fetch addresses
       const addressList = currentMlAddresses
@@ -116,6 +140,8 @@ const NetworkProvider = ({ value: propValue, children }) => {
       setBalance(Number(available_balance) / ML_ATOMS_PER_COIN)
       setLockedBalance(Number(locked_balance) / ML_ATOMS_PER_COIN)
 
+      setFetchingBalances(false)
+
       setCurrentAccountId(accountID)
 
       // fetch transactions data
@@ -130,9 +156,9 @@ const NetworkProvider = ({ value: propValue, children }) => {
       )
       setTransactions(parsedTransactions)
 
+      setFetchingTransactions(false)
+
       // fetch utxos
-      const account = LocalStorageService.getItem('unlockedAccount')
-      const networkType = LocalStorageService.getItem('networkType')
       const accountName = account.name
       const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
       const unconfirmedTransactions =
@@ -164,8 +190,12 @@ const NetworkProvider = ({ value: propValue, children }) => {
           return acc
         }, [])
 
+      setCurrentNetworkType(networkType)
+
       const availableUtxos = available.map((item) => item)
       setUtxos(availableUtxos)
+
+      setFetchingUtxos(false)
 
       // Extract Token balances from UTXOs
       const tokenBalances = ML.getTokenBalances(availableUtxos)
@@ -185,77 +215,84 @@ const NetworkProvider = ({ value: propValue, children }) => {
       }, {})
 
       setTokenBalances(merged)
-    },
-    [currentMlAddresses],
-  )
-
-  const balanceLoading = currentAccountId !== accountID
-
-  const fetchDelegations = useCallback(async () => {
-    try {
-      if (!addresses) return
-      // if (mlDelegationList.length === 0) {
-      //   setDelegationsLoading(true)
-      // }
-      const addressList = [
-        ...currentMlAddresses.mlReceivingAddresses,
-        ...currentMlAddresses.mlChangeAddresses,
-      ]
-      const delegations = await Mintlayer.getWalletDelegations(addressList)
-      const delegation_details = await Mintlayer.getDelegationDetails(
-        delegations.map((delegation) => delegation.delegation_id),
-      )
-      const blocks_data = await Mintlayer.getBlocksData(
-        delegation_details.map(
-          (delegation) => delegation.creation_block_height,
-        ),
-      )
-
-      const mergedDelegations = delegations.map((delegation, index) => {
-        return {
-          ...delegation,
-          balance: delegation.balance.atoms,
-          creation_block_height:
-            delegation_details[index].creation_block_height,
-          creation_time: blocks_data.find(
-            ({ height }) =>
-              height === delegation_details[index].creation_block_height,
-          ).header.timestamp.timestamp,
-        }
-      })
-
-      const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
-      const unconfirmedTransactions =
-        LocalStorageService.getItem(unconfirmedTransactionString) || []
-
-      const delegationTransactions = unconfirmedTransactions.filter(
-        (unconfirmedTransaction) =>
-          unconfirmedTransaction.mode ===
-          AppInfo.ML_TRANSACTION_MODES.DELEGATION,
-      )
-
-      if (delegationTransactions.length > 0) {
-        mergedDelegations.unshift(...delegationTransactions)
-      }
-
-      const totalDelegationBalance = mergedDelegations.reduce(
-        (acc, delegation) =>
-          acc + (delegation.balance ? Number(delegation.balance) : 0),
-        0,
-      )
-      setMlDelegationsBalance(totalDelegationBalance)
-      setMlDelegationList(mergedDelegations)
-    } catch (error) {
-      console.error(error)
     }
-  }, [addresses])
+
+  const balanceLoading =
+    currentAccountId !== accountID || networkType !== currentNetworkType
+
+  const fetchDelegations = async () => {
+      try {
+        if (!addresses) return
+        // if (mlDelegationList.length === 0) {
+        //   setDelegationsLoading(true)
+        // }
+        setFetchingDelegations(true)
+        const addressList = [
+          ...currentMlAddresses.mlReceivingAddresses,
+          ...currentMlAddresses.mlChangeAddresses,
+        ]
+        const delegations = await Mintlayer.getWalletDelegations(addressList)
+        const delegation_details = await Mintlayer.getDelegationDetails(
+          delegations.map((delegation) => delegation.delegation_id),
+        )
+        const blocks_data = await Mintlayer.getBlocksData(
+          delegation_details.map(
+            (delegation) => delegation.creation_block_height,
+          ),
+        )
+
+        const mergedDelegations = delegations.map((delegation, index) => {
+          return {
+            ...delegation,
+            balance: delegation.balance.atoms,
+            creation_block_height:
+              delegation_details[index].creation_block_height,
+            creation_time: blocks_data.find(
+              ({ height }) =>
+                height === delegation_details[index].creation_block_height,
+            ).header.timestamp.timestamp,
+          }
+        })
+
+        const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
+        const unconfirmedTransactions =
+          LocalStorageService.getItem(unconfirmedTransactionString) || []
+
+        const delegationTransactions = unconfirmedTransactions.filter(
+          (unconfirmedTransaction) =>
+            unconfirmedTransaction.mode ===
+            AppInfo.ML_TRANSACTION_MODES.DELEGATION,
+        )
+
+        if (delegationTransactions.length > 0) {
+          mergedDelegations.unshift(...delegationTransactions)
+        }
+
+        const totalDelegationBalance = mergedDelegations.reduce(
+          (acc, delegation) =>
+            acc + (delegation.balance ? Number(delegation.balance) : 0),
+          0,
+        )
+        setMlDelegationsBalance(totalDelegationBalance)
+        setMlDelegationList(mergedDelegations)
+
+        setFetchingDelegations(false)
+      } catch (error) {
+        console.error(error)
+        setFetchingDelegations(false)
+      }
+    }
 
   useEffect(() => {
     setCurrentHeight(onlineHeight)
     // fetch addresses, utxos, transactions
-    fetchAllData()
-    fetchDelegations()
-  }, [onlineHeight, accountID])
+    // fetch data one by one
+    const getData = async () => {
+      await fetchAllData()
+      await fetchDelegations()
+    }
+    getData()
+  }, [onlineHeight, accountID, networkType])
 
   useEffect(() => {
     const getData = async () => {
@@ -289,6 +326,11 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
     balanceLoading,
     feerate,
+
+    fetchingBalances,
+    fetchingUtxos,
+    fetchingTransactions,
+    fetchingDelegations,
   }
 
   return (

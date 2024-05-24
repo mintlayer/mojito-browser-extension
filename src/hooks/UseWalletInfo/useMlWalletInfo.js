@@ -15,6 +15,11 @@ const useMlWalletInfo = (addresses, token) => {
     unusedAddresses,
     feerate,
     currentHeight,
+
+    fetchingBalances,
+    fetchingUtxos,
+    fetchingTransactions,
+    fetchingDelegations,
   } = useContext(NetworkContext)
 
   // const nativecoins
@@ -46,6 +51,11 @@ const useMlWalletInfo = (addresses, token) => {
     unusedAddresses,
     feerate,
     currentHeight,
+
+    fetchingBalances,
+    fetchingUtxos,
+    fetchingTransactions,
+    fetchingDelegations,
   }
 }
 
