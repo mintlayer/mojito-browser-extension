@@ -387,7 +387,7 @@ const SendTransaction = ({
                 <Loading />
               </div>
             ) : (
-              <form>
+              <form onSubmit={sendTransaction}>
                 <VerticalGroup bigGap>
                   <TextField
                     label="Enter your password"
@@ -398,9 +398,7 @@ const SendTransaction = ({
                     errorMessages={passErrorMessage}
                     onChangeHandle={changePassHandle}
                   />
-                  <Button onClickHandle={sendTransaction}>
-                    Send Transaction
-                  </Button>
+                  <Button buttonType="submit">Send Transaction</Button>
                 </VerticalGroup>
               </form>
             )
