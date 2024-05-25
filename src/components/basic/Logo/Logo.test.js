@@ -7,13 +7,10 @@ const toggleNetworkType = jest.fn()
 
 describe('Logo', () => {
   test('renders the component with the mainnet title when account is locked', () => {
-    const isAccountUnlocked = jest.fn(() => false)
     render(
-      <AccountProvider value={{ isAccountUnlocked }}>
-        <SettingsProvider value={{ networkType: 'mainnet', toggleNetworkType }}>
-          <Logo />
-        </SettingsProvider>
-      </AccountProvider>,
+      <SettingsProvider value={{ networkType: 'mainnet', toggleNetworkType }}>
+        <Logo unlocked={false} />
+      </SettingsProvider>,
     )
     const title = screen.getByText('Mojito')
     expect(title).toBeInTheDocument()
@@ -26,7 +23,7 @@ describe('Logo', () => {
     render(
       <AccountProvider value={{ isAccountUnlocked }}>
         <SettingsProvider value={{ networkType: 'testnet', toggleNetworkType }}>
-          <Logo />
+          <Logo unlocked={true} />
         </SettingsProvider>
       </AccountProvider>,
     )
@@ -44,7 +41,7 @@ describe('Logo', () => {
     render(
       <AccountProvider value={{ isAccountUnlocked }}>
         <SettingsProvider value={{ networkType: 'mainnet', toggleNetworkType }}>
-          <Logo />
+          <Logo unlocked={true} />
         </SettingsProvider>
       </AccountProvider>,
     )
