@@ -79,7 +79,6 @@ const CreateDelegationPage = () => {
     if (utxos.length === 0) {
       setFeeLoading(false)
       throw new Error('No UTXOs available')
-      return false
     }
     const transactionSize = await MLTransaction.calculateTransactionSizeInBytes(
       {

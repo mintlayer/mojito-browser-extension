@@ -180,6 +180,7 @@ const getParsedTransactions = (transactions, addresses) => {
               }
             }
           }
+          return acc // return the accumulator if none of the conditions are met
         }, 0)
       value = totalValue
     }
