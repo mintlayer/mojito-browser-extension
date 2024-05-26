@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { SendTransaction } from '@ContainerComponents'
@@ -36,7 +36,6 @@ const CreateDelegationPage = () => {
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [totalFee, setTotalFee] = useState(0)
-  const [preEnterAddress, setPreEnterAddress] = useState(null)
   const navigate = useNavigate()
   const tokenName = 'ML'
   const fiatName = 'USD'
@@ -51,18 +50,16 @@ const CreateDelegationPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { balance: mlBalance, utxos, fetchDelegations, unusedAddresses, feerate } =
-    useMlWalletInfo(currentMlAddresses)
+  const {
+    balance: mlBalance,
+    utxos,
+    fetchDelegations,
+    unusedAddresses,
+    feerate,
+  } = useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
 
-  useEffect(() => {
-    if (state && state.action === 'createDelegate') {
-      setPreEnterAddress(state.pool_id)
-    } else {
-      setPreEnterAddress('')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const preEnterAddress = state?.pool_id || ''
 
   if (!accountID) {
     console.log('No account id.')

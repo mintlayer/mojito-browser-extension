@@ -33,7 +33,7 @@ import {
   SettingsProvider,
   TransactionProvider,
   NetworkProvider,
-  ExchangeRatesProvider
+  ExchangeRatesProvider,
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
@@ -100,7 +100,7 @@ const App = () => {
         if (request.action === 'createDelegate') {
           if (!accountUnlocked) {
             setNextAfterUnlock({
-              route: '/staking',
+              route: '/wallet/Mintlayer/staking/create-delegation',
               state: {
                 action: 'createDelegate',
                 pool_id: request.data.pool_id,
@@ -109,7 +109,7 @@ const App = () => {
             return
           }
           // change route to staking page
-          navigate('/staking', {
+          navigate('/wallet/Mintlayer/staking/create-delegation', {
             state: { action: 'createDelegate', pool_id: request.data.pool_id },
           })
         }

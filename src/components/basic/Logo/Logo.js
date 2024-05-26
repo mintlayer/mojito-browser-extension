@@ -4,11 +4,14 @@ import LogoIcon from '@Assets/images/logo.svg'
 import { AppInfo } from '@Constants'
 import './Logo.css'
 
-const Logo = ({ unlocked }) => {
+const Logo = ({ unlocked, onClick }) => {
   const { networkType } = useContext(SettingsContext)
 
   return (
-    <div className="logoContainer">
+    <div
+      className="logoContainer"
+      onClick={onClick}
+    >
       <img
         src={LogoIcon}
         alt="Mojito Logo"
@@ -31,7 +34,7 @@ const Logo = ({ unlocked }) => {
         )}
         o
       </h1>
-      {networkType === AppInfo.NETWORK_TYPES.TESTNET  && unlocked && (
+      {networkType === AppInfo.NETWORK_TYPES.TESTNET && unlocked && (
         <div
           className="testnetMessage"
           data-testid="testnet-message"
