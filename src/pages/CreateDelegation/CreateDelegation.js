@@ -12,6 +12,7 @@ import { MLTransaction, ML as MLHelpers } from '@Helpers'
 import { ML } from '@Cryptos'
 
 import './CreateDelegation.css'
+import { Error } from '@BasicComponents'
 
 const CreateDelegationPage = () => {
   const { state } = useLocation()
@@ -50,7 +51,7 @@ const CreateDelegationPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlBalance, utxos, fetchDelegations, unusedAddresses, feerate } =
+  const { balance: mlBalance, utxos, fetchDelegations, unusedAddresses, feerate } =
     useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
 
@@ -155,6 +156,12 @@ const CreateDelegationPage = () => {
     return result
   }
 
+  const transaction_conditions =
+    utxos.length > 0 &&
+    mlBalance > 0 &&
+    unusedAddresses.change &&
+    unusedAddresses.receive
+
   return (
     <>
       <div className="page">
@@ -169,13 +176,16 @@ const CreateDelegationPage = () => {
             onSendTransaction={createTransaction}
             calculateTotalFee={calculateMlTotalFee}
             setFormValidity={setFormValid}
-            isFormValid={isFormValid}
+            isFormValid={transaction_conditions && isFormValid}
             confirmTransaction={confirmMlTransaction}
             goBackToWallet={goBackToWallet}
             preEnterAddress={preEnterAddress}
             transactionMode={transactionMode}
             walletType={walletType}
           />
+          {!transaction_conditions && (
+            <Error error="Insufficient funds for the fee. Please wait for the wallet to sync or add coins to the wallet." />
+          )}
         </VerticalGroup>
       </div>
     </>
