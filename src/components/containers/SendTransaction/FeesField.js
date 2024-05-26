@@ -1,13 +1,17 @@
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState } from 'react'
 
 import { FeeField, FeeFieldML } from '@ComposedComponents'
 import TransactionField from './TransactionField'
-import { AccountContext } from '@Contexts'
 
 import './errorMessages.css'
 
-const FeesField = ({ feeChanged, value, errorMessage, setFeeValidity }) => {
-  const { walletType } = useContext(AccountContext)
+const FeesField = ({
+  feeChanged,
+  value,
+  errorMessage,
+  setFeeValidity,
+  walletType,
+}) => {
   const [message, setMessage] = useState(errorMessage)
 
   useEffect(() => {
