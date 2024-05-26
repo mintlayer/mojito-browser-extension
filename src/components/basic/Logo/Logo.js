@@ -4,14 +4,11 @@ import LogoIcon from '@Assets/images/logo.svg'
 import { AppInfo } from '@Constants'
 import './Logo.css'
 
-const Logo = ({ unlocked, onClick }) => {
+const Logo = ({ unlocked }) => {
   const { networkType } = useContext(SettingsContext)
 
   return (
-    <div
-      className="logoContainer"
-      onClick={onClick}
-    >
+    <div className="logoContainer">
       <img
         src={LogoIcon}
         alt="Mojito Logo"

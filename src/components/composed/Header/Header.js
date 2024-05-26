@@ -78,10 +78,6 @@ const Header = ({ customBackAction }) => {
     )
   }
 
-  const headerClickHandler = () => {
-    navigate('/')
-  }
-
   const toggleTooltip = () => {
     setTooltipVisible(!tooltipVisible)
   }
@@ -157,10 +153,7 @@ const Header = ({ customBackAction }) => {
           </Button>
         </>
       )}
-      <Logo
-        unlocked={unlocked}
-        onClick={headerClickHandler}
-      />
+      <Logo unlocked={unlocked} />
     </header>
   )
 }
