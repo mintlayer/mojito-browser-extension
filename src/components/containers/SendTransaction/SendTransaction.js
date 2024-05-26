@@ -332,6 +332,7 @@ const SendTransaction = ({
             feeChanged={feeChanged}
             value={totalFeeCrypto}
             setFeeValidity={setFeeValidity}
+            walletType={walletType}
           />
 
           {txErrorMessage ? (
