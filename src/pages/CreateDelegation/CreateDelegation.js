@@ -13,6 +13,7 @@ import { ML } from '@Cryptos'
 
 import './CreateDelegation.css'
 import { Error } from '@BasicComponents'
+import { Loading } from '@ComposedComponents'
 
 const CreateDelegationPage = () => {
   const { state } = useLocation()
@@ -56,6 +57,8 @@ const CreateDelegationPage = () => {
     fetchDelegations,
     unusedAddresses,
     feerate,
+    fetchingBalances,
+    fetchingUtxos,
   } = useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
 
@@ -158,6 +161,20 @@ const CreateDelegationPage = () => {
     mlBalance > 0 &&
     unusedAddresses.change &&
     unusedAddresses.receive
+
+  const loading = fetchingBalances || fetchingUtxos
+
+  if (loading) {
+    return (
+      <div>
+        <div className="page-loading">
+          <VerticalGroup>
+            <Loading />
+          </VerticalGroup>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
