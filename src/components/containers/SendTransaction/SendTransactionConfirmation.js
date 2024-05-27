@@ -46,7 +46,7 @@ const SendFundConfirmation = ({
         <dt>Total fee:</dt>
         <dd>
           <strong>{totalFeeCrypto}</strong>
-          ML
+          {walletType.name === 'Bitcoin' ? 'BTC' : 'ML'}
           <span>
             (<strong>{feeFiat}</strong>
             {fiatName})

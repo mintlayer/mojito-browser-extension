@@ -20,7 +20,7 @@ const FeeField = ({
   const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
     useState('15 minutes')
   const [estimatedFees, setEstimatedFees] = useState([])
-  const feeType = 'atoms/B'
+  const feeType = 'sat/B'
 
   const blocksToConfirm = useCallback(
     (value) => {
