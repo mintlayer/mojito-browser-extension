@@ -198,11 +198,13 @@ const SendTransaction = ({
     setAddressTo(e.target.value)
 
     // trigger calculation of total fee
-    calculateTotalFee({
-      to: e.target.value,
-      amount: NumbersHelper.floatStringToNumber(amountInCrypto),
-      fee,
-    })
+    if (!isBitcoinWallet) {
+      calculateTotalFee({
+        to: e.target.value,
+        amount: NumbersHelper.floatStringToNumber(amountInCrypto),
+        fee,
+      })
+    }
   }
 
   const changePassHandle = (value) => {
@@ -330,7 +332,7 @@ const SendTransaction = ({
           {/* TODO style error from transaction */}
           <FeesField
             feeChanged={feeChanged}
-            value={totalFeeCrypto}
+            value={isBitcoinWallet ? 'norm' : totalFeeCrypto}
             setFeeValidity={setFeeValidity}
             walletType={walletType}
           />
