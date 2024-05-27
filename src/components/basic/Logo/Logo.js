@@ -31,7 +31,7 @@ const Logo = ({ unlocked }) => {
         )}
         o
       </h1>
-      {networkType === AppInfo.NETWORK_TYPES.TESTNET  && unlocked && (
+      {networkType === AppInfo.NETWORK_TYPES.TESTNET && unlocked && (
         <div
           className="testnetMessage"
           data-testid="testnet-message"

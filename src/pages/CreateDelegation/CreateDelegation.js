@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { SendTransaction } from '@ContainerComponents'
@@ -13,6 +13,7 @@ import { ML } from '@Cryptos'
 
 import './CreateDelegation.css'
 import { Error } from '@BasicComponents'
+import { Loading } from '@ComposedComponents'
 
 const CreateDelegationPage = () => {
   const { state } = useLocation()
@@ -36,7 +37,6 @@ const CreateDelegationPage = () => {
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [totalFee, setTotalFee] = useState(0)
-  const [preEnterAddress, setPreEnterAddress] = useState(null)
   const navigate = useNavigate()
   const tokenName = 'ML'
   const fiatName = 'USD'
@@ -51,18 +51,18 @@ const CreateDelegationPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { balance: mlBalance, utxos, fetchDelegations, unusedAddresses, feerate } =
-    useMlWalletInfo(currentMlAddresses)
+  const {
+    balance: mlBalance,
+    utxos,
+    fetchDelegations,
+    unusedAddresses,
+    feerate,
+    fetchingBalances,
+    fetchingUtxos,
+  } = useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
 
-  useEffect(() => {
-    if (state && state.action === 'createDelegate') {
-      setPreEnterAddress(state.pool_id)
-    } else {
-      setPreEnterAddress('')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const preEnterAddress = state?.pool_id || ''
 
   if (!accountID) {
     console.log('No account id.')
@@ -161,6 +161,20 @@ const CreateDelegationPage = () => {
     mlBalance > 0 &&
     unusedAddresses.change &&
     unusedAddresses.receive
+
+  const loading = fetchingBalances || fetchingUtxos
+
+  if (loading) {
+    return (
+      <div>
+        <div className="page-loading">
+          <VerticalGroup>
+            <Loading />
+          </VerticalGroup>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
