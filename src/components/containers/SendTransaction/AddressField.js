@@ -37,7 +37,8 @@ const AddressField = ({
   }
 
   if (walletType.chain === 'mintlayer') {
-    placeholder = networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc1...' : 'tmt1...'
+    placeholder =
+      networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc1...' : 'tmt1...'
     addressErrorMessage = 'This is not a valid ML address.'
     validity = (val) => ML.isMlAddressValid(val, networkType)
 
@@ -69,7 +70,7 @@ const AddressField = ({
     setValue(ev.target.value)
     setIsValid(validity(ev.target.value))
     setAddressValidity(validity(ev.target.value))
-    if (!validity) {
+    if (!validity(ev.target.value)) {
       setMessage(addressErrorMessage)
     } else {
       setMessage(undefined)
