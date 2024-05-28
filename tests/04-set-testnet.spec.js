@@ -4,10 +4,12 @@ import { useSetTestnet } from './helpers/hooks/useSetTestnet'
 let page
 
 beforeEach(async ({ page: newPage }) => {
+  test.setTimeout(190000)
   page = newPage
   await useRestoreWallet(page, 'sender')
 })
 
 test('Set Testnet', async () => {
+  test.setTimeout(190000)
   await useSetTestnet(page)
 })

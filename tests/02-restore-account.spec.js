@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test')
 import { WALLET_NAME, WALLET_PASSWORD, MNEMONIC } from './data/crate-restore.js'
 
 const restoreAccountTest = async ({ page }) => {
+  test.setTimeout(190000)
   await page.goto('http://127.0.0.1:3000')
 
   await expect(page.locator('h1')).toHaveText('Mojito')

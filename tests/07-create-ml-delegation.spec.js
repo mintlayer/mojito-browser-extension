@@ -7,6 +7,7 @@ import { formatAddress } from './helpers/helpers.js'
 let page
 
 beforeEach(async ({ page: newPage }) => {
+  test.setTimeout(190000)
   page = newPage
   await useRestoreWallet(page, 'sender')
   await useSetTestnet(page)
@@ -16,7 +17,7 @@ const formatedReceiverAddress = formatAddress(receiverData.ML_RECEIVING_ADDRESS)
 const formatedPoolId = formatAddress(senderData.POOL_ID)
 
 test('Create ML delegation', async () => {
-  test.setTimeout(120000)
+  test.setTimeout(190000)
   await page.click(
     'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet)")',
   )

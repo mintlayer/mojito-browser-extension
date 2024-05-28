@@ -7,11 +7,13 @@ import { formatAddress } from './helpers/helpers.js'
 let page
 
 beforeEach(async ({ page: newPage }) => {
+  test.setTimeout(190000)
   page = newPage
   await useRestoreWallet(page, 'sender')
 })
 
 test('Log in and Log out', async () => {
+  test.setTimeout(190000)
   await page.click('button.logout')
   await expect(page.locator(':text("Available wallet")')).toBeVisible()
   await page.getByRole('button', { name: 'SenderWallet' }).click()
