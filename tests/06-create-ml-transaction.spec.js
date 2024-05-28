@@ -2,7 +2,7 @@ import { expect, test, beforeEach } from '@playwright/test'
 import { useRestoreWallet } from './helpers//hooks/useRestore'
 import { useSetTestnet } from './helpers/hooks/useSetTestnet'
 import { receiverData } from './data/index.js'
-import {formatAddress } from './helpers/helpers.js'
+import { formatAddress } from './helpers/helpers.js'
 
 let page
 
@@ -17,7 +17,7 @@ const formatedReceiverAddress = formatAddress(receiverData.ML_RECEIVING_ADDRESS)
 test('Create ML transaction', async () => {
   test.setTimeout(120000)
   await page.click(
-    'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Test)")',
+    'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet)")',
   )
   await page.waitForTimeout(5000)
 
@@ -65,7 +65,7 @@ test('Create ML transaction', async () => {
   //        }),
   //      }),
   //  )
-  
+
   await page.waitForSelector(':text("Your transaction was sent.")')
 
   const resultTitleText = await page.textContent('h3.result-title')

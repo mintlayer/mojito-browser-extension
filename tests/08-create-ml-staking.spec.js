@@ -18,7 +18,7 @@ const formatedPoolId = formatAddress(senderData.POOL_ID)
 test('Create ML staking', async () => {
   test.setTimeout(120000)
   await page.click(
-    'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Test)")',
+    'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet)")',
   )
   await page.waitForTimeout(1000)
 
@@ -28,16 +28,16 @@ test('Create ML staking', async () => {
 
   await page.waitForTimeout(1000)
   await expect(page.locator(':text("Deleg id:")')).toBeVisible()
-  
+
   const inputValue = await page
     .locator('input.input.address-field')
     .inputValue()
-  expect(inputValue).not.toBe('');
+  expect(inputValue).not.toBe('')
 
   await page.fill('input[placeholder="0"]', '0.00000001')
 
   await page.getByRole('button', { name: 'Send' }).click()
-  
+
   await page.waitForTimeout(10000)
 
   await expect(page.getByTestId('popup').getByText('Send to:')).toBeVisible()
@@ -57,22 +57,22 @@ test('Create ML staking', async () => {
   await page.fill('input[placeholder="Password"]', receiverData.WALLET_PASSWORD)
 
   await page.getByRole('button', { name: 'Send Transaction' }).click()
-  
-   await page.route(
-     'https://api-server-lovelace.mintlayer.org/api/v2/transaction',
-     (route) =>
-       route.fulfill({
-         status: 200,
-         contentType: 'application/json',
-         body: JSON.stringify({
-           tx_id:
-             'ba6a6be12a1226f0038365ff2554dfb9f5aa2cb468a523ee4142fd1f1f6d3254',
-         }),
-       }),
-   )
-  
+
+  await page.route(
+    'https://api-server-lovelace.mintlayer.org/api/v2/transaction',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          tx_id:
+            'ba6a6be12a1226f0038365ff2554dfb9f5aa2cb468a523ee4142fd1f1f6d3254',
+        }),
+      }),
+  )
+
   await page.waitForSelector(':text("Your transaction was sent.")')
-  
+
   const resultTitleText = await page.textContent('h3.result-title')
   const txid = resultTitleText.split(': ')[1]
 
@@ -81,6 +81,6 @@ test('Create ML staking', async () => {
   await page.waitForTimeout(2000)
 
   await expect(
-    page.getByRole('button', { name: 'Create new delegation' })
+    page.getByRole('button', { name: 'Create new delegation' }),
   ).toBeVisible()
 })

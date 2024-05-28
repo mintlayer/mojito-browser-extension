@@ -93,9 +93,9 @@ export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
   return { mlReceivingPrivKeys, mlChangePrivKeys }
 }
 
-const checkIfAddressUsed = async (address) => {
+const checkIfAddressUsed = async (address, network) => {
   try {
-    const addressData = await Mintlayer.getAddressData(address)
+    const addressData = await Mintlayer.getAddressData(address, network)
     const data = JSON.parse(addressData)
     if (data.transaction_history.length > 0) {
       return true
@@ -122,7 +122,7 @@ export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
   const checkAndGenerateAddresses = async (addressGenerator) => {
     const addresses = generateAddresses(addressGenerator, batch, 0)
     let allUsed = await Promise.all(
-      addresses.map((address) => checkIfAddressUsed(address)),
+      addresses.map((address) => checkIfAddressUsed(address, network)),
     )
 
     while (allUsed.every((used) => used)) {
@@ -130,7 +130,7 @@ export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
         ...generateAddresses(addressGenerator, batch, addresses.length),
       )
       allUsed = await Promise.all(
-        addresses.map((address) => checkIfAddressUsed(address)),
+        addresses.map((address) => checkIfAddressUsed(address, network)),
       )
     }
 

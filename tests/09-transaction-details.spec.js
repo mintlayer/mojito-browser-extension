@@ -13,7 +13,7 @@ beforeEach(async ({ page: newPage }) => {
 
 test('Transaction details', async () => {
   await page.click(
-    'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Test)")',
+    'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet)")',
   )
   await page.waitForTimeout(5000)
 
