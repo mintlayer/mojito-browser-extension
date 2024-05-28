@@ -162,7 +162,7 @@ const CreateDelegationPage = () => {
     unusedAddresses.change &&
     unusedAddresses.receive
 
-  const loading = fetchingBalances || fetchingUtxos
+  const loading = preEnterAddress && (fetchingBalances || fetchingUtxos)
 
   if (loading) {
     return (

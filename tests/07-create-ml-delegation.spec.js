@@ -18,7 +18,7 @@ const formatedPoolId = formatAddress(senderData.POOL_ID)
 test('Create ML delegation', async () => {
   test.setTimeout(120000)
   await page.click(
-    'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Test)")',
+    'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet)")',
   )
   await page.waitForTimeout(1000)
 
@@ -29,7 +29,7 @@ test('Create ML delegation', async () => {
   await page.waitForTimeout(1000)
   await expect(page.locator(':text("Pool id:")')).toBeVisible()
 
-  await page.fill('input[placeholder="tpool..."]', senderData.POOL_ID)
+  await page.fill('input[placeholder="tpool1..."]', senderData.POOL_ID)
   await page.getByRole('button', { name: 'Create' }).click()
 
   await page.waitForTimeout(1000)

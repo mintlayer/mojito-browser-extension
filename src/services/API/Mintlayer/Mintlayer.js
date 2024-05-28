@@ -66,8 +66,8 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
   }
 }
 
-const tryServers = async (endpoint, body = null) => {
-  const networkType = LocalStorageService.getItem('networkType')
+const tryServers = async (endpoint, body = null, forceNetwork) => {
+  const networkType = forceNetwork || LocalStorageService.getItem('networkType')
   const mintlayerServers =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? EnvVars.TESTNET_MINTLAYER_SERVERS
@@ -91,9 +91,11 @@ const tryServers = async (endpoint, body = null) => {
   }
 }
 
-const getAddressData = (address) => {
+const getAddressData = (address, network) => {
   const data = tryServers(
     MINTLAYER_ENDPOINTS.GET_ADDRESS_DATA.replace(':address', address),
+    null,
+    network,
   )
   return data
 }
