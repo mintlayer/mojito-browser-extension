@@ -1,7 +1,6 @@
 import { useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
-import { Header } from '@ComposedComponents'
 import { SendTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
@@ -18,13 +17,23 @@ import { Electrum } from '@APIs'
 import { AppInfo } from '@Constants'
 import { MLTransaction, ML as MLHelpers } from '@Helpers'
 import { ML } from '@Cryptos'
-import { Mintlayer } from '@APIs'
 
 import './SendTransaction.css'
-import { useEffectOnce } from '../../hooks/etc/useEffectOnce'
 
 const SendTransactionPage = () => {
-  const { addresses, accountID, walletType } = useContext(AccountContext)
+  const { addresses, accountID } = useContext(AccountContext)
+
+  const { coinType } = useParams()
+  const walletType = {
+    name: coinType,
+    ticker: coinType === 'Bitcoin' ? 'BTC' : 'ML',
+    chain: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
+    tokenId: ['Mintlayer', 'Bitcoin'].includes(coinType) ? null : coinType,
+  }
+
+  const datahook =
+    walletType.chain === 'bitcoin' ? useBtcWalletInfo : useMlWalletInfo
+
   const { networkType } = useContext(SettingsContext)
   const { setFeeLoading } = useContext(TransactionContext)
   const currentBtcAddress =
@@ -33,13 +42,33 @@ const SendTransactionPage = () => {
       : addresses.btcTestnetAddress
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
+      ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
+  const [totalFee, setTotalFee] = useState(BigInt(0))
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [adjustedFee, setAdjustedFee] = useState(0)
   const navigate = useNavigate()
-  const tokenName = walletType.name === 'Mintlayer' ? 'ML' : 'BTC'
+
+  const checkAddresses =
+    walletType.chain === 'bitcoin' ? currentBtcAddress : currentMlAddresses
+
+  const { balance, utxos, unusedAddresses, feerate, tokenBalances } = datahook(
+    checkAddresses,
+    coinType,
+  )
+
+  const symbol = () => {
+    if (walletType.name === 'Mintlayer') {
+      return 'ML'
+    }
+    if (walletType.name === 'Bitcoin') {
+      return 'BTC'
+    }
+    return tokenBalances[walletType.name].token_info.token_ticker.string
+  }
+
+  const tokenName = symbol()
   const fiatName = 'USD'
   const [transactionData] = useState({
     fiatName,
@@ -49,14 +78,8 @@ const SendTransactionPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance, getBalance } = useMlWalletInfo(currentMlAddresses)
 
-  useEffectOnce(() => {
-    getBalance()
-  })
-
-  const maxValueToken = walletType.name === 'Mintlayer' ? mlBalance : btcBalance
+  const maxValueToken = balance
 
   if (!accountID) {
     console.log('No account id.')
@@ -64,16 +87,8 @@ const SendTransactionPage = () => {
     return
   }
 
-  const mlAddressList = currentMlAddresses && [
-    ...currentMlAddresses.mlReceivingAddresses,
-    ...currentMlAddresses.mlChangeAddresses,
-  ]
-
   const changeAddressesLength =
     currentMlAddresses && currentMlAddresses.mlChangeAddresses.length
-
-  const changeAddress =
-    currentMlAddresses && currentMlAddresses.mlChangeAddresses
 
   const calculateBtcTotalFee = async (transactionInfo) => {
     const transactionSize =
@@ -96,28 +111,48 @@ const SendTransactionPage = () => {
   const calculateMlTotalFee = async (transactionInfo) => {
     setFeeLoading(true)
     const address = transactionInfo.to
-    const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
-    const unusedChangeAddress = await ML.getUnusedAddress(changeAddress)
-    const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
-    const parsedUtxos = utxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
+    const atoms = walletType.tokenId
+      ? tokenBalances[walletType.tokenId].token_info.number_of_decimals
+      : 11
+    const amountToSend = MLHelpers.getAmountInAtoms(
+      transactionInfo.amount,
+      Math.pow(10, atoms),
+    )
+    const unusedChangeAddress = unusedAddresses.change
     try {
-      const fee = await MLTransaction.calculateFee({
-        utxosTotal: parsedUtxos,
-        address: address,
-        changeAddress: unusedChangeAddress,
-        amountToUse: amountToSend,
-        network: networkType,
-      })
-      const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
-      setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
-      setTotalFeeCrypto(feeInCoins)
+      const transactionSize =
+        await MLTransaction.calculateTransactionSizeInBytes({
+          utxos: utxos,
+          address: address,
+          changeAddress: unusedChangeAddress,
+          amountToUse: amountToSend,
+          tokenId: walletType.tokenId,
+          network: networkType,
+          approximateFee: 0,
+        })
+      const fee = Math.ceil(feerate * (transactionSize / 1000))
+
+      // recalculating transaction size with feeInCoins
+      const newTransactionSize =
+        await MLTransaction.calculateTransactionSizeInBytes({
+          utxos: utxos,
+          address: address,
+          changeAddress: unusedChangeAddress,
+          amountToUse: amountToSend,
+          tokenId: walletType.tokenId,
+          network: networkType,
+          approximateFee: fee,
+        })
+      const newFee = Math.ceil(feerate * (newTransactionSize / 1000))
+      const newFeeInCoins = MLHelpers.getAmountInCoins(Number(newFee))
+
+      setTotalFeeFiat(Format.fiatValue(newFeeInCoins * exchangeRate))
+      setTotalFeeCrypto(newFeeInCoins)
+      setTotalFee(newFee)
       setFeeLoading(false)
-      return feeInCoins
+      return newFeeInCoins
     } catch (e) {
       console.error('Error calculating fee:', e)
-      goBackToWallet()
       setFeeLoading(false)
     }
   }
@@ -159,8 +194,12 @@ const SendTransactionPage = () => {
   }
 
   const confirmMlTransaction = async (password) => {
+    const atoms = walletType.tokenId
+      ? tokenBalances[walletType.tokenId].token_info.number_of_decimals
+      : 11
     const amountToSend = MLHelpers.getAmountInAtoms(
       transactionInformation.amount,
+      Math.pow(10, atoms),
     )
     const { mlPrivKeys } = await Account.unlockAccount(accountID, password)
     const privKey =
@@ -178,30 +217,31 @@ const SendTransactionPage = () => {
       ...walletPrivKeys.mlChangePrivKeys,
     }
 
-    const unusedChageAddress = await ML.getUnusedAddress(changeAddress)
-    const utxos = await Mintlayer.getWalletUtxos(mlAddressList)
-    const parsedUtxos = utxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
+    const unusedChangeAddress = unusedAddresses.change
+
     const result = await MLTransaction.sendTransaction({
-      utxosTotal: parsedUtxos,
+      utxos: utxos,
       keysList: keysList,
       address: transactionInformation.to,
-      changeAddress: unusedChageAddress,
+      changeAddress: unusedChangeAddress,
       amountToUse: amountToSend,
       network: networkType,
-      ...(adjustedFee && {
-        adjustedFee: MLHelpers.getAmountInAtoms(adjustedFee),
-      }),
+      tokenId: walletType.tokenId,
+      ...(adjustedFee
+        ? {
+            adjustedFee: MLHelpers.getAmountInAtoms(adjustedFee),
+          }
+        : {
+            adjustedFee: totalFee,
+          }),
     })
     return result
   }
 
-  const goBackToWallet = () => navigate('/wallet')
+  const goBackToWallet = () => navigate('/wallet/' + walletType.name)
 
   return (
     <>
-      <Header />
       <div className="page">
         <VerticalGroup smallGap>
           <SendTransaction
@@ -214,18 +254,19 @@ const SendTransactionPage = () => {
             maxValueInToken={maxValueToken}
             onSendTransaction={createTransaction}
             calculateTotalFee={
-              walletType.name === 'Mintlayer'
-                ? calculateMlTotalFee
-                : calculateBtcTotalFee
+              walletType.name === 'Bitcoin'
+                ? calculateBtcTotalFee
+                : calculateMlTotalFee
             }
             setFormValidity={setFormValid}
             isFormValid={isFormValid}
             confirmTransaction={
-              walletType.name === 'Mintlayer'
-                ? confirmMlTransaction
-                : confirmBtcTransaction
+              walletType.name === 'Bitcoin'
+                ? confirmBtcTransaction
+                : confirmMlTransaction
             }
             goBackToWallet={goBackToWallet}
+            walletType={walletType}
           />
         </VerticalGroup>
       </div>

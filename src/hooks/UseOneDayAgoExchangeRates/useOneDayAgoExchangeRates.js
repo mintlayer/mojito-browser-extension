@@ -1,30 +1,11 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useContext } from 'react'
 
-import { ExchangeRates } from '@APIs'
+import { ExchangeRatesContext } from '@Contexts'
 
 const useOneDayAgoExchangeRates = (crypto, fiat) => {
-  const effectCalled = useRef(false)
-  const [yesterdayExchangeRate, setYesterdayExchangeRate] = useState(0)
+  const { yesterdayExchangeRate } = useContext(ExchangeRatesContext)
 
-  const getRate = useCallback(async () => {
-    try {
-      const response = await ExchangeRates.getOneDayAgoRate(crypto, fiat)
-      const rates = JSON.parse(response)[`${crypto}-${fiat}`]
-      setYesterdayExchangeRate(rates)
-    } catch (error) {
-      console.error(error)
-    }
-  }, [crypto, fiat])
-
-  useEffect(() => {
-    /* istanbul ignore next */
-    if (effectCalled.current) return
-    effectCalled.current = true
-
-    getRate()
-  }, [getRate])
-
-  return { yesterdayExchangeRate }
+  return { yesterdayExchangeRate: yesterdayExchangeRate[`${crypto}-${fiat}`] }
 }
 
 export default useOneDayAgoExchangeRates

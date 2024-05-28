@@ -4,10 +4,11 @@ import { format } from 'date-fns'
 import { Format } from '@Helpers'
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
-import { AccountContext, SettingsContext } from '@Contexts'
+import { SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './TransactionDetails.css'
+import { useParams } from 'react-router-dom'
 
 const TransactionDetailsItem = ({ title, content }) => {
   return (
@@ -28,7 +29,14 @@ const TransactionDetailsItem = ({ title, content }) => {
 
 const TransactionDetails = ({ transaction, getConfirmations }) => {
   const { networkType } = useContext(SettingsContext)
-  const { walletType } = useContext(AccountContext)
+
+  const { coinType } = useParams()
+  const walletType = {
+    name: coinType,
+    ticker: coinType === 'Bitcoin' ? 'BTC' : 'ML',
+    chain: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
+  }
+
   const [confirmations, setConfirmations] = useState(null)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 

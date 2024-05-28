@@ -8,7 +8,7 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import { Electrum, ExchangeRates } from '@APIs'
-import { ConnectionErrorPopup } from '@ComposedComponents'
+import { ConnectionErrorPopup, Header } from '@ComposedComponents'
 
 import {
   HomePage,
@@ -22,6 +22,9 @@ import {
   SettingsPage,
   StakingPage,
   ConnectionPage,
+  CreateDelegationPage,
+  DelegationStakePage,
+  DelegationWithdrawPage,
 } from '@Pages'
 
 import {
@@ -29,6 +32,8 @@ import {
   AccountProvider,
   SettingsProvider,
   TransactionProvider,
+  NetworkProvider,
+  ExchangeRatesProvider,
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
@@ -95,7 +100,7 @@ const App = () => {
         if (request.action === 'createDelegate') {
           if (!accountUnlocked) {
             setNextAfterUnlock({
-              route: '/staking',
+              route: '/wallet/Mintlayer/staking/create-delegation',
               state: {
                 action: 'createDelegate',
                 pool_id: request.data.pool_id,
@@ -104,7 +109,7 @@ const App = () => {
             return
           }
           // change route to staking page
-          navigate('/staking', {
+          navigate('/wallet/Mintlayer/staking/create-delegation', {
             state: { action: 'createDelegate', pool_id: request.data.pool_id },
           })
         }
@@ -150,6 +155,7 @@ const App = () => {
 
   return (
     <main className="App">
+      <Header />
       {errorPopupOpen && (
         <ConnectionErrorPopup onClickHandle={popupButtonClickHandler} />
       )}
@@ -165,18 +171,6 @@ const App = () => {
         <Route
           path="/restore-account"
           element={<RestoreAccountPage />}
-        />
-        <Route
-          path="/send-transaction"
-          element={<SendTransactionPage />}
-        />
-        <Route
-          path="/staking"
-          element={<StakingPage />}
-        />
-        <Route
-          path="/wallet"
-          element={<WalletPage />}
         />
         <Route
           path="/set-account-password"
@@ -195,6 +189,30 @@ const App = () => {
           element={<ConnectionPage />}
         />
         <Route
+          path="/wallet/:coinType"
+          element={<WalletPage />}
+        />
+        <Route
+          path="/wallet/:coinType/send-transaction"
+          element={<SendTransactionPage />}
+        />
+        <Route
+          path="/wallet/:coinType/staking"
+          element={<StakingPage />}
+        />
+        <Route
+          path="/wallet/:coinType/staking/:delegationId/add-funds"
+          element={<DelegationStakePage />}
+        />
+        <Route
+          path="/wallet/:coinType/staking/:delegationId/withdraw"
+          element={<DelegationWithdrawPage />}
+        />
+        <Route
+          path="/wallet/:coinType/staking/create-delegation"
+          element={<CreateDelegationPage />}
+        />
+        <Route
           exact
           path="/"
           element={<HomePage />}
@@ -208,11 +226,15 @@ root.render(
   <React.StrictMode>
     <AccountProvider>
       <SettingsProvider>
-        <TransactionProvider>
-          <MemoryRouter>
-            <App />
-          </MemoryRouter>
-        </TransactionProvider>
+        <NetworkProvider>
+          <ExchangeRatesProvider>
+            <TransactionProvider>
+              <MemoryRouter>
+                <App />
+              </MemoryRouter>
+            </TransactionProvider>
+          </ExchangeRatesProvider>
+        </NetworkProvider>
       </SettingsProvider>
     </AccountProvider>
   </React.StrictMode>,

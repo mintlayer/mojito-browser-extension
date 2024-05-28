@@ -1,13 +1,17 @@
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState } from 'react'
 
-import { FeeField } from '@ComposedComponents'
+import { FeeField, FeeFieldML } from '@ComposedComponents'
 import TransactionField from './TransactionField'
-import { AccountContext } from '@Contexts'
 
 import './errorMessages.css'
 
-const FeesField = ({ feeChanged, value, errorMessage, setFeeValidity }) => {
-  const { walletType } = useContext(AccountContext)
+const FeesField = ({
+  feeChanged,
+  value,
+  errorMessage,
+  setFeeValidity,
+  walletType,
+}) => {
   const [message, setMessage] = useState(errorMessage)
 
   useEffect(() => {
@@ -27,7 +31,13 @@ const FeesField = ({ feeChanged, value, errorMessage, setFeeValidity }) => {
           setFeeValidity={setFeeValidity}
         />
       ) : (
-        <p>The final fee will be calculated at the next step</p>
+        <FeeFieldML
+          id="fee"
+          changeValueHandle={feeChanged}
+          value={value}
+          setErrorMessage={setMessage}
+          setFeeValidity={setFeeValidity}
+        />
       )}
 
       <p className="error-message">{message}</p>

@@ -5,47 +5,29 @@ import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 import { useMlWalletInfo } from '@Hooks'
 import { ML } from '@Helpers'
-import { LocalStorageService } from '@Storage'
-import { AppInfo } from '@Constants'
 
-import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
+import { SettingsContext } from '@Contexts'
 
 import './CurrentStaking.css'
-import Timer from '../../basic/Timer/Timer'
-import { useEffectOnce } from '../../../hooks/etc/useEffectOnce'
+import { useNavigate, useParams } from 'react-router-dom'
 
 const CurrentStaking = ({ addressList }) => {
+  const navigate = useNavigate()
+  const { coinType } = useParams()
   const { networkType } = useContext(SettingsContext)
-  const { setDelegationStep } = useContext(TransactionContext)
-  const { walletType } = useContext(AccountContext)
 
-  const account = LocalStorageService.getItem('unlockedAccount')
-  const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
-  const isUncofermedTransaction =
-    LocalStorageService.getItem(unconfirmedTransactionString) &&
-    walletType.name === 'Mintlayer'
+  const walletType = {
+    name: coinType,
+    ticker: coinType === 'Mintlayer' ? 'ML' : 'BTC',
+    network: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
+  }
 
-  const unconfirmedTransactions = LocalStorageService.getItem(
-    unconfirmedTransactionString,
-  )
+  const { mlDelegationList, mlDelegationsBalance, fetchingDelegations } =
+    useMlWalletInfo(addressList)
 
-  const revalidate =
-    isUncofermedTransaction &&
-    unconfirmedTransactions.mode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
-  const {
-    mlDelegationList,
-    mlDelegationsBalance,
-    getDelegations,
-    getTransactions,
-  } = useMlWalletInfo(addressList)
-
-  useEffectOnce(() => {
-    getDelegations()
-  })
-
-  const onNextButtonClick = () => {
-    setDelegationStep(2)
+  const delegationsLoading = fetchingDelegations && mlDelegationList.length === 0
+  const onDelegationCreateButtonClick = () => {
+    navigate('/wallet/' + walletType.name + '/staking/create-delegation')
   }
   const stakingGuideLink =
     'https://mintlayer.info/en/Guides/Staking/browser-extension'
@@ -70,18 +52,6 @@ const CurrentStaking = ({ addressList }) => {
             Total staked: {ML.getAmountInCoins(mlDelegationsBalance)} ML
           </p>
         </div>
-        <div>
-          {revalidate && (
-            <Timer
-              onTimerEnd={() => {
-                getDelegations()
-                getTransactions()
-              }}
-              duration={10000}
-              repeat={revalidate}
-            />
-          )}
-        </div>
         <a
           href={poolListLink}
           target="_blank"
@@ -90,12 +60,14 @@ const CurrentStaking = ({ addressList }) => {
         </a>
       </div>
 
-      <Wallet.DelegationList delegationsList={mlDelegationList} />
+      <Wallet.DelegationList
+        delegationsList={mlDelegationList}
+        delegationsLoading={delegationsLoading}
+      />
       <div className="delegation-button-wrapper">
         <Button
-          onClickHandle={onNextButtonClick}
+          onClickHandle={onDelegationCreateButtonClick}
           extraStyleClasses={['delegation-button']}
-          disabled={isUncofermedTransaction}
         >
           Create new delegation
         </Button>

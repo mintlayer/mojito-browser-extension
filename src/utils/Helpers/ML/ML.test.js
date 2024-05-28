@@ -77,6 +77,7 @@ describe('ML', () => {
           isConfirmed: true,
           type: 'Transfer',
           sameWalletTransaction: false,
+          token_id: undefined,
         },
       ]
       expect(getParsedTransactions(transactions, addresses)).toEqual(

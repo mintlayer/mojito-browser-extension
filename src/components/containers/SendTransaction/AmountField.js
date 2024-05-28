@@ -1,9 +1,6 @@
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState } from 'react'
 import { CryptoFiatField } from '@ComposedComponents'
 import TransactionField from './TransactionField'
-import { AppInfo } from '@Constants'
-
-import { TransactionContext, AccountContext } from '@Contexts'
 
 import './errorMessages.css'
 
@@ -17,11 +14,6 @@ const AmountField = ({
   setAmountValidity,
   totalFeeInCrypto,
 }) => {
-  const { walletType } = useContext(AccountContext)
-  const { transactionMode } = useContext(TransactionContext)
-  const isDelegationMode =
-    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
-    walletType.name === 'Mintlayer'
   const [message, setMessage] = useState(errorMessage)
 
   useEffect(() => {
@@ -30,22 +22,20 @@ const AmountField = ({
 
   return (
     <TransactionField>
-      <label htmlFor="amount">{isDelegationMode ? '' : 'Amount:'}</label>
-      {!isDelegationMode && (
-        <CryptoFiatField
-          id="amount"
-          buttonTitle="Max"
-          placeholder="0"
-          transactionData={transactionData}
-          validity={validity}
-          changeValueHandle={amountChanged}
-          setErrorMessage={setMessage}
-          exchangeRate={exchangeRate}
-          maxValueInToken={maxValueInToken}
-          setAmountValidity={setAmountValidity}
-          totalFeeInCrypto={totalFeeInCrypto}
-        />
-      )}
+      <label htmlFor="amount">Amount:</label>
+      <CryptoFiatField
+        id="amount"
+        buttonTitle="Max"
+        placeholder="0"
+        transactionData={transactionData}
+        validity={validity}
+        changeValueHandle={amountChanged}
+        setErrorMessage={setMessage}
+        exchangeRate={exchangeRate}
+        maxValueInToken={maxValueInToken}
+        setAmountValidity={setAmountValidity}
+        totalFeeInCrypto={totalFeeInCrypto}
+      />
       <p className="error-message">{message}</p>
     </TransactionField>
   )

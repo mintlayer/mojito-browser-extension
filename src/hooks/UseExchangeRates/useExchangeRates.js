@@ -1,30 +1,12 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
-
-import { ExchangeRates } from '@APIs'
+import { useContext } from 'react'
+import { ExchangeRatesContext } from '@Contexts'
 
 const useExchangeRates = (crypto, fiat) => {
-  const effectCalled = useRef(false)
-  const [exchangeRate, setExchangeRate] = useState(0)
+  const { exchangeRate } = useContext(ExchangeRatesContext)
 
-  const getRate = useCallback(async () => {
-    try {
-      const response = await ExchangeRates.getRate(crypto, fiat)
-      const rates = JSON.parse(response)[`${crypto}-${fiat}`]
-      setExchangeRate(rates)
-    } catch (error) {
-      console.error(error)
-    }
-  }, [crypto, fiat])
-
-  useEffect(() => {
-    /* istanbul ignore next */
-    if (effectCalled.current) return
-    effectCalled.current = true
-
-    getRate()
-  }, [getRate])
-
-  return { exchangeRate }
+  return {
+    exchangeRate: exchangeRate[`${crypto.toLowerCase()}-${fiat.toLowerCase()}`],
+  }
 }
 
 export default useExchangeRates

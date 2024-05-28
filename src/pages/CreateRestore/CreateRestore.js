@@ -11,6 +11,8 @@ import { LocalStorageService } from '@Storage'
 const CreateRestorePage = () => {
   const { isExtended } = useContext(AccountContext)
   const navigate = useNavigate()
+  const devLocation = ':300'
+  const isDevMode = window.location.href.includes(devLocation)
 
   const expandHandler = (dest) => {
     window.open(
@@ -25,9 +27,15 @@ const CreateRestorePage = () => {
   }
 
   const goToSetAccountPage = () => {
+    if (isDevMode) {
+      return navigate('/set-account')
+    }
     isExtended ? navigate('/set-account') : expandHandler('/set-account')
   }
   const goToRestoreAccountPage = () => {
+    if (isDevMode) {
+      return navigate('/restore-account')
+    }
     isExtended
       ? navigate('/restore-account')
       : expandHandler('/restore-account')
@@ -35,9 +43,9 @@ const CreateRestorePage = () => {
 
   return (
     <div data-testid="create-restore">
-      <h1 className="center-text title-create">
+      <h2 className="center-text title-create">
         Your Mintlayer, right in your browser.
-      </h1>
+      </h2>
       <CenteredLayout>
         <VerticalGroup>
           <Button onClickHandle={goToSetAccountPage}>Create</Button>
@@ -68,7 +76,7 @@ const CreateRestorePage = () => {
           className="footnote-version"
           data-testid="footnote-name"
         >
-          v1.2.2
+          v1.2.3
         </small>
       </div>
     </div>

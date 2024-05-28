@@ -1,6 +1,6 @@
 /* eslint-disable max-params */
 import { useContext, useState, useEffect } from 'react'
-import { Header, PopUp, AddWallet } from '@ComposedComponents'
+import { PopUp, AddWallet } from '@ComposedComponents'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { Account } from '@Entities'
 
@@ -18,27 +18,22 @@ import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router-dom'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
-import { useEffectOnce } from 'src/hooks/etc/useEffectOnce'
 
 const DashboardPage = () => {
-  const { addresses, accountName, setWalletType, accountID } =
-    useContext(AccountContext)
+  const { addresses, accountName, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const currentBtcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.btcMainnetAddress
       : addresses.btcTestnetAddress
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddress
-      : addresses.mlTestnetAddresses
+
   const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
   const [account, setAccount] = useState(null)
 
   const [connectedWalletType, setConnectedWalletType] = useState('')
-  const { btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { mlBalance, getBalance } = useMlWalletInfo(currentMlAddresses)
+  const { balance: btcBalance } = useBtcWalletInfo(currentBtcAddress)
+  const { balance: mlBalance, tokenBalances } = useMlWalletInfo()
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
   const { yesterdayExchangeRate: btcYesterdayExchangeRate } =
@@ -94,7 +89,7 @@ const DashboardPage = () => {
 
   const stats = BTC.getStats(proportionDiffs, balanceDiffs, networkType)
 
-  const getCryptoList = (addresses, network) => {
+  const getCryptoList = (addresses, network, tokenBalances) => {
     if (!addresses) return []
     const cryptos = []
     const addCrypto = (
@@ -104,14 +99,18 @@ const DashboardPage = () => {
       exchangeRate,
       change24h,
       historyRates,
+      network,
+      id,
     ) => {
       cryptos.push({
+        id,
         name,
         symbol,
         balance: NumbersHelper.floatStringToNumber(balance),
         exchangeRate,
         change24h,
         historyRates,
+        network,
       })
     }
 
@@ -130,11 +129,21 @@ const DashboardPage = () => {
         btcExchangeRate,
         change24h,
         btcHistoryRates,
+        'bitcoin',
+        'Bitcoin',
       )
     }
-    const mlAddress = addresses.mlMainnetAddress
-      ? addresses.mlTestnetAddresses.mlReceivingAddresses[0]
-      : false
+
+    const currentMlAddresses =
+      networkType === AppInfo.NETWORK_TYPES.MAINNET
+        ? addresses.mlMainnetAddresses
+        : addresses.mlTestnetAddresses
+
+    const mlAddress =
+      currentMlAddresses &&
+      currentMlAddresses.mlReceivingAddresses &&
+      currentMlAddresses.mlReceivingAddresses[0]
+
     if (mlAddress) {
       const change24h =
         network === AppInfo.NETWORK_TYPES.MAINNET
@@ -147,15 +156,31 @@ const DashboardPage = () => {
         mlExchangeRate,
         change24h,
         mlHistoryrates,
+        'mintlayer',
+        'Mintlayer',
       )
+    }
+
+    if (tokenBalances) {
+      Object.keys(tokenBalances).forEach((token) => {
+        addCrypto(
+          tokenBalances[token].token_info.token_ticker.string,
+          tokenBalances[token].token_info.token_ticker.string,
+          tokenBalances[token].balance,
+          undefined,
+          0,
+          [],
+          'mintlayer',
+          token,
+        )
+      })
     }
 
     return cryptos
   }
 
   const goToWallet = (walletType) => {
-    setWalletType(walletType)
-    navigate('/wallet')
+    navigate('/wallet/' + walletType.id)
   }
 
   const onConnectItemClick = (walletType) => {
@@ -173,13 +198,8 @@ const DashboardPage = () => {
     getCurrentAccount(accountID).then((account) => setAccount(account))
   }, [accountID])
 
-  useEffectOnce(() => {
-    getBalance()
-  }, [])
-
   return (
     <>
-      <Header noBackButton />
       <div className="stats">
         <Dashboard.CryptoSharesChart
           cryptos={
@@ -197,7 +217,7 @@ const DashboardPage = () => {
         />
       </div>
       <Dashboard.CryptoList
-        cryptoList={getCryptoList(addresses, networkType)}
+        cryptoList={getCryptoList(addresses, networkType, tokenBalances)}
         colorList={colorList}
         onWalletItemClick={goToWallet}
         onConnectItemClick={onConnectItemClick}

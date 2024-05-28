@@ -26,7 +26,11 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
       const error = await result.json()
       if (error.error === 'Address not found') {
         return Promise.resolve(
-          JSON.stringify({ coin_balance: 0, transaction_history: [] }),
+          JSON.stringify({
+            unused: true,
+            coin_balance: 0,
+            transaction_history: [],
+          }),
         )
       }
 
@@ -62,8 +66,8 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
   }
 }
 
-const tryServers = async (endpoint, body = null) => {
-  const networkType = LocalStorageService.getItem('networkType')
+const tryServers = async (endpoint, body = null, forceNetwork) => {
+  const networkType = forceNetwork || LocalStorageService.getItem('networkType')
   const mintlayerServers =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? EnvVars.TESTNET_MINTLAYER_SERVERS
@@ -87,9 +91,11 @@ const tryServers = async (endpoint, body = null) => {
   }
 }
 
-const getAddressData = (address) => {
+const getAddressData = (address, network) => {
   const data = tryServers(
     MINTLAYER_ENDPOINTS.GET_ADDRESS_DATA.replace(':address', address),
+    null,
+    network,
   )
   return data
 }
@@ -99,10 +105,16 @@ const getAddressBalance = async (address) => {
     const response = await getAddressData(address)
     const data = JSON.parse(response)
     const balance = {
-      balanceInAtoms: data.coin_balance.atoms,
+      balanceInAtoms:
+        data && data.coin_balance && data.coin_balance.atoms
+          ? data.coin_balance.atoms
+          : 0,
     }
     const balanceLocked = {
-      balanceInAtoms: data.locked_coin_balance.atoms || 0,
+      balanceInAtoms:
+        data && data.locked_coin_balance && data.locked_coin_balance.atoms
+          ? data.locked_coin_balance.atoms
+          : 0,
     }
     return { balance, balanceLocked }
   } catch (error) {
@@ -198,6 +210,22 @@ const getWalletUtxos = (addresses) => {
   return Promise.all(utxosPromises)
 }
 
+const getTokensData = async (tokens) => {
+  const tokensData = {}
+  tokens.forEach((token) => {
+    tokensData[token] = {}
+  })
+  const tokensPromises = tokens.map((token) => {
+    return tryServers(`/token/${token}`)
+      .then(JSON.parse)
+      .then((data) => {
+        tokensData[token] = data
+      })
+  })
+  await Promise.all(tokensPromises)
+  return tokensData
+}
+
 const getAddressDelegations = (address) =>
   tryServers(
     MINTLAYER_ENDPOINTS.GET_ADDRESS_DELEGATIONS.replace(':address', address),
@@ -272,5 +300,6 @@ export {
   broadcastTransaction,
   getFeesEstimates,
   getBlocksData,
+  getTokensData,
   MINTLAYER_ENDPOINTS,
 }

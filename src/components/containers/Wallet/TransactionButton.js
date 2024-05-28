@@ -8,6 +8,10 @@ import './TransactionButton.css'
 const TransactionButton = ({ title, mode, onClick, disabled }) => {
   const buttonExtraClasses = ['button-transaction']
   const buttonUpExtraClasses = ['button-transaction', 'button-transaction-up']
+  const buttonStakingExtraClasses = [
+    'button-transaction',
+    'button-transaction-staking',
+  ]
   return (
     <div
       className="transaction-item"
@@ -15,7 +19,11 @@ const TransactionButton = ({ title, mode, onClick, disabled }) => {
     >
       <Button
         extraStyleClasses={
-          mode === 'up' ? buttonUpExtraClasses : buttonExtraClasses
+          mode === 'up'
+            ? buttonUpExtraClasses
+            : mode === 'staking'
+            ? buttonStakingExtraClasses
+            : buttonExtraClasses
         }
         onClickHandle={onClick}
         disabled={disabled}

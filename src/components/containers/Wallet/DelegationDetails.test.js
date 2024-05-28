@@ -3,6 +3,7 @@ import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
 import DelegationDetails, { DelegationDetailsItem } from './DelegationDetails'
 import { LocalStorageService } from '@Storage'
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
+import { BrowserRouter as Router } from 'react-router-dom'
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
@@ -57,7 +58,9 @@ describe('DelegationDetails', () => {
       <AccountContext.Provider value={mockAccountContext}>
         <TransactionContext.Provider value={mockTransactionContext}>
           <SettingsContext.Provider value={mockSettingsContext}>
-            <DelegationDetails delegation={mockDelegation} />
+            <Router>
+              <DelegationDetails delegation={mockDelegation} />
+            </Router>
           </SettingsContext.Provider>
         </TransactionContext.Provider>
         ,
@@ -68,11 +71,15 @@ describe('DelegationDetails', () => {
   })
 
   it('calls correct functions on button click', () => {
+    mockDelegation.addFundsClickHandle = jest.fn()
+    mockDelegation.withdrawClickHandle = jest.fn()
     render(
       <AccountContext.Provider value={mockAccountContext}>
         <TransactionContext.Provider value={mockTransactionContext}>
           <SettingsContext.Provider value={mockSettingsContext}>
-            <DelegationDetails delegation={mockDelegation} />
+            <Router>
+              <DelegationDetails delegation={mockDelegation} />
+            </Router>
           </SettingsContext.Provider>
         </TransactionContext.Provider>
         ,
@@ -80,13 +87,9 @@ describe('DelegationDetails', () => {
     )
 
     fireEvent.click(screen.getByText('Add funds'))
-    expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
-    expect(mockSetTransactionMode).toHaveBeenCalledWith('staking')
-    expect(mockSetDelegationStep).toHaveBeenCalledWith(2)
+    expect(mockDelegation.addFundsClickHandle).toHaveBeenCalled()
 
     fireEvent.click(screen.getByText('Withdraw'))
-    expect(mockSetCurrentDelegationInfo).toHaveBeenCalledWith(mockDelegation)
-    expect(mockSetTransactionMode).toHaveBeenCalledWith('withdraw')
-    expect(mockSetDelegationStep).toHaveBeenCalledWith(2)
+    expect(mockDelegation.withdrawClickHandle).toHaveBeenCalled()
   })
 })

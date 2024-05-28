@@ -11,14 +11,15 @@ import ProgressTracker from './ProgressTracker/ProgressTracker'
 import TextField from './TextField/TextField'
 import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 import FeeField from './FeeField/FeeField'
+import FeeFieldML from './FeeField/FeeFieldML'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import Entropy from './Entropy/Entropy'
 import WalletList from './WalletList/WalletList'
 import SettingsTestnet from './SettingsTestnet/SettingsTestnet'
-import SettingsRestoreBtcMode from './SettingsRestoreBtcMode/SettingsRestoreBtcMode'
 import AddWallet from './AddWallet/AddWallet'
 import CurrentStaking from './CurrentStaking/CurrentStaking'
 import HelpTooltip from './HelpTooltip/HelpTooltip'
+import RestoreSeedField from './RestoreSeedField/RestoreSeedField'
 
 export {
   Balance,
@@ -34,12 +35,13 @@ export {
   TextField,
   CryptoFiatField,
   FeeField,
+  FeeFieldML,
   ConnectionErrorPopup,
   Entropy,
   WalletList,
   SettingsTestnet,
-  SettingsRestoreBtcMode,
   AddWallet,
   CurrentStaking,
   HelpTooltip,
+  RestoreSeedField,
 }

@@ -1,1 +1,0 @@
-sendrawtransaction RPC error: {"code":-26,"message":"min relay fee not met, 226 < 372"}

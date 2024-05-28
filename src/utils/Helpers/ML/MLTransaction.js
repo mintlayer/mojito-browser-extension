@@ -5,58 +5,33 @@ import { LocalStorageService } from '@Storage'
 import { ML as MLHelpers } from '@Helpers'
 import { AppInfo } from '@Constants'
 
-const getUtxoBalance = (utxo) => {
-  return utxo.reduce(
-    (sum, item) => sum + BigInt(item.utxo.value.amount.atoms),
-    BigInt(0),
-  )
+const getUtxoBalance = (item) => {
+  return BigInt(item.utxo.value.amount.atoms)
 }
 
-const getUtxoAvailable = (utxo) => {
-  const available = utxo
-    .flatMap((utxo) => [...utxo])
-    .filter((item) => item.utxo.value)
-    .reduce((acc, item) => {
-      acc.push(item)
-      return acc
-    }, [])
-
-  return available.map((item) => [item])
-}
-
-const getUtxoTransaction = (utxo) => {
-  return utxo.map((item) => ({
+const getUtxoTransaction = (item) => {
+  return {
     transaction: item.outpoint.source_id,
     index: item.outpoint.index,
-  }))
+  }
 }
 
-const getUtxoTransactionsBytes = (transactions) => {
-  return transactions.map((transaction) => {
-    return {
-      bytes: Buffer.from(transaction.transaction, 'hex'),
-      index: transaction.index,
-    }
-  })
+const getUtxoTransactionsBytes = (transaction) => {
+  return {
+    bytes: Buffer.from(transaction.transaction, 'hex'),
+    index: transaction.index,
+  }
 }
 
 const getOutpointedSourceId = async (transactionsBytes) => {
-  return await Promise.all(
-    transactionsBytes.map(async (transaction) => {
-      return {
-        sourcedID: await ML.getEncodedOutpointSourceId(transaction.bytes),
-        index: transaction.index,
-      }
-    }),
-  )
+  return {
+    sourcedID: await ML.getEncodedOutpointSourceId(transactionsBytes.bytes),
+    index: transactionsBytes.index,
+  }
 }
 
-const getTxInput = async (outpointSourceId) => {
-  return await Promise.all(
-    outpointSourceId.map((outpoint) => {
-      return ML.getTxInput(outpoint.sourcedID, outpoint.index)
-    }),
-  )
+const getTxInput = async (outpoint) => {
+  return ML.getTxInput(outpoint.sourcedID, outpoint.index)
 }
 
 /**
@@ -70,15 +45,15 @@ const getTxInput = async (outpointSourceId) => {
  * @param fee
  * @returns {*[]}
  */
-const getTransactionUtxos = (utxos, amountToUse, fee = BigInt(0)) => {
+const getTransactionUtxos = ({ utxos, amount, tokenId }) => {
   let balance = BigInt(0)
   const utxosToSpend = []
   let lastIndex = 0
 
   for (let i = 0; i < utxos.length; i++) {
     lastIndex = i
-    const utxoBalance = getUtxoBalance(utxos[i])
-    if (balance < BigInt(amountToUse) + fee) {
+    const utxoBalance = getUtxoBalance(utxos[i], tokenId)
+    if (balance < BigInt(amount)) {
       balance += utxoBalance
       utxosToSpend.push(utxos[i])
     } else {
@@ -86,7 +61,7 @@ const getTransactionUtxos = (utxos, amountToUse, fee = BigInt(0)) => {
     }
   }
 
-  if (balance === BigInt(amountToUse)) {
+  if (balance === BigInt(amount)) {
     // pick up extra UTXO
     if (utxos[lastIndex + 1]) {
       utxosToSpend.push(utxos[lastIndex + 1])
@@ -128,18 +103,20 @@ const getTxInputs = async (outpointSourceIds) => {
   return txInputs
 }
 
-const getTxOutput = async (
+const getTxOutput = ({
   amount,
   address,
   networkType,
   poolId,
   delegationId,
-) => {
+  chainTip,
+  tokenId,
+}) => {
   const txOutput = poolId
     ? ML.getDelegationOutput(poolId, address, networkType)
     : delegationId
     ? ML.getStakingOutput(amount, delegationId, networkType)
-    : await ML.getOutputs({ amount, address, networkType })
+    : ML.getOutputs({ amount, address, networkType, chainTip, tokenId })
   return txOutput
 }
 
@@ -159,6 +136,7 @@ const getOptUtxos = async (utxos, network) => {
         networkType: network,
         type: item.utxo.type,
         lock: item.utxo.lock,
+        tokenId: item.utxo.value.token_id,
       })
     }),
   )
@@ -208,56 +186,105 @@ const getArraySpead = (inputs) => {
   return inputsArray
 }
 
-const totalUtxosAmount = (utxosToSpend) => {
-  return utxosToSpend
-    .flatMap((utxo) => [...utxo])
-    .reduce((acc, utxo) => {
-      const amount = utxo?.utxo?.value?.amount
+const totalUtxosAmount = (utxosToSpend, token) => {
+  return utxosToSpend.reduce((acc, utxo) => {
+    const requiredToken = token
+      ? utxo.utxo.value.token_id === token
+      : utxo.utxo.value.type === 'Coin'
+    const amount =
+      utxo?.utxo?.value?.amount && requiredToken
         ? BigInt(utxo.utxo.value.amount.atoms)
-        : 0
-      return acc + amount
-    }, BigInt(0))
+        : BigInt(0)
+    return acc + amount
+  }, BigInt(0))
 }
 
 const getUtxoAddress = (utxosToSpend) => {
-  return utxosToSpend
-    .flatMap((utxo) => [...utxo])
-    .map((utxo) => utxo.utxo.destination)
+  return utxosToSpend.map((utxo) => utxo.utxo.destination)
 }
 
-const calculateFee = async ({
-  utxosTotal,
+const calculateTransactionSizeInBytes = async ({
+  utxos,
   address,
   changeAddress,
   amountToUse,
   network,
   poolId,
   delegationId,
+  tokenId,
+  approximateFee,
 }) => {
-  const amountToUseFinale = amountToUse <= 0 ? BigInt(1) : amountToUse
-  const utxos = getUtxoAvailable(utxosTotal)
-  const totalAmount = !poolId ? totalUtxosAmount(utxos) : 0
-  if (totalAmount < BigInt(amountToUse) && !poolId) {
-    throw new Error('Insufficient funds')
+  const isToken = !!tokenId
+  const amountToUseFinaleCoin = !isToken
+    ? BigInt(amountToUse) + BigInt(approximateFee)
+    : BigInt(approximateFee)
+  const amountToUseFinaleToken = isToken ? BigInt(amountToUse) : BigInt(0)
+  const totalAmountCoin = !poolId ? totalUtxosAmount(utxos) : BigInt(0)
+  const totalAmountToken = isToken
+    ? totalUtxosAmount(utxos, tokenId)
+    : BigInt(0)
+  if (totalAmountCoin < BigInt(amountToUseFinaleCoin) && !poolId) {
+    throw new Error('Insufficient ML')
   }
-  const requireUtxo = getTransactionUtxos(utxos, amountToUseFinale)
+  if (totalAmountToken < BigInt(amountToUseFinaleToken)) {
+    throw new Error('Insufficient Tokens')
+  }
+
+  const utxoCoin = utxos.filter((utxo) => utxo.utxo.value.type === 'Coin')
+  const utxoToken = isToken
+    ? utxos.filter((utxo) => utxo.utxo.value.token_id === tokenId)
+    : []
+
+  const requireUtxoCoin = getTransactionUtxos({
+    utxos: utxoCoin,
+    amount: amountToUseFinaleCoin,
+  })
+  const requireUtxoToken = isToken
+    ? getTransactionUtxos({
+        utxos: utxoToken,
+        amount: amountToUseFinaleToken,
+        tokenId,
+      })
+    : []
+  const requireUtxo = [...requireUtxoCoin, ...requireUtxoToken]
   const transactionStrings = getUtxoTransactions(requireUtxo)
   const addressList = getUtxoAddress(requireUtxo)
   const transactionBytes = getTransactionsBytes(transactionStrings)
   const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
   const inputs = await getTxInputs(outpointedSourceIds)
   const inputsArray = getArraySpead(inputs)
-  const txOutput = await getTxOutput(
-    amountToUseFinale.toString(),
+  const txOutput = await getTxOutput({
+    amount: isToken
+      ? amountToUseFinaleToken.toString()
+      : amountToUseFinaleCoin.toString(),
     address,
-    network,
+    networkType: network,
     poolId,
     delegationId,
-  )
-  const changeAmount = (
-    totalUtxosAmount(requireUtxo) - amountToUseFinale
+    tokenId,
+  })
+  const changeAmountCoin = (
+    totalUtxosAmount(requireUtxoCoin) - amountToUseFinaleCoin
   ).toString()
-  const txChangeOutput = await getTxOutput(changeAmount, changeAddress, network)
+  const txChangeOutputCoin = await getTxOutput({
+    amount: changeAmountCoin,
+    address: changeAddress,
+    networkType: network,
+  })
+
+  const changeAmountToken = (
+    totalUtxosAmount(requireUtxoToken, tokenId) - amountToUseFinaleToken
+  ).toString()
+
+  const txChangeOutputToken = isToken
+    ? await getTxOutput({
+        amount: changeAmountToken,
+        address: changeAddress,
+        networkType: network,
+        tokenId,
+      })
+    : []
+  const txChangeOutput = [...txChangeOutputCoin, ...txChangeOutputToken]
   const outputs = [...txOutput, ...txChangeOutput]
   // const optUtxos = await getOptUtxos(requireUtxo.flat(), network)
   const size = ML.getEstimatetransactionSize(
@@ -266,14 +293,17 @@ const calculateFee = async ({
     outputs,
     network,
   )
-  const feeEstimatesResponse = await Mintlayer.getFeesEstimates()
-  const feeEstimates = JSON.parse(feeEstimatesResponse)
-  const fee = Math.ceil((Number(feeEstimates) / 1000) * size)
 
-  return BigInt(fee)
+  return size
 }
 
-const calculateSpenDelegFee = async (address, amount, network, delegation) => {
+const calculateSpenDelegFee = async (
+  address,
+  amount,
+  network,
+  delegation,
+  chainTip,
+) => {
   const input = ML.getAccountOutpointInput(
     delegation.delegation_id,
     amount.toString(),
@@ -282,12 +312,15 @@ const calculateSpenDelegFee = async (address, amount, network, delegation) => {
   )
   const inputsArray = [...input]
 
-  const spendÒutput = await ML.getOutputs({
+  const spendÒutput = ML.getOutputs({
     amount: amount.toString(),
     address: address,
     networkType: network,
     type: 'spendFromDelegation',
-    lock: undefined,
+    lock: {
+      ForBlockCount: 7200,
+    },
+    chainTip,
   })
   const outputs = [...spendÒutput]
   const size = ML.getEstimatetransactionSize(
@@ -304,7 +337,7 @@ const calculateSpenDelegFee = async (address, amount, network, delegation) => {
 }
 
 const sendTransaction = async ({
-  utxosTotal,
+  utxos,
   keysList,
   address,
   changeAddress,
@@ -314,49 +347,84 @@ const sendTransaction = async ({
   delegationId,
   transactionMode,
   adjustedFee,
+  tokenId,
 }) => {
-  const utxos = getUtxoAvailable(utxosTotal)
-  const totalAmount = totalUtxosAmount(utxos)
-
-  const fee =
-    adjustedFee ||
-    (await calculateFee({
-      utxosTotal: utxos,
-      address,
-      changeAddress,
-      amountToUse,
-      network,
-      poolId,
-      delegationId,
-    }))
-
+  const isToken = !!tokenId
+  const fee = adjustedFee
   if (fee > BigInt(AppInfo.MAX_ML_FEE)) {
     throw new Error('Fee is too high, please try again later.')
   }
 
-  let amount = amountToUse
-  if (totalAmount < amountToUse + fee) {
-    amount = totalAmount - fee
+  const amountToUseFinaleCoin = !isToken
+    ? BigInt(amountToUse) + BigInt(fee)
+    : BigInt(fee)
+  const amountToUseFinaleToken = isToken ? BigInt(amountToUse) : BigInt(0)
+  const totalAmountCoin = !poolId ? totalUtxosAmount(utxos) : BigInt(0)
+  const totalAmountToken = isToken
+    ? totalUtxosAmount(utxos, tokenId)
+    : BigInt(0)
+  if (totalAmountCoin < BigInt(amountToUseFinaleCoin) && !poolId) {
+    throw new Error('Insufficient ML')
+  }
+  if (totalAmountToken < BigInt(amountToUseFinaleToken)) {
+    throw new Error('Insufficient Tokens')
   }
 
-  const requireUtxo = getTransactionUtxos(utxos, amount, fee)
+  const utxoCoin = utxos.filter((utxo) => utxo.utxo.value.type === 'Coin')
+  const utxoToken = isToken
+    ? utxos.filter((utxo) => utxo.utxo.value.token_id === tokenId)
+    : []
+
+  const requireUtxoCoin = getTransactionUtxos({
+    utxos: utxoCoin,
+    amount: amountToUseFinaleCoin,
+  })
+  const requireUtxoToken = isToken
+    ? getTransactionUtxos({
+        utxos: utxoToken,
+        amount: amountToUseFinaleToken,
+        tokenId,
+      })
+    : []
+  const requireUtxo = [...requireUtxoCoin, ...requireUtxoToken]
   const transactionStrings = getUtxoTransactions(requireUtxo)
   const transactionBytes = getTransactionsBytes(transactionStrings)
   const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
   const inputs = await getTxInputs(outpointedSourceIds)
   const inputsArray = getArraySpead(inputs)
-  const txOutput = await getTxOutput(
-    amount.toString(),
+  const txOutput = await getTxOutput({
+    amount: amountToUse.toString(),
     address,
-    network,
+    networkType: network,
     poolId,
     delegationId,
-  )
+    tokenId,
+  })
 
-  const changeAmount = (totalUtxosAmount(requireUtxo) - amount - fee).toString()
-  const txChangeOutput = await getTxOutput(changeAmount, changeAddress, network)
+  const changeAmountCoin = (
+    totalUtxosAmount(requireUtxoCoin) - amountToUseFinaleCoin
+  ).toString()
+  const txChangeOutputCoin = await getTxOutput({
+    amount: changeAmountCoin,
+    address: changeAddress,
+    networkType: network,
+  })
+
+  const changeAmountToken = (
+    totalUtxosAmount(requireUtxoToken, tokenId) - amountToUseFinaleToken
+  ).toString()
+
+  const txChangeOutputToken = isToken
+    ? await getTxOutput({
+        amount: changeAmountToken,
+        address: changeAddress,
+        networkType: network,
+        tokenId,
+      })
+    : []
+  const txChangeOutput = [...txChangeOutputCoin, ...txChangeOutputToken]
   const outputs = [...txOutput, ...txChangeOutput]
-  const optUtxos = await getOptUtxos(requireUtxo.flat(), network)
+  const optUtxos = await getOptUtxos(requireUtxo, network)
   const transaction = await ML.getTransaction(inputsArray, outputs)
   const encodedWitnesses = await getEncodedWitnesses(
     requireUtxo,
@@ -375,37 +443,32 @@ const sendTransaction = async ({
 
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
-  // TODO: remove this after API data is available
-  if (transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION) {
-    const lastDelegationIdString = `${'lastDelegationId'}_${accountName}_${network}`
-    LocalStorageService.setItem(lastDelegationIdString, poolId)
-  }
-  // -------------------------------------
   const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
-  const unconfirmedTransactions = LocalStorageService.getItem(
-    unconfirmedTransactionString,
-  )
+  const unconfirmedTransactions =
+    LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-  if (!unconfirmedTransactions) {
-    const transaction = {
-      direction: 'out',
-      type: 'Unconfirmed',
-      destAddress: address || delegationId,
-      value: MLHelpers.getAmountInCoins(Number(amount)),
-      confirmations: 0,
-      date: '',
-      txid: JSON.parse(result).tx_id,
-      fee: fee.toString(),
-      isConfirmed: false,
-      mode: transactionMode,
-      poolId: poolId,
-      delegationId: delegationId,
-    }
-    LocalStorageService.setItem(unconfirmedTransactionString, transaction)
-    return JSON.parse(result).tx_id
-  } else {
-    return 'Transaction already in progress. You have to wait for confirmation.'
-  }
+  unconfirmedTransactions.push({
+    direction: 'out',
+    type: 'Unconfirmed',
+    destAddress: address || delegationId,
+    value: MLHelpers.getAmountInCoins(Number(amountToUse)),
+    confirmations: 0,
+    date: '',
+    txid: JSON.parse(result).tx_id,
+    fee: fee.toString(),
+    isConfirmed: false,
+    mode: transactionMode,
+    poolId: poolId,
+    delegationId: delegationId,
+    usedUtxosOutpoints: requireUtxo.map(
+      ({ outpoint: { index, source_id } }) => ({ index, source_id }),
+    ),
+  })
+  LocalStorageService.setItem(
+    unconfirmedTransactionString,
+    unconfirmedTransactions,
+  )
+  return JSON.parse(result).tx_id
 }
 
 const spendFromDelegation = async (
@@ -414,8 +477,15 @@ const spendFromDelegation = async (
   amount,
   network,
   delegation,
+  chainTip,
 ) => {
-  const fee = await calculateSpenDelegFee(address, amount, network, delegation)
+  const fee = await calculateSpenDelegFee(
+    address,
+    amount,
+    network,
+    delegation,
+    chainTip,
+  )
   if (fee > AppInfo.MAX_ML_FEE) {
     throw new Error('Fee is too high, please try again later.')
   }
@@ -440,7 +510,10 @@ const spendFromDelegation = async (
     address: address,
     networkType: network,
     type: 'spendFromDelegation',
-    lock: undefined,
+    lock: {
+      ForBlockCount: 7200,
+    },
+    chainTip,
   })
   const outputs = [...spendÒutput]
   const optUtxos = [0]
@@ -466,27 +539,25 @@ const spendFromDelegation = async (
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
   const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
-  const unconfirmedTransactions = LocalStorageService.getItem(
-    unconfirmedTransactionString,
-  )
+  const unconfirmedTransactions =
+    LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-  if (!unconfirmedTransactions) {
-    const transaction = {
-      direction: 'out',
-      type: 'Unconfirmed',
-      destAddress: address,
-      value: MLHelpers.getAmountInCoins(Number(amount)),
-      confirmations: 0,
-      date: '',
-      txid: JSON.parse(result).tx_id,
-      fee: fee,
-      isConfirmed: false,
-    }
-    LocalStorageService.setItem(unconfirmedTransactionString, transaction)
-    return JSON.parse(result).tx_id
-  } else {
-    return 'Transaction already in progress. You have to wait for confirmation.'
-  }
+  unconfirmedTransactions.push({
+    direction: 'out',
+    type: 'Unconfirmed',
+    destAddress: address,
+    value: MLHelpers.getAmountInCoins(Number(amount)),
+    confirmations: 0,
+    date: '',
+    txid: JSON.parse(result).tx_id,
+    fee: fee,
+    isConfirmed: false,
+  })
+  LocalStorageService.setItem(
+    unconfirmedTransactionString,
+    unconfirmedTransactions,
+  )
+  return JSON.parse(result).tx_id
 }
 
 export {
@@ -503,8 +574,8 @@ export {
   getTransactionHex,
   getOptUtxos,
   getEncodedWitnesses,
-  calculateFee,
   calculateSpenDelegFee,
   sendTransaction,
   spendFromDelegation,
+  calculateTransactionSizeInBytes,
 }

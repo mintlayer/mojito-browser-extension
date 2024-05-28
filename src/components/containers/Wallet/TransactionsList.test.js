@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import TransactionsList from './TransactionsList'
-import { TransactionContext } from '@Contexts'
+import { NetworkContext } from '@Contexts'
 
 const TRANSACTIONSSAMPLE = [
   {
@@ -35,9 +35,9 @@ const TRANSACTIONSSAMPLE = [
 
 test('Render transactions list component', () => {
   render(
-    <TransactionContext.Provider value={{ transactionsLoading: false }}>
+    <NetworkContext.Provider value={{ fetchingTransactions: true }}>
       <TransactionsList transactionsList={TRANSACTIONSSAMPLE} />
-    </TransactionContext.Provider>,
+    </NetworkContext.Provider>,
   )
   const transactionsList = screen.getByTestId('transactions-list')
   const transactions = screen.getAllByTestId('transaction')
@@ -48,9 +48,9 @@ test('Render transactions list component', () => {
 
 test('Render transactions list component - empty', () => {
   render(
-    <TransactionContext.Provider value={{ transactionsLoading: false }}>
+    <NetworkContext.Provider value={{ fetchingTransactions: false }}>
       <TransactionsList transactionsList={[]} />
-    </TransactionContext.Provider>,
+    </NetworkContext.Provider>,
   )
   const transactionsList = screen.getByTestId('transactions-list')
   const transactions = screen.getAllByTestId('transaction')
@@ -61,9 +61,9 @@ test('Render transactions list component - empty', () => {
 
 test('Render transactions list component - loading', () => {
   render(
-    <TransactionContext.Provider value={{ transactionsLoading: true }}>
-      <TransactionsList transactionsList={TRANSACTIONSSAMPLE} />
-    </TransactionContext.Provider>,
+    <NetworkContext.Provider value={{ fetchingTransactions: true }}>
+      <TransactionsList transactionsList={[]} />
+    </NetworkContext.Provider>,
   )
   const transactionsList = screen.getByTestId('transactions-list')
   const skeletonLoading = screen.getAllByTestId('card')

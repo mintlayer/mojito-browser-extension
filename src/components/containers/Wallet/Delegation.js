@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react'
+import React, { useState } from 'react'
 // import { format } from 'date-fns'
 
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
@@ -7,49 +7,24 @@ import { Loading, PopUp } from '@ComposedComponents'
 import { ML } from '@Helpers'
 import { AppInfo } from '@Constants'
 import { Button } from '@BasicComponents'
-import { LocalStorageService } from '@Storage'
-
-import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
 
 import DelegationDetails from './DelegationDetails'
 
 import './Delegation.css'
 import { format } from 'date-fns'
+import { useNavigate } from 'react-router-dom'
 
 const Delegation = ({ delegation }) => {
-  const { setDelegationStep, setTransactionMode, setCurrentDelegationInfo } =
-    useContext(TransactionContext)
-  const { walletType } = useContext(AccountContext)
-  const { networkType } = useContext(SettingsContext)
+  const navigate = useNavigate()
+
+  // staking only for Mintlayer
+  const walletType = {
+    name: 'Mintlayer',
+    ticker: 'ML',
+    chain: 'mintlayer',
+  }
+
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
-  // const date = delegation.date
-  //   ? format(new Date(delegation.date * 1000), 'dd/MM/yyyy HH:mm')
-  //   : 'not confirmed'
-
-  const formatAddress = (address) => {
-    if (!address) {
-      return 'Wrong address'
-    }
-    const limitSize = 24
-    const halfLimit = limitSize / 2
-    const firstPart = address.slice(0, halfLimit)
-    const lastPart = address.slice(address.length - halfLimit, address.length)
-    return `${firstPart}...${lastPart}`
-  }
-
-  const addFundsClickHandle = () => {
-    if (isUncofermedTransaction) return
-    setCurrentDelegationInfo(delegation)
-    setTransactionMode(AppInfo.ML_TRANSACTION_MODES.STAKING)
-    setDelegationStep(2)
-  }
-
-  const withdrawClickHandle = () => {
-    if (isUncofermedTransaction) return
-    setCurrentDelegationInfo(delegation)
-    setTransactionMode(AppInfo.ML_TRANSACTION_MODES.WITHDRAW)
-    setDelegationStep(2)
-  }
 
   let delegationOject = delegation
 
@@ -67,12 +42,29 @@ const Delegation = ({ delegation }) => {
     : 0
 
   const buttonExtraStyles = ['delegation-action-button']
-  const account = LocalStorageService.getItem('unlockedAccount')
-  const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
-  const isUncofermedTransaction =
-    LocalStorageService.getItem(unconfirmedTransactionString) &&
-    walletType.name === 'Mintlayer'
+
+  const addFundsClickHandle = () => {
+    navigate(
+      '/wallet/' +
+        walletType.name +
+        '/staking/' +
+        delegation.delegation_id +
+        '/add-funds',
+    )
+  }
+
+  const withdrawClickHandle = () => {
+    navigate(
+      '/wallet/' +
+        walletType.name +
+        '/staking/' +
+        delegation.delegation_id +
+        '/withdraw',
+    )
+  }
+
+  delegationOject.addFundsClickHandle = addFundsClickHandle
+  delegationOject.withdrawClickHandle = withdrawClickHandle
 
   const date = delegationOject.creation_time
     ? format(new Date(delegationOject.creation_time * 1000), 'dd/MM/yyyy HH:mm')
@@ -123,7 +115,7 @@ const Delegation = ({ delegation }) => {
             data-testid="delegation-otherPart"
           >
             {delegation && delegationOject.pool_id
-              ? formatAddress(delegationOject.pool_id)
+              ? ML.formatAddress(delegationOject.pool_id)
               : ''}
           </p>
           <div className="transaction-date-amount">
@@ -158,14 +150,12 @@ const Delegation = ({ delegation }) => {
               <Button
                 extraStyleClasses={buttonExtraStyles}
                 onClickHandle={addFundsClickHandle}
-                disabled={isUncofermedTransaction}
               >
                 Add funds
               </Button>
               <Button
                 extraStyleClasses={buttonExtraStyles}
                 onClickHandle={withdrawClickHandle}
-                disabled={isUncofermedTransaction}
               >
                 Withdraw
               </Button>

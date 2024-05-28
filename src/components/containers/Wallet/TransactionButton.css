@@ -3,7 +3,8 @@
 }
 
 .button-transaction,
-.button-transaction-up {
+.button-transaction-up,
+.button-transaction-staking {
   width: 86px;
   height: 86px;
   min-width: 86px;

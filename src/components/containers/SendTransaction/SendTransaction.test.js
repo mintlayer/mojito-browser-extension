@@ -3,7 +3,7 @@ import { render, screen, act, fireEvent } from '@testing-library/react'
 import SendTransaction from './SendTransaction'
 
 import {
-  AccountProvider,
+  AccountProvider, NetworkContext,
   SettingsProvider,
   TransactionProvider,
 } from '@Contexts'
@@ -21,11 +21,14 @@ test('Send Transaction', async () => {
       <AccountProvider>
         <SettingsProvider>
           <TransactionProvider>
-            <SendTransaction
-              transactionData={TRANSACTIONDATASAMPLE}
-              setFormValidity={() => {}}
-              calculateTotalFee={() => {}}
-            />
+            <NetworkContext.Provider value={{}}>
+              <SendTransaction
+                transactionData={TRANSACTIONDATASAMPLE}
+                setFormValidity={() => {}}
+                calculateTotalFee={() => {}}
+                walletType={{ name: 'Mintlayer' }}
+              />
+            </NetworkContext.Provider>
             ,
           </TransactionProvider>
         </SettingsProvider>

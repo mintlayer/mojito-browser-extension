@@ -30,20 +30,17 @@ Launches the test runner in the interactive watch mode.
 
 ### `npm run e2e`
 
-Runs E2E tests, with Cypress. It will run them against a web server that runs on the `build` directory. So, **BEFORE** running this command, run:
-
-`npm run build:staging` -> to build the project with test Environment variables on the `build` directory
-`npm run serve` -> to run the web server on `build` directory
-
-When the test finishes, it generates screenshots on the path `path/to/screenshots` and videos on `path/to/videos`.
+Runs E2E tests with Playwright. This will run the tests in headless mode.
 
 #### Developer mode
 
-If you want to create new tests, you can have the visual Cypress interface. To do that, run:
+If you want to create new tests, you can have the visual Playwright interface. To do that, run:
 
-`npm run dev:e2e`.
+`npm run e2e:ui`.
 
-Note that it still runs against the same server use on regular E2E tests. So you will need to run the same two commands, `build:staging` and `serve`, listed on the previous section.
+If you want to debug existing tests, run:
+
+`npm run e2e:debug`.
 
 ### `npm run build`
 

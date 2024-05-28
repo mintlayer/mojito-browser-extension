@@ -21,6 +21,7 @@ import init, {
   SignatureHashType,
   SourceId,
   Amount,
+  encode_output_token_transfer,
 } from './@mintlayerlib-js/wasm_wrappers.js'
 
 import { Mintlayer } from '@APIs'
@@ -92,22 +93,23 @@ export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
   return { mlReceivingPrivKeys, mlChangePrivKeys }
 }
 
-const checkIfAddressUsed = async (address) => {
-  const addressTransaction = await Mintlayer.getWalletTransactions([address])
-  if (addressTransaction.length > 0) {
-    return true
+const checkIfAddressUsed = async (address, network) => {
+  try {
+    const addressData = await Mintlayer.getAddressData(address, network)
+    const data = JSON.parse(addressData)
+    if (data.transaction_history.length > 0) {
+      return true
+    }
+    return false
+  } catch (e) {
+    return false
   }
-  return false
 }
 
-export const getWalletAddresses = async (
-  mlPrivateKey,
-  network,
-  offset = 21,
-) => {
-  const generateAddresses = (addressGenerator) => {
-    const privKeys = Array.from({ length: offset }, (_, i) =>
-      addressGenerator(mlPrivateKey, i),
+export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
+  const generateAddresses = (addressGenerator, length, offset) => {
+    const privKeys = Array.from({ length }, (_, i) =>
+      addressGenerator(mlPrivateKey, i + offset),
     )
 
     const publicKeys = privKeys.map((address) =>
@@ -118,16 +120,17 @@ export const getWalletAddresses = async (
   }
 
   const checkAndGenerateAddresses = async (addressGenerator) => {
-    let addresses = generateAddresses(addressGenerator)
+    const addresses = generateAddresses(addressGenerator, batch, 0)
     let allUsed = await Promise.all(
-      addresses.map((address) => checkIfAddressUsed(address)),
+      addresses.map((address) => checkIfAddressUsed(address, network)),
     )
 
     while (allUsed.every((used) => used)) {
-      offset += 20
-      addresses = generateAddresses(addressGenerator)
+      addresses.push(
+        ...generateAddresses(addressGenerator, batch, addresses.length),
+      )
       allUsed = await Promise.all(
-        addresses.map((address) => checkIfAddressUsed(address)),
+        addresses.map((address) => checkIfAddressUsed(address, network)),
       )
     }
 
@@ -142,18 +145,6 @@ export const getWalletAddresses = async (
   return { mlReceivingAddresses, mlChangeAddresses }
 }
 
-export const getUnusedAddress = async (addresses) => {
-  for (let i = 0; i < addresses.length; i++) {
-    const isUsed = await checkIfAddressUsed(addresses[i])
-    if (!isUsed) {
-      return addresses[i]
-    }
-    if (i === addresses.length - 1) {
-      return addresses[i]
-    }
-  }
-}
-
 export const getEncodedOutpointSourceId = (txId) => {
   return encode_outpoint_source_id(txId, SourceId.Transaction)
 }
@@ -162,12 +153,14 @@ export const getTxInput = (outpointSourceId, index) => {
   return encode_input_for_utxo(outpointSourceId, index)
 }
 
-export const getOutputs = async ({
+export const getOutputs = ({
   amount,
   address,
   networkType,
   type = 'Transfer',
   lock,
+  chainTip,
+  tokenId,
 }) => {
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')
@@ -177,7 +170,16 @@ export const getOutputs = async ({
 
   const networkIndex = NETWORKS[networkType]
   if (type === 'Transfer') {
-    return encode_output_transfer(amountInstace, address, networkIndex)
+    if (tokenId) {
+      return encode_output_token_transfer(
+        amountInstace,
+        address,
+        tokenId,
+        networkIndex,
+      )
+    } else {
+      return encode_output_transfer(amountInstace, address, networkIndex)
+    }
   }
   if (type === 'LockThenTransfer') {
     let lockEncoded
@@ -195,11 +197,7 @@ export const getOutputs = async ({
     )
   }
   if (type === 'spendFromDelegation') {
-    const chainTip = await Mintlayer.getChainTip()
-    const stakingMaturity = getStakingMaturity(
-      JSON.parse(chainTip).block_height,
-      networkType,
-    )
+    const stakingMaturity = getStakingMaturity(chainTip, networkType)
     const encodedLockForBlock = encode_lock_for_block_count(stakingMaturity)
     return encode_output_lock_then_transfer(
       amountInstace,

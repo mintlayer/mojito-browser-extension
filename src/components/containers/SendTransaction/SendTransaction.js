@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
-import { AccountContext, TransactionContext } from '@Contexts'
+import { AccountContext, NetworkContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
@@ -16,9 +16,9 @@ import './SendTransaction.css'
 import { Error } from '@BasicComponents'
 
 const SendTransaction = ({
-  totalFeeFiat: totalFeeFiatParent,
-  totalFeeCrypto: totalFeeCryptoParent,
-  setTotalFeeCrypto: setTotalFeeCryptoParent,
+  totalFeeFiat,
+  totalFeeCrypto,
+  setTotalFeeCrypto,
   transactionData,
   exchangeRate = 0,
   maxValueInToken,
@@ -30,14 +30,14 @@ const SendTransaction = ({
   goBackToWallet,
   preEnterAddress,
   setAdjustedFee,
+  transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
+  currentDelegationInfo,
+  walletType,
 }) => {
-  const { walletType, balanceLoading } = useContext(AccountContext)
-  const { feeLoading, transactionMode, currentDelegationInfo } =
-    useContext(TransactionContext)
-  const [cryptoName] = useState(transactionData.tokenName)
-  const [fiatName] = useState(transactionData.fiatName)
-  const [totalFeeFiat, setTotalFeeFiat] = useState(totalFeeFiatParent)
-  const [totalFeeCrypto, setTotalFeeCrypto] = useState(totalFeeCryptoParent)
+  const { balanceLoading } = useContext(AccountContext)
+  const { feeLoading } = useContext(TransactionContext)
+  const cryptoName = transactionData.tokenName
+  const fiatName = transactionData.fiatName
   const [amountInCrypto, setAmountInCrypto] = useState('0.00')
   const [amountInFiat, setAmountInFiat] = useState('0.00')
   const [originalAmount, setOriginalAmount] = useState('0,00')
@@ -56,6 +56,7 @@ const SendTransaction = ({
   const [askPassword, setAskPassword] = useState(false)
   const [pass, setPass] = useState(null)
   const isBitcoinWallet = walletType.name === 'Bitcoin'
+  const NC = useContext(NetworkContext)
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -101,6 +102,9 @@ const SendTransaction = ({
       setPassErrorMessage('')
       setTxErrorMessage('')
       setAskPassword(false)
+      if (NC && NC.fetchAllData) {
+        await NC.fetchAllData()
+      }
     } catch (e) {
       if (e.address === '') {
         // password is not correct
@@ -109,6 +113,16 @@ const SendTransaction = ({
         setPassValidity(false)
         setPass('')
         setAllowClosing(true)
+      } else if (typeof e === 'string' && e.includes('Invalid amount')) {
+        // need to adjust fee
+        setAskPassword(false)
+        setPassPristinity(false)
+        setPassValidity(false)
+        setPass('')
+        setTxErrorMessage('Balance is not enough to cover the transaction')
+        console.error(e)
+        setAllowClosing(true)
+        setPopupState(false)
       } else if (e.message.includes('minimum fee')) {
         // need to adjust fee
         setAskPassword(false)
@@ -116,7 +130,7 @@ const SendTransaction = ({
         setPassValidity(false)
         setPass('')
         setFee(e.message.split('minimum fee ')[1]) // Override fee with minimum fee
-        setTotalFeeCryptoParent(e.message.split('minimum fee ')[1])
+        setTotalFeeCrypto(e.message.split('minimum fee ')[1])
         setAdjustedFee(e.message.split('minimum fee ')[1])
         setTxErrorMessage('Transaction fee adjusted')
         console.error(e)
@@ -144,19 +158,16 @@ const SendTransaction = ({
 
   const handleCancel = () => {
     setPopupState(false)
-    if (walletType.name === 'Mintlayer') {
-      setTotalFeeCryptoParent(0)
-    }
   }
-
-  useEffect(() => setTotalFeeFiat(totalFeeFiatParent), [totalFeeFiatParent])
-  useEffect(
-    () => setTotalFeeCrypto(totalFeeCryptoParent),
-    [totalFeeCryptoParent],
-  )
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
+    calculateTotalFee({
+      to: addressTo,
+      amount: amount.value,
+      fee,
+    })
+
     // TODO process this when/if we will have currency switcher
     // if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
@@ -185,6 +196,15 @@ const SendTransaction = ({
       return
     }
     setAddressTo(e.target.value)
+
+    // trigger calculation of total fee
+    if (!isBitcoinWallet) {
+      calculateTotalFee({
+        to: e.target.value,
+        amount: NumbersHelper.floatStringToNumber(amountInCrypto),
+        fee,
+      })
+    }
   }
 
   const changePassHandle = (value) => {
@@ -291,23 +311,30 @@ const SendTransaction = ({
             addressChanged={addressChanged}
             preEnterAddress={preEnterAddress}
             setAddressValidity={setAddressValidity}
+            transactionMode={transactionMode}
+            currentDelegationInfo={currentDelegationInfo}
+            walletType={walletType}
           />
 
-          <AmountField
-            transactionData={transactionData}
-            amountChanged={amountChanged}
-            exchangeRate={exchangeRate}
-            maxValueInToken={maxValueInToken}
-            setAmountValidity={setAmountValidity}
-            errorMessage={passErrorMessage}
-            totalFeeInCrypto={totalFeeCrypto}
-          />
+          {transactionMode !== AppInfo.ML_TRANSACTION_MODES.DELEGATION && (
+            <AmountField
+              transactionData={transactionData}
+              amountChanged={amountChanged}
+              exchangeRate={exchangeRate}
+              maxValueInToken={maxValueInToken}
+              setAmountValidity={setAmountValidity}
+              errorMessage={passErrorMessage}
+              totalFeeInCrypto={totalFeeCrypto}
+              transactionMode={transactionMode}
+            />
+          )}
 
           {/* TODO style error from transaction */}
           <FeesField
             feeChanged={feeChanged}
-            value="norm"
+            value={isBitcoinWallet ? 'norm' : totalFeeCrypto}
             setFeeValidity={setFeeValidity}
+            walletType={walletType}
           />
 
           {txErrorMessage ? (
@@ -356,13 +383,14 @@ const SendTransaction = ({
                 fee={fee}
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
+                walletType={walletType}
               ></SendTransactionConfirmation>
             ) : feeLoading ? (
               <div className="loading-center">
                 <Loading />
               </div>
             ) : (
-              <form>
+              <form onSubmit={sendTransaction}>
                 <VerticalGroup bigGap>
                   <TextField
                     label="Enter your password"
@@ -373,9 +401,7 @@ const SendTransaction = ({
                     errorMessages={passErrorMessage}
                     onChangeHandle={changePassHandle}
                   />
-                  <Button onClickHandle={sendTransaction}>
-                    Send Transaction
-                  </Button>
+                  <Button buttonType="submit">Send Transaction</Button>
                 </VerticalGroup>
               </form>
             )
