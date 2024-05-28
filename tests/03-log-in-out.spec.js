@@ -2,7 +2,7 @@ import { expect, test, beforeEach } from '@playwright/test'
 import { useRestoreWallet } from './helpers//hooks/useRestore'
 import { useSetTestnet } from './helpers/hooks/useSetTestnet'
 import { senderData } from './data/index.js'
-import {formatAddress } from './helpers/helpers.js'
+import { formatAddress } from './helpers/helpers.js'
 
 let page
 
@@ -13,7 +13,7 @@ beforeEach(async ({ page: newPage }) => {
 
 test('Log in and Log out', async () => {
   await page.click('button.logout')
-  await expect(page.locator(':text("Available Wallet(S)")')).toBeVisible()
+  await expect(page.locator(':text("Available wallet")')).toBeVisible()
   await page.getByRole('button', { name: 'SenderWallet' }).click()
 
   await expect(page.locator(`:text("Password for")`)).toBeVisible()
