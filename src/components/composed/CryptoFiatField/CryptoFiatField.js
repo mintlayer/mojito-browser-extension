@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react'
-import { Button, InputBTC, InputFloat } from '@BasicComponents'
+import { InputBTC, InputFloat } from '@BasicComponents'
 // import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
 import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
 
@@ -41,9 +41,6 @@ const CryptoFiatField = ({
   const amountErrorMessage = 'Amount set is bigger than this wallet balance.'
   const amountFormatErrorMessage = 'Amount format is invalid. Use 0.00 instead.'
   const zeroErrorMessage = 'Amount must be greater than 0.'
-  const isDelegationMode =
-    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
-    walletType.name === 'Mintlayer'
 
   useEffect(() => {
     setMaxFiatValue(maxCryptoValue * exchangeRate)
@@ -57,7 +54,6 @@ const CryptoFiatField = ({
   if (!transactionData) return null
 
   const { tokenName, fiatName } = transactionData
-  const buttonExtraClasses = ['crypto-fiat-input-button']
   const inputExtraClasses = ['crypto-fiat-input']
 
   const isTypeFiat = () => currentValueType === fiatName
@@ -108,24 +104,6 @@ const CryptoFiatField = ({
     // isTypeFiat()
     //   ? switchCurrency(tokenName, calculateCryptoValue, Format.fiatValue)
     //   : switchCurrency(fiatName, calculateFiatValue, Format.BTCValue)
-  }
-
-  const maxButtonClickHandler = () => {
-    if (
-      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
-      walletType.name === 'Mintlayer'
-    ) {
-      return
-    }
-    if (isTypeFiat()) {
-      setValue(Format.fiatValue(maxFiatValue))
-      setBottomValue(Format.BTCValue(maxFiatValue / exchangeRate))
-      finalMaxValue > 0 && setAmountValidity(true)
-    } else {
-      setValue(Format.BTCValue(maxCryptoValue))
-      setBottomValue(Format.fiatValue(maxCryptoValue * exchangeRate))
-      finalMaxValue > 0 && setAmountValidity(true)
-    }
   }
 
   const changeHandler = ({ target: { value, parsedValue } }) => {
@@ -180,6 +158,14 @@ const CryptoFiatField = ({
     if (!isValid) return
   }
 
+  const safeSpend = (value) => {
+    const result = value - totalFeeInCrypto - 0.5 // default fee in mainnet is 0.5 TODO: calculate fee
+    if (result < 0) {
+      return 0
+    }
+    return result.toFixed(5)
+  }
+
   return (
     <div
       className="crypto-fiat-field"
@@ -228,13 +214,9 @@ const CryptoFiatField = ({
         </button>
       </div>
 
-      <Button
-        extraStyleClasses={buttonExtraClasses}
-        onClickHandle={maxButtonClickHandler}
-        disabled={isDelegationMode}
-      >
-        {buttonTitle}
-      </Button>
+      <div className="bottom-note">
+        Available to spend ≈ {safeSpend(maxValueInToken)} {currentValueType}
+      </div>
 
       <p
         className="crypto-fiat-bottom-text"
