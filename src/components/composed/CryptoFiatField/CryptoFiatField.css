@@ -73,3 +73,9 @@
   font-weight: bold;
   margin-left: 5px;
 }
+
+.bottom-note {
+  position: absolute;
+  bottom: 7px;
+  right: 0;
+}
