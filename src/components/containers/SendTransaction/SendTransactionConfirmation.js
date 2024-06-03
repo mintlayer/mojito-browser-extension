@@ -22,8 +22,8 @@ const SendFundConfirmation = ({
 }) => {
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
-  const amountFiat = isTestnet ? '0,00' : amountInFiat
-  const feeFiat = isTestnet ? '0,00' : totalFeeFiat
+  const amountFiat = isTestnet ? '0.00' : amountInFiat
+  const feeFiat = isTestnet ? '0.00' : totalFeeFiat
   return (
     <CenteredLayout>
       <dl className="descriptionList">

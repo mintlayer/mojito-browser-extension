@@ -4,7 +4,6 @@ import React, {
 
 import { NetworkContext } from '@Contexts'
 import { Input } from '@BasicComponents'
-import { OptionButtons } from '@ComposedComponents'
 
 import './FeeField.css'
 import { ML as MLHelpers } from '@Helpers'
@@ -16,8 +15,6 @@ const FeeFieldML = ({
   const { feerate } = useContext(NetworkContext)
   const timeToFirstConfirmations = '~2 minutes'
 
-  const options = [{ name: 'norm', value: feerate }]
-  const radioButtonValue = 'norm'
   return (
     <div className="fee-field-wrapper">
       <div className="fee-field">
@@ -29,10 +26,6 @@ const FeeFieldML = ({
           />
           <small>ML</small>
         </div>
-        <OptionButtons
-          value={radioButtonValue}
-          options={options}
-        />
       </div>
       <p>Estimated time for 1st confirmation: {timeToFirstConfirmations}</p>
     </div>

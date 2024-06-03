@@ -62,6 +62,7 @@ const DelegationStakePage = () => {
     feerate,
   } = useMlWalletInfo(currentMlAddresses)
 
+  console.log('mlBalance', mlBalance)
   const maxValueToken = mlBalance
 
   if (!accountID) {
@@ -87,18 +88,22 @@ const DelegationStakePage = () => {
         approximateFee: 0,
       },
     )
+    console.log('transactionSize', transactionSize)
     const fee = Math.ceil(feerate * (transactionSize / 1000))
+
+    console.log('fee - 1', fee)
 
     const newTransactionSize =
       await MLTransaction.calculateTransactionSizeInBytes({
         utxos: utxos,
         changeAddress: unusedChangeAddress,
-        amountToUse: amountToSend,
+        amountToUse: amountToSend - BigInt(fee),
         network: networkType,
         delegationId: address,
         approximateFee: fee,
       })
     const newFee = Math.ceil(feerate * (newTransactionSize / 1000))
+    console.log('fee - 2', newFee)
     const newFeeInCoins = MLHelpers.getAmountInCoins(Number(newFee))
     setTotalFeeFiat(Format.fiatValue(newFeeInCoins * exchangeRate))
     setTotalFeeCrypto(newFeeInCoins)

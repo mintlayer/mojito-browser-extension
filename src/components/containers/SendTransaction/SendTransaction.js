@@ -38,10 +38,10 @@ const SendTransaction = ({
   const { feeLoading } = useContext(TransactionContext)
   const cryptoName = transactionData.tokenName
   const fiatName = transactionData.fiatName
-  const [amountInCrypto, setAmountInCrypto] = useState('0.00')
-  const [amountInFiat, setAmountInFiat] = useState('0.00')
-  const [originalAmount, setOriginalAmount] = useState('0,00')
-  const [fee, setFee] = useState('0')
+  const [amountInCrypto, setAmountInCrypto] = useState('')
+  const [amountInFiat, setAmountInFiat] = useState('')
+  const [originalAmount, setOriginalAmount] = useState('')
+  const [fee, setFee] = useState('')
   const [addressTo, setAddressTo] = useState('')
   const [addressValidity, setAddressValidity] = useState(false)
   const [amountValidity, setAmountValidity] = useState(false)
@@ -57,6 +57,8 @@ const SendTransaction = ({
   const [pass, setPass] = useState(null)
   const isBitcoinWallet = walletType.name === 'Bitcoin'
   const NC = useContext(NetworkContext)
+
+  const decimals = isBitcoinWallet ? 8 : 11
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -162,6 +164,7 @@ const SendTransaction = ({
 
   const feeChanged = (value) => setFee(value)
   const amountChanged = (amount) => {
+    console.log('amount', amount)
     calculateTotalFee({
       to: addressTo,
       amount: amount.value,
@@ -172,7 +175,7 @@ const SendTransaction = ({
     // if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
       setOriginalAmount(amount.value)
-      setAmountInCrypto(amount.value ? Format.BTCValue(amount.value) : '0,00')
+      setAmountInCrypto(amount.value ? Format.BTCValue(amount.value, decimals) : '')
       setAmountInFiat(
         Format.fiatValue(
           NumbersHelper.floatStringToNumber(amount.value) *
@@ -186,6 +189,7 @@ const SendTransaction = ({
     setAmountInCrypto(
       Format.BTCValue(
         NumbersHelper.floatStringToNumber(amount.value) / exchangeRate,
+        decimals,
       ),
     )
   }
@@ -321,11 +325,12 @@ const SendTransaction = ({
               transactionData={transactionData}
               amountChanged={amountChanged}
               exchangeRate={exchangeRate}
-              maxValueInToken={maxValueInToken}
+              maxValueInToken={maxValueInToken - totalFeeCrypto}
               setAmountValidity={setAmountValidity}
               errorMessage={passErrorMessage}
               totalFeeInCrypto={totalFeeCrypto}
               transactionMode={transactionMode}
+              amountInCrypto={amountInCrypto}
             />
           )}
 
