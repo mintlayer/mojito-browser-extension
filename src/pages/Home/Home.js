@@ -23,18 +23,18 @@ const HomePage = () => {
     currentUnlocked && navigate('/dashboard')
   }, [isAccountUnlocked, navigate])
 
+  const verifyAccountsExistence = async () => {
+    const accountsPresent = await AppInfo.appAccounts()
+    setAccounts(
+      accountsPresent.map((item) => ({ name: item.name, id: item.id })),
+    )
+  }
+
   useEffect(() => {
     if (effectCalled.current) return
     effectCalled.current = true
-
-    const verifyAccountsExistence = async () => {
-      const accountsPresent = await AppInfo.appAccounts()
-      setAccounts(
-        accountsPresent.map((item) => ({ name: item.name, id: item.id })),
-      )
-    }
     verifyAccountsExistence()
-  }, [])
+  }, [accounts])
 
   const Home = () => {
     if (accounts === null) return <Loading />
@@ -42,7 +42,10 @@ const HomePage = () => {
     return !accounts.length || location.state?.fromLogin ? (
       <CreateRestorePage />
     ) : (
-      <LoginPage accounts={accounts} />
+      <LoginPage
+        accounts={accounts}
+        verifyAccountsExistence={verifyAccountsExistence}
+      />
     )
   }
 

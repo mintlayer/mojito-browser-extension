@@ -6,7 +6,7 @@ import { Carousel } from '@ComposedComponents'
 
 import './Login.css'
 
-const Login = ({ accounts, onSelect, onCreate }) => {
+const Login = ({ accounts, onSelect, onDelete, onCreate }) => {
   const onSelectAccount = (account) => onSelect && onSelect(account)
 
   const onCreateAccount = () => onCreate && onCreate()
@@ -16,12 +16,15 @@ const Login = ({ accounts, onSelect, onCreate }) => {
       data-testid="list-accounts"
       className="list-accounts"
     >
-      <h2 className="subtitle">Available wallet{accounts.length > 1 ? 's' : ''}</h2>
+      <h2 className="subtitle">
+        Available wallet{accounts.length > 1 ? 's' : ''}
+      </h2>
       <VerticalGroup bigGap>
         <div className="content">
           <Carousel
             accounts={accounts}
             onClick={onSelectAccount}
+            onDelete={onDelete}
           />
         </div>
         <CenteredLayout>
