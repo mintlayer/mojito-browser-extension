@@ -19,6 +19,8 @@ import CryptoSharesChart from './Dashboard/CryptoSharesChart'
 import Statistics from './Dashboard/Statistics'
 import CryptoList from './Dashboard/CryptoList'
 
+import DeleteAccount from './DeleteAccount/DeleteAccount'
+
 /* istanbul ignore next */
 const Wallet = {
   ShowAddress,
@@ -46,6 +48,7 @@ const Dashboard = {
 export {
   CreateAccount,
   RestoreAccount,
+  DeleteAccount,
   Wallet,
   Login,
   SendTransaction,
