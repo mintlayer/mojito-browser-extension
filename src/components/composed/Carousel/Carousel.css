@@ -78,6 +78,10 @@ button {
   transition-duration: 700ms;
 }
 
+.item-wrapper {
+  position: relative;
+}
+
 .button-account {
   padding: 0.5rem;
   border-radius: 0.75rem;
@@ -95,7 +99,13 @@ button {
   cursor: pointer;
   word-wrap: anywhere;
 }
-.button-account:hover {
+
+.item-wrapper:hover .button-account {
+  color: rgb(var(--color-white));
+  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+}
+
+.item-wrapper:hover .button-account {
   color: rgb(var(--color-white));
   background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
 }
@@ -133,4 +143,33 @@ button {
 .next-icon {
   width: 2rem;
   height: 2rem;
+}
+
+.delete-button {
+  display: none;
+  position: absolute;
+  top: 6px;
+  right: 17px;
+  width: 20px;
+  height: 20px;
+  background-color: rgb(var(--color-extra-light-gray));
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.delete-button:hover {
+  width: 22px;
+  height: 22px;
+  font-size: 0.8rem;
+}
+
+.delete-button:hover .button-account {
+  color: rgb(var(--color-white));
+  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+}
+
+.item-wrapper:hover .delete-button {
+  display: block;
+  font-size: 0.7rem;
 }
