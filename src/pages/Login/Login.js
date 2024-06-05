@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PopUp } from '@ComposedComponents'
 
 import { Login, DeleteAccount } from '@ContainerComponents'
 import { Account } from '@Entities'
 import { useStyleClasses } from '@Hooks'
+
+import { AccountContext } from '@Contexts'
 
 import './Login.css'
 
@@ -14,12 +16,12 @@ const LoginPage = ({
     { id: 2, name: 'RRR' },
     { id: 3, name: 'TTT' },
   ],
-  verifyAccountsExistence,
   onSelect,
   onCreate,
   delay = 0,
 }) => {
   const navigate = useNavigate()
+  const { verifyAccountsExistence } = useContext(AccountContext)
   const [account, setAccount] = useState(undefined)
   const [deletingAccount, setDeletingAccount] = useState(undefined)
   const [removeAccountPopupOpen, setRemoveAccountPopupOpen] = useState(false)

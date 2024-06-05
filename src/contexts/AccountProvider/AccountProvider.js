@@ -1,6 +1,7 @@
 import React, { createContext, useEffect, useState } from 'react'
 import differenceInMinutes from 'date-fns/differenceInMinutes'
 import { LocalStorageService } from '@Storage'
+import { AppInfo } from '@Constants'
 
 const AccountContext = createContext()
 
@@ -8,6 +9,7 @@ const AccountProvider = ({ value: propValue, children }) => {
   const [addresses, setAddresses] = useState('')
   const [accountID, setAccountID] = useState('')
   const [accountName, setAccountName] = useState('')
+  const [accounts, setAccounts] = useState(null)
   const [lines, setLines] = useState([])
   const [entropy, setEntropy] = useState([])
   const [balanceLoading, setBalanceLoading] = useState(false)
@@ -67,6 +69,13 @@ const AccountProvider = ({ value: propValue, children }) => {
     LocalStorageService.setItem(accountRegistryName, account)
   }
 
+  const verifyAccountsExistence = async () => {
+    const accountsPresent = await AppInfo.appAccounts()
+    setAccounts(
+      accountsPresent.map((item) => ({ name: item.name, id: item.id })),
+    )
+  }
+
   const logout = () => LocalStorageService.removeItem(accountRegistryName)
 
   const value = {
@@ -86,6 +95,9 @@ const AccountProvider = ({ value: propValue, children }) => {
     balanceLoading,
     setBalanceLoading,
     isExtended,
+    verifyAccountsExistence,
+    accounts,
+    setAccounts,
   }
 
   useEffect(() => {

@@ -147,6 +147,8 @@ button {
 
 .delete-button {
   display: none;
+  justify-content: center;
+  align-items: center;
   position: absolute;
   top: 6px;
   right: 17px;
@@ -170,6 +172,15 @@ button {
 }
 
 .item-wrapper:hover .delete-button {
-  display: block;
+  display: flex;
   font-size: 0.7rem;
+}
+
+.icon-delete-button {
+  width: 15px;
+  height: 15px;
+}
+
+.icon-delete-button rect {
+  fill: rgb(var(--color-black));
 }

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ReactComponent as IconClose } from '@Assets/images/icon-close.svg'
 
 import next from '@Assets/images/next.svg'
 
@@ -79,7 +80,7 @@ const Carousel = ({ accounts = [], onClick, onDelete, onPrevious, onNext }) => {
                 className="delete-button"
                 onClick={() => handleDelete(index)}
               >
-                X
+                <IconClose className="icon-delete-button" />
               </button>
               <button
                 name="account"
