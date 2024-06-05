@@ -20,6 +20,8 @@ import Statistics from './Dashboard/Statistics'
 import CryptoList from './Dashboard/CryptoList'
 
 import DeleteAccount from './DeleteAccount/DeleteAccount'
+import SettingsDelete from './Settings/SettingsDelete/SettingsDelete'
+import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet'
 
 /* istanbul ignore next */
 const Wallet = {
@@ -45,6 +47,11 @@ const Dashboard = {
   CryptoList,
 }
 
+const Settings = {
+  SettingsTestnet,
+  SettingsDelete,
+}
+
 export {
   CreateAccount,
   RestoreAccount,
@@ -53,4 +60,5 @@ export {
   Login,
   SendTransaction,
   Dashboard,
+  Settings,
 }
