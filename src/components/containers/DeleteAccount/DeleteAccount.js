@@ -1,17 +1,42 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { Button } from '@BasicComponents'
 import { Login } from '@ContainerComponents'
 
 import { Account } from '@Entities'
+import { AccountContext } from '@Contexts'
+import { useNavigate } from 'react-router-dom'
 
 import './DeleteAccount.css'
 
-const DeleteAccount = ({ onDelete, onCancel, account }) => {
+const DeleteAccount = () => {
   const [step, setStep] = useState(1)
+  const {
+    logout,
+    verifyAccountsExistence,
+    deletingAccount,
+    setRemoveAccountPopupOpen,
+  } = useContext(AccountContext)
   const nextButonClickHandler = () => setStep(2)
   const buttonExtraStyleClasses = ['popup-delete-button']
+  const navigate = useNavigate()
+
+  const deleteAccountHandler = async (addresses, accountId) => {
+    try {
+      await Account.deleteAccount(accountId)
+      await verifyAccountsExistence()
+      navigate('/')
+      logout()
+      setRemoveAccountPopupOpen(false)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const onCancel = () => {
+    setRemoveAccountPopupOpen(false)
+  }
 
   return (
     <CenteredLayout>
@@ -52,9 +77,9 @@ const DeleteAccount = ({ onDelete, onCancel, account }) => {
       )}
       {step === 2 && (
         <Login.SetPassword
-          onSubmit={onDelete}
+          onSubmit={deleteAccountHandler}
           checkPassword={Account.unlockAccount}
-          selectedAccount={account}
+          selectedAccount={deletingAccount}
           buttonTitle="Delete Wallet"
         />
       )}

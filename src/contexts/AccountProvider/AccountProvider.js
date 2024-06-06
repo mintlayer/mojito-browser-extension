@@ -13,6 +13,8 @@ const AccountProvider = ({ value: propValue, children }) => {
   const [lines, setLines] = useState([])
   const [entropy, setEntropy] = useState([])
   const [balanceLoading, setBalanceLoading] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(undefined)
+  const [removeAccountPopupOpen, setRemoveAccountPopupOpen] = useState(false)
   const isExtended = window.location.href.includes('popup.html')
 
   const accountRegistryName = 'unlockedAccount'
@@ -98,6 +100,10 @@ const AccountProvider = ({ value: propValue, children }) => {
     verifyAccountsExistence,
     accounts,
     setAccounts,
+    deletingAccount,
+    setDeletingAccount,
+    removeAccountPopupOpen,
+    setRemoveAccountPopupOpen,
   }
 
   useEffect(() => {

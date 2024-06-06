@@ -1,42 +1,28 @@
-import { useState, useContext } from 'react'
+import { useContext } from 'react'
 
 import { Button } from '@BasicComponents'
-import { PopUp } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
-import { DeleteAccount } from '@ContainerComponents'
+
 
 import { ReactComponent as BinIcon } from '@Assets/images/icon-bin.svg'
 import { AccountContext } from '@Contexts'
-import { Account } from '@Entities'
-import { useNavigate } from 'react-router-dom'
 
 import './SettingsDelete.css'
 
 const SettingsDelete = () => {
   const buttonExtraClasses = ['settings-delete-button']
-
-  const navigate = useNavigate()
-  const [deletingAccount, setDeletingAccount] = useState(undefined)
-  const [removeAccountPopupOpen, setRemoveAccountPopupOpen] = useState(false)
-  const { verifyAccountsExistence, logout, accountID, accountName } =
-    useContext(AccountContext)
+  const {
+    accountID,
+    accountName,
+    setRemoveAccountPopupOpen,
+    setDeletingAccount,
+  } = useContext(AccountContext)
 
   const currentAccount = { id: accountID, name: accountName }
 
   const onDeleteClick = (account) => {
     setRemoveAccountPopupOpen(true)
     setDeletingAccount(account)
-  }
-
-  const deleteAccountHandler = async () => {
-    try {
-      await Account.deleteAccount(deletingAccount.id)
-      await verifyAccountsExistence()
-      logout()
-      navigate('/')
-    } catch (e) {
-      console.error(e)
-    }
   }
 
   return (
@@ -60,16 +46,6 @@ const SettingsDelete = () => {
       >
         <BinIcon className="icon-bin" />
       </Button>
-
-      {removeAccountPopupOpen && (
-        <PopUp setOpen={setRemoveAccountPopupOpen}>
-          <DeleteAccount
-            onDelete={deleteAccountHandler}
-            onCancel={() => setRemoveAccountPopupOpen(false)}
-            account={deletingAccount}
-          />
-        </PopUp>
-      )}
     </div>
   )
 }

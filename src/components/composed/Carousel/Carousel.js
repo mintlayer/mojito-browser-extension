@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useContext } from 'react'
 import { ReactComponent as IconClose } from '@Assets/images/icon-close.svg'
+import { AccountContext } from '@Contexts'
 
 import next from '@Assets/images/next.svg'
 
 import './Carousel.css'
 
-const Carousel = ({ accounts = [], onClick, onDelete, onPrevious, onNext }) => {
+const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
+  const { setRemoveAccountPopupOpen, setDeletingAccount } =
+    useContext(AccountContext)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [selected, setSelected] = useState(undefined)
   const carouselRef = useRef()
@@ -31,7 +34,8 @@ const Carousel = ({ accounts = [], onClick, onDelete, onPrevious, onNext }) => {
   }
 
   const handleDelete = (index) => {
-    onDelete(accounts[index])
+     setRemoveAccountPopupOpen(true)
+     setDeletingAccount(accounts[index])
   }
 
   useEffect(() => {

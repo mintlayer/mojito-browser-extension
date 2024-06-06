@@ -8,7 +8,8 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import { Electrum, ExchangeRates } from '@APIs'
-import { ConnectionErrorPopup, Header } from '@ComposedComponents'
+import { ConnectionErrorPopup, Header, PopUp } from '@ComposedComponents'
+import { DeleteAccount } from '@ContainerComponents'
 
 import {
   HomePage,
@@ -49,8 +50,14 @@ const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout, isAccountUnlocked, addresses, isExtended } =
-    useContext(AccountContext)
+  const {
+    logout,
+    isAccountUnlocked,
+    addresses,
+    isExtended,
+    removeAccountPopupOpen,
+    setRemoveAccountPopupOpen,
+  } = useContext(AccountContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
 
   const isConnectionAvailable = async (accountUnlocked) => {
@@ -158,6 +165,11 @@ const App = () => {
       <Header />
       {errorPopupOpen && (
         <ConnectionErrorPopup onClickHandle={popupButtonClickHandler} />
+      )}
+      {removeAccountPopupOpen && (
+        <PopUp setOpen={setRemoveAccountPopupOpen}>
+          <DeleteAccount/>
+        </PopUp>
       )}
       <Routes>
         <Route

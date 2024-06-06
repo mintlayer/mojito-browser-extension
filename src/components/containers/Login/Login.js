@@ -6,9 +6,8 @@ import { Carousel } from '@ComposedComponents'
 
 import './Login.css'
 
-const Login = ({ accounts, onSelect, onDelete, onCreate }) => {
+const Login = ({ accounts, onSelect, onCreate }) => {
   const onSelectAccount = (account) => onSelect && onSelect(account)
-
   const onCreateAccount = () => onCreate && onCreate()
 
   return (
@@ -24,7 +23,6 @@ const Login = ({ accounts, onSelect, onDelete, onCreate }) => {
           <Carousel
             accounts={accounts}
             onClick={onSelectAccount}
-            onDelete={onDelete}
           />
         </div>
         <CenteredLayout>

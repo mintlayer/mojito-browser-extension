@@ -1,12 +1,8 @@
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PopUp } from '@ComposedComponents'
 
-import { Login, DeleteAccount } from '@ContainerComponents'
-import { Account } from '@Entities'
+import { Login } from '@ContainerComponents'
 import { useStyleClasses } from '@Hooks'
-
-import { AccountContext } from '@Contexts'
 
 import './Login.css'
 
@@ -21,10 +17,7 @@ const LoginPage = ({
   delay = 0,
 }) => {
   const navigate = useNavigate()
-  const { verifyAccountsExistence } = useContext(AccountContext)
   const [account, setAccount] = useState(undefined)
-  const [deletingAccount, setDeletingAccount] = useState(undefined)
-  const [removeAccountPopupOpen, setRemoveAccountPopupOpen] = useState(false)
 
   const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses([])
 
@@ -49,21 +42,6 @@ const LoginPage = ({
     onCreate && onCreate()
   }
 
-  const onDeleteClick = (account) => {
-    setRemoveAccountPopupOpen(true)
-    setDeletingAccount(account)
-  }
-
-  const deleteAccountHandler = async () => {
-    try {
-      await Account.deleteAccount(deletingAccount.id)
-      await verifyAccountsExistence()
-      navigate('/')
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
   return (
     <div
       data-testid="generic"
@@ -75,17 +53,7 @@ const LoginPage = ({
           accounts={accounts}
           onSelect={goNext}
           onCreate={goCreate}
-          onDelete={onDeleteClick}
         />
-      )}
-      {removeAccountPopupOpen && (
-        <PopUp setOpen={setRemoveAccountPopupOpen}>
-          <DeleteAccount
-            onDelete={deleteAccountHandler}
-            onCancel={() => setRemoveAccountPopupOpen(false)}
-            account={deletingAccount}
-          />
-        </PopUp>
       )}
     </div>
   )
