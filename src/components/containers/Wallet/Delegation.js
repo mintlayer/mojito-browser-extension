@@ -103,10 +103,16 @@ const Delegation = ({ delegation }) => {
         </>
       )}
       <div
-        className={'transaction-logo-type transaction-logo-out'}
+        className={`transaction-logo-type transaction-logo-out ${
+          delegation.decommissioned ? 'decommissioned' : ''
+        }`}
         data-testid="delegation-icon"
       >
-        <StakeIcon className={'delegation-staking-icon'} />
+        {delegation.decommissioned ? (
+          <StakeIcon className={'delegation-staking-icon decommissioned'} />
+        ) : (
+          <StakeIcon className={'delegation-staking-icon'} />
+        )}
       </div>
       <div className="transaction-detail">
         <div>
@@ -150,6 +156,7 @@ const Delegation = ({ delegation }) => {
               <Button
                 extraStyleClasses={buttonExtraStyles}
                 onClickHandle={addFundsClickHandle}
+                disabled={delegation.decommissioned}
               >
                 Add funds
               </Button>

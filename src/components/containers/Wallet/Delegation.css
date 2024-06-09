@@ -68,6 +68,11 @@
   color: #fff;
 }
 
+.delegation-staking-icon.decommissioned,
+.transaction-logo-type.decommissioned {
+  background: #f00;
+}
+
 .delegation-actions {
   display: flex;
   margin-top: 10px;
