@@ -97,3 +97,11 @@
     width: 95%;
   }
 }
+
+.transaction.decommissioned.non-empty {
+  background: #ffdfb6;
+}
+
+.transaction.decommissioned.empty {
+  opacity: 30%;
+}

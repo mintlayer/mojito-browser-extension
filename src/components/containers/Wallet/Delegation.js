@@ -72,8 +72,9 @@ const Delegation = ({ delegation }) => {
 
   return (
     <li
-      className="transaction"
+      className={`transaction ${delegationOject.decommissioned ? 'decommissioned' : ''} ${delegationOject.balance.length > 11 ? 'non-empty' : 'empty'}`}
       data-testid="delegation"
+      data-poolid={delegationOject.pool_id}
       onClick={() => setDetailPopupOpen(true)}
     >
       {delegation.type === 'Unconfirmed' && delegation.mode === 'delegation' && (

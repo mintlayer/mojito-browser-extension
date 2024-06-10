@@ -1,0 +1,18 @@
+.staking-warning {
+  position: absolute;
+  z-index: 20;
+}
+
+.warning-icon {
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  background: #ffc680;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  z-index: 20;
+  pointer-events: none;
+}

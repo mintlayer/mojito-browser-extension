@@ -36,6 +36,18 @@ const CurrentStaking = ({ addressList }) => {
       ? 'https://lovelace.explorer.mintlayer.org/pools'
       : 'https://explorer.mintlayer.org/pools'
 
+  const decommissionedPools = mlDelegationList.filter(
+    (delegation) => delegation.decommissioned && delegation.balance.length > 11,
+  )
+
+  const handleScrollToPool = () => {
+    const firstDecommissionedPool = mlDelegationList.find(
+      (delegation) => delegation.decommissioned === true && delegation.balance.length > 11,
+    ).pool_id
+    const poolList = document.querySelectorAll(`[data-poolid="${firstDecommissionedPool}"]`)[0]
+    poolList.scrollIntoView({ behavior: 'smooth' })
+  }
+
   return (
     <VerticalGroup>
       <div className="staking-title-wrapper">
@@ -52,6 +64,13 @@ const CurrentStaking = ({ addressList }) => {
             Total staked: {ML.getAmountInCoins(mlDelegationsBalance)} ML
           </p>
         </div>
+        {decommissionedPools.length > 0 && (
+          <div className="delegation-inactive">
+            <div onClick={handleScrollToPool} className="warning-inactive">
+              Some of your delegations are inactive. {decommissionedPools.length}{' '} pool{decommissionedPools.length > 1?'s are' : ' is'} decommissioned.
+            </div>
+          </div>
+        )}
         <a
           href={poolListLink}
           target="_blank"
