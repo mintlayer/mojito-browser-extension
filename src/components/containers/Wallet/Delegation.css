@@ -105,3 +105,8 @@
 .transaction.decommissioned.empty {
   opacity: 30%;
 }
+
+.decommissioned-text {
+  margin-left: 20px;
+  font-size: 20px;
+}

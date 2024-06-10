@@ -124,6 +124,10 @@ const Delegation = ({ delegation }) => {
             {delegation && delegationOject.pool_id
               ? ML.formatAddress(delegationOject.pool_id)
               : ''}
+
+            {delegationOject.decommissioned && (
+              <span className="decommissioned-text">Inactive</span>
+            )}
           </p>
           <div className="transaction-date-amount">
             {delegationOject.creation_time && (
