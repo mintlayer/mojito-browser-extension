@@ -15,6 +15,7 @@ const MINTLAYER_ENDPOINTS = {
   GET_CHAIN_TIP: '/chain/tip',
   GET_BLOCK_HASH: '/chain/:height',
   GET_BLOCK_DATA: '/block/:hash',
+  GET_POOL_DATA: '/pool/:hash',
 }
 
 const requestMintlayer = async (url, body = null, request = fetch) => {
@@ -236,6 +237,9 @@ const getDelegation = (delegation) =>
     MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(':delegation', delegation),
   )
 
+const getPool = (pool) =>
+  tryServers(MINTLAYER_ENDPOINTS.GET_POOL_DATA.replace(':hash', pool))
+
 const getBlockDataByHeight = (height) => {
   return tryServers(
     MINTLAYER_ENDPOINTS.GET_BLOCK_HASH.replace(':height', height),
@@ -271,6 +275,13 @@ const getBlocksData = (heights) => {
   )
 }
 
+const getPoolsData = (pools) => {
+  const poolsPromises = pools.map((pool) => getPool(pool))
+  return Promise.all(poolsPromises).then((results) =>
+    results.flatMap(JSON.parse),
+  )
+}
+
 const getChainTip = async () => {
   return tryServers(MINTLAYER_ENDPOINTS.GET_CHAIN_TIP)
 }
@@ -301,5 +312,6 @@ export {
   getFeesEstimates,
   getBlocksData,
   getTokensData,
+  getPoolsData,
   MINTLAYER_ENDPOINTS,
 }
