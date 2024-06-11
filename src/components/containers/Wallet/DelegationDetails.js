@@ -57,12 +57,14 @@ const DelegationDetails = ({ delegation }) => {
       data-testid="delegation-details"
     >
       <div className="delegation-details-items-wrapper">
-        <DelegationDetailsItem
-          title={'IMPORTANT:'}
-          content={
-            'This pool is decommissioned and will not receive rewards. Please withdraw your funds and delegate to an active pool.'
-          }
-        />
+        {delegation.decommissioned && (
+          <DelegationDetailsItem
+            title={'IMPORTANT:'}
+            content={
+              'This pool is decommissioned and will not receive rewards. Please withdraw your funds and delegate to an active pool.'
+            }
+          />
+        )}{' '}
         <DelegationDetailsItem
           title={'Date:'}
           content={date}
