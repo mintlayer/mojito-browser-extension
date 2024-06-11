@@ -1,18 +1,22 @@
-import { useContext } from 'react'
+import { useState, useContext } from 'react'
 import { Button } from '@BasicComponents'
 import { HelpTooltip } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 import { useMlWalletInfo } from '@Hooks'
 import { ML } from '@Helpers'
+import { Tooltip } from '@BasicComponents'
 
 import { SettingsContext } from '@Contexts'
 
 import './CurrentStaking.css'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { ReactComponent as IconWarning } from '@Assets/images/icon-warning.svg'
+
 const CurrentStaking = ({ addressList }) => {
   const navigate = useNavigate()
+  const [tooltipVisible, setTooltipVisible] = useState(false)
   const { coinType } = useParams()
   const { networkType } = useContext(SettingsContext)
 
@@ -25,7 +29,8 @@ const CurrentStaking = ({ addressList }) => {
   const { mlDelegationList, mlDelegationsBalance, fetchingDelegations } =
     useMlWalletInfo(addressList)
 
-  const delegationsLoading = fetchingDelegations && mlDelegationList.length === 0
+  const delegationsLoading =
+    fetchingDelegations && mlDelegationList.length === 0
   const onDelegationCreateButtonClick = () => {
     navigate('/wallet/' + walletType.name + '/staking/create-delegation')
   }
@@ -42,11 +47,24 @@ const CurrentStaking = ({ addressList }) => {
 
   const handleScrollToPool = () => {
     const firstDecommissionedPool = mlDelegationList.find(
-      (delegation) => delegation.decommissioned === true && delegation.balance.length > 11,
+      (delegation) =>
+        delegation.decommissioned === true && delegation.balance.length > 11,
     ).pool_id
-    const poolList = document.querySelectorAll(`[data-poolid="${firstDecommissionedPool}"]`)[0]
+    const poolList = document.querySelectorAll(
+      `[data-poolid="${firstDecommissionedPool}"]`,
+    )[0]
     poolList.scrollIntoView({ behavior: 'smooth' })
   }
+
+  const toggleTooltip = () => {
+    setTooltipVisible(!tooltipVisible)
+  }
+
+  const tooltipMesage = `Some of your delegations are inactive. ${
+    decommissionedPools.length
+  }${' '} pool${
+    decommissionedPools.length > 1 ? 's are' : ' is'
+  } decommissioned.`
 
   return (
     <VerticalGroup>
@@ -65,10 +83,24 @@ const CurrentStaking = ({ addressList }) => {
           </p>
         </div>
         {decommissionedPools.length > 0 && (
-          <div className="delegation-inactive">
-            <div onClick={handleScrollToPool} className="warning-inactive">
-              Some of your delegations are inactive. {decommissionedPools.length}{' '} pool{decommissionedPools.length > 1?'s are' : ' is'} decommissioned.
+          <div
+            className="tooltipWrapper"
+            onMouseEnter={toggleTooltip}
+            onMouseLeave={toggleTooltip}
+          >
+            <div className="delegation-inactive">
+              <div
+                onClick={handleScrollToPool}
+                className="warning-inactive"
+              >
+                <IconWarning />
+              </div>
             </div>
+            <Tooltip
+              message={tooltipMesage}
+              visible={tooltipVisible}
+              position="left"
+            />
           </div>
         )}
         <a
