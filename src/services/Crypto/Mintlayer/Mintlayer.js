@@ -183,11 +183,11 @@ export const getOutputs = ({
   }
   if (type === 'LockThenTransfer') {
     let lockEncoded
-    if (lock.UntilTime) {
-      lockEncoded = encode_lock_until_time(BigInt(lock.UntilTime.timestamp))
+    if (lock.type === 'UntilTime') {
+      lockEncoded = encode_lock_until_time(BigInt(lock.content.timestamp))
     }
-    if (lock.ForBlockCount) {
-      lockEncoded = encode_lock_for_block_count(BigInt(lock.ForBlockCount))
+    if (lock.type === 'ForBlockCount') {
+      lockEncoded = encode_lock_for_block_count(BigInt(lock.content))
     }
     return encode_output_lock_then_transfer(
       amountInstace,
