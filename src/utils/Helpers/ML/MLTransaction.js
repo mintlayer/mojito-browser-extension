@@ -318,7 +318,8 @@ const calculateSpenDelegFee = async (
     networkType: network,
     type: 'spendFromDelegation',
     lock: {
-      ForBlockCount: 7200,
+      content: 7200,
+      type: 'ForBlockCount',
     },
     chainTip,
   })
@@ -511,7 +512,8 @@ const spendFromDelegation = async (
     networkType: network,
     type: 'spendFromDelegation',
     lock: {
-      ForBlockCount: 7200,
+      content: 7200,
+      type: 'ForBlockCount',
     },
     chainTip,
   })
