@@ -11,6 +11,7 @@ import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 import './Wallet.css'
+import { StakingWarning } from '../../components/composed/StakingWarning/StakingWarning'
 
 const WalletPage = () => {
   const navigate = useNavigate()
@@ -79,11 +80,14 @@ const WalletPage = () => {
           />
           <div className="transactions-buttons-wrapper">
             {walletType.name === 'Mintlayer' && (
-              <Wallet.TransactionButton
-                title={'Staking'}
-                mode={'staking'}
-                onClick={setOpenStaking}
-              />
+              <>
+                <StakingWarning addressList={currentMlAddresses} />
+                <Wallet.TransactionButton
+                  title={'Staking'}
+                  mode={'staking'}
+                  onClick={setOpenStaking}
+                />
+              </>
             )}
             <Wallet.TransactionButton
               title={'Send'}

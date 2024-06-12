@@ -7,6 +7,7 @@
   background: rgb(var(--color-extra-light-gray));
   word-break: break-all;
   cursor: pointer;
+  justify-content: flex-end;
 }
 
 .transaction-logo-type {
@@ -18,11 +19,16 @@
   height: 72px;
   background: rgb(var(--color-light-green));
   border-radius: 50%;
+  color: rgb(var(--color-white));
+  font-size: 43px;
 }
 
 .transaction-detail {
+  /* display: flex;
+  align-items: center; */
   margin-left: 30px;
   flex-grow: 1;
+  max-width: 546px;
 }
 
 .transaction-logo-out {
@@ -45,9 +51,13 @@
 }
 
 .transaction-id {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 1.7rem;
   font-weight: 600;
   margin-bottom: 10px;
+  margin-top: 4px;
   word-break: break-all;
 }
 
@@ -66,6 +76,15 @@
   width: 40px;
   height: 40px;
   color: #fff;
+}
+
+.delegation-staking-icon.decommissioned,
+.transaction-logo-type.decommissioned {
+  background: rgb(var(--color-red));
+
+  /* height: 30px;
+  width: 30px;
+  min-width: 30px; */
 }
 
 .delegation-actions {
@@ -91,4 +110,36 @@
   to {
     width: 95%;
   }
+}
+
+.transaction.decommissioned {
+  height: 55px;
+}
+.transaction.decommissioned .transaction-detail {
+  height: 40px;
+}
+
+/* ROLLUP DELEGATION */
+.transaction.decommissioned.inactive-open {
+  height: auto;
+}
+.transaction.decommissioned.inactive-open .transaction-detail {
+  height: auto;
+}
+
+.transaction.decommissioned.non-empty {
+  background: rgba(255, 223, 182, 0.5);
+}
+
+/* .transaction.decommissioned.empty {
+  opacity: 30%;
+} */
+
+.decommissioned-text {
+  background: rgb(var(--color-red));
+  color: rgb(var(--color-white));
+  padding: 5px;
+  border-radius: 20px;
+  margin-left: 20px;
+  font-size: 15px;
 }
