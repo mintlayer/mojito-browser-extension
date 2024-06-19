@@ -74,16 +74,16 @@ const NetworkProvider = ({ value: propValue, children }) => {
           ...currentMlAddresses.mlChangeAddresses,
         ]
       : []
-    const addresses_data_receive = await Promise.all(
+    const addresses_data_receive = currentMlAddresses ? await Promise.all(
       currentMlAddresses.mlReceivingAddresses.map((address) =>
         getAddressData(address),
       ),
-    )
-    const addresses_data_change = await Promise.all(
+    ) : []
+    const addresses_data_change = currentMlAddresses ? await Promise.all(
       currentMlAddresses.mlChangeAddresses.map((address) =>
         getAddressData(address),
       ),
-    )
+    ) : []
     const addresses_data = [...addresses_data_receive, ...addresses_data_change]
 
     const first_unused_change_address_index = addresses_data_change.findIndex(
@@ -94,7 +94,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
     )
 
     const first_unused_change_address =
-      currentMlAddresses.mlChangeAddresses[first_unused_change_address_index]
+      currentMlAddresses && currentMlAddresses.mlChangeAddresses[first_unused_change_address_index]
 
     const first_unused_receive_address_index = addresses_data_receive.findIndex(
       (address_data) => {
@@ -104,7 +104,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
     )
 
     const first_unused_receive_address =
-      currentMlAddresses.mlReceivingAddresses[
+      currentMlAddresses && currentMlAddresses.mlReceivingAddresses[
         first_unused_receive_address_index
       ]
 
@@ -147,7 +147,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
     setFetchingTransactions(false)
 
     // fetch utxos
-    const accountName = account.name
+    const accountName = account && account.name
     const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
