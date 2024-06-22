@@ -152,7 +152,6 @@ const CreateDelegationPage = () => {
     if (result) {
       // map txid to referral code
       try {
-        console.log('state?.referral_code', state?.referral_code)
         const REFERRAL_TRACK_ENDPOINT = {
           mainnet: 'https://api-server.mintlayer.org/track',
           testnet: 'https://api-server-lovelace.mintlayer.org/track',
@@ -160,7 +159,6 @@ const CreateDelegationPage = () => {
         const referralCode = state?.referral_code || ''
         if (referralCode) {
           const txid = result
-          console.log('txid', txid)
           // send request to api server to track txid and referral_code
           await fetch(REFERRAL_TRACK_ENDPOINT[networkType], {
             method: 'POST',
