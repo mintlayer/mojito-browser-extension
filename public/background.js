@@ -63,7 +63,10 @@ chrome.runtime.onMessageExternal.addListener(function (
               setTimeout(function () {
                 chrome.runtime.sendMessage({
                   action: 'createDelegate',
-                  data: { pool_id: request.pool_id },
+                  data: {
+                    pool_id: request.pool_id,
+                    referral_code: request.referral_code || '',
+                  },
                 })
               }, 1000)
             },
