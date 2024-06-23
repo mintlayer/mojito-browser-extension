@@ -263,6 +263,20 @@ const SendTransaction = ({
     [fee, amountInCrypto],
   )
 
+  useEffect(
+    () => {
+      if (preEnterAddress) {
+        calculateTotalFee({
+          to: preEnterAddress,
+          amount: NumbersHelper.floatStringToNumber(amountInCrypto),
+          fee,
+        })
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isFormValid, amountInCrypto, fee, preEnterAddress],
+  )
+
   useEffect(() => {
     const validity = originalAmount && AppInfo.amountRegex.test(originalAmount)
     const maxValue = BTC.convertBtcToSatoshi(
