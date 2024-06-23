@@ -1,0 +1,33 @@
+.update-button {
+  position: absolute;
+  top: 17px;
+  right: 216px;
+  display: flex;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+.update-button svg {
+  width: 100%;
+  height: 100%;
+  fill: rgb(var(--color-green));
+}
+
+.update-button svg path {
+  fill: rgb(var(--color-green));
+}
+
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-animated {
+  animation: spin 2s linear infinite;
+}
