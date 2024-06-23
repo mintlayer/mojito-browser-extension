@@ -204,7 +204,10 @@ const NetworkProvider = ({ value: propValue, children }) => {
   }
 
   const balanceLoading =
-    currentAccountId !== accountID || networkType !== currentNetworkType
+    currentAccountId !== accountID || networkType !== currentNetworkType || fetchingBalances ||
+    fetchingUtxos ||
+    fetchingTransactions ||
+    fetchingDelegations
 
   const fetchDelegations = async () => {
     try {
