@@ -7,6 +7,7 @@ const useBtcWalletInfo = (address) => {
   const effectCalled = useRef(false)
   const [btcTransactionsList, setBtcTransactionsList] = useState([])
   const [btcBalance, setBtcBalance] = useState(0)
+  const [fetchingBalances, setFetchingBalances] = useState(false)
   const isBitcoin = true
 
   const getTransactions = useCallback(async () => {
@@ -26,14 +27,17 @@ const useBtcWalletInfo = (address) => {
 
   const getBalance = useCallback(async () => {
     try {
+      setFetchingBalances(true)
       if (!address) return ''
       const utxos = await Electrum.getAddressUtxo(address)
       const satoshiBalance = BTC.calculateBalanceFromUtxoList(JSON.parse(utxos))
       const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
       const formattedBalance = Format.BTCValue(balanceConvertedToBTC)
       setBtcBalance(formattedBalance)
+      setFetchingBalances(false)
     } catch (error) {
       console.error(error)
+      setFetchingBalances(false)
     }
   }, [address])
 
@@ -46,7 +50,11 @@ const useBtcWalletInfo = (address) => {
     getBalance()
   }, [getBalance, getTransactions])
 
-  return { transactions: btcTransactionsList, balance: btcBalance }
+  return {
+    transactions: btcTransactionsList,
+    balance: btcBalance,
+    fetchingBalances,
+  }
 }
 
 export default useBtcWalletInfo

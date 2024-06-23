@@ -32,8 +32,13 @@ const DashboardPage = () => {
   const [account, setAccount] = useState(null)
 
   const [connectedWalletType, setConnectedWalletType] = useState('')
-  const { balance: btcBalance } = useBtcWalletInfo(currentBtcAddress)
-  const { balance: mlBalance, tokenBalances } = useMlWalletInfo()
+  const { balance: btcBalance, fetchingBalances: btcFetchingBalances } =
+    useBtcWalletInfo(currentBtcAddress)
+  const {
+    balance: mlBalance,
+    tokenBalances,
+    fetchingBalances: mlFetchingBalances,
+  } = useMlWalletInfo()
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
   const { yesterdayExchangeRate: btcYesterdayExchangeRate } =
@@ -101,6 +106,7 @@ const DashboardPage = () => {
       historyRates,
       network,
       id,
+      fetchingBalances,
     ) => {
       cryptos.push({
         id,
@@ -111,6 +117,7 @@ const DashboardPage = () => {
         change24h,
         historyRates,
         network,
+        fetchingBalances,
       })
     }
 
@@ -131,6 +138,7 @@ const DashboardPage = () => {
         btcHistoryRates,
         'bitcoin',
         'Bitcoin',
+        btcFetchingBalances,
       )
     }
 
@@ -158,6 +166,7 @@ const DashboardPage = () => {
         mlHistoryrates,
         'mintlayer',
         'Mintlayer',
+        mlFetchingBalances,
       )
     }
 
@@ -172,6 +181,7 @@ const DashboardPage = () => {
           [],
           'mintlayer',
           token,
+          mlFetchingBalances,
         )
       })
     }

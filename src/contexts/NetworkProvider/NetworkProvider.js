@@ -74,6 +74,14 @@ const NetworkProvider = ({ value: propValue, children }) => {
           ...currentMlAddresses.mlChangeAddresses,
         ]
       : []
+
+    if (addressList.length === 0) {
+      setFetchingBalances(false)
+      setFetchingTransactions(false)
+      setFetchingUtxos(false)
+      return
+    }
+
     const addresses_data_receive = await Promise.all(
       currentMlAddresses.mlReceivingAddresses.map((address) =>
         getAddressData(address),
