@@ -1,4 +1,5 @@
 .transactions-buttons-wrapper {
+  position: relative;
   display: flex;
   min-width: max-content;
 }

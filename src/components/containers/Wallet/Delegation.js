@@ -25,6 +25,7 @@ const Delegation = ({ delegation }) => {
   }
 
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
+  const [inactiveOpen, setInactiveOpen] = useState(false)
 
   let delegationOject = delegation
 
@@ -70,11 +71,22 @@ const Delegation = ({ delegation }) => {
     ? format(new Date(delegationOject.creation_time * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
 
+  const delegationClickHandle = (delegation) => {
+    delegationOject.decommissioned && !inactiveOpen
+      ? setInactiveOpen(true)
+      : setDetailPopupOpen(true)
+  }
+
   return (
     <li
-      className="transaction"
+      className={`transaction ${
+        delegationOject.decommissioned ? 'decommissioned' : ''
+      } ${inactiveOpen ? 'inactive-open' : ''} ${
+        delegationOject.balance.length > 11 ? 'non-empty' : 'empty'
+      }`}
       data-testid="delegation"
-      onClick={() => setDetailPopupOpen(true)}
+      data-poolid={delegationOject.pool_id}
+      onClick={delegationClickHandle}
     >
       {delegation.type === 'Unconfirmed' && delegation.mode === 'delegation' && (
         <>
@@ -91,6 +103,7 @@ const Delegation = ({ delegation }) => {
           ></div>
           <div
             style={{
+              left: '30px',
               position: 'absolute',
               top: '50%',
               marginTop: '-38px',
@@ -103,10 +116,20 @@ const Delegation = ({ delegation }) => {
         </>
       )}
       <div
-        className={'transaction-logo-type transaction-logo-out'}
+        className={`transaction-logo-type transaction-logo-out ${
+          delegation.decommissioned ? 'decommissioned' : ''
+        }`}
         data-testid="delegation-icon"
       >
-        <StakeIcon className={'delegation-staking-icon'} />
+        {delegation.decommissioned && !inactiveOpen ? (
+          '!'
+        ) : (
+          <StakeIcon
+            className={`delegation-staking-icon ${
+              delegation.decommissioned ? 'decommissioned' : ''
+            }`}
+          />
+        )}
       </div>
       <div className="transaction-detail">
         <div>
@@ -117,6 +140,10 @@ const Delegation = ({ delegation }) => {
             {delegation && delegationOject.pool_id
               ? ML.formatAddress(delegationOject.pool_id)
               : ''}
+
+            {delegationOject.decommissioned && (
+              <span className="decommissioned-text">Inactive</span>
+            )}
           </p>
           <div className="transaction-date-amount">
             {delegationOject.creation_time && (
@@ -150,6 +177,7 @@ const Delegation = ({ delegation }) => {
               <Button
                 extraStyleClasses={buttonExtraStyles}
                 onClickHandle={addFundsClickHandle}
+                disabled={delegation.decommissioned}
               >
                 Add funds
               </Button>

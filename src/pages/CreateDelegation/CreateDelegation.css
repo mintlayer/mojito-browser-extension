@@ -7,5 +7,9 @@
   justify-content: center;
   align-items: center;
   height: 100%;
+  width: 100%;
   min-height: 400px;
+  position: absolute;
+  z-index: 40;
+  background-color: rgba(255, 255, 255, 0.8);
 }

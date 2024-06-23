@@ -50,7 +50,10 @@ browser.runtime.onConnect.addListener((port) => {
         setTimeout(async () => {
           await browser.runtime.sendMessage({
             action: 'createDelegate',
-            data: { pool_id: request.myProperty.message.pool_id },
+            data: {
+              pool_id: request.myProperty.message.pool_id,
+              referral_code: request.myProperty.message.referral_code || '',
+            },
           })
         }, 1000)
       })

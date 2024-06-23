@@ -57,6 +57,14 @@ const DelegationDetails = ({ delegation }) => {
       data-testid="delegation-details"
     >
       <div className="delegation-details-items-wrapper">
+        {delegation.decommissioned && (
+          <DelegationDetailsItem
+            title={'IMPORTANT:'}
+            content={
+              'This pool is decommissioned and will not receive rewards. Please withdraw your funds and delegate to an active pool.'
+            }
+          />
+        )}{' '}
         <DelegationDetailsItem
           title={'Date:'}
           content={date}
@@ -85,6 +93,7 @@ const DelegationDetails = ({ delegation }) => {
             <Button
               extraStyleClasses={buttonExtraStyles}
               onClickHandle={addFundsClickHandle}
+              disabled={delegation.decommissioned}
             >
               Add funds
             </Button>

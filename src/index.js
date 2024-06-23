@@ -105,13 +105,18 @@ const App = () => {
               state: {
                 action: 'createDelegate',
                 pool_id: request.data.pool_id,
+                referral_code: request.data.referral_code || '',
               },
             })
             return
           }
           // change route to staking page
           navigate('/wallet/Mintlayer/staking/create-delegation', {
-            state: { action: 'createDelegate', pool_id: request.data.pool_id },
+            state: {
+              action: 'createDelegate',
+              pool_id: request.data.pool_id,
+              referral_code: request.data.referral_code || '',
+            },
           })
         }
 

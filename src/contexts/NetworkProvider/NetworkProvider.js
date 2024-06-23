@@ -227,9 +227,23 @@ const NetworkProvider = ({ value: propValue, children }) => {
         ),
       )
 
+      const pools = delegation_details.map((delegation) => delegation.pool_id)
+
+      const uniquePools = [...new Set(pools)]
+
+      const pools_data = await Mintlayer.getPoolsData(uniquePools)
+
+      const emptyPoolsDataMap = uniquePools.reduce((acc, pool, index) => {
+        if (pools_data[index].staker_balance.atoms === '0') {
+          acc[pool] = pools_data[index]
+        }
+        return acc
+      }, {})
+
       const mergedDelegations = delegations.map((delegation, index) => {
         return {
           ...delegation,
+          decommissioned: emptyPoolsDataMap[delegation.pool_id] ? true : false,
           balance: delegation.balance.atoms,
           creation_block_height:
             delegation_details[index].creation_block_height,
