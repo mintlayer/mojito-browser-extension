@@ -37,7 +37,7 @@ This part is meant to describe how the project is structured. So if you are crea
 
 Main directory for React components.
 
-Each `Component` should be on its own folder with its own tests, storybook, and CSS files.
+Each `Component` should be on its own folder with its own tests and CSS files.
 
 Everything should have visual tests in this folder. Unit tests can be done if needed
 
