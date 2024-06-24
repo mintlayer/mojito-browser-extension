@@ -8,6 +8,7 @@ import { ReactComponent as ExpandImg } from '@Assets/images/icon-expand.svg'
 import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
 
 import { Button, Logo, Tooltip } from '@BasicComponents'
+import { UpdateButton } from '@ComposedComponents'
 import { AccountContext } from '@Contexts'
 
 import './Header.css'
@@ -154,6 +155,7 @@ const Header = ({ customBackAction }) => {
         </>
       )}
       <Logo unlocked={unlocked} />
+      {unlocked && <UpdateButton />}
     </header>
   )
 }
