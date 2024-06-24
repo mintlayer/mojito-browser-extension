@@ -6,6 +6,11 @@
   font-size: 1.12rem;
 }
 
+.highlighted {
+  color: rgb(var(--color-red));
+  font-weight: 600;
+}
+
 .popup-delete-button {
   padding: 1.5rem 0;
 }

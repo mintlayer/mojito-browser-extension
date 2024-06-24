@@ -3,7 +3,6 @@ import { useContext } from 'react'
 import { Button } from '@BasicComponents'
 import { VerticalGroup } from '@LayoutComponents'
 
-
 import { ReactComponent as BinIcon } from '@Assets/images/icon-bin.svg'
 import { AccountContext } from '@Contexts'
 
@@ -35,8 +34,8 @@ const SettingsDelete = () => {
           <h2 data-testid="title">DELETE WALLET</h2>
           <p>
             If you delete a wallet, you may lose access to all the funds
-            associated with it. Please make sure you have backed up your wallet
-            before proceeding.
+            associated with it. Please make sure that you have securely saved
+            your seed phrase before proceeding.
           </p>
         </VerticalGroup>
       </div>

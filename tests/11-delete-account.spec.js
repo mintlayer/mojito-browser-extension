@@ -4,7 +4,7 @@ import { senderData } from './data/index.js'
 let page
 
 const deleteDescription =
-  'If you delete a wallet, you may lose access to all the funds associated with it. Please make sure you have backed up your wallet before proceeding.'
+  'If you delete a wallet, you may lose access to all the funds associated with it. Please make sure that you have securely saved your seed phrase before proceeding.'
 
 beforeEach(async ({ page: newPage }) => {
   test.setTimeout(190000)

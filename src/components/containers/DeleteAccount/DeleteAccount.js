@@ -50,7 +50,9 @@ const DeleteAccount = () => {
               All local data associated with this wallet will be permanently
               lost.
             </p>
-            <p className="remove-paragraph">This action cannot be undone.</p>
+            <p className="remove-paragraph highlighted">
+              This action cannot be undone.
+            </p>
             <p className="remove-paragraph">
               Please make sure that you have securely saved your seed phrase
               before proceeding.
