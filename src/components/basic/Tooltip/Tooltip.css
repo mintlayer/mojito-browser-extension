@@ -12,6 +12,7 @@
   color: rgb(var(--color-white));
   font-size: 0.8rem;
   transition: opacity 0.7s ease;
+  z-index: 100000;
 }
 
 .top {

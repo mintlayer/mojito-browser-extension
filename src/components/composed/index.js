@@ -19,6 +19,7 @@ import AddWallet from './AddWallet/AddWallet'
 import CurrentStaking from './CurrentStaking/CurrentStaking'
 import HelpTooltip from './HelpTooltip/HelpTooltip'
 import RestoreSeedField from './RestoreSeedField/RestoreSeedField'
+import UpdateButton from './UpdateButton/UpdateButton'
 
 export {
   Balance,
@@ -42,4 +43,5 @@ export {
   CurrentStaking,
   HelpTooltip,
   RestoreSeedField,
+  UpdateButton,
 }
