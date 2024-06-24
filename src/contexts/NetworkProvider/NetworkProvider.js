@@ -13,7 +13,7 @@ import { LocalStorageService } from '@Storage'
 
 const NetworkContext = createContext()
 
-const REFRESH_INTERVAL = 1000 * 10 // one per minute
+const REFRESH_INTERVAL = 1000 * 60 // one per minute
 
 const NetworkProvider = ({ value: propValue, children }) => {
   const { addresses, accountID, accountName } = useContext(AccountContext)
