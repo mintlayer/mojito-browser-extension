@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import Carousel from './Carousel'
+import { AccountContext } from '@Contexts'
 
 const data = {
   accounts: [
@@ -13,8 +14,19 @@ const data = {
   onNext: jest.fn(),
 }
 
+const mockContext = {
+  logout: jest.fn(),
+  verifyAccountsExistence: jest.fn(),
+  deletingAccount: { id: '1', addresses: ['address1'] },
+  setRemoveAccountPopupOpen: jest.fn(),
+}
+
 test('Render Empty Carousel', () => {
-  render(<Carousel />)
+  render(
+    <AccountContext.Provider value={mockContext}>
+      <Carousel />
+    </AccountContext.Provider>,
+  )
   expect(screen.getByRole('button', { name: 'back' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'next' })).toBeInTheDocument()
 
@@ -22,7 +34,11 @@ test('Render Empty Carousel', () => {
 })
 
 test('Render Carousel', () => {
-  render(<Carousel {...data} />)
+  render(
+    <AccountContext.Provider value={mockContext}>
+      <Carousel {...data} />
+    </AccountContext.Provider>,
+  )
   expect(screen.getByRole('button', { name: 'back' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'next' })).toBeInTheDocument()
 
@@ -32,7 +48,11 @@ test('Render Carousel', () => {
 })
 
 test('Render Carousel onClick', () => {
-  render(<Carousel {...data} />)
+  render(
+    <AccountContext.Provider value={mockContext}>
+      <Carousel {...data} />
+    </AccountContext.Provider>,
+  )
 
   fireEvent.click(screen.getByText('Account Name'))
   expect(data.onClick).toHaveBeenCalled()
@@ -41,7 +61,11 @@ test('Render Carousel onClick', () => {
 })
 
 test('Render Carousel previousSlide', () => {
-  render(<Carousel {...data} />)
+  render(
+    <AccountContext.Provider value={mockContext}>
+      <Carousel {...data} />
+    </AccountContext.Provider>,
+  )
 
   const backButton = screen.getByRole('button', { name: 'back' })
   const nextButton = screen.getByRole('button', { name: 'next' })
@@ -56,7 +80,11 @@ test('Render Carousel previousSlide', () => {
 })
 
 test('Render Carousel nextSlide', () => {
-  render(<Carousel {...data} />)
+  render(
+    <AccountContext.Provider value={mockContext}>
+      <Carousel {...data} />
+    </AccountContext.Provider>,
+  )
   const nextButton = screen.getByRole('button', { name: 'next' })
 
   for (let i = 0; i < data.accounts.length; i++) {

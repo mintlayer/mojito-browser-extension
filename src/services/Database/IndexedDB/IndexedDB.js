@@ -129,6 +129,27 @@ const update = (store, entity) => {
   })
 }
 
+const deleteAccount = async (accountId, onError, DB = IDB) => {
+  try {
+    const db = await openDatabase(DB)
+    const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
+    const store = transaction.objectStore(ACCOUNTSSTORENAME)
+
+    const request = store.delete(accountId)
+    request.onsuccess = function (event) {
+      console.log('Account has been removed from the store.')
+    }
+    request.onerror = function (event) {
+      console.error('Failed to remove account:', event.target.errorCode)
+    }
+
+    db.close()
+  } catch (error) {
+    onError && onError(error)
+    console.error(error)
+  }
+}
+
 export {
   DATABASENAME,
   ACCOUNTSSTORENAME,
@@ -143,4 +164,5 @@ export {
   get,
   getAll,
   update,
+  deleteAccount,
 }

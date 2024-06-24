@@ -7,9 +7,15 @@ import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 
 import './SetPassword.css'
 
-const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
+const SetPassword = ({
+  onChangePassword,
+  onSubmit,
+  checkPassword,
+  selectedAccount,
+  buttonTitle = 'Log In',
+}) => {
   const location = useLocation()
-  const account = location.state.account
+  const account = selectedAccount ? selectedAccount : location.state.account
 
   const [accountPasswordValue, setAccountPasswordValue] = useState('')
   const [accountPasswordValid, setAccountPasswordValid] = useState(null)
@@ -38,7 +44,7 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
     </>
   )
 
-  const doLogin = (e) => {
+  const submitHandler = (e) => {
     e.preventDefault()
     e.stopPropagation()
     setAccountPasswordPritinity(false)
@@ -60,7 +66,7 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
     <div>
       <div className="content">
         <CenteredLayout>
-          <form onSubmit={doLogin}>
+          <form onSubmit={submitHandler}>
             <VerticalGroup bigGap>
               {!unlockingAccount ? (
                 <>
@@ -76,7 +82,7 @@ const SetPassword = ({ onChangePassword, onSubmit, checkPassword }) => {
                     alternate
                     focus
                   />
-                  <Button onClickHandle={doLogin}>Log In</Button>
+                  <Button onClickHandle={submitHandler}>{buttonTitle}</Button>
                 </>
               ) : (
                 <>

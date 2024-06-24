@@ -15,7 +15,6 @@ import FeeFieldML from './FeeField/FeeFieldML'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import Entropy from './Entropy/Entropy'
 import WalletList from './WalletList/WalletList'
-import SettingsTestnet from './SettingsTestnet/SettingsTestnet'
 import AddWallet from './AddWallet/AddWallet'
 import CurrentStaking from './CurrentStaking/CurrentStaking'
 import HelpTooltip from './HelpTooltip/HelpTooltip'
@@ -39,7 +38,6 @@ export {
   ConnectionErrorPopup,
   Entropy,
   WalletList,
-  SettingsTestnet,
   AddWallet,
   CurrentStaking,
   HelpTooltip,
