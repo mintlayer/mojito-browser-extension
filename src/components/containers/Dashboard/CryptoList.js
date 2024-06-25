@@ -89,7 +89,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
                 </>
               )}
             </div>
-            {(!isTestnet || !data.length) && (
+            {(!isTestnet || !data || !data.length) && (
               <LineChart
                 points={data}
                 height="40px"
