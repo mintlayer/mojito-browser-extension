@@ -43,9 +43,9 @@ const UpdateButton = () => {
       alternate
       extraStyleClasses={['update-button']}
     >
-      {loading && <LoadingImg className="loading-animated" />}
-      {!loading && showSuccess && <SuccessImg />}
-      {!loading && !showSuccess && <LoadingImg />}
+      {loading && <LoadingImg className="loading-animated"  data-testid="icon-loading-animated"/>}
+      {!loading && showSuccess && <SuccessImg data-testid="icon-success"/>}
+      {!loading && !showSuccess && <LoadingImg data-testid="icon-loading-default"/>}
     </Button>
   )
 }

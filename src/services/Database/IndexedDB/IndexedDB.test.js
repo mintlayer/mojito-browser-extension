@@ -11,6 +11,7 @@ import {
   getAll,
 } from './IndexedDB'
 
+global.structuredClone = (val) => JSON.parse(JSON.stringify(val))
 const deleteDatabase = () => indexedDB.deleteDatabase(DATABASENAME)
 
 test('IndexedDB basic functions - loadAccounts', async () => {
