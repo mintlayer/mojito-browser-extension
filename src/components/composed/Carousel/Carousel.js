@@ -1,10 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useContext } from 'react'
+import { ReactComponent as IconClose } from '@Assets/images/icon-close.svg'
+import { AccountContext } from '@Contexts'
 
 import next from '@Assets/images/next.svg'
 
 import './Carousel.css'
 
 const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
+  const { setRemoveAccountPopupOpen, setDeletingAccount } =
+    useContext(AccountContext)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [selected, setSelected] = useState(undefined)
   const carouselRef = useRef()
@@ -27,6 +31,11 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
     setSelected(index)
     setCurrentSlide(index)
     onClick && onClick(accounts[index])
+  }
+
+  const handleDelete = (index) => {
+     setRemoveAccountPopupOpen(true)
+     setDeletingAccount(accounts[index])
   }
 
   useEffect(() => {
@@ -67,17 +76,28 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
           ref={carouselRef}
         >
           {accounts.map((account, index) => (
-            <button
-              name="account"
+            <div
               key={account.id}
-              className={`button-account 
+              className="item-wrapper"
+            >
+              <button
+                className="delete-button"
+                onClick={() => handleDelete(index)}
+              >
+                <IconClose className="icon-delete-button" />
+              </button>
+              <button
+                name="account"
+                key={account.id}
+                className={`button-account 
                 ${index === currentSlide ? 'current' : ''}
                 ${index === selected ? 'selected' : 'unselected'}
               `}
-              onClick={() => handleClick(index)}
-            >
-              {account.name}
-            </button>
+                onClick={() => handleClick(index)}
+              >
+                {account.name}
+              </button>
+            </div>
           ))}
         </div>
       </div>

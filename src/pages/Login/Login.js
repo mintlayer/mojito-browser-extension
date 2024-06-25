@@ -17,7 +17,6 @@ const LoginPage = ({
   delay = 0,
 }) => {
   const navigate = useNavigate()
-
   const [account, setAccount] = useState(undefined)
 
   const { styleClasses, addStyleClass, removeStyleClass } = useStyleClasses([])

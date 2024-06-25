@@ -24,8 +24,6 @@ yarn-debug.log*
 yarn-error.log*
 *.zip
 
-/storybook-static
-
 /test-results/
 /playwright-report/
 /blob-report/

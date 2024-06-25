@@ -10,7 +10,8 @@ import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
 
 export const CryptoItem = ({ colorList, onClickItem, item }) => {
   const { networkType } = useContext(SettingsContext)
-  const { balanceLoading, tokenBalances } = useContext(NetworkContext)
+  const fetchingBalances = item.fetchingBalances
+  const { tokenBalances } = useContext(NetworkContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const color = colorList[item.symbol.toLowerCase()]
   const balance = item.balance
@@ -48,7 +49,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
 
   return (
     <>
-      {balanceLoading ? (
+      {fetchingBalances ? (
         <SkeletonLoader />
       ) : (
         <li
@@ -69,7 +70,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
                 {!isTestnet && (
                   <>
                     <dt>Price:</dt>
-                    <dd>{item.exchangeRate.toFixed(2)}</dd>
+                    <dd>{item.exchangeRate?.toFixed(2)}</dd>
                   </>
                 )}
               </dl>
@@ -88,7 +89,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
                 </>
               )}
             </div>
-            {(!isTestnet || !data.length) && (
+            {(!isTestnet || !data || !data.length) && (
               <LineChart
                 points={data}
                 height="40px"

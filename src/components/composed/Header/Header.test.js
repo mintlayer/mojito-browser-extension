@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { act } from 'react-dom/test-utils'
+import { act } from 'react'
 import {
   Link,
   MemoryRouter,
@@ -8,13 +8,13 @@ import {
   useLocation,
 } from 'react-router-dom'
 
-import { AccountProvider, SettingsProvider } from '@Contexts'
+import { AccountProvider, SettingsProvider, NetworkProvider } from '@Contexts'
 import Header from './Header'
 
 const toggleNetworkType = jest.fn()
 
 const setup = async (location) => {
-  const value = { isAccountUnlocked: () => true, logout: jest.fn() }
+  const value = { isAccountUnlocked: () => true, logout: jest.fn(), addresses: {mlMainnetAddresses: ['address'], mlTestnetAddresses: ['address']}}
 
   const PreviousPage = () => {
     location = useLocation()
@@ -41,6 +41,7 @@ const setup = async (location) => {
   await render(
     <AccountProvider value={value}>
       <SettingsProvider value={{ networkType: 'testnet', toggleNetworkType }}>
+        <NetworkProvider>
         <MemoryRouter initialEntries={['/']}>
           <Routes>
             <Route
@@ -54,6 +55,7 @@ const setup = async (location) => {
             />
           </Routes>
         </MemoryRouter>
+        </NetworkProvider>
       </SettingsProvider>
     </AccountProvider>,
   )

@@ -1,6 +1,7 @@
 .crypto-list {
   height: 240px;
-  overflow: scroll;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .crypto-item {

@@ -1,11 +1,20 @@
-import { SettingsTestnet } from '@ComposedComponents'
+// import { useState, useContext } from 'react'
+import { Settings } from '@ContainerComponents'
+// import { AccountContext } from '@Contexts'
+// import { Account } from '@Entities'
+// import { useNavigate } from 'react-router-dom'
 
 import './Settings.css'
 
 const SettingsList = [
   {
-    component: <SettingsTestnet />,
+    component: <Settings.SettingsTestnet />,
     value: 'testnet',
+  },
+  // Keep the delete wallet option at the bottom
+  {
+    component: <Settings.SettingsDelete />,
+    value: 'delete',
   },
 ]
 

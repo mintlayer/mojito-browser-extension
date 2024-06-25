@@ -19,7 +19,7 @@ const getAmountInAtoms = (
 const getParsedTransactions = (transactions, addresses) => {
   const account = LocalStorageService.getItem('unlockedAccount')
   const networkType = LocalStorageService.getItem('networkType')
-  const accountName = account.name
+  const accountName = account && account.name
   const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
   const unconfirmedTransactions = LocalStorageService.getItem(
     unconfirmedTransactionString,

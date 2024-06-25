@@ -56,6 +56,10 @@ const updateAccount = async (id, updates) => {
   return updatedAccount
 }
 
+const deleteAccount = async (id) => {
+  await IndexedDB.deleteAccount(id)
+}
+
 const unlockAccount = async (id, password) => {
   const mainnetNetwork = bitcoin.networks['bitcoin']
   const testnetNetwork = bitcoin.networks['testnet']
@@ -147,4 +151,4 @@ const unlockAccount = async (id, password) => {
   }
 }
 
-export { saveAccount, unlockAccount, updateAccount, getAccount }
+export { saveAccount, unlockAccount, updateAccount, getAccount, deleteAccount }

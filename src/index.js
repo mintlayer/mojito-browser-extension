@@ -8,7 +8,8 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import { Electrum, ExchangeRates } from '@APIs'
-import { ConnectionErrorPopup, Header } from '@ComposedComponents'
+import { ConnectionErrorPopup, Header, PopUp } from '@ComposedComponents'
+import { DeleteAccount } from '@ContainerComponents'
 
 import {
   HomePage,
@@ -47,10 +48,17 @@ const root = ReactDOM.createRoot(document.getElementById('root'))
 
 const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
+  const [unlocked, setUnlocked] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout, isAccountUnlocked, addresses, isExtended } =
-    useContext(AccountContext)
+  const {
+    logout,
+    isAccountUnlocked,
+    addresses,
+    isExtended,
+    removeAccountPopupOpen,
+    setRemoveAccountPopupOpen,
+  } = useContext(AccountContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
 
   const isConnectionAvailable = async (accountUnlocked) => {
@@ -77,6 +85,7 @@ const App = () => {
 
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
+    setUnlocked(accountUnlocked)
     accountUnlocked && isConnectionAvailable(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, navigate])
@@ -85,10 +94,9 @@ const App = () => {
   useEffect(() => {
     try {
       const browser = require('webextension-polyfill')
-      const accountUnlocked = isAccountUnlocked()
       const onMessageListener = (request, sender, sendResponse) => {
         if (request.action === 'connect') {
-          if (!accountUnlocked) {
+          if (!unlocked) {
             setNextAfterUnlock({ route: '/connect' })
             return
           }
@@ -98,7 +106,7 @@ const App = () => {
         }
 
         if (request.action === 'createDelegate') {
-          if (!accountUnlocked) {
+          if (!unlocked) {
             setNextAfterUnlock({
               route: '/wallet/Mintlayer/staking/create-delegation',
               state: {
@@ -129,9 +137,10 @@ const App = () => {
           })
         }
       }
-      browser.runtime.onMessage.addListener(onMessageListener)
+      browser.runtime && browser.runtime.onMessage.addListener(onMessageListener)
       return () => {
-        browser.runtime.onMessage.removeListener(onMessageListener)
+        browser.runtime &&
+          browser.runtime.onMessage.removeListener(onMessageListener)
       }
     } catch (e) {
       if (
@@ -144,6 +153,7 @@ const App = () => {
       // other error throw further
       throw e
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses, isAccountUnlocked, navigate])
 
   useEffect(() => {
@@ -163,6 +173,11 @@ const App = () => {
       <Header />
       {errorPopupOpen && (
         <ConnectionErrorPopup onClickHandle={popupButtonClickHandler} />
+      )}
+      {removeAccountPopupOpen && (
+        <PopUp setOpen={setRemoveAccountPopupOpen}>
+          <DeleteAccount/>
+        </PopUp>
       )}
       <Routes>
         <Route
