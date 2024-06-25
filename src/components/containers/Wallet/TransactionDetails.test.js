@@ -3,7 +3,7 @@ import {
   screen,
   waitForElementToBeRemoved,
 } from '@testing-library/react'
-import { act } from 'react-dom/test-utils'
+import { act } from 'react'
 
 import { BTC } from '@Helpers'
 
