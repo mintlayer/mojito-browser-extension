@@ -247,6 +247,7 @@ const calculateTransactionSizeInBytes = async ({
       })
     : []
   const requireUtxo = [...requireUtxoCoin, ...requireUtxoToken]
+  console.log('requireUtxo', requireUtxo)
   const transactionStrings = getUtxoTransactions(requireUtxo)
   const addressList = getUtxoAddress(requireUtxo)
   const transactionBytes = getTransactionsBytes(transactionStrings)

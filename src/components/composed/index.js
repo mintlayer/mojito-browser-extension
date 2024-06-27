@@ -10,6 +10,7 @@ import PopUp from './PopUp/Popup'
 import ProgressTracker from './ProgressTracker/ProgressTracker'
 import TextField from './TextField/TextField'
 import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
+import CryptoField from './CryptoField/CryptoField'
 import FeeField from './FeeField/FeeField'
 import FeeFieldML from './FeeField/FeeFieldML'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
@@ -34,6 +35,7 @@ export {
   ProgressTracker,
   TextField,
   CryptoFiatField,
+  CryptoField,
   FeeField,
   FeeFieldML,
   ConnectionErrorPopup,

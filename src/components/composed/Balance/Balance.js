@@ -28,6 +28,8 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
     return tokenBalances[walletType.name].token_info.token_ticker.string
   }
 
+  const cryptoDecimals = walletType.name === 'Bitcoin' ? 8 : 11
+
   const logo = () => {
     if (walletType.name === 'Mintlayer') {
       return <LogoRound />
@@ -55,7 +57,7 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
           className="balance-btc"
           data-testid="balance-paragraph"
         >
-          <span>{Format.BTCValue(balance)}</span> {symbol()}
+          <span>{Format.BTCValue(balance, cryptoDecimals)}</span> {symbol()}
         </p>
         <p
           className="balance-usd"

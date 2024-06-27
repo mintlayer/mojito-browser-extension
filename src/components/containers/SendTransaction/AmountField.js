@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CryptoFiatField } from '@ComposedComponents'
+import { CryptoField } from '@ComposedComponents'
 import TransactionField from './TransactionField'
 
 import './errorMessages.css'
@@ -13,6 +13,7 @@ const AmountField = ({
   maxValueInToken,
   setAmountValidity,
   totalFeeInCrypto,
+  amountInCrypto,
 }) => {
   const [message, setMessage] = useState(errorMessage)
 
@@ -23,14 +24,15 @@ const AmountField = ({
   return (
     <TransactionField>
       <label htmlFor="amount">Amount:</label>
-      <CryptoFiatField
+      <CryptoField
         id="amount"
         buttonTitle="Max"
-        placeholder="0"
+        placeholder="0.00"
         transactionData={transactionData}
         validity={validity}
         changeValueHandle={amountChanged}
         setErrorMessage={setMessage}
+        inputValue={amountInCrypto}
         exchangeRate={exchangeRate}
         maxValueInToken={maxValueInToken}
         setAmountValidity={setAmountValidity}
