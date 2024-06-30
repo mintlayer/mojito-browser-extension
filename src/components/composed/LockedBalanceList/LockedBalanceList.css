@@ -1,0 +1,25 @@
+.locked-table {
+  width: 100%;
+}
+
+.locked-table-wrapper {
+  display: flex;
+  justify-content: center;
+  height: 465px;
+  overflow: auto;
+}
+
+.locked-title {
+  text-align: left;
+  padding: 10px;
+  background: rgb(var(--color-green));
+  width: 50%;
+  color: rgb(var(--color-white));
+}
+
+.locked-loading-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 465px;
+}
