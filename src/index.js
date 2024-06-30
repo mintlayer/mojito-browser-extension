@@ -26,6 +26,7 @@ import {
   CreateDelegationPage,
   DelegationStakePage,
   DelegationWithdrawPage,
+  LockedBalancePage,
 } from '@Pages'
 
 import {
@@ -231,6 +232,10 @@ const App = () => {
         <Route
           path="/wallet/:coinType/staking/create-delegation"
           element={<CreateDelegationPage />}
+        />
+        <Route
+          path="/wallet/:coinType/locked-balance"
+          element={<LockedBalancePage />}
         />
         <Route
           exact

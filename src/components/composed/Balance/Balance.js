@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 import { LogoRound } from '@BasicComponents'
@@ -12,6 +13,8 @@ import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
 const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
   const { networkType } = useContext(SettingsContext)
   const { tokenBalances } = useContext(NetworkContext)
+  const { coinType } = useParams()
+  const navigate = useNavigate()
   // TODO Consider the correct format for 0,00 that might also be 0.00
   const balanceInUSD =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
@@ -44,6 +47,10 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
     )
   }
 
+  const onLockedClick = () => {
+     navigate('/wallet/' + coinType + '/locked-balance')
+  }
+
   return (
     <div
       className="balance-wrapper"
@@ -64,7 +71,7 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
           <span>{Format.fiatValue(balanceInUSD)}</span> USD
         </p>
         {parseFloat(balanceLocked) > 0 ? (
-          <div className="balance-locked">
+          <div className="balance-locked" onClick={onLockedClick}>
             Locked: {balanceLocked} {symbol()}
           </div>
         ) : (
