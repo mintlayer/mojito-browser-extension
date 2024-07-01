@@ -6,13 +6,13 @@ import LockedBalanceListItem from './LockedBalanceListItem'
 import './LockedBalanceList.css'
 
 const LockedBalanceList = () => {
-  const { lockedUtxos, fetchingUtxos } = useContext(NetworkContext)
-
+  const { lockedUtxos, transactions, fetchingUtxos } =
+    useContext(NetworkContext)
   return (
     <>
       <div className="locked-table-wrapper">
         {fetchingUtxos ? (
-          <div className='locked-loading-wrapper'>
+          <div className="locked-loading-wrapper">
             <Loading />
           </div>
         ) : (
@@ -26,7 +26,7 @@ const LockedBalanceList = () => {
                   style={{ padding: '10px', textAlign: 'left' }}
                   className="locked-title"
                 >
-                  Time
+                  Date
                 </th>
                 <th
                   style={{ padding: '10px', textAlign: 'left' }}
@@ -39,7 +39,12 @@ const LockedBalanceList = () => {
             <tbody>
               {lockedUtxos &&
                 lockedUtxos.map((utxo, index) => (
-                  <LockedBalanceListItem index={index} utxo={utxo}/>
+                  <LockedBalanceListItem
+                    key={index}
+                    index={index}
+                    utxo={utxo}
+                    transactions={transactions}
+                  />
                 ))}
             </tbody>
           </table>
@@ -50,4 +55,3 @@ const LockedBalanceList = () => {
 }
 
 export default LockedBalanceList
-

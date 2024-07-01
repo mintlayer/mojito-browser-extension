@@ -265,6 +265,10 @@ const getBlockDataByHeight = (height) => {
     })
 }
 
+const getBlockDataByHash = (hash) => {
+  return tryServers(MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':hash', hash))
+}
+
 const getWalletDelegations = (addresses) => {
   const delegationsPromises = addresses.map((address) =>
     getAddressDelegations(address),
@@ -326,6 +330,7 @@ export {
   broadcastTransaction,
   getFeesEstimates,
   getBlocksData,
+  getBlockDataByHash,
   getTokensData,
   getPoolsData,
   MINTLAYER_ENDPOINTS,

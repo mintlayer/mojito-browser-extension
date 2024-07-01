@@ -5,6 +5,7 @@
 .locked-table-wrapper {
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   height: 465px;
   overflow: auto;
 }
