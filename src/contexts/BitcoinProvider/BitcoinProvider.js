@@ -68,7 +68,8 @@ const BitcoinProvider = ({ value: propValue, children }) => {
 
    const getBalance = async () => {
      try {
-       const satoshiBalance = BTC.calculateBalanceFromUtxoList(btcUtxos)
+      const utxos = await Electrum.getAddressUtxo(currentBtcAddress)
+       const satoshiBalance = BTC.calculateBalanceFromUtxoList(JSON.parse(utxos))
        const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
        const formattedBalance = Format.BTCValue(balanceConvertedToBTC)
        setBtcBalance(formattedBalance)
@@ -79,10 +80,9 @@ const BitcoinProvider = ({ value: propValue, children }) => {
      }
    }
 
-   getTransactions()
-   getWalletUtxos()
-   getBalance()
-   // eslint-disable-next-line
+   await getTransactions()
+   await getWalletUtxos()
+   await getBalance()
  }
 
  useEffect(() => {
@@ -99,7 +99,6 @@ const BitcoinProvider = ({ value: propValue, children }) => {
   useEffect(() => {
     const getData = async () => {
       const result = await Electrum.getLastBlockHeight()
-      console.log('result', result)
       setOnlineHeight(result)
     }
     getData()
@@ -111,6 +110,7 @@ const BitcoinProvider = ({ value: propValue, children }) => {
   const value = {
     btcBalance,
     btcTransactions,
+    btcUtxos,
     currentBlockHeight,
 
     fetchingBalances,
