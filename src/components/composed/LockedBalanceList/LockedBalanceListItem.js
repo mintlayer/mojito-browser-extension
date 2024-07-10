@@ -1,51 +1,23 @@
-import { useState, useEffect, useMemo } from 'react'
-import { format, addDays } from 'date-fns'
-import { Mintlayer } from '@APIs'
+import { useMemo } from 'react'
+import { format } from 'date-fns'
 
 import './LockedBalanceListItem.css'
 
-const LockedBalanceListItem = ({ index, utxo, transactions }) => {
-  const [initialBlock, setInitialBlock] = useState(null)
-  const [unlockDate, setUnlockDate] = useState(null)
-
-  useEffect(() => {
-    const getBlockData = async (blockId) => {
-      try {
-        const blockData = await Mintlayer.getBlockDataByHash(blockId)
-        const parsedData = JSON.parse(blockData)
-        if (parsedData && parsedData.height) {
-          setInitialBlock(parsedData.height)
-        }
-      } catch (error) {
-        console.error('Failed to fetch block data:', error)
-      }
-    }
-
-    if (utxo.utxo.lock.type === 'ForBlockCount') {
-      const initialTransaction = transactions.find(
-        (tx) => tx.txid === utxo.outpoint.source_id,
-      )
-      if (initialTransaction) {
-        const calculatedUnlockDate = format(
-          addDays(new Date(initialTransaction.date * 1000), 10),
-          'dd/MM/yyyy HH:mm',
-        )
-        getBlockData(initialTransaction.blockId)
-        setUnlockDate(calculatedUnlockDate)
-      }
-    }
-  }, [utxo, transactions])
+const LockedBalanceListItem = ({ index, utxo }) => {
 
   const displayDate = useMemo(() => {
-    if (utxo.utxo.lock.type === 'ForBlockCount' && unlockDate && initialBlock) {
-      return `~ ${unlockDate} (Block height: ${Number(initialBlock) + Number(utxo.utxo.lock.content)})`
+    if (utxo.utxo.lock.type === 'ForBlockCount') {
+      return `~ ${format(
+        new Date(utxo.utxo.lock.content.timestamp * 1000),
+        'dd/MM/yyyy HH:mm',
+      )} (Block height: ${utxo.utxo.lock.content.unlockBlock})`
     } else if (utxo.utxo.lock.type !== 'ForBlockCount') {
       return format(
         new Date(utxo.utxo.lock.content.timestamp * 1000),
         'dd/MM/yyyy HH:mm',
       )
     }
-  }, [utxo, unlockDate, initialBlock])
+  }, [utxo])
 
   return (
     <tr
