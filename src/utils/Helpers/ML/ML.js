@@ -221,8 +221,10 @@ const getParsedTransactions = (transactions, addresses) => {
     const txid = transaction.txid
     const fee = transaction.fee.decimal
     const isConfirmed = confirmations > 0
+    const blockId = transaction.block_id
 
     return {
+      blockId,
       direction,
       destAddress,
       value: value || 0,

@@ -1,9 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import {
-  getAddressData,
-  getChainTip,
-  getTransactionData,
-} from '../../services/API/Mintlayer/Mintlayer'
+
 import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import { ML_ATOMS_PER_COIN } from '../../utils/Constants/AppInfo/AppInfo'
@@ -33,6 +29,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
   const [lockedBalance, setLockedBalance] = useState(0)
   const [unusedAddresses, setUnusedAddresses] = useState({})
   const [utxos, setUtxos] = useState([])
+  const [lockedUtxos, setLockedUtxos] = useState([])
   const [transactions, setTransactions] = useState([])
   const [feerate, setFeerate] = useState(0)
 
@@ -84,12 +81,12 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
     const addresses_data_receive = await Promise.all(
       currentMlAddresses.mlReceivingAddresses.map((address) =>
-        getAddressData(address),
+        Mintlayer.getAddressData(address),
       ),
     )
     const addresses_data_change = await Promise.all(
       currentMlAddresses.mlChangeAddresses.map((address) =>
-        getAddressData(address),
+        Mintlayer.getAddressData(address),
       ),
     )
     const addresses_data = [...addresses_data_receive, ...addresses_data_change]
@@ -143,7 +140,9 @@ const NetworkProvider = ({ value: propValue, children }) => {
     setCurrentAccountId(accountID)
 
     // fetch transactions data
-    const transactions = transaction_ids.map((txid) => getTransactionData(txid))
+    const transactions = transaction_ids.map((txid) =>
+      Mintlayer.getTransactionData(txid),
+    )
     const transactions_data = await Promise.all(transactions)
 
     const parsedTransactions = ML.getParsedTransactions(
@@ -160,11 +159,19 @@ const NetworkProvider = ({ value: propValue, children }) => {
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-    const utxos = await Mintlayer.getWalletUtxos(addressList)
-    const parsedUtxos = utxos
+    const fetchedUtxos = await Mintlayer.getWalletUtxos(addressList)
+    const fetchedSpendableUtxos =
+      await Mintlayer.getWalletSpendableUtxos(addressList)
+
+    const parsedUtxos = fetchedUtxos
       .map((utxo) => JSON.parse(utxo))
       .filter((utxo) => utxo.length > 0)
-    const available = parsedUtxos
+
+    const parsedSpendableUtxos = fetchedSpendableUtxos
+      .map((utxo) => JSON.parse(utxo))
+      .filter((utxo) => utxo.length > 0)
+
+    const available = parsedSpendableUtxos
       .flatMap((utxo) => [...utxo])
       .filter((item) => item.utxo.value)
       .filter((item) => {
@@ -189,7 +196,12 @@ const NetworkProvider = ({ value: propValue, children }) => {
     setCurrentNetworkType(networkType)
 
     const availableUtxos = available.map((item) => item)
+    const lockedUtxos = parsedUtxos
+      .flat()
+      .filter((obj) => obj.utxo.type === 'LockThenTransfer')
+
     setUtxos(availableUtxos)
+    setLockedUtxos(lockedUtxos)
 
     setFetchingUtxos(false)
 
@@ -305,7 +317,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
   useEffect(() => {
     const getData = async () => {
-      const result = await getChainTip()
+      const result = await Mintlayer.getChainTip()
       const { block_height } = JSON.parse(result)
       setOnlineHeight(block_height)
     }
@@ -321,6 +333,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
     tokenBalances,
     // addresses,
     utxos,
+    lockedUtxos,
     transactions,
     currentHeight,
     onlineHeight,
