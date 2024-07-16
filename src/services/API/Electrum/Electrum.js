@@ -31,17 +31,34 @@ const requestElectrum = async (url, body = null, request = fetch) => {
 
 const tryServers = async (endpoint, body = null) => {
   const networkType = LocalStorageService.getItem('networkType')
-  const electrumServes =
+  const customElectrumServerList = LocalStorageService.getItem(
+    AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS
+  )
+
+  const customServer = networkType === AppInfo.NETWORK_TYPES.TESTNET ?
+    customElectrumServerList.bitcoin_testnet :
+    customElectrumServerList.bitcoin_mainnet
+
+  const defaultElectrumServes =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? EnvVars.TESTNET_ELECTRUM_SERVERS
       : EnvVars.MAINNET_ELECTRUM_SERVERS
-  for (let i = 0; i < electrumServes.length; i++) {
+
+  const combinedElectrumServers = customServer ? [customServer, ...defaultElectrumServes] : [...defaultElectrumServes]
+
+  for (let i = 0; i < combinedElectrumServers.length; i++) {
     try {
-      const response = await requestElectrum(electrumServes[i] + endpoint, body)
+      const response = await requestElectrum(
+        combinedElectrumServers[i] + endpoint,
+        body,
+      )
       return response
     } catch (error) {
-      console.warn(`${electrumServes[i] + endpoint} request failed: `, error)
-      if (i === electrumServes.length - 1) {
+      console.warn(
+        `${combinedElectrumServers[i] + endpoint} request failed: `,
+        error,
+      )
+      if (i === combinedElectrumServers.length - 1) {
         throw error
       }
     }
