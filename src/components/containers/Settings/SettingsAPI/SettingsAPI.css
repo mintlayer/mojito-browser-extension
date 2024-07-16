@@ -1,0 +1,8 @@
+.settings-api {
+  display: flex;
+  flex-direction: column;
+}
+
+.api-description {
+  margin-bottom: 10px;
+}

@@ -426,6 +426,7 @@ const SendTransaction = ({
                     pristinity={passPristinity}
                     errorMessages={passErrorMessage}
                     onChangeHandle={changePassHandle}
+                    alternate
                   />
                   <Button buttonType="submit">Send Transaction</Button>
                 </VerticalGroup>
