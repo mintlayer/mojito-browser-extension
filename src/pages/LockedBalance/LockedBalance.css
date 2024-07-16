@@ -1,0 +1,5 @@
+.animate-list-accounts {
+  overflow: hidden;
+  transform: translateX(-200%);
+  transition: transform 1s ease-in-out;
+}

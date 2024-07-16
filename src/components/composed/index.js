@@ -20,6 +20,7 @@ import CurrentStaking from './CurrentStaking/CurrentStaking'
 import HelpTooltip from './HelpTooltip/HelpTooltip'
 import RestoreSeedField from './RestoreSeedField/RestoreSeedField'
 import UpdateButton from './UpdateButton/UpdateButton'
+import LockedBalanceList from './LockedBalanceList/LockedBalanceList'
 
 export {
   Balance,
@@ -44,4 +45,5 @@ export {
   HelpTooltip,
   RestoreSeedField,
   UpdateButton,
+  LockedBalanceList,
 }

@@ -76,7 +76,7 @@ const CreateRestorePage = () => {
           className="footnote-version"
           data-testid="footnote-name"
         >
-          v1.2.8
+          v1.2.9
         </small>
       </div>
     </div>

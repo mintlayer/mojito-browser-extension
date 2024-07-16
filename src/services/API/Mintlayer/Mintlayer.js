@@ -7,7 +7,8 @@ const prefix = '/api/v2'
 const MINTLAYER_ENDPOINTS = {
   GET_ADDRESS_DATA: '/address/:address',
   GET_TRANSACTION_DATA: '/transaction/:txid',
-  GET_ADDRESS_UTXO: '/address/:address/spendable-utxos',
+  GET_ADDRESS_UTXO: '/address/:address/all-utxos',
+  GET_ADDRESS_SPENDABLE_UTXO: '/address/:address/spendable-utxos',
   POST_TRANSACTION: '/transaction',
   GET_FEES_ESTIMATES: '/feerate',
   GET_ADDRESS_DELEGATIONS: '/address/:address/delegations',
@@ -211,6 +212,18 @@ const getWalletUtxos = (addresses) => {
   return Promise.all(utxosPromises)
 }
 
+const getAddressSpendableUtxo = (address) =>
+  tryServers(
+    MINTLAYER_ENDPOINTS.GET_ADDRESS_SPENDABLE_UTXO.replace(':address', address),
+  )
+
+const getWalletSpendableUtxos = (addresses) => {
+  const utxosPromises = addresses.map((address) =>
+    getAddressSpendableUtxo(address),
+  )
+  return Promise.all(utxosPromises)
+}
+
 const getTokensData = async (tokens) => {
   const tokensData = {}
   tokens.forEach((token) => {
@@ -250,6 +263,10 @@ const getBlockDataByHeight = (height) => {
         MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':hash', response),
       )
     })
+}
+
+const getBlockDataByHash = (hash) => {
+  return tryServers(MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':hash', hash))
 }
 
 const getWalletDelegations = (addresses) => {
@@ -304,6 +321,8 @@ export {
   requestMintlayer,
   getAddressUtxo,
   getWalletUtxos,
+  getAddressSpendableUtxo,
+  getWalletSpendableUtxos,
   getAddressDelegations,
   getWalletDelegations,
   getDelegationDetails,
@@ -311,6 +330,7 @@ export {
   broadcastTransaction,
   getFeesEstimates,
   getBlocksData,
+  getBlockDataByHash,
   getTokensData,
   getPoolsData,
   MINTLAYER_ENDPOINTS,
