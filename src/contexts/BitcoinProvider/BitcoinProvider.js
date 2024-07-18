@@ -119,6 +119,8 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     setFetchingBalances,
     setFetchingTransactions,
     setFetchingUtxos,
+
+    fetchAllData,
   }
 
   return (

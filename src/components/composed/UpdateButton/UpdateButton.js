@@ -4,19 +4,21 @@ import { Button } from '@BasicComponents'
 import { ReactComponent as SuccessImg } from '@Assets/images/icon-success.svg'
 import { ReactComponent as LoadingImg } from '@Assets/images/icon-loading.svg'
 
-import { MintlayerContext } from '@Contexts'
+import { MintlayerContext, BitcoinContext } from '@Contexts'
 
 import './UpdateButton.css'
 
 const UpdateButton = () => {
-  const { fetchAllData, fetchDelegations } = useContext(MintlayerContext)
+  const { fetchAllData: fetchAllDataMintlayer, fetchDelegations } = useContext(MintlayerContext)
+  const { fetchAllData: fetchAllDataBitcoin } = useContext(BitcoinContext)
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
   const handleClick = async () => {
     try {
       setLoading(true)
-      await fetchAllData()
+      await fetchAllDataBitcoin()
+      await fetchAllDataMintlayer()
       await fetchDelegations()
       setLoading(false)
       setShowSuccess(true)
