@@ -327,6 +327,11 @@ const NetworkProvider = ({ value: propValue, children }) => {
     return () => clearInterval(data)
   }, [])
 
+  const getPoolsData = async (poolIds) => {
+    const pools_data = await Mintlayer.getPoolsData(poolIds)
+    return pools_data
+  }
+
   const value = {
     balance,
     lockedBalance,
@@ -342,6 +347,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
     fetchAllData,
     fetchDelegations,
+    getPoolsData,
 
     currentAccountId,
     unusedAddresses,
