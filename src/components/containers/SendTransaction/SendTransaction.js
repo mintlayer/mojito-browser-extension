@@ -55,8 +55,19 @@ const SendTransaction = ({
   const [allowClosing, setAllowClosing] = useState(true)
   const [askPassword, setAskPassword] = useState(false)
   const [pass, setPass] = useState(null)
+  const [poolData, setPoolData] = useState(null)
   const isBitcoinWallet = walletType.name === 'Bitcoin'
   const NC = useContext(NetworkContext)
+
+  useEffect(() => {
+    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION && NC && addressTo) {
+      const fetchPoolData = async () => {
+        const poolData = await NC.getPoolsData([addressTo])
+        setPoolData(poolData)
+      }
+      fetchPoolData()
+    }
+  }, [addressTo, transactionMode, NC])
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -398,6 +409,7 @@ const SendTransaction = ({
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
                 walletType={walletType}
+                poolData={poolData}
               ></SendTransactionConfirmation>
             ) : feeLoading ? (
               <div className="loading-center">
