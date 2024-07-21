@@ -103,6 +103,7 @@ const WalletPage = () => {
                 <Wallet.ShowAddress
                   address={walletAddress}
                   unusedAddress={unusedAddresses?.receive}
+                  transactions={walletTransactionList}
                 ></Wallet.ShowAddress>
               </PopUp>
             )}
