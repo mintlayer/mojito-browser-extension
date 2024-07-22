@@ -6,7 +6,12 @@ import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 
 import './ShowAddress.css'
 
-const ShowAddress = ({ address: defaultAddress, onCopy, unusedAddress }) => {
+const ShowAddress = ({
+  address: defaultAddress,
+  onCopy,
+  unusedAddress,
+  transactions,
+}) => {
   const [toCopyLabel, afterCopyLabel] = ['Copy Address', 'Copied!']
   const copiedTimeoutInMs = 2 * 1_000
   const [label, setLabel] = useState(toCopyLabel)
@@ -48,13 +53,16 @@ const ShowAddress = ({ address: defaultAddress, onCopy, unusedAddress }) => {
             <p>Address:</p>
             <p>
               <strong>{address}</strong>
-
-              {unusedAddress &&
-                (showUnused ? (
-                  <span className="unused-address"> (new)</span>
-                ) : (
-                  <span className="used-address"> (used)</span>
-                ))}
+              {unusedAddress && (
+                <>
+                  {(showUnused || transactions.length === 0) && (
+                    <span className="unused-address"> (new)</span>
+                  )}
+                  {!showUnused && transactions.length > 0 && (
+                    <span className="used-address"> (used)</span>
+                  )}
+                </>
+              )}
             </p>
 
             {unusedAddress ? (
