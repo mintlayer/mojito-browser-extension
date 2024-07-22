@@ -46,4 +46,6 @@ dd span * {
   font-size: 1.2rem;
   font-weight: 600;
   color: rgb(var(--color-red));
+  word-wrap: break-word;
+  line-break: normal;
 }
