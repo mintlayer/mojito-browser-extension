@@ -73,10 +73,11 @@ const tryServers = async (endpoint, body = null, forceNetwork) => {
   const customMintlayerServerList = LocalStorageService.getItem(
     AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
   )
-  const customMintlayerServer =
-    networkType === AppInfo.NETWORK_TYPES.TESTNET
+  const customMintlayerServer = customMintlayerServerList
+    ? networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? customMintlayerServerList.mintlayer_testnet
       : customMintlayerServerList.mintlayer_mainnet
+    : null
 
   const defaultMintlayerServers =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
