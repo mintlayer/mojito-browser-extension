@@ -7,6 +7,7 @@ import * as NumbersHelper from './Number/Number'
 import * as Format from './Number/Format'
 import * as ArrayHelper from './Array/Array'
 import * as MLTransaction from './ML/MLTransaction'
+import * as StringHelpers from './String/String'
 
 export {
   BTC,
@@ -18,4 +19,5 @@ export {
   NumbersHelper,
   Format,
   ArrayHelper,
+  StringHelpers,
 }

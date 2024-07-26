@@ -19,7 +19,8 @@ const TextField = ({
   errorMessages,
   pristinity = true,
   reference,
-  focus = false,
+  focus = true,
+  bigGap = true,
 }) => {
   const inputId = useId()
 
@@ -44,7 +45,7 @@ const TextField = ({
   const setPristineState = (e) => setIsPristine(false)
 
   return (
-    <VerticalGroup bigGap>
+    <VerticalGroup bigGap={bigGap}>
       {label && (
         <label
           htmlFor={inputId}
@@ -64,7 +65,7 @@ const TextField = ({
         pattern={pattern}
         extraStyleClasses={extraStyleClasses}
         onBlurHandle={setPristineState}
-        focus
+        focus={focus}
       />
       {errorMessages && !isPristine && <Error error={errorMessages} />}
     </VerticalGroup>

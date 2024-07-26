@@ -11,6 +11,10 @@ const SettingsList = [
     component: <Settings.SettingsTestnet />,
     value: 'testnet',
   },
+  {
+    component: <Settings.SettingsAPI />,
+    value: 'api',
+  },
   // Keep the delete wallet option at the bottom
   {
     component: <Settings.SettingsDelete />,
