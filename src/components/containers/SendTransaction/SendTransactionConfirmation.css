@@ -5,13 +5,11 @@
 dt {
   font-size: 1.5rem;
   font-weight: 300;
-  line-height: 2.25rem;
 }
 
 dd {
   font-weight: 300;
-  line-height: 1.81rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.1rem;
   line-break: anywhere;
 }
 
@@ -42,4 +40,12 @@ dd span > strong {
 dd span,
 dd span * {
   font-size: 1.12rem;
+}
+
+.pool-note-message {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: rgb(var(--color-red));
+  word-wrap: break-word;
+  line-break: normal;
 }
