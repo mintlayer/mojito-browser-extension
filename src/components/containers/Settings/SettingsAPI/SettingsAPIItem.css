@@ -34,3 +34,7 @@
 .api-input {
   padding: 1rem 1rem;
 }
+
+.success-api-icon path {
+  fill: #fff;
+}

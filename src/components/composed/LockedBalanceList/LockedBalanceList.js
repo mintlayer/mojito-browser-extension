@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react'
-import { NetworkContext } from '@Contexts'
+import { MintlayerContext } from '@Contexts'
 
 import { Loading } from '@ComposedComponents'
 import { Mintlayer } from '@APIs'
@@ -9,7 +9,7 @@ import './LockedBalanceList.css'
 
 const LockedBalanceList = () => {
   const { lockedUtxos, transactions, fetchingUtxos } =
-    useContext(NetworkContext)
+    useContext(MintlayerContext)
   const [loading, setLoading] = useState(false)
   const [updatedUtxosList, setUpdatedUtxosList] = useState([])
 
