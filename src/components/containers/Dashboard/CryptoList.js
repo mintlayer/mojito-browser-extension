@@ -3,7 +3,7 @@ import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 import { LogoRound, SkeletonLoader } from '@BasicComponents'
 import { LineChart } from '@ComposedComponents'
 import { AppInfo } from '@Constants'
-import { SettingsContext, NetworkContext } from '@Contexts'
+import { SettingsContext, MintlayerContext } from '@Contexts'
 
 import './CryptoList.css'
 import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
@@ -11,7 +11,7 @@ import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
 export const CryptoItem = ({ colorList, onClickItem, item }) => {
   const { networkType } = useContext(SettingsContext)
   const fetchingBalances = item.fetchingBalances
-  const { tokenBalances } = useContext(NetworkContext)
+  const { tokenBalances } = useContext(MintlayerContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const color = colorList[item.symbol.toLowerCase()]
   const balance = item.balance

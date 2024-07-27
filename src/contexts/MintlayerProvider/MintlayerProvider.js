@@ -7,11 +7,11 @@ import { ML } from '@Helpers'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
 
-const NetworkContext = createContext()
+const MintlayerContext = createContext()
 
 const REFRESH_INTERVAL = 1000 * 60 // one per minute
 
-const NetworkProvider = ({ value: propValue, children }) => {
+const MintlayerProvider = ({ value: propValue, children }) => {
   const { addresses, accountID, accountName } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
@@ -362,10 +362,10 @@ const NetworkProvider = ({ value: propValue, children }) => {
   }
 
   return (
-    <NetworkContext.Provider value={propValue || value}>
+    <MintlayerContext.Provider value={propValue || value}>
       {children}
-    </NetworkContext.Provider>
+    </MintlayerContext.Provider>
   )
 }
 
-export { NetworkContext, NetworkProvider }
+export { MintlayerContext, MintlayerProvider }

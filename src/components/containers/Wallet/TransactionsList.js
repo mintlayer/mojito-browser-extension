@@ -1,11 +1,11 @@
 import { useContext } from 'react'
 import Transaction from './Transaction'
-import { NetworkContext } from '@Contexts'
+import { MintlayerContext } from '@Contexts'
 import { SkeletonLoader } from '@BasicComponents'
 import './TransactionsList.css'
 
 const TransactionsList = ({ transactionsList, getConfirmations }) => {
-  const { fetchingTransactions } = useContext(NetworkContext)
+  const { fetchingTransactions } = useContext(MintlayerContext)
 
   const transactionsLoading =
     fetchingTransactions && transactionsList.length === 0

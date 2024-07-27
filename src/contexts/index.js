@@ -14,15 +14,14 @@ import {
 } from './TransactionProvider/TransactionProvider'
 
 import {
-  NetworkContext,
-  NetworkProvider,
-} from './NetworkProvider/NetworkProvider'
+  MintlayerContext,
+  MintlayerProvider,
+} from './MintlayerProvider/MintlayerProvider'
 
 import {
   ExchangeRatesContext,
   ExchangeRatesProvider,
 } from './ExchangeRatesProvider/ExchangeRatesProvider'
-
 
 export {
   AccountContext,
@@ -31,8 +30,8 @@ export {
   SettingsProvider,
   TransactionContext,
   TransactionProvider,
-  NetworkContext,
-  NetworkProvider,
+  MintlayerContext,
+  MintlayerProvider,
   ExchangeRatesContext,
   ExchangeRatesProvider,
 }
