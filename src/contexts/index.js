@@ -19,6 +19,11 @@ import {
 } from './MintlayerProvider/MintlayerProvider'
 
 import {
+  BitcoinContext,
+  BitcoinProvider,
+} from './BitcoinProvider/BitcoinProvider'
+
+import {
   ExchangeRatesContext,
   ExchangeRatesProvider,
 } from './ExchangeRatesProvider/ExchangeRatesProvider'
@@ -32,6 +37,8 @@ export {
   TransactionProvider,
   MintlayerContext,
   MintlayerProvider,
+  BitcoinContext,
+  BitcoinProvider,
   ExchangeRatesContext,
   ExchangeRatesProvider,
 }

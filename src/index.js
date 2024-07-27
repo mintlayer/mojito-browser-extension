@@ -35,6 +35,7 @@ import {
   SettingsProvider,
   TransactionProvider,
   MintlayerProvider,
+  BitcoinProvider,
   ExchangeRatesProvider,
 } from '@Contexts'
 import { ML } from '@Cryptos'
@@ -253,13 +254,15 @@ root.render(
     <AccountProvider>
       <SettingsProvider>
         <MintlayerProvider>
-          <ExchangeRatesProvider>
-            <TransactionProvider>
-              <MemoryRouter>
-                <App />
-              </MemoryRouter>
-            </TransactionProvider>
-          </ExchangeRatesProvider>
+          <BitcoinProvider>
+            <ExchangeRatesProvider>
+              <TransactionProvider>
+                <MemoryRouter>
+                  <App />
+                </MemoryRouter>
+              </TransactionProvider>
+            </ExchangeRatesProvider>
+          </BitcoinProvider>
         </MintlayerProvider>
       </SettingsProvider>
     </AccountProvider>

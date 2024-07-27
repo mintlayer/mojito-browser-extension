@@ -9,8 +9,6 @@ import { LocalStorageService } from '@Storage'
 
 const MintlayerContext = createContext()
 
-const REFRESH_INTERVAL = 1000 * 60 // one per minute
-
 const MintlayerProvider = ({ value: propValue, children }) => {
   const { addresses, accountID, accountName } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
@@ -154,7 +152,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setFetchingTransactions(false)
 
     // fetch utxos
-    const accountName = account.name
+    const accountName = account && account.name
     const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
@@ -322,7 +320,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       setOnlineHeight(block_height)
     }
     getData()
-    const data = setInterval(getData, REFRESH_INTERVAL)
+    const data = setInterval(getData, AppInfo.REFRESH_INTERVAL)
 
     return () => clearInterval(data)
   }, [])
