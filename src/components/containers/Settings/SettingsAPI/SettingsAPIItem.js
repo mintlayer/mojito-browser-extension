@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { Button } from '@BasicComponents'
 import { TextField } from '@ComposedComponents'
+import { ReactComponent as SuccessImg } from '@Assets/images/icon-success.svg'
 
 import { StringHelpers } from '@Helpers'
 
@@ -20,6 +21,8 @@ const SettingsApiItem = ({
 
   const [fieldValidity, setFieldValidity] = useState(false)
   const [fieldPristinity, setFieldPristinity] = useState(true)
+  const [showSubmitFeedback, setShowSubmitFeedback] = useState(false)
+  const [showResetFeedback, setShowResetFeedback] = useState(false)
 
   const checkFieldValidity = (fieldValidity) => {
     const regex = /^https?:\/\/.{3,}\..+$/m
@@ -35,12 +38,28 @@ const SettingsApiItem = ({
   const onSubmit = (data) => {
     setFieldPristinity(false)
     onSubmitClick(data)
+    setShowSubmitFeedback(true)
   }
 
   const onReset = (data) => {
     setFieldPristinity(true)
     onResetClick(data)
+    setShowResetFeedback(true)
   }
+
+  useEffect(() => {
+    if (showSubmitFeedback) {
+      setTimeout(() => {
+        setShowSubmitFeedback(false)
+      }, 2000)
+    }
+    if (showResetFeedback) {
+      setTimeout(() => {
+        setShowResetFeedback(false)
+      }, 2000)
+    }
+  }
+  , [showSubmitFeedback, showResetFeedback])
 
   const label = `${StringHelpers.capitalizeFirstLetter(walletData.wallet)} ${walletData.networkType} server`
 
@@ -71,7 +90,11 @@ const SettingsApiItem = ({
           extraStyleClasses={submitButtonExtraClasses}
           disabled={!fieldValidity}
         >
-          Submit
+          {showSubmitFeedback ? (
+            <SuccessImg className="success-api-icon" />
+          ) : (
+            'Submit'
+          )}
         </Button>
         <Button
           onClickHandle={() =>
@@ -83,7 +106,11 @@ const SettingsApiItem = ({
           }
           extraStyleClasses={resetButtonExtraClasses}
         >
-          Reset
+          {showResetFeedback ? (
+            <SuccessImg className="success-api-icon" />
+          ) : (
+            'Reset'
+          )}
         </Button>
       </div>
     </div>

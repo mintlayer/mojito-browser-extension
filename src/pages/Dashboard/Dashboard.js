@@ -22,10 +22,6 @@ import { AppInfo } from '@Constants'
 const DashboardPage = () => {
   const { addresses, accountName, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const currentBtcAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.btcMainnetAddress
-      : addresses.btcTestnetAddress
 
   const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
@@ -33,7 +29,7 @@ const DashboardPage = () => {
 
   const [connectedWalletType, setConnectedWalletType] = useState('')
   const { balance: btcBalance, fetchingBalances: btcFetchingBalances } =
-    useBtcWalletInfo(currentBtcAddress)
+    useBtcWalletInfo()
   const {
     balance: mlBalance,
     tokenBalances,

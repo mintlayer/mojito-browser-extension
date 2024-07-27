@@ -47,6 +47,7 @@ const walletTypes = [
 ]
 
 const MAX_ML_FEE = 500000000000
+const REFRESH_INTERVAL = 1000 * 60 // one per minute
 
 export {
   appAccounts,
@@ -66,4 +67,5 @@ export {
   APPROPRIATE_COST_PER_BLOCK,
   APPROPRIATE_MARGIN_RATIO_PER_THOUSAND,
   APP_LOCAL_STORAGE_CUSTOM_SERVERS,
+  REFRESH_INTERVAL,
 }

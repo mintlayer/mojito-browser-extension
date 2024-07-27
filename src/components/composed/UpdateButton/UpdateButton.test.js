@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, fireEvent, waitFor, screen } from '@testing-library/react'
 import UpdateButton from './UpdateButton'
-import { NetworkContext } from '@Contexts'
+import { MintlayerContext } from '@Contexts'
 
 describe('UpdateButton', () => {
   const mockFetchAllData = jest.fn()
@@ -14,9 +14,14 @@ describe('UpdateButton', () => {
 
   it('should display the default loading icon initially', () => {
     render(
-      <NetworkContext.Provider value={{ fetchAllData: mockFetchAllData, fetchDelegations: mockFetchDelegations }}>
+      <MintlayerContext.Provider
+        value={{
+          fetchAllData: mockFetchAllData,
+          fetchDelegations: mockFetchDelegations,
+        }}
+      >
         <UpdateButton />
-      </NetworkContext.Provider>
+      </MintlayerContext.Provider>,
     )
 
     expect(screen.getByTestId('icon-loading-default')).toBeInTheDocument()
@@ -27,9 +32,14 @@ describe('UpdateButton', () => {
     mockFetchDelegations.mockResolvedValueOnce()
 
     render(
-      <NetworkContext.Provider value={{ fetchAllData: mockFetchAllData, fetchDelegations: mockFetchDelegations }}>
+      <MintlayerContext.Provider
+        value={{
+          fetchAllData: mockFetchAllData,
+          fetchDelegations: mockFetchDelegations,
+        }}
+      >
         <UpdateButton />
-      </NetworkContext.Provider>
+      </MintlayerContext.Provider>,
     )
 
     fireEvent.click(screen.getByTestId('icon-loading-default'))
@@ -42,9 +52,14 @@ describe('UpdateButton', () => {
     mockFetchDelegations.mockResolvedValueOnce()
 
     render(
-      <NetworkContext.Provider value={{ fetchAllData: mockFetchAllData, fetchDelegations: mockFetchDelegations }}>
+      <MintlayerContext.Provider
+        value={{
+          fetchAllData: mockFetchAllData,
+          fetchDelegations: mockFetchDelegations,
+        }}
+      >
         <UpdateButton />
-      </NetworkContext.Provider>
+      </MintlayerContext.Provider>,
     )
 
     fireEvent.click(screen.getByTestId('icon-loading-default'))
@@ -58,9 +73,14 @@ describe('UpdateButton', () => {
     mockFetchDelegations.mockResolvedValueOnce()
 
     render(
-      <NetworkContext.Provider value={{ fetchAllData: mockFetchAllData, fetchDelegations: mockFetchDelegations }}>
+      <MintlayerContext.Provider
+        value={{
+          fetchAllData: mockFetchAllData,
+          fetchDelegations: mockFetchDelegations,
+        }}
+      >
         <UpdateButton />
-      </NetworkContext.Provider>
+      </MintlayerContext.Provider>,
     )
 
     fireEvent.click(screen.getByTestId('icon-loading-default'))

@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { NetworkContext } from '@Contexts'
+import { MintlayerContext } from '@Contexts'
 
 const useMlWalletInfo = (addresses, token) => {
   const {
@@ -20,7 +20,7 @@ const useMlWalletInfo = (addresses, token) => {
     fetchingUtxos,
     fetchingTransactions,
     fetchingDelegations,
-  } = useContext(NetworkContext)
+  } = useContext(MintlayerContext)
 
   // const nativecoins
   const nativecoins = ['Mintlayer', 'Bitcoin']

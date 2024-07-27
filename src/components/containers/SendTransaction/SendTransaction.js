@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
-import { AccountContext, NetworkContext, TransactionContext } from '@Contexts'
+import { AccountContext, MintlayerContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
@@ -57,10 +57,14 @@ const SendTransaction = ({
   const [pass, setPass] = useState(null)
   const [poolData, setPoolData] = useState(null)
   const isBitcoinWallet = walletType.name === 'Bitcoin'
-  const NC = useContext(NetworkContext)
+  const NC = useContext(MintlayerContext)
 
   useEffect(() => {
-    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION && NC && addressTo) {
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+      NC &&
+      addressTo
+    ) {
       const fetchPoolData = async () => {
         const poolData = await NC.getPoolsData([addressTo])
         setPoolData(poolData)
