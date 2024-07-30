@@ -14,7 +14,7 @@ import { AccountContext } from '@Contexts'
 
 import './Navigation.css'
 
-const Navigation = ({ customBackAction }) => {
+const Navigation = ({ customNavigation }) => {
   const [unlocked, setUnlocked] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
@@ -26,17 +26,11 @@ const Navigation = ({ customBackAction }) => {
     setSliderMenuOpen,
   } = useContext(AccountContext)
 
-  const hideWithoutCustomBack = ['/set-account', '/restore-account']
-
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
     setUnlocked(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname])
-
-  if (hideWithoutCustomBack.includes(location.pathname) && !customBackAction) {
-    return null
-  }
 
    const toggleSliderMenu = () => {
      setSliderMenuOpen(!sliderMenuOpen)
@@ -114,7 +108,7 @@ const Navigation = ({ customBackAction }) => {
     },
   ]
 
-  const navList = unlocked ? loggedNavigationList : navigationList
+  const navList = customNavigation ? customNavigation : unlocked ? loggedNavigationList : navigationList
 
   return (
     <>

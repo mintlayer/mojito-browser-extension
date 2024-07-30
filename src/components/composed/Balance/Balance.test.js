@@ -1,12 +1,14 @@
 import { render, screen } from '@testing-library/react'
 import Balance from './Balance'
 import { SettingsProvider, MintlayerContext } from '@Contexts'
+import { BrowserRouter as Router } from 'react-router-dom'
 
 const BALANCE_SAMPLE = 1
 const EXCHANGE_RATE_SAMPLE = 25000
 
 test('Render account balance with ML', () => {
   render(
+    <Router>
     <SettingsProvider>
       <MintlayerContext.Provider
         value={{ balanceLoading: false, tokenBalances: [] }}
@@ -19,6 +21,7 @@ test('Render account balance with ML', () => {
       </MintlayerContext.Provider>
       ,
     </SettingsProvider>,
+    </Router>
   )
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
@@ -34,6 +37,7 @@ test('Render account balance with ML', () => {
 
 test('Render account balance with BTC', () => {
   render(
+    <Router>
     <SettingsProvider>
       <MintlayerContext.Provider
         value={{ balanceLoading: false, tokenBalances: [] }}
@@ -46,6 +50,7 @@ test('Render account balance with BTC', () => {
       </MintlayerContext.Provider>
       ,
     </SettingsProvider>,
+    </Router>
   )
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
@@ -61,6 +66,7 @@ test('Render account balance with BTC', () => {
 
 test('renders balance with zero value when networkType is testnet', () => {
   render(
+    <Router>
     <SettingsProvider value={{ networkType: 'testnet' }}>
       <MintlayerContext.Provider
         value={{ balanceLoading: false, tokenBalances: [] }}
@@ -73,6 +79,7 @@ test('renders balance with zero value when networkType is testnet', () => {
       </MintlayerContext.Provider>
       ,
     </SettingsProvider>,
+    </Router>
   )
 
   const currantBalanceComponent = screen.getByTestId('current-balance')

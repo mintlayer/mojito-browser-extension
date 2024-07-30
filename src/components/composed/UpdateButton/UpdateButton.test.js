@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, fireEvent, waitFor, screen } from '@testing-library/react'
 import UpdateButton from './UpdateButton'
-import { MintlayerContext } from '@Contexts'
+import { MintlayerContext, BitcoinContext } from '@Contexts'
 
 describe('UpdateButton', () => {
   const mockFetchAllData = jest.fn()
@@ -20,7 +20,13 @@ describe('UpdateButton', () => {
           fetchDelegations: mockFetchDelegations,
         }}
       >
-        <UpdateButton />
+        <BitcoinContext.Provider
+          value={{
+            fetchAllData: mockFetchAllData,
+          }}
+        >
+          <UpdateButton />
+        </BitcoinContext.Provider>
       </MintlayerContext.Provider>,
     )
 
@@ -38,7 +44,13 @@ describe('UpdateButton', () => {
           fetchDelegations: mockFetchDelegations,
         }}
       >
+       <BitcoinContext.Provider
+          value={{
+            fetchAllData: mockFetchAllData,
+          }}
+        >
         <UpdateButton />
+      </BitcoinContext.Provider>
       </MintlayerContext.Provider>,
     )
 
@@ -58,7 +70,13 @@ describe('UpdateButton', () => {
           fetchDelegations: mockFetchDelegations,
         }}
       >
+         <BitcoinContext.Provider
+          value={{
+            fetchAllData: mockFetchAllData,
+          }}
+        >
         <UpdateButton />
+      </BitcoinContext.Provider>
       </MintlayerContext.Provider>,
     )
 
@@ -79,7 +97,13 @@ describe('UpdateButton', () => {
           fetchDelegations: mockFetchDelegations,
         }}
       >
+         <BitcoinContext.Provider
+          value={{
+            fetchAllData: mockFetchAllData,
+          }}
+        >
         <UpdateButton />
+      </BitcoinContext.Provider>
       </MintlayerContext.Provider>,
     )
 
