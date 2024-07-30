@@ -1,39 +1,41 @@
-// import { useState, useContext } from 'react'
 import { Settings } from '@ContainerComponents'
-// import { AccountContext } from '@Contexts'
-// import { Account } from '@Entities'
-// import { useNavigate } from 'react-router-dom'
 
 import './Settings.css'
 
-const SettingsList = [
-  {
-    component: <Settings.SettingsTestnet />,
-    value: 'testnet',
-  },
-  {
-    component: <Settings.SettingsAPI />,
-    value: 'api',
-  },
-  // Keep the delete wallet option at the bottom
-  {
-    component: <Settings.SettingsDelete />,
-    value: 'delete',
-  },
-]
-
-const SettingsPage = () => {
+const SettingsPage = ({unlocked}) => {
+  const SettingsList = [
+    {
+      component: <Settings.SettingsTestnet />,
+      value: 'testnet',
+      visible: true,
+    },
+    {
+      component: <Settings.SettingsAPI />,
+      value: 'api',
+      visible: true,
+    },
+    // Keep the delete wallet option at the bottom
+    {
+      component: <Settings.SettingsDelete />,
+      value: 'delete',
+      visible: unlocked,
+    },
+  ]
   return (
     <>
       <ul className="settingsWrapper">
         {SettingsList.map((item) => (
-          <li
-            className="settingsItem"
-            key={item.value}
-          >
-            {item.component}
-            <div className="divider" />
-          </li>
+          <>
+            {item.visible && (
+              <li
+                className="settingsItem"
+                key={item.value}
+              >
+                {item.component}
+                <div className="divider" />
+              </li>
+            )}
+          </>
         ))}
       </ul>
     </>
