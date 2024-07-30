@@ -1,0 +1,29 @@
+.bottom-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.bottom-menu-item:last-child {
+  border-bottom: none;
+}
+
+.bottom-menu-item:hover {
+   color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+   background-color: rgb(var(--color-extra-light-gray));
+}
+
+.bottom-menu-item svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.slider-version {
+  display: flex;
+  margin-top: 5px;
+  padding-left: 5px;
+  font-size: 0.9rem
+}
