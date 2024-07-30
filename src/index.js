@@ -205,7 +205,7 @@ const App = () => {
         />
         <Route
           path="/settings"
-          element={<SettingsPage />}
+          element={<SettingsPage unlocked={unlocked} />}
         />
         <Route
           path="/connect"
