@@ -21,6 +21,8 @@ import HelpTooltip from './HelpTooltip/HelpTooltip'
 import RestoreSeedField from './RestoreSeedField/RestoreSeedField'
 import UpdateButton from './UpdateButton/UpdateButton'
 import LockedBalanceList from './LockedBalanceList/LockedBalanceList'
+import SliderMenu from './SliderMenu/SliderMenu'
+import Navigation from './Navigation/Navigation'
 
 export {
   Balance,
@@ -46,4 +48,6 @@ export {
   RestoreSeedField,
   UpdateButton,
   LockedBalanceList,
+  SliderMenu,
+  Navigation,
 }
