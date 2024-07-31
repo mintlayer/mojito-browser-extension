@@ -23,7 +23,11 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
 
   try {
-    const result = await request(url, { method, body })
+    const result = await request(url, {
+      method,
+      body,
+      signal: AbortSignal.timeout(20000),
+    })
     if (!result.ok) {
       const error = await result.json()
       if (error.error === 'Address not found') {
@@ -87,6 +91,7 @@ const tryServers = async (endpoint, body = null, forceNetwork) => {
   const combinedMintlayerServers = customMintlayerServer
     ? [customMintlayerServer, ...defaultMintlayerServers]
     : [...defaultMintlayerServers]
+
   for (let i = 0; i < combinedMintlayerServers.length; i++) {
     try {
       const response = await requestMintlayer(
