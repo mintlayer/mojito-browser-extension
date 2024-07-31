@@ -125,7 +125,7 @@ const Navigation = ({ customNavigation }) => {
         ))}
       </ul>
       <ul className="slider-bottom-nav">
-        {isExtended && (
+        {!isExtended && (
           <li
             className="bottom-menu-item"
             onClick={expandHandler}
