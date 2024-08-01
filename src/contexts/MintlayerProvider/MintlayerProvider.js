@@ -7,11 +7,9 @@ import { ML } from '@Helpers'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
 
-const NetworkContext = createContext()
+const MintlayerContext = createContext()
 
-const REFRESH_INTERVAL = 1000 * 60 // one per minute
-
-const NetworkProvider = ({ value: propValue, children }) => {
+const MintlayerProvider = ({ value: propValue, children }) => {
   const { addresses, accountID, accountName } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
@@ -154,7 +152,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
     setFetchingTransactions(false)
 
     // fetch utxos
-    const accountName = account.name
+    const accountName = account && account.name
     const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
@@ -322,10 +320,15 @@ const NetworkProvider = ({ value: propValue, children }) => {
       setOnlineHeight(block_height)
     }
     getData()
-    const data = setInterval(getData, REFRESH_INTERVAL)
+    const data = setInterval(getData, AppInfo.REFRESH_INTERVAL)
 
     return () => clearInterval(data)
   }, [])
+
+  const getPoolsData = async (poolIds) => {
+    const pools_data = await Mintlayer.getPoolsData(poolIds)
+    return pools_data
+  }
 
   const value = {
     balance,
@@ -342,6 +345,7 @@ const NetworkProvider = ({ value: propValue, children }) => {
 
     fetchAllData,
     fetchDelegations,
+    getPoolsData,
 
     currentAccountId,
     unusedAddresses,
@@ -356,10 +360,10 @@ const NetworkProvider = ({ value: propValue, children }) => {
   }
 
   return (
-    <NetworkContext.Provider value={propValue || value}>
+    <MintlayerContext.Provider value={propValue || value}>
       {children}
-    </NetworkContext.Provider>
+    </MintlayerContext.Provider>
   )
 }
 
-export { NetworkContext, NetworkProvider }
+export { MintlayerContext, MintlayerProvider }

@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
-import { AccountContext, NetworkContext, TransactionContext } from '@Contexts'
+import { AccountContext, MintlayerContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
@@ -55,8 +55,23 @@ const SendTransaction = ({
   const [allowClosing, setAllowClosing] = useState(true)
   const [askPassword, setAskPassword] = useState(false)
   const [pass, setPass] = useState(null)
+  const [poolData, setPoolData] = useState(null)
   const isBitcoinWallet = walletType.name === 'Bitcoin'
-  const NC = useContext(NetworkContext)
+  const NC = useContext(MintlayerContext)
+
+  useEffect(() => {
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+      NC &&
+      addressTo
+    ) {
+      const fetchPoolData = async () => {
+        const poolData = await NC.getPoolsData([addressTo])
+        setPoolData(poolData)
+      }
+      fetchPoolData()
+    }
+  }, [addressTo, transactionMode, NC])
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -398,6 +413,7 @@ const SendTransaction = ({
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
                 walletType={walletType}
+                poolData={poolData}
               ></SendTransactionConfirmation>
             ) : feeLoading ? (
               <div className="loading-center">
@@ -414,6 +430,7 @@ const SendTransaction = ({
                     pristinity={passPristinity}
                     errorMessages={passErrorMessage}
                     onChangeHandle={changePassHandle}
+                    alternate
                   />
                   <Button buttonType="submit">Send Transaction</Button>
                 </VerticalGroup>

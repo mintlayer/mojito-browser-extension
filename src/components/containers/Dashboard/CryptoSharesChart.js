@@ -1,7 +1,7 @@
 import { useContext } from 'react'
 import { ArcChart } from '@ComposedComponents'
 import { Format } from '@Helpers'
-import { NetworkContext, SettingsContext } from '@Contexts'
+import { MintlayerContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './CryptoSharesChart.css'
@@ -14,7 +14,7 @@ const CryptoSharesChart = ({
   colorList,
 }) => {
   const { networkType } = useContext(SettingsContext)
-  const { balanceLoading } = useContext(NetworkContext)
+  const { balanceLoading } = useContext(MintlayerContext)
   const totalBalanceInFiat =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? '0'
@@ -41,7 +41,8 @@ const CryptoSharesChart = ({
             ''
           ) : (
             <>
-              {totalBalanceInFiat}<span> {fiatSymbol}</span>
+              {totalBalanceInFiat}
+              <span> {fiatSymbol}</span>
             </>
           )}
           <em>{accountName}</em>

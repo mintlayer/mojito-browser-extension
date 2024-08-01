@@ -1,7 +1,6 @@
 .inputLabel {
   color: rgb(var(--color-dark-gray));
   display: block;
-  text-align: center;
 }
 
 .inputLabel.alternate {

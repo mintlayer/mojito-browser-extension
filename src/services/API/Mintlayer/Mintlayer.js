@@ -23,7 +23,11 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
 
   try {
-    const result = await request(url, { method, body })
+    const result = await request(url, {
+      method,
+      body,
+      signal: AbortSignal.timeout(20000),
+    })
     if (!result.ok) {
       const error = await result.json()
       if (error.error === 'Address not found') {
@@ -70,23 +74,37 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
 
 const tryServers = async (endpoint, body = null, forceNetwork) => {
   const networkType = forceNetwork || LocalStorageService.getItem('networkType')
-  const mintlayerServers =
+  const customMintlayerServerList = LocalStorageService.getItem(
+    AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
+  )
+  const customMintlayerServer = customMintlayerServerList
+    ? networkType === AppInfo.NETWORK_TYPES.TESTNET
+      ? customMintlayerServerList.mintlayer_testnet
+      : customMintlayerServerList.mintlayer_mainnet
+    : null
+
+  const defaultMintlayerServers =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? EnvVars.TESTNET_MINTLAYER_SERVERS
       : EnvVars.MAINNET_MINTLAYER_SERVERS
-  for (let i = 0; i < mintlayerServers.length; i++) {
+
+  const combinedMintlayerServers = customMintlayerServer
+    ? [customMintlayerServer, ...defaultMintlayerServers]
+    : [...defaultMintlayerServers]
+
+  for (let i = 0; i < combinedMintlayerServers.length; i++) {
     try {
       const response = await requestMintlayer(
-        mintlayerServers[i] + prefix + endpoint,
+        combinedMintlayerServers[i] + prefix + endpoint,
         body,
       )
       return response
     } catch (error) {
       console.warn(
-        `${mintlayerServers[i] + prefix + endpoint} request failed: `,
+        `${combinedMintlayerServers[i] + prefix + endpoint} request failed: `,
         error,
       )
-      if (i === mintlayerServers.length - 1) {
+      if (i === combinedMintlayerServers.length - 1) {
         throw error
       }
     }

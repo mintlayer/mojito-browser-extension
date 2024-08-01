@@ -19,11 +19,16 @@ const SendFundConfirmation = ({
   onConfirm,
   onCancel,
   walletType,
+  poolData
 }) => {
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const amountFiat = isTestnet ? '0,00' : amountInFiat
   const feeFiat = isTestnet ? '0,00' : totalFeeFiat
+
+  const isLowReward = (poolData && poolData[0].cost_per_block.decimal > AppInfo.APPROPRIATE_COST_PER_BLOCK) || (poolData && parseFloat(poolData[0].margin_ratio_per_thousand) > AppInfo.APPROPRIATE_MARGIN_RATIO_PER_THOUSAND)
+  const rewardMessage = 'The pool you are using has a high cost per block and/or margin ratio. This may result in lower rewards.'
+
   return (
     <CenteredLayout>
       <dl className="descriptionList">
@@ -58,6 +63,9 @@ const SendFundConfirmation = ({
             </span>
           )}
         </dd>
+        {poolData && isLowReward && (
+            <dd className="pool-note-message">Please note: {rewardMessage}</dd>
+        )}
       </dl>
 
       <VerticalGroup>

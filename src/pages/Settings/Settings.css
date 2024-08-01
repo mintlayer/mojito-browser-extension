@@ -1,6 +1,8 @@
 .settingsWrapper {
   display: grid;
   margin-top: 50px;
+  max-height: 435px;
+  overflow: auto;
 }
 
 .settingsItem {

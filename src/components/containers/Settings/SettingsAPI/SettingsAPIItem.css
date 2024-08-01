@@ -1,0 +1,40 @@
+.api-field-wrapper {
+  display: flex;
+  margin-bottom: 5px;
+}
+
+.api-input-wrapper {
+  width: 75%;
+  margin-right: 5px;
+}
+
+.api-button-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 25%;
+}
+
+.submit-api-button,
+.reset-api-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 85px;
+  padding: 10px 0;
+  height: 63px;
+  font-size: 1.2rem;
+}
+
+.reset-api-button { 
+  background-color: rgb(var(--color-red));
+  color: white;
+}
+
+.api-input {
+  padding: 1rem 1rem;
+}
+
+.success-api-icon path {
+  fill: #fff;
+}

@@ -34,7 +34,8 @@ import {
   AccountProvider,
   SettingsProvider,
   TransactionProvider,
-  NetworkProvider,
+  MintlayerProvider,
+  BitcoinProvider,
   ExchangeRatesProvider,
 } from '@Contexts'
 import { ML } from '@Cryptos'
@@ -138,7 +139,8 @@ const App = () => {
           })
         }
       }
-      browser.runtime && browser.runtime.onMessage.addListener(onMessageListener)
+      browser.runtime &&
+        browser.runtime.onMessage.addListener(onMessageListener)
       return () => {
         browser.runtime &&
           browser.runtime.onMessage.removeListener(onMessageListener)
@@ -177,7 +179,7 @@ const App = () => {
       )}
       {removeAccountPopupOpen && (
         <PopUp setOpen={setRemoveAccountPopupOpen}>
-          <DeleteAccount/>
+          <DeleteAccount />
         </PopUp>
       )}
       <Routes>
@@ -251,15 +253,17 @@ root.render(
   <React.StrictMode>
     <AccountProvider>
       <SettingsProvider>
-        <NetworkProvider>
-          <ExchangeRatesProvider>
-            <TransactionProvider>
-              <MemoryRouter>
-                <App />
-              </MemoryRouter>
-            </TransactionProvider>
-          </ExchangeRatesProvider>
-        </NetworkProvider>
+        <MintlayerProvider>
+          <BitcoinProvider>
+            <ExchangeRatesProvider>
+              <TransactionProvider>
+                <MemoryRouter>
+                  <App />
+                </MemoryRouter>
+              </TransactionProvider>
+            </ExchangeRatesProvider>
+          </BitcoinProvider>
+        </MintlayerProvider>
       </SettingsProvider>
     </AccountProvider>
   </React.StrictMode>,

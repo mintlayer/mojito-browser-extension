@@ -4,26 +4,25 @@ import { Button } from '@BasicComponents'
 import { ReactComponent as SuccessImg } from '@Assets/images/icon-success.svg'
 import { ReactComponent as LoadingImg } from '@Assets/images/icon-loading.svg'
 
-import { NetworkContext } from '@Contexts'
+import { MintlayerContext, BitcoinContext } from '@Contexts'
 
 import './UpdateButton.css'
 
-
 const UpdateButton = () => {
-  const { fetchAllData, fetchDelegations } =
-    useContext(NetworkContext)
+  const { fetchAllData: fetchAllDataMintlayer, fetchDelegations } = useContext(MintlayerContext)
+  const { fetchAllData: fetchAllDataBitcoin } = useContext(BitcoinContext)
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
   const handleClick = async () => {
     try {
       setLoading(true)
-      await fetchAllData()
+      await fetchAllDataBitcoin()
+      await fetchAllDataMintlayer()
       await fetchDelegations()
       setLoading(false)
       setShowSuccess(true)
-    }
-    catch (error) {
+    } catch (error) {
       console.error(error)
       setLoading(false)
     }
@@ -43,9 +42,16 @@ const UpdateButton = () => {
       alternate
       extraStyleClasses={['update-button']}
     >
-      {loading && <LoadingImg className="loading-animated"  data-testid="icon-loading-animated"/>}
-      {!loading && showSuccess && <SuccessImg data-testid="icon-success"/>}
-      {!loading && !showSuccess && <LoadingImg data-testid="icon-loading-default"/>}
+      {loading && (
+        <LoadingImg
+          className="loading-animated"
+          data-testid="icon-loading-animated"
+        />
+      )}
+      {!loading && showSuccess && <SuccessImg data-testid="icon-success" />}
+      {!loading && !showSuccess && (
+        <LoadingImg data-testid="icon-loading-default" />
+      )}
     </Button>
   )
 }
