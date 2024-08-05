@@ -8,7 +8,7 @@ import {
   useLocation,
 } from 'react-router-dom'
 
-import { AccountProvider, SettingsProvider, MintlayerProvider } from '@Contexts'
+import { AccountProvider, SettingsProvider, MintlayerProvider, BitcoinProvider } from '@Contexts'
 import Header from './Header'
 
 const toggleNetworkType = jest.fn()
@@ -42,6 +42,7 @@ const setup = async (location) => {
     <AccountProvider value={value}>
       <SettingsProvider value={{ networkType: 'testnet', toggleNetworkType }}>
         <MintlayerProvider>
+          <BitcoinProvider>
           <MemoryRouter initialEntries={['/']}>
             <Routes>
               <Route
@@ -55,6 +56,7 @@ const setup = async (location) => {
               />
             </Routes>
           </MemoryRouter>
+          </BitcoinProvider>
         </MintlayerProvider>
       </SettingsProvider>
     </AccountProvider>,

@@ -1,0 +1,56 @@
+.backdrop-slider-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: default;
+}
+
+.slider-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 300px;
+  padding: 50px 30px 40px;
+  background: white;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  z-index: 99999;
+}
+
+.slider-menu.open {
+  transform: translateX(0);
+}
+
+.slider-menu.close {
+  transform: translateX(100%);
+}
+
+.slider-menu-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.slider-menu-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+}
+
+.slider-menu-close-button svg {
+  width: 100%;
+  height: 100%;
+}

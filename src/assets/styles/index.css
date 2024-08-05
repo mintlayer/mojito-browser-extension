@@ -22,6 +22,7 @@ body {
 
 .App {
   position: relative;
+  min-height: 600px;
   padding: 2rem 2.875rem;
 }
 

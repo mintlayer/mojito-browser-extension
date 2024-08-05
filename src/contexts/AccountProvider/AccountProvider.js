@@ -15,6 +15,7 @@ const AccountProvider = ({ value: propValue, children }) => {
   const [balanceLoading, setBalanceLoading] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(undefined)
   const [removeAccountPopupOpen, setRemoveAccountPopupOpen] = useState(false)
+  const [sliderMenuOpen, setSliderMenuOpen] = useState(false)
   const isExtended = window.location.href.includes('popup.html')
 
   const accountRegistryName = 'unlockedAccount'
@@ -104,6 +105,8 @@ const AccountProvider = ({ value: propValue, children }) => {
     setDeletingAccount,
     removeAccountPopupOpen,
     setRemoveAccountPopupOpen,
+    sliderMenuOpen,
+    setSliderMenuOpen,
   }
 
   useEffect(() => {

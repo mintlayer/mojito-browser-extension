@@ -2,7 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 
 import useBtcWalletInfo from './useBtcWalletInfo'
 import { rawTransactions } from '@TestData'
-import { AccountProvider } from '@Contexts'
+import { AccountProvider, BitcoinProvider, SettingsProvider } from '@Contexts'
 
 const Wrapper = ({ children }) => (
   <AccountProvider
@@ -13,7 +13,11 @@ const Wrapper = ({ children }) => (
       },
     }}
   >
-    {children}
+    <BitcoinProvider>
+      <SettingsProvider value={{ networkType: 'testnet' }}>
+        {children}
+      </SettingsProvider>
+    </BitcoinProvider>
   </AccountProvider>
 )
 

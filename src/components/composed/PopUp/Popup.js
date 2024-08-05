@@ -21,6 +21,11 @@ const Popup = ({ children, setOpen, allowClosing = true }) => {
 
   const popupRef = useRef(null)
   useOnClickOutside(popupRef, closeButtonClickHandler)
+
+  const mainElement = document.querySelector('main')
+    ? document.querySelector('main')
+    : document.body
+
   return ReactDOM.createPortal(
     <div
       className={`backdrop ${popupClosing && 'backdropClosing'}`}
@@ -43,7 +48,7 @@ const Popup = ({ children, setOpen, allowClosing = true }) => {
         {children}
       </div>
     </div>,
-    document.body,
+    mainElement,
   )
 }
 
