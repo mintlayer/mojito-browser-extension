@@ -23,6 +23,7 @@ import DeleteAccount from './DeleteAccount/DeleteAccount'
 import SettingsDelete from './Settings/SettingsDelete/SettingsDelete'
 import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet'
 import SettingsAPI from './Settings/SettingsAPI/SettingsAPI'
+import SettingsBackup from './Settings/SettingsBackup/SettingsBackup'
 
 /* istanbul ignore next */
 const Wallet = {
@@ -52,6 +53,7 @@ const Settings = {
   SettingsTestnet,
   SettingsDelete,
   SettingsAPI,
+  SettingsBackup,
 }
 
 export {

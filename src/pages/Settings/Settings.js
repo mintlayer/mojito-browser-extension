@@ -2,7 +2,7 @@ import { Settings } from '@ContainerComponents'
 
 import './Settings.css'
 
-const SettingsPage = ({unlocked}) => {
+const SettingsPage = ({ unlocked }) => {
   const SettingsList = [
     {
       component: <Settings.SettingsTestnet />,
@@ -14,6 +14,11 @@ const SettingsPage = ({unlocked}) => {
       value: 'api',
       visible: true,
     },
+    {
+      component: <Settings.SettingsBackup />,
+      value: 'backup',
+      visible: unlocked,
+    },
     // Keep the delete wallet option at the bottom
     {
       component: <Settings.SettingsDelete />,
@@ -21,6 +26,7 @@ const SettingsPage = ({unlocked}) => {
       visible: unlocked,
     },
   ]
+
   return (
     <>
       <ul className="settingsWrapper">

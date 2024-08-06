@@ -150,6 +150,67 @@ const deleteAccount = async (accountId, onError, DB = IDB) => {
   }
 }
 
+const saveDbToJSON = async (onError, DB = IDB) => {
+  try {
+    const db = await openDatabase(DB)
+    const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
+    const store = transaction.objectStore(ACCOUNTSSTORENAME)
+    const accounts = await getAll(store)
+
+    const json = JSON.stringify(accounts)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'mojito.json'
+    a.click()
+
+    db.close()
+  } catch (error) {
+    onError && onError(error)
+    console.error(error)
+  }
+}
+
+const backupAccountToJSON = async (accountId, onError, DB = IDB) => {
+  try {
+    const db = await openDatabase(DB)
+    const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
+    const store = transaction.objectStore(ACCOUNTSSTORENAME)
+    const account = await get(store, accountId)
+
+    const json = JSON.stringify(account)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    // TODO: Change the name of the file
+    a.download = `mojito_${account.name}.json`
+    a.click()
+
+    db.close()
+  } catch (error) {
+    onError && onError(error)
+    console.error(error)
+  }
+}
+
+const restoreAccountFromJSON = async (json, onError, DB = IDB) => {
+  try {
+    const db = await openDatabase(DB)
+    const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
+    const store = transaction.objectStore(ACCOUNTSSTORENAME)
+
+    const account = JSON.parse(json)
+    await save(store, account)
+
+    db.close()
+  } catch (error) {
+    onError && onError(error)
+    console.error(error)
+  }
+}
+
 export {
   DATABASENAME,
   ACCOUNTSSTORENAME,
@@ -165,4 +226,7 @@ export {
   getAll,
   update,
   deleteAccount,
+  saveDbToJSON,
+  backupAccountToJSON,
+  restoreAccountFromJSON,
 }

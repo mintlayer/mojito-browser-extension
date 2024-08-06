@@ -1,24 +1,24 @@
-.settings-delete {
+.settings-backup {
   display: flex;
   align-items: center;
 }
 
-.delete-description {
+.backup-description {
   max-width: 90%;
   margin: 0 auto;
 }
 
-.settings-delete-button {
+.settings-backup-button {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 80px;
   min-width: 80px;
   padding: 1rem 0;
-  background: rgb(var(--color-red));
+  background: rgb(var(--color-green));
 }
 
-.icon-bin {
+.icon-json {
   width: 30px;
   height: 30px;
   fill: rgb(var(--color-white));
