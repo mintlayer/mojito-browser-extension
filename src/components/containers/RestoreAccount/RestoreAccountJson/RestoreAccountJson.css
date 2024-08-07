@@ -1,0 +1,20 @@
+.account-form-json {
+  margin-top: 4em;
+}
+
+.restore-wallet-title {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.restore-wallet-description {
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.restore-upload-button {
+  border: 2px solid rgba(var(--color-green), var(--nearly-transparent-alpha)) !important;
+  border-style: dashed !important;
+}

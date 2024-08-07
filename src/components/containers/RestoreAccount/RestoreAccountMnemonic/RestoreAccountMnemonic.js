@@ -15,7 +15,7 @@ import {
   WalletList,
 } from '@ComposedComponents'
 
-import './RestoreAccount.css'
+import './RestoreAccountMnemonic.css'
 
 const WalletTypeTitle = ({ top, bottom }) => {
   return (
@@ -56,7 +56,7 @@ const bitcoinWalletTypes = [
   },
 ]
 
-const RestoreAccount = ({
+const RestoreAccountMnemonic = ({
   step,
   setStep,
   onStepsFinished,
@@ -342,4 +342,4 @@ const RestoreAccount = ({
     </div>
   )
 }
-export default RestoreAccount
+export default RestoreAccountMnemonic

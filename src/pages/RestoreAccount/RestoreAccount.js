@@ -6,6 +6,8 @@ import { Account } from '@Entities'
 import { BTC } from '@Cryptos'
 
 import { Loading } from '@ComposedComponents'
+import { Header } from '@ComposedComponents'
+import { Button } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { RestoreAccount } from '@ContainerComponents'
 
@@ -13,9 +15,12 @@ import './RestoreAccount.css'
 
 const RestoreAccountPage = () => {
   const [step, setStep] = useState(1)
-  const navigate = useNavigate()
-  const { setWalletInfo } = useContext(AccountContext)
+  const [restoreMethod, setRestoreMethod] = useState('')
   const [creatingWallet, setCreatingWallet] = useState(false)
+  const { setWalletInfo } = useContext(AccountContext)
+  const restoreButtonExtraClasses = ['restore-button']
+
+  const navigate = useNavigate()
 
   const createAccount = (
     accountName,
@@ -45,6 +50,11 @@ const RestoreAccountPage = () => {
       })
   }
 
+  const goToPrevStep = () => {
+    setRestoreMethod('')
+    navigate('/')
+  }
+
   return creatingWallet ? (
     <>
       <CenteredLayout>
@@ -58,13 +68,48 @@ const RestoreAccountPage = () => {
       </CenteredLayout>
     </>
   ) : (
-    <RestoreAccount
-      step={step}
-      setStep={setStep}
-      onStepsFinished={createAccount}
-      validateMnemonicFn={BTC.validateMnemonic}
-      defaultBTCWordList={BTC.getWordList()}
-    />
+    <>
+      {!restoreMethod && (
+        <VerticalGroup bigGap>
+          <Header customBackAction={goToPrevStep} />
+          <h2 className="center-text title-restore">
+            Please select the method to restore your wallet
+          </h2>
+          <div className="restore-button-wrapper">
+            <Button
+              onClickHandle={() => setRestoreMethod('mnemonic')}
+              extraStyleClasses={restoreButtonExtraClasses}
+            >
+              Seed Phrase
+            </Button>
+            <Button
+              onClickHandle={() => setRestoreMethod('json')}
+              extraStyleClasses={restoreButtonExtraClasses}
+            >
+              Restore from file
+            </Button>
+          </div>
+        </VerticalGroup>
+      )}
+      {restoreMethod === 'mnemonic' && (
+        <RestoreAccount.RestoreAccountMnemonic
+          step={step}
+          setStep={setStep}
+          onStepsFinished={createAccount}
+          validateMnemonicFn={BTC.validateMnemonic}
+          defaultBTCWordList={BTC.getWordList()}
+        />
+      )}
+      {restoreMethod === 'json' && (
+        <RestoreAccount.RestoreAccountJson
+          step={step}
+          setStep={setStep}
+          onStepsFinished={createAccount}
+          validateMnemonicFn={BTC.validateMnemonic}
+          defaultBTCWordList={BTC.getWordList()}
+        />
+      )}
+    </>
   )
 }
 export default RestoreAccountPage

@@ -1,5 +1,6 @@
-import React, { createContext, useEffect, useState } from 'react'
+import React, { createContext, useEffect, useState, useContext } from 'react'
 import { ExchangeRates } from '@APIs'
+import { AccountContext } from '../AccountProvider/AccountProvider'
 
 const ExchangeRatesContext = createContext()
 
@@ -11,8 +12,10 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
   const [exchangeRate, setExchangeRate] = useState({})
   const [yesterdayExchangeRate, setYesterdayExchangeRate] = useState({})
   const [historyRates, setHistoryRates] = useState({})
+  const { accountID } = useContext(AccountContext)
 
   useEffect(() => {
+    if (!accountID) return
     const default_crypto = ['btc', 'ml']
     const getData = async () => {
       const rates = {}
@@ -49,7 +52,7 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
 
     const data = setInterval(getData, REFRESH_INTERVAL)
     return () => clearInterval(data)
-  }, [])
+  }, [accountID])
 
   const value = {
     exchangeRate,

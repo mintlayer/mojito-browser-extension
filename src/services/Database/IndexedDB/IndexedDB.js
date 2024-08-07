@@ -200,14 +200,48 @@ const restoreAccountFromJSON = async (json, onError, DB = IDB) => {
     const db = await openDatabase(DB)
     const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
     const store = transaction.objectStore(ACCOUNTSSTORENAME)
+    const accounts = await getAll(store)
+    const accountsIds = accounts.map((account) => account.id)
 
-    const account = JSON.parse(json)
-    await save(store, account)
+    const restoringAccount = json
 
-    db.close()
+    // Check if restoring account id already exists
+    if (accountsIds.includes(restoringAccount.id)) {
+      // Generate a new id for the restoring account
+      restoringAccount.id = Math.max(...accountsIds) + 1
+    }
+
+    // Ensure the JSON object has the required key property
+    if (!Object.prototype.hasOwnProperty.call(json, 'id')) {
+      throw new Error(
+        'The JSON object does not contain the required "id" property.',
+      )
+    }
+
+    const request = store.add(restoringAccount)
+
+    request.onsuccess = () => {
+      console.log('Account successfully added to the store.')
+    }
+
+    request.onerror = (event) => {
+      const error = event.target.error
+      onError && onError(error)
+      console.error('Error adding account to the store:', error)
+    }
+
+    transaction.oncomplete = () => {
+      db.close()
+    }
+
+    transaction.onerror = (event) => {
+      const error = event.target.error
+      onError && onError(error)
+      console.error('Transaction error:', error)
+    }
   } catch (error) {
     onError && onError(error)
-    console.error(error)
+    console.error('Unexpected error:', error)
   }
 }
 

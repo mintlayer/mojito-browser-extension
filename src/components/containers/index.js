@@ -1,5 +1,6 @@
 import CreateAccount from './CreateAccount/CreateAccount'
-import RestoreAccount from './RestoreAccount/RestoreAccount'
+import RestoreAccountMnemonic from './RestoreAccount/RestoreAccountMnemonic/RestoreAccountMnemonic'
+import RestoreAccountJson from './RestoreAccount/RestoreAccountJson/RestoreAccountJson'
 
 import LoginContainer from './Login/Login'
 import SetPassword from './Login/SetPassword'
@@ -54,6 +55,11 @@ const Settings = {
   SettingsDelete,
   SettingsAPI,
   SettingsBackup,
+}
+
+const RestoreAccount = {
+  RestoreAccountMnemonic,
+  RestoreAccountJson,
 }
 
 export {
