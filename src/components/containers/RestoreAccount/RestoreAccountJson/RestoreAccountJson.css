@@ -14,7 +14,29 @@
   text-align: center;
 }
 
+.restore-wallet-item {
+  display: flex;
+  border-radius: 5px;
+}
+
+.restore-wallet-details-title,
+.restore-wallet-details-content {
+  padding: 10px;
+  background-color: rgb(var(--color-extra-light-gray));
+  word-break: break-word;
+}
+
+.restore-wallet-details-title {
+  margin-right: 10px;
+  width: 25%;
+}
+
+.restore-wallet-details-content {
+  flex-grow: 1;
+}
+
 .restore-upload-button {
   border: 2px solid rgba(var(--color-green), var(--nearly-transparent-alpha)) !important;
   border-style: dashed !important;
+  margin-top: 1rem;
 }
