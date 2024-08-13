@@ -328,6 +328,23 @@ const getFeesEstimates = async () => {
 const broadcastTransaction = (transaction) =>
   tryServers(MINTLAYER_ENDPOINTS.POST_TRANSACTION, transaction)
 
+const batchData = async (type, ids) => {
+  try {
+    const response = await fetch('http://localhost:5050/batch_data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ type, ids }),
+    })
+    const json = await response.json()
+    return json.results
+  } catch (error) {
+    console.error('Failed to get data for batch: ', error)
+    throw error
+  }
+}
+
 export {
   getAddressData,
   getAddressBalance,
@@ -352,4 +369,5 @@ export {
   getTokensData,
   getPoolsData,
   MINTLAYER_ENDPOINTS,
+  batchData,
 }

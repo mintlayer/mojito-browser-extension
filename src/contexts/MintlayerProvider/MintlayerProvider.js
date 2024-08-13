@@ -77,21 +77,20 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       return
     }
 
-    const addresses_data_receive = await Promise.all(
-      currentMlAddresses.mlReceivingAddresses.map((address) =>
-        Mintlayer.getAddressData(address),
-      ),
+    const addresses_data_receive = await Mintlayer.batchData(
+      Mintlayer.MINTLAYER_ENDPOINTS.GET_ADDRESS_DATA,
+      currentMlAddresses.mlReceivingAddresses,
     )
-    const addresses_data_change = await Promise.all(
-      currentMlAddresses.mlChangeAddresses.map((address) =>
-        Mintlayer.getAddressData(address),
-      ),
+    const addresses_data_change = await Mintlayer.batchData(
+      Mintlayer.MINTLAYER_ENDPOINTS.GET_ADDRESS_DATA,
+      currentMlAddresses.mlChangeAddresses,
     )
+
     const addresses_data = [...addresses_data_receive, ...addresses_data_change]
 
     const first_unused_change_address_index = addresses_data_change.findIndex(
       (address_data) => {
-        const { unused } = JSON.parse(address_data)
+        const { unused } = address_data
         return unused === true
       },
     )
@@ -101,7 +100,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     const first_unused_receive_address_index = addresses_data_receive.findIndex(
       (address_data) => {
-        const { unused } = JSON.parse(address_data)
+        const { unused } = address_data
         return unused === true
       },
     )
@@ -121,7 +120,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const transaction_ids = []
     addresses_data.forEach((address_data) => {
       const { coin_balance, locked_coin_balance, transaction_history } =
-        JSON.parse(address_data)
+        address_data
       available_balance = coin_balance
         ? available_balance + BigInt(coin_balance.atoms)
         : available_balance
@@ -138,10 +137,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setCurrentAccountId(accountID)
 
     // fetch transactions data
-    const transactions = transaction_ids.map((txid) =>
-      Mintlayer.getTransactionData(txid),
+    const transactions_data = await Mintlayer.batchData(
+      Mintlayer.MINTLAYER_ENDPOINTS.GET_TRANSACTION_DATA,
+      transaction_ids,
     )
-    const transactions_data = await Promise.all(transactions)
 
     const parsedTransactions = ML.getParsedTransactions(
       transactions_data,
@@ -157,17 +156,20 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-    const fetchedUtxos = await Mintlayer.getWalletUtxos(addressList)
-    const fetchedSpendableUtxos =
-      await Mintlayer.getWalletSpendableUtxos(addressList)
+    const fetchedUtxos = await Mintlayer.batchData(
+      Mintlayer.MINTLAYER_ENDPOINTS.GET_ADDRESS_UTXO,
+      addressList,
+    )
+    const fetchedSpendableUtxos = await Mintlayer.batchData(
+      Mintlayer.MINTLAYER_ENDPOINTS.GET_ADDRESS_SPENDABLE_UTXO,
+      addressList,
+    )
 
-    const parsedUtxos = fetchedUtxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
+    const parsedUtxos = fetchedUtxos.filter((utxo) => utxo.length > 0)
 
-    const parsedSpendableUtxos = fetchedSpendableUtxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
+    const parsedSpendableUtxos = fetchedSpendableUtxos.filter(
+      (utxo) => utxo.length > 0,
+    )
 
     const available = parsedSpendableUtxos
       .flatMap((utxo) => [...utxo])
@@ -235,7 +237,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
         ...currentMlAddresses.mlReceivingAddresses,
         ...currentMlAddresses.mlChangeAddresses,
       ]
-      const delegations = await Mintlayer.getWalletDelegations(addressList)
+      const delegations = await Mintlayer.batchData(
+        Mintlayer.MINTLAYER_ENDPOINTS.GET_ADDRESS_DELEGATIONS,
+        addressList,
+      )
       const delegation_details = await Mintlayer.getDelegationDetails(
         delegations.map((delegation) => delegation.delegation_id),
       )
