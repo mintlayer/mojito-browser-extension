@@ -188,6 +188,7 @@ const RestoreAccountJson = () => {
                   style={{ display: 'none' }}
                   accept=".json"
                   onChange={handleFileChange}
+                  data-testid="file-input"
                 />
                 {errorMessage && <Error error={errorMessage} />}
               </VerticalGroup>

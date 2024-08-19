@@ -8,13 +8,53 @@ import {
   useLocation,
 } from 'react-router-dom'
 
-import { AccountProvider, SettingsProvider, MintlayerProvider, BitcoinProvider } from '@Contexts'
+import {
+  AccountProvider,
+  SettingsProvider,
+  MintlayerProvider,
+  BitcoinProvider,
+} from '@Contexts'
 import Header from './Header'
+import { expect } from '@playwright/test'
+
+global.AbortSignal = global.AbortSignal || {}
+
+global.AbortSignal.timeout = jest.fn((timeout) => {
+  const controller = new AbortController()
+  setTimeout(() => controller.abort(), timeout)
+  return controller.signal
+})
 
 const toggleNetworkType = jest.fn()
 
-const setup = async (location) => {
-  const value = { isAccountUnlocked: () => true, logout: jest.fn(), addresses: {mlMainnetAddresses: ['address'], mlTestnetAddresses: ['address']}}
+const setup = async (location, mode = 'default') => {
+  const valueDefaul = {
+    isAccountUnlocked: () => true,
+    logout: jest.fn(),
+    setSliderMenuOpen: jest.fn(),
+    addresses: {
+      mlMainnetAddresses: ['address'],
+      mlTestnetAddresses: ['address'],
+    },
+  }
+
+  const valueOpenMenu = {
+    isAccountUnlocked: () => true,
+    logout: jest.fn(),
+    setSliderMenuOpen: jest.fn(),
+    sliderMenuOpen: true,
+    addresses: {
+      mlMainnetAddresses: ['address'],
+      mlTestnetAddresses: ['address'],
+    },
+  }
+
+  const mintlayerProviderValue = {
+    currentMlAddresses: {
+      mlReceivingAddresses: ['address'],
+      mlChangeAddresses: ['address'],
+    },
+  }
 
   const PreviousPage = () => {
     location = useLocation()
@@ -38,24 +78,26 @@ const setup = async (location) => {
     )
   }
 
+  const value = mode === 'default' ? valueDefaul : valueOpenMenu
+
   await render(
     <AccountProvider value={value}>
       <SettingsProvider value={{ networkType: 'testnet', toggleNetworkType }}>
-        <MintlayerProvider>
+        <MintlayerProvider value={mintlayerProviderValue}>
           <BitcoinProvider>
-          <MemoryRouter initialEntries={['/']}>
-            <Routes>
-              <Route
-                path="/next-page"
-                element={<NextPage />}
-              />
-              <Route
-                exact
-                path="/"
-                element={<PreviousPage />}
-              />
-            </Routes>
-          </MemoryRouter>
+            <MemoryRouter initialEntries={['/']}>
+              <Routes>
+                <Route
+                  path="/next-page"
+                  element={<NextPage />}
+                />
+                <Route
+                  exact
+                  path="/"
+                  element={<PreviousPage />}
+                />
+              </Routes>
+            </MemoryRouter>
           </BitcoinProvider>
         </MintlayerProvider>
       </SettingsProvider>
@@ -80,6 +122,7 @@ test('Header component, renders a page before, navigate to Header and go back', 
 
   const nextPageComponent = screen.getByTestId('next-page')
   const buttons = screen.getAllByTestId('button')
+  expect(nextPageComponent).toBeInTheDocument()
 
   expect(nextPageComponent).toBeInTheDocument()
 
@@ -91,8 +134,8 @@ test('Header component, renders a page before, navigate to Header and go back', 
   expect(prevPageComponent).toBeInTheDocument()
 })
 
-test('Header component, renders a page before, navigate to Header and logout', async () => {
-  const { value } = await setup()
+test('Header component, navigate to Header and open menu', async () => {
+  const { value } = await setup(false, 'open')
 
   const nextPageLinkComponent = screen.getByTestId('next-page-link')
 
@@ -109,13 +152,29 @@ test('Header component, renders a page before, navigate to Header and logout', a
   expect(nextPageComponent).toBeInTheDocument()
 
   act(() => {
-    buttons[3].click()
+    buttons[1].click()
+  })
+
+  await waitFor(async () => {
+    expect(value.setSliderMenuOpen).toBeCalled()
+  })
+
+  const backdrop = screen.getByTestId('backdrop')
+  const sliderMenu = screen.getByTestId('slider-menu')
+
+  expect(backdrop).toBeInTheDocument()
+  expect(sliderMenu).toBeInTheDocument()
+
+  const logoutButton = screen.getByTestId('navigation-logout')
+  const expandViewButton = screen.getByTestId('navigation-expand-view')
+  expect(logoutButton).toBeInTheDocument()
+  expect(expandViewButton).toBeInTheDocument()
+
+  act(() => {
+    logoutButton.click()
   })
 
   await waitFor(async () => {
     expect(value.logout).toBeCalled()
   })
-
-  const prevPageComponent = screen.getByTestId('prev-page')
-  expect(prevPageComponent).toBeInTheDocument()
 })

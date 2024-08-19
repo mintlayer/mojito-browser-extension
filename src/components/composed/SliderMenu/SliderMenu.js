@@ -26,7 +26,6 @@ const SliderMenu = ({ children, isOpen, onClose }) => {
     ? document.querySelector('main')
     : document.body
 
-
   return ReactDOM.createPortal(
     isVisible && (
       <div
@@ -36,6 +35,7 @@ const SliderMenu = ({ children, isOpen, onClose }) => {
         <div
           ref={sliderRef}
           className={`slider-menu ${isOpen ? 'open' : 'close'}`}
+          data-testid={'slider-menu'}
         >
           <Button
             alternate

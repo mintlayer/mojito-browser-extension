@@ -13,7 +13,6 @@ import {
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
 
 import { LocalStorageService } from '@Storage'
-
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('networkType', 'testnet')
 

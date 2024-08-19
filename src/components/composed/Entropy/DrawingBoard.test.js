@@ -7,9 +7,6 @@ import 'konva/lib/shapes/Line'
 const setLines = jest.fn()
 const setEntropy = jest.fn()
 
-const scaleMock = jest.fn()
-
-
 test('Render Drawing Board', () => {
   render(
     <AccountProvider>
@@ -32,7 +29,7 @@ test('Render Drawing Board', () => {
 
 test('allows drawing on the canvas', () => {
   render(
-    <AccountProvider value={{ lines: [], setLines, scale: scaleMock }}>
+    <AccountProvider value={{ lines: [], setLines }}>
       <DrawingBoard />
     </AccountProvider>,
   )

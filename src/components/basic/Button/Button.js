@@ -12,6 +12,7 @@ const Button = ({
   extraStyleClasses = [],
   disabled = false,
   buttonType = 'button',
+  dataTestId = 'button',
   onMouseEnter,
   onMouseLeave,
 }) => {
@@ -31,7 +32,7 @@ const Button = ({
       <button
         className={styleClasses}
         onClick={onClickHandle}
-        data-testid="button"
+        data-testid={dataTestId}
         disabled={disabled}
         type={buttonType}
         onMouseEnter={onMouseEnter}

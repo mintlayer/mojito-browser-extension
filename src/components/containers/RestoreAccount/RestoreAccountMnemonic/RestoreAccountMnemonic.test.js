@@ -2,7 +2,7 @@ import * as React from 'react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 
-import RestoreAccountMnemonic from './RestoreAccountMnemonic/RestoreAccountMnemonic'
+import RestoreAccountMnemonic from './RestoreAccountMnemonic'
 import { Expressions } from '@Constants'
 import { AccountProvider, SettingsProvider } from '@Contexts'
 import { BTC } from '@Cryptos'
