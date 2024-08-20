@@ -60,8 +60,15 @@ const deleteAccount = async (id) => {
   await IndexedDB.deleteAccount(id)
 }
 
-const backupAccountToJSON = async (id) => {
-  await IndexedDB.backupAccountToJSON(id)
+const backupAccountToJSON = async (account) => {
+  const accountJson = IndexedDB.getAccountJSON(account.id)
+  const blob = new Blob([accountJson], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  // TODO: Change the name of the file
+  a.download = `mojito_${account.name}.json`
+  a.click()
 }
 
 const restoreAccountFromJSON = async (json) => {

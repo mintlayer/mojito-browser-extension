@@ -11,7 +11,12 @@ import './SettingsBackup.css'
 
 const SettingsBackup = () => {
   const buttonExtraClasses = ['settings-backup-button']
-  const { accountID } = useContext(AccountContext)
+  const { accountID, accountName } = useContext(AccountContext)
+
+  const accountObj = {
+    id: accountID,
+    name: accountName,
+  }
 
   const onBackupWallet = (account) => {
     Account.backupAccountToJSON(account)
@@ -33,7 +38,7 @@ const SettingsBackup = () => {
         </VerticalGroup>
       </div>
       <Button
-        onClickHandle={() => onBackupWallet(accountID)}
+        onClickHandle={() => onBackupWallet(accountObj)}
         extraStyleClasses={buttonExtraClasses}
       >
         <JsonIcon className="icon-json" />
