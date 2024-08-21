@@ -150,6 +150,94 @@ const deleteAccount = async (accountId, onError, DB = IDB) => {
   }
 }
 
+const saveDbToJSON = async (onError, DB = IDB) => {
+  try {
+    const db = await openDatabase(DB)
+    const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
+    const store = transaction.objectStore(ACCOUNTSSTORENAME)
+    const accounts = await getAll(store)
+
+    const json = JSON.stringify(accounts)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'mojito.json'
+    a.click()
+
+    db.close()
+  } catch (error) {
+    onError && onError(error)
+    console.error(error)
+  }
+}
+
+const getAccountJSON = async (accountId, onError, DB = IDB) => {
+  try {
+    const db = await openDatabase(DB)
+    const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
+    const store = transaction.objectStore(ACCOUNTSSTORENAME)
+    const account = await get(store, accountId)
+    const json = JSON.stringify(account)
+
+    db.close()
+    return json
+  } catch (error) {
+    onError && onError(error)
+    console.error(error)
+  }
+}
+
+const restoreAccountFromJSON = async (json, onError, DB = IDB) => {
+  try {
+    const db = await openDatabase(DB)
+    const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
+    const store = transaction.objectStore(ACCOUNTSSTORENAME)
+    const accounts = await getAll(store)
+    const accountsIds = accounts.map((account) => account.id)
+
+    const restoringAccount = json
+
+    // Check if restoring account id already exists
+    if (accountsIds.includes(restoringAccount.id)) {
+      // Generate a new id for the restoring account
+      restoringAccount.id = Math.max(...accountsIds) + 1
+    }
+
+    // Ensure the JSON object has the required key property
+    if (!Object.prototype.hasOwnProperty.call(json, 'id')) {
+      throw new Error(
+        'The JSON object does not contain the required "id" property.',
+      )
+    }
+
+    const request = store.add(restoringAccount)
+
+    request.onsuccess = () => {
+      console.log('Account successfully added to the store.')
+    }
+
+    request.onerror = (event) => {
+      const error = event.target.error
+      onError && onError(error)
+      console.error('Error adding account to the store:', error)
+    }
+
+    transaction.oncomplete = () => {
+      db.close()
+    }
+
+    transaction.onerror = (event) => {
+      const error = event.target.error
+      onError && onError(error)
+      console.error('Transaction error:', error)
+    }
+  } catch (error) {
+    onError && onError(error)
+    console.error('Unexpected error:', error)
+  }
+}
+
 export {
   DATABASENAME,
   ACCOUNTSSTORENAME,
@@ -165,4 +253,7 @@ export {
   getAll,
   update,
   deleteAccount,
+  saveDbToJSON,
+  getAccountJSON,
+  restoreAccountFromJSON,
 }

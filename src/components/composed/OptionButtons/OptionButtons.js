@@ -54,9 +54,9 @@ const OptionButtons = ({
       className={`option-buttons ${column && 'option-buttons-column'}`}
       data-testid="option-buttons"
     >
-      {options.map((option) => (
+      {options.map((option, i) => (
         <Button
-          key={option.value}
+          key={i}
           alternate={isAlternate(option)}
           extraStyleClasses={['option-button', buttonExtraStyles]}
           onClickHandle={() => onClick(option)}

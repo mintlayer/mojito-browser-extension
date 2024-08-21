@@ -11,29 +11,35 @@ import { localStorageMock } from 'src/tests/mock/localStorage/localStorage.js'
 
 import { LocalStorageService } from '@Storage'
 
+if (typeof AbortSignal === 'function' && !AbortSignal.timeout) {
+  AbortSignal.timeout = function (ms) {
+    const controller = new AbortController()
+    setTimeout(() => controller.abort(), ms)
+    return controller.signal
+  }
+}
+
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 const mockId = 'networkType'
 const mockValue = 'testnet'
 LocalStorageService.setItem(mockId, mockValue)
 
-jest.spyOn(console, 'warn').mockImplementation(() => {
-  console.warn.restoreMock()
-})
-
+jest.spyOn(console, 'warn').mockImplementation(() => {})
 jest.useRealTimers()
 
 test('Mintlayer API request', async () => {
-  jest.spyOn(console, 'error').mockImplementation((err) => {
-    expect(err).toBeInstanceOf(Error)
-    console.error.restoreMock()
-  })
+  const consoleErrorSpy = jest
+    .spyOn(console, 'error')
+    .mockImplementation((err) => {
+      expect(err).toBeInstanceOf(Error)
+    })
 
   const fetchAddr = 'testFetch'
   const mockFetch = jest.fn((addr) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       resolve({
         ok: true,
-        text: async () => new Promise((resolve) => resolve(fetchAddr)),
+        text: async () => fetchAddr,
       })
     })
   })
@@ -41,6 +47,9 @@ test('Mintlayer API request', async () => {
   await expect(requestMintlayer(fetchAddr, null, mockFetch)).resolves.toMatch(
     fetchAddr,
   )
+
+  consoleErrorSpy.mockRestore()
+  jest.restoreAllMocks()
 })
 
 test('Mintlayer API request - not ok', async () => {

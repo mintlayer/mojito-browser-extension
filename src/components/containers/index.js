@@ -1,5 +1,6 @@
 import CreateAccount from './CreateAccount/CreateAccount'
-import RestoreAccount from './RestoreAccount/RestoreAccount'
+import RestoreAccountMnemonic from './RestoreAccount/RestoreAccountMnemonic/RestoreAccountMnemonic'
+import RestoreAccountJson from './RestoreAccount/RestoreAccountJson/RestoreAccountJson'
 
 import LoginContainer from './Login/Login'
 import SetPassword from './Login/SetPassword'
@@ -23,6 +24,7 @@ import DeleteAccount from './DeleteAccount/DeleteAccount'
 import SettingsDelete from './Settings/SettingsDelete/SettingsDelete'
 import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet'
 import SettingsAPI from './Settings/SettingsAPI/SettingsAPI'
+import SettingsBackup from './Settings/SettingsBackup/SettingsBackup'
 
 /* istanbul ignore next */
 const Wallet = {
@@ -52,6 +54,12 @@ const Settings = {
   SettingsTestnet,
   SettingsDelete,
   SettingsAPI,
+  SettingsBackup,
+}
+
+const RestoreAccount = {
+  RestoreAccountMnemonic,
+  RestoreAccountJson,
 }
 
 export {

@@ -9,7 +9,6 @@ import { ReactComponent as LoginImg } from '@Assets/images/icon-login.svg'
 import { ReactComponent as AddWalletImg } from '@Assets/images/icon-add-wallet.svg'
 import { ReactComponent as HomeImg } from '@Assets/images/icon-home.svg'
 
-
 import { AccountContext } from '@Contexts'
 
 import './Navigation.css'
@@ -32,9 +31,9 @@ const Navigation = ({ customNavigation }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname])
 
-   const toggleSliderMenu = () => {
-     setSliderMenuOpen(!sliderMenuOpen)
-   }
+  const toggleSliderMenu = () => {
+    setSliderMenuOpen(!sliderMenuOpen)
+  }
 
   const goSettings = () => {
     navigate('/settings')
@@ -108,7 +107,11 @@ const Navigation = ({ customNavigation }) => {
     },
   ]
 
-  const navList = customNavigation ? customNavigation : unlocked ? loggedNavigationList : navigationList
+  const navList = customNavigation
+    ? customNavigation
+    : unlocked
+      ? loggedNavigationList
+      : navigationList
 
   return (
     <>
@@ -129,6 +132,7 @@ const Navigation = ({ customNavigation }) => {
           <li
             className="bottom-menu-item"
             onClick={expandHandler}
+            data-testid="navigation-expand-view"
           >
             <ExpandImg /> Expand view
           </li>
@@ -137,12 +141,13 @@ const Navigation = ({ customNavigation }) => {
           <li
             className="bottom-menu-item"
             onClick={logoutHandler}
+            data-testid="navigation-logout"
           >
             <LogoutImg />
             Logout
           </li>
         )}
-        <span className='slider-version'>v1.2.9</span>
+        <span className="slider-version">v1.3.1</span>
       </ul>
     </>
   )

@@ -2,7 +2,7 @@ import * as React from 'react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 
-import RestoreAccount from './RestoreAccount'
+import RestoreAccountMnemonic from './RestoreAccountMnemonic'
 import { Expressions } from '@Constants'
 import { AccountProvider, SettingsProvider } from '@Contexts'
 import { BTC } from '@Cryptos'
@@ -17,7 +17,7 @@ test('Renders restore account page with step 1', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccount
+        <RestoreAccountMnemonic
           step={1}
           setStep={SETSTEPSAMPLE}
         />
@@ -58,7 +58,7 @@ test('Renders restore account page with step 2', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccount
+        <RestoreAccountMnemonic
           step={2}
           setStep={SETSTEPSAMPLE}
         />
@@ -140,7 +140,7 @@ test('Renders set account page with step 3', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccount
+        <RestoreAccountMnemonic
           step={3}
           setStep={SETSTEPSAMPLE}
         />
@@ -175,7 +175,7 @@ test('Renders restore account page with step 4', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccount
+        <RestoreAccountMnemonic
           step={4}
           setStep={SETSTEPSAMPLE}
           words={WORDSSAMPLE}
@@ -228,7 +228,7 @@ test('Renders set account page with step 5', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccount
+        <RestoreAccountMnemonic
           step={5}
           setStep={SETSTEPSAMPLE}
         />
@@ -245,7 +245,7 @@ test('Renders set account page with step 6', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccount
+        <RestoreAccountMnemonic
           step={6}
           setStep={SETSTEPSAMPLE}
           onStepsFinished={ONSTEPSFINISHEDSAMPLE}
@@ -280,7 +280,7 @@ test('Checks back button behavior in a internal navigation component - first ste
     const [step, setStep] = React.useState(2)
 
     return (
-      <RestoreAccount
+      <RestoreAccountMnemonic
         step={step}
         setStep={setStep}
       />
