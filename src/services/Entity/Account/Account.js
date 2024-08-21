@@ -61,7 +61,7 @@ const deleteAccount = async (id) => {
 }
 
 const backupAccountToJSON = async (account) => {
-  const accountJson = IndexedDB.getAccountJSON(account.id)
+  const accountJson = await IndexedDB.getAccountJSON(account.id)
   const blob = new Blob([accountJson], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
