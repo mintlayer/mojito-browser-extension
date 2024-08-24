@@ -1,0 +1,75 @@
+.nested-menu {
+  margin-top: 10px;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.nested-menu-item {
+  position: relative;
+  margin-bottom: 1px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: rgb(var(--color-black));
+  background: rgb(230, 245, 230);
+  transition: all 0.2s ease;
+}
+
+.nested-menu-item-open {
+  padding: 5px;
+}
+
+.nested-label-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.nested-label-wrapper:hover {
+  color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+  background-color: rgb(210, 235, 210);
+  transition: all 0.2s ease;
+}
+
+.nested-menu-item-open .nested-label-wrapper {
+  color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+  background-color: rgb(210, 235, 210);
+  transition: all 0.2s ease;
+}
+
+.nested-item-menu {
+  margin-top: 5px;
+}
+
+.nested-item-menu-item {
+  display: flex;
+  padding: 10px 15px;
+  margin-bottom: 1px;
+  border-radius: 4px;
+  font-size: 15px;
+  cursor: pointer;
+  background-color: rgb(200, 225, 200);
+  transition: all 0.2s ease;
+}
+
+.nested-item-menu-item:hover {
+  color: rgb(var(--color-white));
+  background-color: rgb(153, 196, 153);
+}
+
+.nested-item-menu .navigation-triangle {
+  position: absolute;
+  top: 16px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  margin: 0;
+  transform: rotate(180deg);
+  transition: all 0.2s ease;
+}
+
+.nested-item-menu .navigation-triangle-open {
+  transform: none;
+  top: 21px;
+}
