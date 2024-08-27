@@ -1,7 +1,5 @@
-// import { useState } from 'react'
-import React, { useState } from 'react'
-
-import './RestoreSeedField.css'
+import { useState } from 'react'
+import { Textarea } from '@BasicComponents'
 
 const RestoreSeedField = ({ setFields, accountWordsValid }) => {
   const [textareaValue, setTextareaValue] = useState('')
@@ -12,26 +10,18 @@ const RestoreSeedField = ({ setFields, accountWordsValid }) => {
     setFields(words)
   }
 
-  const getExtraClasses = () => {
-    if (textareaValue && accountWordsValid) {
-      return 'seed-valid'
-    } else if (textareaValue && !accountWordsValid) {
-      return 'seed-invalid'
-    } else {
-      return ''
-    }
+  const textariaSize = {
+    cols: 80,
+    rows: 14,
   }
 
   return (
-    <textarea
-      data-testid="restore-seed-textarea"
+    <Textarea
       value={textareaValue}
       onChange={onChangeHandler}
-      className={`seed-textarea ${getExtraClasses()}`}
-      name="textarea-seed"
-      id="textarea-seed"
-      cols="80"
-      rows="14"
+      id="restore-seed-textarea"
+      size={textariaSize}
+      validity={accountWordsValid}
     />
   )
 }

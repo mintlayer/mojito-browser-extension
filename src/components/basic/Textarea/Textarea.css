@@ -1,12 +1,12 @@
-.seed-textarea {
+.textarea {
   padding: 15px;
   resize: none;
 }
 
-.seed-textarea.seed-invalid {
+.textaria-invalid {
   border-bottom: 2px solid rgb(var(--color-red));
 }
 
-.seed-textarea.seed-valid {
+.textaria-valid {
   border-bottom: 2px solid rgb(var(--color-green));
 }
