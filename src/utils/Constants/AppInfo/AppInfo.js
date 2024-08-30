@@ -90,7 +90,7 @@ const WALLETS_NAVIGATION = [
       {
         id: '2.4',
         name: 'Sign/Verify Message',
-        link: '/wallet/Mintlayer/sign-verify-message',
+        link: '/wallet/Mintlayer/sign-message',
       },
     ],
   },
