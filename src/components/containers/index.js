@@ -26,6 +26,9 @@ import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet'
 import SettingsAPI from './Settings/SettingsAPI/SettingsAPI'
 import SettingsBackup from './Settings/SettingsBackup/SettingsBackup'
 
+import SignMessage from './Message/SignMessage/SignMessage'
+import VerifyMessage from './Message/VerifyMessage/VerifyMessage'
+
 /* istanbul ignore next */
 const Wallet = {
   ShowAddress,
@@ -62,6 +65,11 @@ const RestoreAccount = {
   RestoreAccountJson,
 }
 
+const Message = {
+  SignMessage,
+  VerifyMessage,
+}
+
 export {
   CreateAccount,
   RestoreAccount,
@@ -71,4 +79,5 @@ export {
   SendTransaction,
   Dashboard,
   Settings,
+  Message,
 }
