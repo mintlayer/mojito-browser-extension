@@ -48,7 +48,7 @@ const SignMessage = () => {
       return
     }
 
-    const { mlPrivKeys } = await Account.unlockAccount(accountID, password)
+    const mlPrivKeys = unlockedAccount.mlPrivKeys
     const privKey =
       networkType === 'mainnet'
         ? mlPrivKeys.mlMainnetPrivateKey
@@ -92,7 +92,6 @@ const SignMessage = () => {
     event.preventDefault()
     if (step === 1) {
       const messageIsValid = isMessageValid(messageValue)
-      console.log('messageIsValid, ', messageIsValid)
       messageIsValid ? setStep(2) : setMessageError('Message is required')
       return
     }
