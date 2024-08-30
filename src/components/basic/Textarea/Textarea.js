@@ -8,9 +8,8 @@ const Textarea = ({
   id,
   size,
   validity = true,
+  disabled,
 }) => {
-  console.log(value, 'value')
-  console.log(validity, 'validity')
   const [textareaVakue, setTextareaValue] = useState(value ? value : '')
 
   const getExtraClasses = () => {
@@ -38,6 +37,7 @@ const Textarea = ({
       id={id}
       cols={size.cols}
       rows={size.rows}
+      readOnly={disabled}
     />
   )
 }
