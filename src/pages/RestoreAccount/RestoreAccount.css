@@ -1,3 +1,19 @@
 .restore-account-form {
   margin-top: 36px;
 }
+
+.title-restore {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 2rem 0 2rem 0;
+}
+
+.restore-button-wrapper {
+  display: grid;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.restore-button {
+  width: 500px;
+}

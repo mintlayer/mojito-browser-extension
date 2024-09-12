@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './Toggle.css'
 
-const Toggle = ({ label, name = 'toggleInput', toggled, onClick }) => {
+const Toggle = ({ label, name = 'toggleInput', toggled = false, onClick }) => {
   const [isToggled, toggle] = useState(toggled)
 
   const callback = () => {

@@ -3,23 +3,23 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 import { ReactComponent as BackImg } from '@Assets/images/back-button.svg'
-import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
-import { ReactComponent as ExpandImg } from '@Assets/images/icon-expand.svg'
-import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
+import { ReactComponent as MenuImg } from '@Assets/images/icon-hamburger.svg'
 
-import { Button, Logo, Tooltip } from '@BasicComponents'
-import { UpdateButton } from '@ComposedComponents'
+import { Button, Logo } from '@BasicComponents'
+import { UpdateButton, SliderMenu, Navigation } from '@ComposedComponents'
 import { AccountContext } from '@Contexts'
 
 import './Header.css'
 
 const Header = ({ customBackAction }) => {
   const [unlocked, setUnlocked] = useState(false)
-  const [tooltipVisible, setTooltipVisible] = useState(false)
-  const tooltipMessage = 'Expand view'
   const navigate = useNavigate()
   const location = useLocation()
-  const { isAccountUnlocked, logout, isExtended } = useContext(AccountContext)
+  const {
+    isAccountUnlocked,
+    sliderMenuOpen,
+    setSliderMenuOpen,
+  } = useContext(AccountContext)
 
   const coinType = location.pathname.includes('/wallet/')
     ? location.pathname.split('/wallet/')[1].split('/')[0]
@@ -60,27 +60,8 @@ const Header = ({ customBackAction }) => {
     return customBackAction ? customBackAction() : navigate(-1)
   }
 
-  const logoutHandle = () => {
-    logout()
-    navigate('/')
-  }
-
-  const goSettings = () => {
-    navigate('/settings')
-  }
-
-  const expandHandler = () => {
-    window.open(
-      typeof browser !== 'undefined'
-        ? // eslint-disable-next-line no-undef
-          browser.runtime.getURL('popup.html')
-        : chrome.runtime.getURL('popup.html'),
-      '_blank',
-    )
-  }
-
-  const toggleTooltip = () => {
-    setTooltipVisible(!tooltipVisible)
+  const toggleSliderMenu = () => {
+    setSliderMenuOpen(!sliderMenuOpen)
   }
 
   return (
@@ -95,67 +76,23 @@ const Header = ({ customBackAction }) => {
         </Button>
       </div>
 
-      {!unlocked && !isExtended && (
-        <div className="expand-wrapped">
-          <div className="tooltipWrapper">
+          <div className="expand-wrapped">
             <Button
               alternate
-              extraStyleClasses={['settings']}
-              onClickHandle={expandHandler}
-              onMouseEnter={toggleTooltip}
-              onMouseLeave={toggleTooltip}
+              extraStyleClasses={['header-menu-button']}
+              onClickHandle={toggleSliderMenu}
             >
-              <ExpandImg />
-            </Button>
-            <Tooltip
-              message={tooltipMessage}
-              visible={tooltipVisible}
-              position="left"
-            />
-          </div>
-        </div>
-      )}
-
-      {unlocked && (
-        <>
-          <div className="expand-wrapped expand-wrapped-unlocked">
-            {!isExtended && (
-              <div className="tooltipWrapper">
-                <Button
-                  alternate
-                  extraStyleClasses={['expand']}
-                  onClickHandle={expandHandler}
-                  onMouseEnter={toggleTooltip}
-                  onMouseLeave={toggleTooltip}
-                >
-                  <ExpandImg />
-                </Button>
-                <Tooltip
-                  message={tooltipMessage}
-                  visible={tooltipVisible}
-                  position="left"
-                />
-              </div>
-            )}
-            <Button
-              alternate
-              extraStyleClasses={['settings']}
-              onClickHandle={goSettings}
-            >
-              <SettingsImg />
+              <MenuImg />
             </Button>
           </div>
-          <Button
-            alternate
-            extraStyleClasses={['logout']}
-            onClickHandle={logoutHandle}
-          >
-            <LogoutImg />
-          </Button>
-        </>
-      )}
-      <Logo unlocked={unlocked} />
+      <Logo />
       {unlocked && <UpdateButton />}
+      <SliderMenu
+        isOpen={sliderMenuOpen}
+        onClose={toggleSliderMenu}
+      >
+        <Navigation />
+      </SliderMenu>
     </header>
   )
 }
