@@ -67,23 +67,21 @@ const SignMessage = () => {
       walletPrivKeys.mlReceivingPrivKeys,
     )[0]
 
-    // const publickKey = ML.getPublicKeyFromPrivate(firstReceivingPrivKey)
+    const publickKey = ML.getPublicKeyFromPrivate(firstReceivingPrivKey)
 
     const signedMessage = ML.signMessageForSpending(
       firstReceivingPrivKey,
       messageValue,
     )
+
     const signedMessageString = ArrayHelper.uint8ArrayToString(signedMessage)
+    const publickKeyString = ArrayHelper.uint8ArrayToString(publickKey)
+    const finaleMessageString =
+      signedMessageString +
+      AppInfo.SIGNED_MESSAGE_STRING_SEPARATOR +
+      publickKeyString
 
-    setSignedMessage(signedMessageString)
-
-    // const VerifyMessage = ML.verifySignatureForSpending(
-    //   publickKey,
-    //   signedMessage,
-    //   messageValue,
-    // )
-
-    // console.log('VerifyMessage, ', VerifyMessage)
+    setSignedMessage(finaleMessageString)
 
     return signedMessage
   }

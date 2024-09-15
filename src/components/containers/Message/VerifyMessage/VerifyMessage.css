@@ -1,0 +1,37 @@
+.message-title,
+.message-description {
+  text-align: center;
+}
+
+.message-submit-button-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.message-submit {
+  width: 510px;
+}
+
+.message-button-final {
+  display: flex;
+  gap: 10px;
+}
+
+.icon-verify-success,
+.icon-verify-failed {
+  width: 200px;
+  height: 200px;
+  margin-bottom: 10px;
+}
+
+.icon-verify-success g {
+  fill: rgb(var(--color-light-green));
+}
+
+.icon-verify-failed g {
+  fill: rgb(var(--color-red));
+}
+
+.verify-result {
+  text-align: center;
+}
