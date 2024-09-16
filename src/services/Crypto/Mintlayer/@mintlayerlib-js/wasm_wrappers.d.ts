@@ -97,6 +97,34 @@ export function verify_signature_for_spending(
   message: Uint8Array,
 ): boolean
 /**
+ * Given a message and a private key, create and sign a challenge with the given private key
+ * This kind of signature is to be used when signing challenges.
+ * @param {Uint8Array} private_key
+ * @param {Uint8Array} message
+ * @returns {Uint8Array}
+ */
+export function sign_challenge(
+  private_key: Uint8Array,
+  message: Uint8Array,
+): Uint8Array
+/**
+ * Given a signed challenge, an address and a message. Verify that
+ * the signature is produced by signing the message with the private key
+ * that derived the given public key.
+ * Note that this function is used for verifying messages related challenges.
+ * @param {string} address
+ * @param {Network} network
+ * @param {Uint8Array} signed_challenge
+ * @param {Uint8Array} message
+ * @returns {boolean}
+ */
+export function verify_challenge(
+  address: string,
+  network: Network,
+  signed_challenge: Uint8Array,
+  message: Uint8Array,
+): boolean
+/**
  * Given a destination address, an amount and a network type (mainnet, testnet, etc), this function
  * creates an output of type Transfer, and returns it as bytes.
  * @param {Amount} amount
@@ -408,6 +436,42 @@ export function encode_output_issue_nft(
  */
 export function encode_output_data_deposit(data: Uint8Array): Uint8Array
 /**
+ * Given the parameters needed to create hash timelock contract, and a network type (mainnet, testnet, etc),
+ * this function creates an output.
+ * @param {Amount} amount
+ * @param {string | undefined} token_id
+ * @param {string} secret_hash
+ * @param {string} spend_address
+ * @param {string} refund_address
+ * @param {Uint8Array} refund_timelock
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_htlc(
+  amount: Amount,
+  token_id: string | undefined,
+  secret_hash: string,
+  spend_address: string,
+  refund_address: string,
+  refund_timelock: Uint8Array,
+  network: Network,
+): Uint8Array
+/**
+ * Given a signed transaction and input outpoint that spends an htlc utxo, extract a secret that is
+ * encoded in the corresponding input signature
+ * @param {Uint8Array} signed_tx_bytes
+ * @param {boolean} strict_byte_size
+ * @param {Uint8Array} htlc_outpoint_source_id
+ * @param {number} htlc_output_index
+ * @returns {Uint8Array}
+ */
+export function extract_htlc_secret(
+  signed_tx_bytes: Uint8Array,
+  strict_byte_size: boolean,
+  htlc_outpoint_source_id: Uint8Array,
+  htlc_output_index: number,
+): Uint8Array
+/**
  * Given an output source id as bytes, and an output index, together representing a utxo,
  * this function returns the input that puts them together, as bytes.
  * @param {Uint8Array} outpoint_source_id
@@ -440,6 +504,7 @@ export function encode_input_for_withdraw_from_delegation(
  * for Account inputs that spend from a delegation it is the owning address of that delegation,
  * and in the case of AccountCommand inputs which change a token it is the token's authority destination)
  * and the outputs, estimate the transaction size.
+ * ScriptHash and ClassicMultisig destinations are not supported.
  * @param {Uint8Array} inputs
  * @param {(string)[]} input_utxos_destinations
  * @param {Uint8Array} outputs
@@ -492,7 +557,71 @@ export function encode_witness(
   network: Network,
 ): Uint8Array
 /**
- * Given an unsigned transaction, and signatures, this function returns a SignedTransaction object as bytes.
+ * Given a private key, inputs and an input number to sign, and the destination that owns that output (through the utxo),
+ * and a network type (mainnet, testnet, etc), and an htlc secret this function returns a witness to be used in a signed transaction, as bytes.
+ * @param {SignatureHashType} sighashtype
+ * @param {Uint8Array} private_key_bytes
+ * @param {string} input_owner_destination
+ * @param {Uint8Array} transaction_bytes
+ * @param {Uint8Array} inputs
+ * @param {number} input_num
+ * @param {Uint8Array} secret
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_witness_htlc_secret(
+  sighashtype: SignatureHashType,
+  private_key_bytes: Uint8Array,
+  input_owner_destination: string,
+  transaction_bytes: Uint8Array,
+  inputs: Uint8Array,
+  input_num: number,
+  secret: Uint8Array,
+  network: Network,
+): Uint8Array
+/**
+ * Given an arbitrary number of public keys as bytes, number of minimum required signatures, and a network type, this function returns
+ * the multisig challenge, as bytes.
+ * @param {Uint8Array} public_keys_bytes
+ * @param {number} min_required_signatures
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_multisig_challenge(
+  public_keys_bytes: Uint8Array,
+  min_required_signatures: number,
+  network: Network,
+): Uint8Array
+/**
+ * Given a private key, inputs and an input number to sign, and multisig challenge,
+ * and a network type (mainnet, testnet, etc), this function returns a witness to be used in a signed transaction, as bytes.
+ *
+ * `key_index` parameter is an index of a public key in the challenge, against which is the signature produces from private key is to be verified.
+ * `input_witness` parameter can be either empty or a result of previous calls to this function.
+ * @param {SignatureHashType} sighashtype
+ * @param {Uint8Array} private_key_bytes
+ * @param {number} key_index
+ * @param {Uint8Array} input_witness
+ * @param {Uint8Array} multisig_challenge
+ * @param {Uint8Array} transaction_bytes
+ * @param {Uint8Array} utxos
+ * @param {number} input_num
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_witness_htlc_multisig(
+  sighashtype: SignatureHashType,
+  private_key_bytes: Uint8Array,
+  key_index: number,
+  input_witness: Uint8Array,
+  multisig_challenge: Uint8Array,
+  transaction_bytes: Uint8Array,
+  utxos: Uint8Array,
+  input_num: number,
+  network: Network,
+): Uint8Array
+/**
+ * Given an unsigned transaction and signatures, this function returns a SignedTransaction object as bytes.
  * @param {Uint8Array} transaction_bytes
  * @param {Uint8Array} signatures
  * @returns {Uint8Array}
@@ -533,11 +662,11 @@ export function effective_pool_balance(
   pool_balance: Amount,
 ): Amount
 /**
- * Indicates whether a token can be frozen
+ * A utxo can either come from a transaction or a block reward. This enum signifies that.
  */
-export enum FreezableToken {
-  No = 0,
-  Yes = 1,
+export enum SourceId {
+  Transaction = 0,
+  BlockReward = 1,
 }
 /**
  * The token supply of a specific token, set on issuance
@@ -557,15 +686,6 @@ export enum TotalSupply {
   Fixed = 2,
 }
 /**
- * The part of the transaction that will be committed in the signature. Similar to bitcoin's sighash.
- */
-export enum SignatureHashType {
-  ALL = 0,
-  NONE = 1,
-  SINGLE = 2,
-  ANYONECANPAY = 3,
-}
-/**
  * The network, for which an operation to be done. Mainnet, testnet, etc.
  */
 export enum Network {
@@ -575,11 +695,20 @@ export enum Network {
   Signet = 3,
 }
 /**
- * A utxo can either come from a transaction or a block reward. This enum signifies that.
+ * The part of the transaction that will be committed in the signature. Similar to bitcoin's sighash.
  */
-export enum SourceId {
-  Transaction = 0,
-  BlockReward = 1,
+export enum SignatureHashType {
+  ALL = 0,
+  NONE = 1,
+  SINGLE = 2,
+  ANYONECANPAY = 3,
+}
+/**
+ * Indicates whether a token can be frozen
+ */
+export enum FreezableToken {
+  No = 0,
+  Yes = 1,
 }
 /**
  * Amount type abstraction. The amount type is stored in a string
@@ -609,7 +738,7 @@ export type InitInput =
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory
-  readonly __wbg_amount_free: (a: number) => void
+  readonly __wbg_amount_free: (a: number, b: number) => void
   readonly amount_from_atoms: (a: number, b: number) => number
   readonly amount_atoms: (a: number, b: number) => void
   readonly encode_outpoint_source_id: (
@@ -663,6 +792,23 @@ export interface InitOutput {
     e: number,
     f: number,
     g: number,
+  ) => void
+  readonly sign_challenge: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+  ) => void
+  readonly verify_challenge: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
   ) => void
   readonly encode_output_transfer: (
     a: number,
@@ -798,6 +944,30 @@ export interface InitOutput {
     w: number,
   ) => void
   readonly encode_output_data_deposit: (a: number, b: number, c: number) => void
+  readonly encode_output_htlc: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+    i: number,
+    j: number,
+    k: number,
+    l: number,
+    m: number,
+  ) => void
+  readonly extract_htlc_secret: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+  ) => void
   readonly encode_input_for_utxo: (
     a: number,
     b: number,
@@ -845,6 +1015,46 @@ export interface InitOutput {
     k: number,
     l: number,
   ) => void
+  readonly encode_witness_htlc_secret: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+    i: number,
+    j: number,
+    k: number,
+    l: number,
+    m: number,
+    n: number,
+  ) => void
+  readonly encode_multisig_challenge: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+  ) => void
+  readonly encode_witness_htlc_multisig: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+    i: number,
+    j: number,
+    k: number,
+    l: number,
+    m: number,
+    n: number,
+    o: number,
+  ) => void
   readonly encode_signed_transaction: (
     a: number,
     b: number,
@@ -891,20 +1101,25 @@ export type SyncInitInput = BufferSource | WebAssembly.Module
  * Instantiates the given `module`, which can either be bytes or
  * a precompiled `WebAssembly.Module`.
  *
- * @param {SyncInitInput} module
+ * @param {{ module: SyncInitInput }} module - Passing `SyncInitInput` directly is deprecated.
  *
  * @returns {InitOutput}
  */
-export function initSync(module: SyncInitInput): InitOutput
+export function initSync(
+  module: { module: SyncInitInput } | SyncInitInput,
+): InitOutput
 
 /**
  * If `module_or_path` is {RequestInfo} or {URL}, makes a request and
  * for everything else, calls `WebAssembly.instantiate` directly.
  *
- * @param {InitInput | Promise<InitInput>} module_or_path
+ * @param {{ module_or_path: InitInput | Promise<InitInput> }} module_or_path - Passing `InitInput` directly is deprecated.
  *
  * @returns {Promise<InitOutput>}
  */
 export default function __wbg_init(
-  module_or_path?: InitInput | Promise<InitInput>,
+  module_or_path?:
+    | { module_or_path: InitInput | Promise<InitInput> }
+    | InitInput
+    | Promise<InitInput>,
 ): Promise<InitOutput>

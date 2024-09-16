@@ -1,7 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory
-export function __wbg_amount_free(a: number): void
+export function __wbg_amount_free(a: number, b: number): void
 export function amount_from_atoms(a: number, b: number): number
 export function amount_atoms(a: number, b: number): void
 export function encode_outpoint_source_id(
@@ -55,6 +55,23 @@ export function verify_signature_for_spending(
   e: number,
   f: number,
   g: number,
+): void
+export function sign_challenge(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+): void
+export function verify_challenge(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
 ): void
 export function encode_output_transfer(
   a: number,
@@ -194,6 +211,30 @@ export function encode_output_data_deposit(
   b: number,
   c: number,
 ): void
+export function encode_output_htlc(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: number,
+  l: number,
+  m: number,
+): void
+export function extract_htlc_secret(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+): void
 export function encode_input_for_utxo(
   a: number,
   b: number,
@@ -240,6 +281,46 @@ export function encode_witness(
   j: number,
   k: number,
   l: number,
+): void
+export function encode_witness_htlc_secret(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: number,
+  l: number,
+  m: number,
+  n: number,
+): void
+export function encode_multisig_challenge(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+): void
+export function encode_witness_htlc_multisig(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: number,
+  l: number,
+  m: number,
+  n: number,
+  o: number,
 ): void
 export function encode_signed_transaction(
   a: number,
