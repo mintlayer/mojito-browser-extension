@@ -22,10 +22,17 @@ import init, {
   SourceId,
   Amount,
   encode_output_token_transfer,
+  encode_output_issue_fungible_token,
+  FreezableToken,
+  TotalSupply,
+  encode_output_issue_nft,
   sign_message_for_spending,
   verify_signature_for_spending,
   sign_challenge,
   verify_challenge,
+  encode_output_data_deposit,
+  get_token_id,
+  Network,
 } from './@mintlayerlib-js/wasm_wrappers.js'
 
 import { Mintlayer } from '@APIs'
@@ -210,6 +217,135 @@ export const getOutputs = ({
       networkIndex,
     )
   }
+}
+
+export const getOutputIssueFungibleToken = ({ output, network, chainTip }) => {
+  const {
+    authority,
+    is_freezable,
+    metadata_uri,
+    number_of_decimals,
+    token_ticker,
+    total_supply,
+  } = output
+
+  const _current_block_height = BigInt(chainTip)
+
+  const is_token_freezable = is_freezable
+    ? FreezableToken.Yes
+    : FreezableToken.No
+
+  console.log('total_supply', total_supply)
+
+  const supply_amount = Amount.from_atoms(total_supply.amount.atoms)
+
+  const total_supply_type = TotalSupply[total_supply.type]
+
+  console.log('total_supply.type', total_supply.type)
+  console.log('total_supply_type', total_supply_type)
+
+  console.log('TotalSupply.Unlimited', TotalSupply.Unlimited)
+
+  console.log(
+    'authority,\n' +
+      '    token_ticker.hex,\n' +
+      '    metadata_uri.hex,\n' +
+      '    Number(number_of_decimals),\n' +
+      '    total_supply_type,\n' +
+      '    supply_amount,\n' +
+      '    is_token_freezable,\n' +
+      '    _current_block_height,\n' +
+      '    network,',
+    authority,
+    Buffer.from(token_ticker.hex, 'hex'),
+    Buffer.from(metadata_uri.hex, 'hex'),
+    number_of_decimals,
+    total_supply_type,
+    supply_amount,
+    is_token_freezable,
+    _current_block_height,
+    Network.Testnet,
+  )
+
+  const encoder = new TextEncoder()
+  const networkIndex = Network.Testnet
+
+  console.log('Network.Testnet', Network.Testnet, networkIndex)
+
+  return encode_output_issue_fungible_token(
+    authority, // ok
+    encoder.encode(token_ticker.string), // ok
+    encoder.encode(metadata_uri.string), // ok
+    parseInt(number_of_decimals), // ok
+    total_supply_type, // ok
+    null,
+    is_token_freezable, // ok
+    BigInt(chainTip), // ok
+    Network.Testnet,
+  )
+
+  //
+  // return encode_output_issue_fungible_token(
+  //   authority,
+  //   encoder.encode(token_ticker.string),
+  //   encoder.encode(metadata_uri.string),
+  //   Number(number_of_decimals),
+  //   TotalSupply.Unlimited,
+  //   supply_amount,
+  //   is_token_freezable,
+  //   _current_block_height,
+  //   network,
+  // )
+}
+
+export const getOutputIssueNft = ({ inputs, output, network, chainTip }) => {
+  const { destination, data } = output
+
+  const _current_block_height = BigInt(Number(chainTip))
+  //
+  const token_id = get_token_id(inputs, Network.Testnet)
+  const name = data.name.string
+  const ticker = data.ticker.string
+  const description = data.description.string
+  const media_hash = Buffer.from(data.media_hash.hex, 'hex')
+  const creator = data.creator
+  const media_uri =
+    data.media_uri !== '' && data.media_uri !== null
+      ? data.media_uri
+      : undefined
+  const icon_uri =
+    data.icon_uri !== '' && data.icon_uri !== null ? data.icon_uri : undefined
+  const additional_metadata_uri =
+    data.additional_metadata_uri !== '' && data.additional_metadata_uri !== null
+      ? data.additional_metadata_uri
+      : undefined
+
+  // const encoder = new TextEncoder()
+
+  console.log('media_uri', media_uri)
+  console.log('icon_uri', icon_uri)
+  console.log('additional_metadata_uri', additional_metadata_uri)
+
+  return encode_output_issue_nft(
+    token_id,
+    destination, // that is authority according to API-server
+    name.split(' ').join('').slice(0, 10),
+    ticker.slice(0, 3).toUpperCase(),
+    description.split(' ').join('').slice(0, 100),
+    media_hash,
+    creator,
+    media_uri,
+    icon_uri,
+    additional_metadata_uri,
+    _current_block_height,
+    Network.Testnet,
+  )
+}
+
+export const getOutputDataDeposit = ({ output }) => {
+  const { data } = output
+
+  return encode_output_data_deposit(data)
 }
 
 export const getTransaction = (inputs, outputs) => {

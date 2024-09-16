@@ -97,6 +97,11 @@ const WALLETS_NAVIGATION = [
         name: 'Sign/Verify Message',
         link: '/wallet/Mintlayer/sign-message',
       },
+      {
+        id: '2.5',
+        name: 'Custom Output',
+        link: '/wallet/Mintlayer/custom-output',
+      },
     ],
   },
 ]

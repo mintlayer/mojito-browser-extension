@@ -181,6 +181,7 @@ export function encode_output_issue_fungible_token(
   l: number,
   m: number,
 ): void
+export function get_token_id(a: number, b: number, c: number, d: number): void
 export function encode_output_issue_nft(
   a: number,
   b: number,
@@ -211,6 +212,7 @@ export function encode_output_data_deposit(
   b: number,
   c: number,
 ): void
+export function data_deposit_fee(a: number, b: number): number
 export function encode_output_htlc(
   a: number,
   b: number,

@@ -15,6 +15,7 @@ import DelegationStakePage from './DelegationStake/DelegationStake'
 import DelegationWithdrawPage from './DelegationWithdraw/DelegationWithdraw'
 import LockedBalancePage from './LockedBalance/LockedBalance'
 import MessagePage from './MessagePage/MessagePage'
+import SendCustomOutput from './SendCustomOutput/SendCustomOutput'
 
 export {
   CreateAccountPage,
@@ -34,4 +35,5 @@ export {
   DelegationWithdrawPage,
   LockedBalancePage,
   MessagePage,
+  SendCustomOutput,
 }
