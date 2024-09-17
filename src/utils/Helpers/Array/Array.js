@@ -40,9 +40,15 @@ const stringToUint8Array = (string) => {
   return uint8Array
 }
 
+const stringToBytes = (string) => {
+  const encoder = new TextEncoder()
+  return encoder.encode(string)
+}
+
 export {
   getNRandomElementsFromArray,
   removeDublicates,
   uint8ArrayToString,
   stringToUint8Array,
+  stringToBytes,
 }

@@ -7,6 +7,7 @@ import { VerticalGroup } from '@LayoutComponents'
 import { useNavigate } from 'react-router-dom'
 
 import { ML } from '@Cryptos'
+import { ML as MlHelpers } from '@Helpers'
 import { Account } from '@Entities'
 import { AppInfo } from '@Constants'
 import { ArrayHelper } from '@Helpers'
@@ -15,11 +16,13 @@ import './SignMessage.css'
 
 const SignMessage = () => {
   const [messageValue, setMessageValue] = useState('')
+  const [addressValue, setAddressValue] = useState('')
   const [signedMessage, setSignedMessage] = useState('')
   const [step, setStep] = useState(1)
   const [pass, setPass] = useState('')
   const [loading, setLoading] = useState(false)
   const [messageError, setMessageError] = useState('')
+  const [addressError, setAddressError] = useState('')
   const [passValidity, setPassValidity] = useState(true)
   const [passPristinity, setPassPristinity] = useState(true)
   const [passErrorMessage, setPassErrorMessage] = useState('')
@@ -27,12 +30,30 @@ const SignMessage = () => {
   const { networkType } = useContext(SettingsContext)
   const navigate = useNavigate()
 
+  const findPrivateKeyByAddress = (data, address) => {
+    const { mlReceivingPrivKeys, mlChangePrivKeys } = data
+
+    if (mlReceivingPrivKeys[address]) {
+      return mlReceivingPrivKeys[address]
+    }
+
+    if (mlChangePrivKeys[address]) {
+      return mlChangePrivKeys[address]
+    }
+
+    return false
+  }
+
   const changePassHandle = (value) => {
     setPass(value)
   }
 
-  const onTextfieldChangeHandler = ({ target }) => {
+  const onMessageTextfieldChangeHandler = ({ target }) => {
     setMessageValue(target.value)
+  }
+
+  const onAddressTextfieldChangeHandler = ({ target }) => {
+    setAddressValue(target.value)
   }
 
   const isMessageValid = (message) => {
@@ -44,6 +65,7 @@ const SignMessage = () => {
     if (!pass || !unlockedAccount) {
       setPassPristinity(false)
       setPassValidity(false)
+      setLoading(false)
       setPassErrorMessage('Password must be set.')
       return
     }
@@ -60,28 +82,21 @@ const SignMessage = () => {
       AppInfo.DEFAULT_ML_WALLET_OFFSET,
     )
 
-    // TODO: for the first implementation we will use only the first key, it may be changed in the future
+    const addressprivKey = findPrivateKeyByAddress(walletPrivKeys, addressValue)
 
-    //FIRST receiving address priv key
-    const firstReceivingPrivKey = Object.values(
-      walletPrivKeys.mlReceivingPrivKeys,
-    )[0]
+    if (!addressprivKey) {
+      setPassPristinity(false)
+      setPassValidity(false)
+      setLoading(false)
+      setPassErrorMessage('Address not found in the wallet.')
+      return
+    }
 
-    const publickKey = ML.getPublicKeyFromPrivate(firstReceivingPrivKey)
-
-    const signedMessage = ML.signMessageForSpending(
-      firstReceivingPrivKey,
-      messageValue,
-    )
-
+    const messageBytes = ArrayHelper.stringToBytes(messageValue)
+    const signedMessage = ML.signChallenge(addressprivKey, messageBytes)
     const signedMessageString = ArrayHelper.uint8ArrayToString(signedMessage)
-    const publickKeyString = ArrayHelper.uint8ArrayToString(publickKey)
-    const finaleMessageString =
-      signedMessageString +
-      AppInfo.SIGNED_MESSAGE_STRING_SEPARATOR +
-      publickKeyString
 
-    setSignedMessage(finaleMessageString)
+    setSignedMessage(signedMessageString)
 
     return signedMessage
   }
@@ -91,9 +106,23 @@ const SignMessage = () => {
     if (step === 1) {
       const messageIsValid = isMessageValid(messageValue)
       messageIsValid ? setStep(2) : setMessageError('Message is required')
-      return
     }
     if (step === 2) {
+      const isAddressValid = MlHelpers.isMlAddressValid(
+        addressValue,
+        networkType,
+      )
+      if (!addressValue) {
+        setAddressError('Address is required')
+        return
+      }
+      if (!isAddressValid) {
+        setAddressError('Invalid address')
+        return
+      }
+      setStep(3)
+    }
+    if (step === 3) {
       try {
         setPassValidity(true)
         setPassErrorMessage('')
@@ -103,7 +132,7 @@ const SignMessage = () => {
           setPassValidity(true)
           setPassErrorMessage('')
           setLoading(false)
-          setStep(3)
+          setStep(4)
         }
         return response
       } catch (e) {
@@ -116,7 +145,7 @@ const SignMessage = () => {
       }
     }
 
-    if (step === 3) {
+    if (step === 4) {
       navigate('/dashboard')
     }
   }
@@ -138,11 +167,11 @@ const SignMessage = () => {
   }
 
   const submitButtonTitle =
-    step === 2
+    step === 3
       ? loading
         ? 'Signing...'
         : 'Sign Message'
-      : step === 3
+      : step === 4
         ? 'Go to Dashboard'
         : 'Next'
 
@@ -160,7 +189,7 @@ const SignMessage = () => {
             <div>
               <Textarea
                 value={messageValue}
-                onChange={onTextfieldChangeHandler}
+                onChange={onMessageTextfieldChangeHandler}
                 id="restore-seed-textarea"
                 size={textariaSize}
               />
@@ -169,6 +198,24 @@ const SignMessage = () => {
           </VerticalGroup>
         )}
         {step === 2 && (
+          <VerticalGroup>
+            <h2 className="message-title">Enter Yout address</h2>
+            <p className="message-description">
+              Enter your address you want to sign the message with
+            </p>
+            <div>
+              <Textarea
+                value={addressValue}
+                onChange={onAddressTextfieldChangeHandler}
+                validity={!addressError}
+                id="restore-seed-textarea"
+                size={textariaSize}
+              />
+            </div>
+            {addressError && <Error error={addressError} />}
+          </VerticalGroup>
+        )}
+        {step === 3 && (
           <VerticalGroup bigGap>
             <h2 className="message-title">Enter your Password</h2>
             <p className="message-description">
@@ -187,7 +234,7 @@ const SignMessage = () => {
             </div>
           </VerticalGroup>
         )}
-        {step === 3 && (
+        {step === 4 && (
           <VerticalGroup>
             <h2 className="message-title">Signed Message</h2>
             <p className="message-description">
@@ -218,7 +265,7 @@ const SignMessage = () => {
             </div>
           </VerticalGroup>
         )}
-        {step !== 3 && (
+        {step !== 4 && (
           <div className="message-submit-button-wrapper">
             <Button
               onClickHandle={onSubmitClick}

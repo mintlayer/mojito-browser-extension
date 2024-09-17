@@ -1,23 +1,27 @@
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 
 import { Button, Textarea, Error } from '@BasicComponents'
 import { VerticalGroup } from '@LayoutComponents'
+import { SettingsContext } from '@Contexts'
 
 import { ReactComponent as IconSuccess } from '@Assets/images/icon-checkmark.svg'
 import { ReactComponent as IconFailed } from '@Assets/images/icon-cross.svg'
 
 import { ML } from '@Cryptos'
-import { AppInfo } from '@Constants'
+import { ML as MlHelpers } from '@Helpers'
 import { ArrayHelper } from '@Helpers'
 
 import './VerifyMessage.css'
 
 const VerifyMessage = () => {
+  const { networkType } = useContext(SettingsContext)
   const [step, setStep] = useState(1)
   const [originalMessageValue, setOriginalMessageValue] = useState('')
   const [originalMessageError, setOriginalMessageError] = useState('')
   const [signedMessageValue, setSignedMessageValue] = useState('')
   const [signedMessageError, setSignedMessageError] = useState('')
+  const [addressValue, setAddressValue] = useState('')
+  const [addressError, setAddressError] = useState('')
   const [isVerified, setIsVerified] = useState(false)
 
   const originalMessageFieldChangeHandler = ({ target }) => {
@@ -27,22 +31,20 @@ const VerifyMessage = () => {
     setSignedMessageValue(target.value)
   }
 
-  const verifyMessageHandler = (originalMessage, signedMessage) => {
-    const separatedStrings = signedMessage.split(
-      AppInfo.SIGNED_MESSAGE_STRING_SEPARATOR,
-    )
+  const addressFieldChangeHandler = ({ target }) => {
+    setAddressValue(target.value)
+  }
 
-    const signedMessageUint8Array = ArrayHelper.stringToUint8Array(
-      separatedStrings[0],
-    )
-    const publickKeyUint8Array = ArrayHelper.stringToUint8Array(
-      separatedStrings[1],
-    )
+  const verifyMessageHandler = (address, signedMessage, originalMessage) => {
+    const signedMessageUint8Array =
+      ArrayHelper.stringToUint8Array(signedMessage)
+    const messageBytes = ArrayHelper.stringToBytes(originalMessage)
 
-    const verifyMessage = ML.verifySignatureForSpending(
-      publickKeyUint8Array,
+    const verifyMessage = ML.verifyChallenge(
+      address,
+      networkType,
       signedMessageUint8Array,
-      originalMessage,
+      messageBytes,
     )
 
     return verifyMessage
@@ -59,21 +61,46 @@ const VerifyMessage = () => {
       setStep(2)
     }
     if (step === 2) {
-      if (!signedMessageValue || !signedMessageValue.includes('.')) {
+      if (!addressValue) {
+        setAddressError('Please enter the address.')
+        return
+      }
+      const isAddressValid = MlHelpers.isMlAddressValid(
+        addressValue,
+        networkType,
+      )
+      if (!isAddressValid) {
+        setAddressError('Please enter correct address.')
+        return
+      }
+      setAddressError('')
+      setStep(3)
+    }
+    if (step === 3) {
+      if (!signedMessageValue) {
         setSignedMessageError('Please enter correct signed message.')
         return
       }
       setSignedMessageError('')
-      const isVerified = verifyMessageHandler(
-        originalMessageValue,
-        signedMessageValue,
-      )
-      setIsVerified(isVerified)
-      setStep(3)
+      try {
+        const isVerified = verifyMessageHandler(
+          addressValue,
+          signedMessageValue,
+          originalMessageValue,
+        )
+        setIsVerified(isVerified)
+        setStep(4)
+      } catch (e) {
+        console.error(e)
+        setIsVerified(false)
+        setStep(4)
+        return
+      }
     }
-    if (step === 3) {
+    if (step === 4) {
       setOriginalMessageValue('')
       setSignedMessageValue('')
+      setAddressValue('')
       setIsVerified(false)
       setStep(1)
     }
@@ -85,7 +112,13 @@ const VerifyMessage = () => {
   }
 
   const submitButtonTitle =
-    step === 1 ? 'Next' : step === 2 ? 'Verify' : 'Try Again'
+    step === 1
+      ? 'Next'
+      : step === 2
+        ? 'Next'
+        : step === 3
+          ? 'Verify'
+          : 'Try Again'
   return (
     <form onSubmit={onSubmitClick}>
       <VerticalGroup bigGap={step === 3}>
@@ -110,6 +143,23 @@ const VerifyMessage = () => {
           <VerticalGroup>
             <h2 className="message-title">Verify Message</h2>
             <p className="message-description">
+              Please enter address has used to sign the message
+            </p>
+            <div>
+              <Textarea
+                value={addressValue}
+                onChange={addressFieldChangeHandler}
+                id="restore-seed-textarea"
+                size={textariaSize}
+              />
+            </div>
+            {addressError && <Error error={addressError} />}
+          </VerticalGroup>
+        )}
+        {step === 3 && (
+          <VerticalGroup>
+            <h2 className="message-title">Verify Message</h2>
+            <p className="message-description">
               Please enter the signed message you want to verify
             </p>
             <div>
@@ -123,7 +173,7 @@ const VerifyMessage = () => {
             {signedMessageError && <Error error={signedMessageError} />}
           </VerticalGroup>
         )}
-        {step === 3 && (
+        {step === 4 && (
           <VerticalGroup>
             {isVerified && (
               <div className="verify-result">
