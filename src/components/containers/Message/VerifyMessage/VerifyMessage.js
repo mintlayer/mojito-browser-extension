@@ -4,9 +4,6 @@ import { Button, Textarea, Error } from '@BasicComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { SettingsContext } from '@Contexts'
 
-import { ReactComponent as IconSuccess } from '@Assets/images/icon-checkmark.svg'
-import { ReactComponent as IconFailed } from '@Assets/images/icon-cross.svg'
-
 import { ML } from '@Cryptos'
 import { ML as MlHelpers } from '@Helpers'
 import { ArrayHelper } from '@Helpers'
@@ -15,14 +12,11 @@ import './VerifyMessage.css'
 
 const VerifyMessage = () => {
   const { networkType } = useContext(SettingsContext)
-  const [step, setStep] = useState(1)
+  const [errorMessage, setErrorMessage] = useState('')
   const [originalMessageValue, setOriginalMessageValue] = useState('')
-  const [originalMessageError, setOriginalMessageError] = useState('')
   const [signedMessageValue, setSignedMessageValue] = useState('')
-  const [signedMessageError, setSignedMessageError] = useState('')
   const [addressValue, setAddressValue] = useState('')
-  const [addressError, setAddressError] = useState('')
-  const [isVerified, setIsVerified] = useState(false)
+  const [isVerified, setIsVerified] = useState(undefined)
 
   const originalMessageFieldChangeHandler = ({ target }) => {
     setOriginalMessageValue(target.value)
@@ -52,128 +46,109 @@ const VerifyMessage = () => {
 
   const onSubmitClick = (e) => {
     e.preventDefault()
-    if (step === 1) {
-      if (!originalMessageValue) {
-        setOriginalMessageError('Please enter the original message.')
-        return
-      }
-      setOriginalMessageError('')
-      setStep(2)
-    }
-    if (step === 2) {
-      if (!addressValue) {
-        setAddressError('Please enter the address.')
-        return
-      }
-      const isAddressValid = MlHelpers.isMlAddressValid(
-        addressValue,
-        networkType,
-      )
-      if (!isAddressValid) {
-        setAddressError('Please enter correct address.')
-        return
-      }
-      setAddressError('')
-      setStep(3)
-    }
-    if (step === 3) {
-      if (!signedMessageValue) {
-        setSignedMessageError('Please enter correct signed message.')
-        return
-      }
-      setSignedMessageError('')
-      try {
-        const isVerified = verifyMessageHandler(
-          addressValue,
-          signedMessageValue,
-          originalMessageValue,
-        )
-        setIsVerified(isVerified)
-        setStep(4)
-      } catch (e) {
-        console.error(e)
-        setIsVerified(false)
-        setStep(4)
-        return
-      }
-    }
-    if (step === 4) {
+    if (isVerified !== undefined) {
+      setIsVerified(undefined)
+      setErrorMessage('')
       setOriginalMessageValue('')
-      setSignedMessageValue('')
       setAddressValue('')
+      setSignedMessageValue('')
+      return
+    }
+    setErrorMessage('')
+    const isAddressValid = MlHelpers.isMlAddressValid(addressValue, networkType)
+
+    if (!originalMessageValue) {
+      setErrorMessage('Please enter the original message.')
+      return
+    }
+
+    if (!addressValue) {
+      setErrorMessage('Please enter the address.')
+      return
+    }
+
+    if (!isAddressValid) {
+      setErrorMessage('Please enter correct address.')
+      return
+    }
+
+    if (!signedMessageValue) {
+      setErrorMessage('Please enter correct signed message.')
+      return
+    }
+
+    try {
+      const isVerified = verifyMessageHandler(
+        addressValue,
+        signedMessageValue,
+        originalMessageValue,
+      )
+      setIsVerified(isVerified)
+    } catch (e) {
+      console.error(e)
       setIsVerified(false)
-      setStep(1)
+      return
     }
   }
 
   const textariaSize = {
     cols: 74,
-    rows: 7,
+    rows: 2,
   }
 
-  const submitButtonTitle =
-    step === 1
-      ? 'Next'
-      : step === 2
-        ? 'Next'
-        : step === 3
-          ? 'Verify'
-          : 'Try Again'
+  const textariaAddressSize = {
+    cols: 74,
+    rows: 1,
+  }
+
+  const submitButtonTitle = isVerified !== undefined ? 'Try Again' : 'Verify'
   return (
     <form onSubmit={onSubmitClick}>
-      <VerticalGroup bigGap={step === 3}>
-        {step === 1 && (
-          <VerticalGroup>
-            <h2 className="message-title">Verify Message</h2>
-            <p className="message-description">
-              Please enter the original message you want to verify
-            </p>
-            <div>
-              <Textarea
-                value={originalMessageValue}
-                onChange={originalMessageFieldChangeHandler}
-                id="restore-seed-textarea"
-                size={textariaSize}
-              />
-            </div>
-            {originalMessageError && <Error error={originalMessageError} />}
-          </VerticalGroup>
-        )}
-        {step === 2 && (
-          <VerticalGroup>
-            <h2 className="message-title">Verify Message</h2>
-            <p className="message-description">
-              Please enter address has used to sign the message
-            </p>
-            <div>
-              <Textarea
-                value={addressValue}
-                onChange={addressFieldChangeHandler}
-                id="restore-seed-textarea"
-                size={textariaSize}
-              />
-            </div>
-            {addressError && <Error error={addressError} />}
-          </VerticalGroup>
-        )}
-        {step === 3 && (
-          <VerticalGroup>
-            <h2 className="message-title">Verify Message</h2>
-            <p className="message-description">
-              Please enter the signed message you want to verify
-            </p>
-            <div>
-              <Textarea
-                value={signedMessageValue}
-                onChange={signedMessageFieldChangeHandler}
-                id="restore-seed-textarea"
-                size={textariaSize}
-              />
-            </div>
-            {signedMessageError && <Error error={signedMessageError} />}
-          </VerticalGroup>
-        )}
-        {step === 4 && (
+      <VerticalGroup>
+        <VerticalGroup>
+          <h2 className="message-title">Verify Message</h2>
+          <p className="message-description">
+            Enter the original message you want to verify
+          </p>
+          <div>
+            <Textarea
+              value={originalMessageValue}
+              onChange={originalMessageFieldChangeHandler}
+              id="restore-seed-textarea"
+              size={textariaSize}
+            />
+          </div>
+        </VerticalGroup>
+
+        <VerticalGroup>
+          <p className="message-description">
+            Enter address has used to sign the message
+          </p>
+          <div>
+            <Textarea
+              value={addressValue}
+              onChange={addressFieldChangeHandler}
+              id="restore-seed-textarea"
+              size={textariaAddressSize}
+            />
+          </div>
+        </VerticalGroup>
+
+        <VerticalGroup>
+          <p className="message-description">
+            Enter the signed message you want to verify
+          </p>
+          <div>
+            <Textarea
+              value={signedMessageValue}
+              onChange={signedMessageFieldChangeHandler}
+              id="restore-seed-textarea"
+              size={textariaSize}
+            />
+          </div>
+        </VerticalGroup>
+
+        {/* {step === 2 && (
           <VerticalGroup>
             {isVerified && (
               <div className="verify-result">
@@ -192,12 +167,22 @@ const VerifyMessage = () => {
               </div>
             )}
           </VerticalGroup>
+        )} */}
+        {isVerified !== undefined && isVerified && (
+          <p className="message-success">
+            The message has been verified successfully.
+          </p>
         )}
+
+        {isVerified !== undefined && !isVerified && (
+          <p className="message-failed">The message verification failed.</p>
+        )}
+
+        {errorMessage && <Error error={errorMessage} />}
         <div className="message-submit-button-wrapper">
           <Button
             onClickHandle={onSubmitClick}
             extraStyleClasses={['message-submit']}
-            // disabled={loading}
           >
             {submitButtonTitle}
           </Button>

@@ -35,3 +35,15 @@
 .verify-result {
   text-align: center;
 }
+
+.message-success {
+  font-weight: 600;
+  text-align: center;
+  color: rgb(var(--color-green));
+}
+
+.message-failed {
+  font-weight: 600;
+  text-align: center;
+  color: rgb(var(--color-red));
+}
