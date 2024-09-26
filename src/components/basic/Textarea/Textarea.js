@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './Textarea.css'
 
 const Textarea = ({
@@ -11,6 +11,10 @@ const Textarea = ({
   disabled,
 }) => {
   const [textareaVakue, setTextareaValue] = useState(value ? value : '')
+
+  useEffect(() => {
+    setTextareaValue(value)
+  }, [value])
 
   const getExtraClasses = () => {
     if (value && validity) {

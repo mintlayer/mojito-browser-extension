@@ -22,4 +22,6 @@
 
 .tab-content {
   background: #fff;
+  height: 362px;
+  overflow: auto;
 }
