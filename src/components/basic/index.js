@@ -12,6 +12,7 @@ import Logo from './Logo/Logo'
 import LogoRound from './LogoRound/LogoRound'
 import SkeletonLoader from './SkeletonLoader/SkeletonLoader'
 import Tooltip from './Tooltip/Tooltip'
+import Textarea from './Textarea/Textarea'
 
 export {
   Arc,
@@ -28,4 +29,5 @@ export {
   LogoRound,
   SkeletonLoader,
   Tooltip,
+  Textarea,
 }
