@@ -183,7 +183,7 @@ const Navigation = ({ customNavigation }) => {
             Logout
           </li>
         )}
-        <span className="slider-version">v1.3.2</span>
+        <span className="slider-version">v1.3.3</span>
       </ul>
     </>
   )
