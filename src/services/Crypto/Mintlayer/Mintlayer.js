@@ -22,6 +22,10 @@ import init, {
   SourceId,
   Amount,
   encode_output_token_transfer,
+  sign_message_for_spending,
+  verify_signature_for_spending,
+  sign_challenge,
+  verify_challenge,
 } from './@mintlayerlib-js/wasm_wrappers.js'
 
 import { Mintlayer } from '@APIs'
@@ -290,4 +294,26 @@ export const getAccountOutpointInput = (
     BigInt(Number(nonce)),
     networkIndex,
   )
+}
+
+export const signMessageForSpending = (privateKey, message) => {
+  return sign_message_for_spending(privateKey, message)
+}
+
+export const verifySignatureForSpending = (publicKey, signature, message) => {
+  return verify_signature_for_spending(publicKey, signature, message)
+}
+
+export const signChallenge = (privateKey, message) => {
+  return sign_challenge(privateKey, message)
+}
+
+export const verifyChallenge = (
+  address,
+  networkType,
+  signedChallenge,
+  message,
+) => {
+  const networkIndex = NETWORKS[networkType]
+  return verify_challenge(address, networkIndex, signedChallenge, message)
 }

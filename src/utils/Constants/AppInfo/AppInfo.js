@@ -18,6 +18,7 @@ const APPROPRIATE_MARGIN_RATIO_PER_THOUSAND = 80
 const UNCONFIRMED_TRANSACTION_NAME = 'ml_unconfirmed_transaction'
 const APP_LOCAL_STORAGE_CUSTOM_SERVERS = 'customAPIServers'
 const MAX_UPLOAD_FILE_SIZE = 2 * 1024 // 2 kb
+const SIGNED_MESSAGE_STRING_SEPARATOR = '.'
 
 const NETWORK_TYPES = {
   MAINNET: 'mainnet',
@@ -47,6 +48,55 @@ const walletTypes = [
   },
 ]
 
+const WALLETS_NAVIGATION = [
+  {
+    id: '1',
+    label: 'Bitcoin',
+    value: 'bitcoin',
+    type: 'menu',
+    actions: [
+      {
+        id: '1.1',
+        name: 'Open Wallet',
+        link: '/wallet/Bitcoin',
+      },
+      {
+        id: '1.2',
+        name: 'Send Transaction',
+        link: '/wallet/Bitcoin/send-transaction',
+      },
+    ],
+  },
+  {
+    id: '2',
+    label: 'Mintlayer',
+    value: 'mintlayer',
+    type: 'menu',
+    actions: [
+      {
+        id: '2.1',
+        name: 'Open Wallet',
+        link: '/wallet/Mintlayer',
+      },
+      {
+        id: '2.2',
+        name: 'Send Transaction',
+        link: '/wallet/Mintlayer/send-transaction',
+      },
+      {
+        id: '2.3',
+        name: 'Staking',
+        link: '/wallet/Mintlayer/staking',
+      },
+      {
+        id: '2.4',
+        name: 'Sign/Verify Message',
+        link: '/wallet/Mintlayer/sign-message',
+      },
+    ],
+  },
+]
+
 const MAX_ML_FEE = 500000000000
 const REFRESH_INTERVAL = 1000 * 60 // one per minute
 
@@ -70,4 +120,6 @@ export {
   APP_LOCAL_STORAGE_CUSTOM_SERVERS,
   REFRESH_INTERVAL,
   MAX_UPLOAD_FILE_SIZE,
+  WALLETS_NAVIGATION,
+  SIGNED_MESSAGE_STRING_SEPARATOR,
 }

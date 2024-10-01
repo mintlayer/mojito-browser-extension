@@ -27,6 +27,7 @@ import {
   DelegationStakePage,
   DelegationWithdrawPage,
   LockedBalancePage,
+  MessagePage,
 } from '@Pages'
 
 import {
@@ -238,6 +239,10 @@ const App = () => {
         <Route
           path="/wallet/:coinType/locked-balance"
           element={<LockedBalancePage />}
+        />
+        <Route
+          path="/wallet/:coinType/sign-message"
+          element={<MessagePage />}
         />
         <Route
           exact

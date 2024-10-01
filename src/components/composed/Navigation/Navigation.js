@@ -8,13 +8,20 @@ import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
 import { ReactComponent as LoginImg } from '@Assets/images/icon-login.svg'
 import { ReactComponent as AddWalletImg } from '@Assets/images/icon-add-wallet.svg'
 import { ReactComponent as HomeImg } from '@Assets/images/icon-home.svg'
+import { ReactComponent as WalletIcon } from '@Assets/images/icon-wallet.svg'
+import { ReactComponent as TriangleIcon } from '@Assets/images/icon-triangle.svg'
 
 import { AccountContext } from '@Contexts'
+import { AppInfo } from '@Constants'
+
+import NestedNavigation from './NestedNavigation'
 
 import './Navigation.css'
 
 const Navigation = ({ customNavigation }) => {
   const [unlocked, setUnlocked] = useState(false)
+  const [navigationItemID, setNavigationItemID] = useState(null)
+  const [nestedItemID, setNestedItemID] = useState(null)
   const navigate = useNavigate()
   const location = useLocation()
   const {
@@ -35,24 +42,24 @@ const Navigation = ({ customNavigation }) => {
     setSliderMenuOpen(!sliderMenuOpen)
   }
 
-  const goSettings = () => {
-    navigate('/settings')
-    toggleSliderMenu()
+  const onNavigationItemClick = (item) => {
+    if (item.type !== 'menu') {
+      navigate(item.link)
+      toggleSliderMenu()
+    } else {
+      setNavigationItemID(navigationItemID === item.id ? null : item.id)
+    }
+    return
   }
 
-  const goDashboard = () => {
-    navigate('/dashboard')
-    toggleSliderMenu()
-  }
-
-  const goLogin = () => {
-    navigate('/')
-    toggleSliderMenu()
-  }
-
-  const goCreateAccount = () => {
-    navigate('/create-restore')
-    toggleSliderMenu()
+  const onNestedItemClick = (item) => {
+    if (item.type !== 'menu') {
+      navigate(item.link)
+      toggleSliderMenu()
+    } else {
+      setNestedItemID(nestedItemID === item.id ? null : item.id)
+    }
+    return
   }
 
   const expandHandler = () => {
@@ -76,13 +83,20 @@ const Navigation = ({ customNavigation }) => {
       id: 1,
       label: 'Dashboard',
       icon: <HomeImg />,
-      onClick: goDashboard,
+      link: '/dashboard',
     },
     {
       id: 2,
+      label: 'Wallets',
+      icon: <WalletIcon />,
+      type: 'menu',
+      content: AppInfo.WALLETS_NAVIGATION,
+    },
+    {
+      id: 3,
       label: 'Settings',
       icon: <SettingsImg />,
-      onClick: goSettings,
+      link: '/settings',
     },
   ]
 
@@ -91,19 +105,22 @@ const Navigation = ({ customNavigation }) => {
       id: 1,
       label: 'Login',
       icon: <LoginImg />,
-      onClick: goLogin,
+      link: '/',
+      type: 'link',
     },
     {
       id: 2,
       label: 'Create/Restore Wallet',
       icon: <AddWalletImg />,
-      onClick: goCreateAccount,
+      link: '/create-restore',
+      type: 'link',
     },
     {
       id: 3,
       label: 'Settings',
       icon: <SettingsImg />,
-      onClick: goSettings,
+      link: '/settings',
+      type: 'link',
     },
   ]
 
@@ -119,11 +136,30 @@ const Navigation = ({ customNavigation }) => {
         {navList.map((item) => (
           <li
             key={item.id}
-            onClick={item.onClick}
-            className="bottom-menu-item"
+            className={`navigation-item ${navigationItemID === item.id && 'navigation-item-open'}`}
           >
-            {item.icon && item.icon}
-            {item.label}
+            <div
+              className="label-wrapper"
+              onClick={() => {
+                onNavigationItemClick(item)
+              }}
+            >
+              {item.icon && item.icon}
+              {item.label}
+            </div>
+
+            {item.type === 'menu' && navigationItemID === item.id && (
+              <NestedNavigation
+                item={item}
+                onNestedItemClick={onNestedItemClick}
+                nestedItemID={nestedItemID}
+              />
+            )}
+            {item.type === 'menu' && (
+              <TriangleIcon
+                className={`navigation-triangle ${navigationItemID === item.id && 'navigation-triangle-open'}`}
+              />
+            )}
           </li>
         ))}
       </ul>
