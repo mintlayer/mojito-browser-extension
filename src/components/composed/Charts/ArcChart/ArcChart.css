@@ -1,6 +1,7 @@
 .chart-tooltip {
+  display: none;
   position: absolute;
-  text-align: center;
+  /* text-align: center;
   height: 50px;
   padding: 5px 15px;
   font: 12px sans-serif;
@@ -8,5 +9,5 @@
   border: 0px;
   border-radius: 8px;
   pointer-events: none;
-  opacity: 0;
+  opacity: 0; */
 }
