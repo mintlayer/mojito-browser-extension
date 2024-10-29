@@ -1,6 +1,6 @@
 .api-field-wrapper {
   display: flex;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
 }
 
 .api-input-wrapper {
@@ -13,6 +13,7 @@
   justify-content: space-between;
   align-items: flex-end;
   width: 25%;
+  gap: 10px;
 }
 
 .submit-api-button,
@@ -24,9 +25,10 @@
   padding: 10px 0;
   height: 63px;
   font-size: 1.2rem;
+  border-radius: var(--round-size);
 }
 
-.reset-api-button { 
+.reset-api-button {
   background-color: rgb(var(--color-red));
   color: white;
 }

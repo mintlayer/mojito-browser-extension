@@ -1,33 +1,48 @@
 .option-buttons {
   display: flex;
   width: 100%;
+  gap: 5px;
 }
 
 .option-button {
   display: flex;
-  color: rgb(var(--text-black));
-  background-color: rgb(var(--color-extra-light-gray));
+  width: 90px;
   font-size: 1.25rem;
   font-weight: lighter;
   justify-content: center;
   align-items: center;
+  border-radius: var(--round-size);
+}
+
+.option-button svg {
+  width: 40px;
+  height: 40px;
+  margin-right: 20px;
 }
 
 .option-button.alternate {
-  border: none !important;
   font-weight: bold;
-  color: rgb(var(--color-white));
-  background-color: rgb(var(--color-green));
-}
-
-.option-button.alternate:hover {
-  border: none;
+  /* color: rgb(var(--color-white)); */
+  border: 1px solid rgba(var(--color-light-green), 0.2) !important;
+  background-color: rgba(var(--color-main-green), 0.2) !important;
 }
 
 .option-buttons-column {
   flex-direction: column;
+  gap: 0;
 }
 
 .option-buttons-column .option-button {
-  margin-bottom: 0.3rem;
+  width: 100%;
+  background-color: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.1);
+  border-radius: 20px;
+  margin-bottom: 18px;
+}
+
+.option-buttons-column .option-button:hover,
+.option-buttons-column .option-button:focus {
+  background-color: rgba(var(--color-main-green), 0.2);
+  border: 1px solid rgba(var(--color-light-green), 0.5);
+  color: rgb(var(--color-black));
 }

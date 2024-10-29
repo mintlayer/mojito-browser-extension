@@ -14,7 +14,7 @@ const SliderMenu = ({ children, isOpen, onClose }) => {
     if (isOpen) {
       setIsVisible(true)
     } else {
-      const timer = setTimeout(() => setIsVisible(false), 300) // Match the duration of the CSS animation
+      const timer = setTimeout(() => setIsVisible(false), 300)
       return () => clearTimeout(timer)
     }
   }, [isOpen])
@@ -38,7 +38,6 @@ const SliderMenu = ({ children, isOpen, onClose }) => {
           data-testid={'slider-menu'}
         >
           <Button
-            alternate
             extraStyleClasses={closeButtonExtraStyles}
             onClickHandle={onClose}
           >

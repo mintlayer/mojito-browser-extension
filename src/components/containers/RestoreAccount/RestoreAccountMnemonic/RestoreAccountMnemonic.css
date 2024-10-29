@@ -10,13 +10,16 @@
   margin-top: 204px;
 }
 
+.account-form-address-type {
+  margin-top: 2.5em;
+}
+
 .account-input {
   padding: 1.2rem 1.7rem;
 }
 
 .words-description {
-  font-size: 1.5rem;
-  color: rgb(var(--color-dark-gray));
+  font-size: 24px;
   text-align: center;
 }
 
@@ -31,4 +34,13 @@
 
 .address-type-button {
   padding: 0.9rem 0;
+}
+
+.restore-submit-icon {
+  margin-left: 10px;
+  transition: transform 0.3s ease;
+}
+
+.restore-mnemonic-submit-button:hover .restore-submit-icon {
+  animation: moveArrowRight 0.3s ease-in-out;
 }

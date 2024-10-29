@@ -1,11 +1,12 @@
 .update-button {
   position: absolute;
   top: 17px;
-  right: 216px;
+  right: 212px;
   display: flex;
   width: 30px;
   height: 30px;
   padding: 0;
+  background-color: transparent !important;
 }
 
 .update-button svg {
@@ -17,7 +18,6 @@
 .update-button svg path {
   fill: rgb(var(--color-green));
 }
-
 
 @keyframes spin {
   from {

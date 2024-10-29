@@ -20,6 +20,7 @@ const DeleteAccount = () => {
   } = useContext(AccountContext)
   const nextButonClickHandler = () => setStep(2)
   const buttonExtraStyleClasses = ['popup-delete-button']
+  const buttonCancelExtraStyleClasses = ['popup-delete-button delete-cancel']
   const navigate = useNavigate()
 
   const deleteAccountHandler = async (addresses, accountId) => {
@@ -61,10 +62,11 @@ const DeleteAccount = () => {
               Please confirm that you wish to proceed.
             </p>
           </VerticalGroup>
-          <VerticalGroup>
+          <CenteredLayout>
             <Button
+              alternate
               onClickHandle={onCancel}
-              extraStyleClasses={buttonExtraStyleClasses}
+              extraStyleClasses={buttonCancelExtraStyleClasses}
             >
               Cancel
             </Button>
@@ -74,7 +76,7 @@ const DeleteAccount = () => {
             >
               Continue
             </Button>
-          </VerticalGroup>
+          </CenteredLayout>
         </VerticalGroup>
       )}
       {step === 2 && (

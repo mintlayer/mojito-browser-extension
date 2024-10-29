@@ -44,17 +44,17 @@ const LockedBalanceList = () => {
 
               const blockData = await getBlockData(initialTransaction.blockId)
 
-                utxo.utxo.lock.content = {
-                  lockedFor: utxo.utxo.lock.content,
-                  timestamp: calculatedUnlockTimestamp,
-                  unlockBlock: blockData + utxo.utxo.lock.content,
-                }
+              utxo.utxo.lock.content = {
+                lockedFor: utxo.utxo.lock.content,
+                timestamp: calculatedUnlockTimestamp,
+                unlockBlock: blockData + utxo.utxo.lock.content,
+              }
             }
           }
           return utxo
         }),
       )
-       setLoading(false)
+      setLoading(false)
       return updatedUtxos
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,7 +76,7 @@ const LockedBalanceList = () => {
   return (
     <>
       <div className="locked-table-wrapper">
-        {(fetchingUtxos || loading) ? (
+        {fetchingUtxos || loading ? (
           <div className="locked-loading-wrapper">
             <Loading />
           </div>
@@ -87,18 +87,8 @@ const LockedBalanceList = () => {
           >
             <thead>
               <tr>
-                <th
-                  style={{ padding: '10px', textAlign: 'left' }}
-                  className="locked-title"
-                >
-                  Date
-                </th>
-                <th
-                  style={{ padding: '10px', textAlign: 'left' }}
-                  className="locked-title"
-                >
-                  Amount
-                </th>
+                <th className="locked-title">Date</th>
+                <th className="locked-title">Amount</th>
               </tr>
             </thead>
             <tbody>

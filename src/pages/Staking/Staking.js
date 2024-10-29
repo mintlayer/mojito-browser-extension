@@ -24,9 +24,9 @@ const StakingPage = () => {
   }
 
   return (
-    <>
+    <div className="staking-page">
       <CurrentStaking addressList={currentMlAddresses} />
-    </>
+    </div>
   )
 }
 

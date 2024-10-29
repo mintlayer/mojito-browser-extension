@@ -3,6 +3,8 @@ import { Stage, Layer, Line } from 'react-konva'
 import { Button } from '@BasicComponents'
 import { AccountContext } from '@Contexts'
 
+import { ReactComponent as IconCLose } from '@Assets/images/icon-close.svg'
+
 import './DrawingBoard.css'
 
 const DrawingBoard = () => {
@@ -62,7 +64,7 @@ const DrawingBoard = () => {
             <Line
               key={i}
               points={line.points}
-              stroke="#df4b26"
+              stroke="rgb(55, 219, 140)"
               strokeWidth={5}
               tension={0.5}
               lineCap="round"
@@ -76,9 +78,10 @@ const DrawingBoard = () => {
       </Stage>
       <Button
         extraStyleClasses={['clearButton']}
+        alternate
         onClickHandle={clearButtonClickHandler}
       >
-        Clear
+        <IconCLose /> Clear
       </Button>
     </div>
   )

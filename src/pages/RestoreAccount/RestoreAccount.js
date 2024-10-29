@@ -55,18 +55,20 @@ const RestoreAccountPage = () => {
     navigate('/')
   }
 
+  const loadingExtraClasses = ['loading-big']
+
   return creatingWallet ? (
-    <>
+    <div className="creating-loading-warapper">
       <CenteredLayout>
         <VerticalGroup bigGap>
           <h1 className="loadingText">
             {' '}
-            Just a sec, we are restoring your account...{' '}
+            Just a sec, we are restoring your wallet...{' '}
           </h1>
-          <Loading />
+          <Loading extraStyleClasses={loadingExtraClasses} />
         </VerticalGroup>
       </CenteredLayout>
-    </>
+    </div>
   ) : (
     <>
       {!restoreMethod && (

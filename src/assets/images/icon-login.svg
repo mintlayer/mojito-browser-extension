@@ -1,11 +1,11 @@
 <svg width="32px" height="32px" viewBox="5 1 29 29" xmlns="http://www.w3.org/2000/svg">
   <title>Icon Login</title>
   <g style="width: 20px;">
-    <line x1="29" y1="16" x2="16" y2="16" style="fill: none; stroke: #000000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
-    <path d="M24,25v3H8V4H24V7h2V3a1,1,0,0,0-1-1H7A1,1,0,0,0,6,3V29a1,1,0,0,0,1,1H25a1,1,0,0,0,1-1V25Z"></path>
-    <line x1="16" y1="16" x2="20" y2="12" style="fill: none; stroke: #000000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
-    <line x1="16" y1="16" x2="20" y2="20" style="fill: none; stroke: #000000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
-    <line x1="25" y1="8" x2="25" y2="6" style="fill: none; stroke: #000000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
-    <line x1="25" y1="26" x2="25" y2="24" style="fill: none; stroke: #000000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
+    <line x1="29" y1="16" x2="16" y2="16" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
+    <path fill="#000" d="M24,25v3H8V4H24V7h2V3a1,1,0,0,0-1-1H7A1,1,0,0,0,6,3V29a1,1,0,0,0,1,1H25a1,1,0,0,0,1-1V25Z"></path>
+    <line x1="16" y1="16" x2="20" y2="12" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
+    <line x1="16" y1="16" x2="20" y2="20" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
+    <line x1="25" y1="8" x2="25" y2="6" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
+    <line x1="25" y1="26" x2="25" y2="24" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"></line>
   </g>
 </svg>

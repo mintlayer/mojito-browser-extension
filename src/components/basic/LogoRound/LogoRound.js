@@ -1,10 +1,10 @@
 import LogoMl from '@Assets/images/logo96_white.png'
 import './LogoRound.css'
 
-const LogoRound = () => {
+const LogoRound = ({ small }) => {
   return (
     <div
-      className="logo-round"
+      className={`logo-round ${small ? 'logo-round-small' : ''}`}
       data-testid="logo-round"
     >
       <img

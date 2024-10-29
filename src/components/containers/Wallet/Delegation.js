@@ -88,35 +88,36 @@ const Delegation = ({ delegation }) => {
       data-poolid={delegationOject.pool_id}
       onClick={delegationClickHandle}
     >
-      {delegation.type === 'Unconfirmed' && delegation.mode === 'delegation' && (
-        <>
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              height: '3px',
-              width: '40px',
-              backgroundColor: 'rgb(17, 150, 127)',
-              animation: 'grow 60s cubic-bezier(0.4, 0, 1, 1) forwards',
-            }}
-          ></div>
-          <div
-            style={{
-              left: '30px',
-              position: 'absolute',
-              top: '50%',
-              marginTop: '-38px',
-              marginLeft: '-2px',
-              transform: 'scale(1.2)',
-            }}
-          >
-            <Loading />
-          </div>
-        </>
-      )}
+      {delegation.type === 'Unconfirmed' &&
+        delegation.mode === 'delegation' && (
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                height: '3px',
+                width: '40px',
+                backgroundColor: 'rgb(17, 150, 127)',
+                animation: 'grow 60s cubic-bezier(0.4, 0, 1, 1) forwards',
+              }}
+            ></div>
+            <div
+              style={{
+                left: '30px',
+                position: 'absolute',
+                top: '50%',
+                marginTop: '-38px',
+                marginLeft: '-2px',
+                transform: 'scale(1.2)',
+              }}
+            >
+              <Loading />
+            </div>
+          </>
+        )}
       <div
-        className={`transaction-logo-type transaction-logo-out ${
+        className={`transaction-logo-type transaction-logo-out delegation-icon ${
           delegation.decommissioned ? 'decommissioned' : ''
         }`}
         data-testid="delegation-icon"

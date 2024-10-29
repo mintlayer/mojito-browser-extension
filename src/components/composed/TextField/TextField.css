@@ -1,5 +1,4 @@
 .inputLabel {
-  color: rgb(var(--color-dark-gray));
   display: block;
 }
 
@@ -11,5 +10,6 @@
 .inputLabel.alternate strong {
   font-size: 1.5rem;
   display: block;
-  color: rgb(var(--color-black));
+  margin-top: 10px;
+  color: rgb(var(--color-main-green));
 }

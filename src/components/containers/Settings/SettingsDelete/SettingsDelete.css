@@ -1,6 +1,7 @@
 .settings-delete {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 .delete-description {
@@ -16,6 +17,7 @@
   min-width: 80px;
   padding: 1rem 0;
   background: rgb(var(--color-red));
+  border-radius: var(--round-size);
 }
 
 .icon-bin {

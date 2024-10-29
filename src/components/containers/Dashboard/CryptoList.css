@@ -2,19 +2,22 @@
   height: 240px;
   overflow-y: auto;
   overflow-x: hidden;
+  padding: 7px;
 }
 
 .crypto-item {
-  background-color: rgb(var(--color-extra-light-gray));
   display: flex;
   padding: 0.75rem 1.875rem;
   margin-bottom: 0.75rem;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
+  background-color: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.2);
+  border-radius: 20px;
 }
 
-.crypto-item:hover {
-  transform: scale(1.02);
+.crypto-item:last-child {
+  margin-bottom: 0; /* Remove margin for the last item */
 }
 
 .crypto-item .name-values {
@@ -143,4 +146,9 @@
   line-height: 2rem;
   font-size: 1rem;
   font-weight: 600;
+}
+
+.crypto-item:hover {
+  transform: scale(1.02);
+  border: 1px solid rgba(var(--color-light-green), 0.5);
 }

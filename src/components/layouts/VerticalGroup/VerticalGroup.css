@@ -5,6 +5,10 @@
   gap: 0.7rem;
 }
 
+.v-group.fullWidth {
+  width: 100%;
+}
+
 .v-group.bigGap {
   gap: 2.75em;
 }

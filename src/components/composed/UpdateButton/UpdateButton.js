@@ -9,7 +9,8 @@ import { MintlayerContext, BitcoinContext } from '@Contexts'
 import './UpdateButton.css'
 
 const UpdateButton = () => {
-  const { fetchAllData: fetchAllDataMintlayer, fetchDelegations } = useContext(MintlayerContext)
+  const { fetchAllData: fetchAllDataMintlayer, fetchDelegations } =
+    useContext(MintlayerContext)
   const { fetchAllData: fetchAllDataBitcoin } = useContext(BitcoinContext)
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -39,7 +40,6 @@ const UpdateButton = () => {
     <Button
       onClickHandle={handleClick}
       className="update-button"
-      alternate
       extraStyleClasses={['update-button']}
     >
       {loading && (

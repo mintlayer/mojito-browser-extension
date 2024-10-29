@@ -15,6 +15,8 @@ import {
   WalletList,
 } from '@ComposedComponents'
 
+import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
+
 import './RestoreAccountMnemonic.css'
 
 const WalletTypeTitle = ({ top, bottom }) => {
@@ -248,7 +250,7 @@ const RestoreAccountMnemonic = ({
       <form
         className={`account-form ${
           (step === 4 || step === 5) && 'account-form-words'
-        } ${step === 3 && 'account-form-description'}`}
+        } ${step === 3 && 'account-form-description'} ${step === 6 && 'account-form-address-type'}`}
         method="POST"
         data-testid="restore-account-form"
         onSubmit={handleSubmit}
@@ -256,38 +258,35 @@ const RestoreAccountMnemonic = ({
         <VerticalGroup
           data-step={step}
           bigGap={step !== 4 && step !== 5 && step !== 6}
+          fullWidth={true}
         >
           {step === 1 && (
-            <CenteredLayout>
-              <TextField
-                value={accountNameValue}
-                onChangeHandle={accountNameChangeHandler}
-                validity={accountNameValid}
-                placeHolder={'Wallet Name'}
-                label={'Create a name for your wallet'}
-                extraStyleClasses={inputExtraclasses}
-                errorMessages={accountNameErrorMessage}
-                pristinity={accountNamePristinity}
-                alternate
-              />
-            </CenteredLayout>
+            <TextField
+              value={accountNameValue}
+              onChangeHandle={accountNameChangeHandler}
+              validity={accountNameValid}
+              placeHolder={'Wallet Name'}
+              label={'Create a name for your wallet'}
+              extraStyleClasses={inputExtraclasses}
+              errorMessages={accountNameErrorMessage}
+              pristinity={accountNamePristinity}
+              alternate
+            />
           )}
           {step === 2 && (
-            <CenteredLayout>
-              <TextField
-                value={accountPasswordValue}
-                onChangeHandle={accountPasswordChangeHandler}
-                validity={accountPasswordValid}
-                pattern={passwordPattern}
-                password
-                label={'Create a password for your wallet'}
-                placeHolder={'Password'}
-                extraStyleClasses={inputExtraclasses}
-                errorMessages={accountPasswordErrorMessage}
-                pristinity={accountPasswordPristinity}
-                alternate
-              />
-            </CenteredLayout>
+            <TextField
+              value={accountPasswordValue}
+              onChangeHandle={accountPasswordChangeHandler}
+              validity={accountPasswordValid}
+              pattern={passwordPattern}
+              password
+              label={'Create a password for your wallet'}
+              placeHolder={'Password'}
+              extraStyleClasses={inputExtraclasses}
+              errorMessages={accountPasswordErrorMessage}
+              pristinity={accountPasswordPristinity}
+              alternate
+            />
           )}
           {step === 3 && (
             <CenteredLayout>
@@ -335,7 +334,13 @@ const RestoreAccountMnemonic = ({
             </>
           )}
           <CenteredLayout>
-            <Button onClickHandle={handleSubmit}>{genButtonTitle(step)}</Button>
+            <Button
+              onClickHandle={handleSubmit}
+              extraStyleClasses={['restore-mnemonic-submit-button']}
+            >
+              {genButtonTitle(step)}{' '}
+              <IconArrowRight className="restore-submit-icon" />
+            </Button>
           </CenteredLayout>
         </VerticalGroup>
       </form>

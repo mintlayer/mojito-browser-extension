@@ -7,8 +7,10 @@ import { SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import { ML } from '@Helpers'
 import { format } from 'date-fns'
+import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 
 import './DelegationDetails.css'
+import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 
 const DelegationDetailsItem = ({ title, content }) => {
   return (
@@ -87,33 +89,36 @@ const DelegationDetails = ({ delegation }) => {
           content={delegation.delegation_id}
         />
       </div>
-      <div>
-        {delegation.type !== 'Unconfirmed' && (
-          <div className="delegation-action-wrapper">
-            <Button
-              extraStyleClasses={buttonExtraStyles}
-              onClickHandle={addFundsClickHandle}
-              disabled={delegation.decommissioned}
-            >
-              Add funds
+      <CenteredLayout>
+        <VerticalGroup smallGap>
+          {delegation.type !== 'Unconfirmed' && (
+            <div className="delegation-action-wrapper">
+              <Button
+                extraStyleClasses={buttonExtraStyles}
+                onClickHandle={addFundsClickHandle}
+                disabled={delegation.decommissioned}
+              >
+                Add funds
+              </Button>
+              <Button
+                extraStyleClasses={buttonExtraStyles}
+                onClickHandle={withdrawClickHandle}
+              >
+                Withdraw
+              </Button>
+            </div>
+          )}
+          <a
+            href={explorerLink}
+            target="_blank"
+          >
+            <Button extraStyleClasses={buttonExtraStyles}>
+              Open In Block Explorer
+              <IconArrowTopRight className="delegation-explorer-button-icon" />
             </Button>
-            <Button
-              extraStyleClasses={buttonExtraStyles}
-              onClickHandle={withdrawClickHandle}
-            >
-              Withdraw
-            </Button>
-          </div>
-        )}
-        <a
-          href={explorerLink}
-          target="_blank"
-        >
-          <Button extraStyleClasses={buttonExtraStyles}>
-            Open In Block Explorer
-          </Button>
-        </a>
-      </div>
+          </a>
+        </VerticalGroup>
+      </CenteredLayout>
     </div>
   )
 }

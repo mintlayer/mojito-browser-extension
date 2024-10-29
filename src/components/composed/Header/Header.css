@@ -4,17 +4,24 @@ header {
 }
 
 .backButton {
-  height: 40px;
-  width: 40px;
+  height: 34px;
+  width: 34px;
   padding: 0.2rem;
   position: absolute;
   top: 0.5rem;
   left: 0;
+  background-color: transparent !important;
 }
 
 .backButton svg {
   width: 100%;
   height: 100%;
+}
+
+.backButton:hover svg path,
+.backButton:focus svg path {
+  stroke: rgb(var(--color-black));
+  opacity: 0.6;
 }
 
 .logout {
@@ -30,17 +37,16 @@ header {
   height: 40px;
   width: 40px;
   padding: 0.2rem;
-  /* position: absolute; */
   top: 0.5rem;
   right: 45px;
   outline: none;
+  background-color: transparent !important;
 }
 
 .settings {
   height: 40px;
   width: 40px;
   padding: 0.2rem;
-  /* position: absolute; */
   top: 0.5rem;
   right: 45px;
   outline: none;
@@ -50,7 +56,6 @@ header {
   height: 40px;
   width: 40px;
   padding: 0.2rem;
-  /* position: absolute; */
   top: 0.5rem;
   right: 45px;
   outline: none;
@@ -66,7 +71,7 @@ header {
 .expand-wrapped {
   position: absolute;
   display: flex;
-  top: 0.5rem;
+  top: 8px;
   right: 0;
   overflow: visible;
 }

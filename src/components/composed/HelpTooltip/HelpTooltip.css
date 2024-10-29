@@ -5,8 +5,8 @@
   margin: 0 0 0 5px;
   width: 25px;
   height: 25px;
-  background: black;
-  color: wheat;
+  background: rgb(var(--color-main-green));
+  color: rgb(var(--color-white));
   border-radius: 50%;
   text-decoration: none;
   font-weight: 600;

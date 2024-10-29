@@ -6,10 +6,41 @@
   margin: 0;
   padding: 0;
   overflow: hidden;
+  text-decoration: none;
 }
 
 html {
-  background: #f5f5f5;
+  background: radial-gradient(
+      50% 50% at 20% 30%,
+      rgba(105, 238, 150, 0.4) 0%,
+      rgba(145, 155, 200, 0.4) 59%,
+      rgba(195, 192, 225, 0) 100%
+    ),
+    radial-gradient(
+      50% 50% at 80% 70%,
+      rgba(105, 238, 150, 0.4) 0%,
+      rgba(158, 188, 207, 0.4) 59%,
+      rgba(195, 192, 225, 0) 100%
+    ),
+    radial-gradient(
+      50% 50% at 50% 50%,
+      rgba(105, 238, 150, 0.4) 0%,
+      rgba(145, 155, 200, 0.4) 59%,
+      rgba(195, 192, 225, 0) 100%
+    ),
+    radial-gradient(
+      50% 50% at 30% 80%,
+      rgba(105, 238, 150, 0.4) 0%,
+      rgba(181, 139, 201, 0.4) 59%,
+      rgba(195, 192, 225, 0) 100%
+    ),
+    radial-gradient(
+      50% 50% at 70% 20%,
+      rgba(105, 238, 150, 0.4) 0%,
+      rgba(145, 155, 200, 0.4) 59%,
+      rgba(195, 192, 225, 0) 100%
+    ),
+    rgb(225, 225, 245);
 }
 
 body {
@@ -17,7 +48,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   height: 600px;
   width: 800px;
-  background: #fff;
+  background: rgb(var(--color-white));
 }
 
 .App {
@@ -37,7 +68,7 @@ body {
 
 .title-create {
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 400;
   margin: 4rem 0 4rem 0;
 }
 
@@ -57,4 +88,10 @@ body {
   font-weight: bold;
   color: rgb(var(--color-green));
   text-decoration: none;
+}
+
+@media screen and (min-width: 801px) {
+  body {
+    border-radius: 30px;
+  }
 }

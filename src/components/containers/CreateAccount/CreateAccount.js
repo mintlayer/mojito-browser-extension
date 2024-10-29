@@ -14,6 +14,8 @@ import {
   WalletList,
 } from '@ComposedComponents'
 
+import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
+
 import WordsDescription from './WordsListDescription'
 
 import './CreateAccount.css'
@@ -33,6 +35,7 @@ const CreateAccount = ({
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
   const [accountWordsValid, setAccountWordsValid] = useState(false)
+  const [direction, setDirection] = useState('forward')
 
   const [accountNameValue, setAccountNameValue] = useState('')
   const [accountPasswordValue, setAccountPasswordValue] = useState('')
@@ -116,17 +119,24 @@ const CreateAccount = ({
     setEntropy(calculateEntropy())
   }
 
-  const goToNextStep = () =>
-    step < 7
+  const goToNextStep = () => {
+    setDirection('forward')
+    return step < 7
       ? setStep(step + 1)
       : onStepsFinished(accountNameValue, accountPasswordValue, selectedWallets)
-  const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
+  }
+
+  const goToPrevStep = () => {
+    setDirection('backward')
+    return step < 2 ? navigate(-1) : setStep(step - 1)
+  }
 
   const steps = [
-    { name: 'Wallet Name', active: step === 1 },
-    { name: 'Wallet Password', active: step === 2 },
-    { name: 'Entropy Generation', active: step === 3 },
+    { value: 1, name: 'Wallet Name', active: step === 1 },
+    { value: 2, name: 'Wallet Password', active: step === 2 },
+    { value: 3, name: 'Entropy Generation', active: step === 3 },
     {
+      value: 4,
       name: 'Seed Phrases',
       active: step > 3,
     },
@@ -208,7 +218,10 @@ const CreateAccount = ({
   return (
     <div data-testid="set-account">
       <Header customBackAction={goToPrevStep} />
-      <ProgressTracker steps={steps} />
+      <ProgressTracker
+        steps={steps}
+        direction={direction}
+      />
       <form
         className={`set-account-form ${step > 4 && 'set-account-form-words'}`}
         method="POST"
@@ -218,38 +231,35 @@ const CreateAccount = ({
         <VerticalGroup
           data-step={step}
           bigGap={step !== 6 && step !== 7 && !showEntropyError}
+          fullWidth
         >
           {step === 1 && (
-            <CenteredLayout>
-              <TextField
-                value={accountNameValue}
-                onChangeHandle={accountNameChangeHandler}
-                validity={accountNameValid}
-                placeHolder={'Wallet Name'}
-                label={'Create a name for your wallet'}
-                extraStyleClasses={inputExtraclasses}
-                errorMessages={accountNameErrorMessage}
-                pristinity={accountNamePristinity}
-                alternate
-              />
-            </CenteredLayout>
+            <TextField
+              value={accountNameValue}
+              onChangeHandle={accountNameChangeHandler}
+              validity={accountNameValid}
+              placeHolder={'Wallet Name'}
+              label={'Create a name for your wallet'}
+              extraStyleClasses={inputExtraclasses}
+              errorMessages={accountNameErrorMessage}
+              pristinity={accountNamePristinity}
+              alternate
+            />
           )}
           {step === 2 && (
-            <CenteredLayout>
-              <TextField
-                value={accountPasswordValue}
-                onChangeHandle={accountPasswordChangeHandler}
-                validity={accountPasswordValid}
-                pattern={passwordPattern}
-                password
-                label={'Create a password for your wallet'}
-                placeHolder={'Password'}
-                extraStyleClasses={inputExtraclasses}
-                errorMessages={accountPasswordErrorMessage}
-                pristinity={accountPasswordPristinity}
-                alternate
-              />
-            </CenteredLayout>
+            <TextField
+              value={accountPasswordValue}
+              onChangeHandle={accountPasswordChangeHandler}
+              validity={accountPasswordValid}
+              pattern={passwordPattern}
+              password
+              label={'Create a password for your wallet'}
+              placeHolder={'Password'}
+              extraStyleClasses={inputExtraclasses}
+              errorMessages={accountPasswordErrorMessage}
+              pristinity={accountPasswordPristinity}
+              alternate
+            />
           )}
           {step === 3 && <Entropy isError={showEntropyError} />}
           {step === 4 && <WordsDescription />}
@@ -279,7 +289,13 @@ const CreateAccount = ({
             />
           )}
           <CenteredLayout>
-            <Button onClickHandle={handleSubmit}>{genButtonTitle(step)}</Button>
+            <Button
+              onClickHandle={handleSubmit}
+              extraStyleClasses={['create-submit-button']}
+            >
+              {genButtonTitle(step)}{' '}
+              <IconArrowRight className="create-submit-icon" />
+            </Button>
           </CenteredLayout>
         </VerticalGroup>
       </form>

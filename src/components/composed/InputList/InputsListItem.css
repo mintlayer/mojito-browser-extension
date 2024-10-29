@@ -6,15 +6,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 30px;
-  height: 30px;
+  width: 23px;
+  height: 23px;
   background: rgb(var(--color-extra-light-gray));
   color: rgb(var(--color-balck));
+  font-weight: 600;
+  font-size: 14px;
   border-radius: 50%;
 }
 
 .number-active {
-  background: rgb(var(--color-green));
+  background: rgb(var(--color-main-green));
   color: rgb(var(--color-white));
 }
 
@@ -33,19 +35,14 @@
   padding: 0.85rem;
   text-align: center;
   background: rgb(var(--color-extra-light-gray));
-  border: 2px solid rgb(var(--color-extra-light-gray));
+  font-size: 20px;
 }
 
 .words-list-input-restore {
   padding: 1rem 1rem 1rem 3.4rem;
   background: transparent;
-  border: 2px solid rgb(var(--color-light-gray));
-  border-style: dashed;
-}
-
-.words-list-input:hover,
-.words-list-input:focus {
-  border: 2px solid rgb(var(--color-dark-gray));
+  /* border: 1px solid rgb(var(--color-light-gray)); */
+  /* border-style: dashed; */
 }
 
 .input-restore-finished {
@@ -56,13 +53,13 @@
 .words-list-input:focus ~ .number,
 .words-list-input.readonly ~ .number {
   color: rgb(var(--color-white));
-  background: rgb(var(--color-green));
+  background: rgb(var(--color-main-green));
 }
 
 .words-list-input::placeholder {
-  color: rgb(var(--color-dark-gray));
+  color: rgba(var(--color-white), 0.9);
 }
 
 .words-list-input.readonly {
-  border: none;
+  border: 1px solid rgb(var(--color-medium-blue));
 }

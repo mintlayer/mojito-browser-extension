@@ -194,10 +194,10 @@ test('Renders restore account page with step 4', () => {
   expect(buttons).toHaveLength(3)
   expect(inputs).toHaveLength(1)
   inputs.forEach((input) =>
-    expect(input).not.toHaveClass('seed-textarea seed-invalid'),
+    expect(input).not.toHaveClass('textarea textarea-invalid'),
   )
   inputs.forEach((input) =>
-    expect(input).not.toHaveClass('seed-textarea seed-valid'),
+    expect(input).not.toHaveClass('textarea textarea-valid'),
   )
 
   inputs.forEach((input) =>
@@ -205,14 +205,14 @@ test('Renders restore account page with step 4', () => {
   )
 
   inputs.forEach((input) =>
-    expect(input).toHaveClass('seed-textarea seed-invalid'),
+    expect(input).toHaveClass('textarea textarea-invalid'),
   )
 
   inputs.forEach((input) =>
     fireEvent.change(input, { target: { value: SAMPLE_MNEMONIC } }),
   )
   inputs.forEach((input) =>
-    expect(input).toHaveClass('seed-textarea seed-valid'),
+    expect(input).toHaveClass('textarea textarea-valid'),
   )
 
   act(() => {

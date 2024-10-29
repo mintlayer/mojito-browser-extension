@@ -11,8 +11,3 @@
   margin: 0;
   width: 100px;
 }
-
-.homeLogoContainer .mojitoLettering {
-  color: rgb(var(--color-black));
-  font-size: 4rem;
-}

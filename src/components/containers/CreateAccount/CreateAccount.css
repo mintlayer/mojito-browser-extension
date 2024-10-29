@@ -9,3 +9,11 @@
 .set-account-input {
   padding: 1.2rem 1.7rem;
 }
+
+.create-submit-icon {
+  margin-left: 10px;
+}
+
+.create-submit-button:hover .create-submit-icon {
+  animation: moveArrowRight 0.3s ease-in-out;
+}

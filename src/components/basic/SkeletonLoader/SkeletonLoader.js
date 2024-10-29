@@ -24,15 +24,12 @@ const SkeletonLoader = () => {
     >
       <div
         className="cardHeader"
-        data-testid="card-header"
+        data-testid="cardHeader headerImg skeleton"
       >
-        <div>
-          <img
-            className="cardHeader headerImg skeleton"
-            id="logoImg"
-            alt=""
-          />
-        </div>
+        <div
+          className="cardHeader headerImg skeleton"
+          id="logoCard"
+        />
       </div>
 
       <div className="cardBodyWrapper">

@@ -1,4 +1,4 @@
-import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
+import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
 
 import { Button } from '@BasicComponents'
@@ -22,8 +22,8 @@ const TransactionButton = ({ title, mode, onClick, disabled }) => {
           mode === 'up'
             ? buttonUpExtraClasses
             : mode === 'staking'
-            ? buttonStakingExtraClasses
-            : buttonExtraClasses
+              ? buttonStakingExtraClasses
+              : buttonExtraClasses
         }
         onClickHandle={onClick}
         disabled={disabled}

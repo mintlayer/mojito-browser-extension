@@ -8,21 +8,16 @@
 .settingsItem {
   position: relative;
   padding: 20px 5px;
+  height: max-content;
 }
 
 .divider {
   position: absolute;
   bottom: 0;
   width: 100%;
-  height: 2px;
+  height: 1px;
   margin: 0 auto;
-  background-image: linear-gradient(
-    to right,
-    transparent,
-    #ccc 5%,
-    #ccc 95%,
-    transparent
-  );
+  background: rgb(var(--color-medium-blue));
   background-position: center;
   background-size: 90% 1px;
   background-repeat: no-repeat;

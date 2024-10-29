@@ -1,15 +1,18 @@
 .transaction-item span {
-  font-size: 18px;
+  font-size: 13px;
+  color: rgb(var(--color-lightest-blue));
 }
 
 .button-transaction,
 .button-transaction-up,
 .button-transaction-staking {
-  width: 86px;
-  height: 86px;
-  min-width: 86px;
-  min-height: 86px;
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  min-height: 60px;
   margin-bottom: 10px;
+  border-radius: 10px;
+  padding: 0;
 }
 
 .transaction-buttons-wrapper {
@@ -23,6 +26,10 @@
   align-items: center;
 }
 
+.transaction-item:hover .transaction-button-title {
+  color: rgb(var(--color-white));
+}
+
 .transaction-item:not(:last-child) {
   margin-right: 15px;
 }
@@ -32,13 +39,11 @@
 }
 
 .icon-arrow {
-  width: 30px;
-  height: 36px;
+  width: 26px;
+  height: 26px;
 }
 
 .staking-icon {
-  width: 50px;
-  height: 50px;
-  margin-left: 5px;
-  margin-top: -10px;
+  width: 36px;
+  height: 36px;
 }
