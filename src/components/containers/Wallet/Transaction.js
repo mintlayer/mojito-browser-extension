@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { format } from 'date-fns'
 
-import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
+import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ReactComponent as LoopIcon } from '@Assets/images/icon-loop.svg'
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
 import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'

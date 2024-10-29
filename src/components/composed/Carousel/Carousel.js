@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, useContext } from 'react'
 import { ReactComponent as IconClose } from '@Assets/images/icon-close.svg'
 import { AccountContext } from '@Contexts'
+import { ReactComponent as IconAccount } from '@Assets/images/icon-account.svg'
 
-import next from '@Assets/images/next.svg'
+// import next from '@Assets/images/next.svg'
+
+import { ReactComponent as IconNext } from '@Assets/images/next.svg'
 
 import './Carousel.css'
 
@@ -34,8 +37,8 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
   }
 
   const handleDelete = (index) => {
-     setRemoveAccountPopupOpen(true)
-     setDeletingAccount(accounts[index])
+    setRemoveAccountPopupOpen(true)
+    setDeletingAccount(accounts[index])
   }
 
   useEffect(() => {
@@ -61,14 +64,11 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
         name="back"
         type="button"
         className="back"
+        data-testid="back"
         onClick={() => translateHandleClick(-1)}
         disabled={currentSlide <= 0}
       >
-        <img
-          className="back-icon"
-          src={next}
-          alt="back"
-        />
+        <IconNext className="back-icon" />
       </button>
       <div className="slides">
         <div
@@ -79,6 +79,8 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
             <div
               key={account.id}
               className="item-wrapper"
+              onClick={() => handleClick(index)}
+              data-testid="carousel-item"
             >
               <button
                 className="delete-button"
@@ -93,10 +95,11 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
                 ${index === currentSlide ? 'current' : ''}
                 ${index === selected ? 'selected' : 'unselected'}
               `}
-                onClick={() => handleClick(index)}
+                data-testid="carousel-item-button"
               >
-                {account.name}
+                <IconAccount />
               </button>
+              <h3 className="account-name">{account.name}</h3>
             </div>
           ))}
         </div>
@@ -105,14 +108,11 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
         name="next"
         type="button"
         className="next"
+        data-testid="next"
         onClick={() => translateHandleClick(1)}
         disabled={currentSlide >= accounts.length - 1}
       >
-        <img
-          className="next-icon"
-          src={next}
-          alt="next"
-        />
+        <IconNext className="next-icon" />
       </button>
     </div>
   )

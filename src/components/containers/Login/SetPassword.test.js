@@ -35,23 +35,23 @@ const setup = ({ data = _data } = {}) => {
   const title = screen.getByText('Password for')
   const account = screen.getByText(data.account.name)
   const password = screen.getByPlaceholderText('Password')
-  const login = screen.getByRole('button', { name: 'Log In' })
+  const loginButton = screen.getByTestId('login-password-submit')
   return {
     title,
     account,
     password,
-    login,
+    loginButton,
     utils,
   }
 }
 
 test('Renders SetAccountPassword page', () => {
-  const { title, account, password, login } = setup()
+  const { title, account, password, loginButton } = setup()
 
   expect(title).toBeInTheDocument()
   expect(account).toBeInTheDocument()
   expect(password).toBeInTheDocument()
-  expect(login).toBeInTheDocument()
+  expect(loginButton).toBeInTheDocument()
 })
 
 test('Renders SetAccountPassword page with change password', async () => {
@@ -96,8 +96,8 @@ test('Click login button onSubmit', async () => {
     </AccountProvider>,
   )
 
-  const login = screen.getByRole('button', { name: 'Log In' })
-  fireEvent.click(login)
+  const loginButton = screen.getByTestId('login-password-submit')
+  fireEvent.click(loginButton)
   await waitFor(() => {
     expect(_data.onSubmit).toHaveBeenCalled()
   })
@@ -130,9 +130,9 @@ test('Click login button onSubmit - error', async () => {
     </AccountProvider>,
   )
 
-  const login = screen.getByRole('button', { name: 'Log In' })
+  const loginButton = screen.getByTestId('login-password-submit')
 
-  fireEvent.click(login)
+  fireEvent.click(loginButton)
 
   await waitFor(() => {
     expect(_data.onSubmit).not.toHaveBeenCalled()

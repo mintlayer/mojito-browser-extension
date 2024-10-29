@@ -21,9 +21,9 @@
 }
 
 .input.invalid {
-  border-bottom: 2px solid rgb(var(--color-red));
+  border: 1px solid rgb(var(--color-red));
 }
 
 .input.valid {
-  border-bottom: 2px solid rgb(var(--color-green));
+  border: 1px solid rgb(var(--color-green));
 }

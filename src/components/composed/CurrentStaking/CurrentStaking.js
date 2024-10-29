@@ -1,11 +1,12 @@
 import { useState, useContext } from 'react'
 import { Button } from '@BasicComponents'
 import { HelpTooltip } from '@ComposedComponents'
-import { VerticalGroup } from '@LayoutComponents'
+import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 import { useMlWalletInfo } from '@Hooks'
 import { ML } from '@Helpers'
 import { Tooltip } from '@BasicComponents'
+import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 
 import { SettingsContext } from '@Contexts'
 
@@ -107,7 +108,13 @@ const CurrentStaking = ({ addressList }) => {
           href={poolListLink}
           target="_blank"
         >
-          <Button extraStyleClasses={['pool-button']}>Pool list</Button>
+          <Button
+            alternate
+            extraStyleClasses={['pool-button']}
+          >
+            Pool list
+            <IconArrowTopRight className="pool-list-icon" />
+          </Button>
         </a>
       </div>
 
@@ -115,14 +122,14 @@ const CurrentStaking = ({ addressList }) => {
         delegationsList={mlDelegationList}
         delegationsLoading={delegationsLoading}
       />
-      <div className="delegation-button-wrapper">
+      <CenteredLayout>
         <Button
           onClickHandle={onDelegationCreateButtonClick}
           extraStyleClasses={['delegation-button']}
         >
           Create new delegation
         </Button>
-      </div>
+      </CenteredLayout>
     </VerticalGroup>
   )
 }

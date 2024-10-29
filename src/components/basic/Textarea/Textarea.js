@@ -18,9 +18,9 @@ const Textarea = ({
 
   const getExtraClasses = () => {
     if (value && validity) {
-      return 'textaria-valid'
+      return 'textarea-valid'
     } else if (value && !validity) {
-      return 'textaria-invalid'
+      return 'textarea-invalid'
     } else {
       return ''
     }
@@ -36,7 +36,7 @@ const Textarea = ({
       data-testid={id}
       value={textareaVakue}
       onChange={onChangeHandler}
-      className={`textarea ${getExtraClasses()} ${extraClasses}`}
+      className={`textarea ${getExtraClasses()} ${extraClasses ? extraClasses : ''}`}
       name={id}
       id={id}
       cols={size.cols}

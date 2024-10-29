@@ -1,14 +1,18 @@
 .delegation-list {
   height: 18rem;
   overflow: auto;
+  padding: 7px;
 }
 
 .empty-list {
-  border: 2px dashed rgb(var(--color-light-green));
-  border-radius: var(--round-size);
-  color: rgb(var(--color-dark-gray));
+  background: rgb(var(--color-gray));
   font-size: 1.5em;
   list-style: none;
   padding: 10px;
   text-align: center;
+
+  padding: 26px 20px;
+  border-radius: 20px;
+  border: 1px;
+  border: 1px solid rgba(var(--color-light-green), 0.2);
 }

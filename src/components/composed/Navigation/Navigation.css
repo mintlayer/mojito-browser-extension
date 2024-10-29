@@ -29,12 +29,6 @@
   border-radius: 4px;
 }
 
-.bottom-menu-item:hover,
-.navigation-item:hover {
-  color: rgb(var(--color-green), var(--nearly-opaque-alpha));
-  background-color: rgb(var(--color-extra-light-gray));
-}
-
 .bottom-menu-item svg,
 .navigation-item svg {
   width: 21px;
@@ -50,8 +44,7 @@
 }
 
 .navigation-item-open {
-  color: rgb(var(--color-green), var(--nearly-opaque-alpha));
-  background-color: rgb(var(--color-extra-light-gray));
+  background: rgba(var(--color-light-purple), 0.4);
   padding: 5px;
   transition: all 0.2s ease;
 }
@@ -67,7 +60,16 @@
   transition: all 0.2s ease;
 }
 
+.navigation-item .navigation-triangle g {
+  fill: rgb(var(--color-white));
+}
+
 .navigation-item .navigation-triangle-open {
   transform: none;
   top: 21px;
+}
+
+.bottom-menu-item:hover,
+.navigation-item:hover {
+  background-color: rgba(var(--color-light-purple), 0.4);
 }

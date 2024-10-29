@@ -1,4 +1,4 @@
-import React from 'react'
+// import React, { useEffect, useState } from 'react'
 
 import './ProgressTracker.css'
 
@@ -8,7 +8,7 @@ const defaultSteps = [
   { name: 'Step 3' },
 ]
 
-const ProgressTracker = ({ steps = defaultSteps }) => {
+const ProgressTracker = ({ steps = defaultSteps, direction }) => {
   return (
     <ol
       className="progressTracker"
@@ -17,9 +17,11 @@ const ProgressTracker = ({ steps = defaultSteps }) => {
       {steps.map((step, index) => (
         <li
           key={`${step.name}-${index}`}
-          className={`step ${step.active && 'active'}`}
+          //if previous step add class previous
+          className={`step ${step.active && 'active'} ${direction === 'backward' ? 'backward' : ''}`}
           data-testid="progress-step"
         >
+          <div className="stepper-bar" />
           {step.name}
         </li>
       ))}

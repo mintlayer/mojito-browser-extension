@@ -7,11 +7,6 @@
 .address {
   font-size: 1.25rem;
   line-height: 1.75rem;
-  color: rgb(var(--color-dark-gray));
-}
-
-.press {
-  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
 }
 
 .press:active {
@@ -22,10 +17,10 @@
 
 .show-unused {
   cursor: pointer;
-  background: rgb(var(--color-green), var(--nearly-opaque-alpha));
+  background: rgb(var(--color-main-green));
   padding: 2px 5px;
   border-radius: 5px;
-  color: #fff;
+  color: rgb(var(--color-white));
 }
 
 .used-address {

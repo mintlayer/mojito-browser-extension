@@ -48,6 +48,7 @@
 
 .popupCloseButton {
   position: absolute;
+  background-color: transparent;
   top: 10px;
   right: 10px;
   width: 35px;
@@ -55,9 +56,18 @@
   padding: 0;
 }
 
+.popupCloseButton:hover {
+  background-color: transparent;
+  opacity: 0.6;
+}
+
+.popupCloseButton:hover svg path {
+  stroke: rgb(var(--color-black));
+}
+
 .popupCloseButton svg {
-  height: 100%;
-  width: 100%;
+  height: 50%;
+  width: 50%;
 }
 
 @keyframes slideUp {

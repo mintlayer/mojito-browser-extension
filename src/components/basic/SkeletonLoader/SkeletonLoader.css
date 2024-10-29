@@ -1,8 +1,11 @@
 .card {
   display: flex;
-  background-color: rgb(var(--color-extra-light-gray));
   padding: 0.75rem 1.875rem;
   margin-bottom: 0.75rem;
+  background-color: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.2);
+  border-radius: 20px;
+  color: rgb(var(--color-white));
 }
 
 .skeleton {
@@ -11,10 +14,10 @@
 
 @keyframes skeleton-loading {
   0% {
-    background-color: hsl(200, 20%, 80%);
+    background: rgba(var(--color-main-green), 0.1);
   }
   100% {
-    background-color: hsl(200, 20%, 95%);
+    background: rgba(var(--color-main-green), 0.2);
   }
 }
 

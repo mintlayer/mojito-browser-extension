@@ -1,15 +1,21 @@
 .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: rgb(var(--color-green));
   border: none;
-  border-radius: var(--round-size);
-  color: rgb(var(--color-white));
+  border-radius: var(--round-size-big);
+  color: rgb(var(--color-dark-teal));
   cursor: pointer;
-  font-size: 1.5rem;
-  font-weight: 400;
+  font-size: 16px;
+  font-weight: 600;
   opacity: 1;
-  padding: 1.8rem 0;
-  width: 100%;
-  transition: opacity 0.25s ease-in-out;
+  padding: 14px 22px 14px 22px;
+  width: fit-content;
+}
+
+.btn:hover svg path {
+  stroke: rgb(var(--color-green));
 }
 
 .btn:disabled,
@@ -21,26 +27,43 @@
 
 .btn:hover,
 .btn:focus {
-  opacity: 0.8;
+  background-color: rgb(var(--color-darker-green));
+  color: rgb(var(--color-green));
+  transition: 0.4s ease-in-out;
+}
+
+.btn:hover svg path,
+.btn:focus svg path {
+  stroke: rgb(var(--color-green));
 }
 
 .btn.alternate {
-  background-color: rgb(var(--color-white));
-  border: 2px solid transparent;
-  color: rgb(var(--color-black));
-  transition: opacity 0.25s ease-in-out, border 0.25s ease-in-out;
+  background-color: transparent;
+  border: 1px solid rgb(var(--color-darker-green));
+  color: rgb(var(--color-darker-green));
+  transition:
+    opacity 0.4s ease-in-out,
+    border 0.4s ease-in-out;
 }
 
 .btn.alternate:hover,
 .btn.alternate:focus {
-  border: 2px solid rgba(var(--color-green), var(--nearly-transparent-alpha));
+  background-color: rgb(var(--color-darker-green));
+  color: rgb(var(--color-white));
+  transition: 0.4s ease-in-out;
+}
+
+.btn.alternate:hover svg path {
+  stroke: rgb(var(--color-white));
 }
 
 .btn.dark {
   background-color: rgb(var(--color-black));
   border: 2px solid transparent;
   color: rgb(var(--color-white));
-  transition: opacity 0.25s ease-in-out, border 0.25s ease-in-out;
+  transition:
+    opacity 0.4s ease-in-out,
+    border 0.4s ease-in-out;
 }
 
 .btn.dark:hover,

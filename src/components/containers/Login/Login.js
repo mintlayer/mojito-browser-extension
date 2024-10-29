@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
+import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 import { Button } from '@BasicComponents'
 import { Carousel } from '@ComposedComponents'
 
@@ -26,7 +27,13 @@ const Login = ({ accounts, onSelect, onCreate }) => {
           />
         </div>
         <CenteredLayout>
-          <Button onClickHandle={onCreateAccount}>Add Wallet</Button>
+          <Button
+            onClickHandle={onCreateAccount}
+            extraStyleClasses={['add-wallet-button']}
+            dataTestId="add-wallet-button"
+          >
+            Add Wallet <IconArrowTopRight className="add-wallet-button-icon" />
+          </Button>
         </CenteredLayout>
       </VerticalGroup>
     </div>

@@ -1,8 +1,35 @@
 .loadingText {
-  margin: 3em 0 0 0;
+  margin-bottom: 60px;
+  font-weight: 400;
   text-align: center;
 }
 
 .loadingText ~ div {
   margin: 0 auto;
+}
+
+.creating-loading-warapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+}
+
+.loading-big {
+  width: 190px;
+  height: 190px;
+}
+
+.loading-big::after {
+  width: 160px;
+  height: 160px;
+  border: 15px solid #fff;
+  border-color: rgb(var(--color-main-green)) transparent rgb(var(--color-black))
+    transparent;
+}
+
+.loadingText {
+  margin-bottom: 60px;
+  font-size: 24px;
+  font-weight: 400;
 }
