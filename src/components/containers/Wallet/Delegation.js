@@ -104,9 +104,9 @@ const Delegation = ({ delegation }) => {
             ></div>
             <div
               style={{
-                left: '30px',
                 position: 'absolute',
-                top: '50%',
+                left: '36px',
+                top: '49%',
                 marginTop: '-38px',
                 marginLeft: '-2px',
                 transform: 'scale(1.2)',
