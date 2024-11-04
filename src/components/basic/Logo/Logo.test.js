@@ -1,53 +1,37 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import { AccountProvider, SettingsProvider } from '@Contexts'
+import { SettingsProvider } from '@Contexts'
 import Logo from './Logo'
 
-const toggleNetworkType = jest.fn()
-
 describe('Logo', () => {
-  test('renders the component with the mainnet title when account is locked', () => {
+  test('renders the component without testnet message when networkType is mainnet', () => {
     render(
-      <SettingsProvider value={{ networkType: 'mainnet', toggleNetworkType }}>
-        <Logo unlocked={false} />
+      <SettingsProvider value={{ networkType: 'mainnet' }}>
+        <Logo />
       </SettingsProvider>,
     )
-    const title = screen.getByText('Mojito')
-    expect(title).toBeInTheDocument()
-    const testnetMark = screen.queryByText('t')
-    expect(testnetMark).not.toBeInTheDocument()
+    const logoContainer = screen.getByTestId('logo-container')
+    const logo = screen.getByTestId('logo')
+    expect(logoContainer).toBeInTheDocument()
+    expect(logo).toBeInTheDocument()
+
+    const testnetMessage = screen.queryByTestId('testnet-message')
+    expect(testnetMessage).not.toBeInTheDocument()
   })
 
-  test('renders the component with the testnet title when account is unlocked and networkType is testnet', () => {
-    const isAccountUnlocked = jest.fn(() => true)
+  test('renders the component with testnet message when networkType is testnet', () => {
     render(
-      <AccountProvider value={{ isAccountUnlocked }}>
-        <SettingsProvider value={{ networkType: 'testnet', toggleNetworkType }}>
-          <Logo unlocked={true} />
-        </SettingsProvider>
-      </AccountProvider>,
+      <SettingsProvider value={{ networkType: 'testnet' }}>
+        <Logo />
+      </SettingsProvider>,
     )
-    const title = screen.getByTestId('logo-name')
-    const testnetMark = screen.getByTestId('testnet-mark')
+    const logoContainer = screen.getByTestId('logo-container')
+    const logo = screen.getByTestId('logo')
+    expect(logoContainer).toBeInTheDocument()
+    expect(logo).toBeInTheDocument()
+
     const testnetMessage = screen.getByTestId('testnet-message')
-
-    expect(title).toBeInTheDocument()
-    expect(testnetMark).toBeInTheDocument()
     expect(testnetMessage).toBeInTheDocument()
-  })
-
-  test('renders the component with the mainnet title when account is unlocked and networkType is mainnet', () => {
-    const isAccountUnlocked = jest.fn(() => true)
-    render(
-      <AccountProvider value={{ isAccountUnlocked }}>
-        <SettingsProvider value={{ networkType: 'mainnet', toggleNetworkType }}>
-          <Logo unlocked={true} />
-        </SettingsProvider>
-      </AccountProvider>,
-    )
-    const title = screen.getByText('Mojito')
-    expect(title).toBeInTheDocument()
-    const testnetMark = screen.queryByText('t')
-    expect(testnetMark).not.toBeInTheDocument()
+    expect(testnetMessage).toHaveTextContent('testnet')
   })
 })

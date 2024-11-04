@@ -4,7 +4,8 @@
   padding: 12px 30px;
   margin-bottom: 10px;
   border-radius: 10px;
-  background: rgb(var(--color-extra-light-gray));
+  background: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.2);
   word-break: break-all;
   cursor: pointer;
   position: relative;
@@ -17,7 +18,7 @@
   width: 72px;
   min-width: 72px;
   height: 72px;
-  background: rgb(var(--color-light-green));
+  background: rgb(var(--color-dim-green));
   border-radius: 50%;
   position: relative;
   z-index: 5;
@@ -56,19 +57,19 @@
 }
 
 .transaction-logo-type.transaction-logo-out {
-  background: rgb(var(--color-black));
+  background: rgb(var(--color-dim-corail));
 }
 
 .transaction-logo-type.transaction-logo-type-stake {
-  background: rgb(var(--color-dark-gray));
+  background: rgb(var(--color-dim-blue));
 }
 
 .transaction-logo-type.transaction-logo-type-delegate {
-  background: rgb(var(--color-dark-gray));
+  background: rgb(var(--color-dim-purple));
 }
 
 .transaction-logo-type.transaction-logo-type-unconfirmed {
-  background: rgb(var(--color-dark-gray));
+  background: rgb(var(--color-dim-yellow));
 }
 
 .arrow-icon {
@@ -79,7 +80,6 @@
 .stake-icon {
   width: 40px;
   height: 40px;
-  color: #fff;
 }
 
 .unconfirmed-icon {
@@ -129,4 +129,9 @@
 .transaction-date span,
 .transaction-amount span {
   font-weight: 600;
+}
+
+.transaction:hover {
+  transform: scale(1.02);
+  border: 1px solid rgba(var(--color-light-green), 0.5);
 }

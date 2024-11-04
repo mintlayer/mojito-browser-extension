@@ -12,10 +12,18 @@
 
 .locked-title {
   text-align: left;
-  padding: 10px;
-  background: rgb(var(--color-green));
+  padding: 14px 24px;
+  background: rgba(var(--color-green), 0.8);
   width: 50%;
-  color: rgb(var(--color-white));
+  color: rgb(var(--color-black));
+}
+
+.locked-title:nth-child(1) {
+  border-top-left-radius: var(--round-size);
+}
+
+.locked-title:nth-child(2) {
+  border-top-right-radius: var(--round-size);
 }
 
 .locked-loading-wrapper {

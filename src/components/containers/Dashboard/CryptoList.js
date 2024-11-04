@@ -31,7 +31,7 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
 
   const logo = () => {
     if (item.name === 'Mintlayer') {
-      return <LogoRound />
+      return <LogoRound small />
     } else if (item.name === 'Bitcoin') {
       return <BtcLogo />
     } else {

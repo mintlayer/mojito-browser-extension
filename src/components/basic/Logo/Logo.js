@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import { SettingsContext } from '@Contexts'
-import LogoIcon from '@Assets/images/logo.svg'
+import { ReactComponent as LogoIcon } from '@Assets/images/logo.svg'
 import { AppInfo } from '@Constants'
 import './Logo.css'
 
@@ -9,10 +9,9 @@ const Logo = () => {
 
   return (
     <div className="logoContainer">
-      <img
-        src={LogoIcon}
-        alt="Mojito Logo"
+      <LogoIcon
         className="logo"
+        data-testid="logo"
       />
       <h1
         className="mojitoLettering"

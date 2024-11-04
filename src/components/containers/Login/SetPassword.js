@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom'
 import { Button } from '@BasicComponents'
 import { Loading, TextField } from '@ComposedComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
+import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
 
 import './SetPassword.css'
 
@@ -16,6 +17,7 @@ const SetPassword = ({
 }) => {
   const location = useLocation()
   const account = selectedAccount ? selectedAccount : location.state.account
+  const loadingExtraClasses = ['loading-big']
 
   const [accountPasswordValue, setAccountPasswordValue] = useState('')
   const [accountPasswordValid, setAccountPasswordValid] = useState(null)
@@ -82,7 +84,16 @@ const SetPassword = ({
                     alternate
                     focus
                   />
-                  <Button onClickHandle={submitHandler}>{buttonTitle}</Button>
+                  <CenteredLayout>
+                    <Button
+                      onClickHandle={submitHandler}
+                      extraStyleClasses={['login-password-submit']}
+                      dataTestId="login-password-submit"
+                    >
+                      {buttonTitle}
+                      <IconArrowRight className="login-button-icon" />
+                    </Button>
+                  </CenteredLayout>
                 </>
               ) : (
                 <>
@@ -90,7 +101,7 @@ const SetPassword = ({
                     {' '}
                     Just a sec, we are validating your password...{' '}
                   </h1>
-                  <Loading />
+                  <Loading extraStyleClasses={loadingExtraClasses} />
                 </>
               )}
             </VerticalGroup>

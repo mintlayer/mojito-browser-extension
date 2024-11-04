@@ -1,6 +1,11 @@
 .logo-round {
-  background: rgb(var(--color-green));
+  background: rgb(var(--color-main-green));
   border-radius: 50%;
+  height: 90px;
+  width: 90px;
+}
+
+.logo-round-small {
   height: 72px;
   width: 72px;
 }

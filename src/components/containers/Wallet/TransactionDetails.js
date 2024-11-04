@@ -6,9 +6,11 @@ import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 import { SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
+import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 
 import './TransactionDetails.css'
 import { useParams } from 'react-router-dom'
+import { CenteredLayout } from '@LayoutComponents'
 
 const TransactionDetailsItem = ({ title, content }) => {
   return (
@@ -97,14 +99,17 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
           }
         />
       </div>
-      <a
-        href={explorerLink}
-        target="_blank"
-      >
-        <Button extraStyleClasses={buttonExtraStyles}>
-          Open In Block Explorer
-        </Button>
-      </a>
+      <CenteredLayout>
+        <a
+          href={explorerLink}
+          target="_blank"
+        >
+          <Button extraStyleClasses={buttonExtraStyles}>
+            Open In Block Explorer
+            <IconArrowTopRight className="transaction-explorer-button-icon" />
+          </Button>
+        </a>
+      </CenteredLayout>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { ProgressTracker, Header } from '@ComposedComponents'
+import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
 import { Account } from '@Entities'
 import { AppInfo } from '@Constants'
 
@@ -175,13 +176,15 @@ const RestoreAccountJson = () => {
                   Please select the backup file you want to restore your wallet
                   from.
                 </p>
-                <Button
-                  onClickHandle={handleUploadButtonClick}
-                  extraStyleClasses={uploadButtonExtraClasses}
-                  alternate
-                >
-                  {uploadButtonContent}
-                </Button>
+                <CenteredLayout>
+                  <Button
+                    onClickHandle={handleUploadButtonClick}
+                    extraStyleClasses={uploadButtonExtraClasses}
+                    alternate
+                  >
+                    {uploadButtonContent}
+                  </Button>
+                </CenteredLayout>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -229,8 +232,10 @@ const RestoreAccountJson = () => {
             <Button
               onClickHandle={handleSubmit}
               disabled={isSubmitButtonDisabled}
+              extraStyleClasses={['restore-file-submit-button']}
             >
               {submitButtonContent}
+              <IconArrowRight className="restore-file-submit-icon" />
             </Button>
           </CenteredLayout>
         </VerticalGroup>
