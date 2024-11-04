@@ -1,10 +1,10 @@
 .staking-title {
-  font-size: 1.3rem;
+  font-size: 24px;
   font-weight: 600;
 }
 
 .total-staked {
-  font-size: 1rem;
+  font-size: 18px;
 }
 
 .staking-title-wrapper {
@@ -14,17 +14,12 @@
   overflow: visible;
 }
 
-.delegation-button-wrapper {
-  display: flex;
-  justify-content: center;
+.delegation-button {
+  margin-top: 10px;
 }
 
 .main-info {
   overflow: visible;
-}
-
-.delegation-button {
-  width: 508px;
 }
 
 .guide-wraper {
@@ -34,11 +29,12 @@
   overflow: visible;
 }
 
-.pool-button {
-  width: 110px;
-  height: 51px;
-  padding: 0;
-  font-size: 1.2rem;
+.pool-list-icon {
+  width: 13px;
+  height: 13px;
+  max-width: 13px;
+  max-height: 13px;
+  margin-left: 10px;
 }
 
 .delegation-inactive {
@@ -55,4 +51,8 @@
 
 .delegation-inactive:hover {
   background: #ff9f00;
+}
+
+.pool-button:hover .pool-list-icon {
+  animation: moveArrowUpRight 0.3s ease-in-out;
 }

@@ -2,7 +2,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-import { ReactComponent as BackImg } from '@Assets/images/back-button.svg'
+import { ReactComponent as BackImg } from '@Assets/images/icon-arrow-left.svg'
 import { ReactComponent as MenuImg } from '@Assets/images/icon-hamburger.svg'
 
 import { Button, Logo } from '@BasicComponents'
@@ -15,11 +15,8 @@ const Header = ({ customBackAction }) => {
   const [unlocked, setUnlocked] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
-  const {
-    isAccountUnlocked,
-    sliderMenuOpen,
-    setSliderMenuOpen,
-  } = useContext(AccountContext)
+  const { isAccountUnlocked, sliderMenuOpen, setSliderMenuOpen } =
+    useContext(AccountContext)
 
   const coinType = location.pathname.includes('/wallet/')
     ? location.pathname.split('/wallet/')[1].split('/')[0]
@@ -68,23 +65,22 @@ const Header = ({ customBackAction }) => {
     <header data-testid="header-container">
       <div style={{ visibility: !noBackButton ? 'visible' : 'hidden' }}>
         <Button
-          alternate
           extraStyleClasses={['backButton']}
           onClickHandle={goBack}
+          hoverEffect={false}
         >
           <BackImg />
         </Button>
       </div>
 
-          <div className="expand-wrapped">
-            <Button
-              alternate
-              extraStyleClasses={['header-menu-button']}
-              onClickHandle={toggleSliderMenu}
-            >
-              <MenuImg />
-            </Button>
-          </div>
+      <div className="expand-wrapped">
+        <Button
+          extraStyleClasses={['header-menu-button']}
+          onClickHandle={toggleSliderMenu}
+        >
+          <MenuImg />
+        </Button>
+      </div>
       <Logo />
       {unlocked && <UpdateButton />}
       <SliderMenu

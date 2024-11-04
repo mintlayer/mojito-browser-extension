@@ -2,7 +2,7 @@ import { useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@BasicComponents'
-import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
+import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 import { AccountContext } from '@Contexts'
 
 import './CreateRestore.css'
@@ -46,38 +46,45 @@ const CreateRestorePage = () => {
       <h2 className="center-text title-create">
         Your Mintlayer, right in your browser.
       </h2>
-      <CenteredLayout>
-        <VerticalGroup>
-          <Button onClickHandle={goToSetAccountPage}>Create</Button>
+      <div className="create-content-wrapper">
+        <div className="create-button-wrapper">
           <Button
-            onClickHandle={goToRestoreAccountPage}
-            alternate
+            onClickHandle={goToSetAccountPage}
+            extraStyleClasses={['create-wallet-button']}
           >
-            Restore
+            Create a wallet <IconArrowTopRight className="create-button-icon" />
           </Button>
-        </VerticalGroup>
-      </CenteredLayout>
-      <div className="footnote-wrapper">
-        <small
-          className="center-text footnote-name"
-          data-testid="footnote-name"
-        >
-          ©Mintlayer, 2024
-        </small>
-        <a
-          className="center-text footnote-link"
-          href="https://mintlayer.org"
-          target="_blank"
-          data-testid="footnote-link"
-        >
-          mintlayer.org
-        </a>
-        <small
-          className="footnote-version"
-          data-testid="footnote-name"
-        >
-          v1.3.3
-        </small>
+          <Button
+            alternate
+            onClickHandle={goToRestoreAccountPage}
+            extraStyleClasses={['restore-wallet-button']}
+          >
+            Restore a wallet{' '}
+            <IconArrowTopRight className="create-button-icon" />
+          </Button>
+        </div>
+        <div className="footnote-wrapper">
+          <small
+            className="center-text footnote-name"
+            data-testid="footnote-name"
+          >
+            ©Mintlayer, 2024
+          </small>
+          <a
+            className="center-text footnote-link"
+            href="https://mintlayer.org"
+            target="_blank"
+            data-testid="footnote-link"
+          >
+            mintlayer.org
+          </a>
+          <small
+            className="footnote-version"
+            data-testid="footnote-name"
+          >
+            v1.3.4
+          </small>
+        </div>
       </div>
     </div>
   )

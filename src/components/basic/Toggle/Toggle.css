@@ -36,10 +36,11 @@
 }
 
 .toggleInput:checked + .toggleMark {
-  background-color: #11967f;
+  background-color: rgb(var(--color-main-green));
 }
 
 .toggleInput:checked + .toggleMark:before {
+  background-color: rgb(var(--color-white));
   transform: translateX(29px);
 }
 

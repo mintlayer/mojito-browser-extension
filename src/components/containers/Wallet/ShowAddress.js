@@ -76,13 +76,15 @@ const ShowAddress = ({
               <></>
             )}
           </div>
-          <Button
-            extraStyleClasses={['press']}
-            onClickHandle={copyAddress}
-            disabled={disabled}
-          >
-            {label}
-          </Button>
+          <CenteredLayout>
+            <Button
+              extraStyleClasses={['press']}
+              onClickHandle={copyAddress}
+              disabled={disabled}
+            >
+              {label}
+            </Button>
+          </CenteredLayout>
         </VerticalGroup>
       </CenteredLayout>
     </div>

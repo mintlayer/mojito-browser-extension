@@ -1,11 +1,15 @@
 import React from 'react'
+import { useStyleClasses } from '@Hooks'
 
 import './Loading.css'
 
-const Loading = () => {
+const Loading = ({ extraStyleClasses = [] }) => {
+  const classesList = ['lds-dual-ring', ...extraStyleClasses]
+  const { styleClasses } = useStyleClasses(classesList)
+
   return (
     <div
-      className="lds-dual-ring"
+      className={styleClasses}
       data-testid="loading"
     ></div>
   )

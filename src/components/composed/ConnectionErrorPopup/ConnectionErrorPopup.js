@@ -18,7 +18,9 @@ const ConnectionErrorPopup = ({ onClickHandle }) => {
             Connection with server is lost. Please, check your internet
             connection or try again later.
           </p>
-          <Button onClickHandle={onClickHandle}>Close</Button>
+          <CenteredLayout>
+            <Button onClickHandle={onClickHandle}>Close</Button>
+          </CenteredLayout>
         </VerticalGroup>
       </CenteredLayout>
     </PopUp>

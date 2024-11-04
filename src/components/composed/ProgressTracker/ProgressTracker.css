@@ -1,24 +1,252 @@
-.progressTracker {
+/* .progressTracker {
   display: flex;
   flex-direction: row;
-  gap: 0.25rem;
+  gap: 20px;
   justify-content: space-between;
   margin: 2rem 0;
+  color: rgb(var(--color-lightest-blue));
 }
 
 .step {
-  border-top: 4px solid rgb(var(--color-light-gray));
+  position: relative;
   flex-grow: 1;
   font-size: 0.75rem;
   font-weight: bold;
   list-style: none;
   padding: 0.5rem 0 0;
   text-align: center;
-  width: 25%;
-  min-width: 25%;
+  width: 22%;
+  min-width: 22%;
+}
+ 
+.step.active {
+  color: rgb(var(--color-medium-green));
+}
+
+.stepper-bar {
+  height: 8px;
+  margin-bottom: 17px;
+  background: rgb(var(--color-dark-blue));
+  border-radius: 30px;
+}
+
+.stepper-bar::after,
+.step.active .stepper-bar::after {
+  content: '';  
+  box-sizing: border-box;
+  width: 0;
+  height: 8px;
+  background: rgb(var(--color-dark-blue));
+  position: absolute;
+  top: 8px;
+  left: 0;
+  border-radius: 30px;
+  animation: animBw 0.3s linear forwards;
+}
+
+.stepper-bar::before,
+.step.active .stepper-bar::before {
+  content: '';  
+  box-sizing: border-box;
+  width: 0;
+  height: 8px;
+  background: rgb(var(--color-medium-green));
+  position: absolute;
+  top: 8px;
+  left: 0;
+  border-radius: 30px;
+  animation: animBw 0.3s linear forwards;
+}
+
+.step.active .stepper-bar {
+  color: rgb(var(--color-medium-green));
+}
+
+.step.active .stepper-bar::after {
+  animation: animFw 0.3s linear forwards;
+  background: rgb(var(--color-medium-green));
+}
+
+.step.active .stepper-bar::before {
+  background: rgb(var(--color-dark-blue));
+}
+
+
+@keyframes animFw2 {
+  100% {
+    width: 100%;
+  }
+  0% {
+    width: 0;
+  }
+}
+
+@keyframes animBw2 {
+  100% {
+    width: 100%;
+  }
+  0% {
+    width: 0;
+  }
+}
+
+
+
+@keyframes animFw {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes animBw {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+ */
+
+.progressTracker {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  justify-content: space-between;
+  margin: 2rem 0;
+  color: rgb(var(--color-black));
+}
+
+.step {
+  position: relative;
+  flex-grow: 1;
+  font-size: 0.75rem;
+  font-weight: bold;
+  list-style: none;
+  padding: 0.5rem 0 0;
+  text-align: center;
+  width: 22%;
+  min-width: 22%;
 }
 
 .step.active {
-  border-top: 4px solid rgb(var(--color-green));
-  color: rgb(var(--color-green));
+  color: rgb(var(--color-main-green));
+}
+
+.stepper-bar {
+  height: 8px;
+  margin-bottom: 17px;
+  background: rgb(var(--color-light-gray));
+  border-radius: 30px;
+}
+
+.stepper-bar::after,
+.step.active .stepper-bar::after {
+  content: '';
+  box-sizing: border-box;
+  width: 0;
+  height: 8px;
+  background: rgb(var(--color-light-gray));
+  position: absolute;
+  top: 8px;
+  left: 0;
+  border-radius: 30px;
+  animation: animBw 0.3s linear forwards;
+}
+
+.stepper-bar::before,
+.step.active .stepper-bar::before {
+  content: '';
+  box-sizing: border-box;
+  width: 0;
+  height: 8px;
+  background: rgb(var(--color-main-green));
+  position: absolute;
+  top: 8px;
+  left: 0;
+  border-radius: 30px;
+  animation: animBw 0.3s linear forwards;
+}
+
+/* .backward .stepper-bar::after {
+  animation: none;
+  width: 0;
+}
+
+.backward .stepper-bar::before {
+  animation: animBackward 10s linear forwards;
+  background: rgb(var(--color-medium-green));
+  width: 100%;
+} */
+
+.backward .stepper-bar::after {
+  animation: none;
+  width: 0;
+}
+
+.backward .stepper-bar::before {
+  animation: animBackward 0.3s linear forwards;
+  background: rgb(var(--color-main-green));
+  width: 100%;
+}
+
+.step.active .stepper-bar {
+  color: rgb(var(--color-main-green));
+}
+
+.step.active .stepper-bar::after {
+  animation: animFw 0.3s linear forwards;
+  background: rgb(var(--color-main-green));
+}
+
+.step.active .stepper-bar::before {
+  background: rgb(var(--color-light-gray));
+}
+
+/* .step.active.backward .stepper-bar::after {
+  animation: test 5s linear forwards;
+  background: rgb(var(--color-medium-green));
+  width: 100%;
+} */
+
+.step.active.backward .stepper-bar::after {
+  animation: animBackward 0.3s linear forwards;
+  background: rgb(var(--color-light-gray));
+  width: 0;
+}
+
+.step.active.backward .stepper-bar::before {
+  background: rgb(var(--color-main-green));
+  width: 100%;
+}
+
+@keyframes animFw {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes animBw {
+  100% {
+    width: 100%;
+  }
+  0% {
+    width: 0%;
+  }
+}
+
+@keyframes animBackward {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0;
+  }
 }

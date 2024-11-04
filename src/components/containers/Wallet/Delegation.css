@@ -4,10 +4,12 @@
   padding: 12px 30px;
   margin-bottom: 10px;
   border-radius: 10px;
-  background: rgb(var(--color-extra-light-gray));
+  background: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.2);
   word-break: break-all;
   cursor: pointer;
   justify-content: flex-end;
+  transition: all 0.3s ease-in-out;
 }
 
 .transaction-logo-type {
@@ -17,15 +19,13 @@
   width: 72px;
   min-width: 72px;
   height: 72px;
-  background: rgb(var(--color-light-green));
+  background: rgb(var(--color-dim-green));
   border-radius: 50%;
   color: rgb(var(--color-white));
   font-size: 43px;
 }
 
 .transaction-detail {
-  /* display: flex;
-  align-items: center; */
   margin-left: 30px;
   flex-grow: 1;
   max-width: 546px;
@@ -78,15 +78,6 @@
   color: #fff;
 }
 
-.delegation-staking-icon.decommissioned,
-.transaction-logo-type.decommissioned {
-  background: rgb(var(--color-red));
-
-  /* height: 30px;
-  width: 30px;
-  min-width: 30px; */
-}
-
 .delegation-actions {
   display: flex;
   margin-top: 10px;
@@ -94,8 +85,7 @@
 
 .delegation-action-button {
   margin-right: 10px;
-  padding: 0.8rem 0;
-  font-size: 1.2rem;
+  padding: 0.8rem;
 }
 
 .unconfirmed-delegation-message {
@@ -131,10 +121,6 @@
   background: rgba(255, 223, 182, 0.5);
 }
 
-/* .transaction.decommissioned.empty {
-  opacity: 30%;
-} */
-
 .decommissioned-text {
   background: rgb(var(--color-red));
   color: rgb(var(--color-white));
@@ -142,4 +128,18 @@
   border-radius: 20px;
   margin-left: 20px;
   font-size: 15px;
+}
+
+.transaction:hover {
+  transform: scale(1.02);
+  border: 1px solid rgba(var(--color-light-green), 0.5);
+}
+
+.transaction-logo-type.delegation-icon {
+  background-color: rgb(var(--color-dim-blue));
+}
+
+.delegation-staking-icon.decommissioned,
+.transaction-logo-type.decommissioned {
+  background: rgb(var(--color-red));
 }

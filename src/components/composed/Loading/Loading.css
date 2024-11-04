@@ -11,7 +11,8 @@
   height: 64px;
   border-radius: 50%;
   border: 6px solid #fff;
-  border-color: rgb(var(--color-green)) transparent #000 transparent;
+  border-color: rgb(var(--color-main-green)) transparent rgb(var(--color-black))
+    transparent;
   animation: lds-dual-ring 1.2s linear infinite;
 }
 

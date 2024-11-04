@@ -5,16 +5,17 @@ button {
 
 .carousel {
   display: flex;
-  height: 12rem;
+  height: 16rem;
   padding: 1px;
+  color: rgb(var(--color-black));
 }
 
 .back {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 1) 87%,
-    rgba(255, 255, 255, 0) 100%
+    rgba(var(--color-white), 1) 0%,
+    rgba(var(--color-white), 1) 87%,
+    rgba(var(--color-white), 0) 100%
   );
   cursor: pointer;
   margin-right: -0.5rem;
@@ -55,11 +56,11 @@ button {
 }
 
 .mid .slides {
-  width: 25rem;
+  width: 27rem;
 }
 
 .small .slides {
-  width: 12rem;
+  width: 13rem;
 }
 
 .mid .back,
@@ -80,34 +81,30 @@ button {
 
 .item-wrapper {
   position: relative;
+  cursor: pointer;
 }
 
 .button-account {
   padding: 0.5rem;
-  border-radius: 0.75rem;
+  border-radius: 100%;
   margin-right: 0.75rem;
   display: flex;
-  width: 12rem;
-  height: 100%;
+  width: 200px;
+  height: 200px;
+  background: rgb(var(--color-light-purple));
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
   line-height: 2rem;
   font-weight: 600;
   text-transform: capitalize;
-  transition: all 0.3s ease-in-out;
+  transition: all 0.4s ease-in-out;
   cursor: pointer;
   word-wrap: anywhere;
 }
 
 .item-wrapper:hover .button-account {
-  color: rgb(var(--color-white));
-  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
-}
-
-.item-wrapper:hover .button-account {
-  color: rgb(var(--color-white));
-  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+  background: rgb(var(--color-purple));
 }
 
 .current {
@@ -116,20 +113,20 @@ button {
 
 .selected {
   color: rgb(var(--color-white));
-  background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
+  background: rgb(var(--color-purple));
 }
 
 .unselected {
   color: rgb(var(--text-black));
-  background-color: rgb(var(--color-extra-light-gray));
+  background: rgb(var(--color-light-purple));
 }
 
 .next {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 1) 13%,
-    rgba(255, 255, 255, 1) 100%
+    rgba(var(--color-white), 0) 0%,
+    rgba(var(--color-white), 1) 13%,
+    rgba(var(--color-white), 1) 100%
   );
   cursor: pointer;
   margin-left: -0.5rem;
@@ -154,10 +151,10 @@ button {
   right: 17px;
   width: 20px;
   height: 20px;
-  background-color: rgb(var(--color-extra-light-gray));
+  background-color: rgb(var(--color-red));
   border-radius: 50%;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
+  transition: all 0.4s ease-in-out;
 }
 
 .delete-button:hover {
@@ -171,16 +168,27 @@ button {
   background-color: rgb(var(--color-green), var(--nearly-opaque-alpha));
 }
 
+.item-wrapper:hover .button-account svg path {
+  stroke: rgb(var(--color-white));
+}
+
 .item-wrapper:hover .delete-button {
   display: flex;
   font-size: 0.7rem;
 }
 
 .icon-delete-button {
-  width: 15px;
-  height: 15px;
+  width: 10px;
+  height: 10px;
 }
 
-.icon-delete-button rect {
-  fill: rgb(var(--color-black));
+.icon-delete-button path {
+  stroke: rgb(var(--color-white));
+}
+
+.account-name {
+  font-size: 25px;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 24px;
 }

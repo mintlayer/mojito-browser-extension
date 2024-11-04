@@ -52,7 +52,7 @@ const DashboardPage = () => {
 
   const colorList = {
     btc: '#F7931A',
-    ml: '#0C7764',
+    ml: '#37DB8C',
   }
 
   const cryptos = [

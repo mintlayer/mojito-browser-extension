@@ -27,10 +27,14 @@ test('Render Empty Carousel', () => {
       <Carousel />
     </AccountContext.Provider>,
   )
-  expect(screen.getByRole('button', { name: 'back' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'next' })).toBeInTheDocument()
+  const backButton = screen.getByTestId('back')
+  const nextButton = screen.getByTestId('next')
 
-  expect(screen.queryAllByRole('button', { name: 'account' })).toEqual([])
+  expect(backButton).toBeInTheDocument()
+  expect(nextButton).toBeInTheDocument()
+
+  const accounts = screen.queryAllByTestId('carousel-item')
+  expect(accounts).toEqual([])
 })
 
 test('Render Carousel', () => {
@@ -39,8 +43,11 @@ test('Render Carousel', () => {
       <Carousel {...data} />
     </AccountContext.Provider>,
   )
-  expect(screen.getByRole('button', { name: 'back' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'next' })).toBeInTheDocument()
+
+  const backButton = screen.getByTestId('back')
+  const nextButton = screen.getByTestId('next')
+  expect(backButton).toBeInTheDocument()
+  expect(nextButton).toBeInTheDocument()
 
   data.accounts.forEach((account) => {
     expect(screen.getByText(account.name)).toBeInTheDocument()
@@ -54,10 +61,11 @@ test('Render Carousel onClick', () => {
     </AccountContext.Provider>,
   )
 
-  fireEvent.click(screen.getByText('Account Name'))
+  const items = screen.getAllByTestId('carousel-item')
+  fireEvent.click(items[0])
   expect(data.onClick).toHaveBeenCalled()
-  screen.getByText('Account Name')
-  expect(screen.getByText('Account Name')).toHaveClass('selected')
+  const buttons = screen.getAllByTestId('carousel-item-button')
+  expect(buttons[0]).toHaveClass('selected')
 })
 
 test('Render Carousel previousSlide', () => {
@@ -67,8 +75,8 @@ test('Render Carousel previousSlide', () => {
     </AccountContext.Provider>,
   )
 
-  const backButton = screen.getByRole('button', { name: 'back' })
-  const nextButton = screen.getByRole('button', { name: 'next' })
+  const backButton = screen.getByTestId('back')
+  const nextButton = screen.getByTestId('next')
 
   fireEvent.click(backButton)
   expect(data.onPrevious).not.toHaveBeenCalled()
@@ -85,7 +93,7 @@ test('Render Carousel nextSlide', () => {
       <Carousel {...data} />
     </AccountContext.Provider>,
   )
-  const nextButton = screen.getByRole('button', { name: 'next' })
+  const nextButton = screen.getByTestId('next')
 
   for (let i = 0; i < data.accounts.length; i++) {
     fireEvent.click(nextButton)

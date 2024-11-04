@@ -6,15 +6,26 @@
   flex-direction: column;
 }
 .subtitle {
-  margin-top: 4rem;
+  margin-top: 2rem;
   margin-bottom: 0.5rem;
   font-size: 24px;
   font-weight: lighter;
-  color: rgb(var(--color-dark-gray));
 }
 .content {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.add-wallet-button-icon {
+  width: 13px;
+  height: 13px;
+  max-width: 13px;
+  max-height: 13px;
+  margin-left: 10px;
+}
+
+.add-wallet-button:hover .add-wallet-button-icon {
+  animation: moveArrowUpRight 0.3s ease-in-out;
 }

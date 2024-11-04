@@ -38,7 +38,6 @@ const Popup = ({ children, setOpen, allowClosing = true }) => {
       >
         {allowClosing && (
           <Button
-            alternate
             extraStyleClasses={closeButtonExtraStyles}
             onClickHandle={closeButtonClickHandler}
           >

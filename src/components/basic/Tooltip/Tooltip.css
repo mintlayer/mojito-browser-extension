@@ -7,9 +7,9 @@
   max-width: 122px;
   max-height: fit-content;
   padding: 4px 8px;
-  background: rgb(var(--color-green));
+  background: rgba(var(--color-main-green), 0.2);
   border-radius: 5px;
-  color: rgb(var(--color-white));
+  color: rgb(var(--color-black));
   font-size: 0.8rem;
   transition: opacity 0.7s ease;
   z-index: 100000;

@@ -6,11 +6,12 @@
 .message-submit-button-wrapper {
   display: flex;
   justify-content: center;
+  margin-top: 15px;
 }
 
-.message-submit {
+/* .message-submit {
   width: 510px;
-}
+} */
 
 .message-button-final {
   display: flex;
@@ -39,7 +40,7 @@
 .message-success {
   font-weight: 600;
   text-align: center;
-  color: rgb(var(--color-green));
+  color: rgb(var(--color-main-green));
 }
 
 .message-failed {

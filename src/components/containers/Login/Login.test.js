@@ -24,10 +24,8 @@ test('Renders List Accounts page', () => {
   )
 
   expect(screen.getByTestId('list-accounts')).toBeInTheDocument()
-  expect(
-    screen.getByRole('button', { name: 'Account Name' }),
-  ).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Add Wallet' })).toBeInTheDocument()
+  expect(screen.getByTestId('carousel-item')).toBeInTheDocument()
+  expect(screen.getByTestId('add-wallet-button')).toBeInTheDocument()
 })
 
 test('Render Carousel onSelect', () => {

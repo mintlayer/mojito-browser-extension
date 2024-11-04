@@ -1,6 +1,7 @@
 .settings-backup {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 .backup-description {
@@ -15,7 +16,7 @@
   width: 80px;
   min-width: 80px;
   padding: 1rem 0;
-  background: rgb(var(--color-green));
+  border-radius: var(--round-size);
 }
 
 .icon-json {

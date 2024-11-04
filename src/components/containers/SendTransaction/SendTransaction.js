@@ -58,6 +58,7 @@ const SendTransaction = ({
   const [poolData, setPoolData] = useState(null)
   const isBitcoinWallet = walletType.name === 'Bitcoin'
   const NC = useContext(MintlayerContext)
+  const loadingExtraClasses = ['loading-big']
 
   useEffect(() => {
     if (
@@ -394,10 +395,12 @@ const SendTransaction = ({
           {!transactionTxid ? (
             sendingTransaction ? (
               <VerticalGroup bigGap>
-                <h2>Your transaction broadcasting to network.</h2>
-                <div className="loading-center">
-                  <Loading />
-                </div>
+                <h2 className="loading-text">
+                  Your transaction broadcasting to network.
+                </h2>
+                <CenteredLayout>
+                  <Loading extraStyleClasses={loadingExtraClasses} />
+                </CenteredLayout>
               </VerticalGroup>
             ) : !askPassword && !feeLoading ? (
               <SendTransactionConfirmation
@@ -432,7 +435,9 @@ const SendTransaction = ({
                     onChangeHandle={changePassHandle}
                     alternate
                   />
-                  <Button buttonType="submit">Send Transaction</Button>
+                  <CenteredLayout>
+                    <Button buttonType="submit">Send Transaction</Button>
+                  </CenteredLayout>
                 </VerticalGroup>
               </form>
             )
@@ -447,11 +452,13 @@ const SendTransaction = ({
                   }
                 </p>
               )}
-              <Button onClickHandle={goBackToWallet}>
-                {transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
-                  ? 'Go to Staking'
-                  : 'Back to Dashboard'}
-              </Button>
+              <CenteredLayout>
+                <Button onClickHandle={goBackToWallet}>
+                  {transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
+                    ? 'Go to Staking'
+                    : 'Back to Dashboard'}
+                </Button>
+              </CenteredLayout>
             </VerticalGroup>
           )}
         </PopUp>

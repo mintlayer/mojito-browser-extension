@@ -3,11 +3,18 @@ import { useStyleClasses } from '@Hooks'
 
 import './VerticalGroup.css'
 
-const VerticalGroup = ({ children, bigGap = false, midGap = false, smallGap = false }) => {
+const VerticalGroup = ({
+  children,
+  bigGap = false,
+  midGap = false,
+  smallGap = false,
+  fullWidth = false,
+}) => {
   const classesList = ['v-group']
   bigGap && classesList.push('bigGap')
   midGap && classesList.push('midGap')
   smallGap && classesList.push('smallGap')
+  fullWidth && classesList.push('fullWidth')
   const { styleClasses, addStyleClass, removeStyleClass } =
     useStyleClasses(classesList)
 
@@ -22,6 +29,10 @@ const VerticalGroup = ({ children, bigGap = false, midGap = false, smallGap = fa
   useEffect(() => {
     smallGap ? addStyleClass('smallGap') : removeStyleClass('smallGap')
   }, [smallGap, addStyleClass, removeStyleClass])
+
+  useEffect(() => {
+    fullWidth && addStyleClass('fullWidth')
+  }, [fullWidth, addStyleClass, removeStyleClass])
 
   return (
     <div

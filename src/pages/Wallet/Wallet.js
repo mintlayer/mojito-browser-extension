@@ -69,7 +69,10 @@ const WalletPage = () => {
   const walletTransactionList = transactions
 
   return (
-    <div data-testid="wallet-page">
+    <div
+      className="wallet-page"
+      data-testid="wallet-page"
+    >
       <VerticalGroup bigGap>
         <div className="balance-transactions-wrapper">
           <Balance

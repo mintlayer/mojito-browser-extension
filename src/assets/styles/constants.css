@@ -1,16 +1,83 @@
 :root {
-  --color-green: 17, 150, 127;
   --color-light-green: 20, 190, 160;
+  --color-green: 105, 238, 150;
+  --color-medium-green: 52, 255, 208;
+  --color-dark-green: 46, 222, 182;
+  --color-darker-green: 6, 29, 24;
+  --color-main-green: 55, 219, 140;
+
+  --color-logo-green: 55, 219, 140;
+
   --color-black: 12, 39, 34;
   --color-white: 255, 255, 255;
   --color-extra-light-gray: 247, 250, 250;
   --color-light-gray: 201, 204, 203;
+  --color-gray: 248, 248, 248;
   --color-dark-gray: 84, 103, 100;
   --color-red: 196, 75, 79;
   --color-orange: 255, 153, 0;
+
+  --color-darkest-blue: 5, 7, 42;
+  --color-darker-blue: 12, 14, 56;
+  --color-dark-blue: 31, 34, 96;
+  --color-medium-blue: 42, 45, 104;
+  --color-lightest-blue: 98, 104, 143;
+  --color-dark-teal: 13, 55, 47;
+
+  --color-light-purple: 208, 192, 255;
+  --color-purple: 179, 153, 255;
+
+  --color-dim-yellow: 255, 242, 178;
+  --color-dim-corail: 248, 185, 183;
+  --color-dim-green: 178, 227, 178;
+  --color-dim-purple: 216, 180, 226;
+  --color-dim-blue: 162, 213, 230;
+
   --nearly-opaque-alpha: 0.8;
   --medium-alpha: 0.5;
   --nearly-transparent-alpha: 0.2;
-  --round-size: 10px;
+  --round-size: 20px;
+  --round-size-big: 99px;
   --default-font-size: 16px;
+}
+
+@keyframes moveArrowUpRight {
+  0% {
+    transform: translate(0, 0);
+    scale: 0.5;
+  }
+  50% {
+    transform: translate(10px, -10px);
+    opacity: 0;
+    scale: 0.7;
+  }
+  51% {
+    transform: translate(-10px, 10px);
+    opacity: 0;
+    scale: 0.85;
+  }
+  100% {
+    transform: translate(0, 0);
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes moveArrowRight {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  51% {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }

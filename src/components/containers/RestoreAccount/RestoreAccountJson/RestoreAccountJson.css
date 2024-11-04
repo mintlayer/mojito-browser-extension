@@ -16,14 +16,15 @@
 
 .restore-wallet-item {
   display: flex;
-  border-radius: 5px;
+  width: 500px;
 }
 
 .restore-wallet-details-title,
 .restore-wallet-details-content {
-  padding: 10px;
-  background-color: rgb(var(--color-extra-light-gray));
+  padding: 15px;
+  background: rgba(var(--color-light-green), 0.2);
   word-break: break-word;
+  border-radius: 10px;
 }
 
 .restore-wallet-details-title {
@@ -36,7 +37,13 @@
 }
 
 .restore-upload-button {
-  border: 2px solid rgba(var(--color-green), var(--nearly-transparent-alpha)) !important;
-  border-style: dashed !important;
   margin-top: 1rem;
+}
+
+.restore-file-submit-icon {
+  margin-left: 10px;
+}
+
+.restore-file-submit-button:hover:not(:disabled) .restore-file-submit-icon {
+  animation: moveArrowRight 0.3s ease-in-out;
 }

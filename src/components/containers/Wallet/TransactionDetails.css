@@ -6,7 +6,7 @@
 }
 
 .transaction-details-items-wrapper {
-  height: 336px;
+  height: 392px;
   width: 100%;
   padding: 10px;
   overflow: auto;
@@ -31,4 +31,16 @@
 
 .transaction-details-button {
   margin-top: 1.3rem;
+}
+
+.transaction-explorer-button-icon {
+  width: 13px;
+  height: 13px;
+  max-width: 13px;
+  max-height: 13px;
+  margin-left: 10px;
+}
+
+.transaction-details-button:hover .transaction-explorer-button-icon {
+  animation: moveArrowUpRight 0.3s ease-in-out;
 }

@@ -62,7 +62,8 @@ const OptionButtons = ({
           onClickHandle={() => onClick(option)}
           disabled={option.disabled}
         >
-          {option.name} {option.symbol && `(${option.symbol})`}
+          {option.icon && option.icon} {option.name}{' '}
+          {option.symbol && `(${option.symbol})`}
         </Button>
       ))}
     </div>

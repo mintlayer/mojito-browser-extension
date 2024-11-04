@@ -2,12 +2,14 @@
   width: 100%;
   padding: 15px;
   resize: none;
+  border: 1px solid rgb(var(--color-light-gray));
+  border-radius: var(--round-size);
 }
 
-.textaria-invalid {
+.textarea-invalid {
   border-bottom: 2px solid rgb(var(--color-red));
 }
 
-.textaria-valid {
-  border-bottom: 2px solid rgb(var(--color-green));
+.textarea-valid {
+  border-bottom: 2px solid rgb(var(--color-main-green));
 }

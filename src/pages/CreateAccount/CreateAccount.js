@@ -67,18 +67,20 @@ const CreateAccountPage = () => {
     setEntropy([])
   }
 
+  const loadingExtraClasses = ['loading-big']
+
   return creatingWallet ? (
-    <>
+    <div className="creating-loading-warapper">
       <CenteredLayout>
         <VerticalGroup bigGap>
           <h1 className="loadingText">
             {' '}
-            Just a sec, we are creating your account...{' '}
+            Just a sec, we are creating your wallet...{' '}
           </h1>
-          <Loading />
+          <Loading extraStyleClasses={loadingExtraClasses} />
         </VerticalGroup>
       </CenteredLayout>
-    </>
+    </div>
   ) : (
     <CreateAccount
       step={step}

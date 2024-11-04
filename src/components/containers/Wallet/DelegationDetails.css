@@ -6,10 +6,11 @@
 }
 
 .delegation-details-items-wrapper {
-  height: 336px;
+  height: 370px;
   width: 100%;
   padding: 10px;
   overflow: auto;
+  margin-bottom: 20px;
 }
 
 .delegation-details-item {
@@ -35,10 +36,22 @@
 
 .delegation-action-wrapper {
   display: flex;
+  justify-content: space-between;
   margin-bottom: 10px;
 }
 
-.delegation-action-wrapper .delegation-details-button {
+/* .delegation-action-wrapper .delegation-details-button:not(:last-child) {
   margin-right: 5px;
-  padding: 1.1rem 0;
+} */
+
+.delegation-explorer-button-icon {
+  width: 13px;
+  height: 13px;
+  max-width: 13px;
+  max-height: 13px;
+  margin-left: 10px;
+}
+
+.delegation-details-button:hover .delegation-explorer-button-icon {
+  animation: moveArrowUpRight 0.3s ease-in-out;
 }

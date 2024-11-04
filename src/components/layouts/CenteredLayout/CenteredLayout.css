@@ -1,4 +1,6 @@
 .centeredLayout {
-  margin: 0 auto;
-  width: 508px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
 }
