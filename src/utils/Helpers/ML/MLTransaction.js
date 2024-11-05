@@ -53,6 +53,12 @@ const getTransactionUtxos = ({ utxos, amount, tokenId }) => {
   for (let i = 0; i < utxos.length; i++) {
     lastIndex = i
     const utxoBalance = getUtxoBalance(utxos[i], tokenId)
+    console.log(
+      'balance < BigInt(amount)',
+      balance < BigInt(amount),
+      balance,
+      BigInt(amount),
+    )
     if (balance < BigInt(amount)) {
       balance += utxoBalance
       utxosToSpend.push(utxos[i])
@@ -115,8 +121,8 @@ const getTxOutput = ({
   const txOutput = poolId
     ? ML.getDelegationOutput(poolId, address, networkType)
     : delegationId
-    ? ML.getStakingOutput(amount, delegationId, networkType)
-    : ML.getOutputs({ amount, address, networkType, chainTip, tokenId })
+      ? ML.getStakingOutput(amount, delegationId, networkType)
+      : ML.getOutputs({ amount, address, networkType, chainTip, tokenId })
   return txOutput
 }
 
@@ -186,7 +192,7 @@ const getArraySpead = (inputs) => {
   return inputsArray
 }
 
-const totalUtxosAmount = (utxosToSpend, token) => {
+export const totalUtxosAmount = (utxosToSpend, token) => {
   return utxosToSpend.reduce((acc, utxo) => {
     const requiredToken = token
       ? utxo.utxo.value.token_id === token
@@ -291,6 +297,63 @@ const calculateTransactionSizeInBytes = async ({
     inputsArray,
     addressList,
     outputs,
+    network,
+  )
+
+  return size
+}
+
+const calculateCustomTransactionSizeInBytes = async ({
+  network,
+  inputs,
+  outputs,
+  currentHeight,
+}) => {
+  const requireUtxo = inputs
+  const addressList = getUtxoAddress(requireUtxo)
+  const transactionStrings = getUtxoTransactions(requireUtxo)
+  const transactionBytes = getTransactionsBytes(transactionStrings)
+  const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
+  const inputsIds = await getTxInputs(outpointedSourceIds)
+  const inputsArray = getArraySpead(inputsIds)
+
+  // make array from outputs with await
+  const outputsArrayItems = outputs.map((output) => {
+    if (output.type === 'Transfer') {
+      return ML.getOutputs({
+        amount: BigInt(output.value.amount.atoms).toString(),
+        address: output.destination,
+        networkType: network,
+      })
+    }
+    if (output.type === 'IssueFungibleToken') {
+      return ML.getOutputIssueFungibleToken({
+        output,
+        network,
+        chainTip: currentHeight,
+      })
+    }
+    if (output.type === 'IssueNft') {
+      return ML.getOutputIssueNft({
+        inputs: inputsArray,
+        output,
+        network,
+        chainTip: currentHeight,
+      })
+    }
+    if (output.type === 'DataDeposit') {
+      return ML.getOutputDataDeposit({ output })
+    }
+  })
+
+  console.log('outputsArrayItems', outputsArrayItems)
+
+  const outputsArray = getArraySpead(outputsArrayItems)
+
+  const size = ML.getEstimatetransactionSize(
+    inputsArray,
+    addressList,
+    outputsArray,
     network,
   )
 
@@ -472,6 +535,72 @@ const sendTransaction = async ({
   return JSON.parse(result).tx_id
 }
 
+const sendCustomTransaction = async ({
+  keysList,
+  network,
+  inputs,
+  outputs,
+  currentHeight,
+}) => {
+  const requireUtxo = inputs
+  const transactionStrings = getUtxoTransactions(requireUtxo)
+  // const addressList = getUtxoAddress(requireUtxo)
+  const transactionBytes = getTransactionsBytes(transactionStrings)
+  const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
+  const inputsIds = await getTxInputs(outpointedSourceIds)
+  const inputsArray = getArraySpead(inputsIds)
+
+  console.log('sendCustomTransaction outputs', outputs)
+
+  // make array from outputs with await
+  const outputsArrayItems = outputs.map((output) => {
+    if (output.type === 'Transfer') {
+      return ML.getOutputs({
+        amount: BigInt(output.value.amount.atoms).toString(),
+        address: output.destination,
+        networkType: network,
+      })
+    }
+    if (output.type === 'IssueFungibleToken') {
+      return ML.getOutputIssueFungibleToken({
+        output,
+        network,
+        chainTip: currentHeight,
+      })
+    }
+    if (output.type === 'IssueNft') {
+      return ML.getOutputIssueNft({
+        inputs: inputsArray,
+        output,
+        network,
+        chainTip: currentHeight,
+      })
+    }
+  })
+
+  const outputsArray = getArraySpead(outputsArrayItems)
+
+  const transaction = await ML.getTransaction(inputsArray, outputsArray)
+
+  const optUtxos = await getOptUtxos(requireUtxo, network)
+
+  const encodedWitnesses = await getEncodedWitnesses(
+    requireUtxo,
+    keysList,
+    transaction,
+    optUtxos, // in fact that is transaction inputs
+    network,
+  )
+  const finalWitnesses = getArraySpead(encodedWitnesses)
+  const encodedSignedTransaction = await ML.getEncodedSignedTransaction(
+    transaction,
+    finalWitnesses,
+  )
+  const transactionHex = getTransactionHex(encodedSignedTransaction)
+
+  return transactionHex
+}
+
 const spendFromDelegation = async (
   keysList,
   address,
@@ -578,6 +707,8 @@ export {
   getEncodedWitnesses,
   calculateSpenDelegFee,
   sendTransaction,
+  sendCustomTransaction,
   spendFromDelegation,
   calculateTransactionSizeInBytes,
+  calculateCustomTransactionSizeInBytes,
 }

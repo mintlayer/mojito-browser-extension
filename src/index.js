@@ -28,6 +28,7 @@ import {
   DelegationWithdrawPage,
   LockedBalancePage,
   MessagePage,
+  SendCustomOutput,
 } from '@Pages'
 
 import {
@@ -116,6 +117,27 @@ const App = () => {
                 action: 'createDelegate',
                 pool_id: request.data.pool_id,
                 referral_code: request.data.referral_code || '',
+              },
+            })
+            return
+          }
+          // change route to staking page
+          navigate('/wallet/Mintlayer/staking/create-delegation', {
+            state: {
+              action: 'createDelegate',
+              pool_id: request.data.pool_id,
+              referral_code: request.data.referral_code || '',
+            },
+          })
+        }
+
+        if (request.action === 'customOutput') {
+          if (!unlocked) {
+            setNextAfterUnlock({
+              route: '/wallet/Mintlayer/custom-output',
+              state: {
+                action: 'customOutput',
+                output: request.data.output,
               },
             })
             return
@@ -219,6 +241,10 @@ const App = () => {
         <Route
           path="/wallet/:coinType/send-transaction"
           element={<SendTransactionPage />}
+        />
+        <Route
+          path="/wallet/:coinType/custom-output"
+          element={<SendCustomOutput />}
         />
         <Route
           path="/wallet/:coinType/staking"

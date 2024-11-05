@@ -1139,8 +1139,8 @@ export function token_change_authority_fee(current_block_height, network) {
  * Given the parameters needed to issue a fungible token, and a network type (mainnet, testnet, etc),
  * this function creates an output that issues that token.
  * @param {string} authority
- * @param {Uint8Array} token_ticker
- * @param {Uint8Array} metadata_uri
+ * @param {string} token_ticker
+ * @param {string} metadata_uri
  * @param {number} number_of_decimals
  * @param {TotalSupply} total_supply
  * @param {Amount | undefined} supply_amount
@@ -1168,9 +1168,17 @@ export function encode_output_issue_fungible_token(
       wasm.__wbindgen_realloc,
     )
     const len0 = WASM_VECTOR_LEN
-    const ptr1 = passArray8ToWasm0(token_ticker, wasm.__wbindgen_malloc)
+    const ptr1 = passStringToWasm0(
+      token_ticker,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
     const len1 = WASM_VECTOR_LEN
-    const ptr2 = passArray8ToWasm0(metadata_uri, wasm.__wbindgen_malloc)
+    const ptr2 = passStringToWasm0(
+      metadata_uri,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
     const len2 = WASM_VECTOR_LEN
     let ptr3 = 0
     if (!isLikeNone(supply_amount)) {
@@ -1208,6 +1216,40 @@ export function encode_output_issue_fungible_token(
 }
 
 /**
+ * Returns the Fungible/NFT Token ID for the given inputs of a transaction
+ * @param {Uint8Array} inputs
+ * @param {Network} network
+ * @returns {string}
+ */
+export function get_token_id(inputs, network) {
+  let deferred3_0
+  let deferred3_1
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    wasm.get_token_id(retptr, ptr0, len0, network)
+    var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true)
+    var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true)
+    var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true)
+    var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true)
+    var ptr2 = r0
+    var len2 = r1
+    if (r3) {
+      ptr2 = 0
+      len2 = 0
+      throw takeObject(r2)
+    }
+    deferred3_0 = ptr2
+    deferred3_1 = len2
+    return getStringFromWasm0(ptr2, len2)
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
+  }
+}
+
+/**
  * Given the parameters needed to issue an NFT, and a network type (mainnet, testnet, etc),
  * this function creates an output that issues that NFT.
  * @param {string} token_id
@@ -1216,10 +1258,10 @@ export function encode_output_issue_fungible_token(
  * @param {string} ticker
  * @param {string} description
  * @param {Uint8Array} media_hash
- * @param {string | undefined} creator
- * @param {Uint8Array | undefined} media_uri
- * @param {Uint8Array | undefined} icon_uri
- * @param {Uint8Array | undefined} additional_metadata_uri
+ * @param {Uint8Array | undefined} creator
+ * @param {string | undefined} media_uri
+ * @param {string | undefined} icon_uri
+ * @param {string | undefined} additional_metadata_uri
  * @param {bigint} _current_block_height
  * @param {Network} network
  * @returns {Uint8Array}
@@ -1274,23 +1316,31 @@ export function encode_output_issue_nft(
     const len5 = WASM_VECTOR_LEN
     var ptr6 = isLikeNone(creator)
       ? 0
-      : passStringToWasm0(
-          creator,
-          wasm.__wbindgen_malloc,
-          wasm.__wbindgen_realloc,
-        )
+      : passArray8ToWasm0(creator, wasm.__wbindgen_malloc)
     var len6 = WASM_VECTOR_LEN
     var ptr7 = isLikeNone(media_uri)
       ? 0
-      : passArray8ToWasm0(media_uri, wasm.__wbindgen_malloc)
+      : passStringToWasm0(
+          media_uri,
+          wasm.__wbindgen_malloc,
+          wasm.__wbindgen_realloc,
+        )
     var len7 = WASM_VECTOR_LEN
     var ptr8 = isLikeNone(icon_uri)
       ? 0
-      : passArray8ToWasm0(icon_uri, wasm.__wbindgen_malloc)
+      : passStringToWasm0(
+          icon_uri,
+          wasm.__wbindgen_malloc,
+          wasm.__wbindgen_realloc,
+        )
     var len8 = WASM_VECTOR_LEN
     var ptr9 = isLikeNone(additional_metadata_uri)
       ? 0
-      : passArray8ToWasm0(additional_metadata_uri, wasm.__wbindgen_malloc)
+      : passStringToWasm0(
+          additional_metadata_uri,
+          wasm.__wbindgen_malloc,
+          wasm.__wbindgen_realloc,
+        )
     var len9 = WASM_VECTOR_LEN
     wasm.encode_output_issue_nft(
       retptr,
@@ -1356,6 +1406,17 @@ export function encode_output_data_deposit(data) {
   } finally {
     wasm.__wbindgen_add_to_stack_pointer(16)
   }
+}
+
+/**
+ * Returns the fee that needs to be paid by a transaction for issuing a data deposit
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Amount}
+ */
+export function data_deposit_fee(current_block_height, network) {
+  const ret = wasm.data_deposit_fee(current_block_height, network)
+  return Amount.__wrap(ret)
 }
 
 /**
@@ -2028,13 +2089,30 @@ function handleError(f, args) {
   }
 }
 /**
- * A utxo can either come from a transaction or a block reward. This enum signifies that.
+ * The part of the transaction that will be committed in the signature. Similar to bitcoin's sighash.
  */
-export const SourceId = Object.freeze({
-  Transaction: 0,
-  0: 'Transaction',
-  BlockReward: 1,
-  1: 'BlockReward',
+export const SignatureHashType = Object.freeze({
+  ALL: 0,
+  0: 'ALL',
+  NONE: 1,
+  1: 'NONE',
+  SINGLE: 2,
+  2: 'SINGLE',
+  ANYONECANPAY: 3,
+  3: 'ANYONECANPAY',
+})
+/**
+ * The network, for which an operation to be done. Mainnet, testnet, etc.
+ */
+export const Network = Object.freeze({
+  Mainnet: 0,
+  0: 'Mainnet',
+  Testnet: 1,
+  1: 'Testnet',
+  Regtest: 2,
+  2: 'Regtest',
+  Signet: 3,
+  3: 'Signet',
 })
 /**
  * The token supply of a specific token, set on issuance
@@ -2057,32 +2135,6 @@ export const TotalSupply = Object.freeze({
   2: 'Fixed',
 })
 /**
- * The network, for which an operation to be done. Mainnet, testnet, etc.
- */
-export const Network = Object.freeze({
-  Mainnet: 0,
-  0: 'Mainnet',
-  Testnet: 1,
-  1: 'Testnet',
-  Regtest: 2,
-  2: 'Regtest',
-  Signet: 3,
-  3: 'Signet',
-})
-/**
- * The part of the transaction that will be committed in the signature. Similar to bitcoin's sighash.
- */
-export const SignatureHashType = Object.freeze({
-  ALL: 0,
-  0: 'ALL',
-  NONE: 1,
-  1: 'NONE',
-  SINGLE: 2,
-  2: 'SINGLE',
-  ANYONECANPAY: 3,
-  3: 'ANYONECANPAY',
-})
-/**
  * Indicates whether a token can be frozen
  */
 export const FreezableToken = Object.freeze({
@@ -2090,6 +2142,15 @@ export const FreezableToken = Object.freeze({
   0: 'No',
   Yes: 1,
   1: 'Yes',
+})
+/**
+ * A utxo can either come from a transaction or a block reward. This enum signifies that.
+ */
+export const SourceId = Object.freeze({
+  Transaction: 0,
+  0: 'Transaction',
+  BlockReward: 1,
+  1: 'BlockReward',
 })
 
 const AmountFinalization =
