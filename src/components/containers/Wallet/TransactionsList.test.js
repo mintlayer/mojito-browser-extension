@@ -69,5 +69,5 @@ test('Render transactions list component - loading', () => {
   const skeletonLoading = screen.getAllByTestId('card')
 
   expect(transactionsList).toBeInTheDocument()
-  expect(skeletonLoading).toHaveLength(3)
+  expect(skeletonLoading).toHaveLength(6)
 })
