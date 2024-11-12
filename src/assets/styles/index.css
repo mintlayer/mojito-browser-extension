@@ -63,9 +63,12 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 600px;
+  height: 600px;
   padding: 2rem 2.875rem;
+
+  @media screen and (min-width: 801px) {
+    height: 100%;
+  }
 }
 
 .center-text {

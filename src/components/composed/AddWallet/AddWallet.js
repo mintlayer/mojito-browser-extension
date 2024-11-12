@@ -192,7 +192,9 @@ const AddWallet = ({
           />
         )}
         {mnemonicErrorMessage && <Error error={mnemonicErrorMessage} />}
-        <Button onClickHandle={onConnectSubmit}>{submitButtonTitle}</Button>
+        <CenteredLayout>
+          <Button onClickHandle={onConnectSubmit}>{submitButtonTitle}</Button>
+        </CenteredLayout>
       </VerticalGroup>
     </form>
   )
