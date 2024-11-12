@@ -29,12 +29,12 @@ const SettingsPage = ({ unlocked }) => {
 
   return (
     <>
-      <ul className="settingsWrapper">
+      <ul className="settings-wrapper">
         {SettingsList.map((item) => (
           <>
             {item.visible && (
               <li
-                className="settingsItem"
+                className="settings-item"
                 key={item.value}
               >
                 {item.component}

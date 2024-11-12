@@ -81,8 +81,11 @@ const Header = ({ customBackAction }) => {
           <MenuImg />
         </Button>
       </div>
-      <Logo />
-      {unlocked && <UpdateButton />}
+      <div className="logo-wrapper">
+        <Logo />
+        {unlocked && <UpdateButton />}
+      </div>
+
       <SliderMenu
         isOpen={sliderMenuOpen}
         onClose={toggleSliderMenu}

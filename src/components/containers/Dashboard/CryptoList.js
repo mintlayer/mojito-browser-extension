@@ -58,24 +58,27 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
           onClick={onClick}
           data-testid="crypto-item"
         >
-          {logo()}
-          <div className="name-values">
-            <h5>
-              {item.name} ({symbol})
-            </h5>
-            <div className={`values ${bigValues ? 'big-values' : ''}`}>
-              <dl>
-                <dt>Value:</dt>
-                <dd>{isTestnet ? balance : fiatBalance}</dd>
-                {!isTestnet && (
-                  <>
-                    <dt>Price:</dt>
-                    <dd>{item.exchangeRate?.toFixed(2)}</dd>
-                  </>
-                )}
-              </dl>
+          <div className="logo-wrapper">
+            {logo()}
+            <div className="name-values">
+              <h5>
+                {item.name} ({symbol})
+              </h5>
+              <div className={`values ${bigValues ? 'big-values' : ''}`}>
+                <dl>
+                  <dt>Value:</dt>
+                  <dd>{isTestnet ? balance : fiatBalance}</dd>
+                  {!isTestnet && (
+                    <>
+                      <dt>Price:</dt>
+                      <dd>{item.exchangeRate?.toFixed(2)}</dd>
+                    </>
+                  )}
+                </dl>
+              </div>
             </div>
           </div>
+
           <div className="crypto-stats">
             <div className="crypto-stats-numbers">
               {Number(balance) > 0 && (

@@ -10,6 +10,10 @@
   cursor: pointer;
   justify-content: flex-end;
   transition: all 0.3s ease-in-out;
+
+  @media screen and (min-width: 801px) {
+    justify-content: flex-start;
+  }
 }
 
 .transaction-logo-type {

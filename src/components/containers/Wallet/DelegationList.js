@@ -4,7 +4,7 @@ import './DelegationList.css'
 
 const DelegationList = ({ delegationsList, delegationsLoading }) => {
   const renderSkeletonLoaders = () =>
-    Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
+    Array.from({ length: 6 }, (_, i) => <SkeletonLoader key={i} />)
 
   const renderDelegations = () => {
     if (!delegationsList || !delegationsList.length) {

@@ -42,7 +42,10 @@ const CreateRestorePage = () => {
   }
 
   return (
-    <div data-testid="create-restore">
+    <div
+      data-testid="create-restore"
+      className="create-restore"
+    >
       <h2 className="center-text title-create">
         Your Mintlayer, right in your browser.
       </h2>
