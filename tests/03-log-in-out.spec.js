@@ -14,9 +14,13 @@ beforeEach(async ({ page: newPage }) => {
 
 test('Log in and Log out', async () => {
   test.setTimeout(190000)
-  await page.click('button.logout')
+  await page.click('button.header-menu-button')
+  const logoutElement = page.getByText('Logout', { selector: 'li' })
+  await logoutElement.click()
   await expect(page.locator(':text("Available wallet")')).toBeVisible()
-  await page.getByRole('button', { name: 'SenderWallet' }).click()
+
+  const account = page.getByText('SenderWallet', { selector: 'div' })
+  await account.click()
 
   await expect(page.locator(`:text("Password for")`)).toBeVisible()
   await expect(page.locator(`:text("${senderData.WALLET_NAME}")`)).toBeVisible()
