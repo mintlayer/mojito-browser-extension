@@ -11,8 +11,10 @@ import { LocalStorageService } from '@Storage'
 const CreateRestorePage = () => {
   const { isExtended } = useContext(AccountContext)
   const navigate = useNavigate()
-  const devLocation = ':300'
-  const isDevMode = window.location.href.includes(devLocation)
+  const devLocations = [':300', ':800']
+  const isDevMode = devLocations.some((location) =>
+    window.location.href.includes(location),
+  )
 
   const expandHandler = (dest) => {
     window.open(

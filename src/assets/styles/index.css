@@ -52,6 +52,8 @@ body {
 
   @media screen and (min-width: 801px) {
     height: auto;
+    border-radius: 30px;
+    width: 90vh;
   }
 }
 
@@ -102,11 +104,4 @@ body {
   font-weight: bold;
   color: rgb(var(--color-green));
   text-decoration: none;
-}
-
-@media screen and (min-width: 801px) {
-  body {
-    border-radius: 30px;
-    width: 90vh;
-  }
 }

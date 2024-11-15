@@ -32,7 +32,6 @@
 .transaction-detail {
   margin-left: 30px;
   flex-grow: 1;
-  max-width: 546px;
 }
 
 .transaction-logo-out {

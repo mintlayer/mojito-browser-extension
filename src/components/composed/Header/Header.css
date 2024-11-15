@@ -1,11 +1,17 @@
 .header-container {
   display: flex;
   justify-content: center;
+  min-height: 60px;
 }
 
 header {
   position: relative;
   margin-bottom: 20px;
+  min-height: 60px;
+
+  @media screen and (min-width: 801px) {
+    margin-bottom: 40px;
+  }
 }
 
 .logo-wrapper {
@@ -94,11 +100,4 @@ header {
 .tooltipWrapper {
   position: relative;
   overflow: visible;
-}
-
-@media screen and (min-width: 801px) {
-  header {
-    margin-bottom: 40px;
-    min-height: 60px;
-  }
 }

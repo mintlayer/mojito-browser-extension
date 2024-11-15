@@ -5,7 +5,7 @@
   height: 466px;
 
   @media screen and (min-width: 801px) {
-    height: 605px;
+    height: 630px;
   }
 }
 
@@ -17,6 +17,7 @@
 
   @media screen and (min-width: 801px) {
     height: auto;
+    max-height: 560px;
   }
 }
 
