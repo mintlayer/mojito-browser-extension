@@ -1,0 +1,166 @@
+.text {
+  padding-bottom: 20px;
+}
+
+.text textarea {
+  width: 100%;
+  padding: 10px 20px;
+  height: 180px;
+  overflow: scroll;
+}
+
+.augmentedData {
+  display: flex;
+  flex-direction: row;
+}
+
+.augmentedData * {
+  overflow: scroll;
+}
+
+.balance {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.templateSelector {
+  margin: 10px 0;
+}
+
+.templateSelector select {
+  padding: 2px 5px;
+  margin: 0 10px;
+}
+
+.templateSelector button {
+  padding: 5px 10px;
+  margin: 0 10px;
+  background: rgb(var(--color-green));
+  color: #fff;
+  border-radius: 4px;
+}
+
+.workArea {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+}
+
+.workArea .form {
+  width: 50%;
+}
+
+.workArea .text {
+  width: 50%;
+}
+
+.workArea .text textarea {
+  font-family: monospace;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll;
+  resize: vertical;
+}
+
+.workArea .fieldGroup {
+  margin: 10px 0;
+}
+
+.workArea .fieldGroup label {
+  margin-right: 10px;
+  display: block;
+}
+
+.workArea .fieldGroup .input {
+  margin-right: 10px;
+  width: 100%;
+}
+
+.validationBox button {
+  padding: 10px;
+  background: rgb(var(--color-extra-light-gray));
+  border-radius: 4px;
+  color: rgb(var(--color-green));
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+.transactionPreview {
+  margin: 20px 0;
+}
+
+.augmentedData {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.augmentedData .input,
+.augmentedData .output {
+  width: 48%;
+
+  font-family: monospace;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll;
+  resize: vertical;
+}
+
+.transactionPreviewHeader {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.transactionPreviewHeader button {
+  padding: 5px 10px;
+  background: rgb(var(--color-light-green));
+  color: #fff;
+  border-radius: 4px;
+  margin-left: 10px;
+}
+
+.fee {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+.transactionHexPreview {
+}
+
+.transactionHexPreviewInputs {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: center;
+}
+
+.transactionHexPreviewInputs button {
+  padding: 5px 10px;
+  background: rgb(var(--color-light-green));
+  color: #fff;
+  border-radius: 4px;
+}
+
+.transactionHexPreviewResult {
+  margin: 20px 0;
+  padding: 5px 10px;
+  font-family: monospace;
+  border-radius: 5px;
+  word-break: break-all;
+  background: rgb(var(--color-light-gray));
+}
+
+.broadcast {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.broadcast button {
+  padding: 10px;
+  background: rgb(var(--color-green));
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}

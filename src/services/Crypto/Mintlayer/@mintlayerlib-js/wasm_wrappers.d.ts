@@ -377,8 +377,8 @@ export function token_change_authority_fee(
  * Given the parameters needed to issue a fungible token, and a network type (mainnet, testnet, etc),
  * this function creates an output that issues that token.
  * @param {string} authority
- * @param {Uint8Array} token_ticker
- * @param {Uint8Array} metadata_uri
+ * @param {string} token_ticker
+ * @param {string} metadata_uri
  * @param {number} number_of_decimals
  * @param {TotalSupply} total_supply
  * @param {Amount | undefined} supply_amount
@@ -389,8 +389,8 @@ export function token_change_authority_fee(
  */
 export function encode_output_issue_fungible_token(
   authority: string,
-  token_ticker: Uint8Array,
-  metadata_uri: Uint8Array,
+  token_ticker: string,
+  metadata_uri: string,
   number_of_decimals: number,
   total_supply: TotalSupply,
   supply_amount: Amount | undefined,
@@ -398,6 +398,13 @@ export function encode_output_issue_fungible_token(
   _current_block_height: bigint,
   network: Network,
 ): Uint8Array
+/**
+ * Returns the Fungible/NFT Token ID for the given inputs of a transaction
+ * @param {Uint8Array} inputs
+ * @param {Network} network
+ * @returns {string}
+ */
+export function get_token_id(inputs: Uint8Array, network: Network): string
 /**
  * Given the parameters needed to issue an NFT, and a network type (mainnet, testnet, etc),
  * this function creates an output that issues that NFT.
@@ -407,10 +414,10 @@ export function encode_output_issue_fungible_token(
  * @param {string} ticker
  * @param {string} description
  * @param {Uint8Array} media_hash
- * @param {string | undefined} creator
- * @param {Uint8Array | undefined} media_uri
- * @param {Uint8Array | undefined} icon_uri
- * @param {Uint8Array | undefined} additional_metadata_uri
+ * @param {Uint8Array | undefined} creator
+ * @param {string | undefined} media_uri
+ * @param {string | undefined} icon_uri
+ * @param {string | undefined} additional_metadata_uri
  * @param {bigint} _current_block_height
  * @param {Network} network
  * @returns {Uint8Array}
@@ -422,10 +429,10 @@ export function encode_output_issue_nft(
   ticker: string,
   description: string,
   media_hash: Uint8Array,
-  creator: string | undefined,
-  media_uri: Uint8Array | undefined,
-  icon_uri: Uint8Array | undefined,
-  additional_metadata_uri: Uint8Array | undefined,
+  creator: Uint8Array | undefined,
+  media_uri: string | undefined,
+  icon_uri: string | undefined,
+  additional_metadata_uri: string | undefined,
   _current_block_height: bigint,
   network: Network,
 ): Uint8Array
@@ -435,6 +442,16 @@ export function encode_output_issue_nft(
  * @returns {Uint8Array}
  */
 export function encode_output_data_deposit(data: Uint8Array): Uint8Array
+/**
+ * Returns the fee that needs to be paid by a transaction for issuing a data deposit
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Amount}
+ */
+export function data_deposit_fee(
+  current_block_height: bigint,
+  network: Network,
+): Amount
 /**
  * Given the parameters needed to create hash timelock contract, and a network type (mainnet, testnet, etc),
  * this function creates an output.
@@ -669,6 +686,13 @@ export enum SourceId {
   BlockReward = 1,
 }
 /**
+ * Indicates whether a token can be frozen
+ */
+export enum FreezableToken {
+  No = 0,
+  Yes = 1,
+}
+/**
  * The token supply of a specific token, set on issuance
  */
 export enum TotalSupply {
@@ -686,15 +710,6 @@ export enum TotalSupply {
   Fixed = 2,
 }
 /**
- * The network, for which an operation to be done. Mainnet, testnet, etc.
- */
-export enum Network {
-  Mainnet = 0,
-  Testnet = 1,
-  Regtest = 2,
-  Signet = 3,
-}
-/**
  * The part of the transaction that will be committed in the signature. Similar to bitcoin's sighash.
  */
 export enum SignatureHashType {
@@ -704,11 +719,13 @@ export enum SignatureHashType {
   ANYONECANPAY = 3,
 }
 /**
- * Indicates whether a token can be frozen
+ * The network, for which an operation to be done. Mainnet, testnet, etc.
  */
-export enum FreezableToken {
-  No = 0,
-  Yes = 1,
+export enum Network {
+  Mainnet = 0,
+  Testnet = 1,
+  Regtest = 2,
+  Signet = 3,
 }
 /**
  * Amount type abstraction. The amount type is stored in a string
@@ -918,6 +935,7 @@ export interface InitOutput {
     l: number,
     m: number,
   ) => void
+  readonly get_token_id: (a: number, b: number, c: number, d: number) => void
   readonly encode_output_issue_nft: (
     a: number,
     b: number,
@@ -944,6 +962,7 @@ export interface InitOutput {
     w: number,
   ) => void
   readonly encode_output_data_deposit: (a: number, b: number, c: number) => void
+  readonly data_deposit_fee: (a: number, b: number) => number
   readonly encode_output_htlc: (
     a: number,
     b: number,
