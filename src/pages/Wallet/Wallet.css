@@ -1,8 +1,16 @@
+.wallet-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .transactions-buttons-wrapper {
   position: relative;
   display: flex;
+  justify-content: center;
   min-width: max-content;
   align-items: flex-end;
+  max-width: 100%;
 }
 
 .balance-transactions-wrapper {

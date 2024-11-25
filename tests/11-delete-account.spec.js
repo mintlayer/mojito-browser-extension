@@ -15,7 +15,9 @@ beforeEach(async ({ page: newPage }) => {
 // Delete account - cancel
 test('Delete account - cancel', async () => {
   test.setTimeout(190000)
-  await page.click('button.settings')
+  await page.click('button.header-menu-button')
+  const settings = page.getByText('Settings', { selector: 'li' })
+  await settings.click()
 
   await expect(page.locator(':text("DELETE WALLET")')).toBeVisible()
   await expect(page.locator(`:text("${deleteDescription}")`)).toBeVisible()
@@ -67,7 +69,9 @@ test('Delete account - cancel', async () => {
 // Delete account from settings
 test('Delete account from settings', async () => {
   test.setTimeout(190000)
-  await page.click('button.settings')
+  await page.click('button.header-menu-button')
+  const settings = page.getByText('Settings', { selector: 'li' })
+  await settings.click()
 
   await expect(page.locator(':text("DELETE WALLET")')).toBeVisible()
   await expect(page.locator(`:text("${deleteDescription}")`)).toBeVisible()
@@ -134,7 +138,9 @@ test('Delete account from settings', async () => {
 // Delete account from login page
 test('Delete account from login', async () => {
   test.setTimeout(190000)
-  await page.click('button.logout')
+  await page.click('button.header-menu-button')
+  const logoutElement = page.getByText('Logout', { selector: 'li' })
+  await logoutElement.click()
 
   await expect(page.locator(':text("Available wallet")')).toBeVisible()
   await expect(page.locator(`:text("${senderData.WALLET_NAME}")`)).toBeVisible()

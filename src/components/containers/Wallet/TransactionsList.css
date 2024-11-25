@@ -2,6 +2,11 @@
   height: 19rem;
   overflow: auto;
   padding: 7px;
+
+  @media screen and (min-width: 801px) {
+    padding: 10px;
+    flex-grow: 1;
+  }
 }
 
 .empty-list {

@@ -56,7 +56,11 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
       className="balance-wrapper"
       data-testid="current-balance"
     >
-      {logo()}
+      <div className="wallet-logo-wrapper">
+        {logo()}
+        <h3>{walletType.name}</h3>
+      </div>
+
       <div className="balance">
         <p
           className="balance-btc"
@@ -71,12 +75,12 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
           <span>{Format.fiatValue(balanceInUSD)}</span> USD
         </p>
         {parseFloat(balanceLocked) > 0 ? (
-          <div
+          <button
             className="balance-locked"
             onClick={onLockedClick}
           >
             Locked: {balanceLocked} {symbol()}
-          </div>
+          </button>
         ) : (
           <></>
         )}

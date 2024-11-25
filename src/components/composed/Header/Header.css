@@ -1,6 +1,23 @@
+.header-container {
+  display: flex;
+  justify-content: center;
+  min-height: 60px;
+}
+
 header {
   position: relative;
   margin-bottom: 20px;
+  min-height: 60px;
+
+  @media screen and (min-width: 801px) {
+    margin-bottom: 40px;
+  }
+}
+
+.logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .backButton {
@@ -8,7 +25,7 @@ header {
   width: 34px;
   padding: 0.2rem;
   position: absolute;
-  top: 0.5rem;
+  top: 0.7rem;
   left: 0;
   background-color: transparent !important;
 }

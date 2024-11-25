@@ -49,12 +49,28 @@ body {
   height: 600px;
   width: 800px;
   background: rgb(var(--color-white));
+
+  @media screen and (min-width: 801px) {
+    height: auto;
+    border-radius: 30px;
+    width: 90vh;
+  }
+}
+
+#root {
+  height: 100%;
 }
 
 .App {
   position: relative;
-  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  height: 600px;
   padding: 2rem 2.875rem;
+
+  @media screen and (min-width: 801px) {
+    height: 100%;
+  }
 }
 
 .center-text {
@@ -88,10 +104,4 @@ body {
   font-weight: bold;
   color: rgb(var(--color-green));
   text-decoration: none;
-}
-
-@media screen and (min-width: 801px) {
-  body {
-    border-radius: 30px;
-  }
 }

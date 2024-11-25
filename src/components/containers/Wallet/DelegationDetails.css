@@ -1,16 +1,23 @@
 .delegation-details {
   width: 100%;
-  height: 100%;
   max-width: 510px;
   height: 500px;
+
+  @media screen and (min-width: 801px) {
+    height: 605px;
+  }
 }
 
 .delegation-details-items-wrapper {
-  height: 370px;
+  height: 368px;
   width: 100%;
   padding: 10px;
   overflow: auto;
   margin-bottom: 20px;
+
+  @media screen and (min-width: 801px) {
+    height: 473px;
+  }
 }
 
 .delegation-details-item {
