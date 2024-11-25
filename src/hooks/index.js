@@ -4,6 +4,7 @@ import useBtcWalletInfo from './UseWalletInfo/useBtcWalletInfo'
 import useMlWalletInfo from './UseWalletInfo/useMlWalletInfo'
 import useExchangeRates from './UseExchangeRates/useExchangeRates'
 import useOneDayAgoExchangeRates from './UseOneDayAgoExchangeRates/useOneDayAgoExchangeRates'
+import useMediaQuery from './useMediaQuery/useMediaQuery'
 
 export {
   useStyleClasses,
@@ -12,4 +13,5 @@ export {
   useMlWalletInfo,
   useExchangeRates,
   useOneDayAgoExchangeRates,
+  useMediaQuery,
 }

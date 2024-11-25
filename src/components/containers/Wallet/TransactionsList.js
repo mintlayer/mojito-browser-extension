@@ -11,7 +11,7 @@ const TransactionsList = ({ transactionsList, getConfirmations }) => {
     fetchingTransactions && transactionsList.length === 0
 
   const renderSkeletonLoaders = () =>
-    Array.from({ length: 3 }, (_, i) => <SkeletonLoader key={i} />)
+    Array.from({ length: 6 }, (_, i) => <SkeletonLoader key={i} />)
 
   const renderTransactions = () => {
     if (!transactionsList || !transactionsList.length) {

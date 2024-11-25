@@ -4,7 +4,7 @@ import { WALLET_NAME, WALLET_PASSWORD, MNEMONIC } from './data/crate-restore.js'
 
 const restoreAccountTest = async ({ page }) => {
   test.setTimeout(190000)
-  await page.goto('http://127.0.0.1:3000')
+  await page.goto('http://localhost:8000/')
 
   await expect(page.locator('h1')).toHaveText('Mojito')
   await expect(page.locator('h2')).toHaveText(
@@ -12,6 +12,8 @@ const restoreAccountTest = async ({ page }) => {
   )
 
   await page.getByRole('button', { name: 'Restore' }).click()
+
+  await page.getByRole('button', { name: 'Seed Phrase' }).click()
 
   await expect(page.locator('label')).toHaveText(
     'Create a name for your wallet',
@@ -47,9 +49,6 @@ const restoreAccountTest = async ({ page }) => {
   await textarea[0].fill(mnemonicString)
 
   await page.getByRole('button', { name: 'Continue' }).click()
-
-  await page.getByRole('button', { name: 'Bitcoin (BTC)' }).click()
-  await page.getByRole('button', { name: 'Mintlayer (ML)' }).click()
 
   await page.getByRole('button', { name: 'Confirm' }).click()
 

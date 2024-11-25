@@ -4,7 +4,7 @@ import { WALLET_NAME, WALLET_PASSWORD } from './data/crate-restore.js'
 
 test('Create account', async ({ page }) => {
   test.setTimeout(190000)
-  await page.goto('http://127.0.0.1:3000')
+  await page.goto('http://localhost:8000/')
 
   await expect(page.locator('h1')).toHaveText('Mojito')
   await expect(page.locator('h2')).toHaveText(
@@ -75,7 +75,7 @@ test('Create account', async ({ page }) => {
     }
   }
 
-  const drawingBoardStage = 'canvas'
+  const drawingBoardStage = 'div.drawingBoard'
 
   await drawRandomEntropy(page, drawingBoardStage)
 
@@ -114,9 +114,6 @@ test('Create account', async ({ page }) => {
   }
 
   await page.getByRole('button', { name: 'Continue' }).click()
-
-  await page.getByRole('button', { name: 'Bitcoin (BTC)' }).click()
-  await page.getByRole('button', { name: 'Mintlayer (ML)' }).click()
 
   await page.getByRole('button', { name: 'Create Wallet' }).click()
 

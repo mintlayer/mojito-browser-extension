@@ -49,7 +49,7 @@ const DrawingBoard = () => {
       data-testid="entropy-drawing-board"
     >
       <Stage
-        width={337}
+        width={383}
         height={238}
         onMouseDown={handleMouseDown}
         onMousemove={handleMouseMove}

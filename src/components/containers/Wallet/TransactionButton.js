@@ -1,5 +1,6 @@
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
+import { ReactComponent as SignIcon } from '@Assets/images/icon-sign.svg'
 
 import { Button } from '@BasicComponents'
 
@@ -30,6 +31,8 @@ const TransactionButton = ({ title, mode, onClick, disabled }) => {
       >
         {mode === 'staking' ? (
           <DelegationIcon className="staking-icon" />
+        ) : mode === 'sign' ? (
+          <SignIcon className="sign-icon" />
         ) : (
           <ArrowIcon className="icon-arrow" />
         )}

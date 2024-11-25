@@ -98,6 +98,7 @@ const Input = ({
       pattern={pattern}
       disabled={disabled ? 'disabled' : ''}
       ref={ref}
+      autoComplete="off"
       readOnly={readonly}
     />
   )

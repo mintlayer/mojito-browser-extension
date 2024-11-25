@@ -8,7 +8,10 @@ const Logo = () => {
   const { networkType } = useContext(SettingsContext)
 
   return (
-    <div className="logoContainer">
+    <div
+      className="logoContainer"
+      data-testid="logo-container"
+    >
       <LogoIcon
         className="logo"
         data-testid="logo"

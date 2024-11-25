@@ -1,3 +1,9 @@
+.create-restore {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .title-create {
   font-size: 24px;
   font-weight: 400;
@@ -9,6 +15,11 @@
   flex-direction: column;
   height: 300px;
   justify-content: space-between;
+
+  @media screen and (min-width: 801px) {
+    height: auto;
+    flex-grow: 1;
+  }
 }
 
 .create-button-wrapper {
