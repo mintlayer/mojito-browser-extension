@@ -171,11 +171,13 @@ const getParsedTransactions = (transactions, addresses) => {
               return acc + output.value.amount.decimal
             }
           } else {
-            if (output.value.type === 'Coin') {
-              if (output.type === 'Transfer') {
+            if (output.type === 'Transfer') {
+              if (output.value.type === 'Coin') {
                 return acc + output.value.amount.decimal
               }
-              if (output.type === 'LockThenTransfer') {
+            }
+            if (output.type === 'LockThenTransfer') {
+              if (output.value.type === 'Coin') {
                 return acc + Number(output.value.amount.decimal)
               }
             }
