@@ -21,6 +21,7 @@ const TextField = ({
   reference,
   focus = true,
   bigGap = true,
+  readonly = false,
 }) => {
   const inputId = useId()
 
@@ -66,6 +67,7 @@ const TextField = ({
         extraStyleClasses={extraStyleClasses}
         onBlurHandle={setPristineState}
         focus={focus}
+        readonly={readonly}
       />
       {errorMessages && !isPristine && <Error error={errorMessages} />}
     </VerticalGroup>

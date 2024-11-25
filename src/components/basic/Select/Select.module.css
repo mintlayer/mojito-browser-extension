@@ -1,6 +1,21 @@
-
 .select {
+  position: relative;
   padding: 14px 22px 14px 22px;
   border-radius: var(--round-size-big);
   font-size: 16px;
+  appearance: none;
+}
+
+.customSelect::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #333;
+  transform: translateY(-50%);
 }

@@ -1,3 +1,7 @@
+.slider-top-nav {
+  overflow: auto;
+}
+
 .bottom-menu-item {
   display: flex;
   align-items: center;

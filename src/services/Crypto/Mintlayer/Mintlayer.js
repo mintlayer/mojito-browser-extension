@@ -235,16 +235,9 @@ export const getOutputIssueFungibleToken = ({ output, network, chainTip }) => {
     ? FreezableToken.Yes
     : FreezableToken.No
 
-  console.log('total_supply', total_supply)
-
   const supply_amount = Amount.from_atoms(total_supply.amount.atoms)
 
   const total_supply_type = TotalSupply[total_supply.type]
-
-  console.log('total_supply.type', total_supply.type)
-  console.log('total_supply_type', total_supply_type)
-
-  console.log('TotalSupply.Unlimited', TotalSupply.Unlimited)
 
   console.log(
     'authority,\n' +
@@ -268,9 +261,7 @@ export const getOutputIssueFungibleToken = ({ output, network, chainTip }) => {
   )
 
   const encoder = new TextEncoder()
-  const networkIndex = Network.Testnet
-
-  console.log('Network.Testnet', Network.Testnet, networkIndex)
+  // const networkIndex = Network.Testnet
 
   return encode_output_issue_fungible_token(
     authority, // ok

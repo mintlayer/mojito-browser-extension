@@ -132,7 +132,7 @@ const Navigation = ({ customNavigation }) => {
 
   return (
     <>
-      <ul>
+      <ul className="slider-top-nav">
         {navList.map((item) => (
           <li
             key={item.id}

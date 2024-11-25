@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
-import styles from './SendCustomOutput.module.css'
+import { Select, Textarea, Button, Error } from '@BasicComponents'
+import { TextField } from '@ComposedComponents'
 import {
   validateOutput,
   getInfoAboutOutput,
@@ -19,13 +20,20 @@ import {
   totalUtxosAmount,
 } from '../../utils/Helpers/ML/MLTransaction'
 
+import styles from './SendCustomOutput.module.css'
+import { VerticalGroup } from '@LayoutComponents'
+
 const SendCustomOutput = () => {
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
+  const [selectedTemplate, setSelectedTemplate] = useState('')
+
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
+
+  const coinType = networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'ML' : 'TML'
 
   const {
     balance: mlBalance,
@@ -34,6 +42,14 @@ const SendCustomOutput = () => {
     feerate,
     currentHeight,
   } = useMlWalletInfo(currentMlAddresses)
+
+  const templateOptions = [
+    { value: '', label: 'Select' },
+    { value: 'Transfer', label: 'Transfer' },
+    { value: 'IssueFungibleToken', label: 'IssueFungibleToken' },
+    { value: 'IssueNft', label: 'IssueNft' },
+    { value: 'DataDeposit', label: 'DataDeposit' },
+  ]
 
   useEffect(() => {
     // add style to body
@@ -52,9 +68,14 @@ const SendCustomOutput = () => {
   const [outputs, setOutputs] = useState([])
   const [fields, setFields] = useState([])
   const [transactionHex, setTransactionHex] = useState('')
-
-  const tplRef = React.createRef()
-  const passwordRef = React.createRef()
+  const [passValidity, setPassValidity] = useState(true)
+  const [passPristinity, setPassPristinity] = useState(true)
+  const [passErrorMessage, setPassErrorMessage] = useState('')
+  const [pass, setPass] = useState('')
+  const [loading, setLoading] = useState(false)
+  const changePassHandle = (value) => {
+    setPass(value)
+  }
 
   const handleOutputChange = (e) => {
     const text = e.target.value
@@ -94,11 +115,9 @@ const SendCustomOutput = () => {
       utxos: utxoCoin,
       amount: +(parsedOutput.extraFee || 0) + amountToSend + fee,
     })
-    console.log('inputs', inputs)
 
     setInputs(inputs)
     const utxoBalance = totalUtxosAmount(inputs)
-    console.log('utxoBalance', utxoBalance)
 
     const transactionFee = fee
     const extraFee = parsedOutput.extraFee || 0
@@ -108,8 +127,6 @@ const SendCustomOutput = () => {
       BigInt(amountToSend) -
       BigInt(transactionFee) -
       BigInt(extraFee)
-
-    console.log('amountToReturn', amountToReturn)
 
     // add change
     const output = {
@@ -139,36 +156,65 @@ const SendCustomOutput = () => {
     setFee(new_fee)
   }
 
-  const handleBuildTransaction = async () => {
-    const password = passwordRef.current.value
-    const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
-
-    const { mlPrivKeys } = await Account.unlockAccount(accountID, password)
-    const privKey =
-      networkType === 'mainnet'
-        ? mlPrivKeys.mlMainnetPrivateKey
-        : mlPrivKeys.mlTestnetPrivateKey
-
-    const walletPrivKeys = await ML.getWalletPrivKeysList(
-      privKey,
-      networkType,
-      changeAddressesLength,
-    )
-    const keysList = {
-      ...walletPrivKeys.mlReceivingPrivKeys,
-      ...walletPrivKeys.mlChangePrivKeys,
+  const handleBuildTransaction = async (ev) => {
+    ev.preventDefault()
+    setLoading(true)
+    if (!pass) {
+      setPassPristinity(false)
+      setPassValidity(false)
+      setLoading(false)
+      setPassErrorMessage('Password must be set.')
+      return
     }
 
-    const transactionHex = await MLTransaction.sendCustomTransaction({
-      keysList: keysList,
-      network: networkType,
-      inputs: inputs,
-      outputs: outputs,
-      currentHeight,
-    })
+    try {
+      const unlockedAccount = await Account.unlockAccount(accountID, pass)
 
-    setTransactionHex(transactionHex)
+      if (unlockedAccount) {
+        setPassPristinity(true)
+        setPassValidity(true)
+        setLoading(false)
+        setPassErrorMessage('')
 
+        const mlPrivKeys = unlockedAccount.mlPrivKeys
+
+        const privKey =
+          networkType === 'mainnet'
+            ? mlPrivKeys.mlMainnetPrivateKey
+            : mlPrivKeys.mlTestnetPrivateKey
+
+        const changeAddressesLength =
+          currentMlAddresses.mlChangeAddresses.length
+
+        const walletPrivKeys = ML.getWalletPrivKeysList(
+          privKey,
+          networkType,
+          changeAddressesLength,
+        )
+        const keysList = {
+          ...walletPrivKeys.mlReceivingPrivKeys,
+          ...walletPrivKeys.mlChangePrivKeys,
+        }
+
+        const transactionHex = await MLTransaction.sendCustomTransaction({
+          keysList: keysList,
+          network: networkType,
+          inputs: inputs,
+          outputs: outputs,
+          currentHeight,
+        })
+
+        setTransactionHex(transactionHex)
+      }
+    } catch (e) {
+      setPassPristinity(false)
+      setPassValidity(false)
+      setLoading(false)
+      setPassErrorMessage('Password is incorrect')
+      return
+    }
+
+    setLoading(false)
     return false
   }
 
@@ -215,8 +261,7 @@ const SendCustomOutput = () => {
     ) {
       return
     }
-    const templateName = tplRef.current.selectedOptions[0].value
-    const template = JSON.stringify(getTemplate(templateName), null, 2)
+    const template = JSON.stringify(getTemplate(selectedTemplate), null, 2)
     setCustomOutput(template)
   }
 
@@ -280,97 +325,134 @@ const SendCustomOutput = () => {
   }
 
   return (
-    <div>
-      <div className={styles.balance}>Balance: {mlBalance} TML</div>
-      <div className={styles.templateSelector}>
-        Use template:
-        <select ref={tplRef}>
-          <option value="">Select</option>
-          <option value="Transfer">Transfer</option>
-          <option value="IssueFungibleToken">IssueFungibleToken</option>
-          <option value="IssueNft">IssueNft</option>
-          <option value="DataDeposit">DataDeposit</option>
-        </select>
-        <button onClick={handleInsertTemplate}>apply</button>
-      </div>
-      <div className={styles.workArea}>
-        <div className={styles.form}>
-          <div>
-            {fields.map((field) => {
-              return (
-                <div
-                  className={styles.fieldGroup}
-                  key={field.id}
-                >
-                  <label>{field.label}</label>
-                  <input
-                    className={styles.input}
-                    type="text"
-                    onChange={handleUpdateField(field.id)}
-                    value={field.value}
-                  />
-                </div>
-              )
-            })}
+    <VerticalGroup bigGap>
+      <VerticalGroup midGap>
+        <div className={styles.balance}>Balance: {mlBalance} TML</div>
+        <div className={styles.templateSelectorWrapper}>
+          Select template:
+          <div className={styles.templateSelector}>
+            <Select
+              options={templateOptions}
+              value={selectedTemplate}
+              onChange={(e) => setSelectedTemplate(e.target.value)}
+              placeholder="Select"
+            />
+            <Button
+              onClickHandle={handleInsertTemplate}
+              disabled={loading}
+            >
+              Apply
+            </Button>
           </div>
         </div>
-        <div className={styles.text}>
-          <textarea
-            disabled
-            onChange={handleOutputChange}
-            value={customOutput}
-          >
-            {customOutput}
-          </textarea>
+        <div className={styles.workArea}>
+          <form className={styles.form}>
+            <div>
+              {fields.length <= 0 && <p>Please select a template to start</p>}
+              {fields.map((field) => {
+                return (
+                  <div
+                    className={styles.fieldGroup}
+                    key={field.id}
+                  >
+                    <label>{field.label}</label>
+                    <input
+                      className={styles.customInput}
+                      type="text"
+                      onChange={handleUpdateField(field.id)}
+                      value={field.value}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          </form>
+          <div className={styles.text}>
+            <Textarea
+              value={customOutput}
+              onChange={handleOutputChange}
+              disabled
+              size={{ cols: 50, rows: 10 }}
+              placeholder="Custom Output"
+              extraClasses={styles.customTextarea}
+            />
+          </div>
         </div>
-      </div>
-      <div>{error && <div className={styles.error}>{error}</div>}</div>
-      <div className={styles.validationBox}>
-        <button onClick={handleValidate}>
-          Validate and augment with inputs/outputs
-        </button>
-      </div>
+        {error && <Error error={error} />}
+        <div className={styles.validationBox}>
+          <Button
+            onClickHandle={handleValidate}
+            disabled={loading}
+          >
+            Validate and augment with inputs/outputs
+          </Button>
+        </div>
+      </VerticalGroup>
       <div className={styles.transactionPreview}>
         <div className={styles.transactionPreviewHeader}>
           Transaction preview{' '}
-          <button onClick={handleTogglePreview}>switch to explorer view</button>
+          <Button
+            onClickHandle={handleTogglePreview}
+            extraStyleClasses={[styles.transactionPreviewButton]}
+            disabled={loading}
+          >
+            switch to explorer view
+          </Button>
         </div>
         <div className={styles.augmentedData}>
-          <div className={styles.input}>{JSON.stringify(inputs, null, 2)}</div>
-          <div>></div>
+          <div className={styles.input}>
+            <h3>Inputs:</h3>
+            {JSON.stringify(inputs, null, 2)}
+          </div>
           <div className={styles.output}>
+            <h3>Outputs:</h3>
             {JSON.stringify(outputs, null, 2)}
           </div>
         </div>
       </div>
-      <div className={styles.fee}>
-        Fee:{' '}
-        <input
-          type="text"
-          disabled
-          value={fee / 1e11}
-        />{' '}
-        <span>TML</span>
+      <div className={styles.feePassword}>
+        <div className={styles.passwordFeeInputsWrapper}>
+          <div className={styles.fee}>
+            <TextField
+              label="Fee:"
+              readonly
+              value={fee / 1e11}
+              bigGap={false}
+              extraStyleClasses={[styles.feeInput]}
+              validity={true}
+            />{' '}
+            <span className={styles.coinType}>{coinType}</span>
+          </div>
+          <div>
+            <TextField
+              label="Enter your password:"
+              placeHolder="Password"
+              password
+              validity={passValidity}
+              pristinity={passPristinity}
+              onChangeHandle={changePassHandle}
+              bigGap={false}
+              extraStyleClasses={[styles.passwordInput]}
+            />
+          </div>
+        </div>
+
+        {passErrorMessage && <Error error={passErrorMessage} />}
       </div>
       <div className={styles.transactionHexPreview}>
         <div className={styles.transactionHexPreviewInputs}>
-          <div>
-            password:{' '}
-            <input
-              type="password"
-              ref={passwordRef}
-            />
+          <Button onClickHandle={handleBuildTransaction}>
+            Build transaction
+          </Button>
+          <Button onClickHandle={handleBroadcast}>Broadcast transaction</Button>
+        </div>
+        {transactionHex && (
+          <div className={styles.transactionHexPreviewResult}>
+            {transactionHex}
           </div>
-          <button onClick={handleBuildTransaction}>Build transaction</button>
-        </div>
-        <div className={styles.transactionHexPreviewResult}>
-          {transactionHex}
-        </div>
+        )}
       </div>
-      <div className={styles.broadcast}>
-        <button onClick={handleBroadcast}>Broadcast transaction</button>
-      </div>
-    </div>
+    </VerticalGroup>
   )
 }
 

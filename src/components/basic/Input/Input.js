@@ -20,6 +20,7 @@ const Input = ({
   getMaskedValue,
   justNumbers = false,
   focus,
+  readonly,
 }) => {
   const classesList = useMemo(
     () => ['input', ...extraStyleClasses],
@@ -97,6 +98,7 @@ const Input = ({
       pattern={pattern}
       disabled={disabled ? 'disabled' : ''}
       ref={ref}
+      readOnly={readonly}
     />
   )
 }
