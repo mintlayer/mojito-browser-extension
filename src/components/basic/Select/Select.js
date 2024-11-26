@@ -1,22 +1,29 @@
 import React from 'react'
 import styles from './Select.module.css'
 
-const Select = ({ options, value, onChange, placeholder = 'Select' }) => (
-  <select
-    value={value}
-    onChange={onChange}
-    className={styles.select}
-  >
-    <option value="">{placeholder}</option>
-    {options.map((option) => (
+const Select = ({ options, value, onChange, placeholder }) => (
+  <div className={styles.selectContainer}>
+    <select
+      className={styles.select}
+      value={value}
+      onChange={onChange}
+    >
       <option
-        key={option.value}
-        value={option.value}
+        value=""
+        disabled
       >
-        {option.label}
+        {placeholder}
       </option>
-    ))}
-  </select>
+      {options.map((option) => (
+        <option
+          key={option.value}
+          value={option.value}
+        >
+          {option.label}
+        </option>
+      ))}
+    </select>
+  </div>
 )
 
 export default Select

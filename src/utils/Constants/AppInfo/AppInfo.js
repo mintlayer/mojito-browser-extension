@@ -99,7 +99,7 @@ const WALLETS_NAVIGATION = [
       },
       {
         id: '2.5',
-        name: 'Custom Output',
+        name: 'Custom Transaction',
         link: '/wallet/Mintlayer/custom-output',
       },
     ],

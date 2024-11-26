@@ -1,12 +1,16 @@
-.select {
+.selectContainer {
   position: relative;
-  padding: 14px 22px 14px 22px;
+  width: fit-content;
+}
+
+.select {
+  padding: 14px 36px 14px 22px;
   border-radius: var(--round-size-big);
   font-size: 16px;
   appearance: none;
 }
 
-.customSelect::after {
+.selectContainer::after {
   content: '';
   position: absolute;
   top: 50%;

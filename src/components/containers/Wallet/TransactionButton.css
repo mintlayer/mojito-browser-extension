@@ -23,7 +23,13 @@
   display: flex;
   width: fit-content;
   flex-direction: column;
+  text-align: center;
   align-items: center;
+
+  @media screen and (min-width: 801px) {
+    min-width: 70px;
+    max-width: 75px;
+  }
 }
 
 .transaction-item:hover .transaction-button-title {
@@ -31,7 +37,7 @@
 }
 
 .transaction-item:not(:last-child) {
-  margin-right: 15px;
+  margin-right: 12px;
 }
 
 .button-transaction-up svg {

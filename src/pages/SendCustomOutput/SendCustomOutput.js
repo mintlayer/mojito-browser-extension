@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { Select, Textarea, Button, Error } from '@BasicComponents'
+import { Select, Textarea, Button, Error, Loader } from '@BasicComponents'
 import { TextField } from '@ComposedComponents'
 import {
   validateOutput,
@@ -51,16 +51,6 @@ const SendCustomOutput = () => {
     { value: 'DataDeposit', label: 'DataDeposit' },
   ]
 
-  useEffect(() => {
-    // add style to body
-    document.body.style.height = 'auto'
-    document.documentElement.style.overflow = 'auto'
-    return () => {
-      document.body.style.height = '600px'
-      document.documentElement.style.overflow = 'hidden'
-    }
-  }, [])
-
   const [customOutput, setCustomOutput] = useState('')
   const [fee, setFee] = useState('')
   const [error, setError] = useState('')
@@ -83,7 +73,10 @@ const SendCustomOutput = () => {
   }
 
   const handleValidate = async () => {
-    // validate output
+    if (!customOutput) {
+      setError('Please enter a custom output')
+      return
+    }
     if (!validateOutput(customOutput)) {
       setError('Invalid output')
       return
@@ -103,7 +96,7 @@ const SendCustomOutput = () => {
     }
 
     if (parsedOutput.requiredFields) {
-      // TODO go through the required fields and check and add info
+      console.log('required fields', parsedOutput.requiredFields)
     }
 
     const adjustedOutput = JSON.parse(customOutput)
@@ -154,6 +147,7 @@ const SendCustomOutput = () => {
 
     const new_fee = Math.ceil(feerate * (transactionSize / 1000))
     setFee(new_fee)
+    setError('')
   }
 
   const handleBuildTransaction = async (ev) => {
@@ -325,7 +319,7 @@ const SendCustomOutput = () => {
   }
 
   return (
-    <VerticalGroup bigGap>
+    <div className={styles.customOutputWrapper}>
       <VerticalGroup midGap>
         <div className={styles.balance}>Balance: {mlBalance} TML</div>
         <div className={styles.templateSelectorWrapper}>
@@ -378,7 +372,6 @@ const SendCustomOutput = () => {
             />
           </div>
         </div>
-        {error && <Error error={error} />}
         <div className={styles.validationBox}>
           <Button
             onClickHandle={handleValidate}
@@ -387,6 +380,7 @@ const SendCustomOutput = () => {
             Validate and augment with inputs/outputs
           </Button>
         </div>
+        {error && <Error error={error} />}
       </VerticalGroup>
       <div className={styles.transactionPreview}>
         <div className={styles.transactionPreviewHeader}>
@@ -423,7 +417,7 @@ const SendCustomOutput = () => {
             />{' '}
             <span className={styles.coinType}>{coinType}</span>
           </div>
-          <div>
+          <div className={styles.password}>
             <TextField
               label="Enter your password:"
               placeHolder="Password"
@@ -441,10 +435,20 @@ const SendCustomOutput = () => {
       </div>
       <div className={styles.transactionHexPreview}>
         <div className={styles.transactionHexPreviewInputs}>
-          <Button onClickHandle={handleBuildTransaction}>
-            Build transaction
+          <Button
+            onClickHandle={handleBuildTransaction}
+            disabled={loading}
+            extraStyleClasses={[styles.buildTransactionButton]}
+          >
+            {loading ? <Loader /> : 'Build transaction'}
           </Button>
-          <Button onClickHandle={handleBroadcast}>Broadcast transaction</Button>
+          <Button
+            onClickHandle={handleBroadcast}
+            disabled={loading}
+            extraStyleClasses={[styles.broadcastTransactionButton]}
+          >
+            {loading ? <Loader /> : 'Broadcast transaction'}
+          </Button>
         </div>
         {transactionHex && (
           <div className={styles.transactionHexPreviewResult}>
@@ -452,7 +456,7 @@ const SendCustomOutput = () => {
           </div>
         )}
       </div>
-    </VerticalGroup>
+    </div>
   )
 }
 

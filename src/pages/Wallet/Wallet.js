@@ -19,6 +19,7 @@ import './Wallet.css'
 import { StakingWarning } from '../../components/composed/StakingWarning/StakingWarning'
 
 const ActionButtons = ({ data }) => {
+  const isExtendedView = useMediaQuery('(min-width: 801px)')
   return (
     <div className="transactions-buttons-wrapper">
       {data.walletType.name === 'Mintlayer' && (
@@ -34,6 +35,13 @@ const ActionButtons = ({ data }) => {
             mode={'sign'}
             onClick={data.setOpenSignPage}
           />
+          {isExtendedView && (
+            <Wallet.TransactionButton
+              title={'Custom Transaction'}
+              mode={'custom'}
+              onClick={data.setOpenCustomOutputPage}
+            />
+          )}
         </>
       )}
       <Wallet.TransactionButton
@@ -104,6 +112,9 @@ const WalletPage = () => {
   const setOpenSignPage = () => {
     navigate('/wallet/' + walletType.name + '/sign-message')
   }
+  const setOpenCustomOutputPage = () => {
+    navigate('/wallet/' + walletType.name + '/custom-output')
+  }
 
   const { exchangeRate } = useExchangeRates(
     walletType.ticker.toLowerCase(),
@@ -125,6 +136,7 @@ const WalletPage = () => {
     setOpenTransactionForm,
     setOpenShowAddress,
     setOpenSignPage,
+    setOpenCustomOutputPage,
     openShowAddress,
     walletAddress,
     unusedAddresses,
