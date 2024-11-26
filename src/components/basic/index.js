@@ -14,6 +14,7 @@ import SkeletonLoader from './SkeletonLoader/SkeletonLoader'
 import Tooltip from './Tooltip/Tooltip'
 import Textarea from './Textarea/Textarea'
 import Select from './Select/Select'
+import Loader from './Loader/Loader'
 
 export {
   Arc,
@@ -32,4 +33,5 @@ export {
   Tooltip,
   Textarea,
   Select,
+  Loader,
 }
