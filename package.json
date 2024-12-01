@@ -43,7 +43,7 @@
     "pretty-quick": "pretty-quick",
     "pretty-quick-check": "pretty-quick --check",
     "pretty-quick-check-branch": "pretty-quick --check --branch main",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "eslintConfig": {
     "ignorePatterns": [
@@ -160,12 +160,12 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
-    "@playwright/test": "^1.48.2",
+    "@playwright/test": "^1.49.0",
     "@svgr/webpack": "^8.1.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
-    "@types/node": "^22.9.0",
+    "@types/node": "^22.10.1",
     "@types/tiny-secp256k1": "^2.0.1",
     "dotenv-webpack": "^8.1.0",
     "ecpair": "^2.1.0",
@@ -173,10 +173,10 @@
     "fake-indexeddb": "^6.0.0",
     "gh-pages": "^6.2.0",
     "http-server": "^14.1.1",
-    "husky": "^9.1.6",
+    "husky": "^9.1.7",
     "indexeddb-export-import": "^2.1.5",
     "jest-canvas-mock": "^2.5.2",
-    "prettier": "^3.3.3",
+    "prettier": "^3.4.1",
     "pretty-quick": "^4.0.0",
     "react-app-rewire-alias": "^1.1.7",
     "react-scripts": "5.0.1",
