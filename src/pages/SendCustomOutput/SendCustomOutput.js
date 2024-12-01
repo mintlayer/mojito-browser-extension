@@ -74,7 +74,7 @@ const SendCustomOutput = () => {
 
   const handleValidate = async () => {
     if (!customOutput) {
-      setError('Please enter a custom output')
+      setError('Please select a custom output template')
       return
     }
     if (!validateOutput(customOutput)) {

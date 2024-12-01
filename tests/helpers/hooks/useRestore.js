@@ -4,7 +4,7 @@ import { receiverData, senderData } from '../../data/index.js'
 export const useRestoreWallet = async (page, walletType) => {
   const wallet = walletType === 'sender' ? senderData : receiverData
   const walletName = wallet.WALLET_NAME
-  await page.goto('http://127.0.0.1:8000')
+  await page.goto('http://localhost:8000/')
   await page.getByRole('button', { name: 'Restore' }).click()
   await page.getByRole('button', { name: 'Seed Phrase' }).click()
   await page.fill('input[placeholder="Wallet Name"]', wallet.WALLET_NAME)
