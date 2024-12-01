@@ -1,5 +1,6 @@
 .v-group {
   position: relative;
+  min-height: max-content;
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
