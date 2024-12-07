@@ -43,7 +43,7 @@ const CreateAccount = ({
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
   const [accountEntropyValid, setAccountEntropyValid] = useState(false)
-  const [accountWalletValid, setAccountWalletValid] = useState(false)
+  const [accountWalletValid, setAccountWalletValid] = useState(true)
 
   const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
@@ -53,7 +53,7 @@ const CreateAccount = ({
   const [accountNamePristinity, setAccountNamePristinity] = useState(true)
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
-  const [selectedWallets, setSelectedWallets] = useState([])
+  const [selectedWallets, setSelectedWallets] = useState(['btc', 'ml'])
 
   const navigate = useNavigate()
 

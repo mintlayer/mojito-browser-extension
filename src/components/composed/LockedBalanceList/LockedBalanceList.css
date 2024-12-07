@@ -8,6 +8,10 @@
   align-items: flex-start;
   height: 465px;
   overflow: auto;
+
+  @media screen and (min-width: 801px) {
+    flex-grow: 1;
+  }
 }
 
 .locked-title {

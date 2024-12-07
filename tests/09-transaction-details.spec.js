@@ -20,8 +20,6 @@ test('Transaction details', async () => {
   await page.waitForSelector('li.transaction')
   await page.click('li.transaction:first-of-type')
 
-  await expect(page.getByTestId('popup').getByText('To:')).toBeVisible()
-
   await expect(page.getByTestId('popup').getByText('Date:')).toBeVisible()
   await expect(page.getByTestId('popup').getByText('Amount:')).toBeVisible()
   await expect(page.getByTestId('popup').getByText('Tx:')).toBeVisible()

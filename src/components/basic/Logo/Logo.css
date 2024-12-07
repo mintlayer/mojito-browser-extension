@@ -1,15 +1,14 @@
 .logoContainer {
   position: relative;
   display: flex;
-  margin: 0 auto;
   justify-content: space-between;
   line-height: 60px;
-  width: 205px;
+  width: 200px;
 }
 
 .logoContainer .logo {
-  width: 60px;
-  height: 60px;
+  width: 55px;
+  height: 55px;
   margin: 0;
 }
 

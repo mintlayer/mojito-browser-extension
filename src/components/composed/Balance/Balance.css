@@ -4,6 +4,25 @@
   width: fit-content;
   padding: 5px 5px 10px 5px;
   font-weight: 600;
+
+  @media screen and (min-width: 801px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+.wallet-logo-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.wallet-logo-wrapper h3 {
+  font-size: 25px;
+  margin-left: 10px;
+
+  @media screen and (max-width: 801px) {
+    display: none;
+  }
 }
 
 .balance-wrapper svg {
@@ -18,6 +37,12 @@
   position: relative;
   overflow: visible;
   width: 280px;
+
+  @media screen and (min-width: 801px) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
 }
 
 .balance-btc {

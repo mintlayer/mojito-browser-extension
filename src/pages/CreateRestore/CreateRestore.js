@@ -11,8 +11,10 @@ import { LocalStorageService } from '@Storage'
 const CreateRestorePage = () => {
   const { isExtended } = useContext(AccountContext)
   const navigate = useNavigate()
-  const devLocation = ':300'
-  const isDevMode = window.location.href.includes(devLocation)
+  const devLocations = [':300', ':800']
+  const isDevMode = devLocations.some((location) =>
+    window.location.href.includes(location),
+  )
 
   const expandHandler = (dest) => {
     window.open(
@@ -42,7 +44,10 @@ const CreateRestorePage = () => {
   }
 
   return (
-    <div data-testid="create-restore">
+    <div
+      data-testid="create-restore"
+      className="create-restore"
+    >
       <h2 className="center-text title-create">
         Your Mintlayer, right in your browser.
       </h2>

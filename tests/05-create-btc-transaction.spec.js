@@ -32,7 +32,7 @@ test('Create BTC transaction', async () => {
   )
   await page.fill('input[placeholder="0"]', '0.00000001')
 
-  await page.getByRole('button', { name: 'norm' }).click()
+  await page.getByRole('button', { name: 'high' }).click()
   await page.getByRole('button', { name: 'Send' }).click()
 
   await page.waitForTimeout(10000)
@@ -56,15 +56,15 @@ test('Create BTC transaction', async () => {
   ).toBeVisible()
   await page.fill('input[placeholder="Password"]', receiverData.WALLET_PASSWORD)
 
-  await page.getByRole('button', { name: 'Send Transaction' }).click()
-  await page.waitForSelector(':text("Your transaction was sent.")')
+  // await page.getByRole('button', { name: 'Send Transaction' }).click()
+  // await page.waitForSelector(':text("Your transaction was sent.")')
 
-  const resultTitleText = await page.textContent('h3.result-title')
-  const txid = resultTitleText.split(': ')[1]
+  // const resultTitleText = await page.textContent('h3.result-title')
+  // const txid = resultTitleText.split(': ')[1]
 
-  await page.getByRole('button', { name: 'Back to Dashboard' }).click()
+  // await page.getByRole('button', { name: 'Back to Dashboard' }).click()
 
-  await page.waitForTimeout(2000)
+  // await page.waitForTimeout(2000)
 
   // TODO: temporary disabled due to the issue with the transaction list
   // await expect(

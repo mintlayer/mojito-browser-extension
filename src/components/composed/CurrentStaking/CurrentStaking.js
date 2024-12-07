@@ -68,7 +68,7 @@ const CurrentStaking = ({ addressList }) => {
   } decommissioned.`
 
   return (
-    <VerticalGroup>
+    <VerticalGroup grow>
       <div className="staking-title-wrapper">
         <div className="main-info">
           <div className="guide-wraper">

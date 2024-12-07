@@ -25,9 +25,10 @@ const Textarea = ({
       return ''
     }
   }
-  const onChangeHandler = ({ target }) => {
-    onChange && onChange({ target })
-    setTextareaValue(target.value)
+  const onChangeHandler = (event) => {
+    const newValue = event.target.value
+    setTextareaValue(newValue)
+    onChange && onChange({ target: { value: newValue } })
     getExtraClasses()
   }
 

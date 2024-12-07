@@ -1,7 +1,10 @@
 const { expect } = require('@playwright/test')
 
 export const useSetTestnet = async (page) => {
-  await page.click('button.settings')
+  await page.click('button.header-menu-button')
+  const settings = page.getByText('Settings', { selector: 'li' })
+  await settings.click()
+
   await page.click('strong:text("testnet switcher")')
   await page.click('button.backButton')
 

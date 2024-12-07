@@ -14,8 +14,12 @@
   width: fit-content;
 }
 
+.btn svg {
+  max-height: 40px;
+}
+
 .btn:hover svg path {
-  stroke: rgb(var(--color-green));
+  fill: rgb(var(--color-green));
 }
 
 .btn:disabled,

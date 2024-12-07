@@ -76,7 +76,7 @@ const RestoreAccountMnemonic = ({
 
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
-  const [accountWalletValid, setAccountWalletValid] = useState(false)
+  const [accountWalletValid, setAccountWalletValid] = useState(true)
 
   const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
@@ -87,7 +87,7 @@ const RestoreAccountMnemonic = ({
     useState(true)
 
   const [btcAddressTypeValue, setBtcAddressTypeValue] = useState(undefined)
-  const [selectedWallets, setSelectedWallets] = useState([])
+  const [selectedWallets, setSelectedWallets] = useState(['btc', 'ml'])
 
   const btcAddressType = btcAddressTypeValue
     ? btcAddressTypeValue.value

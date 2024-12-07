@@ -3,10 +3,16 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 7px;
+
+  @media screen and (min-width: 801px) {
+    padding: 10px;
+    flex-grow: 1;
+  }
 }
 
 .crypto-item {
   display: flex;
+  justify-content: space-between;
   padding: 0.75rem 1.875rem;
   margin-bottom: 0.75rem;
   cursor: pointer;
@@ -14,6 +20,10 @@
   background-color: rgb(var(--color-gray));
   border: 1px solid rgba(var(--color-light-green), 0.2);
   border-radius: 20px;
+}
+
+.logo-wrapper {
+  display: flex;
 }
 
 .crypto-item:last-child {
