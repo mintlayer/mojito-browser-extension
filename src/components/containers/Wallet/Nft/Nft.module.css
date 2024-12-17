@@ -1,0 +1,74 @@
+.transaction {
+  display: flex;
+  align-items: center;
+  padding: 12px 30px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.2);
+  word-break: break-all;
+  cursor: pointer;
+  justify-content: flex-end;
+  transition: all 0.3s ease-in-out;
+}
+
+.transactionLogoType {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  min-width: 72px;
+  height: 72px;
+  background: rgb(var(--color-dim-green));
+  border-radius: 50%;
+  position: relative;
+  z-index: 5;
+}
+
+.transactionLogoTypeInfo {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgb(var(--color-dark-gray));
+}
+
+.transactionDetail {
+  margin-left: 30px;
+  flex-grow: 1;
+}
+
+.transactionDateAmount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.transactionIdInfo {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  word-break: break-word;
+}
+
+.transactionId {
+  font-size: 1.7rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  word-break: break-all;
+}
+
+.transactionDate,
+.transactionAmount {
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.transactionDate span,
+.transactionAmount span {
+  font-weight: 600;
+}
+
+.transaction:hover {
+  transform: scale(1.02);
+  border: 1px solid rgba(var(--color-light-green), 0.5);
+}
