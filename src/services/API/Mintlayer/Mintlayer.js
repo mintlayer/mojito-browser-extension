@@ -26,7 +26,7 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
     const result = await request(url, {
       method,
       body,
-      signal: AbortSignal.timeout(20000),
+      // signal: AbortSignal.timeout(20000),
     })
     if (!result.ok) {
       const error = await result.json()

@@ -10,6 +10,7 @@ const useMlWalletInfo = (addresses, token) => {
     mlDelegationList,
     mlDelegationsBalance,
     utxos,
+    nftUtxos,
     fetchAllData,
     fetchDelegations,
     unusedAddresses,
@@ -20,6 +21,7 @@ const useMlWalletInfo = (addresses, token) => {
     fetchingUtxos,
     fetchingTransactions,
     fetchingDelegations,
+    fetchingTokens,
   } = useContext(MintlayerContext)
 
   // const nativecoins
@@ -46,6 +48,7 @@ const useMlWalletInfo = (addresses, token) => {
     mlDelegationsBalance,
     tokenBalances,
     utxos,
+    nftUtxos,
     fetchAllData,
     fetchDelegations,
     unusedAddresses,
@@ -56,6 +59,7 @@ const useMlWalletInfo = (addresses, token) => {
     fetchingUtxos,
     fetchingTransactions,
     fetchingDelegations,
+    fetchingTokens,
   }
 }
 
