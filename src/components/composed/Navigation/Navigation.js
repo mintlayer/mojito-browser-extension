@@ -11,7 +11,7 @@ import { ReactComponent as HomeImg } from '@Assets/images/icon-home.svg'
 import { ReactComponent as WalletIcon } from '@Assets/images/icon-wallet.svg'
 import { ReactComponent as TriangleIcon } from '@Assets/images/icon-triangle.svg'
 
-import { AccountContext } from '@Contexts'
+import { AccountContext, MintlayerContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import NestedNavigation from './NestedNavigation'
@@ -31,6 +31,7 @@ const Navigation = ({ customNavigation }) => {
     sliderMenuOpen,
     setSliderMenuOpen,
   } = useContext(AccountContext)
+  const { setAllDataFetching } = useContext(MintlayerContext)
 
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
@@ -73,6 +74,7 @@ const Navigation = ({ customNavigation }) => {
   }
 
   const logoutHandler = () => {
+    setAllDataFetching(false)
     logout()
     navigate('/')
     toggleSliderMenu()

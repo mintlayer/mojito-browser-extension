@@ -34,6 +34,11 @@ const ActionButtons = ({ data }) => {
             mode={'sign'}
             onClick={data.setOpenSignPage}
           />
+          <Wallet.TransactionButton
+            title={'Nft'}
+            mode={'nft'}
+            onClick={data.setOpenNftPage}
+          />
         </>
       )}
       <Wallet.TransactionButton
@@ -62,6 +67,7 @@ const WalletPage = () => {
   const navigate = useNavigate()
 
   const { coinType } = useParams()
+  console.log('coinType', coinType)
   const walletType = {
     name: coinType,
     ticker: coinType === 'Bitcoin' ? 'BTC' : 'ML',
@@ -104,6 +110,9 @@ const WalletPage = () => {
   const setOpenSignPage = () => {
     navigate('/wallet/' + walletType.name + '/sign-message')
   }
+  const setOpenNftPage = () => {
+    navigate('/wallet/' + walletType.name + '/nft')
+  }
 
   const { exchangeRate } = useExchangeRates(
     walletType.ticker.toLowerCase(),
@@ -115,7 +124,7 @@ const WalletPage = () => {
 
   const walletBalance = balance
   const walletBalanceLocked = lockedBalance || 0
-  const walletAddress = walletType.name === 'Mintlayer' ? mlAddress : btcAddress
+  const walletAddress = walletType.name === 'Bitocin' ? btcAddress : mlAddress
   const walletTransactionList = transactions
 
   const actionButtonData = {
@@ -125,6 +134,7 @@ const WalletPage = () => {
     setOpenTransactionForm,
     setOpenShowAddress,
     setOpenSignPage,
+    setOpenNftPage,
     openShowAddress,
     walletAddress,
     unusedAddresses,
