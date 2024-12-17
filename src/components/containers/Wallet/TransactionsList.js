@@ -1,7 +1,7 @@
 import { useContext } from 'react'
 import Transaction from './Transaction'
 import { MintlayerContext } from '@Contexts'
-import { SkeletonLoader } from '@BasicComponents'
+import { SkeletonLoader, EmptyListMessage } from '@BasicComponents'
 import './TransactionsList.css'
 
 const TransactionsList = ({ transactionsList, getConfirmations }) => {
@@ -15,14 +15,7 @@ const TransactionsList = ({ transactionsList, getConfirmations }) => {
 
   const renderTransactions = () => {
     if (!transactionsList || !transactionsList.length) {
-      return (
-        <li
-          className="empty-list"
-          data-testid="transaction"
-        >
-          No transactions in this wallet
-        </li>
-      )
+      return <EmptyListMessage message={'No transactions in this wallet'} />
     }
 
     return transactionsList.map((transaction, index) => (

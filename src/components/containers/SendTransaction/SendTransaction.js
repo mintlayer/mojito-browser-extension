@@ -248,7 +248,8 @@ const SendTransaction = ({
   useEffect(() => {
     if (!isBitcoinWallet) setFeeValidity(true)
     if (
-      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+      (transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION ||
+        transactionMode === AppInfo.ML_TRANSACTION_MODES.NFT) &&
       walletType.name === 'Mintlayer'
     ) {
       setAmountValidity(true)
@@ -337,6 +338,16 @@ const SendTransaction = ({
         </div>
       ) : (
         <>
+          {transactionMode === AppInfo.ML_TRANSACTION_MODES.NFT && (
+            <div className="nft-transaction-info">
+              <h2>Nft Id: </h2>
+              <p>
+                {transactionData.tokenId
+                  ? transactionData.tokenId
+                  : 'No NFT id'}
+              </p>
+            </div>
+          )}
           <AddressField
             addressChanged={addressChanged}
             preEnterAddress={preEnterAddress}
@@ -346,18 +357,19 @@ const SendTransaction = ({
             walletType={walletType}
           />
 
-          {transactionMode !== AppInfo.ML_TRANSACTION_MODES.DELEGATION && (
-            <AmountField
-              transactionData={transactionData}
-              amountChanged={amountChanged}
-              exchangeRate={exchangeRate}
-              maxValueInToken={maxValueInToken}
-              setAmountValidity={setAmountValidity}
-              errorMessage={passErrorMessage}
-              totalFeeInCrypto={totalFeeCrypto}
-              transactionMode={transactionMode}
-            />
-          )}
+          {transactionMode !== AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+            transactionMode !== AppInfo.ML_TRANSACTION_MODES.NFT && (
+              <AmountField
+                transactionData={transactionData}
+                amountChanged={amountChanged}
+                exchangeRate={exchangeRate}
+                maxValueInToken={maxValueInToken}
+                setAmountValidity={setAmountValidity}
+                errorMessage={passErrorMessage}
+                totalFeeInCrypto={totalFeeCrypto}
+                transactionMode={transactionMode}
+              />
+            )}
 
           {/* TODO style error from transaction */}
           <FeesField

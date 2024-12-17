@@ -11,7 +11,7 @@ import {
   useOneDayAgoExchangeRates,
 } from '@Hooks'
 import { Dashboard } from '@ContainerComponents'
-import { NumbersHelper } from '@Helpers'
+import { NumbersHelper, ObjectHelpers } from '@Helpers'
 
 import './Dashboard.css'
 import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
@@ -34,6 +34,7 @@ const DashboardPage = () => {
     balance: mlBalance,
     tokenBalances,
     fetchingBalances: mlFetchingBalances,
+    fetchingTokens: mlFetchingTokens,
   } = useMlWalletInfo()
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
@@ -148,6 +149,8 @@ const DashboardPage = () => {
       currentMlAddresses.mlReceivingAddresses &&
       currentMlAddresses.mlReceivingAddresses[0]
 
+    const isTokensEmpty = ObjectHelpers.isObjEmpty(tokenBalances)
+
     if (mlAddress) {
       const change24h =
         network === AppInfo.NETWORK_TYPES.MAINNET
@@ -166,6 +169,20 @@ const DashboardPage = () => {
       )
     }
 
+    if (mlFetchingTokens && isTokensEmpty) {
+      addCrypto(
+        'Token',
+        'Token',
+        0,
+        undefined,
+        0,
+        [],
+        'mintlayer',
+        'Mintlayer',
+        mlFetchingTokens,
+      )
+    }
+
     if (tokenBalances) {
       Object.keys(tokenBalances).forEach((token) => {
         addCrypto(
@@ -177,7 +194,7 @@ const DashboardPage = () => {
           [],
           'mintlayer',
           token,
-          mlFetchingBalances,
+          mlFetchingTokens,
         )
       })
     }
