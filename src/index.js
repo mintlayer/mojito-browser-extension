@@ -142,12 +142,11 @@ const App = () => {
             })
             return
           }
-          // change route to staking page
-          navigate('/wallet/Mintlayer/staking/create-delegation', {
+          // change route to custom output page
+          navigate('/wallet/Mintlayer/custom-output', {
             state: {
-              action: 'createDelegate',
-              pool_id: request.data.pool_id,
-              referral_code: request.data.referral_code || '',
+              action: 'customOutput',
+              output: request.data.output,
             },
           })
         }

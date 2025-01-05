@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { Select, Textarea, Button, Error, Loader } from '@BasicComponents'
 import { TextField } from '@ComposedComponents'
 import {
@@ -22,8 +22,10 @@ import {
 
 import styles from './SendCustomOutput.module.css'
 import { VerticalGroup } from '@LayoutComponents'
+import { useLocation } from 'react-router-dom'
 
 const SendCustomOutput = () => {
+  const { state } = useLocation()
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const [selectedTemplate, setSelectedTemplate] = useState('')
@@ -44,19 +46,17 @@ const SendCustomOutput = () => {
   } = useMlWalletInfo(currentMlAddresses)
 
   const templateOptions = [
-    { value: '', label: 'Select' },
     { value: 'Transfer', label: 'Transfer' },
     { value: 'IssueFungibleToken', label: 'IssueFungibleToken' },
     { value: 'IssueNft', label: 'IssueNft' },
     { value: 'DataDeposit', label: 'DataDeposit' },
   ]
 
-  const [customOutput, setCustomOutput] = useState('')
+  const [customOutputs, setCustomOutputs] = useState([])
   const [fee, setFee] = useState('')
   const [error, setError] = useState('')
   const [inputs, setInputs] = useState([])
   const [outputs, setOutputs] = useState([])
-  const [fields, setFields] = useState([])
   const [transactionHex, setTransactionHex] = useState('')
   const [passValidity, setPassValidity] = useState(true)
   const [passPristinity, setPassPristinity] = useState(true)
@@ -67,22 +67,55 @@ const SendCustomOutput = () => {
     setPass(value)
   }
 
-  const handleOutputChange = (e) => {
+  useEffect(() => {
+    if (state && state.output) {
+      // check if array
+      if (Array.isArray(state.output)) {
+        setCustomOutputs(state.output)
+      } else {
+        setCustomOutputs([state.output])
+      }
+    }
+  }, [state])
+
+  const enableAugmentButton = customOutputs.length > 0
+
+  const getFields = (output) => {
+    const allFields = getInfoAboutOutput(output).allFields
+    console.log('allFields', allFields)
+    const fields = Object.keys(allFields).map((key) => {
+      return {
+        id: key,
+        label: key,
+        value: allFields[key],
+      }
+    })
+    return fields
+  }
+
+  const handleOutputChange = (index) => (e) => {
     const text = e.target.value
-    setCustomOutput(text)
+    const outputs = customOutputs
+    try {
+      outputs[index] = JSON.parse(text)
+      setCustomOutputs([...outputs])
+    } catch (e) {
+      // TODO: handle error
+    }
   }
 
   const handleValidate = async () => {
-    if (!customOutput) {
+    if (!customOutputs) {
       setError('Please select a custom output template')
       return
     }
-    if (!validateOutput(customOutput)) {
+    if (!validateOutput(customOutputs)) {
       setError('Invalid output')
       return
     }
 
     // parse output
+    const customOutput = customOutputs[0]
     const parsedOutput = getInfoAboutOutput(customOutput)
     let amountToSend = 0
 
@@ -99,7 +132,7 @@ const SendCustomOutput = () => {
       console.log('required fields', parsedOutput.requiredFields)
     }
 
-    const adjustedOutput = JSON.parse(customOutput)
+    const adjustedOutput = customOutput
 
     const unusedChangeAddress = unusedAddresses.change
 
@@ -213,7 +246,6 @@ const SendCustomOutput = () => {
   }
 
   const handleBroadcast = async () => {
-    // TODO broadcast transaction
     const result = await Mintlayer.broadcastTransaction(transactionHex)
 
     const account = LocalStorageService.getItem('unlockedAccount')
@@ -247,40 +279,36 @@ const SendCustomOutput = () => {
   }
 
   const handleInsertTemplate = () => {
-    if (
-      customOutput?.length > 0 &&
-      !window.confirm(
-        'Are you sure you want to insert a template? It will overwrite the current output',
-      )
-    ) {
-      return
-    }
-    const template = JSON.stringify(getTemplate(selectedTemplate), null, 2)
-    setCustomOutput(template)
+    const template = getTemplate(selectedTemplate)
+    setCustomOutputs([...customOutputs, template])
+    setSelectedTemplate('')
   }
 
   const handleTogglePreview = () => {
     // TODO toggle preview
   }
+  //
+  // useEffect(() => {
+  //   if (customOutputs) {
+  //     const customOutput = JSON.parse(customOutputs)[0]
+  //     const allFields = getInfoAboutOutput(customOutput).allFields
+  //
+  //     const fields = Object.keys(allFields).map((key) => {
+  //       return {
+  //         id: key,
+  //         label: key,
+  //         value: allFields[key],
+  //       }
+  //     })
+  //
+  //     setFields(fields)
+  //   }
+  // }, [customOutputs])
 
-  useEffect(() => {
-    if (customOutput) {
-      const allFields = getInfoAboutOutput(customOutput).allFields
+  const handleUpdateField = (index, id) => (event) => {
+    const datas = customOutputs
 
-      const fields = Object.keys(allFields).map((key) => {
-        return {
-          id: key,
-          label: key,
-          value: allFields[key],
-        }
-      })
-
-      setFields(fields)
-    }
-  }, [customOutput])
-
-  const handleUpdateField = (id) => (event) => {
-    const data = JSON.parse(customOutput)
+    const data = datas[index]
 
     if (id === 'value.amount.decimal') {
       data['value']['amount']['decimal'] = event.target.value
@@ -315,7 +343,12 @@ const SendCustomOutput = () => {
       data[id] = event.target.value
     }
 
-    setCustomOutput(JSON.stringify(data, null, 2))
+    setCustomOutputs([...datas])
+  }
+
+  const handleOutputRemove = (index) => () => {
+    const newOutputs = customOutputs.filter((_, i) => i !== index)
+    setCustomOutputs(newOutputs)
   }
 
   return (
@@ -323,7 +356,7 @@ const SendCustomOutput = () => {
       <VerticalGroup midGap>
         <div className={styles.balance}>Balance: {mlBalance} TML</div>
         <div className={styles.templateSelectorWrapper}>
-          Select template:
+          Select output:
           <div className={styles.templateSelector}>
             <Select
               options={templateOptions}
@@ -335,49 +368,57 @@ const SendCustomOutput = () => {
               onClickHandle={handleInsertTemplate}
               disabled={loading}
             >
-              Apply
+              Add
             </Button>
           </div>
         </div>
-        <div className={styles.workArea}>
-          <form className={styles.form}>
-            <div>
-              {fields.length <= 0 && <p>Please select a template to start</p>}
-              {fields.map((field) => {
-                return (
-                  <div
-                    className={styles.fieldGroup}
-                    key={field.id}
-                  >
-                    <label>{field.label}</label>
-                    <input
-                      className={styles.customInput}
-                      type="text"
-                      onChange={handleUpdateField(field.id)}
-                      value={field.value}
-                    />
+        <div className={styles.workAreaList}>
+          {customOutputs.map((output, index) => {
+            return (
+              <div className={styles.workArea}>
+                <form className={styles.form}>
+                  <div>
+                    {getFields(output).map((field) => {
+                      return (
+                        <div
+                          className={styles.fieldGroup}
+                          key={field.id}
+                        >
+                          <label>{field.label}</label>
+                          <input
+                            className={styles.customInput}
+                            type="text"
+                            onChange={handleUpdateField(index, field.id)}
+                            value={field.value}
+                          />
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
-            </div>
-          </form>
-          <div className={styles.text}>
-            <Textarea
-              value={customOutput}
-              onChange={handleOutputChange}
-              disabled
-              size={{ cols: 50, rows: 10 }}
-              placeholder="Custom Output"
-              extraClasses={styles.customTextarea}
-            />
-          </div>
+                  <div>
+                    <button onClick={handleOutputRemove(index)}>remove</button>
+                  </div>
+                </form>
+                <div className={styles.text}>
+                  <Textarea
+                    disabled
+                    value={JSON.stringify(output, null, 2)}
+                    onChange={handleOutputChange(index)}
+                    size={{ cols: 50, rows: 10 }}
+                    placeholder="Custom Output"
+                    extraClasses={styles.customTextarea}
+                  />
+                </div>
+              </div>
+            )
+          })}
         </div>
         <div className={styles.validationBox}>
           <Button
             onClickHandle={handleValidate}
-            disabled={loading}
+            disabled={!enableAugmentButton}
           >
-            Validate and augment with inputs/outputs
+            Augment and preview inputs/outputs
           </Button>
         </div>
         {error && <Error error={error} />}
@@ -388,10 +429,12 @@ const SendCustomOutput = () => {
           <Button
             onClickHandle={handleTogglePreview}
             extraStyleClasses={[styles.transactionPreviewButton]}
-            disabled={loading}
           >
             switch to explorer view
           </Button>
+        </div>
+        <div className={styles.fee}>
+          Minimum fee: {fee / 1e11} {coinType}
         </div>
         <div className={styles.augmentedData}>
           <div className={styles.input}>
@@ -404,19 +447,8 @@ const SendCustomOutput = () => {
           </div>
         </div>
       </div>
-      <div className={styles.feePassword}>
-        <div className={styles.passwordFeeInputsWrapper}>
-          <div className={styles.fee}>
-            <TextField
-              label="Fee:"
-              readonly
-              value={fee / 1e11}
-              bigGap={false}
-              extraStyleClasses={[styles.feeInput]}
-              validity={true}
-            />{' '}
-            <span className={styles.coinType}>{coinType}</span>
-          </div>
+      <div>
+        <div>
           <div className={styles.password}>
             <TextField
               label="Enter your password:"
@@ -440,14 +472,7 @@ const SendCustomOutput = () => {
             disabled={loading}
             extraStyleClasses={[styles.buildTransactionButton]}
           >
-            {loading ? <Loader /> : 'Build transaction'}
-          </Button>
-          <Button
-            onClickHandle={handleBroadcast}
-            disabled={loading}
-            extraStyleClasses={[styles.broadcastTransactionButton]}
-          >
-            {loading ? <Loader /> : 'Broadcast transaction'}
+            {loading ? <Loader /> : 'Generate transaction data'}
           </Button>
         </div>
         {transactionHex && (
@@ -455,6 +480,16 @@ const SendCustomOutput = () => {
             {transactionHex}
           </div>
         )}
+
+        <div>
+          <Button
+            onClickHandle={handleBroadcast}
+            disabled={transactionHex === '' || loading}
+            extraStyleClasses={[styles.broadcastTransactionButton]}
+          >
+            {loading ? <Loader /> : 'Broadcast transaction'}
+          </Button>
+        </div>
       </div>
     </div>
   )

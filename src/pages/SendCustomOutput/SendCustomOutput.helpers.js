@@ -4,11 +4,23 @@ export const validateOutput = (output) => {
 }
 
 export const getInfoAboutOutput = (output) => {
-  const parsedOutput = JSON.parse(output)
+  const parsedOutput = output
 
   if (parsedOutput.type === 'Transfer') {
     return {
       type: 'Transfer',
+      requiredFields: ['destination', 'value'],
+      amountToSend: parsedOutput.value.amount.decimal,
+      allFields: {
+        destination: parsedOutput.destination,
+        'value.amount.decimal': parsedOutput.value.amount.decimal,
+      },
+    }
+  }
+
+  if (parsedOutput.type === 'LockThenTransfer') {
+    return {
+      type: 'LockThenTransfer',
       requiredFields: ['destination', 'value'],
       amountToSend: parsedOutput.value.amount.decimal,
       allFields: {
@@ -81,7 +93,7 @@ export const getTemplate = (name) => {
           decimal: '',
         },
       },
-      destination: 'insert destination address',
+      destination: '',
     }
   }
   if (name === 'IssueFungibleToken') {
