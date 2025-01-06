@@ -27,7 +27,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const [lockedBalance, setLockedBalance] = useState(0)
   const [unusedAddresses, setUnusedAddresses] = useState({})
   const [utxos, setUtxos] = useState([])
-  const [nftUtxos, setNftUtxos] = useState([])
+  const [nftData, setNftData] = useState([])
+  const [nftInitialUtxos, setNftInitialUtxos] = useState([])
   const [lockedUtxos, setLockedUtxos] = useState([])
   const [transactions, setTransactions] = useState([])
   const [feerate, setFeerate] = useState(0)
@@ -189,12 +190,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       .map((utxo) => JSON.parse(utxo))
       .filter((utxo) => utxo.length > 0)
 
-    // Extract NFT UTXOs
-    const availableNftUtxos = parsedSpendableUtxos
-      .flatMap((utxo) => [...utxo])
-      .filter((item) => item.utxo.type === 'IssueNft')
-    setFetchingNft(false)
-
     const available = parsedSpendableUtxos
       .flatMap((utxo) => [...utxo])
       .filter((item) => item.utxo.value)
@@ -223,27 +218,72 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       .filter((obj) => obj.utxo.type === 'LockThenTransfer')
 
     setUtxos(availableUtxos)
-    setNftUtxos(availableNftUtxos)
     setLockedUtxos(lockedUtxos)
 
     setFetchingUtxos(false)
 
     // Extract Token balances from UTXOs
     const tokenBalances = ML.getTokenBalances(availableUtxos)
-    const tokensData = await Mintlayer.getTokensData(Object.keys(tokenBalances))
-    const mergedTokensData = Object.keys(tokenBalances).reduce((acc, key) => {
-      acc[key] = {
-        balance: tokenBalances[key],
-        token_info: {
-          number_of_decimals: tokensData[key].number_of_decimals,
-          token_ticker: tokensData[key].token_ticker,
-          token_id: key,
-        },
-      }
-      return acc
-    }, {})
+    const tokenBalancesFiltered = Object.entries(tokenBalances).reduce(
+      (acc, [key, value]) => {
+        if (value > 0) {
+          acc[key] = value
+        }
+        return acc
+      },
+      {},
+    )
 
+    const tokensData = await Mintlayer.getTokensData(
+      Object.keys(tokenBalancesFiltered),
+    )
+    const mergedTokensData = Object.keys(tokenBalancesFiltered).reduce(
+      (acc, key) => {
+        if (tokensData[key] && Object.keys(tokensData[key]).length > 0) {
+          acc[key] = {
+            balance: tokenBalancesFiltered[key],
+            token_info: {
+              number_of_decimals: tokensData[key].number_of_decimals,
+              token_ticker: tokensData[key].token_ticker,
+              token_id: key,
+            },
+          }
+        }
+        return acc
+      },
+      {},
+    )
+
+    // Start fetching NFTs
+    const availableNftInitialUtxos = parsedSpendableUtxos
+      .flatMap((utxo) => [...utxo])
+      .filter((item) => item.utxo.type === 'IssueNft')
+    setNftInitialUtxos(availableNftInitialUtxos)
+
+    const nftData = await Mintlayer.getNftsData(
+      Object.keys(tokenBalancesFiltered),
+    )
+
+    const filteredNftsData = Object.entries(nftData).reduce(
+      (acc, [key, value]) => {
+        if (value && Object.keys(value).length > 0) {
+          acc.push({
+            token_id: key,
+            data: { ...value },
+          })
+        }
+        return acc
+      },
+      [],
+    )
+
+    const initialNftData = availableNftInitialUtxos.map((item) => item.utxo)
+    const mergedNftsData = [...filteredNftsData, ...initialNftData]
+    // End fetching NFTs
+
+    setFetchingNft(false)
     setTokenBalances(mergedTokensData)
+    setNftData(mergedNftsData)
     setFetchingTokens(false)
     setAllDataFetching(false)
   }
@@ -361,7 +401,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     utxos,
     lockedUtxos,
     transactions,
-    nftUtxos,
+    nftData,
+    nftInitialUtxos,
     currentHeight,
     onlineHeight,
     mlDelegationsBalance,
