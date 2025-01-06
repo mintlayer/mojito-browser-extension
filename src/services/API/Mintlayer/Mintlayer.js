@@ -247,14 +247,38 @@ const getTokensData = async (tokens) => {
   tokens.forEach((token) => {
     tokensData[token] = {}
   })
-  const tokensPromises = tokens.map((token) => {
-    return tryServers(`/token/${token}`)
-      .then(JSON.parse)
-      .then((data) => {
-        tokensData[token] = data
-      })
+
+  const tokensPromises = tokens.map(async (token) => {
+    try {
+      const text = await tryServers(`/token/${token}`)
+      const data = await JSON.parse(text)
+      tokensData[token] = data
+    } catch (error) {
+      console.error(`Failed to fetch data for token ${token}:`, error)
+    }
   })
-  await Promise.all(tokensPromises)
+
+  await Promise.allSettled(tokensPromises)
+  return tokensData
+}
+
+const getNftsData = async (tokens) => {
+  const tokensData = {}
+  tokens.forEach((token) => {
+    tokensData[token] = {}
+  })
+
+  const tokensPromises = tokens.map(async (token) => {
+    try {
+      const text = await tryServers(`/nft/${token}`)
+      const data = await JSON.parse(text)
+      tokensData[token] = data
+    } catch (error) {
+      console.error(`Failed to fetch data for token ${token}:`, error)
+    }
+  })
+
+  await Promise.allSettled(tokensPromises)
   return tokensData
 }
 
@@ -351,5 +375,6 @@ export {
   getBlockDataByHash,
   getTokensData,
   getPoolsData,
+  getNftsData,
   MINTLAYER_ENDPOINTS,
 }
