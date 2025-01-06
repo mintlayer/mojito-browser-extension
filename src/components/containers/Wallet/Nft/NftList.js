@@ -8,7 +8,7 @@ import { MintlayerContext } from '@Contexts'
 import styles from './NftList.module.css'
 
 const NftList = () => {
-  const { nftUtxos, fetchingNft } = useContext(MintlayerContext)
+  const { nftData, fetchingNft } = useContext(MintlayerContext)
   const renderSkeletonLoaders = () => (
     <div>
       {Array.from({ length: 6 }, (_, i) => (
@@ -23,18 +23,18 @@ const NftList = () => {
       grow
     >
       <h1 className={styles.title}>Your current Nft</h1>
-      {nftUtxos.length === 0 && !fetchingNft && (
+      {nftData.length === 0 && !fetchingNft && (
         <EmptyListMessage message="No NFT in this wallet" />
       )}
       {fetchingNft ? (
         renderSkeletonLoaders()
       ) : (
         <ul className={styles.list}>
-          {nftUtxos.map((nftTransaction, index) => {
+          {nftData.map((nft, index) => {
             return (
               <Nft
                 key={index}
-                nft={nftTransaction.utxo}
+                nft={nft}
               />
             )
           })}

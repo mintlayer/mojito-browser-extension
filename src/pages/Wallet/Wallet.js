@@ -67,7 +67,6 @@ const WalletPage = () => {
   const navigate = useNavigate()
 
   const { coinType } = useParams()
-  console.log('coinType', coinType)
   const walletType = {
     name: coinType,
     ticker: coinType === 'Bitcoin' ? 'BTC' : 'ML',

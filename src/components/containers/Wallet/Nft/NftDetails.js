@@ -83,7 +83,7 @@ const NftDetails = ({ nft, handleSend }) => {
         />
         <NftDetailsItem
           title={'Address:'}
-          content={nft.destination}
+          content={nft?.destination || 'N/A'}
         />
       </div>
       <CenteredLayout>

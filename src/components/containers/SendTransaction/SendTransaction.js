@@ -119,7 +119,7 @@ const SendTransaction = ({
       setTxErrorMessage('')
       setAskPassword(false)
       if (NC && NC.fetchAllData) {
-        await NC.fetchAllData()
+        await NC.fetchAllData(true)
       }
     } catch (e) {
       if (e.address === '') {
