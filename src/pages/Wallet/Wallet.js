@@ -30,7 +30,7 @@ const ActionButtons = ({ data }) => {
             onClick={data.setOpenStaking}
           />
           <Wallet.TransactionButton
-            title={'Sign/Verify'}
+            title={'Sign'}
             mode={'sign'}
             onClick={data.setOpenSignPage}
           />

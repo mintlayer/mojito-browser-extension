@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@BasicComponents'
 import { TextField } from '@ComposedComponents'
 import { ReactComponent as SuccessImg } from '@Assets/images/icon-success.svg'
+import { ReactComponent as UnsuccessImg } from '@Assets/images/icon-cross.svg'
 
 import { StringHelpers } from '@Helpers'
 
@@ -21,7 +22,8 @@ const SettingsApiItem = ({
 
   const [fieldValidity, setFieldValidity] = useState(false)
   const [fieldPristinity, setFieldPristinity] = useState(true)
-  const [showSubmitFeedback, setShowSubmitFeedback] = useState(false)
+  const [showSubmitSuccess, setShowSubmitSuccess] = useState(false)
+  const [showSubmitUnsuccess, setShowSubmitUnsuccess] = useState(false)
   const [showResetFeedback, setShowResetFeedback] = useState(false)
 
   const checkFieldValidity = (fieldValidity) => {
@@ -35,22 +37,41 @@ const SettingsApiItem = ({
     setInputValue(value)
   }
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
+    if (inputValue.length <= 0) {
+      return
+    }
     setFieldPristinity(false)
-    onSubmitClick(data)
-    setShowSubmitFeedback(true)
+    const responce = await onSubmitClick(data)
+    if (responce) {
+      setShowSubmitSuccess(true)
+    } else {
+      setShowSubmitUnsuccess(true)
+      setFieldValidity(false)
+      setInputValue('Something went wrong. Try again with a valid server')
+    }
   }
 
   const onReset = (data) => {
-    setFieldPristinity(true)
     onResetClick(data)
+    setFieldPristinity(true)
+    setFieldValidity(false)
+    setInputValue('')
+    setShowSubmitSuccess(false)
+    setShowSubmitUnsuccess(false)
     setShowResetFeedback(true)
   }
 
   useEffect(() => {
-    if (showSubmitFeedback) {
+    if (showSubmitSuccess) {
       setTimeout(() => {
-        setShowSubmitFeedback(false)
+        setShowSubmitSuccess(false)
+        setInputValue('')
+      }, 2000)
+    }
+    if (showSubmitUnsuccess) {
+      setTimeout(() => {
+        setShowSubmitUnsuccess(false)
       }, 2000)
     }
     if (showResetFeedback) {
@@ -58,8 +79,10 @@ const SettingsApiItem = ({
         setShowResetFeedback(false)
       }, 2000)
     }
-  }
-  , [showSubmitFeedback, showResetFeedback])
+
+    setFieldPristinity(true)
+    setFieldValidity(false)
+  }, [showSubmitSuccess, showSubmitUnsuccess, showResetFeedback, setInputValue])
 
   const label = `${StringHelpers.capitalizeFirstLetter(walletData.wallet)} ${walletData.networkType} server`
 
@@ -90,8 +113,16 @@ const SettingsApiItem = ({
           extraStyleClasses={submitButtonExtraClasses}
           disabled={!fieldValidity}
         >
-          {showSubmitFeedback ? (
-            <SuccessImg className="success-api-icon" />
+          {showSubmitSuccess ? (
+            <SuccessImg
+              className="success-api-icon"
+              data-testid="success-api-feedback"
+            />
+          ) : showSubmitUnsuccess ? (
+            <UnsuccessImg
+              className="success-api-icon"
+              data-testid="unsuccess-api-feedback"
+            />
           ) : (
             'Submit'
           )}
@@ -107,7 +138,10 @@ const SettingsApiItem = ({
           extraStyleClasses={resetButtonExtraClasses}
         >
           {showResetFeedback ? (
-            <SuccessImg className="success-api-icon" />
+            <SuccessImg
+              className="success-api-icon"
+              data-testid="reset-api-feedback"
+            />
           ) : (
             'Reset'
           )}
@@ -116,6 +150,5 @@ const SettingsApiItem = ({
     </div>
   )
 }
-
 
 export default SettingsApiItem

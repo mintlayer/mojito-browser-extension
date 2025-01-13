@@ -2,8 +2,6 @@ import { EnvVars } from '@Constants'
 import { LocalStorageService } from '@Storage'
 import { AppInfo } from '@Constants'
 
-const prefix = '/api/v2'
-
 const MINTLAYER_ENDPOINTS = {
   GET_ADDRESS_DATA: '/address/:address',
   GET_TRANSACTION_DATA: '/transaction/:txid',
@@ -26,7 +24,6 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
     const result = await request(url, {
       method,
       body,
-      // signal: AbortSignal.timeout(20000),
     })
     if (!result.ok) {
       const error = await result.json()
@@ -95,13 +92,13 @@ const tryServers = async (endpoint, body = null, forceNetwork) => {
   for (let i = 0; i < combinedMintlayerServers.length; i++) {
     try {
       const response = await requestMintlayer(
-        combinedMintlayerServers[i] + prefix + endpoint,
+        combinedMintlayerServers[i] + endpoint,
         body,
       )
       return response
     } catch (error) {
       console.warn(
-        `${combinedMintlayerServers[i] + prefix + endpoint} request failed: `,
+        `${combinedMintlayerServers[i] + endpoint} request failed: `,
         error,
       )
       if (i === combinedMintlayerServers.length - 1) {

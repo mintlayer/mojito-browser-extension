@@ -6,6 +6,10 @@
 .api-input-wrapper {
   width: 75%;
   margin-right: 5px;
+
+  @media screen and (min-width: 801px) {
+    width: 77%;
+  }
 }
 
 .api-button-wrapper {
@@ -14,6 +18,10 @@
   align-items: flex-end;
   width: 25%;
   gap: 10px;
+
+  @media screen and (min-width: 801px) {
+    width: 23%;
+  }
 }
 
 .submit-api-button,

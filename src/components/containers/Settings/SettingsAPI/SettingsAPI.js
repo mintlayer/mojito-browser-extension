@@ -4,12 +4,15 @@ import { VerticalGroup } from '@LayoutComponents'
 import { EnvVars, AppInfo } from '@Constants'
 import { LocalStorageService } from '@Storage'
 import SettingsApiItem from './SettingsAPIItem.js'
+import { Mintlayer, Electrum } from '@APIs'
 
 import './SettingsAPI.css'
 
 const SettingsAPI = () => {
-  const [mintlayerTestnetFieldValue, setMintlayerTestnetFieldValue] = useState('')
-  const [mintlayerMainnetFieldValue, setMintlayerMainnetFieldValue] = useState('')
+  const [mintlayerTestnetFieldValue, setMintlayerTestnetFieldValue] =
+    useState('')
+  const [mintlayerMainnetFieldValue, setMintlayerMainnetFieldValue] =
+    useState('')
   const [bitconinTestnetFieldValue, setBitconinTestnetFieldValue] = useState('')
   const [bitconinMainnetFieldValue, setBitconinMainnetFieldValue] = useState('')
   const [currentServers, setCurrentServers] = useState({})
@@ -43,43 +46,68 @@ const SettingsAPI = () => {
       setCurrentServers(currentServers)
     }
     getCurrentServer()
-  }, [bitconinDefauldMainnetServer, bitconinDefauldTestnetServer, mintlayerDefauldMainnetServer, mintlayerDefauldTestnetServer])
+  }, [
+    bitconinDefauldMainnetServer,
+    bitconinDefauldTestnetServer,
+    mintlayerDefauldMainnetServer,
+    mintlayerDefauldTestnetServer,
+  ])
 
-
-  const submitHandler = (data) => {
+  const submitHandler = async (data) => {
     const customServersFromStore = LocalStorageService.getItem(
       AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
     )
     const customServers = customServersFromStore ? customServersFromStore : {}
     const key = `${data.wallet}_${data.networkType}`
-    customServers[key] = data.data
 
-    LocalStorageService.setItem(
-      AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
-      customServers,
-    )
+    try {
+      let endpoint
+      if (data.wallet === 'mintlayer') {
+        endpoint = Mintlayer.MINTLAYER_ENDPOINTS.GET_CHAIN_TIP
+      } else if (data.wallet === 'bitcoin') {
+        endpoint = Electrum.ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HEIGHT
+      } else {
+        throw new Error('Unsupported wallet type')
+      }
+
+      const response = await fetch(data.data + endpoint)
+      if (!response.ok) {
+        throw new Error(`Invalid response from ${data.wallet} server`)
+      }
+
+      customServers[key] = data.data
+
+      LocalStorageService.setItem(
+        AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
+        customServers,
+      )
+      return true
+    } catch (error) {
+      console.error(`Invalid ${data.wallet} ${data.networkType} server:`, error)
+      return false
+    }
   }
 
   const resetHandler = (data) => {
     const customServersFromStore = LocalStorageService.getItem(
       AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
     )
-     const key = `${data.wallet}_${data.networkType}`
-     const storageKey = customServersFromStore[key]
+    const key = `${data.wallet}_${data.networkType}`
+    const storageKey = customServersFromStore[key]
 
-     if (storageKey) {
-       delete customServersFromStore[key]
-       LocalStorageService.setItem(
-         AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
-         customServersFromStore,
-       )
-       setMintlayerTestnetFieldValue('')
-        setMintlayerMainnetFieldValue('')
-        setBitconinTestnetFieldValue('')
-        setBitconinMainnetFieldValue('')
-     } else {
-       console.log('Invalid wallet or network type.')
-     }
+    if (storageKey) {
+      delete customServersFromStore[key]
+      LocalStorageService.setItem(
+        AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
+        customServersFromStore,
+      )
+      setMintlayerTestnetFieldValue('')
+      setMintlayerMainnetFieldValue('')
+      setBitconinTestnetFieldValue('')
+      setBitconinMainnetFieldValue('')
+    } else {
+      console.log('Invalid wallet or network type.')
+    }
   }
 
   const inputsList = [
