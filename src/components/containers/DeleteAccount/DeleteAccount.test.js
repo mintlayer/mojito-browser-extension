@@ -1,8 +1,7 @@
-import { render, fireEvent, waitFor, screen } from '@testing-library/react'
-import { AccountContext } from '@Contexts'
+import { render, fireEvent, screen } from '@testing-library/react'
+import { AccountContext, MintlayerContext } from '@Contexts'
 import { BrowserRouter as Router } from 'react-router-dom'
 import DeleteAccount from './DeleteAccount'
-import { Account } from '@Entities'
 
 const mockContext = {
   logout: jest.fn(),
@@ -11,12 +10,24 @@ const mockContext = {
   setRemoveAccountPopupOpen: jest.fn(),
 }
 
+const mockMintlayerContext = {
+  setAllDataFetching: jest.fn(),
+}
+
+const memoryRouterFeature = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
+
 describe('DeleteAccount', () => {
   it('renders initial step correctly', () => {
     render(
-      <Router>
+      <Router future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
-          <DeleteAccount />
+          <MintlayerContext.Provider value={mockMintlayerContext}>
+            <DeleteAccount />
+          </MintlayerContext.Provider>
         </AccountContext.Provider>
         ,
       </Router>,
@@ -30,9 +41,11 @@ describe('DeleteAccount', () => {
 
   it('changes step on Continue click', () => {
     render(
-      <Router>
+      <Router future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
-          <DeleteAccount />
+          <MintlayerContext.Provider value={mockMintlayerContext}>
+            <DeleteAccount />
+          </MintlayerContext.Provider>
         </AccountContext.Provider>
         ,
       </Router>,
@@ -43,9 +56,11 @@ describe('DeleteAccount', () => {
 
   it('calls setRemoveAccountPopupOpen on Cancel click', () => {
     render(
-      <Router>
+      <Router future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
-          <DeleteAccount />
+          <MintlayerContext.Provider value={mockMintlayerContext}>
+            <DeleteAccount />
+          </MintlayerContext.Provider>
         </AccountContext.Provider>
         ,
       </Router>,
@@ -56,9 +71,11 @@ describe('DeleteAccount', () => {
 
   it('calls deleteAccountHandler on form submit', async () => {
     render(
-      <Router>
+      <Router future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
-          <DeleteAccount />
+          <MintlayerContext.Provider value={mockMintlayerContext}>
+            <DeleteAccount />
+          </MintlayerContext.Provider>
         </AccountContext.Provider>
         ,
       </Router>,

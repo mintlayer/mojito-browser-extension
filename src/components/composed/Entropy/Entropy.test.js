@@ -2,6 +2,13 @@ import { render, screen } from '@testing-library/react'
 import Entropy from './Entropy'
 import { AccountProvider } from '@Contexts'
 
+// TODO: Mock the react-konva library to pass the test cause react-konva is not properly working with jest. Need to find a bettr way to test this component.
+jest.mock('react-konva', () => ({
+  Stage: ({ children, ...props }) => <div {...props}>{children}</div>,
+  Layer: ({ children, ...props }) => <div {...props}>{children}</div>,
+  Line: ({ ...props }) => <div {...props} />,
+}))
+
 test('Render Entropy', async () => {
   render(
     <AccountProvider>

@@ -149,12 +149,12 @@ const SettingsAPI = () => {
       <div className="api-description">
         <VerticalGroup>
           <h2 data-testid="title">API SERVERS</h2>
-          <p>
+          <p data-testid="description">
             Here you can define the API server for each wallet and network type.
             If you leave the field empty, the default server will be used. To
             reset the API server to default, click the reset button.
           </p>
-          <p>
+          <p data-testid="description">
             Plese note that the API server is used for the transaction and if
             you are using a custom server, make sure it is a safe and reliable
             server
