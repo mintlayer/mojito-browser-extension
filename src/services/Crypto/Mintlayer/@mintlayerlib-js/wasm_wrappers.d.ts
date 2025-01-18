@@ -5,9 +5,6 @@
  * Given a source id, whether from a block reward or transaction, this function
  * takes a generic id with it, and returns serialized binary data of the id
  * with the given source id.
- * @param {Uint8Array} id
- * @param {SourceId} source
- * @returns {Uint8Array}
  */
 export function encode_outpoint_source_id(
   id: Uint8Array,
@@ -15,15 +12,11 @@ export function encode_outpoint_source_id(
 ): Uint8Array
 /**
  * Generates a new, random private key from entropy
- * @returns {Uint8Array}
  */
 export function make_private_key(): Uint8Array
 /**
  * Create the default account's extended private key for a given mnemonic
  * derivation path: 44'/mintlayer_coin_type'/0'
- * @param {string} mnemonic
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function make_default_account_privkey(
   mnemonic: string,
@@ -32,9 +25,6 @@ export function make_default_account_privkey(
 /**
  * From an extended private key create a receiving private key for a given key index
  * derivation path: 44'/mintlayer_coin_type'/0'/0/key_index
- * @param {Uint8Array} private_key_bytes
- * @param {number} key_index
- * @returns {Uint8Array}
  */
 export function make_receiving_address(
   private_key_bytes: Uint8Array,
@@ -43,9 +33,6 @@ export function make_receiving_address(
 /**
  * From an extended private key create a change private key for a given key index
  * derivation path: 44'/mintlayer_coin_type'/0'/1/key_index
- * @param {Uint8Array} private_key_bytes
- * @param {number} key_index
- * @returns {Uint8Array}
  */
 export function make_change_address(
   private_key_bytes: Uint8Array,
@@ -54,9 +41,6 @@ export function make_change_address(
 /**
  * Given a public key (as bytes) and a network type (mainnet, testnet, etc),
  * return the address public key hash from that public key as an address
- * @param {Uint8Array} public_key_bytes
- * @param {Network} network
- * @returns {string}
  */
 export function pubkey_to_pubkeyhash_address(
   public_key_bytes: Uint8Array,
@@ -64,17 +48,12 @@ export function pubkey_to_pubkeyhash_address(
 ): string
 /**
  * Given a private key, as bytes, return the bytes of the corresponding public key
- * @param {Uint8Array} private_key
- * @returns {Uint8Array}
  */
 export function public_key_from_private_key(private_key: Uint8Array): Uint8Array
 /**
  * Given a message and a private key, sign the message with the given private key
  * This kind of signature is to be used when signing spend requests, such as transaction
  * input witness.
- * @param {Uint8Array} private_key
- * @param {Uint8Array} message
- * @returns {Uint8Array}
  */
 export function sign_message_for_spending(
   private_key: Uint8Array,
@@ -86,10 +65,6 @@ export function sign_message_for_spending(
  * that derived the given public key.
  * Note that this function is used for verifying messages related to spending,
  * such as transaction input witness.
- * @param {Uint8Array} public_key
- * @param {Uint8Array} signature
- * @param {Uint8Array} message
- * @returns {boolean}
  */
 export function verify_signature_for_spending(
   public_key: Uint8Array,
@@ -99,9 +74,6 @@ export function verify_signature_for_spending(
 /**
  * Given a message and a private key, create and sign a challenge with the given private key
  * This kind of signature is to be used when signing challenges.
- * @param {Uint8Array} private_key
- * @param {Uint8Array} message
- * @returns {Uint8Array}
  */
 export function sign_challenge(
   private_key: Uint8Array,
@@ -112,11 +84,6 @@ export function sign_challenge(
  * the signature is produced by signing the message with the private key
  * that derived the given public key.
  * Note that this function is used for verifying messages related challenges.
- * @param {string} address
- * @param {Network} network
- * @param {Uint8Array} signed_challenge
- * @param {Uint8Array} message
- * @returns {boolean}
  */
 export function verify_challenge(
   address: string,
@@ -127,10 +94,6 @@ export function verify_challenge(
 /**
  * Given a destination address, an amount and a network type (mainnet, testnet, etc), this function
  * creates an output of type Transfer, and returns it as bytes.
- * @param {Amount} amount
- * @param {string} address
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_transfer(
   amount: Amount,
@@ -140,11 +103,6 @@ export function encode_output_transfer(
 /**
  * Given a destination address, an amount, token ID (in address form) and a network type (mainnet, testnet, etc), this function
  * creates an output of type Transfer for tokens, and returns it as bytes.
- * @param {Amount} amount
- * @param {string} address
- * @param {string} token_id
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_token_transfer(
   amount: Amount,
@@ -157,9 +115,6 @@ export function encode_output_token_transfer(
  * this function returns the number of blocks, after which a pool that decommissioned,
  * will have its funds unlocked and available for spending.
  * The current block height information is used in case a network upgrade changed the value.
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {bigint}
  */
 export function staking_pool_spend_maturity_block_count(
   current_block_height: bigint,
@@ -169,24 +124,18 @@ export function staking_pool_spend_maturity_block_count(
  * Given a number of blocks, this function returns the output timelock
  * which is used in locked outputs to lock an output for a given number of blocks
  * since that output's transaction is included the blockchain
- * @param {bigint} block_count
- * @returns {Uint8Array}
  */
 export function encode_lock_for_block_count(block_count: bigint): Uint8Array
 /**
  * Given a number of clock seconds, this function returns the output timelock
  * which is used in locked outputs to lock an output for a given number of seconds
  * since that output's transaction is included in the blockchain
- * @param {bigint} total_seconds
- * @returns {Uint8Array}
  */
 export function encode_lock_for_seconds(total_seconds: bigint): Uint8Array
 /**
  * Given a timestamp represented by as unix timestamp, i.e., number of seconds since unix epoch,
  * this function returns the output timelock which is used in locked outputs to lock an output
  * until the given timestamp
- * @param {bigint} timestamp_since_epoch_in_seconds
- * @returns {Uint8Array}
  */
 export function encode_lock_until_time(
   timestamp_since_epoch_in_seconds: bigint,
@@ -194,19 +143,12 @@ export function encode_lock_until_time(
 /**
  * Given a block height, this function returns the output timelock which is used in
  * locked outputs to lock an output until that block height is reached.
- * @param {bigint} block_height
- * @returns {Uint8Array}
  */
 export function encode_lock_until_height(block_height: bigint): Uint8Array
 /**
  * Given a valid receiving address, and a locking rule as bytes (available in this file),
  * and a network type (mainnet, testnet, etc), this function creates an output of type
  * LockThenTransfer with the parameters provided.
- * @param {Amount} amount
- * @param {string} address
- * @param {Uint8Array} lock
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_lock_then_transfer(
   amount: Amount,
@@ -218,12 +160,6 @@ export function encode_output_lock_then_transfer(
  * Given a valid receiving address, token ID (in address form), a locking rule as bytes (available in this file),
  * and a network type (mainnet, testnet, etc), this function creates an output of type
  * LockThenTransfer with the parameters provided.
- * @param {Amount} amount
- * @param {string} address
- * @param {string} token_id
- * @param {Uint8Array} lock
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_token_lock_then_transfer(
   amount: Amount,
@@ -234,17 +170,11 @@ export function encode_output_token_lock_then_transfer(
 ): Uint8Array
 /**
  * Given an amount, this function creates an output (as bytes) to burn a given amount of coins
- * @param {Amount} amount
- * @returns {Uint8Array}
  */
 export function encode_output_coin_burn(amount: Amount): Uint8Array
 /**
  * Given an amount, token ID (in address form) and network type (mainnet, testnet, etc),
  * this function creates an output (as bytes) to burn a given amount of tokens
- * @param {Amount} amount
- * @param {string} token_id
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_token_burn(
   amount: Amount,
@@ -255,10 +185,6 @@ export function encode_output_token_burn(
  * Given a pool id as string, an owner address and a network type (mainnet, testnet, etc),
  * this function returns an output (as bytes) to create a delegation to the given pool.
  * The owner address is the address that is authorized to withdraw from that delegation.
- * @param {string} pool_id
- * @param {string} owner_address
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_create_delegation(
   pool_id: string,
@@ -268,10 +194,6 @@ export function encode_output_create_delegation(
 /**
  * Given a delegation id (as string, in address form), an amount and a network type (mainnet, testnet, etc),
  * this function returns an output (as bytes) that would delegate coins to be staked in the specified delegation id.
- * @param {Amount} amount
- * @param {string} delegation_id
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_delegate_staking(
   amount: Amount,
@@ -281,14 +203,6 @@ export function encode_output_delegate_staking(
 /**
  * This function returns the staking pool data needed to create a staking pool in an output as bytes,
  * given its parameters and the network type (testnet, mainnet, etc).
- * @param {Amount} value
- * @param {string} staker
- * @param {string} vrf_public_key
- * @param {string} decommission_key
- * @param {number} margin_ratio_per_thousand
- * @param {Amount} cost_per_block
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_stake_pool_data(
   value: Amount,
@@ -304,10 +218,6 @@ export function encode_stake_pool_data(
  * this function returns an output that creates that staking pool.
  * Note that the pool id is mandated to be taken from the hash of the first input.
  * It is not arbitrary.
- * @param {string} pool_id
- * @param {Uint8Array} pool_data
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_create_stake_pool(
   pool_id: string,
@@ -316,9 +226,6 @@ export function encode_output_create_stake_pool(
 ): Uint8Array
 /**
  * Returns the fee that needs to be paid by a transaction for issuing a new fungible token
- * @param {bigint} _current_block_height
- * @param {Network} network
- * @returns {Amount}
  */
 export function fungible_token_issuance_fee(
   _current_block_height: bigint,
@@ -328,9 +235,6 @@ export function fungible_token_issuance_fee(
  * Given the current block height and a network type (mainnet, testnet, etc),
  * this will return the fee that needs to be paid by a transaction for issuing a new NFT
  * The current block height information is used in case a network upgrade changed the value.
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Amount}
  */
 export function nft_issuance_fee(
   current_block_height: bigint,
@@ -341,9 +245,6 @@ export function nft_issuance_fee(
  * this will return the fee that needs to be paid by a transaction for changing the total supply of a token
  * by either minting or unminting tokens
  * The current block height information is used in case a network upgrade changed the value.
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Amount}
  */
 export function token_supply_change_fee(
   current_block_height: bigint,
@@ -353,9 +254,6 @@ export function token_supply_change_fee(
  * Given the current block height and a network type (mainnet, testnet, etc),
  * this will return the fee that needs to be paid by a transaction for freezing/unfreezing a token
  * The current block height information is used in case a network upgrade changed the value.
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Amount}
  */
 export function token_freeze_fee(
   current_block_height: bigint,
@@ -365,9 +263,6 @@ export function token_freeze_fee(
  * Given the current block height and a network type (mainnet, testnet, etc),
  * this will return the fee that needs to be paid by a transaction for changing the authority of a token
  * The current block height information is used in case a network upgrade changed the value.
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Amount}
  */
 export function token_change_authority_fee(
   current_block_height: bigint,
@@ -376,21 +271,11 @@ export function token_change_authority_fee(
 /**
  * Given the parameters needed to issue a fungible token, and a network type (mainnet, testnet, etc),
  * this function creates an output that issues that token.
- * @param {string} authority
- * @param {Uint8Array} token_ticker
- * @param {Uint8Array} metadata_uri
- * @param {number} number_of_decimals
- * @param {TotalSupply} total_supply
- * @param {Amount | undefined} supply_amount
- * @param {FreezableToken} is_token_freezable
- * @param {bigint} _current_block_height
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_issue_fungible_token(
   authority: string,
-  token_ticker: Uint8Array,
-  metadata_uri: Uint8Array,
+  token_ticker: string,
+  metadata_uri: string,
   number_of_decimals: number,
   total_supply: TotalSupply,
   supply_amount: Amount | undefined,
@@ -399,21 +284,12 @@ export function encode_output_issue_fungible_token(
   network: Network,
 ): Uint8Array
 /**
+ * Returns the Fungible/NFT Token ID for the given inputs of a transaction
+ */
+export function get_token_id(inputs: Uint8Array, network: Network): string
+/**
  * Given the parameters needed to issue an NFT, and a network type (mainnet, testnet, etc),
  * this function creates an output that issues that NFT.
- * @param {string} token_id
- * @param {string} authority
- * @param {string} name
- * @param {string} ticker
- * @param {string} description
- * @param {Uint8Array} media_hash
- * @param {string | undefined} creator
- * @param {Uint8Array | undefined} media_uri
- * @param {Uint8Array | undefined} icon_uri
- * @param {Uint8Array | undefined} additional_metadata_uri
- * @param {bigint} _current_block_height
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_issue_nft(
   token_id: string,
@@ -422,30 +298,27 @@ export function encode_output_issue_nft(
   ticker: string,
   description: string,
   media_hash: Uint8Array,
-  creator: string | undefined,
-  media_uri: Uint8Array | undefined,
-  icon_uri: Uint8Array | undefined,
-  additional_metadata_uri: Uint8Array | undefined,
+  creator: Uint8Array | undefined,
+  media_uri: string | undefined,
+  icon_uri: string | undefined,
+  additional_metadata_uri: string | undefined,
   _current_block_height: bigint,
   network: Network,
 ): Uint8Array
 /**
  * Given data to be deposited in the blockchain, this function provides the output that deposits this data
- * @param {Uint8Array} data
- * @returns {Uint8Array}
  */
 export function encode_output_data_deposit(data: Uint8Array): Uint8Array
 /**
+ * Returns the fee that needs to be paid by a transaction for issuing a data deposit
+ */
+export function data_deposit_fee(
+  current_block_height: bigint,
+  network: Network,
+): Amount
+/**
  * Given the parameters needed to create hash timelock contract, and a network type (mainnet, testnet, etc),
  * this function creates an output.
- * @param {Amount} amount
- * @param {string | undefined} token_id
- * @param {string} secret_hash
- * @param {string} spend_address
- * @param {string} refund_address
- * @param {Uint8Array} refund_timelock
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_output_htlc(
   amount: Amount,
@@ -459,11 +332,6 @@ export function encode_output_htlc(
 /**
  * Given a signed transaction and input outpoint that spends an htlc utxo, extract a secret that is
  * encoded in the corresponding input signature
- * @param {Uint8Array} signed_tx_bytes
- * @param {boolean} strict_byte_size
- * @param {Uint8Array} htlc_outpoint_source_id
- * @param {number} htlc_output_index
- * @returns {Uint8Array}
  */
 export function extract_htlc_secret(
   signed_tx_bytes: Uint8Array,
@@ -474,9 +342,6 @@ export function extract_htlc_secret(
 /**
  * Given an output source id as bytes, and an output index, together representing a utxo,
  * this function returns the input that puts them together, as bytes.
- * @param {Uint8Array} outpoint_source_id
- * @param {number} output_index
- * @returns {Uint8Array}
  */
 export function encode_input_for_utxo(
   outpoint_source_id: Uint8Array,
@@ -486,11 +351,6 @@ export function encode_input_for_utxo(
  * Given a delegation id, an amount and a network type (mainnet, testnet, etc), this function
  * creates an input that withdraws from a delegation.
  * A nonce is needed because this spends from an account. The nonce must be in sequence for everything in that account.
- * @param {string} delegation_id
- * @param {Amount} amount
- * @param {bigint} nonce
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_input_for_withdraw_from_delegation(
   delegation_id: string,
@@ -505,11 +365,6 @@ export function encode_input_for_withdraw_from_delegation(
  * and in the case of AccountCommand inputs which change a token it is the token's authority destination)
  * and the outputs, estimate the transaction size.
  * ScriptHash and ClassicMultisig destinations are not supported.
- * @param {Uint8Array} inputs
- * @param {(string)[]} input_utxos_destinations
- * @param {Uint8Array} outputs
- * @param {Network} network
- * @returns {number}
  */
 export function estimate_transaction_size(
   inputs: Uint8Array,
@@ -520,10 +375,6 @@ export function estimate_transaction_size(
 /**
  * Given inputs as bytes, outputs as bytes, and flags settings, this function returns
  * the transaction that contains them all, as bytes.
- * @param {Uint8Array} inputs
- * @param {Uint8Array} outputs
- * @param {bigint} flags
- * @returns {Uint8Array}
  */
 export function encode_transaction(
   inputs: Uint8Array,
@@ -532,20 +383,11 @@ export function encode_transaction(
 ): Uint8Array
 /**
  * Encode an input witness of the variant that contains no signature.
- * @returns {Uint8Array}
  */
 export function encode_witness_no_signature(): Uint8Array
 /**
  * Given a private key, inputs and an input number to sign, and the destination that owns that output (through the utxo),
  * and a network type (mainnet, testnet, etc), this function returns a witness to be used in a signed transaction, as bytes.
- * @param {SignatureHashType} sighashtype
- * @param {Uint8Array} private_key_bytes
- * @param {string} input_owner_destination
- * @param {Uint8Array} transaction_bytes
- * @param {Uint8Array} inputs
- * @param {number} input_num
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_witness(
   sighashtype: SignatureHashType,
@@ -559,15 +401,6 @@ export function encode_witness(
 /**
  * Given a private key, inputs and an input number to sign, and the destination that owns that output (through the utxo),
  * and a network type (mainnet, testnet, etc), and an htlc secret this function returns a witness to be used in a signed transaction, as bytes.
- * @param {SignatureHashType} sighashtype
- * @param {Uint8Array} private_key_bytes
- * @param {string} input_owner_destination
- * @param {Uint8Array} transaction_bytes
- * @param {Uint8Array} inputs
- * @param {number} input_num
- * @param {Uint8Array} secret
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_witness_htlc_secret(
   sighashtype: SignatureHashType,
@@ -582,10 +415,6 @@ export function encode_witness_htlc_secret(
 /**
  * Given an arbitrary number of public keys as bytes, number of minimum required signatures, and a network type, this function returns
  * the multisig challenge, as bytes.
- * @param {Uint8Array} public_keys_bytes
- * @param {number} min_required_signatures
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_multisig_challenge(
   public_keys_bytes: Uint8Array,
@@ -598,16 +427,6 @@ export function encode_multisig_challenge(
  *
  * `key_index` parameter is an index of a public key in the challenge, against which is the signature produces from private key is to be verified.
  * `input_witness` parameter can be either empty or a result of previous calls to this function.
- * @param {SignatureHashType} sighashtype
- * @param {Uint8Array} private_key_bytes
- * @param {number} key_index
- * @param {Uint8Array} input_witness
- * @param {Uint8Array} multisig_challenge
- * @param {Uint8Array} transaction_bytes
- * @param {Uint8Array} utxos
- * @param {number} input_num
- * @param {Network} network
- * @returns {Uint8Array}
  */
 export function encode_witness_htlc_multisig(
   sighashtype: SignatureHashType,
@@ -622,9 +441,6 @@ export function encode_witness_htlc_multisig(
 ): Uint8Array
 /**
  * Given an unsigned transaction and signatures, this function returns a SignedTransaction object as bytes.
- * @param {Uint8Array} transaction_bytes
- * @param {Uint8Array} signatures
- * @returns {Uint8Array}
  */
 export function encode_signed_transaction(
   transaction_bytes: Uint8Array,
@@ -640,9 +456,6 @@ export function encode_signed_transaction(
  * This is useful when the provided bytes are of a `SignedTransaction` instead of a `Transaction`,
  * since the signatures are appended at the end of the `Transaction` object as a vector to create a `SignedTransaction`.
  * It is recommended to use a strict `Transaction` size and set the second parameter to `true`.
- * @param {Uint8Array} transaction_bytes
- * @param {boolean} strict_byte_size
- * @returns {string}
  */
 export function get_transaction_id(
   transaction_bytes: Uint8Array,
@@ -651,16 +464,70 @@ export function get_transaction_id(
 /**
  * Calculate the "effective balance" of a pool, given the total pool balance and pledge by the pool owner/staker.
  * The effective balance is how the influence of a pool is calculated due to its balance.
- * @param {Network} network
- * @param {Amount} pledge_amount
- * @param {Amount} pool_balance
- * @returns {Amount}
  */
 export function effective_pool_balance(
   network: Network,
   pledge_amount: Amount,
   pool_balance: Amount,
 ): Amount
+/**
+ * Given ask and give amounts and a conclude key create output that creates an order.
+ *
+ * 'ask_token_id': the parameter represents a Token if it's Some and coins otherwise.
+ * 'give_token_id': the parameter represents a Token if it's Some and coins otherwise.
+ */
+export function encode_create_order_output(
+  ask_amount: Amount,
+  ask_token_id: string | undefined,
+  give_amount: Amount,
+  give_token_id: string | undefined,
+  conclude_address: string,
+  network: Network,
+): Uint8Array
+/**
+ * Given an amount to fill an order (which is described in terms of ask currency) and a destination
+ * for result outputs create an input that fills the order.
+ */
+export function encode_input_for_fill_order(
+  order_id: string,
+  fill_amount: Amount,
+  destination: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given an order id create an input that concludes the order.
+ */
+export function encode_input_for_conclude_order(
+  order_id: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Indicates whether a token can be frozen
+ */
+export enum FreezableToken {
+  No = 0,
+  Yes = 1,
+}
+/**
+ * The network, for which an operation to be done. Mainnet, testnet, etc.
+ */
+export enum Network {
+  Mainnet = 0,
+  Testnet = 1,
+  Regtest = 2,
+  Signet = 3,
+}
+/**
+ * The part of the transaction that will be committed in the signature. Similar to bitcoin's sighash.
+ */
+export enum SignatureHashType {
+  ALL = 0,
+  NONE = 1,
+  SINGLE = 2,
+  ANYONECANPAY = 3,
+}
 /**
  * A utxo can either come from a transaction or a block reward. This enum signifies that.
  */
@@ -686,46 +553,15 @@ export enum TotalSupply {
   Fixed = 2,
 }
 /**
- * The network, for which an operation to be done. Mainnet, testnet, etc.
- */
-export enum Network {
-  Mainnet = 0,
-  Testnet = 1,
-  Regtest = 2,
-  Signet = 3,
-}
-/**
- * The part of the transaction that will be committed in the signature. Similar to bitcoin's sighash.
- */
-export enum SignatureHashType {
-  ALL = 0,
-  NONE = 1,
-  SINGLE = 2,
-  ANYONECANPAY = 3,
-}
-/**
- * Indicates whether a token can be frozen
- */
-export enum FreezableToken {
-  No = 0,
-  Yes = 1,
-}
-/**
  * Amount type abstraction. The amount type is stored in a string
  * since JavaScript number type cannot fit 128-bit integers.
  * The amount is given as an integer in units of "atoms".
  * Atoms are the smallest, indivisible amount of a coin or token.
  */
 export class Amount {
+  private constructor()
   free(): void
-  /**
-   * @param {string} atoms
-   * @returns {Amount}
-   */
   static from_atoms(atoms: string): Amount
-  /**
-   * @returns {string}
-   */
   atoms(): string
 }
 
@@ -740,50 +576,43 @@ export interface InitOutput {
   readonly memory: WebAssembly.Memory
   readonly __wbg_amount_free: (a: number, b: number) => void
   readonly amount_from_atoms: (a: number, b: number) => number
-  readonly amount_atoms: (a: number, b: number) => void
+  readonly amount_atoms: (a: number) => [number, number]
   readonly encode_outpoint_source_id: (
     a: number,
     b: number,
     c: number,
-    d: number,
-  ) => void
-  readonly make_private_key: (a: number) => void
+  ) => [number, number]
+  readonly make_private_key: () => [number, number]
   readonly make_default_account_privkey: (
     a: number,
     b: number,
     c: number,
-    d: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly make_receiving_address: (
     a: number,
     b: number,
     c: number,
-    d: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly make_change_address: (
     a: number,
     b: number,
     c: number,
-    d: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly pubkey_to_pubkeyhash_address: (
     a: number,
     b: number,
     c: number,
-    d: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly public_key_from_private_key: (
     a: number,
     b: number,
-    c: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly sign_message_for_spending: (
     a: number,
     b: number,
     c: number,
     d: number,
-    e: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly verify_signature_for_spending: (
     a: number,
     b: number,
@@ -791,15 +620,13 @@ export interface InitOutput {
     d: number,
     e: number,
     f: number,
-    g: number,
-  ) => void
+  ) => [number, number, number]
   readonly sign_challenge: (
     a: number,
     b: number,
     c: number,
     d: number,
-    e: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly verify_challenge: (
     a: number,
     b: number,
@@ -808,15 +635,13 @@ export interface InitOutput {
     e: number,
     f: number,
     g: number,
-    h: number,
-  ) => void
+  ) => [number, number, number]
   readonly encode_output_transfer: (
     a: number,
     b: number,
     c: number,
     d: number,
-    e: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_output_token_transfer: (
     a: number,
     b: number,
@@ -824,16 +649,15 @@ export interface InitOutput {
     d: number,
     e: number,
     f: number,
-    g: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly staking_pool_spend_maturity_block_count: (
-    a: number,
+    a: bigint,
     b: number,
-  ) => number
-  readonly encode_lock_for_block_count: (a: number, b: number) => void
-  readonly encode_lock_for_seconds: (a: number, b: number) => void
-  readonly encode_lock_until_time: (a: number, b: number) => void
-  readonly encode_lock_until_height: (a: number, b: number) => void
+  ) => bigint
+  readonly encode_lock_for_block_count: (a: bigint) => [number, number]
+  readonly encode_lock_for_seconds: (a: bigint) => [number, number]
+  readonly encode_lock_until_time: (a: bigint) => [number, number]
+  readonly encode_lock_until_height: (a: bigint) => [number, number]
   readonly encode_output_lock_then_transfer: (
     a: number,
     b: number,
@@ -841,8 +665,7 @@ export interface InitOutput {
     d: number,
     e: number,
     f: number,
-    g: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_output_token_lock_then_transfer: (
     a: number,
     b: number,
@@ -852,31 +675,29 @@ export interface InitOutput {
     f: number,
     g: number,
     h: number,
-    i: number,
-  ) => void
-  readonly encode_output_coin_burn: (a: number, b: number) => void
+  ) => [number, number, number, number]
+  readonly encode_output_coin_burn: (
+    a: number,
+  ) => [number, number, number, number]
   readonly encode_output_token_burn: (
     a: number,
     b: number,
     c: number,
     d: number,
-    e: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_output_create_delegation: (
     a: number,
     b: number,
     c: number,
     d: number,
     e: number,
-    f: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_output_delegate_staking: (
     a: number,
     b: number,
     c: number,
     d: number,
-    e: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_stake_pool_data: (
     a: number,
     b: number,
@@ -888,21 +709,19 @@ export interface InitOutput {
     h: number,
     i: number,
     j: number,
-    k: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_output_create_stake_pool: (
     a: number,
     b: number,
     c: number,
     d: number,
     e: number,
-    f: number,
-  ) => void
-  readonly fungible_token_issuance_fee: (a: number, b: number) => number
-  readonly nft_issuance_fee: (a: number, b: number) => number
-  readonly token_supply_change_fee: (a: number, b: number) => number
-  readonly token_freeze_fee: (a: number, b: number) => number
-  readonly token_change_authority_fee: (a: number, b: number) => number
+  ) => [number, number, number, number]
+  readonly fungible_token_issuance_fee: (a: bigint, b: number) => number
+  readonly nft_issuance_fee: (a: bigint, b: number) => number
+  readonly token_supply_change_fee: (a: bigint, b: number) => number
+  readonly token_freeze_fee: (a: bigint, b: number) => number
+  readonly token_change_authority_fee: (a: bigint, b: number) => number
   readonly encode_output_issue_fungible_token: (
     a: number,
     b: number,
@@ -914,10 +733,14 @@ export interface InitOutput {
     h: number,
     i: number,
     j: number,
-    k: number,
+    k: bigint,
     l: number,
-    m: number,
-  ) => void
+  ) => [number, number, number, number]
+  readonly get_token_id: (
+    a: number,
+    b: number,
+    c: number,
+  ) => [number, number, number, number]
   readonly encode_output_issue_nft: (
     a: number,
     b: number,
@@ -939,11 +762,14 @@ export interface InitOutput {
     r: number,
     s: number,
     t: number,
-    u: number,
+    u: bigint,
     v: number,
-    w: number,
-  ) => void
-  readonly encode_output_data_deposit: (a: number, b: number, c: number) => void
+  ) => [number, number, number, number]
+  readonly encode_output_data_deposit: (
+    a: number,
+    b: number,
+  ) => [number, number, number, number]
+  readonly data_deposit_fee: (a: bigint, b: number) => number
   readonly encode_output_htlc: (
     a: number,
     b: number,
@@ -957,8 +783,7 @@ export interface InitOutput {
     j: number,
     k: number,
     l: number,
-    m: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly extract_htlc_secret: (
     a: number,
     b: number,
@@ -966,22 +791,19 @@ export interface InitOutput {
     d: number,
     e: number,
     f: number,
-    g: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_input_for_utxo: (
     a: number,
     b: number,
     c: number,
-    d: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_input_for_withdraw_from_delegation: (
     a: number,
     b: number,
     c: number,
-    d: number,
+    d: bigint,
     e: number,
-    f: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly estimate_transaction_size: (
     a: number,
     b: number,
@@ -990,17 +812,15 @@ export interface InitOutput {
     e: number,
     f: number,
     g: number,
-    h: number,
-  ) => void
+  ) => [number, number, number]
   readonly encode_transaction: (
     a: number,
     b: number,
     c: number,
     d: number,
-    e: number,
-    f: number,
-  ) => void
-  readonly encode_witness_no_signature: (a: number) => void
+    e: bigint,
+  ) => [number, number, number, number]
+  readonly encode_witness_no_signature: () => [number, number]
   readonly encode_witness: (
     a: number,
     b: number,
@@ -1013,8 +833,7 @@ export interface InitOutput {
     i: number,
     j: number,
     k: number,
-    l: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_witness_htlc_secret: (
     a: number,
     b: number,
@@ -1029,15 +848,13 @@ export interface InitOutput {
     k: number,
     l: number,
     m: number,
-    n: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_multisig_challenge: (
     a: number,
     b: number,
     c: number,
     d: number,
-    e: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_witness_htlc_multisig: (
     a: number,
     b: number,
@@ -1053,27 +870,49 @@ export interface InitOutput {
     l: number,
     m: number,
     n: number,
-    o: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly encode_signed_transaction: (
     a: number,
     b: number,
     c: number,
     d: number,
-    e: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly get_transaction_id: (
     a: number,
     b: number,
     c: number,
-    d: number,
-  ) => void
+  ) => [number, number, number, number]
   readonly effective_pool_balance: (
     a: number,
     b: number,
     c: number,
+  ) => [number, number, number]
+  readonly encode_create_order_output: (
+    a: number,
+    b: number,
+    c: number,
     d: number,
-  ) => void
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+    i: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_fill_order: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: bigint,
+    g: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_conclude_order: (
+    a: number,
+    b: number,
+    c: bigint,
+    d: number,
+  ) => [number, number, number, number]
   readonly rustsecp256k1_v0_10_0_context_create: (a: number) => number
   readonly rustsecp256k1_v0_10_0_context_destroy: (a: number) => void
   readonly rustsecp256k1_v0_10_0_default_illegal_callback_fn: (
@@ -1084,6 +923,9 @@ export interface InitOutput {
     a: number,
     b: number,
   ) => void
+  readonly __wbindgen_exn_store: (a: number) => void
+  readonly __externref_table_alloc: () => number
+  readonly __wbindgen_export_2: WebAssembly.Table
   readonly __wbindgen_malloc: (a: number, b: number) => number
   readonly __wbindgen_realloc: (
     a: number,
@@ -1091,9 +933,9 @@ export interface InitOutput {
     c: number,
     d: number,
   ) => number
-  readonly __wbindgen_add_to_stack_pointer: (a: number) => number
   readonly __wbindgen_free: (a: number, b: number, c: number) => void
-  readonly __wbindgen_exn_store: (a: number) => void
+  readonly __externref_table_dealloc: (a: number) => void
+  readonly __wbindgen_start: () => void
 }
 
 export type SyncInitInput = BufferSource | WebAssembly.Module

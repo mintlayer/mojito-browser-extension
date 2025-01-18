@@ -8,18 +8,24 @@ import { AccountProvider, SettingsProvider } from '@Contexts'
 
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
+const memoryRouterFeature = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
 
 test('Renders set account page with step 1', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <SetAccount
-          step={1}
-          setStep={SETSTEPSAMPLE}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <SetAccount
+            step={1}
+            setStep={SETSTEPSAMPLE}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const setAccountComponent = screen.getByTestId('set-account')
   const setAccountForm = screen.getByTestId('set-account-form')
@@ -50,13 +56,14 @@ test('Renders set account page with step 2', async () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <SetAccount
-          step={2}
-          setStep={SETSTEPSAMPLE}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <SetAccount
+            step={2}
+            setStep={SETSTEPSAMPLE}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const setAccountComponent = screen.getByTestId('set-account')
   const setAccountForm = screen.getByTestId('set-account-form')
@@ -132,13 +139,14 @@ test('Renders set account page with step 4', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <SetAccount
-          step={4}
-          setStep={SETSTEPSAMPLE}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <SetAccount
+            step={4}
+            setStep={SETSTEPSAMPLE}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const descriptionParagraphs = screen.getAllByTestId('description-paragraph')
   const setAccountForm = screen.getByTestId('set-account-form')
@@ -156,14 +164,15 @@ test('Renders set account page with step 5', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <SetAccount
-          step={5}
-          setStep={SETSTEPSAMPLE}
-          words={WORDSSAMPLE}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <SetAccount
+            step={5}
+            setStep={SETSTEPSAMPLE}
+            words={WORDSSAMPLE}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
 
   const buttons = screen.getAllByTestId('button')
@@ -192,16 +201,17 @@ test('Renders set account page with step 6', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <SetAccount
-          step={6}
-          setStep={SETSTEPSAMPLE}
-          words={WORDSSAMPLE}
-          onStepsFinished={onStepsFinishedFn}
-          validateMnemonicFn={validateMnemonicMock}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <SetAccount
+            step={6}
+            setStep={SETSTEPSAMPLE}
+            words={WORDSSAMPLE}
+            onStepsFinished={onStepsFinishedFn}
+            validateMnemonicFn={validateMnemonicMock}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const setAccountForm = screen.getByTestId('set-account-form')
   const buttons = screen.getAllByTestId('button')
@@ -250,7 +260,10 @@ test('Checks back button behavior in a internal navigation component - first ste
   render(
     <AccountProvider>
       <SettingsProvider>
-        <MemoryRouter initialEntries={['/', '/set-account']}>
+        <MemoryRouter
+          initialEntries={['/', '/set-account']}
+          future={memoryRouterFeature}
+        >
           <Routes>
             <Route
               path="/set-account"

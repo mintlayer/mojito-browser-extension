@@ -3,7 +3,7 @@ import { Stage, Layer, Line } from 'react-konva'
 import { Button } from '@BasicComponents'
 import { AccountContext } from '@Contexts'
 
-import { ReactComponent as IconCLose } from '@Assets/images/icon-close.svg'
+import { ReactComponent as IconClose } from '@Assets/images/icon-close.svg'
 
 import './DrawingBoard.css'
 
@@ -52,9 +52,10 @@ const DrawingBoard = () => {
         width={383}
         height={238}
         onMouseDown={handleMouseDown}
-        onMousemove={handleMouseMove}
-        onMouseup={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
         className="drawingBoardStage"
+        data-testid="drawing-board-stage"
       >
         <Layer
           className="layer"
@@ -81,7 +82,7 @@ const DrawingBoard = () => {
         alternate
         onClickHandle={clearButtonClickHandler}
       >
-        <IconCLose /> Clear
+        <IconClose /> Clear
       </Button>
     </div>
   )

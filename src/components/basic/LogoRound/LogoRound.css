@@ -3,11 +3,13 @@
   border-radius: 50%;
   height: 90px;
   width: 90px;
+  min-width: 90px;
 }
 
 .logo-round-small {
   height: 72px;
   width: 72px;
+  min-width: 72px;
 }
 
 .logo-round img {

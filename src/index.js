@@ -28,6 +28,8 @@ import {
   DelegationWithdrawPage,
   LockedBalancePage,
   MessagePage,
+  NftPage,
+  NftSendPage,
 } from '@Pages'
 
 import {
@@ -38,6 +40,7 @@ import {
   MintlayerProvider,
   BitcoinProvider,
   ExchangeRatesProvider,
+  MintlayerContext,
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
@@ -62,6 +65,7 @@ const App = () => {
     removeAccountPopupOpen,
     setRemoveAccountPopupOpen,
   } = useContext(AccountContext)
+  const { setAllDataFetching } = useContext(MintlayerContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
 
   const isConnectionAvailable = async (accountUnlocked) => {
@@ -73,6 +77,7 @@ const App = () => {
       if (accountUnlocked) {
         console.log(error)
         setErrorPopupOpen(true)
+        setAllDataFetching(false)
         logout()
         navigate('/')
       }
@@ -172,6 +177,17 @@ const App = () => {
     setErrorPopupOpen(false)
   }
 
+  // if ('serviceWorker' in navigator) {
+  //   navigator.serviceWorker
+  //     .register('./service-worker.js')
+  //     .then((registration) => {
+  //       console.log('Service Worker registered with scope:', registration.scope)
+  //     })
+  //     .catch((error) => {
+  //       console.error('Service Worker registration failed:', error)
+  //     })
+  // }
+
   return (
     <main className="App">
       <Header />
@@ -243,6 +259,14 @@ const App = () => {
         <Route
           path="/wallet/:coinType/sign-message"
           element={<MessagePage />}
+        />
+        <Route
+          path="/wallet/:coinType/nft"
+          element={<NftPage />}
+        />
+        <Route
+          path="/wallet/:coinType/nft/:tokenId/send"
+          element={<NftSendPage />}
         />
         <Route
           exact

@@ -8,6 +8,12 @@ import { BrowserRouter as Router } from 'react-router-dom'
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
 
+const memoryRouterFeature = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
+
 describe('DelegationList', () => {
   const mockDelegationsList = [
     {
@@ -27,7 +33,7 @@ describe('DelegationList', () => {
       <AccountContext.Provider value={{ accountName: 'test' }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
           <TransactionContext.Provider value={{ delegationsLoading: true }}>
-            <Router>
+            <Router future={memoryRouterFeature}>
               <DelegationList delegationsList={mockDelegationsList} />
             </Router>
           </TransactionContext.Provider>
@@ -47,7 +53,7 @@ describe('DelegationList', () => {
       <AccountContext.Provider value={{ accountName: 'test' }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
           <TransactionContext.Provider value={{ delegationsLoading: false }}>
-            <Router>
+            <Router future={memoryRouterFeature}>
               <DelegationList delegationsList={[]} />
             </Router>
           </TransactionContext.Provider>
@@ -68,7 +74,7 @@ describe('DelegationList', () => {
       <AccountContext.Provider value={{ accountName: 'test' }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
           <TransactionContext.Provider value={{ delegationsLoading: false }}>
-            <Router>
+            <Router future={memoryRouterFeature}>
               <DelegationList delegationsList={mockDelegationsList} />
             </Router>
           </TransactionContext.Provider>

@@ -40,10 +40,16 @@ const validJson = JSON.stringify({
   walletsToCreate: ['wallet1', 'wallet2'],
 })
 
+const memoryRouterFeature = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
+
 describe('RestoreAccountJson', () => {
   test('renders initial step correctly', () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter future={memoryRouterFeature}>
         <AccountProvider>
           <SettingsProvider
             value={{ networkType: 'testnet', toggleNetworkType }}
@@ -66,7 +72,7 @@ describe('RestoreAccountJson', () => {
 
   test('displays error message for invalid JSON file', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter future={memoryRouterFeature}>
         <AccountProvider>
           <SettingsProvider
             value={{ networkType: 'testnet', toggleNetworkType }}
@@ -93,7 +99,7 @@ describe('RestoreAccountJson', () => {
 
   test('displays wallet details after valid JSON file upload', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter future={memoryRouterFeature}>
         <AccountProvider>
           <SettingsProvider
             value={{ networkType: 'testnet', toggleNetworkType }}
@@ -131,7 +137,7 @@ describe('RestoreAccountJson', () => {
 
   test('calls restoreAccountFromJSON and navigates to home on finish', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter future={memoryRouterFeature}>
         <AccountProvider>
           <SettingsProvider
             value={{ networkType: 'testnet', toggleNetworkType }}

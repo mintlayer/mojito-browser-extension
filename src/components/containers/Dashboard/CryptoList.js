@@ -29,6 +29,10 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
     onClickItem(item)
   }
 
+  const logoText =
+    tokenBalances[item.id]?.token_info?.token_ticker?.string.substring(0, 3) ||
+    'TKN'
+
   const logo = () => {
     if (item.name === 'Mintlayer') {
       return <LogoRound small />
@@ -38,10 +42,8 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
       // TODO: logo for token
       return (
         <TokenLogoRound
-          text={tokenBalances[item.id].token_info.token_ticker.string.substring(
-            0,
-            3,
-          )}
+          text={logoText}
+          small
         />
       )
     }
