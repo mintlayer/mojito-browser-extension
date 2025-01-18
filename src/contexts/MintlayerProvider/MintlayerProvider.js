@@ -54,13 +54,13 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       return
     }
 
-    setAllDataFetching(true)
     // fetch fee rate
     const feerate = await Mintlayer.getFeesEstimates()
     setFeerate(parseInt(JSON.parse(feerate)))
 
     const account = LocalStorageService.getItem('unlockedAccount')
 
+    setAllDataFetching(true)
     setFetchingTransactions(true)
     setFetchingBalances(true)
     setFetchingUtxos(true)
