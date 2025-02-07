@@ -377,7 +377,7 @@ const calculateCustomTransactionSizeInBytes = async ({
   const transactionBytes = getTransactionsBytes(transactionStrings)
   const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
   const inputsIds = await getTxInputs(outpointedSourceIds)
-  const inputsArray = getArraySpead(inputsIds)
+  const inputsArray = getArraySpread(inputsIds)
 
   // make array from outputs with await
   const outputsArrayItems = outputs.map((output) => {
@@ -410,7 +410,7 @@ const calculateCustomTransactionSizeInBytes = async ({
 
   console.log('outputsArrayItems', outputsArrayItems)
 
-  const outputsArray = getArraySpead(outputsArrayItems)
+  const outputsArray = getArraySpread(outputsArrayItems)
 
   const size = ML.getEstimatetransactionSize(
     inputsArray,
@@ -613,7 +613,7 @@ const sendCustomTransaction = async ({
   const transactionBytes = getTransactionsBytes(transactionStrings)
   const outpointedSourceIds = await getOutpointedSourceIds(transactionBytes)
   const inputsIds = await getTxInputs(outpointedSourceIds)
-  const inputsArray = getArraySpead(inputsIds)
+  const inputsArray = getArraySpread(inputsIds)
 
   console.log('sendCustomTransaction outputs', outputs)
 
@@ -643,7 +643,7 @@ const sendCustomTransaction = async ({
     }
   })
 
-  const outputsArray = getArraySpead(outputsArrayItems)
+  const outputsArray = getArraySpread(outputsArrayItems)
 
   const transaction = await ML.getTransaction(inputsArray, outputsArray)
 
@@ -656,7 +656,7 @@ const sendCustomTransaction = async ({
     optUtxos, // in fact that is transaction inputs
     network,
   )
-  const finalWitnesses = getArraySpead(encodedWitnesses)
+  const finalWitnesses = getArraySpread(encodedWitnesses)
   const encodedSignedTransaction = await ML.getEncodedSignedTransaction(
     transaction,
     finalWitnesses,

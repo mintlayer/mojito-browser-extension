@@ -28,13 +28,11 @@ import init, {
   encode_output_issue_fungible_token,
   FreezableToken,
   TotalSupply,
-  encode_output_issue_nft,
   sign_message_for_spending,
   verify_signature_for_spending,
   sign_challenge,
   verify_challenge,
   encode_output_data_deposit,
-  get_token_id,
   Network,
 } from './@mintlayerlib-js/wasm_wrappers.js'
 
@@ -310,7 +308,7 @@ export const getOutputIssueFungibleToken = ({ output, network, chainTip }) => {
   // )
 }
 
-export const getOutputIssueNft = ({ inputs, output, network, chainTip }) => {
+export const getOutputIssueNft_ = ({ inputs, output, network, chainTip }) => {
   const { destination, data } = output
 
   const _current_block_height = BigInt(Number(chainTip))
