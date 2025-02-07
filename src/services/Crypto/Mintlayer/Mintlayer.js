@@ -1,3 +1,4 @@
+/* eslint-disable max-params */
 import init, {
   public_key_from_private_key,
   make_receiving_address,
@@ -17,6 +18,8 @@ import init, {
   encode_lock_for_block_count,
   encode_output_create_delegation,
   encode_output_delegate_staking,
+  encode_output_issue_nft,
+  get_token_id,
   staking_pool_spend_maturity_block_count,
   SignatureHashType,
   SourceId,
@@ -172,6 +175,7 @@ export const getOutputs = ({
   lock,
   chainTip,
   tokenId,
+  utxo,
 }) => {
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')
@@ -214,6 +218,23 @@ export const getOutputs = ({
       amountInstace,
       address,
       encodedLockForBlock,
+      networkIndex,
+    )
+  }
+
+  if (type === 'IssueNft') {
+    return encode_output_issue_nft(
+      utxo.utxo.token_id,
+      utxo.utxo.destination,
+      utxo.utxo.data.name.string,
+      utxo.utxo.data.ticker.string,
+      utxo.utxo.data.description.string,
+      Buffer.from(utxo.utxo.data.media_hash.hex, 'hex'),
+      utxo.utxo.data.creator,
+      utxo.utxo.data.media_uri.string,
+      utxo.utxo.data.icon_uri.string,
+      utxo.utxo.data.additional_metadata_uri.string,
+      BigInt(Number(chainTip)),
       networkIndex,
     )
   }
@@ -443,4 +464,41 @@ export const verifyChallenge = (
 ) => {
   const networkIndex = NETWORKS[networkType]
   return verify_challenge(address, networkIndex, signedChallenge, message)
+}
+
+export const getOutputIssueNft = (
+  tokenId,
+  address,
+  name,
+  ticker,
+  description,
+  mediaHash,
+  creator,
+  mediaUri,
+  iconUri,
+  additionalMetadataUri,
+  currentBlockHeight,
+  networkType,
+) => {
+  const networkIndex = NETWORKS[networkType]
+  return encode_output_issue_nft(
+    tokenId,
+    address,
+    name,
+    ticker,
+    description,
+    mediaHash,
+    creator,
+    mediaUri,
+    iconUri,
+    additionalMetadataUri,
+    currentBlockHeight,
+    networkIndex,
+  )
+}
+
+export const getTokenId = (inputs, networkType) => {
+  const networkIndex = NETWORKS[networkType]
+
+  return get_token_id(inputs, networkIndex)
 }

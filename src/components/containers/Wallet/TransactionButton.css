@@ -6,13 +6,23 @@
 .button-transaction,
 .button-transaction-up,
 .button-transaction-staking {
-  width: 60px;
-  height: 60px;
-  min-width: 60px;
-  min-height: 60px;
+  width: 55px;
+  height: 55px;
+  min-width: 55px;
+  min-height: 55px;
   margin-bottom: 10px;
   border-radius: 10px;
   padding: 0;
+
+  @media screen and (min-width: 801px) {
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+    min-height: 60px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    padding: 0;
+  }
 }
 
 .transaction-buttons-wrapper {
@@ -37,7 +47,11 @@
 }
 
 .transaction-item:not(:last-child) {
-  margin-right: 12px;
+  margin-right: 5px;
+
+  @media screen and (min-width: 801px) {
+    margin-right: 15px;
+  }
 }
 
 .button-transaction-up svg {

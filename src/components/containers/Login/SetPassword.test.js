@@ -15,6 +15,12 @@ const _data = {
   onSubmit: jest.fn(),
 }
 
+const memoryRouterFeatures = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
+
 const setup = ({ data = _data } = {}) => {
   const utils = render(
     <AccountProvider>
@@ -26,6 +32,7 @@ const setup = ({ data = _data } = {}) => {
               state: { account: data.account },
             },
           ]}
+          future={memoryRouterFeatures}
         >
           <SetPassword {...data} />
         </MemoryRouter>
@@ -86,6 +93,7 @@ test('Click login button onSubmit', async () => {
               state: { account: _data.account },
             },
           ]}
+          future={memoryRouterFeatures}
         >
           <SetPassword
             {..._data}
@@ -120,6 +128,7 @@ test('Click login button onSubmit - error', async () => {
               state: { account: _data.account },
             },
           ]}
+          future={memoryRouterFeatures}
         >
           <SetPassword
             {..._data}

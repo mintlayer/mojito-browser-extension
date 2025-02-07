@@ -27,6 +27,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const [lockedBalance, setLockedBalance] = useState(0)
   const [unusedAddresses, setUnusedAddresses] = useState({})
   const [utxos, setUtxos] = useState([])
+  const [nftData, setNftData] = useState([])
+  const [nftInitialUtxos, setNftInitialUtxos] = useState([])
   const [lockedUtxos, setLockedUtxos] = useState([])
   const [transactions, setTransactions] = useState([])
   const [feerate, setFeerate] = useState(0)
@@ -38,18 +40,33 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const [fetchingUtxos, setFetchingUtxos] = useState(true)
   const [fetchingTransactions, setFetchingTransactions] = useState(true)
   const [fetchingDelegations, setFetchingDelegations] = useState(true)
+  const [fetchingTokens, setFetchingTokens] = useState(true)
+  const [fetchingNft, setFetchingNft] = useState(true)
+  const [allDataFetching, setAllDataFetching] = useState(false)
 
-  const fetchAllData = async () => {
+  const fetchAllData = async (force) => {
+    // check if height is the same as online height or fetching is in progress to avoid multiple requests
+    if (
+      allDataFetching &&
+      !force &&
+      (currentAccountId === accountID || networkType === currentNetworkType)
+    ) {
+      return
+    }
+
     // fetch fee rate
     const feerate = await Mintlayer.getFeesEstimates()
     setFeerate(parseInt(JSON.parse(feerate)))
 
     const account = LocalStorageService.getItem('unlockedAccount')
 
+    setAllDataFetching(true)
     setFetchingTransactions(true)
     setFetchingBalances(true)
     setFetchingUtxos(true)
     setFetchingDelegations(true)
+    setFetchingTokens(true)
+    setFetchingNft(true)
 
     if (currentAccountId !== accountID || networkType !== currentNetworkType) {
       // reset data if account or network changed
@@ -61,7 +78,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       setMlDelegationList([])
       setMlDelegationsBalance(0)
     }
-
     // fetch addresses
     const addressList = currentMlAddresses
       ? [
@@ -74,8 +90,12 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       setFetchingBalances(false)
       setFetchingTransactions(false)
       setFetchingUtxos(false)
+      setAllDataFetching(false)
       return
     }
+
+    setCurrentNetworkType(networkType)
+    setCurrentHeight(onlineHeight)
 
     const addresses_data_receive = await Promise.all(
       currentMlAddresses.mlReceivingAddresses.map((address) =>
@@ -147,6 +167,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       transactions_data,
       addressList,
     )
+
     setTransactions(parsedTransactions)
 
     setFetchingTransactions(false)
@@ -191,8 +212,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
         return acc
       }, [])
 
-    setCurrentNetworkType(networkType)
-
     const availableUtxos = available.map((item) => item)
     const lockedUtxos = parsedUtxos
       .flat()
@@ -205,20 +224,68 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     // Extract Token balances from UTXOs
     const tokenBalances = ML.getTokenBalances(availableUtxos)
-    const tokensData = await Mintlayer.getTokensData(Object.keys(tokenBalances))
-    const merged = Object.keys(tokenBalances).reduce((acc, key) => {
-      acc[key] = {
-        balance: tokenBalances[key],
-        token_info: {
-          number_of_decimals: tokensData[key].number_of_decimals,
-          token_ticker: tokensData[key].token_ticker,
-          token_id: key,
-        },
-      }
-      return acc
-    }, {})
+    const tokenBalancesFiltered = Object.entries(tokenBalances).reduce(
+      (acc, [key, value]) => {
+        if (value > 0) {
+          acc[key] = value
+        }
+        return acc
+      },
+      {},
+    )
 
-    setTokenBalances(merged)
+    const tokensData = await Mintlayer.getTokensData(
+      Object.keys(tokenBalancesFiltered),
+    )
+    const mergedTokensData = Object.keys(tokenBalancesFiltered).reduce(
+      (acc, key) => {
+        if (tokensData[key] && Object.keys(tokensData[key]).length > 0) {
+          acc[key] = {
+            balance: tokenBalancesFiltered[key],
+            token_info: {
+              number_of_decimals: tokensData[key].number_of_decimals,
+              token_ticker: tokensData[key].token_ticker,
+              token_id: key,
+            },
+          }
+        }
+        return acc
+      },
+      {},
+    )
+
+    // Start fetching NFTs
+    const availableNftInitialUtxos = parsedSpendableUtxos
+      .flatMap((utxo) => [...utxo])
+      .filter((item) => item.utxo.type === 'IssueNft')
+    setNftInitialUtxos(availableNftInitialUtxos)
+
+    const nftData = await Mintlayer.getNftsData(
+      Object.keys(tokenBalancesFiltered),
+    )
+
+    const filteredNftsData = Object.entries(nftData).reduce(
+      (acc, [key, value]) => {
+        if (value && Object.keys(value).length > 0) {
+          acc.push({
+            token_id: key,
+            data: { ...value },
+          })
+        }
+        return acc
+      },
+      [],
+    )
+
+    const initialNftData = availableNftInitialUtxos.map((item) => item.utxo)
+    const mergedNftsData = [...filteredNftsData, ...initialNftData]
+    // End fetching NFTs
+
+    setFetchingNft(false)
+    setTokenBalances(mergedTokensData)
+    setNftData(mergedNftsData)
+    setFetchingTokens(false)
+    setAllDataFetching(false)
   }
 
   const balanceLoading =
@@ -227,9 +294,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const fetchDelegations = async () => {
     try {
       if (!addresses) return
-      // if (mlDelegationList.length === 0) {
-      //   setDelegationsLoading(true)
-      // }
       setFetchingDelegations(true)
       const addressList = [
         ...currentMlAddresses.mlReceivingAddresses,
@@ -334,10 +398,11 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     balance,
     lockedBalance,
     tokenBalances,
-    // addresses,
     utxos,
     lockedUtxos,
     transactions,
+    nftData,
+    nftInitialUtxos,
     currentHeight,
     onlineHeight,
     mlDelegationsBalance,
@@ -357,6 +422,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     fetchingUtxos,
     fetchingTransactions,
     fetchingDelegations,
+    fetchingTokens,
+    fetchingNft,
+    allDataFetching,
+    setAllDataFetching,
   }
 
   return (

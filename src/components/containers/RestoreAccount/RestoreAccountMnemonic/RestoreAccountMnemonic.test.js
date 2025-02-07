@@ -13,17 +13,24 @@ const WORDSSAMPLE = ['car', 'house', 'cat']
 const SAMPLE_MNEMONIC =
   'pave defy issue grant pear balance mad scatter summer weasel spend metal'
 
+const memoryRouterFeature = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
+
 test('Renders restore account page with step 1', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccountMnemonic
-          step={1}
-          setStep={SETSTEPSAMPLE}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <RestoreAccountMnemonic
+            step={1}
+            setStep={SETSTEPSAMPLE}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const RestoreAccountComponent = screen.getByTestId('restore-account')
   const restoreAccountForm = screen.getByTestId('restore-account-form')
@@ -58,13 +65,14 @@ test('Renders restore account page with step 2', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccountMnemonic
-          step={2}
-          setStep={SETSTEPSAMPLE}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <RestoreAccountMnemonic
+            step={2}
+            setStep={SETSTEPSAMPLE}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const RestoreAccountComponent = screen.getByTestId('restore-account')
   const restoreAccountForm = screen.getByTestId('restore-account-form')
@@ -140,13 +148,14 @@ test('Renders set account page with step 3', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccountMnemonic
-          step={3}
-          setStep={SETSTEPSAMPLE}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <RestoreAccountMnemonic
+            step={3}
+            setStep={SETSTEPSAMPLE}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const descriptionParagraph = screen.getAllByTestId('description-paragraph')
   const restoreAccountForm = screen.getByTestId('restore-account-form')
@@ -175,17 +184,18 @@ test('Renders restore account page with step 4', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccountMnemonic
-          step={4}
-          setStep={SETSTEPSAMPLE}
-          words={WORDSSAMPLE}
-          onStepsFinished={onStepsFinishedFn}
-          validateMnemonicFn={validateMnemonicMock}
-          defaultBTCWordList={BTC.getWordList()}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <RestoreAccountMnemonic
+            step={4}
+            setStep={SETSTEPSAMPLE}
+            words={WORDSSAMPLE}
+            onStepsFinished={onStepsFinishedFn}
+            validateMnemonicFn={validateMnemonicMock}
+            defaultBTCWordList={BTC.getWordList()}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const restoreAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
@@ -228,13 +238,14 @@ test('Renders set account page with step 5', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccountMnemonic
-          step={5}
-          setStep={SETSTEPSAMPLE}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <RestoreAccountMnemonic
+            step={5}
+            setStep={SETSTEPSAMPLE}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const description = screen.getByTestId('wallet-list-description')
 
@@ -245,14 +256,15 @@ test('Renders set account page with step 6', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <RestoreAccountMnemonic
-          step={6}
-          setStep={SETSTEPSAMPLE}
-          onStepsFinished={ONSTEPSFINISHEDSAMPLE}
-        />
+        <MemoryRouter future={memoryRouterFeature}>
+          <RestoreAccountMnemonic
+            step={6}
+            setStep={SETSTEPSAMPLE}
+            onStepsFinished={ONSTEPSFINISHEDSAMPLE}
+          />
+        </MemoryRouter>
       </SettingsProvider>
     </AccountProvider>,
-    { wrapper: MemoryRouter },
   )
   const descriptionParagraph = screen.getAllByTestId('description-paragraph')
   const restoreAccountForm = screen.getByTestId('restore-account-form')
@@ -295,7 +307,10 @@ test('Checks back button behavior in a internal navigation component - first ste
   render(
     <AccountProvider>
       <SettingsProvider>
-        <MemoryRouter initialEntries={['/', '/set-account']}>
+        <MemoryRouter
+          initialEntries={['/', '/set-account']}
+          future={memoryRouterFeature}
+        >
           <Routes>
             <Route
               path="/set-account"

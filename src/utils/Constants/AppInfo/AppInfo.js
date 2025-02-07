@@ -36,6 +36,7 @@ const ML_TRANSACTION_MODES = {
   DELEGATION: 'delegation',
   STAKING: 'staking',
   WITHDRAW: 'withdraw',
+  NFT: 'nft',
 }
 const walletTypes = [
   {
@@ -94,6 +95,11 @@ const WALLETS_NAVIGATION = [
       },
       {
         id: '2.4',
+        name: 'NFT',
+        link: '/wallet/Mintlayer/nft',
+      },
+      {
+        id: '2.5',
         name: 'Sign/Verify Message',
         link: '/wallet/Mintlayer/sign-message',
       },
@@ -106,7 +112,7 @@ const WALLETS_NAVIGATION = [
   },
 ]
 
-const MAX_ML_FEE = 500000000000
+const MAX_ML_FEE = 500000000000 // 5 ML in atoms
 const REFRESH_INTERVAL = 1000 * 60 // one per minute
 
 export {

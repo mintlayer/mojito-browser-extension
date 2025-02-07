@@ -13,6 +13,12 @@ import { BrowserRouter as Router } from 'react-router-dom'
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
 
+const memoryRouterFeature = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
+
 describe('Delegation', () => {
   const mockDelegation = {
     creation_time: 1645113600,
@@ -29,7 +35,7 @@ describe('Delegation', () => {
       <AccountProvider>
         <SettingsProvider>
           <TransactionProvider>
-            <Router>
+            <Router future={memoryRouterFeature}>
               <Delegation delegation={mockDelegation} />
             </Router>
           </TransactionProvider>
@@ -53,7 +59,7 @@ describe('Delegation', () => {
       <AccountProvider>
         <SettingsProvider>
           <TransactionProvider>
-            <Router>
+            <Router future={memoryRouterFeature}>
               <Delegation delegation={mockDelegation} />
             </Router>
           </TransactionProvider>

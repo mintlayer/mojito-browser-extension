@@ -54,6 +54,7 @@ const setup = async (location, mode = 'default') => {
       mlReceivingAddresses: ['address'],
       mlChangeAddresses: ['address'],
     },
+    setAllDataFetching: jest.fn(),
   }
 
   const PreviousPage = () => {
@@ -80,12 +81,21 @@ const setup = async (location, mode = 'default') => {
 
   const value = mode === 'default' ? valueDefaul : valueOpenMenu
 
+  const memoryRouterFeature = {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+    v7_partialHydration: true,
+  }
+
   await render(
     <AccountProvider value={value}>
       <SettingsProvider value={{ networkType: 'testnet', toggleNetworkType }}>
         <MintlayerProvider value={mintlayerProviderValue}>
           <BitcoinProvider>
-            <MemoryRouter initialEntries={['/']}>
+            <MemoryRouter
+              initialEntries={['/']}
+              future={memoryRouterFeature}
+            >
               <Routes>
                 <Route
                   path="/next-page"

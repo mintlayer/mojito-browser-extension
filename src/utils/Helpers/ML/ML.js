@@ -99,6 +99,10 @@ const getParsedTransactions = (transactions, addresses) => {
       (output) => output?.value?.token_id,
     )?.value?.token_id
 
+    const nft_id = transaction.outputs.find(
+      (output) => output?.type === 'IssueNft',
+    )?.token_id
+
     // outbound transaction
     if (direction === 'out' && transaction.inputs.length > 0) {
       const destAddressOutput = transaction.outputs.find((output) => {
@@ -238,6 +242,7 @@ const getParsedTransactions = (transactions, addresses) => {
       type,
       sameWalletTransaction,
       token_id,
+      nft_id,
     }
   })
 }
