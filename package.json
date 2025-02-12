@@ -34,7 +34,7 @@
     "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --testPathIgnorePatterns='src/pages'",
     "coverage": "npm test -- --coverage ",
     "serve": "npm run build && http-server -p 8000 build/ ",
-    "e2e": "npx playwright test --workers=1",
+    "e2e": "npx playwright test --workers=5",
     "e2e:debug": "npx playwright test --headed",
     "e2e:ui": "npx playwright test --ui",
     "eject": "react-scripts eject",
