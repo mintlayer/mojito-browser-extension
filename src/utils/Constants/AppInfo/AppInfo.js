@@ -108,7 +108,7 @@ const WALLETS_NAVIGATION = [
 ]
 
 const MAX_ML_FEE = 500000000000 // 5 ML in atoms
-const REFRESH_INTERVAL = 1000 * 60 // one per minute
+const REFRESH_INTERVAL = 1000 * 60 * 2 // one per two minutes
 
 export {
   appAccounts,
