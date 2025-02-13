@@ -12,9 +12,7 @@ beforeEach(async ({ page: newPage }) => {
   await useRestoreWallet(page, 'sender')
 })
 
-// Delete account - cancel
 test('Delete account - cancel', async () => {
-  test.setTimeout(190000)
   await page.click('button.header-menu-button')
   const settings = page.getByText('Settings', { selector: 'li' })
   await settings.click()
@@ -58,17 +56,12 @@ test('Delete account - cancel', async () => {
   ).toBeVisible()
 
   await expect(page.getByTestId('popup').getByText('Cancel')).toBeVisible()
-
   await expect(page.getByTestId('popup').getByText('Continue')).toBeVisible()
-
   await page.getByRole('button', { name: 'Cancel' }).click()
-
   await expect(page.locator(':text("DELETE WALLET")')).toBeVisible()
 })
 
-// Delete account from settings
 test('Delete account from settings', async () => {
-  test.setTimeout(190000)
   await page.click('button.header-menu-button')
   const settings = page.getByText('Settings', { selector: 'li' })
   await settings.click()
@@ -112,9 +105,7 @@ test('Delete account from settings', async () => {
   ).toBeVisible()
 
   await expect(page.getByTestId('popup').getByText('Cancel')).toBeVisible()
-
   await expect(page.getByTestId('popup').getByText('Continue')).toBeVisible()
-
   await page.getByRole('button', { name: 'Continue' }).click()
 
   await expect(
@@ -128,16 +119,13 @@ test('Delete account from settings', async () => {
     'placeholder',
     'Password',
   )
+
   await page.fill('input[placeholder="Password"]', senderData.WALLET_PASSWORD)
-
   await page.getByRole('button', { name: 'Delete Wallet' }).click()
-
   await page.waitForSelector(':text("Your Mintlayer, right in your browser.")')
 })
 
-// Delete account from login page
 test('Delete account from login', async () => {
-  test.setTimeout(190000)
   await page.click('button.header-menu-button')
   const logoutElement = page.getByText('Logout', { selector: 'li' })
   await logoutElement.click()
@@ -177,9 +165,7 @@ test('Delete account from login', async () => {
   ).toBeVisible()
 
   await expect(page.getByTestId('popup').getByText('Cancel')).toBeVisible()
-
   await expect(page.getByTestId('popup').getByText('Continue')).toBeVisible()
-
   await page.getByRole('button', { name: 'Continue' }).click()
 
   await expect(
@@ -193,9 +179,8 @@ test('Delete account from login', async () => {
     'placeholder',
     'Password',
   )
+
   await page.fill('input[placeholder="Password"]', senderData.WALLET_PASSWORD)
-
   await page.getByRole('button', { name: 'Delete Wallet' }).click()
-
   await page.waitForSelector(':text("Your Mintlayer, right in your browser.")')
 })

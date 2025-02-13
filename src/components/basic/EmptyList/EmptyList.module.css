@@ -1,0 +1,12 @@
+.emptyList {
+  background: rgb(var(--color-gray));
+  font-size: 1.5em;
+  list-style: none;
+  padding: 10px;
+  text-align: center;
+
+  padding: 26px 20px;
+  border-radius: 20px;
+  border: 1px;
+  border: 1px solid rgba(var(--color-light-green), 0.2);
+}

@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import { Toggle } from '@BasicComponents'
-import { SettingsContext } from '@Contexts'
+import { MintlayerContext, SettingsContext } from '@Contexts'
 import { VerticalGroup } from '@LayoutComponents'
 import { AppInfo } from '@Constants'
 
@@ -8,8 +8,10 @@ import './SettingsTestnet.css'
 
 const SettingsTestnet = () => {
   const { networkType, toggleNetworkType } = useContext(SettingsContext)
+  const { setAllDataFetching } = useContext(MintlayerContext)
   const isTestnetEnabled = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const onToggle = () => {
+    setAllDataFetching(false)
     toggleNetworkType()
   }
   return (

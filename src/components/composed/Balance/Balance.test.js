@@ -6,22 +6,29 @@ import { BrowserRouter as Router } from 'react-router-dom'
 const BALANCE_SAMPLE = 1
 const EXCHANGE_RATE_SAMPLE = 25000
 
+const memoryRouterFeature = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
+
 test('Render account balance with ML', () => {
   render(
-    <Router>
-    <SettingsProvider>
-      <MintlayerContext.Provider
-        value={{ balanceLoading: false, tokenBalances: [] }}
-      >
-        <Balance
-          balance={BALANCE_SAMPLE}
-          exchangeRate={EXCHANGE_RATE_SAMPLE}
-          walletType={{ name: 'Mintlayer' }}
-        />
-      </MintlayerContext.Provider>
+    <Router future={memoryRouterFeature}>
+      <SettingsProvider>
+        <MintlayerContext.Provider
+          value={{ balanceLoading: false, tokenBalances: [] }}
+        >
+          <Balance
+            balance={BALANCE_SAMPLE}
+            exchangeRate={EXCHANGE_RATE_SAMPLE}
+            walletType={{ name: 'Mintlayer' }}
+          />
+        </MintlayerContext.Provider>
+        ,
+      </SettingsProvider>
       ,
-    </SettingsProvider>,
-    </Router>
+    </Router>,
   )
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
@@ -37,20 +44,21 @@ test('Render account balance with ML', () => {
 
 test('Render account balance with BTC', () => {
   render(
-    <Router>
-    <SettingsProvider>
-      <MintlayerContext.Provider
-        value={{ balanceLoading: false, tokenBalances: [] }}
-      >
-        <Balance
-          balance={BALANCE_SAMPLE}
-          exchangeRate={EXCHANGE_RATE_SAMPLE}
-          walletType={{ name: 'Bitcoin' }}
-        />
-      </MintlayerContext.Provider>
+    <Router future={memoryRouterFeature}>
+      <SettingsProvider>
+        <MintlayerContext.Provider
+          value={{ balanceLoading: false, tokenBalances: [] }}
+        >
+          <Balance
+            balance={BALANCE_SAMPLE}
+            exchangeRate={EXCHANGE_RATE_SAMPLE}
+            walletType={{ name: 'Bitcoin' }}
+          />
+        </MintlayerContext.Provider>
+        ,
+      </SettingsProvider>
       ,
-    </SettingsProvider>,
-    </Router>
+    </Router>,
   )
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
@@ -66,20 +74,21 @@ test('Render account balance with BTC', () => {
 
 test('renders balance with zero value when networkType is testnet', () => {
   render(
-    <Router>
-    <SettingsProvider value={{ networkType: 'testnet' }}>
-      <MintlayerContext.Provider
-        value={{ balanceLoading: false, tokenBalances: [] }}
-      >
-        <Balance
-          balance={BALANCE_SAMPLE}
-          exchangeRate={EXCHANGE_RATE_SAMPLE}
-          walletType={{ name: 'Bitcoin' }}
-        />
-      </MintlayerContext.Provider>
+    <Router future={memoryRouterFeature}>
+      <SettingsProvider value={{ networkType: 'testnet' }}>
+        <MintlayerContext.Provider
+          value={{ balanceLoading: false, tokenBalances: [] }}
+        >
+          <Balance
+            balance={BALANCE_SAMPLE}
+            exchangeRate={EXCHANGE_RATE_SAMPLE}
+            walletType={{ name: 'Bitcoin' }}
+          />
+        </MintlayerContext.Provider>
+        ,
+      </SettingsProvider>
       ,
-    </SettingsProvider>,
-    </Router>
+    </Router>,
   )
 
   const currantBalanceComponent = screen.getByTestId('current-balance')

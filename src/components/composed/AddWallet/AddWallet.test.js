@@ -27,10 +27,16 @@ describe('AddWallet', () => {
     },
   }
 
+  const memoryRouterFeature = {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+    v7_partialHydration: true,
+  }
+
   test('renders without crashing', () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router>
+        <Router future={memoryRouterFeature}>
           <AddWallet {...mockPropsEmpty} />
         </Router>
       </AccountContext.Provider>,
@@ -40,7 +46,7 @@ describe('AddWallet', () => {
   test('renders description paragraphs when step is 1', () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router>
+        <Router future={memoryRouterFeature}>
           <AddWallet {...mockPropsEmpty} />
         </Router>
       </AccountContext.Provider>,
@@ -57,7 +63,7 @@ describe('AddWallet', () => {
   test('renders InputList when step is 2', () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router>
+        <Router future={memoryRouterFeature}>
           <AddWallet {...mockPropsEmpty} />
         </Router>
       </AccountContext.Provider>,
@@ -86,7 +92,7 @@ describe('AddWallet', () => {
   test('renders password field and submit button when step is 3', async () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router>
+        <Router future={memoryRouterFeature}>
           <AddWallet {...mockProps} />
         </Router>
       </AccountContext.Provider>,
@@ -108,7 +114,7 @@ describe('AddWallet', () => {
   test('changes step on submit button click', () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router>
+        <Router future={memoryRouterFeature}>
           <AddWallet {...mockPropsEmpty} />
         </Router>
       </AccountContext.Provider>,

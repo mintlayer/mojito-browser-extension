@@ -101,6 +101,7 @@ test('Electrum request - getTransactionData', async () => {
 })
 
 test('Electrum request - getAdressUtxo', async () => {
+  jest.setTimeout(5000)
   const result = await getAddressUtxo(FIRST_TESTNET_WALLET)
   const transactions = JSON.parse(result)
   expect(transactions.length).toBeGreaterThan(0)

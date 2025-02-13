@@ -5,7 +5,7 @@ import { Button } from '@BasicComponents'
 import { Login } from '@ContainerComponents'
 
 import { Account } from '@Entities'
-import { AccountContext } from '@Contexts'
+import { AccountContext, MintlayerContext } from '@Contexts'
 import { useNavigate } from 'react-router-dom'
 
 import './DeleteAccount.css'
@@ -18,6 +18,7 @@ const DeleteAccount = () => {
     deletingAccount,
     setRemoveAccountPopupOpen,
   } = useContext(AccountContext)
+  const { setAllDataFetching } = useContext(MintlayerContext)
   const nextButonClickHandler = () => setStep(2)
   const buttonExtraStyleClasses = ['popup-delete-button']
   const buttonCancelExtraStyleClasses = ['popup-delete-button delete-cancel']
@@ -28,6 +29,7 @@ const DeleteAccount = () => {
       await Account.deleteAccount(accountId)
       await verifyAccountsExistence()
       navigate('/')
+      setAllDataFetching(false)
       logout()
       setRemoveAccountPopupOpen(false)
     } catch (e) {

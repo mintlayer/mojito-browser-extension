@@ -58,7 +58,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
   }explorer.mintlayer.org/tx/${transaction?.txid}`
 
   const explorerLink =
-    walletType.name === 'Mintlayer' ? externalMlLink : externalBtcLink
+    walletType.name === 'Bitcoin' ? externalBtcLink : externalMlLink
 
   useEffect(() => {
     const getConfirmationAmount = async () => {

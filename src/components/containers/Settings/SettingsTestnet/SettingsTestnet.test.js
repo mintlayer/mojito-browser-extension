@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
 import SettingsTestnet from './SettingsTestnet'
-import { SettingsContext } from '@Contexts'
+import { SettingsContext, MintlayerContext } from '@Contexts'
 
 const toggleNetworkType = jest.fn()
 
@@ -10,7 +10,9 @@ test('Render Inputs list item', async () => {
     <SettingsContext.Provider
       value={{ networkType: 'mainnet', toggleNetworkType }}
     >
-      <SettingsTestnet />
+      <MintlayerContext.Provider value={{ setAllDataFetching: jest.fn() }}>
+        <SettingsTestnet />
+      </MintlayerContext.Provider>
     </SettingsContext.Provider>,
   )
   const component = screen.getByTestId('settings-testnet')
@@ -26,7 +28,9 @@ test('toggles the network type', () => {
     <SettingsContext.Provider
       value={{ networkType: 'mainnet', toggleNetworkType }}
     >
-      <SettingsTestnet />
+      <MintlayerContext.Provider value={{ setAllDataFetching: jest.fn() }}>
+        <SettingsTestnet />
+      </MintlayerContext.Provider>
     </SettingsContext.Provider>,
   )
   const toggleButton = screen.getAllByTestId('toggle')[0]

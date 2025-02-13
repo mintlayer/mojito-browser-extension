@@ -15,6 +15,8 @@ import DelegationStakePage from './DelegationStake/DelegationStake'
 import DelegationWithdrawPage from './DelegationWithdraw/DelegationWithdraw'
 import LockedBalancePage from './LockedBalance/LockedBalance'
 import MessagePage from './MessagePage/MessagePage'
+import NftPage from './Nft/Nft'
+import NftSendPage from './NftSend/NftSend'
 
 export {
   CreateAccountPage,
@@ -34,4 +36,6 @@ export {
   DelegationWithdrawPage,
   LockedBalancePage,
   MessagePage,
+  NftPage,
+  NftSendPage,
 }

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 import { LogoRound } from '@BasicComponents'
-import { Format, NumbersHelper } from '@Helpers'
+import { Format, NumbersHelper, ML } from '@Helpers'
 import { MintlayerContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
@@ -15,6 +15,10 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
   const { coinType } = useParams()
   const navigate = useNavigate()
   const { tokenBalances } = useContext(MintlayerContext)
+  const name =
+    walletType.name.length > 25
+      ? ML.formatAddress(walletType.name)
+      : walletType.name
   // TODO Consider the correct format for 0,00 that might also be 0.00
   const balanceInUSD =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
@@ -58,7 +62,7 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
     >
       <div className="wallet-logo-wrapper">
         {logo()}
-        <h3>{walletType.name}</h3>
+        <h3>{name}</h3>
       </div>
 
       <div className="balance">

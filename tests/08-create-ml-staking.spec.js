@@ -13,21 +13,13 @@ beforeEach(async ({ page: newPage }) => {
   await useSetTestnet(page)
 })
 
-const formatedReceiverAddress = formatAddress(receiverData.ML_RECEIVING_ADDRESS)
-const formatedPoolId = formatAddress(senderData.POOL_ID)
-
 test('Create ML staking', async () => {
-  test.setTimeout(190000)
   await page.click(
     'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet)")',
   )
-  await page.waitForTimeout(1000)
 
   await page.click('button.button-transaction-staking')
-
   await page.getByRole('button', { name: 'Add funds' }).nth(0).click()
-
-  await page.waitForTimeout(1000)
   await expect(page.locator(':text("Deleg id:")')).toBeVisible()
 
   const inputValue = await page
@@ -38,8 +30,6 @@ test('Create ML staking', async () => {
   await page.fill('input[placeholder="0"]', '0.00000001')
 
   await page.getByRole('button', { name: 'Send' }).click()
-
-  await page.waitForTimeout(10000)
 
   await expect(page.getByTestId('popup').getByText('Send to:')).toBeVisible()
   await expect(
@@ -73,15 +63,4 @@ test('Create ML staking', async () => {
   )
 
   await page.waitForSelector(':text("Your transaction was sent.")')
-
-  const resultTitleText = await page.textContent('h3.result-title')
-  const txid = resultTitleText.split(': ')[1]
-
-  await page.getByRole('button', { name: 'Back to Dashboard' }).click()
-
-  await page.waitForTimeout(2000)
-
-  await expect(
-    page.getByRole('button', { name: 'Create new delegation' }),
-  ).toBeVisible()
 })

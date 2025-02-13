@@ -1,0 +1,97 @@
+.Nftdetails {
+  width: 100%;
+  max-width: 510px;
+  height: 500px;
+
+  @media screen and (min-width: 801px) {
+    height: 605px;
+  }
+}
+
+.nftImage {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto;
+  margin-bottom: 15px;
+
+  @media screen and (min-width: 801px) {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+.nftImage img {
+  width: 100%;
+  height: 100%;
+}
+
+.nftDetailsItemsWrapper {
+  height: 368px;
+  width: 100%;
+  padding: 10px;
+  overflow: auto;
+  margin-bottom: 20px;
+
+  @media screen and (min-width: 801px) {
+    height: 630px;
+  }
+}
+
+.nftDetailsItem {
+  margin-bottom: 1.5rem;
+}
+
+.nftDetailsItem h2 {
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.nftDetailsContent {
+  font-size: 1.5rem;
+  font-weight: 600;
+  word-break: break-word;
+  cursor: auto;
+}
+
+.nftDetailsActionButtons {
+  width: 50%;
+}
+
+.nftDetailsButton {
+  width: 100%;
+}
+
+.nftExplorerButtonIcon {
+  width: 13px;
+  height: 13px;
+  max-width: 13px;
+  max-height: 13px;
+  margin-left: 10px;
+}
+
+.nftDetailsButton:hover .nftExplorerButtonIcon {
+  animation: moveArrowUpRight 0.3s ease-in-out;
+}
+
+@keyframes moveArrowUpRight {
+  0% {
+    transform: translate(0, 0);
+    scale: 0.5;
+  }
+  50% {
+    transform: translate(10px, -10px);
+    opacity: 0;
+    scale: 0.7;
+  }
+  51% {
+    transform: translate(-10px, 10px);
+    opacity: 0;
+    scale: 0.85;
+  }
+  100% {
+    transform: translate(0, 0);
+    opacity: 1;
+    scale: 1;
+  }
+}

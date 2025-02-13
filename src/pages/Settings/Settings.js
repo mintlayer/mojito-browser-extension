@@ -31,7 +31,7 @@ const SettingsPage = ({ unlocked }) => {
     <>
       <ul className="settings-wrapper">
         {SettingsList.map((item) => (
-          <>
+          <div key={item.value}>
             {item.visible && (
               <li
                 className="settings-item"
@@ -41,7 +41,7 @@ const SettingsPage = ({ unlocked }) => {
                 <div className="divider" />
               </li>
             )}
-          </>
+          </div>
         ))}
       </ul>
     </>

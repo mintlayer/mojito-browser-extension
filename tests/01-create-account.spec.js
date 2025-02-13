@@ -4,7 +4,7 @@ import { WALLET_NAME, WALLET_PASSWORD } from './data/crate-restore.js'
 
 test('Create account', async ({ page }) => {
   test.setTimeout(190000)
-  await page.goto('http://localhost:8000/')
+  await page.goto('http://127.0.0.1:8000')
 
   await expect(page.locator('h1')).toHaveText('Mojito')
   await expect(page.locator('h2')).toHaveText(

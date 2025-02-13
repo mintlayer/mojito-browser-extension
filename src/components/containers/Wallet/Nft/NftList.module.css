@@ -1,0 +1,16 @@
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  min-height: max-content;
+}
+
+.list {
+  height: 30rem;
+  overflow: auto;
+  padding: 7px;
+
+  @media screen and (min-width: 801px) {
+    padding: 10px;
+    flex-grow: 1;
+  }
+}
