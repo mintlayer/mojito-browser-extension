@@ -8,8 +8,13 @@ export const useSetTestnet = async (page) => {
   await page.click('strong:text("testnet switcher")')
   await page.click('button.backButton')
 
-  await page.waitForTimeout(10000)
+  // await expect(page.locator(':text("Bitcoin (Testnet)")')).toBeVisible()
+  // await expect(page.locator(':text("Mintlayer (Testnet)")')).toBeVisible()
 
-  await expect(page.locator(':text("Bitcoin (Testnet)")')).toBeVisible()
-  await expect(page.locator(':text("Mintlayer (Testnet)")')).toBeVisible()
+  await page.waitForSelector(
+    'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet")',
+  )
+  await page.waitForSelector(
+    'li.crypto-item[data-testid="crypto-item"] h5:text("Bitcoin (Testnet")',
+  )
 }

@@ -15,7 +15,6 @@ test('Transaction details', async () => {
   await page.click(
     'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet)")',
   )
-  await page.waitForTimeout(5000)
 
   await page.waitForSelector('li.transaction')
   await page.click('li.transaction:first-of-type')

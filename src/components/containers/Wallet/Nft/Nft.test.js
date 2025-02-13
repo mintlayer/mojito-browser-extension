@@ -14,10 +14,16 @@ const mockNft = {
   },
 }
 
+const memoryRouterFeature = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
+
 describe('NftItem', () => {
   test('renders the NftItem component', () => {
     render(
-      <Router>
+      <Router future={memoryRouterFeature}>
         <SettingsProvider>
           <NftItem nft={mockNft} />
         </SettingsProvider>
@@ -39,7 +45,7 @@ describe('NftItem', () => {
 
   test('opens detail popup on click', () => {
     render(
-      <Router>
+      <Router future={memoryRouterFeature}>
         <SettingsProvider>
           <NftItem nft={mockNft} />
         </SettingsProvider>
