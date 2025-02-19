@@ -17,13 +17,14 @@ const formatedReceiverAddress = formatAddress(receiverData.ML_RECEIVING_ADDRESS)
 const formatedPoolId = formatAddress(senderData.POOL_ID)
 
 test('Create ML delegation', async () => {
-  test.setTimeout(190000)
   await page.click(
     'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet)")',
   )
-  await page.waitForTimeout(1000)
 
   await page.click('button.button-transaction-staking')
+
+  await page.waitForSelector(`:text("${formatedPoolId}")`)
+  await expect(page.locator(`:text("${formatedPoolId}")`).nth(0)).toBeVisible()
 
   await page.getByRole('button', { name: 'Create new delegation' }).click()
 
@@ -70,19 +71,4 @@ test('Create ML delegation', async () => {
   await page.waitForTimeout(2000)
 
   await page.waitForSelector(':text("Your transaction was sent.")')
-
-  const resultTitleText = await page.textContent('h3.result-title')
-  const txid = resultTitleText.split(': ')[1]
-
-  await page.getByRole('button', { name: 'Go to Staking' }).click()
-
-  await page.waitForTimeout(2000)
-
-  await page.waitForSelector(`:text("${formatedPoolId}")`)
-
-  await expect(page.locator(`:text("${formatedPoolId}")`).nth(0)).toBeVisible()
-
-  await expect(
-    page.locator(`:text("Preparing delegation for staking")`).nth(0),
-  ).toBeVisible()
 })

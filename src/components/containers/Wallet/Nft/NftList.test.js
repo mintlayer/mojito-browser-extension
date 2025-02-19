@@ -4,9 +4,15 @@ import NftList from './NftList'
 import { MintlayerContext } from '@Contexts'
 import { BrowserRouter as Router } from 'react-router-dom'
 
+const memoryRouterFeature = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+  v7_partialHydration: true,
+}
+
 const renderWithContext = (ui, { providerProps, ...renderOptions }) => {
   return render(
-    <Router>
+    <Router future={memoryRouterFeature}>
       <MintlayerContext.Provider {...providerProps}>
         {ui}
       </MintlayerContext.Provider>

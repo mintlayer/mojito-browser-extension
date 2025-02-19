@@ -28,6 +28,7 @@ export const useRestoreWallet = async (page, walletType) => {
   await page.waitForSelector(`:text("${walletName}")`)
   await expect(page.locator(`:text("${walletName}")`)).toBeVisible()
   await page.waitForSelector(':text("Mintlayer (ML)")')
+  await page.waitForSelector(':text("Bitcoin (BTC)")')
   await expect(page.locator(':text("Bitcoin (BTC)")')).toBeVisible()
   await expect(page.locator(':text("Mintlayer (ML)")')).toBeVisible()
 }

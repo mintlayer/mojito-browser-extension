@@ -18,11 +18,10 @@ const formatedReceiverAddress = formatAddress(
 )
 
 test('Create BTC transaction', async () => {
-  test.setTimeout(190000)
   await page.click(
     'li.crypto-item[data-testid="crypto-item"] h5:text("Bitcoin (Testnet)")',
   )
-  await page.waitForTimeout(1000)
+  // await page.waitForTimeout(1000)
   await page.click('button.button-transaction-up')
   await expect(page.locator(':text("Send to:")')).toBeVisible()
 
@@ -35,7 +34,7 @@ test('Create BTC transaction', async () => {
   await page.getByRole('button', { name: 'high' }).click()
   await page.getByRole('button', { name: 'Send' }).click()
 
-  await page.waitForTimeout(10000)
+  await page.waitForTimeout(2000)
 
   await expect(page.getByTestId('popup').getByText('Send to:')).toBeVisible()
   await expect(
@@ -56,20 +55,15 @@ test('Create BTC transaction', async () => {
   ).toBeVisible()
   await page.fill('input[placeholder="Password"]', receiverData.WALLET_PASSWORD)
 
-  // await page.getByRole('button', { name: 'Send Transaction' }).click()
-  // await page.waitForSelector(':text("Your transaction was sent.")')
+  await page.getByRole('button', { name: 'Send Transaction' }).click()
+  await page.route('*/**/tx', async (route) => {
+    const json =
+      'a6a3d270fa33eb7fca6f6d2f56c0c3c431f9cad51b2a7881208b5e8f4ec12dcf'
+    await route.fulfill({ json })
+  })
 
-  // const resultTitleText = await page.textContent('h3.result-title')
-  // const txid = resultTitleText.split(': ')[1]
+  await page.waitForSelector(':text("Your transaction was sent.")')
 
-  // await page.getByRole('button', { name: 'Back to Dashboard' }).click()
-
-  // await page.waitForTimeout(2000)
-
-  // TODO: temporary disabled due to the issue with the transaction list
-  // await expect(
-  //   page.locator(`:text("${formatedReceiverAddress}")`).nth(0),
-  // ).toBeVisible()
-
-  // await expect(page.locator(`:text("not confirmed")`).nth(0)).toBeVisible()
+  const resultTitleText = await page.textContent('h3.result-title')
+  const txid = resultTitleText.split(': ')[1]
 })

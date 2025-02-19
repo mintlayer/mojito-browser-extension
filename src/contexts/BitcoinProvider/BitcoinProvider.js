@@ -20,7 +20,6 @@ const BitcoinProvider = ({ value: propValue, children }) => {
   const [currentBlockHeight, setCurrentBlockHeight] = useState(0)
   const [onlineHeight, setOnlineHeight] = useState(0)
 
-
   const [btcTransactions, setBtcTransactions] = useState([])
   const [btcBalance, setBtcBalance] = useState(0)
   const [btcUtxos, setBtcUtxos] = useState([])
@@ -29,72 +28,79 @@ const BitcoinProvider = ({ value: propValue, children }) => {
   const [fetchingTransactions, setFetchingTransactions] = useState(false)
   const [fetchingUtxos, setFetchingUtxos] = useState(false)
 
- const fetchAllData = async () => {
-   const account = LocalStorageService.getItem('unlockedAccount')
+  const fetchAllData = async () => {
+    const account = LocalStorageService.getItem('unlockedAccount')
 
-   if (!account) return
+    if (!account) return
 
-   setFetchingBalances(true)
-   setFetchingTransactions(true)
-   setFetchingUtxos(true)
+    setBtcTransactions([])
+    setBtcUtxos([])
+    setBtcBalance(0)
 
-   const getTransactions = async () => {
-     try {
-       const response = await Electrum.getAddressTransactions(currentBtcAddress)
-       const transactions = JSON.parse(response)
-       const parsedTransactions = BTC.getParsedTransactions(
-         transactions,
-         currentBtcAddress,
-       )
-       setBtcTransactions(parsedTransactions)
-       setFetchingTransactions(false)
-     } catch (error) {
-       console.error(error)
-       setFetchingTransactions(false)
-     }
-   }
+    setFetchingBalances(true)
+    setFetchingTransactions(true)
+    setFetchingUtxos(true)
 
-   const getWalletUtxos = async () => {
-     try {
-       setFetchingUtxos(true)
-       const utxos = await Electrum.getAddressUtxo(currentBtcAddress)
-       setBtcUtxos(JSON.parse(utxos))
-       setFetchingUtxos(false)
-     } catch (error) {
-       console.error(error)
-       setFetchingUtxos(false)
-     }
-   }
+    const getTransactions = async () => {
+      try {
+        const response =
+          await Electrum.getAddressTransactions(currentBtcAddress)
+        const transactions = JSON.parse(response)
+        const parsedTransactions = BTC.getParsedTransactions(
+          transactions,
+          currentBtcAddress,
+        )
+        setBtcTransactions(parsedTransactions)
+        setFetchingTransactions(false)
+      } catch (error) {
+        console.error(error)
+        setFetchingTransactions(false)
+      }
+    }
 
-   const getBalance = async () => {
-     try {
-      const utxos = await Electrum.getAddressUtxo(currentBtcAddress)
-       const satoshiBalance = BTC.calculateBalanceFromUtxoList(JSON.parse(utxos))
-       const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
-       const formattedBalance = Format.BTCValue(balanceConvertedToBTC)
-       setBtcBalance(formattedBalance)
-       setFetchingBalances(false)
-     } catch (error) {
-       console.error(error)
-       setFetchingBalances(false)
-     }
-   }
+    const getWalletUtxos = async () => {
+      try {
+        setFetchingUtxos(true)
+        const utxos = await Electrum.getAddressUtxo(currentBtcAddress)
+        setBtcUtxos(JSON.parse(utxos))
+        setFetchingUtxos(false)
+      } catch (error) {
+        console.error(error)
+        setFetchingUtxos(false)
+      }
+    }
 
-   await getTransactions()
-   await getWalletUtxos()
-   await getBalance()
- }
+    const getBalance = async () => {
+      try {
+        const utxos = await Electrum.getAddressUtxo(currentBtcAddress)
+        const satoshiBalance = BTC.calculateBalanceFromUtxoList(
+          JSON.parse(utxos),
+        )
+        const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
+        const formattedBalance = Format.BTCValue(balanceConvertedToBTC)
+        setBtcBalance(formattedBalance)
+        setFetchingBalances(false)
+      } catch (error) {
+        console.error(error)
+        setFetchingBalances(false)
+      }
+    }
 
- useEffect(() => {
-   setCurrentBlockHeight(onlineHeight)
-   // fetch addresses, utxos, transactions
-   // fetch data one by one
-   const getData = async () => {
-     await fetchAllData()
-   }
-   getData()
-   // eslint-disable-next-line react-hooks/exhaustive-deps
- }, [onlineHeight, accountID, networkType])
+    await getTransactions()
+    await getWalletUtxos()
+    await getBalance()
+  }
+
+  useEffect(() => {
+    setCurrentBlockHeight(onlineHeight)
+    // fetch addresses, utxos, transactions
+    // fetch data one by one
+    const getData = async () => {
+      await fetchAllData()
+    }
+    getData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onlineHeight, accountID, networkType])
 
   useEffect(() => {
     const getData = async () => {

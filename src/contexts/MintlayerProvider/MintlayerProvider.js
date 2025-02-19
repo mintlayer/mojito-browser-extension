@@ -60,16 +60,9 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     const account = LocalStorageService.getItem('unlockedAccount')
 
-    setAllDataFetching(true)
-    setFetchingTransactions(true)
-    setFetchingBalances(true)
-    setFetchingUtxos(true)
-    setFetchingDelegations(true)
-    setFetchingTokens(true)
-    setFetchingNft(true)
+    if (!account) return
 
-    if (currentAccountId !== accountID || networkType !== currentNetworkType) {
-      // reset data if account or network changed
+    const resetState = () => {
       setTransactions([])
       setBalance(0)
       setLockedBalance(0)
@@ -78,6 +71,16 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       setMlDelegationList([])
       setMlDelegationsBalance(0)
     }
+
+    setAllDataFetching(true)
+    setFetchingTransactions(true)
+    setFetchingBalances(true)
+    setFetchingUtxos(true)
+    setFetchingDelegations(true)
+    setFetchingTokens(true)
+    setFetchingNft(true)
+
+    resetState()
     // fetch addresses
     const addressList = currentMlAddresses
       ? [
