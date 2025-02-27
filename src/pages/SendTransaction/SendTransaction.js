@@ -65,6 +65,13 @@ const SendTransactionPage = () => {
     if (walletType.name === 'Bitcoin') {
       return 'BTC'
     }
+    if (
+      !tokenBalances ||
+      !tokenBalances[walletType.name] ||
+      !tokenBalances[walletType.name].token_info
+    ) {
+      return 'TKN'
+    }
     return tokenBalances[walletType.name].token_info.token_ticker.string
   }
 
@@ -238,7 +245,13 @@ const SendTransactionPage = () => {
     return result
   }
 
-  const goBackToWallet = () => navigate('/wallet/' + walletType.name)
+  const goBackToWallet = () => {
+    if (walletType.tokenId) {
+      navigate('/')
+    } else {
+      navigate('/wallet/' + walletType.name)
+    }
+  }
 
   return (
     <>
