@@ -57,7 +57,7 @@ const DelegationWithdrawPage = () => {
   )
 
   const delegationBalance = Format.BTCValue(
-    MLHelpers.getAmountInCoins(currentDelegationInfo.balance),
+    MLHelpers.getAmountInCoins(currentDelegationInfo?.balance || 0),
   )
 
   const maxValueToken = delegationBalance - totalFeeCrypto
@@ -103,7 +103,7 @@ const DelegationWithdrawPage = () => {
         ? mlPrivKeys.mlMainnetPrivateKey
         : mlPrivKeys.mlTestnetPrivateKey
 
-    const walletPrivKeys = await ML.getWalletPrivKeysList(
+    const walletPrivKeys = ML.getWalletPrivKeysList(
       privKey,
       networkType,
       changeAddressesLength,

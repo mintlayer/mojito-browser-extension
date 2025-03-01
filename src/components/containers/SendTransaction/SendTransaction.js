@@ -398,7 +398,7 @@ const SendTransaction = ({
           </CenteredLayout>
         </>
       )}
-
+      {/* TODO: remove popup */}
       {openSendFundConfirmation && (
         <PopUp
           setOpen={setPopupState}

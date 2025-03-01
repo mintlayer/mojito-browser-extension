@@ -68,7 +68,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       setLockedBalance(0)
       setTokenBalances({})
       setUtxos([])
-      setMlDelegationList([])
+      // TODO: eneable this when after remove popup confirmation
+      // setMlDelegationList([])
       setMlDelegationsBalance(0)
     }
 

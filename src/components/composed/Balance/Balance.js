@@ -32,6 +32,13 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
     if (walletType.name === 'Bitcoin') {
       return 'BTC'
     }
+    if (
+      !tokenBalances ||
+      !tokenBalances[walletType.name] ||
+      !tokenBalances[walletType.name].token_info
+    ) {
+      return 'TKN'
+    }
     return tokenBalances[walletType.name].token_info.token_ticker.string
   }
 
@@ -41,6 +48,13 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
     }
     if (walletType.name === 'Bitcoin') {
       return <BtcLogo />
+    }
+    if (
+      !tokenBalances ||
+      !tokenBalances[walletType.name] ||
+      !tokenBalances[walletType.name].token_info
+    ) {
+      return <TokenLogoRound text={'TKN'} />
     }
     return (
       <TokenLogoRound
