@@ -318,7 +318,8 @@ export const getOutputIssueNft_ = ({ inputs, output, network, chainTip }) => {
   const ticker = data.ticker.string
   const description = data.description.string
   const media_hash = Buffer.from(data.media_hash.hex, 'hex')
-  const creator = data.creator
+  const creator =
+    data.creator !== '' && data.creator !== null ? data.creator : undefined
   const media_uri =
     data.media_uri !== '' && data.media_uri !== null
       ? data.media_uri

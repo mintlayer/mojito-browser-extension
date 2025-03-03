@@ -396,7 +396,7 @@ const calculateCustomTransactionSizeInBytes = async ({
       })
     }
     if (output.type === 'IssueNft') {
-      return ML.getOutputIssueNft({
+      return ML.getOutputIssueNft_({
         inputs: inputsArray,
         output,
         network,
@@ -634,7 +634,7 @@ const sendCustomTransaction = async ({
       })
     }
     if (output.type === 'IssueNft') {
-      return ML.getOutputIssueNft({
+      return ML.getOutputIssueNft_({
         inputs: inputsArray,
         output,
         network,

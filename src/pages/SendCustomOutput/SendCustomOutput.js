@@ -53,6 +53,7 @@ const SendCustomOutput = () => {
   ]
 
   const [customOutputs, setCustomOutputs] = useState([])
+  const [customInputs, setCustomInputs] = useState([])
   const [fee, setFee] = useState('')
   const [error, setError] = useState('')
   const [inputs, setInputs] = useState([])
@@ -67,6 +68,8 @@ const SendCustomOutput = () => {
     setPass(value)
   }
 
+  console.log('customInputs', customInputs)
+
   useEffect(() => {
     if (state && state.output) {
       // check if array
@@ -74,6 +77,13 @@ const SendCustomOutput = () => {
         setCustomOutputs(state.output)
       } else {
         setCustomOutputs([state.output])
+      }
+    }
+    if (state && state.inputs) {
+      if (Array.isArray(state.inputs)) {
+        setCustomInputs(state.inputs)
+      } else {
+        setCustomInputs([state.inputs])
       }
     }
   }, [state])
@@ -136,14 +146,20 @@ const SendCustomOutput = () => {
 
     const unusedChangeAddress = unusedAddresses.change
 
+    console.log('utxos', utxos)
+
     const utxoCoin = utxos.filter((utxo) => utxo.utxo.value.type === 'Coin')
     const inputs = getTransactionUtxos({
       utxos: utxoCoin,
       amount: +(parsedOutput.extraFee || 0) + amountToSend + fee,
     })
 
+    console.log('utxoCoin', utxoCoin)
+
     setInputs(inputs)
     const utxoBalance = totalUtxosAmount(inputs)
+
+    console.log('utxoBalance', utxoBalance)
 
     const transactionFee = fee
     const extraFee = parsedOutput.extraFee || 0
@@ -154,20 +170,25 @@ const SendCustomOutput = () => {
       BigInt(transactionFee) -
       BigInt(extraFee)
 
+    console.log('amountToReturn', amountToReturn)
+
+    console.log(unusedChangeAddress)
     // add change
-    const output = {
-      type: 'Transfer',
-      destination: unusedChangeAddress,
-      value: {
-        type: 'Coin',
-        amount: {
-          atoms: amountToReturn.toString(),
-          decimal: amountToReturn.toString() / 1e11,
+    const output = [
+      {
+        type: 'Transfer',
+        destination: unusedChangeAddress,
+        value: {
+          type: 'Coin',
+          amount: {
+            atoms: amountToReturn.toString(),
+            decimal: amountToReturn.toString() / 1e11,
+          },
         },
       },
-    }
+    ]
 
-    setOutputs([adjustedOutput, output])
+    setOutputs([adjustedOutput, ...output])
 
     // calculate fee
     const transactionSize =
@@ -194,51 +215,42 @@ const SendCustomOutput = () => {
       return
     }
 
-    try {
-      const unlockedAccount = await Account.unlockAccount(accountID, pass)
+    const unlockedAccount = await Account.unlockAccount(accountID, pass)
 
-      if (unlockedAccount) {
-        setPassPristinity(true)
-        setPassValidity(true)
-        setLoading(false)
-        setPassErrorMessage('')
-
-        const mlPrivKeys = unlockedAccount.mlPrivKeys
-
-        const privKey =
-          networkType === 'mainnet'
-            ? mlPrivKeys.mlMainnetPrivateKey
-            : mlPrivKeys.mlTestnetPrivateKey
-
-        const changeAddressesLength =
-          currentMlAddresses.mlChangeAddresses.length
-
-        const walletPrivKeys = ML.getWalletPrivKeysList(
-          privKey,
-          networkType,
-          changeAddressesLength,
-        )
-        const keysList = {
-          ...walletPrivKeys.mlReceivingPrivKeys,
-          ...walletPrivKeys.mlChangePrivKeys,
-        }
-
-        const transactionHex = await MLTransaction.sendCustomTransaction({
-          keysList: keysList,
-          network: networkType,
-          inputs: inputs,
-          outputs: outputs,
-          currentHeight,
-        })
-
-        setTransactionHex(transactionHex)
-      }
-    } catch (e) {
-      setPassPristinity(false)
-      setPassValidity(false)
+    if (unlockedAccount) {
+      setPassPristinity(true)
+      setPassValidity(true)
       setLoading(false)
-      setPassErrorMessage('Password is incorrect')
-      return
+      setPassErrorMessage('')
+
+      const mlPrivKeys = unlockedAccount.mlPrivKeys
+
+      const privKey =
+        networkType === 'mainnet'
+          ? mlPrivKeys.mlMainnetPrivateKey
+          : mlPrivKeys.mlTestnetPrivateKey
+
+      const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
+
+      const walletPrivKeys = ML.getWalletPrivKeysList(
+        privKey,
+        networkType,
+        changeAddressesLength,
+      )
+      const keysList = {
+        ...walletPrivKeys.mlReceivingPrivKeys,
+        ...walletPrivKeys.mlChangePrivKeys,
+      }
+
+      const transactionHex = await MLTransaction.sendCustomTransaction({
+        keysList: keysList,
+        network: networkType,
+        inputs: inputs,
+        outputs: outputs,
+        currentHeight,
+      })
+
+      setTransactionHex(transactionHex)
     }
 
     setLoading(false)

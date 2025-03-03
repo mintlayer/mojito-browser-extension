@@ -51,7 +51,7 @@ export const getInfoAboutOutput = (output) => {
     return {
       type: 'IssueNft',
       requiredFields: ['authority'],
-      extraFee: 50 * 1e11, // Decimal
+      extraFee: 5 * 1e11, // Decimal
       allFields: {
         token_id: parsedOutput.token_id,
         destination: parsedOutput.destination,
@@ -123,30 +123,61 @@ export const getTemplate = (name) => {
     return {
       type: 'IssueNft',
       token_id: '',
-      destination: '',
+      destination: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
       data: {
-        additional_metadata_uri: '',
-        creator: null,
+        additional_metadata_uri:
+          'ipfs://bafybeib3r2befelhmzzm3eiyteg76e2qkea26kodwqlx2ksqqji2pcxn3y/token_metadata.json',
+        creator: 'ss',
         description: {
-          hex: '',
-          string: '',
+          hex: '6969',
+          string: 'ii',
         },
-        icon_uri: '',
+        icon_uri:
+          'ipfs://bafybeib3r2befelhmzzm3eiyteg76e2qkea26kodwqlx2ksqqji2pcxn3y/E0A7060D-0A9C-4A79-BBDE-06F47FB5A2FF.jpeg',
         media_hash: {
-          hex: '',
-          string: null,
+          hex: '36333363653865313234396139373662366433663534616230306430316262626132373937393066343431376336356434353463323839336136643538306366',
+          string:
+            '633ce8e1249a976b6d3f54ab00d01bbba279790f4417c65d454c2893a6d580cf',
         },
-        media_uri: '',
+        media_uri:
+          'ipfs://bafybeib3r2befelhmzzm3eiyteg76e2qkea26kodwqlx2ksqqji2pcxn3y/E0A7060D-0A9C-4A79-BBDE-06F47FB5A2FF.jpeg',
         name: {
-          hex: '',
-          string: '',
+          hex: '6969',
+          string: 'ii',
         },
         ticker: {
-          hex: '',
-          string: '',
+          hex: '6969',
+          string: 'ii',
         },
       },
     }
+    // return {
+    //   type: 'IssueNft',
+    //   token_id: '',
+    //   destination: '',
+    //   data: {
+    //     additional_metadata_uri: '',
+    //     creator: null,
+    //     description: {
+    //       hex: '',
+    //       string: '',
+    //     },
+    //     icon_uri: '',
+    //     media_hash: {
+    //       hex: '',
+    //       string: null,
+    //     },
+    //     media_uri: '',
+    //     name: {
+    //       hex: '',
+    //       string: '',
+    //     },
+    //     ticker: {
+    //       hex: '',
+    //       string: '',
+    //     },
+    //   },
+    // }
   }
   if (name === 'DataDeposit') {
     return {
