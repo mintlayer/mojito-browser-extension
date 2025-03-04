@@ -29,7 +29,9 @@ const useMlWalletInfo = (addresses, token) => {
   const nativecoins = ['Mintlayer', 'Bitcoin']
 
   if (token && !nativecoins.includes(token)) {
-    const tokenBalance = tokenBalances[token].balance || 0
+    const tokenBalance = tokenBalances[token]?.balance
+      ? tokenBalances[token].balance
+      : 0
 
     return {
       transactions: transactions.filter((tx) => tx.token_id === token),
