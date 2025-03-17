@@ -30,7 +30,9 @@
       "*://localhost/*",
       "*://explorer.mintlayer.org/*",
       "*://lovelace.explorer.mintlayer.org/*",
-      "*://blockexplorer-staging.mintlayer.org/*"
+      "*://blockexplorer-staging.mintlayer.org/*",
+      "*://factory.mintlayer.org/*",
+      "*://staging.factory.mintlayer.org/*"
     ]
   },
   "permissions": ["externally_connectable"],

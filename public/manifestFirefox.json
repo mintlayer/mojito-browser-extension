@@ -25,7 +25,9 @@
         "*://localhost/*",
         "*://explorer.mintlayer.org/*",
         "*://lovelace.explorer.mintlayer.org/*",
-        "*://blockexplorer-staging.mintlayer.org/*"
+        "*://blockexplorer-staging.mintlayer.org/*",
+        "*://factory.mintlayer.org/*",
+        "*://staging.factory.mintlayer.org/*"
       ],
       "js": ["explorer/content-script.js"]
     }
