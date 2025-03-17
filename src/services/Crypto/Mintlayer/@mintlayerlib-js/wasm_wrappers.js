@@ -206,7 +206,7 @@ export function make_default_account_privkey(mnemonic, network) {
 
 /**
  * From an extended private key create a receiving private key for a given key index
- * derivation path: 44'/mintlayer_coin_type'/0'/0/key_index
+ * derivation path: current_derivation_path/0/key_index
  * @param {Uint8Array} private_key_bytes
  * @param {number} key_index
  * @returns {Uint8Array}
@@ -225,7 +225,7 @@ export function make_receiving_address(private_key_bytes, key_index) {
 
 /**
  * From an extended private key create a change private key for a given key index
- * derivation path: 44'/mintlayer_coin_type'/0'/1/key_index
+ * derivation path: current_derivation_path/1/key_index
  * @param {Uint8Array} private_key_bytes
  * @param {number} key_index
  * @returns {Uint8Array}
@@ -289,6 +289,75 @@ export function public_key_from_private_key(private_key) {
 }
 
 /**
+ * Return the extended public key from an extended private key
+ * @param {Uint8Array} private_key_bytes
+ * @returns {Uint8Array}
+ */
+export function extended_public_key_from_extended_private_key(
+  private_key_bytes,
+) {
+  const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.extended_public_key_from_extended_private_key(ptr0, len0)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * From an extended public key create a receiving public key for a given key index
+ * derivation path: current_derivation_path/0/key_index
+ * @param {Uint8Array} extended_public_key_bytes
+ * @param {number} key_index
+ * @returns {Uint8Array}
+ */
+export function make_receiving_address_public_key(
+  extended_public_key_bytes,
+  key_index,
+) {
+  const ptr0 = passArray8ToWasm0(
+    extended_public_key_bytes,
+    wasm.__wbindgen_malloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.make_receiving_address_public_key(ptr0, len0, key_index)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * From an extended public key create a change public key for a given key index
+ * derivation path: current_derivation_path/1/key_index
+ * @param {Uint8Array} extended_public_key_bytes
+ * @param {number} key_index
+ * @returns {Uint8Array}
+ */
+export function make_change_address_public_key(
+  extended_public_key_bytes,
+  key_index,
+) {
+  const ptr0 = passArray8ToWasm0(
+    extended_public_key_bytes,
+    wasm.__wbindgen_malloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.make_change_address_public_key(ptr0, len0, key_index)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
  * Given a message and a private key, sign the message with the given private key
  * This kind of signature is to be used when signing spend requests, such as transaction
  * input witness.
@@ -343,7 +412,7 @@ export function verify_signature_for_spending(public_key, signature, message) {
 }
 
 /**
- * Given a message and a private key, create and sign a challenge with the given private key
+ * Given a message and a private key, create and sign a challenge with the given private key.
  * This kind of signature is to be used when signing challenges.
  * @param {Uint8Array} private_key
  * @param {Uint8Array} message
@@ -364,10 +433,15 @@ export function sign_challenge(private_key, message) {
 }
 
 /**
- * Given a signed challenge, an address and a message. Verify that
+ * Given a signed challenge, an address and a message, verify that
  * the signature is produced by signing the message with the private key
  * that derived the given public key.
- * Note that this function is used for verifying messages related challenges.
+ * This function is used for verifying messages-related challenges.
+ *
+ * Note: for signatures that were created by `sign_challenge`, the provided address must be
+ * a 'pubkeyhash' address.
+ *
+ * Note: currently this function never returns `false` - it either returns `true` or fails with an error.
  * @param {string} address
  * @param {Network} network
  * @param {Uint8Array} signed_challenge
@@ -390,6 +464,126 @@ export function verify_challenge(address, network, signed_challenge, message) {
     throw takeFromExternrefTable0(ret[1])
   }
   return ret[0] !== 0
+}
+
+/**
+ * Return the message that has to be signed to produce a signed transaction intent.
+ * @param {string} intent
+ * @param {string} transaction_id
+ * @returns {Uint8Array}
+ */
+export function make_transaction_intent_message_to_sign(
+  intent,
+  transaction_id,
+) {
+  const ptr0 = passStringToWasm0(
+    intent,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    transaction_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.make_transaction_intent_message_to_sign(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Return a `SignedTransactionIntent` object as bytes given the message and encoded signatures.
+ *
+ * Note: to produce a valid signed intent one is expected to sign the corresponding message by private keys
+ * corresponding to each input of the transaction.
+ *
+ * Parameters:
+ * `signed_message` - this must have been produced by `make_transaction_intent_message_to_sign`.
+ * `signatures` - this should be an array of arrays of bytes, each of them representing an individual signature
+ * of `signed_message` produced by `sign_challenge` using the private key for the corresponding input destination
+ * of the transaction. The number of signatures must be equal to the number of inputs in the transaction.
+ * @param {Uint8Array} signed_message
+ * @param {any} signatures
+ * @returns {Uint8Array}
+ */
+export function encode_signed_transaction_intent(signed_message, signatures) {
+  const ptr0 = passArray8ToWasm0(signed_message, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_signed_transaction_intent(ptr0, len0, signatures)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+function passArrayJsValueToWasm0(array, malloc) {
+  const ptr = malloc(array.length * 4, 4) >>> 0
+  for (let i = 0; i < array.length; i++) {
+    const add = addToExternrefTable0(array[i])
+    getDataViewMemory0().setUint32(ptr + 4 * i, add, true)
+  }
+  WASM_VECTOR_LEN = array.length
+  return ptr
+}
+/**
+ * Verify a signed transaction intent.
+ *
+ * Parameters:
+ * `expected_signed_message` - the message that is supposed to be signed; this must have been
+ * produced by `make_transaction_intent_message_to_sign`.
+ * `encoded_signed_intent` - the signed transaction intent produced by `encode_signed_transaction_intent`.
+ * `input_destinations` - an array of addresses (strings), corresponding to the transaction's input destinations
+ * (note that this function treats "pub key" and "pub key hash" addresses interchangeably, so it's ok to pass
+ * one instead of the other).
+ * `network` - the network being used (needed to decode the addresses).
+ * @param {Uint8Array} expected_signed_message
+ * @param {Uint8Array} encoded_signed_intent
+ * @param {string[]} input_destinations
+ * @param {Network} network
+ */
+export function verify_transaction_intent(
+  expected_signed_message,
+  encoded_signed_intent,
+  input_destinations,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(
+    expected_signed_message,
+    wasm.__wbindgen_malloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passArray8ToWasm0(encoded_signed_intent, wasm.__wbindgen_malloc)
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArrayJsValueToWasm0(
+    input_destinations,
+    wasm.__wbindgen_malloc,
+  )
+  const len2 = WASM_VECTOR_LEN
+  const ret = wasm.verify_transaction_intent(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    network,
+  )
+  if (ret[1]) {
+    throw takeFromExternrefTable0(ret[0])
+  }
 }
 
 function _assertClass(instance, klass) {
@@ -916,7 +1110,7 @@ export function token_change_authority_fee(current_block_height, network) {
  * @param {string} metadata_uri
  * @param {number} number_of_decimals
  * @param {TotalSupply} total_supply
- * @param {Amount | undefined} supply_amount
+ * @param {Amount | null | undefined} supply_amount
  * @param {FreezableToken} is_token_freezable
  * @param {bigint} _current_block_height
  * @param {Network} network
@@ -1015,10 +1209,10 @@ export function get_token_id(inputs, network) {
  * @param {string} ticker
  * @param {string} description
  * @param {Uint8Array} media_hash
- * @param {Uint8Array | undefined} creator
- * @param {string | undefined} media_uri
- * @param {string | undefined} icon_uri
- * @param {string | undefined} additional_metadata_uri
+ * @param {Uint8Array | null | undefined} creator
+ * @param {string | null | undefined} media_uri
+ * @param {string | null | undefined} icon_uri
+ * @param {string | null | undefined} additional_metadata_uri
  * @param {bigint} _current_block_height
  * @param {Network} network
  * @returns {Uint8Array}
@@ -1161,7 +1355,7 @@ export function data_deposit_fee(current_block_height, network) {
  * Given the parameters needed to create hash timelock contract, and a network type (mainnet, testnet, etc),
  * this function creates an output.
  * @param {Amount} amount
- * @param {string | undefined} token_id
+ * @param {string | null | undefined} token_id
  * @param {string} secret_hash
  * @param {string} spend_address
  * @param {string} refund_address
@@ -1326,15 +1520,6 @@ export function encode_input_for_withdraw_from_delegation(
   return v3
 }
 
-function passArrayJsValueToWasm0(array, malloc) {
-  const ptr = malloc(array.length * 4, 4) >>> 0
-  const mem = getDataViewMemory0()
-  for (let i = 0; i < array.length; i++) {
-    mem.setUint32(ptr + 4 * i, addToExternrefTable0(array[i]), true)
-  }
-  WASM_VECTOR_LEN = array.length
-  return ptr
-}
 /**
  * Given the inputs, along each input's destination that can spend that input
  * (e.g. If we are spending a UTXO in input number 1 and it is owned by address mtc1xxxx, then it is mtc1xxxx in element number 2 in the vector/list.
@@ -1343,7 +1528,7 @@ function passArrayJsValueToWasm0(array, malloc) {
  * and the outputs, estimate the transaction size.
  * ScriptHash and ClassicMultisig destinations are not supported.
  * @param {Uint8Array} inputs
- * @param {(string)[]} input_utxos_destinations
+ * @param {string[]} input_utxos_destinations
  * @param {Uint8Array} outputs
  * @param {Network} network
  * @returns {number}
@@ -1693,14 +1878,239 @@ export function effective_pool_balance(network, pledge_amount, pool_balance) {
 }
 
 /**
+ * Given a token_id, an amount of tokens to mint and nonce return an encoded mint tokens input
+ * @param {string} token_id
+ * @param {Amount} amount
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_mint_tokens(token_id, amount, nonce, network) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  _assertClass(amount, Amount)
+  var ptr1 = amount.__destroy_into_raw()
+  const ret = wasm.encode_input_for_mint_tokens(
+    ptr0,
+    len0,
+    ptr1,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Given a token_id and nonce return an encoded unmint tokens input
+ * @param {string} token_id
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_unmint_tokens(token_id, nonce, network) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_unmint_tokens(ptr0, len0, nonce, network)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a token_id and nonce return an encoded lock_token_supply input
+ * @param {string} token_id
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_lock_token_supply(token_id, nonce, network) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_lock_token_supply(
+    ptr0,
+    len0,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a token_id, is token unfreezable and nonce return an encoded freeze token input
+ * @param {string} token_id
+ * @param {TokenUnfreezable} is_token_unfreezable
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_freeze_token(
+  token_id,
+  is_token_unfreezable,
+  nonce,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_freeze_token(
+    ptr0,
+    len0,
+    is_token_unfreezable,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a token_id and nonce return an encoded unfreeze token input
+ * @param {string} token_id
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_unfreeze_token(token_id, nonce, network) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_unfreeze_token(ptr0, len0, nonce, network)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a token_id, new authority destination and nonce return an encoded change token authority input
+ * @param {string} token_id
+ * @param {string} new_authority
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_change_token_authority(
+  token_id,
+  new_authority,
+  nonce,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    new_authority,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_change_token_authority(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Given a token_id, new metadata uri and nonce return an encoded change token metadata uri input
+ * @param {string} token_id
+ * @param {string} new_metadata_uri
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_change_token_metadata_uri(
+  token_id,
+  new_metadata_uri,
+  nonce,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    new_metadata_uri,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_change_token_metadata_uri(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
  * Given ask and give amounts and a conclude key create output that creates an order.
  *
  * 'ask_token_id': the parameter represents a Token if it's Some and coins otherwise.
  * 'give_token_id': the parameter represents a Token if it's Some and coins otherwise.
  * @param {Amount} ask_amount
- * @param {string | undefined} ask_token_id
+ * @param {string | null | undefined} ask_token_id
  * @param {Amount} give_amount
- * @param {string | undefined} give_token_id
+ * @param {string | null | undefined} give_token_id
  * @param {string} conclude_address
  * @param {Network} network
  * @returns {Uint8Array}
@@ -1878,6 +2288,16 @@ export const SourceId = Object.freeze({
   1: 'BlockReward',
 })
 /**
+ * Indicates whether a token can be unfrozen once frozen
+ * @enum {0 | 1}
+ */
+export const TokenUnfreezable = Object.freeze({
+  No: 0,
+  0: 'No',
+  Yes: 1,
+  1: 'Yes',
+})
+/**
  * The token supply of a specific token, set on issuance
  * @enum {0 | 1 | 2}
  */
@@ -1994,19 +2414,19 @@ async function __wbg_load(module, imports) {
 function __wbg_get_imports() {
   const imports = {}
   imports.wbg = {}
-  imports.wbg.__wbg_buffer_61b7ce01341d7f88 = function (arg0) {
+  imports.wbg.__wbg_buffer_609cc3eee51ed158 = function (arg0) {
     const ret = arg0.buffer
     return ret
   }
-  imports.wbg.__wbg_call_500db948e69c7330 = function () {
-    return handleError(function (arg0, arg1, arg2) {
-      const ret = arg0.call(arg1, arg2)
+  imports.wbg.__wbg_call_672a4d21634d4a24 = function () {
+    return handleError(function (arg0, arg1) {
+      const ret = arg0.call(arg1)
       return ret
     }, arguments)
   }
-  imports.wbg.__wbg_call_b0d8e36992d9900d = function () {
-    return handleError(function (arg0, arg1) {
-      const ret = arg0.call(arg1)
+  imports.wbg.__wbg_call_7cccdd69e0791ae2 = function () {
+    return handleError(function (arg0, arg1, arg2) {
+      const ret = arg0.call(arg1, arg2)
       return ret
     }, arguments)
   }
@@ -2023,15 +2443,15 @@ function __wbg_get_imports() {
     const ret = arg0.msCrypto
     return ret
   }
-  imports.wbg.__wbg_new_3ff5b33b1ce712df = function (arg0) {
+  imports.wbg.__wbg_new_a12002a7f91c75be = function (arg0) {
     const ret = new Uint8Array(arg0)
     return ret
   }
-  imports.wbg.__wbg_newnoargs_fd9e4bf8be2bc16d = function (arg0, arg1) {
+  imports.wbg.__wbg_newnoargs_105ed471475aaf50 = function (arg0, arg1) {
     const ret = new Function(getStringFromWasm0(arg0, arg1))
     return ret
   }
-  imports.wbg.__wbg_newwithbyteoffsetandlength_ba35896968751d91 = function (
+  imports.wbg.__wbg_newwithbyteoffsetandlength_d97e637ebe145a9a = function (
     arg0,
     arg1,
     arg2,
@@ -2039,7 +2459,7 @@ function __wbg_get_imports() {
     const ret = new Uint8Array(arg0, arg1 >>> 0, arg2 >>> 0)
     return ret
   }
-  imports.wbg.__wbg_newwithlength_34ce8f1051e74449 = function (arg0) {
+  imports.wbg.__wbg_newwithlength_a381634e90c276d4 = function (arg0) {
     const ret = new Uint8Array(arg0 >>> 0)
     return ret
   }
@@ -2062,26 +2482,32 @@ function __wbg_get_imports() {
       return ret
     }, arguments)
   }
-  imports.wbg.__wbg_set_23d69db4e5c66a6e = function (arg0, arg1, arg2) {
+  imports.wbg.__wbg_set_65595bdd868b3009 = function (arg0, arg1, arg2) {
     arg0.set(arg1, arg2 >>> 0)
   }
-  imports.wbg.__wbg_static_accessor_GLOBAL_0be7472e492ad3e3 = function () {
+  imports.wbg.__wbg_static_accessor_GLOBAL_88a902d13a557d07 = function () {
     const ret = typeof global === 'undefined' ? null : global
     return isLikeNone(ret) ? 0 : addToExternrefTable0(ret)
   }
-  imports.wbg.__wbg_static_accessor_GLOBAL_THIS_1a6eb482d12c9bfb = function () {
+  imports.wbg.__wbg_static_accessor_GLOBAL_THIS_56578be7e9f832b0 = function () {
     const ret = typeof globalThis === 'undefined' ? null : globalThis
     return isLikeNone(ret) ? 0 : addToExternrefTable0(ret)
   }
-  imports.wbg.__wbg_static_accessor_SELF_1dc398a895c82351 = function () {
+  imports.wbg.__wbg_static_accessor_SELF_37c5d418e4bf5819 = function () {
     const ret = typeof self === 'undefined' ? null : self
     return isLikeNone(ret) ? 0 : addToExternrefTable0(ret)
   }
-  imports.wbg.__wbg_static_accessor_WINDOW_ae1c80c7eea8d64a = function () {
+  imports.wbg.__wbg_static_accessor_WINDOW_5de37043a91a9c40 = function () {
     const ret = typeof window === 'undefined' ? null : window
     return isLikeNone(ret) ? 0 : addToExternrefTable0(ret)
   }
-  imports.wbg.__wbg_subarray_46adeb9b86949d12 = function (arg0, arg1, arg2) {
+  imports.wbg.__wbg_stringify_f7ed6987935b4a24 = function () {
+    return handleError(function (arg0) {
+      const ret = JSON.stringify(arg0)
+      return ret
+    }, arguments)
+  }
+  imports.wbg.__wbg_subarray_aa9065fa9dc5df96 = function (arg0, arg1, arg2) {
     const ret = arg0.subarray(arg1 >>> 0, arg2 >>> 0)
     return ret
   }
