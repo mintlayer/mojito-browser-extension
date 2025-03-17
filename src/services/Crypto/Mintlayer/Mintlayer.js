@@ -245,67 +245,38 @@ export const getOutputIssueFungibleToken = ({ output, network, chainTip }) => {
     metadata_uri,
     number_of_decimals,
     token_ticker,
-    total_supply,
+    // total_supply,
   } = output
 
-  const _current_block_height = BigInt(chainTip)
+  // const _current_block_height = BigInt(chainTip)
+
+  const networkIndex = NETWORKS[network]
 
   const is_token_freezable = is_freezable
     ? FreezableToken.Yes
     : FreezableToken.No
 
-  const supply_amount = Amount.from_atoms(total_supply.amount.atoms)
+  // const supply_amount = Amount.from_atoms(total_supply.amount.atoms)
 
-  const total_supply_type = TotalSupply[total_supply.type]
+  const total_supply_type = TotalSupply.Unlimited
 
-  console.log(
-    'authority,\n' +
-      '    token_ticker.hex,\n' +
-      '    metadata_uri.hex,\n' +
-      '    Number(number_of_decimals),\n' +
-      '    total_supply_type,\n' +
-      '    supply_amount,\n' +
-      '    is_token_freezable,\n' +
-      '    _current_block_height,\n' +
-      '    network,',
-    authority,
-    Buffer.from(token_ticker.hex, 'hex'),
-    Buffer.from(metadata_uri.hex, 'hex'),
-    number_of_decimals,
-    total_supply_type,
-    supply_amount,
-    is_token_freezable,
-    _current_block_height,
-    Network.Testnet,
-  )
+  // const encoder = new TextEncoder()
 
-  const encoder = new TextEncoder()
-  // const networkIndex = Network.Testnet
-
-  return encode_output_issue_fungible_token(
-    authority, // ok
-    encoder.encode(token_ticker.string), // ok
-    encoder.encode(metadata_uri.string), // ok
-    parseInt(number_of_decimals), // ok
-    total_supply_type, // ok
-    null,
-    is_token_freezable, // ok
-    BigInt(chainTip), // ok
-    Network.Testnet,
-  )
-
-  //
-  // return encode_output_issue_fungible_token(
-  //   authority,
-  //   encoder.encode(token_ticker.string),
-  //   encoder.encode(metadata_uri.string),
-  //   Number(number_of_decimals),
-  //   TotalSupply.Unlimited,
-  //   supply_amount,
-  //   is_token_freezable,
-  //   _current_block_height,
-  //   network,
-  // )
+  try {
+    return encode_output_issue_fungible_token(
+      authority, // ok
+      token_ticker.string, // ok
+      metadata_uri.string, // ok
+      parseInt(number_of_decimals), // ok
+      total_supply_type, // ok
+      null,
+      is_token_freezable, // ok
+      BigInt(chainTip), // ok
+      networkIndex,
+    )
+  } catch (error) {
+    console.error('error', error)
+  }
 }
 
 export const getOutputIssueNft_ = ({ inputs, output, network, chainTip }) => {
