@@ -29,6 +29,7 @@ import init, {
   verify_signature_for_spending,
   sign_challenge,
   verify_challenge,
+  encode_output_token_lock_then_transfer,
 } from './@mintlayerlib-js/wasm_wrappers.js'
 
 import { Mintlayer } from '@APIs'
@@ -197,12 +198,22 @@ export const getOutputs = ({
     if (lock.type === 'ForBlockCount') {
       lockEncoded = encode_lock_for_block_count(BigInt(lock.content))
     }
-    return encode_output_lock_then_transfer(
-      amountInstace,
-      address,
-      lockEncoded,
-      networkIndex,
-    )
+    if (tokenId) {
+      return encode_output_token_lock_then_transfer(
+        amountInstace,
+        address,
+        tokenId,
+        lockEncoded,
+        networkIndex,
+      )
+    } else {
+      return encode_output_lock_then_transfer(
+        amountInstace,
+        address,
+        lockEncoded,
+        networkIndex,
+      )
+    }
   }
   if (type === 'spendFromDelegation') {
     const stakingMaturity = getStakingMaturity(chainTip, networkType)

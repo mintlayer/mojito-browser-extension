@@ -24,7 +24,7 @@ export function make_default_account_privkey(
 ): Uint8Array
 /**
  * From an extended private key create a receiving private key for a given key index
- * derivation path: 44'/mintlayer_coin_type'/0'/0/key_index
+ * derivation path: current_derivation_path/0/key_index
  */
 export function make_receiving_address(
   private_key_bytes: Uint8Array,
@@ -32,7 +32,7 @@ export function make_receiving_address(
 ): Uint8Array
 /**
  * From an extended private key create a change private key for a given key index
- * derivation path: 44'/mintlayer_coin_type'/0'/1/key_index
+ * derivation path: current_derivation_path/1/key_index
  */
 export function make_change_address(
   private_key_bytes: Uint8Array,
@@ -50,6 +50,28 @@ export function pubkey_to_pubkeyhash_address(
  * Given a private key, as bytes, return the bytes of the corresponding public key
  */
 export function public_key_from_private_key(private_key: Uint8Array): Uint8Array
+/**
+ * Return the extended public key from an extended private key
+ */
+export function extended_public_key_from_extended_private_key(
+  private_key_bytes: Uint8Array,
+): Uint8Array
+/**
+ * From an extended public key create a receiving public key for a given key index
+ * derivation path: current_derivation_path/0/key_index
+ */
+export function make_receiving_address_public_key(
+  extended_public_key_bytes: Uint8Array,
+  key_index: number,
+): Uint8Array
+/**
+ * From an extended public key create a change public key for a given key index
+ * derivation path: current_derivation_path/1/key_index
+ */
+export function make_change_address_public_key(
+  extended_public_key_bytes: Uint8Array,
+  key_index: number,
+): Uint8Array
 /**
  * Given a message and a private key, sign the message with the given private key
  * This kind of signature is to be used when signing spend requests, such as transaction
@@ -72,7 +94,7 @@ export function verify_signature_for_spending(
   message: Uint8Array,
 ): boolean
 /**
- * Given a message and a private key, create and sign a challenge with the given private key
+ * Given a message and a private key, create and sign a challenge with the given private key.
  * This kind of signature is to be used when signing challenges.
  */
 export function sign_challenge(
@@ -80,10 +102,15 @@ export function sign_challenge(
   message: Uint8Array,
 ): Uint8Array
 /**
- * Given a signed challenge, an address and a message. Verify that
+ * Given a signed challenge, an address and a message, verify that
  * the signature is produced by signing the message with the private key
  * that derived the given public key.
- * Note that this function is used for verifying messages related challenges.
+ * This function is used for verifying messages-related challenges.
+ *
+ * Note: for signatures that were created by `sign_challenge`, the provided address must be
+ * a 'pubkeyhash' address.
+ *
+ * Note: currently this function never returns `false` - it either returns `true` or fails with an error.
  */
 export function verify_challenge(
   address: string,
@@ -91,6 +118,47 @@ export function verify_challenge(
   signed_challenge: Uint8Array,
   message: Uint8Array,
 ): boolean
+/**
+ * Return the message that has to be signed to produce a signed transaction intent.
+ */
+export function make_transaction_intent_message_to_sign(
+  intent: string,
+  transaction_id: string,
+): Uint8Array
+/**
+ * Return a `SignedTransactionIntent` object as bytes given the message and encoded signatures.
+ *
+ * Note: to produce a valid signed intent one is expected to sign the corresponding message by private keys
+ * corresponding to each input of the transaction.
+ *
+ * Parameters:
+ * `signed_message` - this must have been produced by `make_transaction_intent_message_to_sign`.
+ * `signatures` - this should be an array of arrays of bytes, each of them representing an individual signature
+ * of `signed_message` produced by `sign_challenge` using the private key for the corresponding input destination
+ * of the transaction. The number of signatures must be equal to the number of inputs in the transaction.
+ */
+export function encode_signed_transaction_intent(
+  signed_message: Uint8Array,
+  signatures: any,
+): Uint8Array
+/**
+ * Verify a signed transaction intent.
+ *
+ * Parameters:
+ * `expected_signed_message` - the message that is supposed to be signed; this must have been
+ * produced by `make_transaction_intent_message_to_sign`.
+ * `encoded_signed_intent` - the signed transaction intent produced by `encode_signed_transaction_intent`.
+ * `input_destinations` - an array of addresses (strings), corresponding to the transaction's input destinations
+ * (note that this function treats "pub key" and "pub key hash" addresses interchangeably, so it's ok to pass
+ * one instead of the other).
+ * `network` - the network being used (needed to decode the addresses).
+ */
+export function verify_transaction_intent(
+  expected_signed_message: Uint8Array,
+  encoded_signed_intent: Uint8Array,
+  input_destinations: string[],
+  network: Network,
+): void
 /**
  * Given a destination address, an amount and a network type (mainnet, testnet, etc), this function
  * creates an output of type Transfer, and returns it as bytes.
@@ -278,7 +346,7 @@ export function encode_output_issue_fungible_token(
   metadata_uri: string,
   number_of_decimals: number,
   total_supply: TotalSupply,
-  supply_amount: Amount | undefined,
+  supply_amount: Amount | null | undefined,
   is_token_freezable: FreezableToken,
   _current_block_height: bigint,
   network: Network,
@@ -298,10 +366,10 @@ export function encode_output_issue_nft(
   ticker: string,
   description: string,
   media_hash: Uint8Array,
-  creator: Uint8Array | undefined,
-  media_uri: string | undefined,
-  icon_uri: string | undefined,
-  additional_metadata_uri: string | undefined,
+  creator: Uint8Array | null | undefined,
+  media_uri: string | null | undefined,
+  icon_uri: string | null | undefined,
+  additional_metadata_uri: string | null | undefined,
   _current_block_height: bigint,
   network: Network,
 ): Uint8Array
@@ -322,7 +390,7 @@ export function data_deposit_fee(
  */
 export function encode_output_htlc(
   amount: Amount,
-  token_id: string | undefined,
+  token_id: string | null | undefined,
   secret_hash: string,
   spend_address: string,
   refund_address: string,
@@ -471,6 +539,66 @@ export function effective_pool_balance(
   pool_balance: Amount,
 ): Amount
 /**
+ * Given a token_id, an amount of tokens to mint and nonce return an encoded mint tokens input
+ */
+export function encode_input_for_mint_tokens(
+  token_id: string,
+  amount: Amount,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id and nonce return an encoded unmint tokens input
+ */
+export function encode_input_for_unmint_tokens(
+  token_id: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id and nonce return an encoded lock_token_supply input
+ */
+export function encode_input_for_lock_token_supply(
+  token_id: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id, is token unfreezable and nonce return an encoded freeze token input
+ */
+export function encode_input_for_freeze_token(
+  token_id: string,
+  is_token_unfreezable: TokenUnfreezable,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id and nonce return an encoded unfreeze token input
+ */
+export function encode_input_for_unfreeze_token(
+  token_id: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id, new authority destination and nonce return an encoded change token authority input
+ */
+export function encode_input_for_change_token_authority(
+  token_id: string,
+  new_authority: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id, new metadata uri and nonce return an encoded change token metadata uri input
+ */
+export function encode_input_for_change_token_metadata_uri(
+  token_id: string,
+  new_metadata_uri: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
  * Given ask and give amounts and a conclude key create output that creates an order.
  *
  * 'ask_token_id': the parameter represents a Token if it's Some and coins otherwise.
@@ -478,9 +606,9 @@ export function effective_pool_balance(
  */
 export function encode_create_order_output(
   ask_amount: Amount,
-  ask_token_id: string | undefined,
+  ask_token_id: string | null | undefined,
   give_amount: Amount,
-  give_token_id: string | undefined,
+  give_token_id: string | null | undefined,
   conclude_address: string,
   network: Network,
 ): Uint8Array
@@ -534,6 +662,13 @@ export enum SignatureHashType {
 export enum SourceId {
   Transaction = 0,
   BlockReward = 1,
+}
+/**
+ * Indicates whether a token can be unfrozen once frozen
+ */
+export enum TokenUnfreezable {
+  No = 0,
+  Yes = 1,
 }
 /**
  * The token supply of a specific token, set on issuance
@@ -607,6 +742,20 @@ export interface InitOutput {
     a: number,
     b: number,
   ) => [number, number, number, number]
+  readonly extended_public_key_from_extended_private_key: (
+    a: number,
+    b: number,
+  ) => [number, number, number, number]
+  readonly make_receiving_address_public_key: (
+    a: number,
+    b: number,
+    c: number,
+  ) => [number, number, number, number]
+  readonly make_change_address_public_key: (
+    a: number,
+    b: number,
+    c: number,
+  ) => [number, number, number, number]
   readonly sign_message_for_spending: (
     a: number,
     b: number,
@@ -636,6 +785,26 @@ export interface InitOutput {
     f: number,
     g: number,
   ) => [number, number, number]
+  readonly make_transaction_intent_message_to_sign: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+  ) => [number, number, number, number]
+  readonly encode_signed_transaction_intent: (
+    a: number,
+    b: number,
+    c: any,
+  ) => [number, number, number, number]
+  readonly verify_transaction_intent: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+  ) => [number, number]
   readonly encode_output_transfer: (
     a: number,
     b: number,
@@ -887,6 +1056,54 @@ export interface InitOutput {
     b: number,
     c: number,
   ) => [number, number, number]
+  readonly encode_input_for_mint_tokens: (
+    a: number,
+    b: number,
+    c: number,
+    d: bigint,
+    e: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_unmint_tokens: (
+    a: number,
+    b: number,
+    c: bigint,
+    d: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_lock_token_supply: (
+    a: number,
+    b: number,
+    c: bigint,
+    d: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_freeze_token: (
+    a: number,
+    b: number,
+    c: number,
+    d: bigint,
+    e: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_unfreeze_token: (
+    a: number,
+    b: number,
+    c: bigint,
+    d: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_change_token_authority: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: bigint,
+    f: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_change_token_metadata_uri: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: bigint,
+    f: number,
+  ) => [number, number, number, number]
   readonly encode_create_order_output: (
     a: number,
     b: number,

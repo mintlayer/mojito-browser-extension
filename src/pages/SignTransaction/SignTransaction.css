@@ -1,0 +1,179 @@
+/* SignTransaction.css */
+.SignTransaction {
+  background-color: #ffffff;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
+  overflow: scroll;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.SignTransaction .header {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 20px;
+  position: absolute;
+}
+
+.SignTransaction .content {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  margin-top: 40px;
+  height: 80%;
+}
+
+.SignTransaction .mock_selector {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  margin-bottom: 20px;
+  position: absolute;
+  bottom: 30px;
+  left: 1px;
+  opacity: 0.1;
+  overflow: scroll;
+  right: 1px;
+}
+
+.SignTransaction .mock_selector:hover {
+  opacity: 1;
+}
+
+.SignTransaction .mock_selector div {
+  background-color: #f3f4f6;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-right: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.SignTransaction .mock_selector div:hover {
+  background-color: #e5e7eb;
+}
+
+.SignTransaction .transaction_preview {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  height: 100%;
+  overflow: scroll;
+  width: 100%;
+}
+
+.SignTransaction .transaction_raw {
+  background-color: #f9fafb;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #4b5563;
+  word-break: break-all;
+  unicode-bidi: embed;
+  font-family: monospace;
+  white-space: pre;
+  height: 100%;
+  overflow: scroll;
+  width: 100%;
+}
+
+.SignTransaction .footer {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  bottom: 0;
+}
+
+.SignTransaction .btn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.SignTransaction .btn.approve {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.SignTransaction .btn.approve:hover {
+  background-color: #059669;
+}
+
+.SignTransaction .btn.reject {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.SignTransaction .btn.reject:hover {
+  background-color: #dc2626;
+}
+
+.SignTransaction .switcher_view {
+  background-color: #f9fafb;
+  padding: 10px;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  cursor: pointer;
+}
+
+.SignTransaction .switcher_view:hover {
+  background-color: #e5e7eb;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-content button {
+  margin: 5px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-content button:first-of-type {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.modal-content button:last-of-type {
+  background-color: #ef4444;
+  color: #ffffff;
+}

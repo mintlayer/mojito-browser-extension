@@ -30,6 +30,7 @@ import {
   MessagePage,
   NftPage,
   NftSendPage,
+  SignTransactionPage,
 } from '@Pages'
 
 import {
@@ -52,6 +53,14 @@ import '@Assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
+const storage =
+  // eslint-disable-next-line no-undef
+  typeof browser !== 'undefined' ? browser.storage : chrome.storage
+
+const runtime =
+  // eslint-disable-next-line no-undef
+  typeof browser !== 'undefined' ? browser.runtime : chrome.runtime
+
 const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
   const [unlocked, setUnlocked] = useState(false)
@@ -67,6 +76,7 @@ const App = () => {
   } = useContext(AccountContext)
   const { setAllDataFetching } = useContext(MintlayerContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
+  const [request, setRequest] = useState(null)
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
@@ -98,72 +108,184 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, navigate])
 
-  // subscribe to chrome runtime messages
   useEffect(() => {
-    try {
-      const browser = require('webextension-polyfill')
-      const onMessageListener = (request, sender, sendResponse) => {
-        if (request.action === 'connect') {
-          if (!unlocked) {
-            setNextAfterUnlock({ route: '/connect' })
-            return
-          }
-          sendResponse({ connected: true })
-          // change route to staking page
-          navigate('/connect')
+    if (storage) {
+      // Load pending request from storage
+      storage.local.get(['pendingRequest'], (data) => {
+        if (runtime.lastError) {
+          console.error('[Mojito Popup] Storage error:', runtime.lastError)
+          return
         }
+        const pendingRequest = data.pendingRequest
+        if (pendingRequest) {
+          setRequest(pendingRequest)
+          handlePendingRequest(pendingRequest)
+        }
+      })
+    }
+  }, [addresses, isAccountUnlocked, navigate])
 
-        if (request.action === 'createDelegate') {
-          if (!unlocked) {
-            setNextAfterUnlock({
-              route: '/wallet/Mintlayer/staking/create-delegation',
-              state: {
-                action: 'createDelegate',
-                pool_id: request.data.pool_id,
-                referral_code: request.data.referral_code || '',
-              },
-            })
-            return
-          }
-          // change route to staking page
-          navigate('/wallet/Mintlayer/staking/create-delegation', {
-            state: {
-              action: 'createDelegate',
-              pool_id: request.data.pool_id,
-              referral_code: request.data.referral_code || '',
-            },
-          })
-        }
+  const handlePendingRequest = (pendingRequest) => {
+    const { action, origin, requestId } = pendingRequest
 
-        if (request.action === 'getAddresses') {
-          // respond with addresses
-          sendResponse({
-            addresses: {
-              mainnet: addresses.mlMainnetAddress,
-              testnet: addresses.mlTestnetAddress,
-            },
-          })
-        }
-      }
-      browser.runtime &&
-        browser.runtime.onMessage.addListener(onMessageListener)
-      return () => {
-        browser.runtime &&
-          browser.runtime.onMessage.removeListener(onMessageListener)
-      }
-    } catch (e) {
-      if (
-        e.message ===
-        'This script should only be loaded in a browser extension.'
-      ) {
-        // not extension env
+    if (action === 'connect') {
+      if (!unlocked) {
+        setNextAfterUnlock({ route: '/connect' })
         return
       }
-      // other error throw further
-      throw e
+
+      const response = {
+        action: 'popupResponse',
+        method: 'connect',
+        requestId,
+        origin,
+        result: {
+          address: {
+            mainnet: {
+              receiving: addresses?.mlMainnetAddresses?.mlReceivingAddresses,
+              change: addresses?.mlMainnetAddresses?.mlChangeAddresses,
+            },
+            testnet: {
+              receiving: addresses?.mlTestnetAddresses?.mlReceivingAddresses,
+              change: addresses?.mlTestnetAddresses?.mlChangeAddresses,
+            },
+          },
+        },
+      }
+      runtime.sendMessage(response, () => {
+        console.log('[Popup] Response sent:', response)
+        // Remove pendingRequest after sending response
+        storage.local.remove('pendingRequest', () => {
+          if (runtime.lastError) {
+            console.error(
+              '[Mojito Popup] Error removing pendingRequest:',
+              runtime.lastError,
+            )
+          }
+          // window.close()
+        })
+      })
+      navigate('/connect')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addresses, isAccountUnlocked, navigate])
+
+    if (action === 'signTransaction') {
+      if (!unlocked) {
+        setNextAfterUnlock({
+          route: '/wallet/Mintlayer/sign-transaction',
+          state: { action: 'signTransaction', request },
+        })
+        return
+      }
+      navigate('/wallet/Mintlayer/sign-transaction', {
+        state: { action: 'signTransaction', request },
+      })
+    }
+
+    if (action === 'createDelegate') {
+      if (!unlocked) {
+        setNextAfterUnlock({
+          route: '/wallet/Mintlayer/staking/create-delegation',
+          state: {
+            action: 'createDelegate',
+            pool_id: request.data.pool_id,
+            referral_code: request.data.referral_code || '',
+          },
+        })
+        storage.local.remove('pendingRequest', () => {
+          if (runtime.lastError) {
+            console.error(
+              '[Mojito Popup] Error removing pendingRequest:',
+              runtime.lastError,
+            )
+          }
+        })
+        return
+      }
+
+      navigate('/wallet/Mintlayer/staking/create-delegation', {
+        state: {
+          action: 'createDelegate',
+          pool_id: request.data.pool_id,
+          referral_code: request.data.referral_code || '',
+        },
+      })
+      storage.local.remove('pendingRequest', () => {
+        if (runtime.lastError) {
+          console.error(
+            '[Mojito Popup] Error removing pendingRequest:',
+            runtime.lastError,
+          )
+        }
+      })
+    }
+  }
+
+  // // subscribe to chrome runtime messages
+  // useEffect(() => {
+  //   try {
+  //     const browser = require('webextension-polyfill')
+  //     const onMessageListener = (request, sender, sendResponse) => {
+  //       if (request.action === 'connect') {
+  //         if (!unlocked) {
+  //           setNextAfterUnlock({ route: '/connect' })
+  //           return
+  //         }
+  //         sendResponse({ connected: true })
+  //         // change route to staking page
+  //         navigate('/connect')
+  //       }
+  //
+  //       if (request.action === 'createDelegate') {
+  //         if (!unlocked) {
+  //           setNextAfterUnlock({
+  //             route: '/wallet/Mintlayer/staking/create-delegation',
+  //             state: {
+  //               action: 'createDelegate',
+  //               pool_id: request.data.pool_id,
+  //               referral_code: request.data.referral_code || '',
+  //             },
+  //           })
+  //           return
+  //         }
+  //         // change route to staking page
+  //         navigate('/wallet/Mintlayer/staking/create-delegation', {
+  //           state: {
+  //             action: 'createDelegate',
+  //             pool_id: request.data.pool_id,
+  //             referral_code: request.data.referral_code || '',
+  //           },
+  //         })
+  //       }
+  //
+  //       if (request.action === 'getAddresses') {
+  //         // respond with addresses
+  //         sendResponse({
+  //           addresses: {
+  //             mainnet: addresses.mlMainnetAddress,
+  //             testnet: addresses.mlTestnetAddress,
+  //           },
+  //         })
+  //       }
+  //     }
+  //     browser.runtime &&
+  //       browser.runtime.onMessage.addListener(onMessageListener)
+  //     return () => {
+  //       browser.runtime &&
+  //         browser.runtime.onMessage.removeListener(onMessageListener)
+  //     }
+  //   } catch (e) {
+  //     if (
+  //       e.message ===
+  //       'This script should only be loaded in a browser extension.'
+  //     ) {
+  //       // not extension env
+  //       return
+  //     }
+  //     // other error throw further
+  //     throw e
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [addresses, isAccountUnlocked, navigate])
 
   useEffect(() => {
     const extendPath = LocalStorageService.getItem('extendPath')
@@ -227,6 +349,10 @@ const App = () => {
         <Route
           path="/connect"
           element={<ConnectionPage />}
+        />
+        <Route
+          path="/wallet/:coinType/sign-transaction"
+          element={<SignTransactionPage />}
         />
         <Route
           path="/wallet/:coinType"

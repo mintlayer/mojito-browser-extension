@@ -1,123 +1,231 @@
-/* eslint-disable max-depth */
+/* eslint-disable no-undef */
 /* global chrome */
 
-var popupWindowId = false
-var connectWindowId = false
+;(function () {
+  // Detect browser API (Chrome or Firefox)
+  const api = typeof browser !== 'undefined' ? browser : chrome
 
-chrome.runtime.onMessageExternal.addListener(function (
-  request,
-  sender,
-  sendResponse,
-) {
-  if (request) {
-    if (request.message) {
-      if (request.message === 'version') {
-        sendResponse({ version: chrome.runtime.getManifest().version })
-      }
+  // Track popup window IDs
+  let popupWindowId = false
+  let connectWindowId = false
+  let connectedSites = {}
+  const pendingResponses = new Map()
 
-      if (request.message === 'connect') {
-        if (connectWindowId === false) {
-          popupWindowId = true
-          chrome.windows.create(
+  // Load connected sites from storage
+  api.storage.local.get(['connectedSites'], (data) => {
+    if (api.runtime.lastError) {
+      console.error('[Mintlayer] Storage get error:', api.runtime.lastError)
+      return
+    }
+    connectedSites = data.connectedSites || {}
+    console.log('[Mintlayer] Connected sites loaded:', connectedSites)
+  })
+
+  // Single listener for all messages
+  api.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log('[Mintlayer] Received message:', message, 'from', sender)
+
+    const origin = sender.origin || 'unknown'
+
+    // Handle requests from content.js
+    if (message.method) {
+      if (message.method === 'checkConnection') {
+        sendResponse({
+          result: connectedSites[origin]
+            ? { isConnected: true, address: connectedSites[origin].address }
+            : { isConnected: false },
+        })
+      } else if (message.method === 'connect') {
+        if (
+          connectedSites[origin] &&
+          connectedSites[origin].address.length > 0
+        ) {
+          sendResponse({ result: [connectedSites[origin].address] })
+        } else if (connectWindowId === false) {
+          api.windows.create(
             {
-              url: chrome.runtime.getURL('popup.html'),
+              url: api.runtime.getURL('popup.html'),
               type: 'popup',
               width: 800,
               height: 600,
               focused: true,
             },
-            function (win) {
+            (win) => {
               connectWindowId = win.id
-              setTimeout(function () {
-                chrome.runtime.sendMessage(
-                  {
+              api.storage.local.set(
+                {
+                  pendingRequest: {
+                    origin,
+                    requestId: message.requestId,
                     action: 'connect',
                   },
-                  function (response) {
-                    sendResponse(response)
-                  },
-                )
-              }, 1000)
+                },
+                () => {
+                  if (api.runtime.lastError) {
+                    console.error(
+                      '[Mintlayer] Storage set error:',
+                      api.runtime.lastError,
+                    )
+                  }
+                },
+              )
             },
           )
-        } else if (typeof popupWindowId === 'number') {
-          //The window is open, and the user clicked the button.
-          //  Focus the window.
-          chrome.windows.update(popupWindowId, { focused: true })
+          return true // Keep channel open
+        } else if (typeof connectWindowId === 'number') {
+          api.windows.update(connectWindowId, { focused: true })
+          sendResponse({ error: 'Connection window already open' })
         }
-      }
-
-      if (request.message === 'delegate') {
-        if (popupWindowId === false) {
-          popupWindowId = true
-          chrome.windows.create(
+      } else if (message.method === 'signTransaction') {
+        if (!connectedSites[origin]) {
+          sendResponse({ error: 'Not connected. Call connect first.' })
+        } else if (popupWindowId === false) {
+          pendingResponses.set(message.requestId, sendResponse)
+          api.windows.create(
             {
-              url: chrome.runtime.getURL('popup.html'),
+              url: api.runtime.getURL('popup.html'),
               type: 'popup',
               width: 800,
               height: 600,
               focused: true,
             },
-            function (win) {
+            (win) => {
               popupWindowId = win.id
-              setTimeout(function () {
-                chrome.runtime.sendMessage({
-                  action: 'createDelegate',
-                  data: {
-                    pool_id: request.pool_id,
-                    referral_code: request.referral_code || '',
+              api.storage.local.set(
+                {
+                  pendingRequest: {
+                    origin,
+                    requestId: message.requestId,
+                    action: 'signTransaction',
+                    data: message.params || {},
                   },
-                })
-              }, 1000)
+                },
+                () => {
+                  if (api.runtime.lastError) {
+                    console.error(
+                      '[Mintlayer] Storage set error:',
+                      api.runtime.lastError,
+                    )
+                  }
+                },
+              )
             },
           )
+          return true
         } else if (typeof popupWindowId === 'number') {
-          //The window is open, and the user clicked the button.
-          //  Focus the window.
-          chrome.windows.update(popupWindowId, { focused: true })
+          api.windows.update(popupWindowId, { focused: true })
+          sendResponse({ error: 'Transaction signing window already open' })
         }
-      }
-
-      if (request.message === 'stake') {
+      } else if (message.method === 'delegate') {
         if (popupWindowId === false) {
-          popupWindowId = true
-          chrome.windows.create(
+          api.windows.create(
             {
-              url: chrome.runtime.getURL('popup.html'),
+              url: api.runtime.getURL('popup.html'),
+              type: 'popup',
+              width: 800,
+              height: 600,
+              focused: true,
+            },
+            (win) => {
+              popupWindowId = win.id
+              api.storage.local.set({
+                pendingRequest: {
+                  origin,
+                  requestId: message.requestId,
+                  action: 'createDelegate',
+                  data: message.params || {},
+                },
+              })
+            },
+          )
+          return true
+        } else if (typeof popupWindowId === 'number') {
+          api.windows.update(popupWindowId, { focused: true })
+          sendResponse({ error: 'Delegate window already open' })
+        }
+      } else if (message.method === 'stake') {
+        if (popupWindowId === false) {
+          api.windows.create(
+            {
+              url: api.runtime.getURL('popup.html'),
               type: 'popup',
               width: 800,
               height: 630,
               focused: true,
             },
-            function (win) {
+            (win) => {
               popupWindowId = win.id
-              setTimeout(function () {
-                chrome.runtime.sendMessage({
+              api.storage.local.set({
+                pendingRequest: {
+                  origin,
+                  requestId: message.requestId,
                   action: 'addStake',
-                  data: {
-                    delegation_id: request.delegation_id,
-                    amount: request.amount,
-                  },
-                })
-              }, 1000)
+                  data: message.params || {},
+                },
+              })
             },
           )
+          return true
         } else if (typeof popupWindowId === 'number') {
-          //The window is open, and the user clicked the button.
-          //  Focus the window.
-          chrome.windows.update(popupWindowId, { focused: true })
+          api.windows.update(popupWindowId, { focused: true })
+          sendResponse({ error: 'Stake window already open' })
         }
+      } else if (message.method === 'version') {
+        sendResponse({ result: api.runtime.getManifest().version })
+      } else {
+        sendResponse({ error: 'Unknown method' })
       }
     }
-  }
-  return true
-})
 
-chrome.windows.onRemoved.addListener(function (winId) {
-  if (popupWindowId === winId) {
-    popupWindowId = false
-  }
-  if (connectWindowId === winId) {
-    connectWindowId = false
-  }
-})
+    // Handle popup responses
+    if (message.action === 'popupResponse') {
+      const { requestId, origin, result, error } = message
+      const storedSendResponse = pendingResponses.get(requestId)
+      if (result && message.method === 'connect') {
+        connectedSites[origin] = {
+          address: result.address,
+          timestamp: Date.now(),
+        }
+        api.storage.local.set({ connectedSites }, () => {
+          if (api.runtime.lastError) {
+            console.error(
+              '[Mintlayer] Storage set error:',
+              api.runtime.lastError,
+            )
+          }
+          api.runtime.sendMessage({ requestId, result, error }, (response) => {
+            if (api.runtime.lastError) {
+              console.error(
+                '[Mintlayer] Send response error:',
+                api.runtime.lastError,
+              )
+            }
+          })
+        })
+      } else if (result && message.method === 'signTransaction_approve') {
+        storedSendResponse({ result, error })
+        pendingResponses.delete(requestId)
+      } else if (result && message.method === 'signTransaction_reject') {
+        storedSendResponse({ result, error })
+        pendingResponses.delete(requestId)
+      } else {
+        api.runtime.sendMessage({ requestId, result, error }, (response) => {
+          if (api.runtime.lastError) {
+            console.error(
+              '[Mintlayer] Send response error:',
+              api.runtime.lastError,
+            )
+          }
+        })
+      }
+    }
+  })
+
+  // Clean up window IDs
+  api.windows.onRemoved.addListener((winId) => {
+    if (popupWindowId === winId) popupWindowId = false
+    if (connectWindowId === winId) connectWindowId = false
+  })
+
+  console.log('[Mintlayer Extension] Background script loaded')
+})()

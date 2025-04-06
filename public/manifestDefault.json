@@ -33,10 +33,11 @@
       "*://blockexplorer-staging.mintlayer.org/*"
     ]
   },
-  "permissions": ["externally_connectable"],
+  "permissions": ["externally_connectable", "storage"],
   "content_scripts": [
     {
       "matches": [
+        "*://*/*",
         "*://localhost/*",
         "*://explorer.mintlayer.org/*",
         "*://lovelace.explorer.mintlayer.org/*",

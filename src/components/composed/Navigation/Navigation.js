@@ -100,6 +100,12 @@ const Navigation = ({ customNavigation }) => {
       icon: <SettingsImg />,
       link: '/settings',
     },
+    {
+      id: 3,
+      label: 'Sign Transaction Test',
+      icon: <SettingsImg />,
+      link: '/wallet/Mintlayer/sign-transaction',
+    },
   ]
 
   const navigationList = [
