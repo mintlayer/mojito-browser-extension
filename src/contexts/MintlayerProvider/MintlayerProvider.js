@@ -62,16 +62,16 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     if (!account) return
 
-    const resetState = () => {
-      setTransactions([])
-      setBalance(0)
-      setLockedBalance(0)
-      setTokenBalances({})
-      setUtxos([])
-      // TODO: eneable this when after remove popup confirmation
-      // setMlDelegationList([])
-      setMlDelegationsBalance(0)
-    }
+    // const resetState = () => {
+    //   setTransactions([])
+    //   setBalance(0)
+    //   setLockedBalance(0)
+    //   setTokenBalances({})
+    //   setUtxos([])
+    //   // TODO: enable this when after remove popup confirmation
+    //   // setMlDelegationList([])
+    //   setMlDelegationsBalance(0)
+    // }
 
     setAllDataFetching(true)
     setFetchingTransactions(true)
@@ -81,7 +81,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setFetchingTokens(true)
     setFetchingNft(true)
 
-    resetState()
+    // resetState()
     // fetch addresses
     const addressList = currentMlAddresses
       ? [
@@ -373,6 +373,9 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   }
 
   useEffect(() => {
+    console.log('accountID', accountID)
+    Mintlayer.cancelAllRequests()
+
     setCurrentHeight(onlineHeight)
     // fetch addresses, utxos, transactions
     // fetch data one by one

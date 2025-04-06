@@ -17,8 +17,12 @@ const MINTLAYER_ENDPOINTS = {
   GET_POOL_DATA: '/pool/:hash',
 }
 
+const abortControllers = new Map()
+
 const requestMintlayer = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
+  const controller = new AbortController()
+  abortControllers.set(url, controller)
 
   try {
     const result = await request(url, {
@@ -66,6 +70,8 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
   } catch (error) {
     console.error(error)
     throw error
+  } finally {
+    abortControllers.delete(url)
   }
 }
 
@@ -349,6 +355,11 @@ const getFeesEstimates = async () => {
 const broadcastTransaction = (transaction) =>
   tryServers(MINTLAYER_ENDPOINTS.POST_TRANSACTION, transaction)
 
+const cancelAllRequests = () => {
+  abortControllers.forEach((controller) => controller.abort())
+  abortControllers.clear()
+}
+
 export {
   getAddressData,
   getAddressBalance,
@@ -374,4 +385,6 @@ export {
   getPoolsData,
   getNftsData,
   MINTLAYER_ENDPOINTS,
+  abortControllers,
+  cancelAllRequests,
 }
