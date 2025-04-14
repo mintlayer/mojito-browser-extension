@@ -182,6 +182,31 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       }
     })
 
+    const { tokensData: nftData, excludedTokenIds } =
+      await Mintlayer.getNftsData(Object.keys(nftBalances))
+
+    if (Object.keys(excludedTokenIds).length > 0) {
+      Object.keys(nftBalances).forEach((tokenId) => {
+        if (excludedTokenIds[tokenId]) {
+          tokenBalances[tokenId] = nftBalances[tokenId]
+          delete nftBalances[tokenId]
+        }
+      })
+    }
+
+    const mergedNftsData = Object.entries(nftData).reduce(
+      (acc, [key, value]) => {
+        if (value && Object.keys(value).length > 0) {
+          acc.push({
+            token_id: key,
+            data: { ...value },
+          })
+        }
+        return acc
+      },
+      [],
+    )
+
     const tokensData = await Mintlayer.getTokensData(Object.keys(tokenBalances))
 
     const mergedTokensData = Object.keys(tokenBalances).reduce((acc, key) => {
@@ -197,21 +222,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       }
       return acc
     }, {})
-
-    const nftData = await Mintlayer.getNftsData(Object.keys(nftBalances))
-
-    const mergedNftsData = Object.entries(nftData).reduce(
-      (acc, [key, value]) => {
-        if (value && Object.keys(value).length > 0) {
-          acc.push({
-            token_id: key,
-            data: { ...value },
-          })
-        }
-        return acc
-      },
-      [],
-    )
 
     setFetchingNft(false)
     setTokenBalances(mergedTokensData)

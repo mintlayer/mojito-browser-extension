@@ -267,6 +267,7 @@ const getTokensData = async (tokens) => {
 
 const getNftsData = async (tokens) => {
   const tokensData = {}
+  const excludedTokenIds = {} // to send tokens that had zero decimal and 1/1 atoms/decimals value (which is looks like NFT)
   tokens.forEach((token) => {
     tokensData[token] = {}
   })
@@ -277,12 +278,15 @@ const getNftsData = async (tokens) => {
       const data = await JSON.parse(text)
       tokensData[token] = data
     } catch (error) {
+      if (error.message.includes('Request not successful')) {
+        excludedTokenIds[token] = 1
+      }
       console.error(`Failed to fetch data for token ${token}:`, error)
     }
   })
 
   await Promise.allSettled(tokensPromises)
-  return tokensData
+  return { tokensData, excludedTokenIds }
 }
 
 const getAddressDelegations = (address) =>
