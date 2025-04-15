@@ -94,6 +94,7 @@ const getParsedTransactions = (transactions, addresses) => {
     let destAddress
     let value
     let sameWalletTransaction = false
+    let delegationOwner
 
     const token_id = transaction.outputs.find(
       (output) => output?.value?.token_id,
@@ -155,6 +156,7 @@ const getParsedTransactions = (transactions, addresses) => {
           if (output.type === 'CreateDelegationId') {
             type = 'CreateDelegationId'
             destAddress = output.pool_id
+            delegationOwner = output.destination
             sameWalletTransaction = false
             return acc + Number(0)
           }
@@ -243,6 +245,7 @@ const getParsedTransactions = (transactions, addresses) => {
       sameWalletTransaction,
       token_id,
       nft_id,
+      ...(delegationOwner && { delegationOwner }),
     }
   })
 }

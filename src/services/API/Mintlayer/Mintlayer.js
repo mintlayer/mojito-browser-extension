@@ -17,8 +17,12 @@ const MINTLAYER_ENDPOINTS = {
   GET_POOL_DATA: '/pool/:hash',
 }
 
+const abortControllers = new Map()
+
 const requestMintlayer = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
+  const controller = new AbortController()
+  abortControllers.set(url, controller)
 
   try {
     const result = await request(url, {
@@ -66,6 +70,8 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
   } catch (error) {
     console.error(error)
     throw error
+  } finally {
+    abortControllers.delete(url)
   }
 }
 
@@ -261,6 +267,7 @@ const getTokensData = async (tokens) => {
 
 const getNftsData = async (tokens) => {
   const tokensData = {}
+  const excludedTokenIds = {} // to send tokens that had zero decimal and 1/1 atoms/decimals value (which is looks like NFT)
   tokens.forEach((token) => {
     tokensData[token] = {}
   })
@@ -271,12 +278,15 @@ const getNftsData = async (tokens) => {
       const data = await JSON.parse(text)
       tokensData[token] = data
     } catch (error) {
+      if (error.message.includes('Request not successful')) {
+        excludedTokenIds[token] = 1
+      }
       console.error(`Failed to fetch data for token ${token}:`, error)
     }
   })
 
   await Promise.allSettled(tokensPromises)
-  return tokensData
+  return { tokensData, excludedTokenIds }
 }
 
 const getAddressDelegations = (address) =>
@@ -349,6 +359,11 @@ const getFeesEstimates = async () => {
 const broadcastTransaction = (transaction) =>
   tryServers(MINTLAYER_ENDPOINTS.POST_TRANSACTION, transaction)
 
+const cancelAllRequests = () => {
+  abortControllers.forEach((controller) => controller.abort())
+  abortControllers.clear()
+}
+
 export {
   getAddressData,
   getAddressBalance,
@@ -374,4 +389,6 @@ export {
   getPoolsData,
   getNftsData,
   MINTLAYER_ENDPOINTS,
+  abortControllers,
+  cancelAllRequests,
 }
