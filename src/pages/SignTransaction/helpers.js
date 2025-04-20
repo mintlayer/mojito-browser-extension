@@ -18,6 +18,12 @@ import {
   encode_output_coin_burn,
   encode_input_for_unmint_tokens,
   encode_input_for_lock_token_supply,
+  encode_input_for_change_token_authority,
+  encode_input_for_change_token_metadata_uri,
+  encode_input_for_freeze_token,
+  encode_input_for_unfreeze_token,
+  encode_output_data_deposit,
+  TokenUnfreezable,
   SourceId,
   SignatureHashType,
   FreezableToken,
@@ -107,6 +113,37 @@ export function getTransactionBINrepresentation(
       }
       if (input.command === 'LockTokenSupply') {
         return encode_input_for_lock_token_supply(
+          input.token_id,
+          input.nonce.toString(),
+          network,
+        )
+      }
+      if (input.command === 'ChangeTokenAuthority') {
+        return encode_input_for_change_token_authority(
+          input.token_id,
+          input.new_authority,
+          input.nonce.toString(),
+          network,
+        )
+      }
+      if (input.command === 'ChangeMetadataUri') {
+        return encode_input_for_change_token_metadata_uri(
+          input.token_id,
+          input.new_metadata_uri,
+          input.nonce.toString(),
+          network,
+        )
+      }
+      if (input.command === 'FreezeToken') {
+        return encode_input_for_freeze_token(
+          input.token_id,
+          input.is_unfreezable ? TokenUnfreezable.Yes : TokenUnfreezable.No,
+          input.nonce.toString(),
+          network,
+        )
+      }
+      if (input.command === 'UnfreezeToken') {
+        return encode_input_for_unfreeze_token(
           input.token_id,
           input.nonce.toString(),
           network,
@@ -207,6 +244,12 @@ export function getTransactionBINrepresentation(
           is_token_freezable, // ok
           BigInt(chainTip), // ok
           network,
+        )
+      }
+
+      if(output.type === 'DataDeposit') {
+        return encode_output_data_deposit(
+          output.data.string,
         )
       }
     },
