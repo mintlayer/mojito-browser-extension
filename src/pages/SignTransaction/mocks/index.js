@@ -58,6 +58,66 @@ export const MOCKS = {
       requestId: 'wymzne7u81',
     },
   },
+  bridge_request: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          intent: '0x12312312312312312312312313',
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    'cd86fa3aa7b141691feb87f892ede669f5bb59bd32778874c901d56943156743',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qy2dxl0nhtgv02dxljzrlknwg8skr8a3xccpmtqx',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1902977911700428',
+                      decimal: '19029.77911700428',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q8jpdd7e6yfzx44pjdkgtpz2y3tql4dmzu5a34wu',
+                type: 'Transfer',
+                value: {
+                  amount: { atoms: 1000000000000, decimal: '10' },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1901827911700428',
+                    decimal: '19018.27911700428',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
   tokensmint: {
     action: 'signTransaction',
     request: {
@@ -623,6 +683,165 @@ export const MOCKS = {
                     decimal: '19014.77911700428',
                   },
                   type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  burnCoin: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '8dbe2ac78ab6ab2648babb5f970994384ba639f6be84ff84a24a0e3490f00fac',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1q832erm9ta8vwvs08qrvdj480ddquex80qfvkn8d',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1791948604300000',
+                      decimal: '17919.486043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                type: 'BurnToken',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1790348604300000',
+                    decimal: '17903.486043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  burnToken: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '2868b6a5384e62c0040c58276ae650c8c59ea1c0fe5a3f291b7f1986a3a45250',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1789748604300000',
+                      decimal: '17897.486043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    '0da4ad912602b87fe0ae40691ddc075e6e3cdd1891724456ab9a44490dc3f69b',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qy9l2pvaz84z60uvlggcy5ttxdvw825uhsxeaxc5',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '10000000000000',
+                      decimal: '100',
+                    },
+                    token_id:
+                      'tmltk16u754a6su60wd3tra669a3gt0su79zehqeavu4ffgrnjzgaedasqtfurcu',
+                    type: 'TokenV1',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                type: 'BurnToken',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  token_id:
+                    'tmltk16u754a6su60wd3tra669a3gt0su79zehqeavu4ffgrnjzgaedasqtfurcu',
+                  type: 'TokenV1',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1789148604300000',
+                    decimal: '17891.486043',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '9000000000000',
+                    decimal: '90',
+                  },
+                  token_id:
+                    'tmltk16u754a6su60wd3tra669a3gt0su79zehqeavu4ffgrnjzgaedasqtfurcu',
+                  type: 'TokenV1',
                 },
               },
             ],

@@ -10,6 +10,12 @@ import {
   encode_output_issue_fungible_token,
   encode_input_for_mint_tokens,
   encode_input_for_fill_order,
+  make_transaction_intent_message_to_sign,
+  encode_signed_transaction_intent,
+  sign_challenge,
+  get_transaction_id,
+  encode_output_token_burn,
+  encode_output_coin_burn,
   SourceId,
   SignatureHashType,
   FreezableToken,
@@ -127,6 +133,20 @@ export function getTransactionBINrepresentation(
           output.conclude_destination, // conclude_address
           network, // network
         )
+      }
+      if (output.type === 'BurnToken') {
+        if(output.value.token_id) {
+          return encode_output_token_burn(
+            Amount.from_atoms(output.value.amount.atoms.toString()), // amount
+            output.value.token_id, // token_id
+            network, // network
+          )
+        }
+        if(output.value.type === 'Coin') {
+          return encode_output_coin_burn(
+            Amount.from_atoms(output.value.amount.atoms.toString()), // amount
+          )
+        }
       }
       if (output.type === 'IssueFungibleToken') {
         const {
@@ -310,4 +330,56 @@ export function getTransactionHEX(
   )
 
   return txHash
+}
+
+export function getTransactionIntent({ intent, transactionBINrepresentation, transactionJSONrepresentation, addressesPrivateKeys }) {
+  const inputsArray = transactionBINrepresentation.inputs
+  const outputsArray = transactionBINrepresentation.outputs
+  const transaction = encode_transaction(
+    mergeUint8Arrays(inputsArray),
+    mergeUint8Arrays(outputsArray),
+    BigInt(0),
+  )
+  const transaction_id = get_transaction_id(transaction)
+  const intent_message = make_transaction_intent_message_to_sign(intent, transaction_id)
+  console.log('transaction_id', transaction_id)
+  console.log('intent_message', intent_message)
+
+  const sign_challenges = transactionJSONrepresentation.inputs.map((input) => {
+    const address =
+      input?.utxo?.destination ||
+      input?.input?.authority ||
+      input?.input?.destination
+    console.log('addressesPrivateKeys', addressesPrivateKeys)
+    console.log('address-----', address)
+    const addressPrivateKey = addressesPrivateKeys[address]
+
+    console.log('addressPrivateKey', addressPrivateKey)
+
+    console.log('ch', sign_challenge(
+      addressPrivateKey,
+      intent_message,
+    ))
+
+    const signature = sign_challenge(
+      addressPrivateKey,
+      intent_message,
+    )
+
+    return Array.from(signature)
+  })
+  // sign_challenge
+
+  console.log('intent_message', intent_message)
+  console.log('sign_challenges', sign_challenges)
+
+  const encodedIntent = encode_signed_transaction_intent(intent_message, sign_challenges)
+  console.log('encodedIntent', encodedIntent)
+
+  const encodedIntentHash = encodedIntent.reduce(
+    (acc, byte) => acc + byte.toString(16).padStart(2, '0'),
+    '',
+  )
+
+  return encodedIntentHash
 }

@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom'
-import { getTransactionBINrepresentation, getTransactionHEX } from './helpers'
+import { getTransactionBINrepresentation, getTransactionHEX, getTransactionIntent } from './helpers'
 import { MOCKS } from './mocks'
 
 import { TransactionPreview } from './components/TransactionPreview'
@@ -49,73 +49,99 @@ export const SignTransactionPage = () => {
   }
 
   const handleModalSubmit = async () => {
-    const transactionJSONrepresentation =
-      state?.request?.data?.txData?.JSONRepresentation
-    console.log('transactionJSONrepresentation', transactionJSONrepresentation)
-    const transactionBINrepresentation = getTransactionBINrepresentation(
-      transactionJSONrepresentation,
-      network,
-    )
-    console.log('transactionBINrepresentation', transactionBINrepresentation)
-
-    const pass = password
-
-    const unlockedAccount = await Account.unlockAccount(accountID, pass)
-
-    const mlPrivKeys = unlockedAccount.mlPrivKeys
-
-    const privKey =
-      networkType === 'mainnet'
-        ? mlPrivKeys.mlMainnetPrivateKey
-        : mlPrivKeys.mlTestnetPrivateKey
-
-    const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
-
-    const walletPrivKeys = ML.getWalletPrivKeysList(
-      privKey,
-      networkType,
-      changeAddressesLength,
-    )
-
-    console.log('walletPrivKeys', walletPrivKeys)
-
-    const keysList = {
-      ...walletPrivKeys.mlReceivingPrivKeys,
-      ...walletPrivKeys.mlChangePrivKeys,
-    }
-
-    console.log('keysList', keysList)
-
-    const transactionHex = getTransactionHEX(
-      {
-        transactionBINrepresentation,
+    try {
+      const transactionJSONrepresentation =
+        state?.request?.data?.txData?.JSONRepresentation
+      console.log('transactionJSONrepresentation', transactionJSONrepresentation)
+      const transactionBINrepresentation = getTransactionBINrepresentation(
         transactionJSONrepresentation,
-        addressesPrivateKeys: keysList,
-      },
-      network,
-    )
+        network,
+      )
+      console.log('transactionBINrepresentation', transactionBINrepresentation)
 
-    console.log('transactionHex', transactionHex)
+      const pass = password
 
-    const requestId = state?.request?.requestId
-    const method = 'signTransaction_approve'
-    const result = transactionHex
-    // eslint-disable-next-line no-undef
-    runtime.sendMessage(
-      {
-        action: 'popupResponse',
-        method,
-        requestId,
-        origin,
-        result,
-      },
-      () => {
-        // eslint-disable-next-line no-undef
-        storage.local.remove('pendingRequest', () => {
-          window.close()
+      const unlockedAccount = await Account.unlockAccount(accountID, pass)
+
+      const mlPrivKeys = unlockedAccount.mlPrivKeys
+
+      const privKey =
+        networkType === 'mainnet'
+          ? mlPrivKeys.mlMainnetPrivateKey
+          : mlPrivKeys.mlTestnetPrivateKey
+
+      const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
+
+      const walletPrivKeys = ML.getWalletPrivKeysList(
+        privKey,
+        networkType,
+        changeAddressesLength,
+      )
+
+      console.log('walletPrivKeys', walletPrivKeys)
+
+      const keysList = {
+        ...walletPrivKeys.mlReceivingPrivKeys,
+        ...walletPrivKeys.mlChangePrivKeys,
+      }
+
+      console.log('keysList', keysList)
+
+      let intentEncode
+
+      if (state?.request?.data?.txData?.intent) {
+        const intent = state?.request?.data?.txData?.intent
+        intentEncode = getTransactionIntent({
+          intent,
+          transactionBINrepresentation,
+          transactionJSONrepresentation,
+          addressesPrivateKeys: keysList,
         })
-      },
-    )
+        console.log('intentEncode', intentEncode)
+      }
+
+      const transactionHex = getTransactionHEX(
+        {
+          transactionBINrepresentation,
+          transactionJSONrepresentation,
+          addressesPrivateKeys: keysList,
+        },
+        network,
+      )
+
+      console.log('transactionHex', transactionHex)
+
+      const requestId = state?.request?.requestId
+      const method = 'signTransaction_approve'
+      let result
+      if (intentEncode) {
+        result = {
+          transactionHex,
+          intentEncode,
+        }
+      } else {
+        result = transactionHex
+      }
+      // eslint-disable-next-line no-undef
+      runtime.sendMessage(
+        {
+          action: 'popupResponse',
+          method,
+          requestId,
+          origin,
+          result,
+        },
+        () => {
+          // eslint-disable-next-line no-undef
+          storage.local.remove('pendingRequest', () => {
+            window.close()
+          })
+        },
+      )
+    } catch (error) {
+      console.error('Error during transaction signing:', error)
+      setIsModalOpen(false)
+    }
   }
 
   const handleReject = () => {
