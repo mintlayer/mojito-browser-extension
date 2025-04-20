@@ -953,4 +953,66 @@ export const MOCKS = {
       requestId: 'wymzne7u81',
     },
   },
+  lockTokenSupply: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  authority: 'tmt1qxn502fssxk8e3wpn7h24avw2anwr8y7rgdsqmle',
+                  command: 'LockTokenSupply',
+                  input_type: 'AccountCommand',
+                  nonce: 0,
+                  token_id:
+                    'tmltk1n569zrcce0njma7cehpatyc8nqg3kqy7fx9sqyl9cuw6spg3je9qspqh35',
+                },
+                utxo: null,
+              },
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    'ca1ce85c5ef7e987d098832a367562ecfa5c08b6c681e3af952017dbde4fbb53',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qx66ux2w4cjj3ctsu9469s7k7vde6xmhkq2my0h2',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1779621711700428',
+                      decimal: '17796.21711700428',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1764021711700428',
+                    decimal: '17640.21711700428',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
 }

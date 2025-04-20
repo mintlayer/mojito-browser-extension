@@ -17,6 +17,7 @@ import {
   encode_output_token_burn,
   encode_output_coin_burn,
   encode_input_for_unmint_tokens,
+  encode_input_for_lock_token_supply,
   SourceId,
   SignatureHashType,
   FreezableToken,
@@ -104,6 +105,13 @@ export function getTransactionBINrepresentation(
           network,
         )
       }
+      if (input.command === 'LockTokenSupply') {
+        return encode_input_for_lock_token_supply(
+          input.token_id,
+          input.nonce.toString(),
+          network,
+        )
+      }
     })
 
   const inputsArray = [...inputCommands, ...inputsIds]
@@ -168,9 +176,12 @@ export function getTransactionBINrepresentation(
 
         const chainTip = '200000'
 
-        const is_token_freezable = is_freezable
-          ? FreezableToken.Yes
-          : FreezableToken.No
+        console.log('is_freezable', is_freezable)
+
+        const is_token_freezable =
+          is_freezable === true ? FreezableToken.Yes : FreezableToken.No
+
+        console.log('is_token_freezable', is_token_freezable)
 
         const supply_amount =
           total_supply.type === 'Fixed'
@@ -180,7 +191,9 @@ export function getTransactionBINrepresentation(
         const total_supply_type =
           total_supply.type === 'Fixed'
             ? TotalSupply.Fixed
-            : TotalSupply.Unlimited
+            : total_supply.type === 'Lockable'
+              ? TotalSupply.Lockable
+              : TotalSupply.Unlimited
 
         // const encoder = new TextEncoder()
 
