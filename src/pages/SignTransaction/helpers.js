@@ -16,6 +16,7 @@ import {
   get_transaction_id,
   encode_output_token_burn,
   encode_output_coin_burn,
+  encode_input_for_unmint_tokens,
   SourceId,
   SignatureHashType,
   FreezableToken,
@@ -96,6 +97,13 @@ export function getTransactionBINrepresentation(
           network,
         )
       }
+      if (input.command === 'UnmintTokens') {
+        return encode_input_for_unmint_tokens(
+          input.token_id,
+          input.nonce.toString(),
+          network,
+        )
+      }
     })
 
   const inputsArray = [...inputCommands, ...inputsIds]
@@ -135,14 +143,14 @@ export function getTransactionBINrepresentation(
         )
       }
       if (output.type === 'BurnToken') {
-        if(output.value.token_id) {
+        if (output.value.token_id) {
           return encode_output_token_burn(
             Amount.from_atoms(output.value.amount.atoms.toString()), // amount
             output.value.token_id, // token_id
             network, // network
           )
         }
-        if(output.value.type === 'Coin') {
+        if (output.value.type === 'Coin') {
           return encode_output_coin_burn(
             Amount.from_atoms(output.value.amount.atoms.toString()), // amount
           )
@@ -332,7 +340,12 @@ export function getTransactionHEX(
   return txHash
 }
 
-export function getTransactionIntent({ intent, transactionBINrepresentation, transactionJSONrepresentation, addressesPrivateKeys }) {
+export function getTransactionIntent({
+  intent,
+  transactionBINrepresentation,
+  transactionJSONrepresentation,
+  addressesPrivateKeys,
+}) {
   const inputsArray = transactionBINrepresentation.inputs
   const outputsArray = transactionBINrepresentation.outputs
   const transaction = encode_transaction(
@@ -341,7 +354,10 @@ export function getTransactionIntent({ intent, transactionBINrepresentation, tra
     BigInt(0),
   )
   const transaction_id = get_transaction_id(transaction)
-  const intent_message = make_transaction_intent_message_to_sign(intent, transaction_id)
+  const intent_message = make_transaction_intent_message_to_sign(
+    intent,
+    transaction_id,
+  )
   console.log('transaction_id', transaction_id)
   console.log('intent_message', intent_message)
 
@@ -356,15 +372,9 @@ export function getTransactionIntent({ intent, transactionBINrepresentation, tra
 
     console.log('addressPrivateKey', addressPrivateKey)
 
-    console.log('ch', sign_challenge(
-      addressPrivateKey,
-      intent_message,
-    ))
+    console.log('ch', sign_challenge(addressPrivateKey, intent_message))
 
-    const signature = sign_challenge(
-      addressPrivateKey,
-      intent_message,
-    )
+    const signature = sign_challenge(addressPrivateKey, intent_message)
 
     return Array.from(signature)
   })
@@ -373,7 +383,10 @@ export function getTransactionIntent({ intent, transactionBINrepresentation, tra
   console.log('intent_message', intent_message)
   console.log('sign_challenges', sign_challenges)
 
-  const encodedIntent = encode_signed_transaction_intent(intent_message, sign_challenges)
+  const encodedIntent = encode_signed_transaction_intent(
+    intent_message,
+    sign_challenges,
+  )
   console.log('encodedIntent', encodedIntent)
 
   const encodedIntentHash = encodedIntent.reduce(
