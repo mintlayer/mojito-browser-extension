@@ -5,7 +5,6 @@ import { AppInfo } from '@Constants'
 import { getEncryptedPrivateKeys } from './AccountHelpers'
 
 import loadAccountSubRoutines from './loadWorkers'
-import { LocalStorageService } from '@Storage'
 
 const saveAccount = async (data) => {
   const { generateEncryptionKey } = await loadAccountSubRoutines()
@@ -80,8 +79,6 @@ const unlockAccount = async (id, password) => {
   const mainnetNetwork = bitcoin.networks['bitcoin']
   const testnetNetwork = bitcoin.networks['testnet']
 
-  const storedNetworkType = LocalStorageService.getItem('networkType')
-
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
   const addresses = {}
 
@@ -136,24 +133,19 @@ const unlockAccount = async (id, password) => {
     }
 
     if (walletsToCreate.includes('ml')) {
-      // TODO: use only network-related addresses
-      if (storedNetworkType === 'testnet') {
-        const mlTestnetWalletAddresses = await ML.getWalletAddresses(
-          mlTestnetPrivateKey,
-          AppInfo.NETWORK_TYPES.TESTNET,
-          AppInfo.DEFAULT_ML_WALLET_OFFSET,
-        )
-        addresses.mlTestnetAddresses = mlTestnetWalletAddresses
-      }
+      const mlTestnetWalletAddresses = await ML.getWalletAddresses(
+        mlTestnetPrivateKey,
+        AppInfo.NETWORK_TYPES.TESTNET,
+        AppInfo.DEFAULT_ML_WALLET_OFFSET,
+      )
+      addresses.mlTestnetAddresses = mlTestnetWalletAddresses
 
-      if (storedNetworkType === 'mainnet') {
-        const mlMainnetWalletAddresses = await ML.getWalletAddresses(
-          mlMainnetPrivateKey,
-          AppInfo.NETWORK_TYPES.MAINNET,
-          AppInfo.DEFAULT_ML_WALLET_OFFSET,
-        )
-        addresses.mlMainnetAddresses = mlMainnetWalletAddresses
-      }
+      const mlMainnetWalletAddresses = await ML.getWalletAddresses(
+        mlMainnetPrivateKey,
+        AppInfo.NETWORK_TYPES.MAINNET,
+        AppInfo.DEFAULT_ML_WALLET_OFFSET,
+      )
+      addresses.mlMainnetAddresses = mlMainnetWalletAddresses
     }
 
     return {
