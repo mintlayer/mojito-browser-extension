@@ -247,10 +247,8 @@ export function getTransactionBINrepresentation(
         )
       }
 
-      if(output.type === 'DataDeposit') {
-        return encode_output_data_deposit(
-          output.data.string,
-        )
+      if (output.type === 'DataDeposit') {
+        return encode_output_data_deposit(new TextEncoder().encode(output.data))
       }
     },
   )

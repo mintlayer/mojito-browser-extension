@@ -116,60 +116,6 @@
           api.windows.update(popupWindowId, { focused: true })
           sendResponse({ error: 'Transaction signing window already open' })
         }
-      } else if (message.method === 'delegate') {
-        if (popupWindowId === false) {
-          api.windows.create(
-            {
-              url: api.runtime.getURL('popup.html'),
-              type: 'popup',
-              width: 800,
-              height: 600,
-              focused: true,
-            },
-            (win) => {
-              popupWindowId = win.id
-              api.storage.local.set({
-                pendingRequest: {
-                  origin,
-                  requestId: message.requestId,
-                  action: 'createDelegate',
-                  data: message.params || {},
-                },
-              })
-            },
-          )
-          return true
-        } else if (typeof popupWindowId === 'number') {
-          api.windows.update(popupWindowId, { focused: true })
-          sendResponse({ error: 'Delegate window already open' })
-        }
-      } else if (message.method === 'stake') {
-        if (popupWindowId === false) {
-          api.windows.create(
-            {
-              url: api.runtime.getURL('popup.html'),
-              type: 'popup',
-              width: 800,
-              height: 630,
-              focused: true,
-            },
-            (win) => {
-              popupWindowId = win.id
-              api.storage.local.set({
-                pendingRequest: {
-                  origin,
-                  requestId: message.requestId,
-                  action: 'addStake',
-                  data: message.params || {},
-                },
-              })
-            },
-          )
-          return true
-        } else if (typeof popupWindowId === 'number') {
-          api.windows.update(popupWindowId, { focused: true })
-          sendResponse({ error: 'Stake window already open' })
-        }
       } else if (message.method === 'version') {
         sendResponse({ result: api.runtime.getManifest().version })
       } else {

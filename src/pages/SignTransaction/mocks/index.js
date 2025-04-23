@@ -1266,4 +1266,59 @@ export const MOCKS = {
       requestId: 'wymzne7u81',
     },
   },
+  dataDeposit: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    'b69876c1b963422723926b6dc452cb9787107f84948b1e65a22f2d0f8ca36694',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1707421711700428',
+                      decimal: '17074.21711700428',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                type: 'DataDeposit',
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1687021711700428',
+                    decimal: '16870.21711700428',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
 }
