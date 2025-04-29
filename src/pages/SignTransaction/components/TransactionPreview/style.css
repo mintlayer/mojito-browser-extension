@@ -11,9 +11,7 @@
 .preview-section {
   margin-bottom: 24px;
   padding: 20px;
-  background: #f8fafc;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
 }
 
 .preview-section h3 {
@@ -113,4 +111,19 @@
 
 .transaction-table tr:nth-child(even) td {
   background: #f8fafc;
+}
+
+.transactionDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signTxSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
 }

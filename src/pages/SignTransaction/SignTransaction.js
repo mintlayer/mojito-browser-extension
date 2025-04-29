@@ -1,6 +1,11 @@
 import { useLocation } from 'react-router-dom'
-import { getTransactionBINrepresentation, getTransactionHEX, getTransactionIntent } from './helpers'
+import {
+  getTransactionBINrepresentation,
+  getTransactionHEX,
+  getTransactionIntent,
+} from './helpers'
 import { MOCKS } from './mocks'
+import { Button } from '@BasicComponents'
 
 import { TransactionPreview } from './components/TransactionPreview'
 
@@ -29,13 +34,12 @@ export const SignTransactionPage = () => {
   const [mode, setMode] = useState('json')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
+  const extraButtonStyles = ['buttonSignTransaction']
 
   const state = external_state || MOCKS[selectedMock]
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-
-  console.log('state', state)
 
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -52,7 +56,10 @@ export const SignTransactionPage = () => {
     try {
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
-      console.log('transactionJSONrepresentation', transactionJSONrepresentation)
+      console.log(
+        'transactionJSONrepresentation',
+        transactionJSONrepresentation,
+      )
       const transactionBINrepresentation = getTransactionBINrepresentation(
         transactionJSONrepresentation,
         network,
@@ -203,9 +210,7 @@ export const SignTransactionPage = () => {
           <>
             {mode === 'preview' && (
               <div className="transaction_preview">
-                <TransactionPreview
-                  data={state?.request?.data?.txData?.JSONRepresentation}
-                />
+                <TransactionPreview data={state} />
               </div>
             )}
             {mode === 'json' && (
@@ -222,18 +227,18 @@ export const SignTransactionPage = () => {
       </div>
 
       <div className="footer">
-        <div
-          className="btn approve"
-          onClick={handleApprove}
-        >
-          Approve and return to page
-        </div>
-        <div
-          className="btn reject"
-          onClick={handleReject}
+        <Button
+          onClickHandle={handleReject}
+          extraStyleClasses={extraButtonStyles}
         >
           Decline
-        </div>
+        </Button>
+        <Button
+          onClickHandle={handleApprove}
+          extraStyleClasses={extraButtonStyles}
+        >
+          Approve and return to page
+        </Button>
       </div>
 
       {isModalOpen && (

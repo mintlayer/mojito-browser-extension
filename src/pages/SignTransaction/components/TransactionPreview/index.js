@@ -1,80 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { getTransactionDetails } from '../../helpers'
 import './style.css'
 
-// SVG Icons for transaction types
-const TransferIcon = () => (
-  <svg
-    className="tx-icon"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-  >
-    <path
-      d="M17 8l4 4m0 0l-4 4m4-4H3"
-      strokeWidth="2"
-    />
-  </svg>
-)
-
-const TokenMintIcon = () => (
-  <svg
-    className="tx-icon"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-  >
-    <circle
-      cx="12"
-      cy="12"
-      r="10"
-      strokeWidth="2"
-    />
-    <path
-      d="M12 6v12M6 12h12"
-      strokeWidth="2"
-    />
-  </svg>
-)
-
-const TokenIssueIcon = () => (
-  <svg
-    className="tx-icon"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-  >
-    <path
-      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-      strokeWidth="2"
-    />
-  </svg>
-)
-
-const OrderIcon = () => (
-  <svg
-    className="tx-icon"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-  >
-    <path
-      d="M3 3h18v18H3z"
-      strokeWidth="2"
-    />
-    <path
-      d="M12 8v8M8 12h8"
-      strokeWidth="2"
-    />
-  </svg>
-)
-
-const formatAmount = (amount) => {
-  if (!amount) return 'N/A'
-  return amount.decimal
-    ? `${amount.decimal} (${amount.atoms || '0'} atoms)`
-    : `${amount.atoms || '0'} atoms`
-}
-
+// TODO: fix the fee calculation
 const calculateFee = (inputs, outputs) => {
   let totalInput = 0
   let totalOutput = 0
@@ -96,311 +24,410 @@ const calculateFee = (inputs, outputs) => {
     : null
 }
 
-const SummaryView = ({ data }) => {
-  const { inputs = [], outputs = [] } = data
-
-  const getTransactionType = () => {
-    if (outputs.some((out) => out.type === 'IssueFungibleToken'))
-      return { name: 'Token Issuance', icon: <TokenIssueIcon /> }
-    if (outputs.some((out) => out.type === 'CreateOrder'))
-      return { name: 'Order Creation', icon: <OrderIcon /> }
-    if (inputs.some((inp) => inp.input?.command === 'FillOrder'))
-      return { name: 'Order Fill', icon: <OrderIcon /> }
-    if (inputs.some((inp) => inp.input?.type === 'ConcludeOrder'))
-      return { name: 'Order Conclusion', icon: <OrderIcon /> }
-    if (inputs.some((inp) => inp.input?.command === 'MintTokens'))
-      return { name: 'Token Mint', icon: <TokenMintIcon /> }
-    return { name: 'Transfer', icon: <TransferIcon /> }
-  }
-
+const TransferDetails = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
   const fee = calculateFee(inputs, outputs)
-  const txType = getTransactionType()
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>You're giving someone else permission to transfer your coins</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Destination:</h4>
+        <p>{JSONRepresentation.outputs[0].destination}</p>
+        <h4>Amount:</h4>
+        <p>{JSONRepresentation.outputs[0].value.amount.decimal} ML</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs)
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.input.token_id,
+  )
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>
+          You're giving someone else permission to{' '}
+          {unfreeze ? 'unfreeze' : 'freeze'} token
+        </p>
+      </div>
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithToken.input.token_id}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const ChangeTokenMetadata = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs)
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.input.token_id,
+  )
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>You're giving someone else permission to change token metadata</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithToken.input.token_id}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>New metadata:</h4>
+        <p>{inputWithToken.input.new_metadata_uri}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const ChangeTokenAuthority = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs)
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.input.token_id,
+  )
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>You're giving someone else permission to change token authority</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithToken.input.token_id}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>New authority:</h4>
+        <p>{inputWithToken.input.new_authority}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const LockTokenSupply = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs)
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.input.token_id,
+  )
+
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>You're giving someone else permission to lock token supply</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithToken.input.token_id}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const BurnToken = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs)
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.utxo.value.token_id,
+  )
+
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>You're giving someone else permission to burn token</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithToken.utxo.value.token_id}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const ConcludeOrder = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs)
+  const inputWithOrderID = JSONRepresentation.inputs.find(
+    (input) => input.input.order_id,
+  )
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>You're giving someone else permission to conclude order</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithOrderID.input.order_id}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const FillOrder = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs)
+  const inputWithOrderID = JSONRepresentation.inputs.find(
+    (input) => input.input.order_id,
+  )
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>You're giving someone else permission to fill order</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Order id:</h4>
+        <p>{inputWithOrderID.input.order_id}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const CreateOrder = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs)
+
+  const outputWithCreateOrder = JSONRepresentation.outputs.find(
+    (output) => output.type === 'CreateOrder',
+  )
+  // TODO: double check the data structure with final transaction
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>You're giving someone else permission to create order</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Ask balance:</h4>
+        <p>{outputWithCreateOrder.ask_balance.decimal}</p>
+        <h4>Ask currency:</h4>
+        <p>{outputWithCreateOrder.ask_currency.type}</p>
+        <h4>Destination:</h4>
+        <p>{outputWithCreateOrder.conclude_destination}</p>
+        <h4>Give balance:</h4>
+        <p>{outputWithCreateOrder.give_balance.decimal}</p>
+        <h4>Give currency:</h4>
+        <p>Token id: {outputWithCreateOrder.give_currency.token_id}</p>
+        <p>type: {outputWithCreateOrder.give_currency.type}</p>
+        <h4>Initially asked:</h4>
+        <p>{outputWithCreateOrder.initially_asked.decimal}</p>
+        <h4>Initially given:</h4>
+        <p>{outputWithCreateOrder.initially_given.decimal}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const IssueToken = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs)
+
+  const outputWithCreateOrder = JSONRepresentation.outputs.find(
+    (output) => output.type === 'IssueFungibleToken',
+  )
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>You're giving someone else permission to issue a token</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Authority:</h4>
+        <p>{outputWithCreateOrder.authority}</p>
+        <h4>Freezable:</h4>
+        <p>{outputWithCreateOrder.is_freezable ? 'True' : 'False'}</p>
+        <h4>Metadata:</h4>
+        <p>Hex: {outputWithCreateOrder.metadata_uri.hex}</p>
+        <p>String: {outputWithCreateOrder.metadata_uri.string}</p>
+        <h4>Number of decimals:</h4>
+        <p>{outputWithCreateOrder.number_of_decimals}</p>
+        <h4>Token ticker:</h4>
+        <p>Hex: {outputWithCreateOrder.token_ticker.hex}</p>
+        <p>String: {outputWithCreateOrder.token_ticker.string}</p>
+        <h4>Supply type:</h4>
+        <p>{outputWithCreateOrder.total_supply.type}</p>
+        {outputWithCreateOrder.total_supply?.amount?.decimal && (
+          <>
+            <h4>Total supply:</h4>
+            <p>{outputWithCreateOrder.total_supply.amount.decimal}</p>
+          </>
+        )}
+      </div>
+      <div className="signTxSection">
+        <h4>Request from:</h4>
+        <p>{transactionData.origin}</p>
+        <h4>Request id:</h4>
+        <p>{transactionData.requestId}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>Network fee:</h4>
+        <p>{fee.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const SummaryView = ({ data }) => {
+  const { flags, transactionData } = getTransactionDetails(data)
+  console.log('flags', flags)
+  console.log('transactionData', transactionData)
 
   return (
     <div className="preview-section summary">
-      <h3>
-        {txType.icon}
-        {txType.name}
-      </h3>
-      <div className="summary-grid">
-        <div>
-          <strong>Total Input:</strong>{' '}
-          {inputs.reduce(
-            (sum, inp) =>
-              sum +
-              parseInt(
-                inp.utxo?.value?.amount?.atoms || inp.input?.amount?.atoms || 0,
-                10,
-              ),
-            0,
-          )}{' '}
-          atoms
-        </div>
-        <div>
-          <strong>Total Output:</strong>{' '}
-          {outputs.reduce(
-            (sum, out) =>
-              sum +
-              parseInt(
-                out.value?.amount?.atoms || out.ask_balance?.atoms || 0,
-                10,
-              ),
-            0,
-          )}{' '}
-          atoms
-        </div>
-        <div>
-          <strong>Fee:</strong> {fee ? formatAmount(fee) : 'N/A'}
-        </div>
-        <div>
-          <strong>Destinations:</strong>{' '}
-          {outputs
-            .filter((out) => out.destination)
-            .map((out) => out.destination)
-            .join(', ') || 'N/A'}
-        </div>
+      <div className="preview-section-header">
+        <h3>Transaction Preview</h3>
       </div>
-      {txType.name === 'Token Issuance' && (
-        <div className="extra-info">
-          <p>
-            <strong>Token Ticker:</strong>{' '}
-            {
-              outputs.find((out) => out.type === 'IssueFungibleToken')
-                ?.token_ticker?.string
-            }
-          </p>
-          <p>
-            <strong>Supply:</strong>{' '}
-            {
-              outputs.find((out) => out.type === 'IssueFungibleToken')
-                ?.total_supply?.type
-            }
-          </p>
-        </div>
-      )}
-      {txType.name.includes('Order') && (
-        <div className="extra-info">
-          <p>
-            <strong>Order ID:</strong>{' '}
-            {inputs.find((inp) => inp.input?.order_id)?.input?.order_id ||
-              outputs.find((out) => out.type === 'CreateOrder')?.order_id ||
-              'N/A'}
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-const DetailedView = ({ data }) => {
-  const { inputs = [], outputs = [] } = data
-
-  return (
-    <div className="preview-section">
-      <h3>Detailed Transaction</h3>
-      <div className="detail-grid">
-        {inputs.map((input, index) => (
-          <div
-            key={index}
-            className="detail-item"
-          >
-            <h4>Input {index + 1}</h4>
-            {input.input?.input_type === 'UTXO' ? (
-              <>
-                <p>
-                  <strong>Source ID:</strong> {input.input.source_id}
-                </p>
-                <p>
-                  <strong>Destination:</strong>{' '}
-                  {input.utxo?.destination || 'N/A'}
-                </p>
-                <p>
-                  <strong>Amount:</strong>{' '}
-                  {formatAmount(input.utxo?.value?.amount)}
-                </p>
-                <p>
-                  <strong>Type:</strong> {input.utxo?.value?.type}
-                </p>
-              </>
-            ) : (
-              <>
-                <p>
-                  <strong>Command:</strong>{' '}
-                  {input.input?.command || input.input?.type}
-                </p>
-                <p>
-                  <strong>Authority:</strong> {input.input?.authority || 'N/A'}
-                </p>
-                <p>
-                  <strong>Nonce:</strong> {input.input?.nonce || 'N/A'}
-                </p>
-                <p>
-                  <strong>Amount:</strong> {formatAmount(input.input?.amount)}
-                </p>
-                <p>
-                  <strong>Token ID:</strong> {input.input?.token_id || 'N/A'}
-                </p>
-              </>
-            )}
-          </div>
-        ))}
-        {outputs.map((output, index) => (
-          <div
-            key={index}
-            className="detail-item"
-          >
-            <h4>Output {index + 1}</h4>
-            {output.type === 'IssueFungibleToken' ? (
-              <>
-                <p>
-                  <strong>Type:</strong> Token Issuance
-                </p>
-                <p>
-                  <strong>Ticker:</strong> {output.token_ticker?.string}
-                </p>
-                <p>
-                  <strong>Authority:</strong> {output.authority}
-                </p>
-                <p>
-                  <strong>Decimals:</strong> {output.number_of_decimals}
-                </p>
-                <p>
-                  <strong>Freezable:</strong>{' '}
-                  {output.is_freezable ? 'Yes' : 'No'}
-                </p>
-                <p>
-                  <strong>Metadata:</strong> {output.metadata_uri?.string}
-                </p>
-              </>
-            ) : output.type === 'CreateOrder' ? (
-              <>
-                <p>
-                  <strong>Type:</strong> Order Creation
-                </p>
-                <p>
-                  <strong>Ask:</strong> {formatAmount(output.ask_balance)} (
-                  {output.ask_currency?.type})
-                </p>
-                <p>
-                  <strong>Give:</strong> {formatAmount(output.give_balance)} (
-                  {output.give_currency?.type})
-                </p>
-                <p>
-                  <strong>Destination:</strong> {output.conclude_destination}
-                </p>
-              </>
-            ) : (
-              <>
-                <p>
-                  <strong>Type:</strong> {output.type}
-                </p>
-                <p>
-                  <strong>Destination:</strong> {output.destination || 'N/A'}
-                </p>
-                <p>
-                  <strong>Amount:</strong> {formatAmount(output.value?.amount)}
-                </p>
-                <p>
-                  <strong>Value Type:</strong> {output.value?.type}
-                </p>
-                {output.lock && (
-                  <p>
-                    <strong>Lock:</strong> {output.lock.type} (
-                    {output.lock.content} blocks)
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-        ))}
+      <div>
+        {flags.isTransfer && (
+          <TransferDetails transactionData={transactionData} />
+        )}
+        {flags.isUnfreezeToken && (
+          <FreezeTokenDetails
+            transactionData={transactionData}
+            unfreeze
+          />
+        )}
+        {flags.isFreezeToken && (
+          <FreezeTokenDetails transactionData={transactionData} />
+        )}
+        {flags.isChangeTokenMetadata && (
+          <ChangeTokenMetadata transactionData={transactionData} />
+        )}
+        {flags.isChangeTokenAuthority && (
+          <ChangeTokenAuthority transactionData={transactionData} />
+        )}
+        {flags.isLockTokenSupply && (
+          <LockTokenSupply transactionData={transactionData} />
+        )}
+        {flags.isBurnToken && <BurnToken transactionData={transactionData} />}
+        {/* TODO: BURN COIN */}
+        {flags.isConcludeOrder && (
+          <ConcludeOrder transactionData={transactionData} />
+        )}
+        {flags.isFillOrder && <FillOrder transactionData={transactionData} />}
+        {flags.isCreateOrder && (
+          <CreateOrder transactionData={transactionData} />
+        )}
+        {flags.isIssueToken && <IssueToken transactionData={transactionData} />}
       </div>
-    </div>
-  )
-}
-
-const TableView = ({ data }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const { inputs = [], outputs = [] } = data
-
-  return (
-    <div className="preview-section">
-      <h3
-        onClick={() => setIsOpen(!isOpen)}
-        className="toggle-header"
-      >
-        {isOpen ? '▼' : '▶'} Inputs & Outputs Table
-      </h3>
-      {isOpen && (
-        <>
-          <h4>Inputs</h4>
-          <table className="transaction-table">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Source/Details</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inputs.map((input, index) => (
-                <tr key={index}>
-                  <td>{input.input?.input_type}</td>
-                  <td>
-                    {input.input?.input_type === 'UTXO' ? (
-                      `Source: ${input.input.source_id.slice(0, 10)}...`
-                    ) : (
-                      <>
-                        Cmd: {input.input?.command || input.input?.type}
-                        <br />
-                        Auth: {input.input?.authority?.slice(0, 10) ||
-                          'N/A'}...
-                      </>
-                    )}
-                  </td>
-                  <td>
-                    {formatAmount(
-                      input.utxo?.value?.amount || input.input?.amount,
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <h4>Outputs</h4>
-          <table className="transaction-table">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Destination</th>
-                <th>Amount</th>
-                <th>Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {outputs.map((output, index) => (
-                <tr key={index}>
-                  <td>{output.type}</td>
-                  <td>
-                    {(output.destination || output.authority)?.slice(0, 10) ||
-                      'N/A'}
-                    ...
-                  </td>
-                  <td>
-                    {formatAmount(output.value?.amount || output.ask_balance)}
-                  </td>
-                  <td>
-                    {output.type === 'IssueFungibleToken'
-                      ? `Ticker: ${output.token_ticker?.string}`
-                      : output.type === 'CreateOrder'
-                        ? `Ask: ${output.ask_currency?.type}`
-                        : output.value?.type}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
     </div>
   )
 }
@@ -409,8 +436,6 @@ export const TransactionPreview = ({ data }) => {
   return (
     <div className="transactionPreview">
       <SummaryView data={data} />
-      <DetailedView data={data} />
-      <TableView data={data} />
     </div>
   )
 }

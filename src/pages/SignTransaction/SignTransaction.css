@@ -92,13 +92,7 @@
 }
 
 .SignTransaction .btn {
-  flex: 1;
-  padding: 10px 16px;
-  border-radius: 6px;
-  text-align: center;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  width: 50%;
 }
 
 .SignTransaction .btn.approve {
@@ -176,4 +170,13 @@
 .modal-content button:last-of-type {
   background-color: #ef4444;
   color: #ffffff;
+}
+
+.buttonSignTransaction:nth-child(1) {
+  background-color: rgb(var(--color-red));
+  color: #ffffff;
+}
+
+.buttonSignTransaction:nth-child(1):hover {
+  opacity: 0.8;
 }
