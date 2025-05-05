@@ -32,8 +32,7 @@ export const MOCKS = {
             ],
             outputs: [
               {
-                destination:
-                  'tmltk1rmz3lv0rw3smzlzaeg3xctpmtvzelpht89qj3u0stye3rulalfqsahsvqq',
+                destination: 'tmt1q8hmm58xyscp0q8yh8r7q2zmkfc5cfmzeu5k0phq',
                 type: 'Transfer',
                 value: {
                   amount: {

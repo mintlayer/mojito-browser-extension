@@ -1,6 +1,6 @@
 import React from 'react'
-import { getTransactionDetails } from '../../helpers'
-import './style.css'
+import { SignTransaction as SignTxHelpers } from '@Helpers'
+import './TransactionPreview.css'
 
 // TODO: fix the fee calculation
 const calculateFee = (inputs, outputs) => {
@@ -24,32 +24,54 @@ const calculateFee = (inputs, outputs) => {
     : null
 }
 
-const TransferDetails = ({ transactionData }) => {
+const EstimatedChanges = ({ action }) => {
+  return (
+    <div className="signTxSection">
+      <h4>Estimated changes:</h4>
+      <p>
+        You're giving someone else permission to{' '}
+        <span className="signTxAction">{action}</span>
+      </p>
+    </div>
+  )
+}
+
+const RequestDetails = ({ transactionData }) => {
+  return (
+    <div className="signTxSection">
+      <h4>Request from:</h4>
+      <p>{transactionData.origin}</p>
+      <h4>Request id:</h4>
+      <p>{transactionData.requestId}</p>
+    </div>
+  )
+}
+
+const NetworkFee = ({ fee }) => {
+  if (!fee) return ''
+  return (
+    <div className="signTxSection">
+      <h4>Network fee:</h4>
+      <p>{fee.decimal}</p>
+    </div>
+  )
+}
+
+const TransferDetails = ({ transactionData, isToken }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
   const fee = calculateFee(inputs, outputs)
   return (
     <div className="transactionDetails">
-      <div className="signTxSection">
-        <h4>Estimated changes:</h4>
-        <p>You're giving someone else permission to transfer your coins</p>
-      </div>
+      <EstimatedChanges action="Transfer your coins" />
       <div className="signTxSection">
         <h4>Destination:</h4>
         <p>{JSONRepresentation.outputs[0].destination}</p>
         <h4>Amount:</h4>
-        <p>{JSONRepresentation.outputs[0].value.amount.decimal} ML</p>
+        <p>{JSONRepresentation.outputs[0].value.amount.decimal}</p>
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -75,16 +97,8 @@ const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
         <h4>Token id:</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -99,10 +113,7 @@ const ChangeTokenMetadata = ({ transactionData }) => {
   )
   return (
     <div className="transactionDetails">
-      <div className="signTxSection">
-        <h4>Estimated changes:</h4>
-        <p>You're giving someone else permission to change token metadata</p>
-      </div>
+      <EstimatedChanges action="Change token metadata" />
       <div className="signTxSection">
         <h4>Token id:</h4>
         <p>{inputWithToken.input.token_id}</p>
@@ -111,16 +122,8 @@ const ChangeTokenMetadata = ({ transactionData }) => {
         <h4>New metadata:</h4>
         <p>{inputWithToken.input.new_metadata_uri}</p>
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -135,10 +138,7 @@ const ChangeTokenAuthority = ({ transactionData }) => {
   )
   return (
     <div className="transactionDetails">
-      <div className="signTxSection">
-        <h4>Estimated changes:</h4>
-        <p>You're giving someone else permission to change token authority</p>
-      </div>
+      <EstimatedChanges action="Change token authority" />
       <div className="signTxSection">
         <h4>Token id:</h4>
         <p>{inputWithToken.input.token_id}</p>
@@ -147,16 +147,8 @@ const ChangeTokenAuthority = ({ transactionData }) => {
         <h4>New authority:</h4>
         <p>{inputWithToken.input.new_authority}</p>
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -172,24 +164,13 @@ const LockTokenSupply = ({ transactionData }) => {
 
   return (
     <div className="transactionDetails">
-      <div className="signTxSection">
-        <h4>Estimated changes:</h4>
-        <p>You're giving someone else permission to lock token supply</p>
-      </div>
+      <EstimatedChanges action="Lock token supply" />
       <div className="signTxSection">
         <h4>Token id:</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -205,24 +186,13 @@ const BurnToken = ({ transactionData }) => {
 
   return (
     <div className="transactionDetails">
-      <div className="signTxSection">
-        <h4>Estimated changes:</h4>
-        <p>You're giving someone else permission to burn token</p>
-      </div>
+      <EstimatedChanges action="Burn token" />
       <div className="signTxSection">
         <h4>Token id:</h4>
         <p>{inputWithToken.utxo.value.token_id}</p>
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -236,24 +206,13 @@ const ConcludeOrder = ({ transactionData }) => {
   )
   return (
     <div className="transactionDetails">
-      <div className="signTxSection">
-        <h4>Estimated changes:</h4>
-        <p>You're giving someone else permission to conclude order</p>
-      </div>
+      <EstimatedChanges action="Conclude order" />
       <div className="signTxSection">
         <h4>Token id:</h4>
         <p>{inputWithOrderID.input.order_id}</p>
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -267,24 +226,13 @@ const FillOrder = ({ transactionData }) => {
   )
   return (
     <div className="transactionDetails">
-      <div className="signTxSection">
-        <h4>Estimated changes:</h4>
-        <p>You're giving someone else permission to fill order</p>
-      </div>
+      <EstimatedChanges action="Fill order" />
       <div className="signTxSection">
         <h4>Order id:</h4>
         <p>{inputWithOrderID.input.order_id}</p>
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -300,10 +248,7 @@ const CreateOrder = ({ transactionData }) => {
   // TODO: double check the data structure with final transaction
   return (
     <div className="transactionDetails">
-      <div className="signTxSection">
-        <h4>Estimated changes:</h4>
-        <p>You're giving someone else permission to create order</p>
-      </div>
+      <EstimatedChanges action="Create order" />
       <div className="signTxSection">
         <h4>Ask balance:</h4>
         <p>{outputWithCreateOrder.ask_balance.decimal}</p>
@@ -321,16 +266,8 @@ const CreateOrder = ({ transactionData }) => {
         <h4>Initially given:</h4>
         <p>{outputWithCreateOrder.initially_given.decimal}</p>
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -345,10 +282,7 @@ const IssueToken = ({ transactionData }) => {
   )
   return (
     <div className="transactionDetails">
-      <div className="signTxSection">
-        <h4>Estimated changes:</h4>
-        <p>You're giving someone else permission to issue a token</p>
-      </div>
+      <EstimatedChanges action="Issue token" />
       <div className="signTxSection">
         <h4>Authority:</h4>
         <p>{outputWithCreateOrder.authority}</p>
@@ -371,22 +305,14 @@ const IssueToken = ({ transactionData }) => {
           </>
         )}
       </div>
-      <div className="signTxSection">
-        <h4>Request from:</h4>
-        <p>{transactionData.origin}</p>
-        <h4>Request id:</h4>
-        <p>{transactionData.requestId}</p>
-      </div>
-      <div className="signTxSection">
-        <h4>Network fee:</h4>
-        <p>{fee.decimal}</p>
-      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
     </div>
   )
 }
 
 const SummaryView = ({ data }) => {
-  const { flags, transactionData } = getTransactionDetails(data)
+  const { flags, transactionData } = SignTxHelpers.getTransactionDetails(data)
   console.log('flags', flags)
   console.log('transactionData', transactionData)
 
@@ -432,10 +358,12 @@ const SummaryView = ({ data }) => {
   )
 }
 
-export const TransactionPreview = ({ data }) => {
+const TransactionPreview = ({ data }) => {
   return (
     <div className="transactionPreview">
       <SummaryView data={data} />
     </div>
   )
 }
+
+export default TransactionPreview

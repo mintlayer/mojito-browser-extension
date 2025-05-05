@@ -29,8 +29,8 @@ import {
   FreezableToken,
   TotalSupply,
   Amount,
-} from '../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
-import { getOutputs } from '../../services/Crypto/Mintlayer/Mintlayer'
+} from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
+import { getOutputs } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
 
 function mergeUint8Arrays(arrays) {
   const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0)
@@ -358,13 +358,10 @@ export function getTransactionHEX(
 
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
-      console.log('input', input)
       const address =
         input?.utxo?.destination ||
         input?.input?.authority ||
         input?.input?.destination
-      console.log('addressesPrivateKeys', addressesPrivateKeys)
-      console.log('address-----', address)
       const addressPrivateKey = addressesPrivateKeys[address]
 
       console.log('addressPrivateKey', addressPrivateKey)
@@ -478,7 +475,6 @@ export const getTransactionDetails = (transaction) => {
     (input) => input.input?.type === 'ConcludeOrder',
   )
 
-  // Check for intent (Bridge Request)
   if (intent) {
     flags.isBridgeRequest = true
   }
@@ -487,7 +483,6 @@ export const getTransactionDetails = (transaction) => {
     flags.isConcludeOrder = true
   }
 
-  // Process inputs
   JSONRepresentation?.inputs?.forEach((input) => {
     switch (input.input?.command) {
       case 'MintTokens':
@@ -519,7 +514,6 @@ export const getTransactionDetails = (transaction) => {
     }
   })
 
-  // Process outputs
   JSONRepresentation?.outputs?.forEach((output) => {
     switch (output.type) {
       case 'LockThenTransfer':
@@ -542,7 +536,6 @@ export const getTransactionDetails = (transaction) => {
     }
   })
 
-  // Ensure `isTransfer` is true as a fallback
   if (
     !Object.values(flags).some(
       (flag, key) => key !== 'isTransfer' && flag === true,

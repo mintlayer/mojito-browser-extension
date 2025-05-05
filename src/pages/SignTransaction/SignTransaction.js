@@ -1,13 +1,9 @@
 import { useLocation } from 'react-router-dom'
-import {
-  getTransactionBINrepresentation,
-  getTransactionHEX,
-  getTransactionIntent,
-} from './helpers'
+import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button } from '@BasicComponents'
 
-import { TransactionPreview } from './components/TransactionPreview'
+import { SignTransaction } from '@ContainerComponents'
 
 import './SignTransaction.css'
 import { useState, useContext } from 'react'
@@ -60,10 +56,11 @@ export const SignTransactionPage = () => {
         'transactionJSONrepresentation',
         transactionJSONrepresentation,
       )
-      const transactionBINrepresentation = getTransactionBINrepresentation(
-        transactionJSONrepresentation,
-        network,
-      )
+      const transactionBINrepresentation =
+        SignTxHelpers.getTransactionBINrepresentation(
+          transactionJSONrepresentation,
+          network,
+        )
       console.log('transactionBINrepresentation', transactionBINrepresentation)
 
       const pass = password
@@ -98,7 +95,7 @@ export const SignTransactionPage = () => {
 
       if (state?.request?.data?.txData?.intent) {
         const intent = state?.request?.data?.txData?.intent
-        intentEncode = getTransactionIntent({
+        intentEncode = SignTxHelpers.getTransactionIntent({
           intent,
           transactionBINrepresentation,
           transactionJSONrepresentation,
@@ -107,7 +104,7 @@ export const SignTransactionPage = () => {
         console.log('intentEncode', intentEncode)
       }
 
-      const transactionHex = getTransactionHEX(
+      const transactionHex = SignTxHelpers.getTransactionHEX(
         {
           transactionBINrepresentation,
           transactionJSONrepresentation,
@@ -177,11 +174,20 @@ export const SignTransactionPage = () => {
     setSelectedMock(name)
   }
 
+  const switchHandle = () => {
+    setMode(mode === 'json' ? 'preview' : 'json')
+  }
+
   return (
     <div className="SignTransaction">
-      <div className="header">Sign transaction</div>
+      <div className="header">
+        <h1 className="signTxTitle">Sign Transaction</h1>
+        <Button onClickHandle={switchHandle}>
+          {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
+        </Button>
+      </div>
 
-      <div className="content">
+      <div className="SignTxContent">
         {!external_state && (
           <div className="mock_selector">
             {Object.keys(MOCKS).map((key) => {
@@ -199,29 +205,14 @@ export const SignTransactionPage = () => {
           </div>
         )}
 
-        <div
-          className="switcher_view"
-          onClick={() => setMode(mode === 'json' ? 'preview' : 'json')}
-        >
-          Switch to {mode === 'json' ? 'preview' : 'json'}
-        </div>
-
         {state?.request?.data?.txData?.JSONRepresentation && (
           <>
             {mode === 'preview' && (
-              <div className="transaction_preview">
-                <TransactionPreview data={state} />
+              <div className="transaction-preview-wrapper">
+                <SignTransaction.TransactionPreview data={state} />
               </div>
             )}
-            {mode === 'json' && (
-              <div className="transaction_raw">
-                {JSON.stringify(
-                  state?.request?.data?.txData?.JSONRepresentation,
-                  null,
-                  2,
-                )}
-              </div>
-            )}
+            {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
           </>
         )}
       </div>

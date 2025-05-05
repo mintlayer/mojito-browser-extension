@@ -10,19 +10,22 @@
 }
 
 .SignTransaction .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
-  text-align: center;
   margin-bottom: 20px;
-  position: absolute;
 }
 
-.SignTransaction .content {
+.signTxTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.SignTransaction .SignTxContent {
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  margin-top: 40px;
   height: 80%;
 }
 
@@ -57,16 +60,13 @@
   background-color: #e5e7eb;
 }
 
-.SignTransaction .transaction_preview {
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
+.SignTransaction .transaction-preview-wrapper {
   height: 100%;
   overflow: scroll;
   width: 100%;
 }
 
-.SignTransaction .transaction_raw {
+.SignTransaction .transaction-raw-wrapper {
   background-color: #f9fafb;
   padding: 12px;
   border: 1px solid #e5e7eb;
@@ -89,41 +89,6 @@
   justify-content: center;
   gap: 12px;
   bottom: 0;
-}
-
-.SignTransaction .btn {
-  width: 50%;
-}
-
-.SignTransaction .btn.approve {
-  background-color: #10b981;
-  color: #ffffff;
-}
-
-.SignTransaction .btn.approve:hover {
-  background-color: #059669;
-}
-
-.SignTransaction .btn.reject {
-  background-color: #ef4444;
-  color: #ffffff;
-}
-
-.SignTransaction .btn.reject:hover {
-  background-color: #dc2626;
-}
-
-.SignTransaction .switcher_view {
-  background-color: #f9fafb;
-  padding: 10px;
-  position: absolute;
-  right: 0px;
-  top: 0px;
-  cursor: pointer;
-}
-
-.SignTransaction .switcher_view:hover {
-  background-color: #e5e7eb;
 }
 
 .modal {
@@ -170,6 +135,10 @@
 .modal-content button:last-of-type {
   background-color: #ef4444;
   color: #ffffff;
+}
+
+.buttonSignTransaction {
+  width: 50%;
 }
 
 .buttonSignTransaction:nth-child(1) {
