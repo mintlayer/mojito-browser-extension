@@ -62,10 +62,9 @@
             '*',
           )
         }
-      }, 20000) // 10 seconds timeout
+      }, 1000 * 120) // 2-minute timeout
     }
   })
 
   const pendingResponses = new Set() // Track pending requests
-  console.log('[Mintlayer Extension] Content script loaded')
 })()

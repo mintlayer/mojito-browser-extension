@@ -23,6 +23,7 @@ import {
   encode_input_for_freeze_token,
   encode_input_for_unfreeze_token,
   encode_output_data_deposit,
+  encode_output_issue_nft,
   TokenUnfreezable,
   SourceId,
   SignatureHashType,
@@ -247,6 +248,38 @@ export function getTransactionBINrepresentation(
         )
       }
 
+      if (output.type === 'IssueNft') {
+        const {
+          name,
+          ticker,
+          description,
+          media_hash,
+          // creator,
+          media_uri,
+          icon_uri,
+          additional_metadata_uri,
+        } = output.data
+
+        const { destination: address, token_id } = output
+
+        const chainTip = '200000' // TODO unhardcode
+
+        return encode_output_issue_nft(
+          token_id,
+          address,
+          name.string,
+          ticker.string,
+          description.string,
+          media_hash.string,
+          null, // TODO: check for public key, key hash is not working
+          media_uri.string,
+          icon_uri.string,
+          additional_metadata_uri.string,
+          BigInt(chainTip),
+          network,
+        )
+      }
+
       if (output.type === 'DataDeposit') {
         return encode_output_data_deposit(new TextEncoder().encode(output.data))
       }
@@ -336,6 +369,14 @@ export function getTransactionHEX(
         ...(input?.utxo?.value?.token_id
           ? { tokenId: input.utxo.value.token_id }
           : {}),
+      })
+    }
+    if (input.utxo.type === 'IssueNft') {
+      return getOutputs({
+        utxo: { utxo: input.utxo },
+        chainTip: 100000n,
+        networkType,
+        type: 'IssueNft',
       })
     }
   })

@@ -175,7 +175,8 @@ export const getOutputs = ({
     throw new Error('LockThenTransfer requires a lock')
   }
 
-  const amountInstace = Amount.from_atoms(amount)
+  console.log('aaa', type, amount)
+  const amountInstace = amount ? Amount.from_atoms(amount) : undefined
 
   const networkIndex = NETWORKS[networkType]
   if (type === 'Transfer') {
