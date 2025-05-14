@@ -130,42 +130,16 @@ const App = () => {
 
     if (action === 'connect') {
       if (!unlocked) {
-        setNextAfterUnlock({ route: '/connect' })
+        setNextAfterUnlock({
+          route: '/connect',
+          state: { action: 'connect', origin, requestId, request },
+        })
         return
       }
 
-      const response = {
-        action: 'popupResponse',
-        method: 'connect',
-        requestId,
-        origin,
-        result: {
-          address: {
-            mainnet: {
-              receiving: addresses?.mlMainnetAddresses?.mlReceivingAddresses,
-              change: addresses?.mlMainnetAddresses?.mlChangeAddresses,
-            },
-            testnet: {
-              receiving: addresses?.mlTestnetAddresses?.mlReceivingAddresses,
-              change: addresses?.mlTestnetAddresses?.mlChangeAddresses,
-            },
-          },
-        },
-      }
-      runtime.sendMessage(response, () => {
-        console.log('[Popup] Response sent:', response)
-        // Remove pendingRequest after sending response
-        storage.local.remove('pendingRequest', () => {
-          if (runtime.lastError) {
-            console.error(
-              '[Mojito Popup] Error removing pendingRequest:',
-              runtime.lastError,
-            )
-          }
-          // window.close()
-        })
+      navigate('/connect', {
+        state: { action: 'connect', origin, requestId, request },
       })
-      navigate('/connect')
     }
 
     if (action === 'signTransaction') {

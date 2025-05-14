@@ -31,17 +31,11 @@
     if (message.method) {
       if (message.method === 'checkConnection') {
         sendResponse({
-          result: connectedSites[origin]
-            ? { isConnected: true, address: connectedSites[origin].address }
-            : { isConnected: false },
+          result: { isConnected: !!connectedSites[origin] },
         })
       } else if (message.method === 'connect') {
-        if (
-          connectedSites[origin] &&
-          connectedSites[origin].address.length > 0
-        ) {
-          sendResponse({ result: [connectedSites[origin].address] })
-        } else if (connectWindowId === false) {
+        if (connectWindowId === false) {
+          pendingResponses.set(message.requestId, sendResponse)
           api.windows.create(
             {
               url: api.runtime.getURL('popup.html'),
@@ -126,6 +120,7 @@
     // Handle popup responses
     if (message.action === 'popupResponse') {
       const { requestId, origin, result, error } = message
+      console.log('message from popup', message)
       const storedSendResponse = pendingResponses.get(requestId)
       if (result && message.method === 'connect') {
         connectedSites[origin] = {
@@ -139,14 +134,11 @@
               api.runtime.lastError,
             )
           }
-          api.runtime.sendMessage({ requestId, result, error }, (response) => {
-            if (api.runtime.lastError) {
-              console.error(
-                '[Mintlayer] Send response error:',
-                api.runtime.lastError,
-              )
-            }
-          })
+
+          if (storedSendResponse) {
+            storedSendResponse({ result, error })
+            pendingResponses.delete(requestId)
+          }
         })
       } else if (result && message.method === 'signTransaction_approve') {
         storedSendResponse({ result, error })
@@ -164,6 +156,25 @@
           }
         })
       }
+    }
+
+    if (message.action === 'getSession') {
+      const sessionOrigin = message.origin || sender.origin
+      const session = connectedSites[sessionOrigin]
+
+      if (session && session.address) {
+        sendResponse({
+          session: {
+            connected: true,
+            address: session.address,
+            timestamp: session.timestamp,
+          },
+        })
+      } else {
+        sendResponse({ session: null })
+      }
+
+      return true // async response
     }
   })
 

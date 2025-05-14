@@ -100,12 +100,26 @@ const Navigation = ({ customNavigation }) => {
       icon: <SettingsImg />,
       link: '/settings',
     },
-    {
-      id: 3,
-      label: 'Sign Transaction Test',
-      icon: <SettingsImg />,
-      link: '/wallet/Mintlayer/sign-transaction',
-    },
+    ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
+      ? [
+          {
+            id: 4,
+            label: 'Connection Page',
+            icon: <SettingsImg />,
+            link: '/connect',
+          },
+        ]
+      : []),
+    ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
+      ? [
+          {
+            id: 5,
+            label: 'Test Sign Transaction',
+            icon: <SettingsImg />,
+            link: '/wallet/Mintlayer/sign-transaction',
+          },
+        ]
+      : []),
   ]
 
   const navigationList = [

@@ -25,17 +25,11 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "externally_connectable": {
-    "matches": [
-      "*://localhost/*",
-      "*://explorer.mintlayer.org/*",
-      "*://lovelace.explorer.mintlayer.org/*",
-      "*://blockexplorer-staging.mintlayer.org/*"
-    ]
-  },
-  "permissions": ["externally_connectable", "storage"],
+  "permissions": ["scripting", "storage"],
   "content_scripts": [
     {
+      "run_at": "document_start",
+      "all_frames": true,
       "matches": [
         "*://*/*",
         "*://localhost/*",
@@ -44,6 +38,12 @@
         "*://blockexplorer-staging.mintlayer.org/*"
       ],
       "js": ["explorer/content-script.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["mojito.js"],
+      "matches": ["<all_urls>"]
     }
   ]
 }
