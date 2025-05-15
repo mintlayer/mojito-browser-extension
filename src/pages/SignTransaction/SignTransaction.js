@@ -1,5 +1,9 @@
 import { useLocation } from 'react-router-dom'
-import { getTransactionBINrepresentation, getTransactionHEX, getTransactionIntent } from './helpers'
+import {
+  getTransactionBINrepresentation,
+  getTransactionHEX,
+  getTransactionIntent,
+} from './helpers'
 import { MOCKS } from './mocks'
 
 import { TransactionPreview } from './components/TransactionPreview'
@@ -35,8 +39,6 @@ export const SignTransactionPage = () => {
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
-  console.log('state', state)
-
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddresses
@@ -52,12 +54,11 @@ export const SignTransactionPage = () => {
     try {
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
-      console.log('transactionJSONrepresentation', transactionJSONrepresentation)
+
       const transactionBINrepresentation = getTransactionBINrepresentation(
         transactionJSONrepresentation,
         network,
       )
-      console.log('transactionBINrepresentation', transactionBINrepresentation)
 
       const pass = password
 
@@ -78,14 +79,10 @@ export const SignTransactionPage = () => {
         changeAddressesLength,
       )
 
-      console.log('walletPrivKeys', walletPrivKeys)
-
       const keysList = {
         ...walletPrivKeys.mlReceivingPrivKeys,
         ...walletPrivKeys.mlChangePrivKeys,
       }
-
-      console.log('keysList', keysList)
 
       let intentEncode
 
@@ -97,7 +94,6 @@ export const SignTransactionPage = () => {
           transactionJSONrepresentation,
           addressesPrivateKeys: keysList,
         })
-        console.log('intentEncode', intentEncode)
       }
 
       const transactionHex = getTransactionHEX(
@@ -108,8 +104,6 @@ export const SignTransactionPage = () => {
         },
         network,
       )
-
-      console.log('transactionHex', transactionHex)
 
       const requestId = state?.request?.requestId
       const method = 'signTransaction_approve'
