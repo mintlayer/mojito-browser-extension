@@ -73,15 +73,16 @@
         function handler(event) {
           if (event.source !== window) return
           const data = event.data
+
           if (
             data?.type === 'MINTLAYER_RESPONSE' &&
             data.requestId === requestId
           ) {
             window.removeEventListener('message', handler)
+
             if (data.result?.address) {
-              mojito.connectedAddresses =
-                data.result.address[mojito.network]?.receiving || []
-              resolve(data.result.address) // return addresses
+              mojito.connectedAddresses = data.result.address
+              resolve(data.result.address)
             } else {
               resolve(null)
             }

@@ -112,6 +112,23 @@
         }
       } else if (message.method === 'version') {
         sendResponse({ result: api.runtime.getManifest().version })
+      } else if (message.method === 'getSession') {
+        const sessionOrigin = message.origin || sender.origin
+        const session = connectedSites[sessionOrigin]
+
+        if (session && session.address) {
+          console.log('restore send response')
+          sendResponse({
+            result: {
+              address: session.address,
+            },
+          })
+        } else {
+          console.log('restore send null response')
+          sendResponse({ result: null })
+        }
+
+        return true
       } else {
         sendResponse({ error: 'Unknown method' })
       }
@@ -156,25 +173,6 @@
           }
         })
       }
-    }
-
-    if (message.action === 'getSession') {
-      const sessionOrigin = message.origin || sender.origin
-      const session = connectedSites[sessionOrigin]
-
-      if (session && session.address) {
-        sendResponse({
-          session: {
-            connected: true,
-            address: session.address,
-            timestamp: session.timestamp,
-          },
-        })
-      } else {
-        sendResponse({ session: null })
-      }
-
-      return true // async response
     }
   })
 
