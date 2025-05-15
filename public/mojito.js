@@ -20,10 +20,7 @@
       return new Promise((resolve, reject) => {
         const requestId = Math.random().toString(36).substring(2)
 
-        console.log('requestId', requestId)
-
         function handle(event) {
-          console.log('event', event)
           if (event.source !== window) return
           const data = event.data
           if (

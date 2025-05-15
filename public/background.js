@@ -117,14 +117,12 @@
         const session = connectedSites[sessionOrigin]
 
         if (session && session.address) {
-          console.log('restore send response')
           sendResponse({
             result: {
               address: session.address,
             },
           })
         } else {
-          console.log('restore send null response')
           sendResponse({ result: null })
         }
 
@@ -137,7 +135,6 @@
     // Handle popup responses
     if (message.action === 'popupResponse') {
       const { requestId, origin, result, error } = message
-      console.log('message from popup', message)
       const storedSendResponse = pendingResponses.get(requestId)
       if (result && message.method === 'connect') {
         connectedSites[origin] = {

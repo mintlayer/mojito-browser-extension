@@ -80,7 +80,6 @@ export function getTransactionBINrepresentation(
   const inputCommands = transactionJSONrepresentation.inputs
     .filter(({ input }) => input.input_type === 'AccountCommand')
     .map(({ input }) => {
-      console.log('input', input)
       if (input.command === 'ConcludeOrder') {
         return encode_input_for_conclude_order(
           input.order_id,
@@ -212,14 +211,10 @@ export function getTransactionBINrepresentation(
           total_supply,
         } = output
 
-        const chainTip = '200000'
-
-        console.log('is_freezable', is_freezable)
+        const chainTip = '200000' // TODO unhardcode
 
         const is_token_freezable =
           is_freezable === true ? FreezableToken.Yes : FreezableToken.No
-
-        console.log('is_token_freezable', is_token_freezable)
 
         const supply_amount =
           total_supply.type === 'Fixed'
@@ -291,23 +286,12 @@ export function getTransactionBINrepresentation(
     .filter(({ input }) => input.input_type === 'UTXO')
     .map((input) => input?.utxo?.destination || input?.destination)
 
-  console.log('inputsArray', inputsArray)
-  console.log('outputsArray', outputsArray)
-
-  console.log(
-    mergeUint8Arrays(inputsArray),
-    inputAddresses,
-    mergeUint8Arrays(outputsArray),
-    network,
-  )
-
   const transactionsize = estimate_transaction_size(
     mergeUint8Arrays(inputsArray),
     inputAddresses,
     mergeUint8Arrays(outputsArray),
     network,
   )
-  console.log('transactionsize', transactionsize)
 
   const feeRate = BigInt(Math.ceil(100000000000 / 1000))
 
@@ -335,14 +319,6 @@ export function getTransactionHEX(
     mergeUint8Arrays(inputsArray),
     mergeUint8Arrays(outputsArray),
     BigInt(0),
-  )
-
-  console.log(
-    'transaction',
-    transaction.reduce(
-      (acc, byte) => acc + byte.toString(16).padStart(2, '0'),
-      '',
-    ),
   )
 
   const optUtxos_ = transactionJSONrepresentation.inputs.map((input) => {
@@ -381,8 +357,6 @@ export function getTransactionHEX(
     }
   })
 
-  console.log('optUtxos_', optUtxos_)
-
   const optUtxos = []
   for (let i = 0; i < optUtxos_.length; i++) {
     if (transactionJSONrepresentation.inputs[i].input.input_type !== 'UTXO') {
@@ -395,20 +369,13 @@ export function getTransactionHEX(
     }
   }
 
-  console.log('optUtxos', optUtxos)
-
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
-      console.log('input', input)
       const address =
         input?.utxo?.destination ||
         input?.input?.authority ||
         input?.input?.destination
-      console.log('addressesPrivateKeys', addressesPrivateKeys)
-      console.log('address-----', address)
       const addressPrivateKey = addressesPrivateKeys[address]
-
-      console.log('addressPrivateKey', addressPrivateKey)
 
       const witness = encode_witness(
         SignatureHashType.ALL,
@@ -453,36 +420,24 @@ export function getTransactionIntent({
     intent,
     transaction_id,
   )
-  console.log('transaction_id', transaction_id)
-  console.log('intent_message', intent_message)
 
   const sign_challenges = transactionJSONrepresentation.inputs.map((input) => {
     const address =
       input?.utxo?.destination ||
       input?.input?.authority ||
       input?.input?.destination
-    console.log('addressesPrivateKeys', addressesPrivateKeys)
-    console.log('address-----', address)
+
     const addressPrivateKey = addressesPrivateKeys[address]
-
-    console.log('addressPrivateKey', addressPrivateKey)
-
-    console.log('ch', sign_challenge(addressPrivateKey, intent_message))
 
     const signature = sign_challenge(addressPrivateKey, intent_message)
 
     return Array.from(signature)
   })
   // sign_challenge
-
-  console.log('intent_message', intent_message)
-  console.log('sign_challenges', sign_challenges)
-
   const encodedIntent = encode_signed_transaction_intent(
     intent_message,
     sign_challenges,
   )
-  console.log('encodedIntent', encodedIntent)
 
   const encodedIntentHash = encodedIntent.reduce(
     (acc, byte) => acc + byte.toString(16).padStart(2, '0'),
