@@ -61,7 +61,6 @@ export const SignTransactionPage = () => {
           transactionJSONrepresentation,
           network,
         )
-      console.log('transactionBINrepresentation', transactionBINrepresentation)
 
       const pass = password
 
@@ -82,14 +81,10 @@ export const SignTransactionPage = () => {
         changeAddressesLength,
       )
 
-      console.log('walletPrivKeys', walletPrivKeys)
-
       const keysList = {
         ...walletPrivKeys.mlReceivingPrivKeys,
         ...walletPrivKeys.mlChangePrivKeys,
       }
-
-      console.log('keysList', keysList)
 
       let intentEncode
 
@@ -101,7 +96,6 @@ export const SignTransactionPage = () => {
           transactionJSONrepresentation,
           addressesPrivateKeys: keysList,
         })
-        console.log('intentEncode', intentEncode)
       }
 
       const transactionHex = SignTxHelpers.getTransactionHEX(
@@ -112,8 +106,6 @@ export const SignTransactionPage = () => {
         },
         network,
       )
-
-      console.log('transactionHex', transactionHex)
 
       const requestId = state?.request?.requestId
       const method = 'signTransaction_approve'

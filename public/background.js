@@ -31,17 +31,11 @@
     if (message.method) {
       if (message.method === 'checkConnection') {
         sendResponse({
-          result: connectedSites[origin]
-            ? { isConnected: true, address: connectedSites[origin].address }
-            : { isConnected: false },
+          result: { isConnected: !!connectedSites[origin] },
         })
       } else if (message.method === 'connect') {
-        if (
-          connectedSites[origin] &&
-          connectedSites[origin].address.length > 0
-        ) {
-          sendResponse({ result: [connectedSites[origin].address] })
-        } else if (connectWindowId === false) {
+        if (connectWindowId === false) {
+          pendingResponses.set(message.requestId, sendResponse)
           api.windows.create(
             {
               url: api.runtime.getURL('popup.html'),
@@ -118,6 +112,21 @@
         }
       } else if (message.method === 'version') {
         sendResponse({ result: api.runtime.getManifest().version })
+      } else if (message.method === 'getSession') {
+        const sessionOrigin = message.origin || sender.origin
+        const session = connectedSites[sessionOrigin]
+
+        if (session && session.address) {
+          sendResponse({
+            result: {
+              address: session.address,
+            },
+          })
+        } else {
+          sendResponse({ result: null })
+        }
+
+        return true
       } else {
         sendResponse({ error: 'Unknown method' })
       }
@@ -139,14 +148,11 @@
               api.runtime.lastError,
             )
           }
-          api.runtime.sendMessage({ requestId, result, error }, (response) => {
-            if (api.runtime.lastError) {
-              console.error(
-                '[Mintlayer] Send response error:',
-                api.runtime.lastError,
-              )
-            }
-          })
+
+          if (storedSendResponse) {
+            storedSendResponse({ result, error })
+            pendingResponses.delete(requestId)
+          }
         })
       } else if (result && message.method === 'signTransaction_approve') {
         storedSendResponse({ result, error })

@@ -1,0 +1,87 @@
+.connect-page {
+  font-family: sans-serif;
+  padding: 2rem;
+  text-align: center;
+}
+
+.connect-page__container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.connect-page__title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+}
+
+.connect-page__description {
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.connect-page__host {
+  font-weight: 600;
+  color: #333;
+}
+
+.connect-page__permissions {
+  text-align: left;
+  margin: 1rem 0;
+  padding-left: 1.2rem;
+}
+
+.connect-page__permissions li {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.connect-page__remember {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.connect-page__checkbox {
+  transform: scale(1.1);
+}
+
+.connect-page__actions {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.connect-page__button {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.connect-page__button--reject {
+  background-color: #eee;
+  color: #333;
+}
+
+.connect-page__button--reject:hover {
+  background-color: #ddd;
+}
+
+.connect-page__button--connect {
+  background-color: #3cb371;
+  color: #fff;
+}
+
+.connect-page__button--connect:hover {
+  background-color: #35a164;
+}

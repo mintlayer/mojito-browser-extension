@@ -1462,4 +1462,217 @@ export const MOCKS = {
       requestId: 'wymzne7u81',
     },
   },
+  issueNft: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '9dc1221aa78551c7529068c021531df59103226d8b46277cd2ab40c6f78455ef',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1705748604300000',
+                      decimal: '17057.486043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                data: {
+                  additional_metadata_uri: {
+                    hex: '697066733a2f2f6261666b726569656d6861676332736e706a6a6e64766471346a786d68346c6f6267336d707465327a3432627269657164336d6564677367633471',
+                    string:
+                      'ipfs://bafkreiemhagc2snpjjndvdq4jxmh4lobg3mpte2z42brieqd3medgsgc4q',
+                  },
+                  creator: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  description: {
+                    hex: '4465736372697074696f6e',
+                    string: 'Description',
+                  },
+                  icon_uri: {
+                    hex: '697066733a2f2f62616679626569627732796c363432336561673433746c6765757074636564726632666c78706e707674796d736e71627063666e6c786a637a34692f70686f746f5f323032342d31302d30332d32332e32342e30342e6a706567',
+                    string:
+                      'ipfs://bafybeibw2yl6423eag43tlgeuptcedrf2flxpnpvtymsnqbpcfnlxjcz4i/photo_2024-10-03-23.24.04.jpeg',
+                  },
+                  media_hash: {
+                    hex: '316336653936303431306132',
+                    string: '1c6e960410a2',
+                  },
+                  media_uri: {
+                    hex: '697066733a2f2f62616679626569627732796c363432336561673433746c6765757074636564726632666c78706e707674796d736e71627063666e6c786a637a34692f70686f746f5f323032342d31302d30332d32332e32342e30342e6a706567',
+                    string:
+                      'ipfs://bafybeibw2yl6423eag43tlgeuptcedrf2flxpnpvtymsnqbpcfnlxjcz4i/photo_2024-10-03-23.24.04.jpeg',
+                  },
+                  name: {
+                    hex: '4e616d65',
+                    string: 'Name',
+                  },
+                  ticker: {
+                    hex: '505050',
+                    string: 'PPP',
+                  },
+                },
+                destination: 'tmt1q96glhddzd2u9wcyzfeqm53yrxxqgfm66yezu0gd',
+                token_id:
+                  'tmltk1hulyp284e3kc522ta435wyckrqy4j4842perueyge6ctjlp2mpds65mcx8',
+                type: 'IssueNft',
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1705048604300000',
+                    decimal: '17050.486043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  transferNft: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '6eed78dd553ea0125a54fb95b960217d3509aeeb2ec80196d5d21aefa4487d01',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1705048604300000',
+                      decimal: '17050.486043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    'aed5bdd295db9889faed63de972ec6099805474c3f260e6a0d1b2814e9e8d9f9',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  data: {
+                    additional_metadata_uri: {
+                      hex: '697066733a2f2f6261667962656962337232626566656c686d7a7a6d3365697974656737366532716b656132366b6f6477716c78326b7371716a69327063786e33792f746f6b656e5f6d657461646174612e6a736f6e',
+                      string:
+                        'ipfs://bafybeib3r2befelhmzzm3eiyteg76e2qkea26kodwqlx2ksqqji2pcxn3y/token_metadata.json',
+                    },
+                    creator: null,
+                    description: {
+                      hex: '46756e6e79646f67',
+                      string: 'Funnydog',
+                    },
+                    icon_uri: {
+                      hex: '697066733a2f2f6261667962656962337232626566656c686d7a7a6d3365697974656737366532716b656132366b6f6477716c78326b7371716a69327063786e33792f45304137303630442d304139432d344137392d424244452d3036463437464235413246462e6a706567',
+                      string:
+                        'ipfs://bafybeib3r2befelhmzzm3eiyteg76e2qkea26kodwqlx2ksqqji2pcxn3y/E0A7060D-0A9C-4A79-BBDE-06F47FB5A2FF.jpeg',
+                    },
+                    media_hash: {
+                      hex: '363333636538653132343961393736623664',
+                      string: '633ce8e1249a976b6d',
+                    },
+                    media_uri: {
+                      hex: '697066733a2f2f6261667962656962337232626566656c686d7a7a6d3365697974656737366532716b656132366b6f6477716c78326b7371716a69327063786e33792f45304137303630442d304139432d344137392d424244452d3036463437464235413246462e6a706567',
+                      string:
+                        'ipfs://bafybeib3r2befelhmzzm3eiyteg76e2qkea26kodwqlx2ksqqji2pcxn3y/E0A7060D-0A9C-4A79-BBDE-06F47FB5A2FF.jpeg',
+                    },
+                    name: {
+                      hex: '5665737061446f67',
+                      string: 'VespaDog',
+                    },
+                    ticker: {
+                      hex: '564544',
+                      string: 'VED',
+                    },
+                  },
+                  destination: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                  token_id:
+                    'tmltk1xvjg47rcn6j9afcpwzcv8rut5edys8yakgktrkjpzpw5ys83v4tqtqzrd4',
+                  type: 'IssueNft',
+                  value: {
+                    amount: {
+                      atoms: '1',
+                      decimal: '1',
+                    },
+                    token_id:
+                      'tmltk1xvjg47rcn6j9afcpwzcv8rut5edys8yakgktrkjpzpw5ys83v4tqtqzrd4',
+                    type: 'TokenV1',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9efmjwt59a2z5vnsakavl5npalescjj7ualmhe9',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1',
+                    decimal: '1',
+                  },
+                  token_id:
+                    'tmltk1xvjg47rcn6j9afcpwzcv8rut5edys8yakgktrkjpzpw5ys83v4tqtqzrd4',
+                  type: 'TokenV1',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1704648604300000',
+                    decimal: '17046.486043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
 }

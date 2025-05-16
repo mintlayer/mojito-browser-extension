@@ -2,6 +2,32 @@
 ;(function () {
   const api = typeof browser !== 'undefined' ? browser : chrome
 
+  // Inject mojito.js into the page
+  try {
+    const script = document.createElement('script')
+    script.src = api.runtime.getURL('mojito.js')
+    script.onload = () => script.remove()
+    ;(document.head || document.documentElement).appendChild(script)
+  } catch (err) {
+    console.error('[Content] Failed to inject Mojito SDK:', err)
+  }
+
+  const origin = window.location.origin
+
+  chrome.runtime.sendMessage({ action: 'getSession', origin }, (res) => {
+    if (res?.session) {
+      console.log('[Mojito] Session restored:', res.session)
+      window.postMessage(
+        {
+          type: 'MINTLAYER_EVENT',
+          event: 'accountsChanged',
+          data: res.session.address,
+        },
+        '*',
+      )
+    }
+  })
+
   window.addEventListener('message', (event) => {
     if (event.source === window && event.data.type === 'MINTLAYER_REQUEST') {
       console.log('[Content] Received from SDK:', event.data)
@@ -62,10 +88,9 @@
             '*',
           )
         }
-      }, 20000) // 10 seconds timeout
+      }, 1000 * 120) // 2-minute timeout
     }
   })
 
   const pendingResponses = new Set() // Track pending requests
-  console.log('[Mintlayer Extension] Content script loaded')
 })()
