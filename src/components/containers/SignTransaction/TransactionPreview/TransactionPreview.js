@@ -1,27 +1,37 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import './TransactionPreview.css'
 
-// TODO: fix the fee calculation
-const calculateFee = (inputs, outputs) => {
-  let totalInput = 0
-  let totalOutput = 0
+import { AccountContext, SettingsContext } from '@Contexts'
 
-  inputs.forEach((input) => {
-    const amount = input.utxo?.value?.amount || input.input?.amount
-    if (amount?.atoms) totalInput += parseInt(amount.atoms, 10)
-  })
+const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
+  const inputWithToken = inputs.find((input) => input.utxo?.value?.token_id)
+  if (inputWithToken) {
+    const tokenId = inputWithToken.utxo.value.token_id
+    return outputs.find(
+      (output) =>
+        output.value.token_id === tokenId &&
+        !requiredAddresses.includes(output.destination),
+    )
+  }
+  return outputs.find(
+    (output) => !requiredAddresses.includes(output.destination),
+  )
+}
 
-  outputs.forEach((output) => {
-    const amount =
-      output.value?.amount || output.ask_balance || output.total_supply?.amount
-    if (amount?.atoms) totalOutput += parseInt(amount.atoms, 10)
-  })
+const calculateFee = (inputs, outputs, addresses) => {
+  const totalAmountCoins = inputs.reduce((acc, input) => {
+    if (input.utxo.type === 'Transfer' && !input?.utxo?.value?.token_id) {
+      return acc + Number(input.utxo.value.amount.decimal)
+    }
+    return acc
+  }, 0)
 
-  const feeAtoms = totalInput - totalOutput
-  return feeAtoms > 0
-    ? { atoms: feeAtoms.toString(), decimal: (feeAtoms / 1e8).toFixed(8) }
-    : null
+  const change = outputs.find((output) =>
+    addresses.includes(output.destination),
+  )?.value.amount.decimal
+
+  return Number(totalAmountCoins) - Number(change)
 }
 
 const EstimatedChanges = ({ action }) => {
@@ -52,23 +62,42 @@ const NetworkFee = ({ fee }) => {
   return (
     <div className="signTxSection">
       <h4>Network fee:</h4>
-      <p>{fee.decimal}</p>
+      <p>{fee}</p>
     </div>
   )
 }
 
-const TransferDetails = ({ transactionData, isToken }) => {
+const TransferDetails = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.utxo.value.token_id,
+  )
+  const tokenId = inputWithToken ? inputWithToken?.utxo.value.token_id : null
+  const title = inputWithToken ? 'Transfer token' : 'Transfer coins'
+
+  const relevantOutput = findRelevantOutput(
+    JSONRepresentation.inputs,
+    JSONRepresentation.outputs,
+    requiredAddresses,
+  )
+
   return (
     <div className="transactionDetails">
-      <EstimatedChanges action="Transfer your coins" />
+      <EstimatedChanges action={title} />
       <div className="signTxSection">
         <h4>Destination:</h4>
-        <p>{JSONRepresentation.outputs[0].destination}</p>
+        <p>{relevantOutput.destination}</p>
+        {inputWithToken && (
+          <>
+            <h4>Token id:</h4>
+            <p>{tokenId}</p>
+          </>
+        )}
         <h4>Amount:</h4>
-        <p>{JSONRepresentation.outputs[0].value.amount.decimal}</p>
+        <p>{relevantOutput.value.amount.decimal}</p>
       </div>
       <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
@@ -76,10 +105,14 @@ const TransferDetails = ({ transactionData, isToken }) => {
   )
 }
 
-const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
+const FreezeTokenDetails = ({
+  transactionData,
+  requiredAddresses,
+  unfreeze,
+}) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -103,10 +136,10 @@ const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
   )
 }
 
-const ChangeTokenMetadata = ({ transactionData }) => {
+const ChangeTokenMetadata = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -128,10 +161,10 @@ const ChangeTokenMetadata = ({ transactionData }) => {
   )
 }
 
-const ChangeTokenAuthority = ({ transactionData }) => {
+const ChangeTokenAuthority = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -153,10 +186,10 @@ const ChangeTokenAuthority = ({ transactionData }) => {
   )
 }
 
-const LockTokenSupply = ({ transactionData }) => {
+const LockTokenSupply = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -175,10 +208,10 @@ const LockTokenSupply = ({ transactionData }) => {
   )
 }
 
-const BurnToken = ({ transactionData }) => {
+const BurnToken = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.utxo.value.token_id,
@@ -197,10 +230,10 @@ const BurnToken = ({ transactionData }) => {
   )
 }
 
-const ConcludeOrder = ({ transactionData }) => {
+const ConcludeOrder = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input.order_id,
   )
@@ -217,10 +250,10 @@ const ConcludeOrder = ({ transactionData }) => {
   )
 }
 
-const FillOrder = ({ transactionData }) => {
+const FillOrder = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input.order_id,
   )
@@ -237,10 +270,10 @@ const FillOrder = ({ transactionData }) => {
   )
 }
 
-const CreateOrder = ({ transactionData }) => {
+const CreateOrder = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateOrder',
@@ -272,10 +305,11 @@ const CreateOrder = ({ transactionData }) => {
   )
 }
 
-const IssueToken = ({ transactionData }) => {
+const IssueToken = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs)
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  console.log('fee', fee)
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'IssueFungibleToken',
@@ -311,10 +345,42 @@ const IssueToken = ({ transactionData }) => {
   )
 }
 
+const BridgeRequest = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
+
+  const inputsWithTokens = JSONRepresentation.inputs.filter(
+    (input) => input.utxo.value.token_id,
+  )
+  const outputsWithTokens = JSONRepresentation.outputs.filter(
+    (output) => output.value.token_id,
+  )
+
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="make a Bridge request" />
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputsWithTokens[0].utxo.value.token_id}</p>
+        <h4>Amount:</h4>
+        <p>{outputsWithTokens[0].value.amount.decimal}</p>
+      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
 const SummaryView = ({ data }) => {
   const { flags, transactionData } = SignTxHelpers.getTransactionDetails(data)
-  console.log('flags', flags)
-  console.log('transactionData', transactionData)
+  const { addresses } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+
+  const requiredAddresses =
+    networkType === 'mainnet'
+      ? addresses.mlMainnetAddresses.mlChangeAddresses
+      : addresses.mlTestnetAddresses.mlChangeAddresses
 
   return (
     <div className="preview-section summary">
@@ -323,36 +389,79 @@ const SummaryView = ({ data }) => {
       </div>
       <div>
         {flags.isTransfer && (
-          <TransferDetails transactionData={transactionData} />
+          <TransferDetails
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
         )}
         {flags.isUnfreezeToken && (
           <FreezeTokenDetails
             transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
             unfreeze
           />
         )}
         {flags.isFreezeToken && (
-          <FreezeTokenDetails transactionData={transactionData} />
+          <FreezeTokenDetails
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
         )}
         {flags.isChangeTokenMetadata && (
-          <ChangeTokenMetadata transactionData={transactionData} />
+          <ChangeTokenMetadata
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
         )}
         {flags.isChangeTokenAuthority && (
-          <ChangeTokenAuthority transactionData={transactionData} />
+          <ChangeTokenAuthority
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
         )}
         {flags.isLockTokenSupply && (
-          <LockTokenSupply transactionData={transactionData} />
+          <LockTokenSupply
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
         )}
-        {flags.isBurnToken && <BurnToken transactionData={transactionData} />}
+        {flags.isBurnToken && (
+          <BurnToken
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
         {/* TODO: BURN COIN */}
         {flags.isConcludeOrder && (
-          <ConcludeOrder transactionData={transactionData} />
+          <ConcludeOrder
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
         )}
-        {flags.isFillOrder && <FillOrder transactionData={transactionData} />}
+        {flags.isFillOrder && (
+          <FillOrder
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
         {flags.isCreateOrder && (
-          <CreateOrder transactionData={transactionData} />
+          <CreateOrder
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
         )}
-        {flags.isIssueToken && <IssueToken transactionData={transactionData} />}
+        {flags.isIssueToken && (
+          <IssueToken
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+        {flags.isBridgeRequest && (
+          <BridgeRequest
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
       </div>
     </div>
   )

@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button } from '@BasicComponents'
-
+import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 
 import './SignTransaction.css'
@@ -178,6 +178,10 @@ export const SignTransactionPage = () => {
     setMode(mode === 'json' ? 'preview' : 'json')
   }
 
+  const passwordChangeHandler = (value) => {
+    setPassword(value)
+  }
+
   return (
     <div className="SignTransaction">
       <div className="header">
@@ -233,19 +237,32 @@ export const SignTransactionPage = () => {
       </div>
 
       {isModalOpen && (
-        <div className="modal">
+        <PopUp setOpen={setIsModalOpen}>
           <div className="modal-content">
-            <h3>Re-enter Password</h3>
-            <input
-              type="password"
+            <TextField
+              label="Re-enter your Password"
+              password
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChangeHandle={passwordChangeHandler}
               placeholder="Enter your password"
+              autoFocus
             />
-            <button onClick={handleModalSubmit}>Submit</button>
-            <button onClick={() => setIsModalOpen(false)}>Cancel</button>
+            <div className="modal-buttons">
+              <Button
+                onClickHandle={() => setIsModalOpen(false)}
+                extraStyleClasses={extraButtonStyles}
+              >
+                Decline
+              </Button>
+              <Button
+                onClickHandle={handleModalSubmit}
+                extraStyleClasses={extraButtonStyles}
+              >
+                Approve
+              </Button>
+            </div>
           </div>
-        </div>
+        </PopUp>
       )}
     </div>
   )
