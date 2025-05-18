@@ -522,6 +522,9 @@ export const getTransactionDetails = (transaction) => {
       case 'IssueFungibleToken':
         flags.isIssueToken = true
         break
+      case 'IssueNft':
+        flags.isIssueNft = true
+        break
       case 'CreateOrder':
         flags.isCreateOrder = true
         break
@@ -530,6 +533,9 @@ export const getTransactionDetails = (transaction) => {
         break
       case 'BurnToken':
         flags.isBurnToken = true
+        break
+      case 'DataDeposit':
+        flags.isDataDeposit = true
         break
       default:
         break
