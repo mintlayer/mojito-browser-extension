@@ -217,6 +217,7 @@ export const SignTransactionPage = () => {
         <Button
           onClickHandle={handleReject}
           extraStyleClasses={extraButtonStyles}
+          alternate
         >
           Decline
         </Button>

@@ -126,12 +126,3 @@
 .buttonSignTransaction {
   width: 50%;
 }
-
-.buttonSignTransaction:nth-child(1) {
-  background-color: rgb(var(--color-red));
-  color: #ffffff;
-}
-
-.buttonSignTransaction:nth-child(1):hover {
-  opacity: 0.8;
-}

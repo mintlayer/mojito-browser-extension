@@ -2,6 +2,8 @@ import './ConnectionPage.css'
 import { useLocation } from 'react-router-dom'
 import { useContext } from 'react'
 import { AccountContext } from '@Contexts'
+import { Button } from '@BasicComponents'
+import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
 
 const storage =
   // eslint-disable-next-line no-undef
@@ -13,13 +15,13 @@ const runtime =
 
 export const ConnectionPage = () => {
   const { state: external_state } = useLocation()
-
   const { addresses } = useContext(AccountContext)
-
   const website = 'example.com' // This should be replaced with the actual website name or URL
 
   const state = external_state
   const origin = state?.request?.origin || website
+
+  const connectButtonExtraStyles = ['connectButton']
 
   const handleConnect = () => {
     const remember =
@@ -107,49 +109,61 @@ export const ConnectionPage = () => {
     })
   }
 
+  const submitHandler = (e) => {
+    e.preventDefault()
+    handleConnect()
+  }
+
   return (
-    <div>
-      <div className="connect-page">
-        <div className="connect-page__container">
-          <h2 className="connect-page__title">
-            Connect Website to Your Mojito Wallet
-          </h2>
-          <p className="connect-page__description">
-            The website <span className="connect-page__host">{origin}</span> is
-            requesting access to your wallet.
-          </p>
+    <form
+      className="connect-page__form"
+      onSubmit={submitHandler}
+      method="POST"
+    >
+      <div className="connect-page__title">
+        <h2 className="connect-page__title">
+          Connect Website to Your Mojito Wallet
+        </h2>
+        <p className="connect-page__description">
+          The website <span className="connect-page__host">{origin}</span> is
+          requesting access to your wallet.
+        </p>
+      </div>
 
-          <ul className="connect-page__permissions">
-            <li>View your public addresses</li>
-            <li>Request transaction signing</li>
-            <li>Track connection status</li>
-          </ul>
+      <div className="connect-page__content">
+        <ul className="connect-page__permissions">
+          <IconShield className="connect-page__icon" />
+          <li>View your public addresses</li>
+          <li>Request transaction signing</li>
+          <li>Track connection status</li>
+        </ul>
 
-          <label className="connect-page__remember">
+        {/* // TODO: Make this work */}
+        {/* <label className="connect-page__remember">
             <input
               type="checkbox"
               className="connect-page__checkbox"
             />
             <span>Always allow this app</span>
-          </label>
+          </label> */}
 
-          <div className="connect-page__actions">
-            <button
-              onClick={handleReject}
-              className="connect-page__button connect-page__button--reject"
-            >
-              Reject
-            </button>
-            <button
-              onClick={handleConnect}
-              className="connect-page__button connect-page__button--connect"
-            >
-              Connect
-            </button>
-          </div>
+        <div className="connect-page__actions">
+          <Button
+            onClickHandle={handleReject}
+            extraStyleClasses={connectButtonExtraStyles}
+            alternate
+          >
+            Reject
+          </Button>
+          <Button
+            onClickHandle={handleConnect}
+            extraStyleClasses={connectButtonExtraStyles}
+          >
+            Connect
+          </Button>
         </div>
       </div>
-    </div>
+    </form>
   )
 }
 

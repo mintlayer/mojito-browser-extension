@@ -123,6 +123,7 @@ const App = () => {
         }
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses, isAccountUnlocked, navigate])
 
   const handlePendingRequest = (pendingRequest) => {
@@ -194,73 +195,6 @@ const App = () => {
     }
   }
 
-  // // subscribe to chrome runtime messages
-  // useEffect(() => {
-  //   try {
-  //     const browser = require('webextension-polyfill')
-  //     const onMessageListener = (request, sender, sendResponse) => {
-  //       if (request.action === 'connect') {
-  //         if (!unlocked) {
-  //           setNextAfterUnlock({ route: '/connect' })
-  //           return
-  //         }
-  //         sendResponse({ connected: true })
-  //         // change route to staking page
-  //         navigate('/connect')
-  //       }
-  //
-  //       if (request.action === 'createDelegate') {
-  //         if (!unlocked) {
-  //           setNextAfterUnlock({
-  //             route: '/wallet/Mintlayer/staking/create-delegation',
-  //             state: {
-  //               action: 'createDelegate',
-  //               pool_id: request.data.pool_id,
-  //               referral_code: request.data.referral_code || '',
-  //             },
-  //           })
-  //           return
-  //         }
-  //         // change route to staking page
-  //         navigate('/wallet/Mintlayer/staking/create-delegation', {
-  //           state: {
-  //             action: 'createDelegate',
-  //             pool_id: request.data.pool_id,
-  //             referral_code: request.data.referral_code || '',
-  //           },
-  //         })
-  //       }
-  //
-  //       if (request.action === 'getAddresses') {
-  //         // respond with addresses
-  //         sendResponse({
-  //           addresses: {
-  //             mainnet: addresses.mlMainnetAddress,
-  //             testnet: addresses.mlTestnetAddress,
-  //           },
-  //         })
-  //       }
-  //     }
-  //     browser.runtime &&
-  //       browser.runtime.onMessage.addListener(onMessageListener)
-  //     return () => {
-  //       browser.runtime &&
-  //         browser.runtime.onMessage.removeListener(onMessageListener)
-  //     }
-  //   } catch (e) {
-  //     if (
-  //       e.message ===
-  //       'This script should only be loaded in a browser extension.'
-  //     ) {
-  //       // not extension env
-  //       return
-  //     }
-  //     // other error throw further
-  //     throw e
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [addresses, isAccountUnlocked, navigate])
-
   useEffect(() => {
     const extendPath = LocalStorageService.getItem('extendPath')
     if (isExtended && extendPath) {
@@ -272,17 +206,6 @@ const App = () => {
   const popupButtonClickHandler = () => {
     setErrorPopupOpen(false)
   }
-
-  // if ('serviceWorker' in navigator) {
-  //   navigator.serviceWorker
-  //     .register('./service-worker.js')
-  //     .then((registration) => {
-  //       console.log('Service Worker registered with scope:', registration.scope)
-  //     })
-  //     .catch((error) => {
-  //       console.error('Service Worker registration failed:', error)
-  //     })
-  // }
 
   return (
     <main className="App">
