@@ -5,7 +5,9 @@ import './TransactionPreview.css'
 import { AccountContext, SettingsContext } from '@Contexts'
 
 const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
-  const inputWithToken = inputs.find((input) => input.utxo?.value?.token_id)
+  const inputWithToken = inputs.find(
+    (input) => input.utxo?.value?.type === 'TokenV1',
+  )
   if (inputWithToken) {
     const tokenId = inputWithToken.utxo.value.token_id
     return outputs.find(
@@ -21,7 +23,11 @@ const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
 
 const calculateFee = (inputs, outputs, addresses) => {
   const totalAmountCoins = inputs.reduce((acc, input) => {
-    if (input.utxo.type === 'Transfer' && !input?.utxo?.value?.token_id) {
+    if (
+      input.utxo &&
+      input.utxo.type === 'Transfer' &&
+      !input?.utxo?.value?.token_id
+    ) {
       return acc + Number(input.utxo.value.amount.decimal)
     }
     return acc
@@ -73,7 +79,7 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
   const fee = calculateFee(inputs, outputs, requiredAddresses)
 
   const inputWithToken = JSONRepresentation.inputs.find(
-    (input) => input.utxo.value.token_id,
+    (input) => input.utxo.value.type === 'TokenV1',
   )
   const tokenId = inputWithToken ? inputWithToken?.utxo.value.token_id : null
   const title = inputWithToken ? 'Transfer token' : 'Transfer coins'
@@ -213,17 +219,25 @@ const BurnToken = ({ transactionData, requiredAddresses }) => {
   const { inputs, outputs } = JSONRepresentation
   const fee = calculateFee(inputs, outputs, requiredAddresses)
 
-  const inputWithToken = JSONRepresentation.inputs.find(
-    (input) => input.utxo.value.token_id,
+  const burnOutput = JSONRepresentation.outputs.find(
+    (output) => output.type === 'BurnToken',
   )
+  const tokenId =
+    burnOutput?.value?.type === 'TokenV1' ? burnOutput.value.token_id : null
 
   return (
     <div className="transactionDetails">
       <EstimatedChanges action="Burn token" />
-      <div className="signTxSection">
-        <h4>Token id:</h4>
-        <p>{inputWithToken.utxo.value.token_id}</p>
-      </div>
+      {tokenId ? (
+        <div className="signTxSection">
+          <h4>Token id:</h4>
+          <p>{tokenId}</p>
+        </div>
+      ) : (
+        <div className="signTxSection">
+          <h4>Mintlayer Coin</h4>
+        </div>
+      )}
       <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
@@ -345,6 +359,48 @@ const IssueToken = ({ transactionData, requiredAddresses }) => {
   )
 }
 
+const IssueNft = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
+
+  const outputWithIssueNft = JSONRepresentation.outputs.find(
+    (output) => output.type === 'IssueNft',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Issue NFT" />
+      <div className="signTxSection">
+        <h4>Destination:</h4>
+        <p>{outputWithIssueNft.destination}</p>
+      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const DataDeposit = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
+
+  const outputWithDataDeposit = JSONRepresentation.outputs.find(
+    (output) => output.type === 'DataDeposit',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Data Deposit" />
+      <div className="signTxSection">
+        <h4>Data:</h4>
+        <p>{outputWithDataDeposit.data}</p>
+      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
 const BridgeRequest = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
@@ -456,8 +512,20 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
+        {flags.isIssueNft && (
+          <IssueNft
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
         {flags.isBridgeRequest && (
           <BridgeRequest
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+        {flags.isDataDeposit && (
+          <DataDeposit
             transactionData={transactionData}
             requiredAddresses={requiredAddresses}
           />
