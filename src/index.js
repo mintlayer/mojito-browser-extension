@@ -30,6 +30,7 @@ import {
   MessagePage,
   NftPage,
   NftSendPage,
+  SignTransactionPage,
 } from '@Pages'
 
 import {
@@ -52,6 +53,14 @@ import '@Assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
+const storage =
+  // eslint-disable-next-line no-undef
+  typeof browser !== 'undefined' ? browser.storage : chrome.storage
+
+const runtime =
+  // eslint-disable-next-line no-undef
+  typeof browser !== 'undefined' ? browser.runtime : chrome.runtime
+
 const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
   const [unlocked, setUnlocked] = useState(false)
@@ -67,6 +76,7 @@ const App = () => {
   } = useContext(AccountContext)
   const { setAllDataFetching } = useContext(MintlayerContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
+  const [request, setRequest] = useState(null)
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
@@ -98,72 +108,92 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, navigate])
 
-  // subscribe to chrome runtime messages
   useEffect(() => {
-    try {
-      const browser = require('webextension-polyfill')
-      const onMessageListener = (request, sender, sendResponse) => {
-        if (request.action === 'connect') {
-          if (!unlocked) {
-            setNextAfterUnlock({ route: '/connect' })
-            return
-          }
-          sendResponse({ connected: true })
-          // change route to staking page
-          navigate('/connect')
+    if (storage) {
+      // Load pending request from storage
+      storage.local.get(['pendingRequest'], (data) => {
+        if (runtime.lastError) {
+          console.error('[Mojito Popup] Storage error:', runtime.lastError)
+          return
         }
-
-        if (request.action === 'createDelegate') {
-          if (!unlocked) {
-            setNextAfterUnlock({
-              route: '/wallet/Mintlayer/staking/create-delegation',
-              state: {
-                action: 'createDelegate',
-                pool_id: request.data.pool_id,
-                referral_code: request.data.referral_code || '',
-              },
-            })
-            return
-          }
-          // change route to staking page
-          navigate('/wallet/Mintlayer/staking/create-delegation', {
-            state: {
-              action: 'createDelegate',
-              pool_id: request.data.pool_id,
-              referral_code: request.data.referral_code || '',
-            },
-          })
+        const pendingRequest = data.pendingRequest
+        if (pendingRequest) {
+          setRequest(pendingRequest)
+          handlePendingRequest(pendingRequest)
         }
-
-        if (request.action === 'getAddresses') {
-          // respond with addresses
-          sendResponse({
-            addresses: {
-              mainnet: addresses.mlMainnetAddress,
-              testnet: addresses.mlTestnetAddress,
-            },
-          })
-        }
-      }
-      browser.runtime &&
-        browser.runtime.onMessage.addListener(onMessageListener)
-      return () => {
-        browser.runtime &&
-          browser.runtime.onMessage.removeListener(onMessageListener)
-      }
-    } catch (e) {
-      if (
-        e.message ===
-        'This script should only be loaded in a browser extension.'
-      ) {
-        // not extension env
-        return
-      }
-      // other error throw further
-      throw e
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses, isAccountUnlocked, navigate])
+
+  const handlePendingRequest = (pendingRequest) => {
+    const { action, origin, requestId } = pendingRequest
+
+    if (action === 'connect') {
+      if (!unlocked) {
+        setNextAfterUnlock({
+          route: '/connect',
+          state: { action: 'connect', origin, requestId, request },
+        })
+        return
+      }
+
+      navigate('/connect', {
+        state: { action: 'connect', origin, requestId, request },
+      })
+    }
+
+    if (action === 'signTransaction') {
+      if (!unlocked) {
+        setNextAfterUnlock({
+          route: '/wallet/Mintlayer/sign-transaction',
+          state: { action: 'signTransaction', request },
+        })
+        return
+      }
+      navigate('/wallet/Mintlayer/sign-transaction', {
+        state: { action: 'signTransaction', request },
+      })
+    }
+
+    if (action === 'createDelegate') {
+      if (!unlocked) {
+        setNextAfterUnlock({
+          route: '/wallet/Mintlayer/staking/create-delegation',
+          state: {
+            action: 'createDelegate',
+            pool_id: request.data.pool_id,
+            referral_code: request.data.referral_code || '',
+          },
+        })
+        storage.local.remove('pendingRequest', () => {
+          if (runtime.lastError) {
+            console.error(
+              '[Mojito Popup] Error removing pendingRequest:',
+              runtime.lastError,
+            )
+          }
+        })
+        return
+      }
+
+      navigate('/wallet/Mintlayer/staking/create-delegation', {
+        state: {
+          action: 'createDelegate',
+          pool_id: request.data.pool_id,
+          referral_code: request.data.referral_code || '',
+        },
+      })
+      storage.local.remove('pendingRequest', () => {
+        if (runtime.lastError) {
+          console.error(
+            '[Mojito Popup] Error removing pendingRequest:',
+            runtime.lastError,
+          )
+        }
+      })
+    }
+  }
 
   useEffect(() => {
     const extendPath = LocalStorageService.getItem('extendPath')
@@ -176,17 +206,6 @@ const App = () => {
   const popupButtonClickHandler = () => {
     setErrorPopupOpen(false)
   }
-
-  // if ('serviceWorker' in navigator) {
-  //   navigator.serviceWorker
-  //     .register('./service-worker.js')
-  //     .then((registration) => {
-  //       console.log('Service Worker registered with scope:', registration.scope)
-  //     })
-  //     .catch((error) => {
-  //       console.error('Service Worker registration failed:', error)
-  //     })
-  // }
 
   return (
     <main className="App">
@@ -227,6 +246,10 @@ const App = () => {
         <Route
           path="/connect"
           element={<ConnectionPage />}
+        />
+        <Route
+          path="/wallet/:coinType/sign-transaction"
+          element={<SignTransactionPage />}
         />
         <Route
           path="/wallet/:coinType"

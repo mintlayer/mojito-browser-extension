@@ -17,6 +17,7 @@ import LockedBalancePage from './LockedBalance/LockedBalance'
 import MessagePage from './MessagePage/MessagePage'
 import NftPage from './Nft/Nft'
 import NftSendPage from './NftSend/NftSend'
+import SignTransactionPage from './SignTransaction/SignTransaction'
 
 export {
   CreateAccountPage,
@@ -38,4 +39,5 @@ export {
   MessagePage,
   NftPage,
   NftSendPage,
+  SignTransactionPage,
 }

@@ -383,12 +383,14 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   }
 
   useEffect(() => {
-    console.log('accountID', accountID)
-    Mintlayer.cancelAllRequests()
+    if (networkType !== currentNetworkType) {
+      fetchAllData(true)
+    }
+  })
 
+  useEffect(() => {
+    Mintlayer.cancelAllRequests()
     setCurrentHeight(onlineHeight)
-    // fetch addresses, utxos, transactions
-    // fetch data one by one
     const getData = async () => {
       await fetchAllData()
     }
