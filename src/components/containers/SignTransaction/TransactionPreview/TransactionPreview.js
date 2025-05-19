@@ -45,7 +45,7 @@ const EstimatedChanges = ({ action }) => {
     <div className="signTxSection">
       <h4>Estimated changes:</h4>
       <p>
-        You're giving someone else permission to{' '}
+        You’re approving a one-time request to{' '}
         <span className="signTxAction">{action}</span>
       </p>
     </div>
@@ -128,7 +128,7 @@ const FreezeTokenDetails = ({
       <div className="signTxSection">
         <h4>Estimated changes:</h4>
         <p>
-          You're giving someone else permission to{' '}
+          You’re approving a one-time request to{' '}
           {unfreeze ? 'unfreeze' : 'freeze'} token
         </p>
       </div>
