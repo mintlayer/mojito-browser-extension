@@ -17,7 +17,8 @@
       "@Helpers": ["./src/utils/Helpers/index.js"],
       "@Constants": ["./src/utils/Constants/index.js"],
       "@TestData": ["./src/utils/TestData/index.js"],
-      "@Storage": ["./src/services/Storage/index.js"]
+      "@Storage": ["./src/services/Storage/index.js"],
+      "@Version": ["./src/version/version.js"]
     }
   },
   "exclude": ["node_modules", "build"]

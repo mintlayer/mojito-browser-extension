@@ -7,6 +7,7 @@ import { AccountContext } from '@Contexts'
 
 import './CreateRestore.css'
 import { LocalStorageService } from '@Storage'
+import { APP_VERSION } from '@Version'
 
 const CreateRestorePage = () => {
   const { isExtended } = useContext(AccountContext)
@@ -87,7 +88,7 @@ const CreateRestorePage = () => {
             className="footnote-version"
             data-testid="footnote-name"
           >
-            v1.3.7
+            v{APP_VERSION}
           </small>
         </div>
       </div>

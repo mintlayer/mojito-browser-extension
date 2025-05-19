@@ -11,6 +11,8 @@ import { ReactComponent as HomeImg } from '@Assets/images/icon-home.svg'
 import { ReactComponent as WalletIcon } from '@Assets/images/icon-wallet.svg'
 import { ReactComponent as TriangleIcon } from '@Assets/images/icon-triangle.svg'
 
+import { APP_VERSION } from '@Version'
+
 import { AccountContext, MintlayerContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
@@ -205,7 +207,7 @@ const Navigation = ({ customNavigation }) => {
             Logout
           </li>
         )}
-        <span className="slider-version">v1.3.7</span>
+        <span className="slider-version">v{APP_VERSION}</span>
       </ul>
     </>
   )

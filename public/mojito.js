@@ -1,5 +1,5 @@
 // mojito.js — injected SDK
-
+import { APP_VERSION } from '@Version'
 ;(function () {
   const NETWORKS = {
     mainnet: 'mainnet',
@@ -8,7 +8,7 @@
 
   const mojito = {
     isExtension: true,
-    version: '1.3.7',
+    version: APP_VERSION,
     connectedAddresses: [],
     network: NETWORKS['testnet'], // default network
 
