@@ -32,8 +32,7 @@ export const MOCKS = {
             ],
             outputs: [
               {
-                destination:
-                  'tmltk1rmz3lv0rw3smzlzaeg3xctpmtvzelpht89qj3u0stye3rulalfqsahsvqq',
+                destination: 'tmt1q8hmm58xyscp0q8yh8r7q2zmkfc5cfmzeu5k0phq',
                 type: 'Transfer',
                 value: {
                   amount: {
@@ -138,6 +137,19 @@ export const MOCKS = {
                     decimal: '17069.486043',
                   },
                   type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '441300768',
+                    decimal: '4.41300768',
+                  },
+                  token_id:
+                    'tmltk1une5v627lk0cln0y4g8cxxvk62rye9qaqp97h2m5r5puljyqzgrqrq5530',
+                  type: 'TokenV1',
                 },
               },
             ],

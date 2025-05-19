@@ -1,5 +1,6 @@
 import * as BTC from './BTC/BTC'
 import * as ML from './ML/ML'
+import * as SignTransaction from './ML/SignTransaction'
 import * as BTCTransaction from './BTC/BTCTransaction'
 import * as CoinSelectionAlgo from './BTC/CoinSelectionAlgo'
 import * as Concurrency from './Concurrency/Concurrency'
@@ -15,6 +16,7 @@ export {
   ML,
   BTCTransaction,
   MLTransaction,
+  SignTransaction,
   Concurrency,
   CoinSelectionAlgo,
   NumbersHelper,

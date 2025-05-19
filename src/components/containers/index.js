@@ -30,6 +30,9 @@ import SettingsBackup from './Settings/SettingsBackup/SettingsBackup'
 import SignMessage from './Message/SignMessage/SignMessage'
 import VerifyMessage from './Message/VerifyMessage/VerifyMessage'
 
+import TransactionPreview from './SignTransaction/TransactionPreview/TransactionPreview'
+import JsonPreview from './SignTransaction/JsonPreview/JsonPreview'
+
 /* istanbul ignore next */
 const Wallet = {
   ShowAddress,
@@ -72,6 +75,11 @@ const Message = {
   VerifyMessage,
 }
 
+const SignTransaction = {
+  TransactionPreview,
+  JsonPreview,
+}
+
 export {
   CreateAccount,
   RestoreAccount,
@@ -82,4 +90,5 @@ export {
   Dashboard,
   Settings,
   Message,
+  SignTransaction,
 }

@@ -30,8 +30,8 @@ import {
   FreezableToken,
   TotalSupply,
   Amount,
-} from '../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
-import { getOutputs } from '../../services/Crypto/Mintlayer/Mintlayer'
+} from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
+import { getOutputs } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
 
 function mergeUint8Arrays(arrays) {
   const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0)
@@ -445,4 +445,108 @@ export function getTransactionIntent({
   )
 
   return encodedIntentHash
+}
+
+export const getTransactionDetails = (transaction) => {
+  const { txData } = transaction.request.data
+
+  const flags = {
+    isTransfer: false,
+    isBridgeRequest: false,
+    isTokenMint: false,
+    isTokenUnmint: false,
+    isTokenMintWithLock: false,
+    isIssueToken: false,
+    isCreateOrder: false,
+    isFillOrder: false,
+    isConcludeOrder: false,
+    isBurnCoin: false,
+    isBurnToken: false,
+    isLockTokenSupply: false,
+    isChangeTokenAuthority: false,
+    isChangeTokenMetadata: false,
+    isFreezeToken: false,
+    isUnfreezeToken: false,
+  }
+
+  const { JSONRepresentation, intent } = txData
+  const concludeOrder = JSONRepresentation?.inputs?.some(
+    (input) => input.input?.type === 'ConcludeOrder',
+  )
+
+  if (intent) {
+    flags.isBridgeRequest = true
+  }
+
+  if (concludeOrder) {
+    flags.isConcludeOrder = true
+  }
+
+  JSONRepresentation?.inputs?.forEach((input) => {
+    switch (input.input?.command) {
+      case 'MintTokens':
+        flags.isTokenMint = true
+        break
+      case 'UnmintTokens':
+        flags.isTokenUnmint = true
+        break
+      case 'LockTokenSupply':
+        flags.isLockTokenSupply = true
+        break
+      case 'ChangeTokenAuthority':
+        flags.isChangeTokenAuthority = true
+        break
+      case 'ChangeMetadataUri':
+        flags.isChangeTokenMetadata = true
+        break
+      case 'FreezeToken':
+        flags.isFreezeToken = true
+        break
+      case 'UnfreezeToken':
+        flags.isUnfreezeToken = true
+        break
+      case 'FillOrder':
+        flags.isFillOrder = true
+        break
+      default:
+        break
+    }
+  })
+
+  JSONRepresentation?.outputs?.forEach((output) => {
+    switch (output.type) {
+      case 'LockThenTransfer':
+        flags.isTokenMintWithLock = true
+        break
+      case 'IssueFungibleToken':
+        flags.isIssueToken = true
+        break
+      case 'CreateOrder':
+        flags.isCreateOrder = true
+        break
+      case 'BurnCoin':
+        flags.isBurnCoin = true
+        break
+      case 'BurnToken':
+        flags.isBurnToken = true
+        break
+      default:
+        break
+    }
+  })
+
+  if (
+    !Object.values(flags).some(
+      (flag, key) => key !== 'isTransfer' && flag === true,
+    )
+  ) {
+    flags.isTransfer = true
+  }
+
+  const transactionData = transaction.request
+
+  return {
+    flags,
+    transactionData,
+  }
 }

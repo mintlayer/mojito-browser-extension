@@ -1,12 +1,9 @@
 import { useLocation } from 'react-router-dom'
-import {
-  getTransactionBINrepresentation,
-  getTransactionHEX,
-  getTransactionIntent,
-} from './helpers'
+import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
-
-import { TransactionPreview } from './components/TransactionPreview'
+import { Button } from '@BasicComponents'
+import { PopUp, TextField } from '@ComposedComponents'
+import { SignTransaction } from '@ContainerComponents'
 
 import './SignTransaction.css'
 import { useState, useContext } from 'react'
@@ -33,6 +30,7 @@ export const SignTransactionPage = () => {
   const [mode, setMode] = useState('json')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
+  const extraButtonStyles = ['buttonSignTransaction']
 
   const state = external_state || MOCKS[selectedMock]
 
@@ -54,11 +52,15 @@ export const SignTransactionPage = () => {
     try {
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
-
-      const transactionBINrepresentation = getTransactionBINrepresentation(
+      console.log(
+        'transactionJSONrepresentation',
         transactionJSONrepresentation,
-        network,
       )
+      const transactionBINrepresentation =
+        SignTxHelpers.getTransactionBINrepresentation(
+          transactionJSONrepresentation,
+          network,
+        )
 
       const pass = password
 
@@ -88,7 +90,7 @@ export const SignTransactionPage = () => {
 
       if (state?.request?.data?.txData?.intent) {
         const intent = state?.request?.data?.txData?.intent
-        intentEncode = getTransactionIntent({
+        intentEncode = SignTxHelpers.getTransactionIntent({
           intent,
           transactionBINrepresentation,
           transactionJSONrepresentation,
@@ -96,7 +98,7 @@ export const SignTransactionPage = () => {
         })
       }
 
-      const transactionHex = getTransactionHEX(
+      const transactionHex = SignTxHelpers.getTransactionHEX(
         {
           transactionBINrepresentation,
           transactionJSONrepresentation,
@@ -164,11 +166,24 @@ export const SignTransactionPage = () => {
     setSelectedMock(name)
   }
 
+  const switchHandle = () => {
+    setMode(mode === 'json' ? 'preview' : 'json')
+  }
+
+  const passwordChangeHandler = (value) => {
+    setPassword(value)
+  }
+
   return (
     <div className="SignTransaction">
-      <div className="header">Sign transaction</div>
+      <div className="header">
+        <h1 className="signTxTitle">Sign Transaction</h1>
+        <Button onClickHandle={switchHandle}>
+          {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
+        </Button>
+      </div>
 
-      <div className="content">
+      <div className="SignTxContent">
         {!external_state && (
           <div className="mock_selector">
             {Object.keys(MOCKS).map((key) => {
@@ -186,64 +201,60 @@ export const SignTransactionPage = () => {
           </div>
         )}
 
-        <div
-          className="switcher_view"
-          onClick={() => setMode(mode === 'json' ? 'preview' : 'json')}
-        >
-          Switch to {mode === 'json' ? 'preview' : 'json'}
-        </div>
-
         {state?.request?.data?.txData?.JSONRepresentation && (
           <>
             {mode === 'preview' && (
-              <div className="transaction_preview">
-                <TransactionPreview
-                  data={state?.request?.data?.txData?.JSONRepresentation}
-                />
+              <div className="transaction-preview-wrapper">
+                <SignTransaction.TransactionPreview data={state} />
               </div>
             )}
-            {mode === 'json' && (
-              <div className="transaction_raw">
-                {JSON.stringify(
-                  state?.request?.data?.txData?.JSONRepresentation,
-                  null,
-                  2,
-                )}
-              </div>
-            )}
+            {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
           </>
         )}
       </div>
 
       <div className="footer">
-        <div
-          className="btn approve"
-          onClick={handleApprove}
-        >
-          Approve and return to page
-        </div>
-        <div
-          className="btn reject"
-          onClick={handleReject}
+        <Button
+          onClickHandle={handleReject}
+          extraStyleClasses={extraButtonStyles}
         >
           Decline
-        </div>
+        </Button>
+        <Button
+          onClickHandle={handleApprove}
+          extraStyleClasses={extraButtonStyles}
+        >
+          Approve and return to page
+        </Button>
       </div>
 
       {isModalOpen && (
-        <div className="modal">
+        <PopUp setOpen={setIsModalOpen}>
           <div className="modal-content">
-            <h3>Re-enter Password</h3>
-            <input
-              type="password"
+            <TextField
+              label="Re-enter your Password"
+              password
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChangeHandle={passwordChangeHandler}
               placeholder="Enter your password"
+              autoFocus
             />
-            <button onClick={handleModalSubmit}>Submit</button>
-            <button onClick={() => setIsModalOpen(false)}>Cancel</button>
+            <div className="modal-buttons">
+              <Button
+                onClickHandle={() => setIsModalOpen(false)}
+                extraStyleClasses={extraButtonStyles}
+              >
+                Decline
+              </Button>
+              <Button
+                onClickHandle={handleModalSubmit}
+                extraStyleClasses={extraButtonStyles}
+              >
+                Approve
+              </Button>
+            </div>
           </div>
-        </div>
+        </PopUp>
       )}
     </div>
   )
