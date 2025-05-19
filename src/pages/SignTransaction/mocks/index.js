@@ -43,7 +43,7 @@ export const MOCKS = {
                 },
               },
               {
-                destination: 'tmt1q92v6p4j3g72lfcadk5usz8fhwua68wgey9r5tjg',
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
                 type: 'Transfer',
                 value: {
                   amount: {
@@ -73,19 +73,19 @@ export const MOCKS = {
             inputs: [
               {
                 input: {
-                  index: 1,
+                  index: 0,
                   input_type: 'UTXO',
                   source_id:
-                    '6f526556500ff03373c6ca7ccccead0367b4f0c58c903bf8cdef79b5a1ed26fc',
+                    '3e0c04ce80dff7dfae5be22b9ada59f0338d2a6ad6204aa1320a2fa5d6ca7afa',
                   source_type: 'Transaction',
                 },
                 utxo: {
-                  destination: 'tmt1q92v6p4j3g72lfcadk5usz8fhwua68wgey9r5tjg',
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
                   type: 'Transfer',
                   value: {
                     amount: {
-                      atoms: '7007600000000',
-                      decimal: '70.076',
+                      atoms: '1707148604300000',
+                      decimal: '17071.486043',
                     },
                     type: 'Coin',
                   },
@@ -93,22 +93,22 @@ export const MOCKS = {
               },
               {
                 input: {
-                  index: 0,
+                  index: 2,
                   input_type: 'UTXO',
                   source_id:
-                    '951829f80bfdec70f212ca5d804f7420efe1660351b0a6f72076d01d0efc8bd0',
+                    '3ac01a6e57a89b594857b1b9b9bd6a2e54bc0b52f01707a27e8440857c20ea71',
                   source_type: 'Transaction',
                 },
                 utxo: {
-                  destination: 'tmt1qxskh99uvaa8agqpdjt5psuq94fl5n6lg5dcd639',
+                  destination: 'tmt1qylwcqnt5p0kajj6rnwa8fvrtqgf4jcvaun5h7h8',
                   type: 'Transfer',
                   value: {
                     amount: {
-                      atoms: '1929300768',
-                      decimal: '19.29300768',
+                      atoms: '91400',
+                      decimal: '914',
                     },
                     token_id:
-                      'tmltk1aa3vvztufv5m054klp960p6f6pf59ugxp394x7n42v0clgwhrw3q3mpcq3',
+                      'tmltk1une5v627lk0cln0y4g8cxxvk62rye9qaqp97h2m5r5puljyqzgrqrq5530',
                     type: 'TokenV1',
                   },
                 },
@@ -116,31 +116,31 @@ export const MOCKS = {
             ],
             outputs: [
               {
-                destination: 'tmtc1qndaahcuq9v8qhtapvlse28qxf6nf4xg7c2jecdh',
+                destination: 'tmt1qy9987wg35ehqm4r0t5mr8p7z0v6y8ul4sp7yl6q',
                 type: 'Transfer',
                 value: {
                   amount: {
-                    atoms: '1488000000',
-                    decimal: '14.88',
+                    atoms: '1000000000000',
+                    decimal: '10',
                   },
                   token_id:
-                    'tmltk1aa3vvztufv5m054klp960p6f6pf59ugxp394x7n42v0clgwhrw3q3mpcq3',
+                    'tmltk1une5v627lk0cln0y4g8cxxvk62rye9qaqp97h2m5r5puljyqzgrqrq5530',
                   type: 'TokenV1',
                 },
               },
               {
-                destination: 'tmt1q92v6p4j3g72lfcadk5usz8fhwua68wgey9r5tjg',
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
                 type: 'Transfer',
                 value: {
                   amount: {
-                    atoms: '6607600000000',
-                    decimal: '66.076',
+                    atoms: '1706948604300000',
+                    decimal: '17069.486043',
                   },
                   type: 'Coin',
                 },
               },
               {
-                destination: 'tmt1q92v6p4j3g72lfcadk5usz8fhwua68wgey9r5tjg',
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
                 type: 'Transfer',
                 value: {
                   amount: {
@@ -148,7 +148,7 @@ export const MOCKS = {
                     decimal: '4.41300768',
                   },
                   token_id:
-                    'tmltk1aa3vvztufv5m054klp960p6f6pf59ugxp394x7n42v0clgwhrw3q3mpcq3',
+                    'tmltk1une5v627lk0cln0y4g8cxxvk62rye9qaqp97h2m5r5puljyqzgrqrq5530',
                   type: 'TokenV1',
                 },
               },
