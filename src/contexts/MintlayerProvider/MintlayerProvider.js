@@ -62,16 +62,16 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     if (!account) return
 
-    const resetState = () => {
-      setTransactions([])
-      setBalance(0)
-      setLockedBalance(0)
-      setTokenBalances({})
-      setUtxos([])
-      // TODO: eneable this when after remove popup confirmation
-      // setMlDelegationList([])
-      setMlDelegationsBalance(0)
-    }
+    // const resetState = () => {
+    //   setTransactions([])
+    //   setBalance(0)
+    //   setLockedBalance(0)
+    //   setTokenBalances({})
+    //   setUtxos([])
+    //   // TODO: enable this when after remove popup confirmation
+    //   // setMlDelegationList([])
+    //   setMlDelegationsBalance(0)
+    // }
 
     setAllDataFetching(true)
     setFetchingTransactions(true)
@@ -81,7 +81,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setFetchingTokens(true)
     setFetchingNft(true)
 
-    resetState()
+    // resetState()
     // fetch addresses
     const addressList = currentMlAddresses
       ? [
@@ -142,9 +142,12 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     let available_balance = BigInt(0)
     let locked_balance = BigInt(0)
+    const tokenBalances = {}
+    const nftBalances = {}
     const transaction_ids = []
-    addresses_data.forEach((address_data) => {
-      const { coin_balance, locked_coin_balance, transaction_history } =
+    const non_zero_addresses = []
+    addresses_data.forEach((address_data, index) => {
+      const { coin_balance, locked_coin_balance, transaction_history, tokens } =
         JSON.parse(address_data)
       available_balance = coin_balance
         ? available_balance + BigInt(coin_balance.atoms)
@@ -153,12 +156,80 @@ const MintlayerProvider = ({ value: propValue, children }) => {
         ? locked_balance + BigInt(locked_coin_balance.atoms)
         : locked_balance
       transaction_ids.push(...transaction_history)
+
+      if (coin_balance !== 0) {
+        if (
+          coin_balance.atoms !== '0' ||
+          (tokens.length > 0 &&
+            tokens.some((token) => token.amount.atoms !== '0'))
+        ) {
+          non_zero_addresses.push(addressList[index])
+        }
+      }
+
+      if (tokens) {
+        tokens.forEach((token) => {
+          const { token_id, amount } = token
+          if (!tokenBalances[token_id]) {
+            tokenBalances[token_id] = 0
+          }
+          if (amount.decimal === '1' && amount.atoms === '1') {
+            nftBalances[token_id] = 1
+          } else {
+            tokenBalances[token_id] += Number(amount.decimal)
+          }
+        })
+      }
     })
+
+    const { tokensData: nftData, excludedTokenIds } =
+      await Mintlayer.getNftsData(Object.keys(nftBalances))
+
+    if (Object.keys(excludedTokenIds).length > 0) {
+      Object.keys(nftBalances).forEach((tokenId) => {
+        if (excludedTokenIds[tokenId]) {
+          tokenBalances[tokenId] = nftBalances[tokenId]
+          delete nftBalances[tokenId]
+        }
+      })
+    }
+
+    const mergedNftsData = Object.entries(nftData).reduce(
+      (acc, [key, value]) => {
+        if (value && Object.keys(value).length > 0) {
+          acc.push({
+            token_id: key,
+            data: { ...value },
+          })
+        }
+        return acc
+      },
+      [],
+    )
+
+    const tokensData = await Mintlayer.getTokensData(Object.keys(tokenBalances))
+
+    const mergedTokensData = Object.keys(tokenBalances).reduce((acc, key) => {
+      if (tokensData[key] && Object.keys(tokensData[key]).length > 0) {
+        acc[key] = {
+          balance: tokenBalances[key],
+          token_info: {
+            number_of_decimals: tokensData[key].number_of_decimals,
+            token_ticker: tokensData[key].token_ticker,
+            token_id: key,
+          },
+        }
+      }
+      return acc
+    }, {})
+
+    setFetchingNft(false)
+    setTokenBalances(mergedTokensData)
+    setNftData(mergedNftsData)
     setBalance(Number(available_balance) / ML_ATOMS_PER_COIN)
     setLockedBalance(Number(locked_balance) / ML_ATOMS_PER_COIN)
-
     setFetchingBalances(false)
-
+    setFetchingTokens(false)
     setCurrentAccountId(accountID)
 
     // fetch transactions data
@@ -171,10 +242,14 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       transactions_data,
       addressList,
     )
-
     setTransactions(parsedTransactions)
-
     setFetchingTransactions(false)
+
+    const addressesWithDelegation = parsedTransactions
+      .filter((tx) => tx.type === 'CreateDelegationId')
+      .map((tx) => tx.delegationOwner)
+    const uniqueAddressesWithDelegation = [...new Set(addressesWithDelegation)]
+    await fetchDelegations(uniqueAddressesWithDelegation)
 
     // fetch utxos
     const accountName = account && account.name
@@ -182,9 +257,9 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-    const fetchedUtxos = await Mintlayer.getWalletUtxos(addressList)
+    const fetchedUtxos = await Mintlayer.getWalletUtxos(non_zero_addresses)
     const fetchedSpendableUtxos =
-      await Mintlayer.getWalletSpendableUtxos(addressList)
+      await Mintlayer.getWalletSpendableUtxos(non_zero_addresses)
 
     const parsedUtxos = fetchedUtxos
       .map((utxo) => JSON.parse(utxo))
@@ -221,88 +296,26 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       .flat()
       .filter((obj) => obj.utxo.type === 'LockThenTransfer')
 
+    const availableNftInitialUtxos = parsedSpendableUtxos
+      .flatMap((utxo) => [...utxo])
+      .filter((item) => item.utxo.type === 'IssueNft')
+
+    setNftInitialUtxos(availableNftInitialUtxos)
     setUtxos(availableUtxos)
     setLockedUtxos(lockedUtxos)
 
     setFetchingUtxos(false)
-
-    // Extract Token balances from UTXOs
-    const tokenBalances = ML.getTokenBalances(availableUtxos)
-    const tokenBalancesFiltered = Object.entries(tokenBalances).reduce(
-      (acc, [key, value]) => {
-        if (value > 0) {
-          acc[key] = value
-        }
-        return acc
-      },
-      {},
-    )
-
-    const tokensData = await Mintlayer.getTokensData(
-      Object.keys(tokenBalancesFiltered),
-    )
-    const mergedTokensData = Object.keys(tokenBalancesFiltered).reduce(
-      (acc, key) => {
-        if (tokensData[key] && Object.keys(tokensData[key]).length > 0) {
-          acc[key] = {
-            balance: tokenBalancesFiltered[key],
-            token_info: {
-              number_of_decimals: tokensData[key].number_of_decimals,
-              token_ticker: tokensData[key].token_ticker,
-              token_id: key,
-            },
-          }
-        }
-        return acc
-      },
-      {},
-    )
-
-    // Start fetching NFTs
-    const availableNftInitialUtxos = parsedSpendableUtxos
-      .flatMap((utxo) => [...utxo])
-      .filter((item) => item.utxo.type === 'IssueNft')
-    setNftInitialUtxos(availableNftInitialUtxos)
-
-    const nftData = await Mintlayer.getNftsData(
-      Object.keys(tokenBalancesFiltered),
-    )
-
-    const filteredNftsData = Object.entries(nftData).reduce(
-      (acc, [key, value]) => {
-        if (value && Object.keys(value).length > 0) {
-          acc.push({
-            token_id: key,
-            data: { ...value },
-          })
-        }
-        return acc
-      },
-      [],
-    )
-
-    const initialNftData = availableNftInitialUtxos.map((item) => item.utxo)
-    const mergedNftsData = [...filteredNftsData, ...initialNftData]
-    // End fetching NFTs
-
-    setFetchingNft(false)
-    setTokenBalances(mergedTokensData)
-    setNftData(mergedNftsData)
-    setFetchingTokens(false)
     setAllDataFetching(false)
   }
 
   const balanceLoading =
     currentAccountId !== accountID || networkType !== currentNetworkType
 
-  const fetchDelegations = async () => {
+  const fetchDelegations = async (uniqueAddressesWithDelegation) => {
     try {
       if (!addresses) return
       setFetchingDelegations(true)
-      const addressList = [
-        ...currentMlAddresses.mlReceivingAddresses,
-        ...currentMlAddresses.mlChangeAddresses,
-      ]
+      const addressList = uniqueAddressesWithDelegation
       const delegations = await Mintlayer.getWalletDelegations(addressList)
       const delegation_details = await Mintlayer.getDelegationDetails(
         delegations.map((delegation) => delegation.delegation_id),
@@ -370,12 +383,16 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   }
 
   useEffect(() => {
+    if (networkType !== currentNetworkType) {
+      fetchAllData(true)
+    }
+  })
+
+  useEffect(() => {
+    Mintlayer.cancelAllRequests()
     setCurrentHeight(onlineHeight)
-    // fetch addresses, utxos, transactions
-    // fetch data one by one
     const getData = async () => {
       await fetchAllData()
-      await fetchDelegations()
     }
     getData()
     // eslint-disable-next-line react-hooks/exhaustive-deps

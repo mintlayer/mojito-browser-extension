@@ -1,0 +1,15 @@
+.transactionRawWrapper {
+  background-color: #f9fafb;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #4b5563;
+  word-break: break-all;
+  unicode-bidi: embed;
+  font-family: monospace;
+  white-space: pre;
+  height: 100%;
+  overflow: scroll;
+  width: 100%;
+}

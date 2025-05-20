@@ -34,6 +34,20 @@ export const public_key_from_private_key: (
   a: number,
   b: number,
 ) => [number, number, number, number]
+export const extended_public_key_from_extended_private_key: (
+  a: number,
+  b: number,
+) => [number, number, number, number]
+export const make_receiving_address_public_key: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number, number]
+export const make_change_address_public_key: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number, number]
 export const sign_message_for_spending: (
   a: number,
   b: number,
@@ -63,6 +77,26 @@ export const verify_challenge: (
   f: number,
   g: number,
 ) => [number, number, number]
+export const make_transaction_intent_message_to_sign: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+) => [number, number, number, number]
+export const encode_signed_transaction_intent: (
+  a: number,
+  b: number,
+  c: any,
+) => [number, number, number, number]
+export const verify_transaction_intent: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+) => [number, number]
 export const encode_output_transfer: (
   a: number,
   b: number,
@@ -314,6 +348,54 @@ export const effective_pool_balance: (
   b: number,
   c: number,
 ) => [number, number, number]
+export const encode_input_for_mint_tokens: (
+  a: number,
+  b: number,
+  c: number,
+  d: bigint,
+  e: number,
+) => [number, number, number, number]
+export const encode_input_for_unmint_tokens: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: number,
+) => [number, number, number, number]
+export const encode_input_for_lock_token_supply: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: number,
+) => [number, number, number, number]
+export const encode_input_for_freeze_token: (
+  a: number,
+  b: number,
+  c: number,
+  d: bigint,
+  e: number,
+) => [number, number, number, number]
+export const encode_input_for_unfreeze_token: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: number,
+) => [number, number, number, number]
+export const encode_input_for_change_token_authority: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: bigint,
+  f: number,
+) => [number, number, number, number]
+export const encode_input_for_change_token_metadata_uri: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: bigint,
+  f: number,
+) => [number, number, number, number]
 export const encode_create_order_output: (
   a: number,
   b: number,
