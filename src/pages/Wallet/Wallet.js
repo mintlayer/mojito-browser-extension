@@ -123,7 +123,7 @@ const WalletPage = () => {
 
   const walletBalance = balance
   const walletBalanceLocked = lockedBalance || 0
-  const walletAddress = walletType.name === 'Bitocin' ? btcAddress : mlAddress
+  const walletAddress = walletType.name === 'Bitcoin' ? btcAddress : mlAddress
   const walletTransactionList = transactions
 
   const actionButtonData = {
