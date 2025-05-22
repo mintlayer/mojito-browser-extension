@@ -27,7 +27,7 @@ export const SignTransactionPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
 
-  const [mode, setMode] = useState('json')
+  const [mode, setMode] = useState('preview')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = ['buttonSignTransaction']
@@ -244,6 +244,7 @@ export const SignTransactionPage = () => {
               <Button
                 onClickHandle={() => setIsModalOpen(false)}
                 extraStyleClasses={extraButtonStyles}
+                alternate
               >
                 Decline
               </Button>
