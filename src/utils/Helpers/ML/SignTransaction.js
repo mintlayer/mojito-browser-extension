@@ -23,6 +23,8 @@ import {
   encode_input_for_freeze_token,
   encode_input_for_unfreeze_token,
   encode_output_data_deposit,
+  encode_output_create_delegation,
+  encode_output_delegate_staking,
   TokenUnfreezable,
   SourceId,
   SignatureHashType,
@@ -244,6 +246,23 @@ export function getTransactionBINrepresentation(
       if (output.type === 'DataDeposit') {
         return encode_output_data_deposit(new TextEncoder().encode(output.data))
       }
+
+      if (output.type === 'CreateDelegationId') {
+        return encode_output_create_delegation(
+          output.pool_id,
+          output.destination,
+          network,
+        )
+      }
+
+      if (output.type === 'DelegateStaking') {
+        return encode_output_delegate_staking(
+          Amount.from_atoms(output.amount.atoms),
+          output.delegation_id,
+          network,
+        )
+      }
+
       return null
     },
   )
@@ -495,6 +514,12 @@ export const getTransactionDetails = (transaction) => {
         break
       case 'DataDeposit':
         flags.isDataDeposit = true
+        break
+      case 'CreateDelegationId':
+        flags.isCreateDelegationId = true
+        break
+      case 'DelegateStaking':
+        flags.isDelegateStaking = true
         break
       default:
         break
