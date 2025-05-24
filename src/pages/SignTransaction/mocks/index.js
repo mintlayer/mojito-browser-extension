@@ -1792,4 +1792,52 @@ export const MOCKS = {
       requestId: 'wymzne7u81',
     },
   },
+  delegationWithdraw: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  account_type: 'DelegationBalance',
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  delegation_id:
+                    'tdelg1mfust4vvrn3xy6slm9qvtf8kjlzw4ezspkqwenfnzryyeumgdahqp2upjz',
+                  input_type: 'Account',
+                  nonce: 1,
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9l0g4kd3s6x5rmesaznegz06pw9hxu6qvqu3pa7',
+                lock: {
+                  content: '7200',
+                  type: 'ForBlockCount',
+                },
+                type: 'LockThenTransfer',
+                value: {
+                  amount: {
+                    atoms: '800000000000',
+                    decimal: '8',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
 }
