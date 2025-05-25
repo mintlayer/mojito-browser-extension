@@ -255,7 +255,7 @@ const ConcludeOrder = ({ transactionData, requiredAddresses }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Conclude order" />
       <div className="signTxSection">
-        <h4>Token id:</h4>
+        <h4>Order ID:</h4>
         <p>{inputWithOrderID.input.order_id}</p>
       </div>
       <RequestDetails transactionData={transactionData} />
