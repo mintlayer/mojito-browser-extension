@@ -430,16 +430,9 @@ export const getTransactionDetails = (transaction) => {
   }
 
   const { JSONRepresentation, intent } = txData
-  const concludeOrder = JSONRepresentation?.inputs?.some(
-    (input) => input.input?.type === 'ConcludeOrder',
-  )
 
   if (intent) {
     flags.isBridgeRequest = true
-  }
-
-  if (concludeOrder) {
-    flags.isConcludeOrder = true
   }
 
   JSONRepresentation?.inputs?.forEach((input) => {
@@ -467,6 +460,9 @@ export const getTransactionDetails = (transaction) => {
         break
       case 'FillOrder':
         flags.isFillOrder = true
+        break
+      case 'ConcludeOrder':
+        flags.isConcludeOrder = true
         break
       default:
         break
