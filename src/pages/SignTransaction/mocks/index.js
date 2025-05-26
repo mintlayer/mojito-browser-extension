@@ -857,83 +857,76 @@ export const MOCKS = {
     },
   },
   concludeorder: {
-    action: 'signTransaction',
-    request: {
-      action: 'signTransaction',
-      data: {
-        txData: {
-          BINRepresentation: {},
-          HEXRepresentation_unsigned: {},
-          JSONRepresentation: {
-            inputs: [
-              {
-                input: {
-                  destination: 'tmt1qxfacpkjnuzsvjcp0ynsd3zh2z5ve28hn504e2dm',
-                  nonce: 0,
-                  order_id:
-                    'tordr1hy0l3z7yvuy2qrk4p9wkxsladukzuvjac728kumq9j22r9luzz5qyvnp7t',
-                  type: 'ConcludeOrder',
-                },
-                utxo: null,
-              },
-              {
-                input: {
-                  index: 1,
-                  input_type: 'UTXO',
-                  source_id:
-                    'c4b5ad06ce2d8f0663508ef8db4c4e0e23d2b5eaeeb3da5ecbe5c9ab1b7c2dee',
-                  source_type: 'Transaction',
-                },
-                utxo: {
-                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
-                  type: 'Transfer',
-                  value: {
-                    amount: {
-                      atoms: '1901627911700428',
-                      decimal: '19016.27911700428',
-                    },
-                    type: 'Coin',
-                  },
-                },
-              },
-            ],
-            outputs: [
-              {
-                type: 'Transfer',
-                value: {
-                  amount: {
-                    atoms: null,
-                  },
-                  type: 'Coin',
-                },
-              },
-              {
-                type: 'Transfer',
-                value: {
-                  amount: {
-                    atoms: null,
-                  },
-                  type: 'Coin',
-                },
-              },
-              {
-                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
-                type: 'Transfer',
-                value: {
-                  amount: {
-                    atoms: '1901477911700428',
-                    decimal: '19014.77911700428',
-                  },
-                  type: 'Coin',
-                },
-              },
-            ],
+    inputs: [
+      {
+        input: {
+          command: 'ConcludeOrder',
+          destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
+          input_type: 'AccountCommand',
+          nonce: 1,
+          order_id:
+            'tordr1thu5ykcdl0uj30g97wqkam7kart50lgzaq60edh8nq6zrn366lmql50gnu',
+        },
+        utxo: null,
+      },
+      {
+        input: {
+          index: 1,
+          input_type: 'UTXO',
+          source_id:
+            '0b9844f148f6ce71f0ec3741b9ed40ba1a709f1bdf2dc3144ff31d7b49c9be07',
+          source_type: 'Transaction',
+        },
+        utxo: {
+          destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+          type: 'Transfer',
+          value: {
+            amount: {
+              atoms: '1701905604300000',
+              decimal: '17019.056043',
+            },
+            type: 'Coin',
           },
         },
       },
-      origin: 'http://localhost:8080',
-      requestId: 'wymzne7u81',
-    },
+    ],
+    outputs: [
+      {
+        destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
+        type: 'Transfer',
+        value: {
+          amount: {
+            atoms: '900000000000',
+            decimal: '9',
+          },
+          type: 'Coin',
+        },
+      },
+      {
+        destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
+        type: 'Transfer',
+        value: {
+          amount: {
+            atoms: '1000000000000',
+            decimal: '10',
+          },
+          token_id:
+            'tmltk17jgtcm3gc8fne3su8s96gwj0yw8k2khx3fglfe8mz72jhygemgnqm57l7l',
+          type: 'TokenV1',
+        },
+      },
+      {
+        destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+        type: 'Transfer',
+        value: {
+          amount: {
+            atoms: '1701705604300000',
+            decimal: '17017.056043',
+          },
+          type: 'Coin',
+        },
+      },
+    ],
   },
   burnCoin: {
     action: 'signTransaction',
