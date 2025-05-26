@@ -1668,4 +1668,169 @@ export const MOCKS = {
       requestId: 'wymzne7u81',
     },
   },
+  delegationCreateId: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  source_id:
+                    'af3b5fad20f6f97eb210934e942176f7f7d0f70423590659ee0e0217053a7cab',
+                  source_type: 'Transaction',
+                  input_type: 'UTXO',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1703205604300000',
+                      decimal: '17032.056043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                type: 'CreateDelegationId',
+                destination: 'tmt1qyrjfd5e3nref7zga24jcthffahjwyg3csxu3xgc',
+                pool_id:
+                  'tpool1dwpe7zy0mhagnwl36ywt5q20xxvu5dwmph4z6q8sc0a3srz5h8jqr0r2yg',
+              },
+              {
+                type: 'Transfer',
+                value: {
+                  type: 'Coin',
+                  amount: {
+                    atoms: '1703005604300000',
+                    decimal: '17030.056043',
+                  },
+                },
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  delegationStake: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  source_id:
+                    'af3b5fad20f6f97eb210934e942176f7f7d0f70423590659ee0e0217053a7cab',
+                  source_type: 'Transaction',
+                  input_type: 'UTXO',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1703205604300000',
+                      decimal: '17032.056043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                type: 'DelegateStaking',
+                delegation_id:
+                  'tdelg1d57nmkp24k0rh0fgsjnjy78wxql8wvgr420ncdsesvssvdgfcg6sx6262w',
+                amount: {
+                  atoms: '1000000000000',
+                  decimal: '10',
+                },
+              },
+              {
+                type: 'Transfer',
+                value: {
+                  type: 'Coin',
+                  amount: {
+                    atoms: '1702005604300000',
+                    decimal: '17020.056043',
+                  },
+                },
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  delegationWithdraw: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  account_type: 'DelegationBalance',
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  delegation_id:
+                    'tdelg1mfust4vvrn3xy6slm9qvtf8kjlzw4ezspkqwenfnzryyeumgdahqp2upjz',
+                  input_type: 'Account',
+                  nonce: 1,
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9l0g4kd3s6x5rmesaznegz06pw9hxu6qvqu3pa7',
+                lock: {
+                  content: '7200',
+                  type: 'ForBlockCount',
+                },
+                type: 'LockThenTransfer',
+                value: {
+                  amount: {
+                    atoms: '800000000000',
+                    decimal: '8',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
 }

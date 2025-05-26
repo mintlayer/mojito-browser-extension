@@ -401,6 +401,50 @@ const DataDeposit = ({ transactionData, requiredAddresses }) => {
   )
 }
 
+const CreateDelegationId = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
+
+  const outputWithDataDeposit = JSONRepresentation.outputs.find(
+    (output) => output.type === 'CreateDelegationId',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Create Delegation" />
+      <div className="signTxSection">
+        <h4>Pool Id:</h4>
+        <p>{outputWithDataDeposit.pool_id}</p>
+      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const DelegateStaking = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const { inputs, outputs } = JSONRepresentation
+  const fee = calculateFee(inputs, outputs, requiredAddresses)
+
+  const outputWithDataDeposit = JSONRepresentation.outputs.find(
+    (output) => output.type === 'DelegateStaking',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Stake to delegation" />
+      <div className="signTxSection">
+        <h4>Delegation Id:</h4>
+        <p>{outputWithDataDeposit.delegation_id}</p>
+        <h4>Amount:</h4>
+        <p>{outputWithDataDeposit.amount.decimal}</p>
+      </div>
+      <RequestDetails transactionData={transactionData} />
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
 const BridgeRequest = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
@@ -526,6 +570,18 @@ const SummaryView = ({ data }) => {
         )}
         {flags.isDataDeposit && (
           <DataDeposit
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+        {flags.isCreateDelegationId && (
+          <CreateDelegationId
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+        {flags.isDelegateStaking && (
+          <DelegateStaking
             transactionData={transactionData}
             requiredAddresses={requiredAddresses}
           />
