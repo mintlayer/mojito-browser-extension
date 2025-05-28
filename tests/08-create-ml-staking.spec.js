@@ -3,6 +3,7 @@ import { useRestoreWallet } from './helpers//hooks/useRestore'
 import { useSetTestnet } from './helpers/hooks/useSetTestnet'
 import { receiverData, senderData } from './data/index.js'
 import { formatAddress } from './helpers/helpers.js'
+import { time } from 'console'
 
 let page
 
@@ -19,6 +20,8 @@ test('Create ML staking', async () => {
   )
 
   await page.click('button.button-transaction-staking')
+  await page.waitForTimeout(5000)
+
   await page.getByRole('button', { name: 'Add funds' }).nth(0).click()
   await expect(page.locator(':text("Deleg id:")')).toBeVisible()
 

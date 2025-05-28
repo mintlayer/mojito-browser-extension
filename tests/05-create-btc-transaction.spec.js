@@ -7,7 +7,7 @@ import { formatAddress } from './helpers/helpers.js'
 let page
 
 beforeEach(async ({ page: newPage }) => {
-  test.setTimeout(190000)
+  test.setTimeout(10000)
   page = newPage
   await useRestoreWallet(page, 'sender')
   await useSetTestnet(page)
@@ -18,10 +18,12 @@ const formatedReceiverAddress = formatAddress(
 )
 
 test('Create BTC transaction', async () => {
+  await page.waitForTimeout(2000)
   await page.click(
     'li.crypto-item[data-testid="crypto-item"] h5:text("Bitcoin (Testnet)")',
   )
-  // await page.waitForTimeout(1000)
+  await page.click('button.btn.update-button')
+  await page.waitForTimeout(10000)
   await page.click('button.button-transaction-up')
   await expect(page.locator(':text("Send to:")')).toBeVisible()
 

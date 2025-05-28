@@ -1,8 +1,6 @@
 import { expect, test, beforeEach } from '@playwright/test'
 import { useRestoreWallet } from './helpers//hooks/useRestore'
-import { useSetTestnet } from './helpers/hooks/useSetTestnet'
 import { senderData } from './data/index.js'
-import { formatAddress } from './helpers/helpers.js'
 
 let page
 

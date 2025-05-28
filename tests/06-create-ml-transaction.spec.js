@@ -16,7 +16,7 @@ beforeEach(async ({ page: newPage }) => {
 const formatedReceiverAddress = formatAddress(receiverData.ML_RECEIVING_ADDRESS)
 
 test('Create ML transaction', async () => {
-  await page.waitForTimeout(250000)
+  await page.waitForTimeout(10000)
   await page.click(
     'li.crypto-item[data-testid="crypto-item"] h5:text("Mintlayer (Testnet)")',
   )

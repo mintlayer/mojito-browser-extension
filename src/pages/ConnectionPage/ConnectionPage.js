@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import './ConnectionPage.css'
 import { useLocation } from 'react-router-dom'
 import { useContext } from 'react'
@@ -6,12 +7,18 @@ import { Button } from '@BasicComponents'
 import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
 
 const storage =
-  // eslint-disable-next-line no-undef
-  typeof browser !== 'undefined' ? browser.storage : chrome.storage
+  typeof browser !== 'undefined' && browser.storage
+    ? browser.storage
+    : typeof chrome !== 'undefined' && chrome.storage
+      ? chrome.storage
+      : null
 
 const runtime =
-  // eslint-disable-next-line no-undef
-  typeof browser !== 'undefined' ? browser.runtime : chrome.runtime
+  typeof browser !== 'undefined' && browser.runtime
+    ? browser.runtime
+    : typeof chrome !== 'undefined' && chrome.runtime
+      ? chrome.runtime
+      : null
 
 export const ConnectionPage = () => {
   const { state: external_state } = useLocation()
