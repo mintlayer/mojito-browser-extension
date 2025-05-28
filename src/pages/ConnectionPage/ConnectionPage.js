@@ -31,10 +31,7 @@ export const ConnectionPage = () => {
   const connectButtonExtraStyles = ['connectButton']
 
   const handleConnect = () => {
-    const remember =
-      document.querySelector <
-      HTMLInputElement >
-      '.connect-page__checkbox'?.checked
+    const remember = document.querySelector('.connect-page__checkbox')?.checked
 
     const sessionKey = `session_${origin}`
     const sessionData = {
