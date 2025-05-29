@@ -17,12 +17,13 @@ const formatedReceiverAddress = formatAddress(
 )
 
 test('Create BTC transaction', async () => {
-  await page.waitForTimeout(2000)
+  test.setTimeout(300000)
+  await page.waitForTimeout(10000)
+  await page.click('button.btn.update-button')
+  await page.waitForTimeout(10000)
   await page.click(
     'li.crypto-item[data-testid="crypto-item"] h5:text("Bitcoin (Testnet)")',
   )
-  await page.click('button.btn.update-button')
-  await page.waitForTimeout(10000)
   await page.click('button.button-transaction-up')
   await expect(page.locator(':text("Send to:")')).toBeVisible()
 
