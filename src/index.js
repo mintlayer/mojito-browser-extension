@@ -54,14 +54,6 @@ import '@Assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
-// const storage =
-//   // eslint-disable-next-line no-undef
-//   typeof browser !== 'undefined' ? browser.storage : chrome.storage
-
-// const runtime =
-//   // eslint-disable-next-line no-undef
-//   typeof browser !== 'undefined' ? browser.runtime : chrome.runtime
-
 const storage =
   typeof browser !== 'undefined' && browser.storage
     ? browser.storage
@@ -75,9 +67,6 @@ const runtime =
     : typeof chrome !== 'undefined' && chrome.runtime
       ? chrome.runtime
       : null
-
-console.log('storage', storage)
-console.log('runtime', runtime)
 
 const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)

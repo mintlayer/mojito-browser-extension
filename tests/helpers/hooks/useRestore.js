@@ -24,6 +24,7 @@ export const useRestoreWallet = async (page, walletType) => {
   await page.getByRole('button', { name: 'Confirm' }).click()
   await page.getByRole('button', { name: 'Segwit' }).click()
   await page.getByRole('button', { name: 'Confirm' }).click()
+  console.log(`++++++++++++++++++++++++++++++wallet: ${walletName}`)
 
   await page.waitForSelector(`:text("${walletName}")`)
   await expect(page.locator(`:text("${walletName}")`)).toBeVisible()

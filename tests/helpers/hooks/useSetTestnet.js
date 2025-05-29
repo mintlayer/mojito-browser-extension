@@ -7,11 +7,6 @@ export const useSetTestnet = async (page) => {
   await settings.click()
 
   await page.click('strong:text("testnet switcher")')
-  // await page.click('button.backButton')
-
-  // await expect(page.locator(':text("Bitcoin (Testnet)")')).toBeVisible()
-  // await expect(page.locator(':text("Mintlayer (Testnet)")')).toBeVisible()
-
   await useLogin(page)
 
   await page.waitForSelector(

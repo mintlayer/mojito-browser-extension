@@ -25,7 +25,6 @@ jest.spyOn(console, 'warn').mockImplementation(() => {
 })
 
 jest.useRealTimers()
-// jest.setTimeout(10000)
 
 test('Electrum request', async () => {
   jest.spyOn(console, 'error').mockImplementation((err) => {
