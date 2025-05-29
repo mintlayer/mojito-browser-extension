@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test'
 import { senderData } from '../../data/index.js'
 
 export const useLogin = async (page) => {
-  test.setTimeout(190000)
   await expect(page.locator(':text("Available wallet")')).toBeVisible()
 
   const account = page.getByText('SenderWallet', { selector: 'div' })

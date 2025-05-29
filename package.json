@@ -1,6 +1,6 @@
 {
   "name": "browser-extension",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "dependencies": {
     "@bitcoin-js/tiny-secp256k1-asmjs": "^2.2.3",
@@ -44,7 +44,7 @@
     "pretty-quick-check": "pretty-quick --check",
     "pretty-quick-check-branch": "pretty-quick --check --branch main",
     "prepare": "husky install",
-    "version-manifest": "node scripts/version-manifest.js"
+    "version": "node src/version/version-manifest.js && node src/version/version-mojito.js"
   },
   "eslintConfig": {
     "ignorePatterns": [

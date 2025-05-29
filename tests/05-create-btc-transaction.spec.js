@@ -7,7 +7,6 @@ import { formatAddress } from './helpers/helpers.js'
 let page
 
 beforeEach(async ({ page: newPage }) => {
-  test.setTimeout(10000)
   page = newPage
   await useRestoreWallet(page, 'sender')
   await useSetTestnet(page)

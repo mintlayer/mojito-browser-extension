@@ -9,7 +9,7 @@
 
   const mojito = {
     isExtension: true,
-    version: '1.4.0',
+    version: '__APP_VERSION__',
     connectedAddresses: [],
     network: NETWORKS['testnet'], // default network
 
