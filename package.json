@@ -25,7 +25,8 @@
     "react-qr-code": "^2.0.15",
     "react-router-dom": "^6.28.0",
     "stream-browserify": "^3.0.0",
-    "web-vitals": "^5.0.1"
+    "web-vitals": "^5.0.1",
+    "@mintlayer/sdk": "^1.0.12"
   },
   "scripts": {
     "start": "react-app-rewired start",
@@ -170,7 +171,7 @@
     "@types/node": "^22.15.24",
     "@types/tiny-secp256k1": "^2.0.1",
     "dotenv-webpack": "^8.1.0",
-    "ecpair": "^3.0.0",
+    "ecpair": "^2.1.0",
     "env-cmd": "^10.1.0",
     "fake-indexeddb": "^6.0.1",
     "gh-pages": "^6.3.0",
