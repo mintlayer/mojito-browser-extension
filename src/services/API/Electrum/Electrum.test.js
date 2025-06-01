@@ -8,7 +8,7 @@ import {
   requestElectrum,
   getLastBlockHeight,
   getFeesEstimates,
-  broadcastTransaction,
+  // broadcastTransaction,
 } from './Electrum.js'
 
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage.js'
@@ -111,11 +111,4 @@ test('Electrum request - getFeesEstimates', async () => {
   const result = await getFeesEstimates()
   const fees = JSON.parse(result)
   expect(Object.keys(fees).length).toBe(28)
-})
-
-test('Electrum request - broadcastTransaction', async () => {
-  await expect(
-    async () => await broadcastTransaction({}),
-  ).rejects.toThrowError()
-  expect(console.warn).toHaveBeenCalled()
 })

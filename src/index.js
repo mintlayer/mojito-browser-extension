@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import React, { useState, useEffect, useContext } from 'react'
 import ReactDOM from 'react-dom/client'
 import {
@@ -54,12 +55,18 @@ import '@Assets/styles/index.css'
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
 const storage =
-  // eslint-disable-next-line no-undef
-  typeof browser !== 'undefined' ? browser.storage : chrome.storage
+  typeof browser !== 'undefined' && browser.storage
+    ? browser.storage
+    : typeof chrome !== 'undefined' && chrome.storage
+      ? chrome.storage
+      : null
 
 const runtime =
-  // eslint-disable-next-line no-undef
-  typeof browser !== 'undefined' ? browser.runtime : chrome.runtime
+  typeof browser !== 'undefined' && browser.runtime
+    ? browser.runtime
+    : typeof chrome !== 'undefined' && chrome.runtime
+      ? chrome.runtime
+      : null
 
 const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)

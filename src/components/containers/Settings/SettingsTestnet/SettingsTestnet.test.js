@@ -1,19 +1,26 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
 import SettingsTestnet from './SettingsTestnet'
-import { SettingsContext, MintlayerContext } from '@Contexts'
+import { SettingsContext, MintlayerContext, AccountContext } from '@Contexts'
+import { BrowserRouter as Router } from 'react-router-dom'
 
 const toggleNetworkType = jest.fn()
+const logout = jest.fn()
 
 test('Render Inputs list item', async () => {
   render(
-    <SettingsContext.Provider
-      value={{ networkType: 'mainnet', toggleNetworkType }}
-    >
-      <MintlayerContext.Provider value={{ setAllDataFetching: jest.fn() }}>
-        <SettingsTestnet />
-      </MintlayerContext.Provider>
-    </SettingsContext.Provider>,
+    <AccountContext.Provider value={{ logout }}>
+      <SettingsContext.Provider
+        value={{ networkType: 'mainnet', toggleNetworkType }}
+      >
+        <MintlayerContext.Provider value={{ setAllDataFetching: jest.fn() }}>
+          <Router>
+            <SettingsTestnet />
+          </Router>
+        </MintlayerContext.Provider>
+      </SettingsContext.Provider>
+      ,
+    </AccountContext.Provider>,
   )
   const component = screen.getByTestId('settings-testnet')
   const text = screen.getByTestId('title')
@@ -25,13 +32,19 @@ test('Render Inputs list item', async () => {
 
 test('toggles the network type', () => {
   render(
-    <SettingsContext.Provider
-      value={{ networkType: 'mainnet', toggleNetworkType }}
-    >
-      <MintlayerContext.Provider value={{ setAllDataFetching: jest.fn() }}>
-        <SettingsTestnet />
-      </MintlayerContext.Provider>
-    </SettingsContext.Provider>,
+    <AccountContext.Provider value={{ logout }}>
+      <SettingsContext.Provider
+        value={{ networkType: 'mainnet', toggleNetworkType }}
+      >
+        <MintlayerContext.Provider value={{ setAllDataFetching: jest.fn() }}>
+          <Router>
+            <SettingsTestnet />
+          </Router>
+          ,
+        </MintlayerContext.Provider>
+      </SettingsContext.Provider>
+      ,
+    </AccountContext.Provider>,
   )
   const toggleButton = screen.getAllByTestId('toggle')[0]
 

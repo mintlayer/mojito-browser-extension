@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { useLocation } from 'react-router-dom'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
@@ -15,12 +16,18 @@ import { ML } from '@Cryptos'
 import { AccountContext, SettingsContext } from '@Contexts'
 
 const storage =
-  // eslint-disable-next-line no-undef
-  typeof browser !== 'undefined' ? browser.storage : chrome.storage
+  typeof browser !== 'undefined' && browser.storage
+    ? browser.storage
+    : typeof chrome !== 'undefined' && chrome.storage
+      ? chrome.storage
+      : null
 
 const runtime =
-  // eslint-disable-next-line no-undef
-  typeof browser !== 'undefined' ? browser.runtime : chrome.runtime
+  typeof browser !== 'undefined' && browser.runtime
+    ? browser.runtime
+    : typeof chrome !== 'undefined' && chrome.runtime
+      ? chrome.runtime
+      : null
 
 export const SignTransactionPage = () => {
   const { state: external_state } = useLocation()

@@ -19,6 +19,7 @@ const BitcoinProvider = ({ value: propValue, children }) => {
 
   const [currentBlockHeight, setCurrentBlockHeight] = useState(0)
   const [onlineHeight, setOnlineHeight] = useState(0)
+  const [currentNetworkType, setCurrentNetworkType] = useState(networkType)
 
   const [btcTransactions, setBtcTransactions] = useState([])
   const [btcBalance, setBtcBalance] = useState(0)
@@ -40,6 +41,7 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     setFetchingBalances(true)
     setFetchingTransactions(true)
     setFetchingUtxos(true)
+    setCurrentNetworkType(networkType)
 
     const getTransactions = async () => {
       try {
@@ -112,6 +114,12 @@ const BitcoinProvider = ({ value: propValue, children }) => {
 
     return () => clearInterval(data)
   }, [])
+
+  useEffect(() => {
+    if (networkType !== currentNetworkType) {
+      fetchAllData(true)
+    }
+  })
 
   const value = {
     btcBalance,
