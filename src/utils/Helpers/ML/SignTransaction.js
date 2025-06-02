@@ -25,6 +25,7 @@ import {
   encode_output_data_deposit,
   encode_output_create_delegation,
   encode_output_delegate_staking,
+  encode_input_for_withdraw_from_delegation,
   TokenUnfreezable,
   SourceId,
   SignatureHashType,
@@ -79,7 +80,10 @@ export function getTransactionBINrepresentation(
   )
 
   const inputCommands = transactionJSONrepresentation.inputs
-    .filter(({ input }) => input.input_type === 'AccountCommand')
+    .filter(
+      ({ input }) =>
+        input.input_type === 'AccountCommand' || input.input_type === 'Account',
+    )
     .map(({ input }) => {
       if (input.command === 'ConcludeOrder') {
         return encode_input_for_conclude_order(
@@ -147,6 +151,14 @@ export function getTransactionBINrepresentation(
         return encode_input_for_unfreeze_token(
           input.token_id,
           input.nonce.toString(),
+          network,
+        )
+      }
+      if (input.account_type === 'DelegationBalance') {
+        return encode_input_for_withdraw_from_delegation(
+          input.delegation_id,
+          Amount.from_atoms(input.amount.atoms.toString()),
+          BigInt(input.nonce.toString()),
           network,
         )
       }
@@ -350,10 +362,19 @@ export function getTransactionHEX(
 
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
-      const address =
+      let address =
         input?.utxo?.destination ||
         input?.input?.authority ||
         input?.input?.destination
+
+      // for delegation withdraws, the address is in outputs
+      if (
+        transactionJSONrepresentation.inputs[0].input.account_type ===
+        'DelegationBalance'
+      ) {
+        address = transactionJSONrepresentation.outputs[0].destination
+      }
+
       const addressPrivateKey = addressesPrivateKeys[address]
 
       const witness = encode_witness(
@@ -446,6 +467,7 @@ export const getTransactionDetails = (transaction) => {
     isChangeTokenMetadata: false,
     isFreezeToken: false,
     isUnfreezeToken: false,
+    isDelegateWithdraw: false,
   }
 
   const { JSONRepresentation, intent } = txData
@@ -455,6 +477,11 @@ export const getTransactionDetails = (transaction) => {
   }
 
   JSONRepresentation?.inputs?.forEach((input) => {
+    if (input.input.account_type === 'DelegationBalance') {
+      flags.isDelegateWithdraw = true
+      return
+    }
+
     switch (input.input?.command) {
       case 'MintTokens':
         flags.isTokenMint = true
