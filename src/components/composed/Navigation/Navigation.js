@@ -125,7 +125,7 @@ const Navigation = ({ customNavigation }) => {
     ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
       ? [
           {
-            id: 5,
+            id: 6,
             label: 'Test Sign Challenge',
             icon: <SettingsImg />,
             link: '/wallet/Mintlayer/sign-challenge',

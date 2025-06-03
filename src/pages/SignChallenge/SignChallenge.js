@@ -224,7 +224,7 @@ export const SignChallengePage = () => {
           onClickHandle={handleApprove}
           extraStyleClasses={extraButtonStyles}
         >
-          Approve and return to page
+          Sign and return to page
         </Button>
       </div>
 
@@ -261,4 +261,4 @@ export const SignChallengePage = () => {
   )
 }
 
-export default SignTransactionPage
+export default SignChallengePage

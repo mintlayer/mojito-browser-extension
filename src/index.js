@@ -32,6 +32,7 @@ import {
   NftPage,
   NftSendPage,
   SignTransactionPage,
+  SignChallengePage,
 } from '@Pages'
 
 import {
@@ -51,7 +52,6 @@ import reportWebVitals from './utils/reportWebVitals'
 
 import '@Assets/styles/constants.css'
 import '@Assets/styles/index.css'
-import { SignChallengePage } from './pages/SignChallenge/SignChallenge'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
