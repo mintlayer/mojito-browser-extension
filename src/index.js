@@ -51,6 +51,7 @@ import reportWebVitals from './utils/reportWebVitals'
 
 import '@Assets/styles/constants.css'
 import '@Assets/styles/index.css'
+import { SignChallengePage } from './pages/SignChallenge/SignChallenge'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
@@ -163,6 +164,19 @@ const App = () => {
       })
     }
 
+    if (action === 'signChallenge') {
+      if (!unlocked) {
+        setNextAfterUnlock({
+          route: '/wallet/Mintlayer/sign-challenge',
+          state: { action: 'signChallenge', request },
+        })
+        return
+      }
+      navigate('/wallet/Mintlayer/sign-challenge', {
+        state: { action: 'signChallenge', request },
+      })
+    }
+
     if (action === 'createDelegate') {
       if (!unlocked) {
         setNextAfterUnlock({
@@ -257,6 +271,10 @@ const App = () => {
         <Route
           path="/wallet/:coinType/sign-transaction"
           element={<SignTransactionPage />}
+        />
+        <Route
+          path="/wallet/:coinType/sign-challenge"
+          element={<SignChallengePage />}
         />
         <Route
           path="/wallet/:coinType"
