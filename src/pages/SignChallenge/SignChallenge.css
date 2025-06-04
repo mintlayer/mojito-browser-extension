@@ -1,4 +1,17 @@
 .SignChallenge {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: normal;
+  justify-content: space-between;
+}
+
+.mock_selector {
+  position: absolute;
+  bottom: 20px;
+  display: flex;
+  gap: 20px;
 }
 
 .SignChallenge .container {
@@ -7,4 +20,40 @@
   align-items: center;
   justify-content: center;
   height: 100vh;
+}
+
+.challenge_details {
+  background: #fff;
+  border: 1px solid #000;
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+
+.challenge_message {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 10px;
+  word-break: break-all;
+}
+
+.challenge_message .value {
+  overflow: scroll;
+  max-height: 200px;
+}
+
+.challenge_address {
+}
+
+.SignChallenge .footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 20px;
+}
+
+.SignChallenge .challenge_details .label {
+  font-weight: bold;
+  color: #000;
 }

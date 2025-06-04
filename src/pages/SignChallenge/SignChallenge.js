@@ -7,7 +7,6 @@ import { PopUp, TextField } from '@ComposedComponents'
 
 import './SignChallenge.css'
 import { useState, useContext } from 'react'
-import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
 import { AppInfo } from '@Constants'
 import { Account } from '@Entities'
@@ -33,8 +32,6 @@ export const SignChallengePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
 
-  const [mode, setMode] = useState('preview')
-
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = ['buttonSignTransaction']
 
@@ -48,25 +45,16 @@ export const SignChallengePage = () => {
       ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
 
-  const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
-
   const handleApprove = async () => {
     setIsModalOpen(true) // Open the modal
   }
 
   const handleModalSubmit = async () => {
     try {
-      const transactionJSONrepresentation =
-        state?.request?.data?.txData?.JSONRepresentation
-      console.log(
-        'transactionJSONrepresentation',
-        transactionJSONrepresentation,
-      )
-      const transactionBINrepresentation =
-        SignTxHelpers.getTransactionBINrepresentation(
-          transactionJSONrepresentation,
-          network,
-        )
+      const message = state?.request?.data?.message
+      const address =
+        state?.request?.data?.address ||
+        currentMlAddresses.mlReceivingAddresses[0]
 
       const pass = password
 
@@ -92,38 +80,21 @@ export const SignChallengePage = () => {
         ...walletPrivKeys.mlChangePrivKeys,
       }
 
-      let intentEncode
+      const signature = SignTxHelpers.signChallenge(message, address, keysList)
 
-      if (state?.request?.data?.txData?.intent) {
-        const intent = state?.request?.data?.txData?.intent
-        intentEncode = SignTxHelpers.getTransactionIntent({
-          intent,
-          transactionBINrepresentation,
-          transactionJSONrepresentation,
-          addressesPrivateKeys: keysList,
-        })
-      }
-
-      const transactionHex = SignTxHelpers.getTransactionHEX(
-        {
-          transactionBINrepresentation,
-          transactionJSONrepresentation,
-          addressesPrivateKeys: keysList,
-        },
-        network,
+      const signatureHex = signature.reduce(
+        (acc, byte) => acc + byte.toString(16).padStart(2, '0'),
+        '',
       )
 
       const requestId = state?.request?.requestId
-      const method = 'signTransaction_approve'
-      let result
-      if (intentEncode) {
-        result = {
-          transactionHex,
-          intentEncode,
-        }
-      } else {
-        result = transactionHex
+      const method = 'signChallenge_approve'
+      const result = {
+        message,
+        address,
+        signature: signatureHex,
       }
+
       // eslint-disable-next-line no-undef
       runtime.sendMessage(
         {
@@ -141,14 +112,14 @@ export const SignChallengePage = () => {
         },
       )
     } catch (error) {
-      console.error('Error during transaction signing:', error)
+      console.error('Error during challenge signing:', error)
       setIsModalOpen(false)
     }
   }
 
   const handleReject = () => {
     const requestId = state?.request?.requestId
-    const method = 'signTransaction_reject'
+    const method = 'signChallenge_reject'
     const result = 'null'
     // eslint-disable-next-line no-undef
     runtime.sendMessage(
@@ -172,10 +143,6 @@ export const SignChallengePage = () => {
     setSelectedMock(name)
   }
 
-  const switchHandle = () => {
-    setMode(mode === 'json' ? 'preview' : 'json')
-  }
-
   const passwordChangeHandler = (value) => {
     setPassword(value)
   }
@@ -184,9 +151,6 @@ export const SignChallengePage = () => {
     <div className="SignChallenge">
       <div className="header">
         <h1 className="signChallengeTitle">Sign Challenge</h1>
-        <Button onClickHandle={switchHandle}>
-          {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
-        </Button>
       </div>
 
       <div className="SignChallengeContent">
@@ -208,7 +172,20 @@ export const SignChallengePage = () => {
         )}
 
         {state?.request?.data && (
-          <>{JSON.stringify(state?.request?.data, null, 2)}</>
+          <div className="challenge_details">
+            <div className="challenge_message">
+              <div className="label">Message to sign:</div>
+              <div className="value">
+                {state?.request?.data?.message || 'No message provided'}
+              </div>
+            </div>
+            <div className="challenge_address">
+              <div className="label">Address to sign with:</div>
+              <div className="">
+                {state?.request?.data?.address || 'No address provided'}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 

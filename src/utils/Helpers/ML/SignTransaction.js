@@ -537,3 +537,12 @@ export const getTransactionDetails = (transaction) => {
     transactionData,
   }
 }
+
+export function signChallenge(message, address, keysList) {
+  const key = keysList[address]
+  if (!key) {
+    throw new Error(`No private key found for address: ${address}`)
+  }
+  const messageBytes = new TextEncoder().encode(message)
+  return sign_challenge(key, messageBytes)
+}
