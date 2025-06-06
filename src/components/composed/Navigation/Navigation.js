@@ -125,6 +125,16 @@ const Navigation = ({ customNavigation }) => {
     ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
       ? [
           {
+            id: 5,
+            label: 'Test SDK',
+            icon: <SettingsImg />,
+            link: '/wallet/Mintlayer/sdk-test',
+          },
+        ]
+      : []),
+    ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
+      ? [
+          {
             id: 6,
             label: 'Test Sign Challenge',
             icon: <SettingsImg />,

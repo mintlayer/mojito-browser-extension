@@ -33,6 +33,7 @@ import {
   NftSendPage,
   SignTransactionPage,
   SignChallengePage,
+  SDKTestPage,
 } from '@Pages'
 
 import {
@@ -271,6 +272,10 @@ const App = () => {
         <Route
           path="/wallet/:coinType/sign-transaction"
           element={<SignTransactionPage />}
+        />
+        <Route
+          path="/wallet/:coinType/sdk-test"
+          element={<SDKTestPage />}
         />
         <Route
           path="/wallet/:coinType/sign-challenge"
