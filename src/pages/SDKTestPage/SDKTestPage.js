@@ -3,6 +3,7 @@ import { Client } from '@mintlayer/sdk'
 import { useContext, useEffect, useState } from 'react'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
+import { useNavigate } from 'react-router-dom'
 
 class InMemoryAccountProvider {
   constructor(addresses) {
@@ -10,7 +11,7 @@ class InMemoryAccountProvider {
       testnet: {
         receiving: addresses.testnet.receiving || [],
         change: addresses.testnet.change || [],
-      }
+      },
     }
   }
 
@@ -32,9 +33,11 @@ class InMemoryAccountProvider {
 }
 
 export const SignTransactionPage = () => {
-  const [ client, setClient ] = useState(null)
-  const [ to, setTo ] = useState('')
+  const [client, setClient] = useState(null)
+  const [to, setTo] = useState('')
+  const [amount, setAmount] = useState('')
 
+  const navigate = useNavigate()
   const { addresses } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
@@ -44,7 +47,7 @@ export const SignTransactionPage = () => {
       : addresses.mlTestnetAddresses
 
   useEffect(() => {
-    if(currentMlAddresses?.mlReceivingAddresses?.length > 0) {
+    if (currentMlAddresses?.mlReceivingAddresses?.length > 0) {
       console.log('currentMlAddresses', currentMlAddresses)
       const initClient = async () => {
         const clientInstance = await Client.create({
@@ -53,30 +56,53 @@ export const SignTransactionPage = () => {
             testnet: {
               receiving: currentMlAddresses.mlReceivingAddresses || [],
               change: currentMlAddresses.mlChangeAddresses || [],
-            }
+            },
           }),
         })
         await clientInstance.connect()
         setClient(clientInstance)
       }
-      initClient().catch(error => {
+      initClient().catch((error) => {
         console.error('Failed to initialize Mintlayer Connect SDK:', error)
       })
     }
   }, [currentMlAddresses.mlReceivingAddresses])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     console.log(client.getAddresses())
-    client.transfer({
-      to: to,
-      amount: 500,
+    const transaction = await client.buildTransaction({
+      type: 'Transfer',
+      params: {
+        to: to,
+        amount: amount, // Example amount in satoshis
+      },
+    })
+    console.log('transaction', transaction)
+    navigate('/wallet/Mintlayer/sign-transaction', {
+      state: {
+        action: 'signTransaction',
+        request: { action: 'signTransaction', data: { txData: transaction } },
+      },
     })
   }
 
   return (
     <div>
       Test page for SDK component.
-      <input type="text" onChange={(e) => setTo(e.target.value)} />
+      <div>
+        To:
+        <input
+          type="text"
+          onChange={(e) => setTo(e.target.value)}
+        />
+      </div>
+      <div>
+        amount:
+        <input
+          type="text"
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      </div>
       <button onClick={handleSend}>Send</button>
     </div>
   )

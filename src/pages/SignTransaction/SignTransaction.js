@@ -41,6 +41,8 @@ export const SignTransactionPage = () => {
 
   const state = external_state || MOCKS[selectedMock]
 
+  console.log('state', state)
+
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
