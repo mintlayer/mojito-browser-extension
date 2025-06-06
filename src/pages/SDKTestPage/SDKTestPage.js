@@ -69,7 +69,6 @@ export const SignTransactionPage = () => {
   }, [currentMlAddresses.mlReceivingAddresses])
 
   const handleSend = async () => {
-    console.log(client.getAddresses())
     const transaction = await client.buildTransaction({
       type: 'Transfer',
       params: {
@@ -77,7 +76,6 @@ export const SignTransactionPage = () => {
         amount: amount, // Example amount in satoshis
       },
     })
-    console.log('transaction', transaction)
     navigate('/wallet/Mintlayer/sign-transaction', {
       state: {
         action: 'signTransaction',
