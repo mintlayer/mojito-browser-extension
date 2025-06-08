@@ -857,76 +857,90 @@ export const MOCKS = {
     },
   },
   concludeorder: {
-    inputs: [
-      {
-        input: {
-          command: 'ConcludeOrder',
-          destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
-          input_type: 'AccountCommand',
-          nonce: 1,
-          order_id:
-            'tordr1thu5ykcdl0uj30g97wqkam7kart50lgzaq60edh8nq6zrn366lmql50gnu',
-        },
-        utxo: null,
-      },
-      {
-        input: {
-          index: 1,
-          input_type: 'UTXO',
-          source_id:
-            '0b9844f148f6ce71f0ec3741b9ed40ba1a709f1bdf2dc3144ff31d7b49c9be07',
-          source_type: 'Transaction',
-        },
-        utxo: {
-          destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
-          type: 'Transfer',
-          value: {
-            amount: {
-              atoms: '1701905604300000',
-              decimal: '17019.056043',
-            },
-            type: 'Coin',
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  command: 'ConcludeOrder',
+                  destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
+                  input_type: 'AccountCommand',
+                  nonce: 1,
+                  order_id:
+                    'tordr1thu5ykcdl0uj30g97wqkam7kart50lgzaq60edh8nq6zrn366lmql50gnu',
+                },
+                utxo: null,
+              },
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '0b9844f148f6ce71f0ec3741b9ed40ba1a709f1bdf2dc3144ff31d7b49c9be07',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1701905604300000',
+                      decimal: '17019.056043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '900000000000',
+                    decimal: '9',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  token_id:
+                    'tmltk17jgtcm3gc8fne3su8s96gwj0yw8k2khx3fglfe8mz72jhygemgnqm57l7l',
+                  type: 'TokenV1',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1701705604300000',
+                    decimal: '17017.056043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
           },
         },
       },
-    ],
-    outputs: [
-      {
-        destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
-        type: 'Transfer',
-        value: {
-          amount: {
-            atoms: '900000000000',
-            decimal: '9',
-          },
-          type: 'Coin',
-        },
-      },
-      {
-        destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
-        type: 'Transfer',
-        value: {
-          amount: {
-            atoms: '1000000000000',
-            decimal: '10',
-          },
-          token_id:
-            'tmltk17jgtcm3gc8fne3su8s96gwj0yw8k2khx3fglfe8mz72jhygemgnqm57l7l',
-          type: 'TokenV1',
-        },
-      },
-      {
-        destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
-        type: 'Transfer',
-        value: {
-          amount: {
-            atoms: '1701705604300000',
-            decimal: '17017.056043',
-          },
-          type: 'Coin',
-        },
-      },
-    ],
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
   },
   burnCoin: {
     action: 'signTransaction',
@@ -1826,6 +1840,1346 @@ export const MOCKS = {
                 },
               },
             ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  createHtlc: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            fee: {
+              atoms: '124900000000',
+              decimal: '1.249',
+            },
+            id: '513932890fb1fee9b21d3004d4292e7eace8753f43d601013d635b8b1195f207',
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '92b08778d6d0345f1f943f83e7969fbcece9629938dddcec94f0b28382a58feb',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1689595604300000',
+                      decimal: '16895.956043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                amount: {
+                  atoms: '1000000000000',
+                  decimal: '10',
+                },
+                refund_address: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                refund_timelock: {
+                  content: '20',
+                  type: 'ForBlockCount',
+                },
+                secret_hash: 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3',
+                spend_address: 'tmt1q9mfg7d6ul2nt5yhmm7l7r6wwyqkd822rymr83uc',
+                token_id: null,
+                type: 'CreateHtlc',
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1688470704300000',
+                    decimal: '16884.707043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  refundHtlc: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 0,
+                  source_type: 0,
+                  source_id:
+                    '513932890fb1fee9b21d3004d4292e7eace8753f43d601013d635b8b1195f207',
+                  input_type: 'UTXO',
+                },
+                utxo: {
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '1000000000000',
+                      decimal: '10',
+                    },
+                    type: 'Coin',
+                  },
+                  htlc: {
+                    refund_key: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                    refund_timelock: {
+                      content: 20,
+                      type: 'ForBlockCount',
+                    },
+                    secret_hash: {
+                      hex: 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9mfg7d6ul2nt5yhmm7l7r6wwyqkd822rymr83uc',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 0,
+                  source_id:
+                    'af3b5fad20f6f97eb210934e942176f7f7d0f70423590659ee0e0217053a7cab',
+                  source_type: 'Transaction',
+                  input_type: 'UTXO',
+                },
+                utxo: {
+                  destination: 'tmt1q9l0g4kd3s6x5rmesaznegz06pw9hxu6qvqu3pa7',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1000000000000',
+                      decimal: '10',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                type: 'Transfer',
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                value: {
+                  type: 'Coin',
+                  amount: {
+                    decimal: '10',
+                    atoms: '1000000000000',
+                  },
+                },
+              },
+              {
+                type: 'Transfer',
+                value: {
+                  type: 'Coin',
+                  amount: {
+                    atoms: '965500000000',
+                    decimal: '9.655',
+                  },
+                },
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+              },
+            ],
+            fee: {
+              atoms: '34500000000',
+              decimal: '0.345',
+            },
+            id: '63c90b6d244cdf901322fa7e75fb6499a8e7a30152d573626e5a10b06befe65a',
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  createHtlc2: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            fee: {
+              atoms: '124900000000',
+              decimal: '1.249',
+            },
+            id: '408a1e5a8c59ed10ffc6a55244f29e465b692223ef6e6ef05b03a3a4b6010507',
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '513932890fb1fee9b21d3004d4292e7eace8753f43d601013d635b8b1195f207',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1688470704300000',
+                      decimal: '16884.707043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                htlc: {
+                  refund_key: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  refund_timelock: {
+                    content: 20,
+                    type: 'ForBlockCount',
+                  },
+                  secret_hash: {
+                    hex: '0000000000000000000000000000000000000000', // should be filled in by the wallet
+                    string: null,
+                  },
+                  spend_key: 'tmt1q9mfg7d6ul2nt5yhmm7l7r6wwyqkd822rymr83uc',
+                },
+                type: 'Htlc',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1687345804300000',
+                    decimal: '16873.458043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  refundHtlc2: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            fee: {
+              atoms: '34500000000',
+              decimal: '0.345',
+            },
+            id: '73a881ff916842962b91167123f776b64a95f443c611040a1680306d89686eb3',
+            inputs: [
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    '408a1e5a8c59ed10ffc6a55244f29e465b692223ef6e6ef05b03a3a4b6010507',
+                  source_type: 0,
+                },
+                utxo: {
+                  htlc: {
+                    refund_key: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                    refund_timelock: {
+                      content: 20,
+                      type: 'ForBlockCount',
+                    },
+                    secret_hash: {
+                      hex: 'd5777dbd9541baea8a562381387323773b18e0f6',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9mfg7d6ul2nt5yhmm7l7r6wwyqkd822rymr83uc',
+                  },
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '1000000000000',
+                      decimal: '10',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    'af3b5fad20f6f97eb210934e942176f7f7d0f70423590659ee0e0217053a7cab',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1q9l0g4kd3s6x5rmesaznegz06pw9hxu6qvqu3pa7',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1000000000000',
+                      decimal: '10',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '965500000000',
+                    decimal: '9.655',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  spendHtlc003: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            fee: {
+              atoms: '45000000000',
+              decimal: '0.45',
+            },
+            id: '2add3f9296f07fd0be403f21349ff6f5820849075be0e837beec14f6d66d58ae',
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '7a067e2f1283e016acb329ae270a70ef6bb20e4c57295eb94b639bbcaffb8431',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1680886511700428',
+                      decimal: '16808.86511700428',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    '8a39d5e1b091a4b6681a9617e4ec5d4cba6f3f80b2c60e4d7bb6422536d309df',
+                  source_type: 0,
+                },
+                utxo: {
+                  htlc: {
+                    refund_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                    refund_timelock: {
+                      content: 20,
+                      type: 'ForBlockCount',
+                    },
+                    secret_hash: {
+                      hex: '6fe48221f25bee488253b95514bd67aed628c848',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                  },
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '1000000000000',
+                      decimal: '10',
+                    },
+                    token_id:
+                      'tmltk16u754a6su60wd3tra669a3gt0su79zehqeavu4ffgrnjzgaedasqtfurcu',
+                    type: 'TokenV1',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1679841511700428',
+                    decimal: '16798.41511700428',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  refundHtlc003: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            fee: {
+              atoms: '45000000000',
+              decimal: '0.45',
+            },
+            id: '0891cd57aeaef656f2b17c152f0da3be4e1ab101c400c2a0e167c26da5092ea6',
+            inputs: [
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    'd2b0490b0c09f35bfaadbf42e3b4e239c6fa805596a95c14fe1edbef5f63e97d',
+                  source_type: 0,
+                },
+                utxo: {
+                  htlc: {
+                    refund_key: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                    refund_timelock: {
+                      content: 20,
+                      type: 'ForBlockCount',
+                    },
+                    secret: null,
+                    secret_hash: {
+                      hex: 'f3379f953cf661374eaf6f5e22fe3d96342f4e75',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                  },
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '1000000000000',
+                      decimal: '10',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '1067780d1f96c2fa66a6a99cccebecc92b0e94ab17c6be6f7dd7ff7ec99303be',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1575786605844429',
+                      decimal: '15757.86605844429',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1575741605844429',
+                    decimal: '15757.41605844429',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  refundHtlc004: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            fee: {
+              atoms: '45000000000',
+              decimal: '0.45',
+            },
+            id: '5c773621c90d67e7e4dab67ada6f2e7dd42905e135125da29a8e5ad53a6e8480',
+            inputs: [
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    'd964a60d19d5b8c95e45c303867b097bedd257b2b3da72a3a12efa16ec7683b0',
+                  source_type: 0,
+                },
+                utxo: {
+                  htlc: {
+                    refund_key: 'tmt1qxjkxwfcv7cscypmxhugss6jjzxh6c6k7u48acjf',
+                    refund_timelock: {
+                      content: 20,
+                      type: 'ForBlockCount',
+                    },
+                    secret: null,
+                    secret_hash: {
+                      hex: '73d01e927b39d3d4150c59751d493379537c6810',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9l0g4kd3s6x5rmesaznegz06pw9hxu6qvqu3pa7',
+                  },
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '1000000000000',
+                      decimal: '10',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '6978c743d518230dec177484847c4ea7ac4b1830892beea7731c582b2240f891',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxr8pg9suckl32jgm3a8x5z237e00c3rvcwnfsye',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1551009504300000',
+                      decimal: '15510.095043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1qxjkxwfcv7cscypmxhugss6jjzxh6c6k7u48acjf',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1550964504300000',
+                    decimal: '15509.645043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  refundHtlc005: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          BINRepresentation: {},
+          HEXRepresentation_unsigned: {},
+          JSONRepresentation: {
+            fee: {
+              atoms: '45000000000',
+              decimal: '0.45',
+            },
+            id: '27935275cdb56ec7a0642c86fa2fede661e8fd841e90f35c4cdda478a730bc74',
+            inputs: [
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    '18cf188d0e4b4456fe4fc30ab0df219803f311b32dc39351d237940b2d44d181',
+                  source_type: 0,
+                },
+                utxo: {
+                  htlc: {
+                    refund_key: 'tmt1q8xqrjnm0329ax0vz6929ar5srgdnyk7ryfpjcun',
+                    refund_timelock: {
+                      content: 2,
+                      type: 'ForBlockCount',
+                    },
+                    secret: null,
+                    secret_hash: {
+                      hex: 'd5836c42fdad436cf6d870585975cee0d2184c1e',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                  },
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '1000000000000',
+                      decimal: '10',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '18cf188d0e4b4456fe4fc30ab0df219803f311b32dc39351d237940b2d44d181',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1546069604300000',
+                      decimal: '15460.696043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q8xqrjnm0329ax0vz6929ar5srgdnyk7ryfpjcun',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1546024604300000',
+                    decimal: '15460.246043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  createHtlcWRefund: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  source_id:
+                    '3fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f14',
+                  source_type: 'Transaction',
+                  input_type: 'UTXO',
+                },
+                utxo: {
+                  destination: 'tmt1qxn6genn5dl765l9gvnnjjz7eskxu06fhu83cpk5',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '6565137000000',
+                      decimal: '65.65137',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 1,
+                  source_id:
+                    '4e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f',
+                  source_type: 'Transaction',
+                  input_type: 'UTXO',
+                },
+                utxo: {
+                  destination: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '2000000000000',
+                      decimal: '20',
+                    },
+                    token_id:
+                      'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                    type: 'TokenV1',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                type: 'Htlc',
+                htlc: {
+                  refund_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                  refund_timelock: {
+                    type: 'ForBlockCount',
+                    content: '5',
+                  },
+                  secret_hash: {
+                    hex: '0000000000000000000000000000000000000000',
+                    string: null,
+                  },
+                  spend_key: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                },
+                value: {
+                  amount: {
+                    decimal: '10',
+                    atoms: '1000000000000',
+                  },
+                  type: 'TokenV1',
+                  token_id:
+                    'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                },
+              },
+              {
+                type: 'Transfer',
+                value: {
+                  type: 'Coin',
+                  amount: {
+                    atoms: '6416937000000',
+                    decimal: '64.16937',
+                  },
+                },
+                destination: 'tmt1q8fx589gdhcpprz0mcewca7a7h4wmtzeqccj4jdv',
+              },
+              {
+                type: 'Transfer',
+                value: {
+                  type: 'TokenV1',
+                  token_id:
+                    'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                },
+                destination: 'tmt1q8fx589gdhcpprz0mcewca7a7h4wmtzeqccj4jdv',
+              },
+            ],
+            fee: {
+              atoms: '148200000000',
+              decimal: '1.482',
+            },
+            id: '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          },
+          BINRepresentation: {},
+          HEXRepresentation_unsigned:
+            '01000800003fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f140100000000004e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f010000000c0a023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e80000000000000000000000000000000000000000014feab906d667b56c49e3c86b8bf9e1ea10bdff2d02140147540a3dcb25b89c803930dd23f1b01aaa1af59000000b401c400fd60501d26a1ca86df0108c4fde32ec77ddf5eaedac590600023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e801d26a1ca86df0108c4fde32ec77ddf5eaedac5906',
+          transaction_id:
+            '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          htlc: {
+            spend_pubkey:
+              '0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  refundHtlcWRefund: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          JSONRepresentation: {
+            id: null,
+            inputs: [
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  type: 'Htlc',
+                  htlc: {
+                    refund_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                    refund_timelock: {
+                      type: 'ForBlockCount',
+                      content: '5',
+                    },
+                    secret_hash: {
+                      hex: '4a0ac45551164f161e8318f06b0fd8da1c07476f',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                  },
+                  value: {
+                    amount: {
+                      decimal: '10',
+                      atoms: '1000000000000',
+                    },
+                    type: 'TokenV1',
+                    token_id:
+                      'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+          BINRepresentation: {},
+          HEXRepresentation_unsigned:
+            '01000800003fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f140100000000004e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f010000000c0a023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e80000000000000000000000000000000000000000014feab906d667b56c49e3c86b8bf9e1ea10bdff2d02140147540a3dcb25b89c803930dd23f1b01aaa1af59000000b401c400fd60501d26a1ca86df0108c4fde32ec77ddf5eaedac590600023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e801d26a1ca86df0108c4fde32ec77ddf5eaedac5906',
+          transaction_id:
+            '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          htlc: {
+            multisig_challenge:
+              '02080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+            witness_input:
+              '010131020125020400004d289db78cd77834d8fceeb16500731ed5d4abfe5a2a41c1804694d0257b99c46163c3c4cecb184604ffc7ef03ce69a7dab89a5f42947ecbd6fb14620a20f7b502080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  clamHTLC2: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          JSONRepresentation: {
+            fee: {
+              atoms: '68600000000',
+              decimal: '0.686',
+            },
+            id: 'd715e101cfcd268a0013dfd8b30cee4dfbdba6ad3da96cd8214201c5415ac472',
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    'ee674161da300e36334f4fb644403ca1e8e1cb601a4c8b37d0b579760a3c23b3',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1523680304300000',
+                      decimal: '15236.803043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    'f902a75999200e3e84382bfd4c499547433b2473a3fe8a1c1ae5864171d785b0',
+                  source_type: 0,
+                },
+                utxo: {
+                  htlc: {
+                    refund_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                    refund_timelock: {
+                      content: 144,
+                      type: 'ForBlockCount',
+                    },
+                    secret: null,
+                    secret_hash: {
+                      hex: '610df940305b95c8b28a433541303dbf0322a5ee',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                  },
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '1000000000000',
+                      decimal: '10',
+                    },
+                    token_id:
+                      'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                    type: 'TokenV1',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 2,
+                  input_type: 'UTXO',
+                  source_id:
+                    '05520d5d070d750f9f794a6806ae0e796e020ee08a130aa7f4498f24a7b2a8e9',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '900000000000000',
+                      decimal: '9000',
+                    },
+                    token_id:
+                      'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                    type: 'TokenV1',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  token_id:
+                    'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                  type: 'TokenV1',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1523611704300000',
+                    decimal: '15236.117043',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '900000000000000',
+                    decimal: '9000',
+                  },
+                  token_id:
+                    'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                  type: 'TokenV1',
+                },
+              },
+            ],
+          },
+          BINRepresentation: {},
+          HEXRepresentation_unsigned:
+            '01000800003fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f140100000000004e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f010000000c0a023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e80000000000000000000000000000000000000000014feab906d667b56c49e3c86b8bf9e1ea10bdff2d02140147540a3dcb25b89c803930dd23f1b01aaa1af59000000b401c400fd60501d26a1ca86df0108c4fde32ec77ddf5eaedac590600023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e801d26a1ca86df0108c4fde32ec77ddf5eaedac5906',
+          transaction_id:
+            '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          htlc: {
+            multisig_challenge:
+              '02080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+            witness_input:
+              '010131020125020400004d289db78cd77834d8fceeb16500731ed5d4abfe5a2a41c1804694d0257b99c46163c3c4cecb184604ffc7ef03ce69a7dab89a5f42947ecbd6fb14620a20f7b502080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  clamHTLC3: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          JSONRepresentation: {
+            fee: {
+              atoms: '68500000000',
+              decimal: '0.685',
+            },
+            id: '52cc3e2ebca5315f2528d21498de52e59ecf13981dd298a14b776ebb9b858eb1',
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    'd83087d9dee2ed0da017d87a03f1267a33e2ecd195d680dfd96624ae8958c235',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1522436704300000',
+                      decimal: '15224.367043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    'f057485ab7a42ebd057c156a0a83c04cc40d1fd32a3b6a5e3963331003f7e07a',
+                  source_type: 0,
+                },
+                utxo: {
+                  htlc: {
+                    refund_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                    refund_timelock: {
+                      content: 144,
+                      type: 'ForBlockCount',
+                    },
+                    secret: null,
+                    secret_hash: {
+                      hex: '4ae3643f3632e9b58fb97a3f34bdbb129fd40dc5',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                  },
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '100000000000',
+                      decimal: '1',
+                    },
+                    token_id:
+                      'tmltk16u754a6su60wd3tra669a3gt0su79zehqeavu4ffgrnjzgaedasqtfurcu',
+                    type: 'TokenV1',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 2,
+                  input_type: 'UTXO',
+                  source_id:
+                    '403505e7b3da873dddcc2e38e1b4be1787645b214345cd1a6eced496244e10b6',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '6200000000000',
+                      decimal: '62',
+                    },
+                    token_id:
+                      'tmltk16u754a6su60wd3tra669a3gt0su79zehqeavu4ffgrnjzgaedasqtfurcu',
+                    type: 'TokenV1',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '100000000000',
+                    decimal: '1',
+                  },
+                  token_id:
+                    'tmltk16u754a6su60wd3tra669a3gt0su79zehqeavu4ffgrnjzgaedasqtfurcu',
+                  type: 'TokenV1',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1522368204300000',
+                    decimal: '15223.682043',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '6200000000000',
+                    decimal: '62',
+                  },
+                  token_id:
+                    'tmltk16u754a6su60wd3tra669a3gt0su79zehqeavu4ffgrnjzgaedasqtfurcu',
+                  type: 'TokenV1',
+                },
+              },
+            ],
+          },
+          BINRepresentation: {},
+          HEXRepresentation_unsigned:
+            '01000800003fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f140100000000004e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f010000000c0a023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e80000000000000000000000000000000000000000014feab906d667b56c49e3c86b8bf9e1ea10bdff2d02140147540a3dcb25b89c803930dd23f1b01aaa1af59000000b401c400fd60501d26a1ca86df0108c4fde32ec77ddf5eaedac590600023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e801d26a1ca86df0108c4fde32ec77ddf5eaedac5906',
+          transaction_id:
+            '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          htlc: {
+            multisig_challenge:
+              '02080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+            witness_input:
+              '010131020125020400004d289db78cd77834d8fceeb16500731ed5d4abfe5a2a41c1804694d0257b99c46163c3c4cecb184604ffc7ef03ce69a7dab89a5f42947ecbd6fb14620a20f7b502080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  refundHTLC3: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          JSONRepresentation: {
+            fee: {
+              atoms: '45000000000',
+              decimal: '0.45',
+            },
+            id: '04f4f38533c9b08de4cf07efb347baa4da474b28d9f0ea4de945f03e9d6e9589',
+            inputs: [
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    'b11bdf1e0f70d4bb6ff9d15b96d3fa65ba2fdc51077fd3b4054550a8aa5d587d',
+                  source_type: 0,
+                },
+                utxo: {
+                  htlc: {
+                    refund_key: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                    refund_timelock: {
+                      content: 144,
+                      type: 'ForBlockCount',
+                    },
+                    secret: null,
+                    secret_hash: {
+                      hex: '41390d5049c8ec381acf5647b37efe06df88a504',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                  },
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '500000000000',
+                      decimal: '5',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    'b593c3ea704ab34b0d0f548c4a1e1006daf1c4a9a3597e5019a74b9575efd350',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1522323104300000',
+                      decimal: '15223.231043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '500000000000',
+                    decimal: '5',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1522278104300000',
+                    decimal: '15222.781043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+          BINRepresentation: {},
+          HEXRepresentation_unsigned:
+            '01000800003fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f140100000000004e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f010000000c0a023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e80000000000000000000000000000000000000000014feab906d667b56c49e3c86b8bf9e1ea10bdff2d02140147540a3dcb25b89c803930dd23f1b01aaa1af59000000b401c400fd60501d26a1ca86df0108c4fde32ec77ddf5eaedac590600023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e801d26a1ca86df0108c4fde32ec77ddf5eaedac5906',
+          transaction_id:
+            '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          htlc: {
+            multisig_challenge:
+              '02080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+            witness_input:
+              '010131020125020400004d289db78cd77834d8fceeb16500731ed5d4abfe5a2a41c1804694d0257b99c46163c3c4cecb184604ffc7ef03ce69a7dab89a5f42947ecbd6fb14620a20f7b502080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
           },
         },
       },

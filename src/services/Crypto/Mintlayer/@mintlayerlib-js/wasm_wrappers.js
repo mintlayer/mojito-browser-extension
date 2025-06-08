@@ -58,6 +58,71 @@ function isLikeNone(x) {
   return x === undefined || x === null
 }
 
+function debugString(val) {
+  // primitive types
+  const type = typeof val
+  if (type == 'number' || type == 'boolean' || val == null) {
+    return `${val}`
+  }
+  if (type == 'string') {
+    return `"${val}"`
+  }
+  if (type == 'symbol') {
+    const description = val.description
+    if (description == null) {
+      return 'Symbol'
+    } else {
+      return `Symbol(${description})`
+    }
+  }
+  if (type == 'function') {
+    const name = val.name
+    if (typeof name == 'string' && name.length > 0) {
+      return `Function(${name})`
+    } else {
+      return 'Function'
+    }
+  }
+  // objects
+  if (Array.isArray(val)) {
+    const length = val.length
+    let debug = '['
+    if (length > 0) {
+      debug += debugString(val[0])
+    }
+    for (let i = 1; i < length; i++) {
+      debug += ', ' + debugString(val[i])
+    }
+    debug += ']'
+    return debug
+  }
+  // Test for built-in
+  const builtInMatches = /\[object ([^\]]+)\]/.exec(toString.call(val))
+  let className
+  if (builtInMatches && builtInMatches.length > 1) {
+    className = builtInMatches[1]
+  } else {
+    // Failed to match the standard '[object ClassName]'
+    return toString.call(val)
+  }
+  if (className == 'Object') {
+    // we're a user defined class or Object
+    // JSON.stringify avoids problems with cycles, and is generally much
+    // easier than looping through ownProperties of `val`.
+    try {
+      return 'Object(' + JSON.stringify(val) + ')'
+    } catch (_) {
+      return 'Object'
+    }
+  }
+  // errors
+  if (val instanceof Error) {
+    return `${val.name}: ${val.message}\n${val.stack}`
+  }
+  // TODO we could test for more things here, like `Set`s and `Map`s.
+  return className
+}
+
 let WASM_VECTOR_LEN = 0
 
 const cachedTextEncoder =
@@ -208,12 +273,12 @@ export function make_default_account_privkey(mnemonic, network) {
 /**
  * From an extended private key create a receiving private key for a given key index
  * derivation path: current_derivation_path/0/key_index
- * @param {Uint8Array} private_key_bytes
+ * @param {Uint8Array} private_key
  * @param {number} key_index
  * @returns {Uint8Array}
  */
-export function make_receiving_address(private_key_bytes, key_index) {
-  const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
+export function make_receiving_address(private_key, key_index) {
+  const ptr0 = passArray8ToWasm0(private_key, wasm.__wbindgen_malloc)
   const len0 = WASM_VECTOR_LEN
   const ret = wasm.make_receiving_address(ptr0, len0, key_index)
   if (ret[3]) {
@@ -227,12 +292,12 @@ export function make_receiving_address(private_key_bytes, key_index) {
 /**
  * From an extended private key create a change private key for a given key index
  * derivation path: current_derivation_path/1/key_index
- * @param {Uint8Array} private_key_bytes
+ * @param {Uint8Array} private_key
  * @param {number} key_index
  * @returns {Uint8Array}
  */
-export function make_change_address(private_key_bytes, key_index) {
-  const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
+export function make_change_address(private_key, key_index) {
+  const ptr0 = passArray8ToWasm0(private_key, wasm.__wbindgen_malloc)
   const len0 = WASM_VECTOR_LEN
   const ret = wasm.make_change_address(ptr0, len0, key_index)
   if (ret[3]) {
@@ -246,15 +311,15 @@ export function make_change_address(private_key_bytes, key_index) {
 /**
  * Given a public key (as bytes) and a network type (mainnet, testnet, etc),
  * return the address public key hash from that public key as an address
- * @param {Uint8Array} public_key_bytes
+ * @param {Uint8Array} public_key
  * @param {Network} network
  * @returns {string}
  */
-export function pubkey_to_pubkeyhash_address(public_key_bytes, network) {
+export function pubkey_to_pubkeyhash_address(public_key, network) {
   let deferred3_0
   let deferred3_1
   try {
-    const ptr0 = passArray8ToWasm0(public_key_bytes, wasm.__wbindgen_malloc)
+    const ptr0 = passArray8ToWasm0(public_key, wasm.__wbindgen_malloc)
     const len0 = WASM_VECTOR_LEN
     const ret = wasm.pubkey_to_pubkeyhash_address(ptr0, len0, network)
     var ptr2 = ret[0]
@@ -291,13 +356,11 @@ export function public_key_from_private_key(private_key) {
 
 /**
  * Return the extended public key from an extended private key
- * @param {Uint8Array} private_key_bytes
+ * @param {Uint8Array} private_key
  * @returns {Uint8Array}
  */
-export function extended_public_key_from_extended_private_key(
-  private_key_bytes,
-) {
-  const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
+export function extended_public_key_from_extended_private_key(private_key) {
+  const ptr0 = passArray8ToWasm0(private_key, wasm.__wbindgen_malloc)
   const len0 = WASM_VECTOR_LEN
   const ret = wasm.extended_public_key_from_extended_private_key(ptr0, len0)
   if (ret[3]) {
@@ -311,18 +374,15 @@ export function extended_public_key_from_extended_private_key(
 /**
  * From an extended public key create a receiving public key for a given key index
  * derivation path: current_derivation_path/0/key_index
- * @param {Uint8Array} extended_public_key_bytes
+ * @param {Uint8Array} extended_public_key
  * @param {number} key_index
  * @returns {Uint8Array}
  */
 export function make_receiving_address_public_key(
-  extended_public_key_bytes,
+  extended_public_key,
   key_index,
 ) {
-  const ptr0 = passArray8ToWasm0(
-    extended_public_key_bytes,
-    wasm.__wbindgen_malloc,
-  )
+  const ptr0 = passArray8ToWasm0(extended_public_key, wasm.__wbindgen_malloc)
   const len0 = WASM_VECTOR_LEN
   const ret = wasm.make_receiving_address_public_key(ptr0, len0, key_index)
   if (ret[3]) {
@@ -336,18 +396,12 @@ export function make_receiving_address_public_key(
 /**
  * From an extended public key create a change public key for a given key index
  * derivation path: current_derivation_path/1/key_index
- * @param {Uint8Array} extended_public_key_bytes
+ * @param {Uint8Array} extended_public_key
  * @param {number} key_index
  * @returns {Uint8Array}
  */
-export function make_change_address_public_key(
-  extended_public_key_bytes,
-  key_index,
-) {
-  const ptr0 = passArray8ToWasm0(
-    extended_public_key_bytes,
-    wasm.__wbindgen_malloc,
-  )
+export function make_change_address_public_key(extended_public_key, key_index) {
+  const ptr0 = passArray8ToWasm0(extended_public_key, wasm.__wbindgen_malloc)
   const len0 = WASM_VECTOR_LEN
   const ret = wasm.make_change_address_public_key(ptr0, len0, key_index)
   if (ret[3]) {
@@ -503,33 +557,6 @@ export function make_transaction_intent_message_to_sign(
   return v3
 }
 
-/**
- * Return a `SignedTransactionIntent` object as bytes given the message and encoded signatures.
- *
- * Note: to produce a valid signed intent one is expected to sign the corresponding message by private keys
- * corresponding to each input of the transaction.
- *
- * Parameters:
- * `signed_message` - this must have been produced by `make_transaction_intent_message_to_sign`.
- * `signatures` - this should be an array of arrays of bytes, each of them representing an individual signature
- * of `signed_message` produced by `sign_challenge` using the private key for the corresponding input destination
- * of the transaction. The number of signatures must be equal to the number of inputs in the transaction.
- * @param {Uint8Array} signed_message
- * @param {any} signatures
- * @returns {Uint8Array}
- */
-export function encode_signed_transaction_intent(signed_message, signatures) {
-  const ptr0 = passArray8ToWasm0(signed_message, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_signed_transaction_intent(ptr0, len0, signatures)
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v2
-}
-
 function passArrayJsValueToWasm0(array, malloc) {
   const ptr = malloc(array.length * 4, 4) >>> 0
   for (let i = 0; i < array.length; i++) {
@@ -539,6 +566,35 @@ function passArrayJsValueToWasm0(array, malloc) {
   WASM_VECTOR_LEN = array.length
   return ptr
 }
+/**
+ * Return a `SignedTransactionIntent` object as bytes given the message and encoded signatures.
+ *
+ * Note: to produce a valid signed intent one is expected to sign the corresponding message by private keys
+ * corresponding to each input of the transaction.
+ *
+ * Parameters:
+ * `signed_message` - this must have been produced by `make_transaction_intent_message_to_sign`.
+ * `signatures` - this should be an array of Uint8Array, each of them representing an individual signature
+ * of `signed_message` produced by `sign_challenge` using the private key for the corresponding input destination
+ * of the transaction. The number of signatures must be equal to the number of inputs in the transaction.
+ * @param {Uint8Array} signed_message
+ * @param {Uint8Array[]} signatures
+ * @returns {Uint8Array}
+ */
+export function encode_signed_transaction_intent(signed_message, signatures) {
+  const ptr0 = passArray8ToWasm0(signed_message, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passArrayJsValueToWasm0(signatures, wasm.__wbindgen_malloc)
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.encode_signed_transaction_intent(ptr0, len0, ptr1, len1)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
 /**
  * Verify a signed transaction intent.
  *
@@ -585,82 +641,6 @@ export function verify_transaction_intent(
   if (ret[1]) {
     throw takeFromExternrefTable0(ret[0])
   }
-}
-
-function _assertClass(instance, klass) {
-  if (!(instance instanceof klass)) {
-    throw new Error(`expected instance of ${klass.name}`)
-  }
-}
-/**
- * Given a destination address, an amount and a network type (mainnet, testnet, etc), this function
- * creates an output of type Transfer, and returns it as bytes.
- * @param {Amount} amount
- * @param {string} address
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_output_transfer(amount, address, network) {
-  _assertClass(amount, Amount)
-  var ptr0 = amount.__destroy_into_raw()
-  const ptr1 = passStringToWasm0(
-    address,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len1 = WASM_VECTOR_LEN
-  const ret = wasm.encode_output_transfer(ptr0, ptr1, len1, network)
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v3
-}
-
-/**
- * Given a destination address, an amount, token ID (in address form) and a network type (mainnet, testnet, etc), this function
- * creates an output of type Transfer for tokens, and returns it as bytes.
- * @param {Amount} amount
- * @param {string} address
- * @param {string} token_id
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_output_token_transfer(
-  amount,
-  address,
-  token_id,
-  network,
-) {
-  _assertClass(amount, Amount)
-  var ptr0 = amount.__destroy_into_raw()
-  const ptr1 = passStringToWasm0(
-    address,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len1 = WASM_VECTOR_LEN
-  const ptr2 = passStringToWasm0(
-    token_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len2 = WASM_VECTOR_LEN
-  const ret = wasm.encode_output_token_transfer(
-    ptr0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v4 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v4
 }
 
 /**
@@ -736,6 +716,999 @@ export function encode_lock_until_height(block_height) {
   var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
   wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
   return v1
+}
+
+function _assertClass(instance, klass) {
+  if (!(instance instanceof klass)) {
+    throw new Error(`expected instance of ${klass.name}`)
+  }
+}
+/**
+ * This function returns the staking pool data needed to create a staking pool in an output as bytes,
+ * given its parameters and the network type (testnet, mainnet, etc).
+ * @param {Amount} value
+ * @param {string} staker
+ * @param {string} vrf_public_key
+ * @param {string} decommission_key
+ * @param {number} margin_ratio_per_thousand
+ * @param {Amount} cost_per_block
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_stake_pool_data(
+  value,
+  staker,
+  vrf_public_key,
+  decommission_key,
+  margin_ratio_per_thousand,
+  cost_per_block,
+  network,
+) {
+  _assertClass(value, Amount)
+  var ptr0 = value.__destroy_into_raw()
+  const ptr1 = passStringToWasm0(
+    staker,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passStringToWasm0(
+    vrf_public_key,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len2 = WASM_VECTOR_LEN
+  const ptr3 = passStringToWasm0(
+    decommission_key,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len3 = WASM_VECTOR_LEN
+  _assertClass(cost_per_block, Amount)
+  var ptr4 = cost_per_block.__destroy_into_raw()
+  const ret = wasm.encode_stake_pool_data(
+    ptr0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    margin_ratio_per_thousand,
+    ptr4,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v6
+}
+
+/**
+ * Returns the fee that needs to be paid by a transaction for issuing a new fungible token
+ * @param {bigint} _current_block_height
+ * @param {Network} network
+ * @returns {Amount}
+ */
+export function fungible_token_issuance_fee(_current_block_height, network) {
+  const ret = wasm.fungible_token_issuance_fee(_current_block_height, network)
+  return Amount.__wrap(ret)
+}
+
+/**
+ * Given the current block height and a network type (mainnet, testnet, etc),
+ * this will return the fee that needs to be paid by a transaction for issuing a new NFT
+ * The current block height information is used in case a network upgrade changed the value.
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Amount}
+ */
+export function nft_issuance_fee(current_block_height, network) {
+  const ret = wasm.nft_issuance_fee(current_block_height, network)
+  return Amount.__wrap(ret)
+}
+
+/**
+ * Given the current block height and a network type (mainnet, testnet, etc),
+ * this will return the fee that needs to be paid by a transaction for changing the total supply of a token
+ * by either minting or unminting tokens
+ * The current block height information is used in case a network upgrade changed the value.
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Amount}
+ */
+export function token_supply_change_fee(current_block_height, network) {
+  const ret = wasm.token_supply_change_fee(current_block_height, network)
+  return Amount.__wrap(ret)
+}
+
+/**
+ * Given the current block height and a network type (mainnet, testnet, etc),
+ * this will return the fee that needs to be paid by a transaction for freezing/unfreezing a token
+ * The current block height information is used in case a network upgrade changed the value.
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Amount}
+ */
+export function token_freeze_fee(current_block_height, network) {
+  const ret = wasm.token_freeze_fee(current_block_height, network)
+  return Amount.__wrap(ret)
+}
+
+/**
+ * Given the current block height and a network type (mainnet, testnet, etc),
+ * this will return the fee that needs to be paid by a transaction for changing the authority of a token
+ * The current block height information is used in case a network upgrade changed the value.
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Amount}
+ */
+export function token_change_authority_fee(current_block_height, network) {
+  const ret = wasm.token_change_authority_fee(current_block_height, network)
+  return Amount.__wrap(ret)
+}
+
+/**
+ * Returns the Fungible/NFT Token ID for the given inputs of a transaction
+ * @param {Uint8Array} inputs
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {string}
+ */
+export function get_token_id(inputs, current_block_height, network) {
+  let deferred3_0
+  let deferred3_1
+  try {
+    const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    const ret = wasm.get_token_id(ptr0, len0, current_block_height, network)
+    var ptr2 = ret[0]
+    var len2 = ret[1]
+    if (ret[3]) {
+      ptr2 = 0
+      len2 = 0
+      throw takeFromExternrefTable0(ret[2])
+    }
+    deferred3_0 = ptr2
+    deferred3_1 = len2
+    return getStringFromWasm0(ptr2, len2)
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
+  }
+}
+
+/**
+ * Returns the Order ID for the given inputs of a transaction
+ * @param {Uint8Array} inputs
+ * @param {Network} network
+ * @returns {string}
+ */
+export function get_order_id(inputs, network) {
+  let deferred3_0
+  let deferred3_1
+  try {
+    const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    const ret = wasm.get_order_id(ptr0, len0, network)
+    var ptr2 = ret[0]
+    var len2 = ret[1]
+    if (ret[3]) {
+      ptr2 = 0
+      len2 = 0
+      throw takeFromExternrefTable0(ret[2])
+    }
+    deferred3_0 = ptr2
+    deferred3_1 = len2
+    return getStringFromWasm0(ptr2, len2)
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
+  }
+}
+
+/**
+ * Returns the Delegation ID for the given inputs of a transaction
+ * @param {Uint8Array} inputs
+ * @param {Network} network
+ * @returns {string}
+ */
+export function get_delegation_id(inputs, network) {
+  let deferred3_0
+  let deferred3_1
+  try {
+    const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    const ret = wasm.get_delegation_id(ptr0, len0, network)
+    var ptr2 = ret[0]
+    var len2 = ret[1]
+    if (ret[3]) {
+      ptr2 = 0
+      len2 = 0
+      throw takeFromExternrefTable0(ret[2])
+    }
+    deferred3_0 = ptr2
+    deferred3_1 = len2
+    return getStringFromWasm0(ptr2, len2)
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
+  }
+}
+
+/**
+ * Returns the Pool ID for the given inputs of a transaction
+ * @param {Uint8Array} inputs
+ * @param {Network} network
+ * @returns {string}
+ */
+export function get_pool_id(inputs, network) {
+  let deferred3_0
+  let deferred3_1
+  try {
+    const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    const ret = wasm.get_pool_id(ptr0, len0, network)
+    var ptr2 = ret[0]
+    var len2 = ret[1]
+    if (ret[3]) {
+      ptr2 = 0
+      len2 = 0
+      throw takeFromExternrefTable0(ret[2])
+    }
+    deferred3_0 = ptr2
+    deferred3_1 = len2
+    return getStringFromWasm0(ptr2, len2)
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
+  }
+}
+
+/**
+ * Returns the fee that needs to be paid by a transaction for issuing a data deposit
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Amount}
+ */
+export function data_deposit_fee(current_block_height, network) {
+  const ret = wasm.data_deposit_fee(current_block_height, network)
+  return Amount.__wrap(ret)
+}
+
+/**
+ * Given a signed transaction and input outpoint that spends an htlc utxo, extract a secret that is
+ * encoded in the corresponding input signature
+ * @param {Uint8Array} signed_tx
+ * @param {boolean} strict_byte_size
+ * @param {Uint8Array} htlc_outpoint_source_id
+ * @param {number} htlc_output_index
+ * @returns {Uint8Array}
+ */
+export function extract_htlc_secret(
+  signed_tx,
+  strict_byte_size,
+  htlc_outpoint_source_id,
+  htlc_output_index,
+) {
+  const ptr0 = passArray8ToWasm0(signed_tx, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passArray8ToWasm0(
+    htlc_outpoint_source_id,
+    wasm.__wbindgen_malloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.extract_htlc_secret(
+    ptr0,
+    len0,
+    strict_byte_size,
+    ptr1,
+    len1,
+    htlc_output_index,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Given the inputs, along each input's destination that can spend that input
+ * (e.g. If we are spending a UTXO in input number 1 and it is owned by address mtc1xxxx, then it is mtc1xxxx in element number 2 in the vector/list.
+ * for Account inputs that spend from a delegation it is the owning address of that delegation,
+ * and in the case of AccountCommand inputs which change a token it is the token's authority destination)
+ * and the outputs, estimate the transaction size.
+ * ScriptHash and ClassicMultisig destinations are not supported.
+ * @param {Uint8Array} inputs
+ * @param {string[]} input_utxos_destinations
+ * @param {Uint8Array} outputs
+ * @param {Network} network
+ * @returns {number}
+ */
+export function estimate_transaction_size(
+  inputs,
+  input_utxos_destinations,
+  outputs,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passArrayJsValueToWasm0(
+    input_utxos_destinations,
+    wasm.__wbindgen_malloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArray8ToWasm0(outputs, wasm.__wbindgen_malloc)
+  const len2 = WASM_VECTOR_LEN
+  const ret = wasm.estimate_transaction_size(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    network,
+  )
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1])
+  }
+  return ret[0] >>> 0
+}
+
+/**
+ * Given inputs as bytes, outputs as bytes, and flags settings, this function returns
+ * the transaction that contains them all, as bytes.
+ * @param {Uint8Array} inputs
+ * @param {Uint8Array} outputs
+ * @param {bigint} flags
+ * @returns {Uint8Array}
+ */
+export function encode_transaction(inputs, outputs, flags) {
+  const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passArray8ToWasm0(outputs, wasm.__wbindgen_malloc)
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.encode_transaction(ptr0, len0, ptr1, len1, flags)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Decodes a signed transaction from its binary encoding into a JavaScript object.
+ * @param {Uint8Array} transaction
+ * @param {Network} network
+ * @returns {any}
+ */
+export function decode_signed_transaction_to_js(transaction, network) {
+  const ptr0 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.decode_signed_transaction_to_js(ptr0, len0, network)
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1])
+  }
+  return takeFromExternrefTable0(ret[0])
+}
+
+/**
+ * Encode an input witness of the variant that contains no signature.
+ * @returns {Uint8Array}
+ */
+export function encode_witness_no_signature() {
+  const ret = wasm.encode_witness_no_signature()
+  var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v1
+}
+
+/**
+ * Sign the specified input of the transaction and encode the signature as InputWitness.
+ *
+ * `input_utxos` must be formed as follows: for each transaction input, emit byte 0 if it's a non-UTXO input,
+ * otherwise emit 1 followed by the corresponding transaction output encoded via the appropriate "encode_output_"
+ * function.
+ *
+ * `additional_info` must contain the following:
+ * 1) for each `ProduceBlockFromStake` input of the transaction, the pool info for the pool referenced by that input;
+ * 2) for each `FillOrder` and `ConcludeOrder` input of the transaction, the order info for the order referenced by
+ *    that input.
+ * Note:
+ * - It doesn't matter which input witness is currently being encoded. E.g. even if you are encoding a witness
+ *   for some UTXO-based input but another input of the same transaction is `FillOrder`, you have to include the order
+ *   info when encoding the witness for the UTXO-based input too.
+ * - After a certain hard fork, the produced signature will "commit" to the provided additional info, i.e. the info
+ *   will become a part of what is being signed. So, passing invalid additional info will result in an invalid signature
+ *   (with one small caveat: for `FillOrder` we only commit to order's initial balances and not the current ones;
+ *   so if you only have `FillOrder` inputs, you can technically pass bogus values for the current balances and
+ *   the resulting signature will still be valid; though it's better to avoid doing this).
+ * @param {SignatureHashType} sighashtype
+ * @param {Uint8Array} private_key
+ * @param {string} input_owner_destination
+ * @param {Uint8Array} transaction
+ * @param {Uint8Array} input_utxos
+ * @param {number} input_index
+ * @param {TxAdditionalInfo} additional_info
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_witness(
+  sighashtype,
+  private_key,
+  input_owner_destination,
+  transaction,
+  input_utxos,
+  input_index,
+  additional_info,
+  current_block_height,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(private_key, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    input_owner_destination,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len2 = WASM_VECTOR_LEN
+  const ptr3 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
+  const len3 = WASM_VECTOR_LEN
+  const ret = wasm.encode_witness(
+    sighashtype,
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    input_index,
+    additional_info,
+    current_block_height,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v5 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v5
+}
+
+/**
+ * Sign the specified HTLC input of the transaction and encode the signature as InputWitness.
+ *
+ * This function must be used for HTLC spending.
+ *
+ * `input_utxos` and `additional_info` have the same format and requirements as in `encode_witness`.
+ * @param {SignatureHashType} sighashtype
+ * @param {Uint8Array} private_key
+ * @param {string} input_owner_destination
+ * @param {Uint8Array} transaction
+ * @param {Uint8Array} input_utxos
+ * @param {number} input_index
+ * @param {Uint8Array} secret
+ * @param {TxAdditionalInfo} additional_info
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_witness_htlc_spend(
+  sighashtype,
+  private_key,
+  input_owner_destination,
+  transaction,
+  input_utxos,
+  input_index,
+  secret,
+  additional_info,
+  current_block_height,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(private_key, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    input_owner_destination,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len2 = WASM_VECTOR_LEN
+  const ptr3 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
+  const len3 = WASM_VECTOR_LEN
+  const ptr4 = passArray8ToWasm0(secret, wasm.__wbindgen_malloc)
+  const len4 = WASM_VECTOR_LEN
+  const ret = wasm.encode_witness_htlc_spend(
+    sighashtype,
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    input_index,
+    ptr4,
+    len4,
+    additional_info,
+    current_block_height,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v6
+}
+
+/**
+ * Given an arbitrary number of public keys as bytes, number of minimum required signatures, and a network type, this function returns
+ * the multisig challenge, as bytes.
+ * @param {Uint8Array} public_keys
+ * @param {number} min_required_signatures
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_multisig_challenge(
+  public_keys,
+  min_required_signatures,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(public_keys, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_multisig_challenge(
+    ptr0,
+    len0,
+    min_required_signatures,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Produce a multisig address given a multisig challenge.
+ * @param {Uint8Array} multisig_challenge
+ * @param {Network} network
+ * @returns {string}
+ */
+export function multisig_challenge_to_address(multisig_challenge, network) {
+  let deferred3_0
+  let deferred3_1
+  try {
+    const ptr0 = passArray8ToWasm0(multisig_challenge, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    const ret = wasm.multisig_challenge_to_address(ptr0, len0, network)
+    var ptr2 = ret[0]
+    var len2 = ret[1]
+    if (ret[3]) {
+      ptr2 = 0
+      len2 = 0
+      throw takeFromExternrefTable0(ret[2])
+    }
+    deferred3_0 = ptr2
+    deferred3_1 = len2
+    return getStringFromWasm0(ptr2, len2)
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
+  }
+}
+
+/**
+ * Sign the specified HTLC input of the transaction and encode the signature as InputWitness.
+ *
+ * This function must be used for HTLC refunding when the refund address is a multisig one.
+ *
+ * `key_index` parameter is an index of the public key in the multisig challenge corresponding to
+ * the specified private key.
+ * `input_witness` parameter can be either empty or a result of previous calls to this function.
+ *
+ * `input_utxos` and `additional_info` have the same format and requirements as in `encode_witness`.
+ * @param {SignatureHashType} sighashtype
+ * @param {Uint8Array} private_key
+ * @param {number} key_index
+ * @param {Uint8Array} input_witness
+ * @param {Uint8Array} multisig_challenge
+ * @param {Uint8Array} transaction
+ * @param {Uint8Array} input_utxos
+ * @param {number} input_index
+ * @param {TxAdditionalInfo} additional_info
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_witness_htlc_refund_multisig(
+  sighashtype,
+  private_key,
+  key_index,
+  input_witness,
+  multisig_challenge,
+  transaction,
+  input_utxos,
+  input_index,
+  additional_info,
+  current_block_height,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(private_key, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passArray8ToWasm0(input_witness, wasm.__wbindgen_malloc)
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArray8ToWasm0(multisig_challenge, wasm.__wbindgen_malloc)
+  const len2 = WASM_VECTOR_LEN
+  const ptr3 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len3 = WASM_VECTOR_LEN
+  const ptr4 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
+  const len4 = WASM_VECTOR_LEN
+  const ret = wasm.encode_witness_htlc_refund_multisig(
+    sighashtype,
+    ptr0,
+    len0,
+    key_index,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    ptr4,
+    len4,
+    input_index,
+    additional_info,
+    current_block_height,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v6
+}
+
+/**
+ * Sign the specified HTLC input of the transaction and encode the signature as InputWitness.
+ *
+ * This function must be used for HTLC refunding when the refund address is a single-sig one.
+ *
+ * `input_utxos` and `additional_info` have the same format and requirements as in `encode_witness`.
+ * @param {SignatureHashType} sighashtype
+ * @param {Uint8Array} private_key
+ * @param {string} input_owner_destination
+ * @param {Uint8Array} transaction
+ * @param {Uint8Array} input_utxos
+ * @param {number} input_index
+ * @param {TxAdditionalInfo} additional_info
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_witness_htlc_refund_single_sig(
+  sighashtype,
+  private_key,
+  input_owner_destination,
+  transaction,
+  input_utxos,
+  input_index,
+  additional_info,
+  current_block_height,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(private_key, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    input_owner_destination,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len2 = WASM_VECTOR_LEN
+  const ptr3 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
+  const len3 = WASM_VECTOR_LEN
+  const ret = wasm.encode_witness_htlc_refund_single_sig(
+    sighashtype,
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    input_index,
+    additional_info,
+    current_block_height,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v5 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v5
+}
+
+/**
+ * Given an unsigned transaction and signatures, this function returns a SignedTransaction object as bytes.
+ * @param {Uint8Array} transaction
+ * @param {Uint8Array} signatures
+ * @returns {Uint8Array}
+ */
+export function encode_signed_transaction(transaction, signatures) {
+  const ptr0 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passArray8ToWasm0(signatures, wasm.__wbindgen_malloc)
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.encode_signed_transaction(ptr0, len0, ptr1, len1)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Return a PartiallySignedTransaction object as bytes.
+ *
+ * `transaction` is an encoded `Transaction` (which can be produced via `encode_transaction`).
+ *
+ * `signatures`, `input_utxos`, `input_destinations` and `htlc_secrets` are encoded lists of
+ * optional objects of the corresponding type. To produce such a list, iterate over your
+ * original list of optional objects and then:
+ * 1) emit byte 0 if the current object is null;
+ * 2) otherwise emit byte 1 followed by the object in its encoded form.
+ *
+ * Each individual object in each of the lists corresponds to the transaction input with the same
+ * index and its meaning is as follows:
+ *   1) `signatures` - the signature for the input;
+ *   2) `input_utxos`- the utxo for the input (if it's utxo-based);
+ *   3) `input_destinations` - the destination (address) corresponding to the input; this determines
+ *      the key(s) with which the input has to be signed. Note that for utxo-based inputs the
+ *      corresponding destination can usually be extracted from the utxo itself (the exception
+ *      being the `ProduceBlockFromStake` utxo, which doesn't contain the pool's decommission key).
+ *      However, PartiallySignedTransaction requires that *all* input destinations are provided
+ *      explicitly anyway.
+ *   4) `htlc_secrets` - if the input is an HTLC one and if the transaction is spending the HTLC,
+ *      this should be the HTLC secret. Otherwise it should be null.
+ *
+ *   The number of items in each list must be equal to the number of transaction inputs.
+ *
+ * `additional_info` has the same meaning as in `encode_witness`.
+ * @param {Uint8Array} transaction
+ * @param {Uint8Array} signatures
+ * @param {Uint8Array} input_utxos
+ * @param {Uint8Array} input_destinations
+ * @param {Uint8Array} htlc_secrets
+ * @param {TxAdditionalInfo} additional_info
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_partially_signed_transaction(
+  transaction,
+  signatures,
+  input_utxos,
+  input_destinations,
+  htlc_secrets,
+  additional_info,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passArray8ToWasm0(signatures, wasm.__wbindgen_malloc)
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
+  const len2 = WASM_VECTOR_LEN
+  const ptr3 = passArray8ToWasm0(input_destinations, wasm.__wbindgen_malloc)
+  const len3 = WASM_VECTOR_LEN
+  const ptr4 = passArray8ToWasm0(htlc_secrets, wasm.__wbindgen_malloc)
+  const len4 = WASM_VECTOR_LEN
+  const ret = wasm.encode_partially_signed_transaction(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    ptr4,
+    len4,
+    additional_info,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v6
+}
+
+/**
+ * Decodes a partially signed transaction from its binary encoding into a JavaScript object.
+ * @param {Uint8Array} transaction
+ * @param {Network} network
+ * @returns {any}
+ */
+export function decode_partially_signed_transaction_to_js(
+  transaction,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.decode_partially_signed_transaction_to_js(
+    ptr0,
+    len0,
+    network,
+  )
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1])
+  }
+  return takeFromExternrefTable0(ret[0])
+}
+
+/**
+ * Convert the specified string address into a Destination object, encoded as bytes.
+ * @param {string} address
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_destination(address, network) {
+  const ptr0 = passStringToWasm0(
+    address,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_destination(ptr0, len0, network)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a `Transaction` encoded in bytes (not a signed transaction, but a signed transaction is tolerated by ignoring the extra bytes, by choice)
+ * this function will return the transaction id.
+ *
+ * The second parameter, the boolean, is provided as means of asserting that the given bytes exactly match a `Transaction` object.
+ * When set to `true`, the bytes provided must exactly match a single `Transaction` object.
+ * When set to `false`, extra bytes can exist, but will be ignored.
+ * This is useful when the provided bytes are of a `SignedTransaction` instead of a `Transaction`,
+ * since the signatures are appended at the end of the `Transaction` object as a vector to create a `SignedTransaction`.
+ * It is recommended to use a strict `Transaction` size and set the second parameter to `true`.
+ * @param {Uint8Array} transaction
+ * @param {boolean} strict_byte_size
+ * @returns {string}
+ */
+export function get_transaction_id(transaction, strict_byte_size) {
+  let deferred3_0
+  let deferred3_1
+  try {
+    const ptr0 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+    const len0 = WASM_VECTOR_LEN
+    const ret = wasm.get_transaction_id(ptr0, len0, strict_byte_size)
+    var ptr2 = ret[0]
+    var len2 = ret[1]
+    if (ret[3]) {
+      ptr2 = 0
+      len2 = 0
+      throw takeFromExternrefTable0(ret[2])
+    }
+    deferred3_0 = ptr2
+    deferred3_1 = len2
+    return getStringFromWasm0(ptr2, len2)
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
+  }
+}
+
+/**
+ * Calculate the "effective balance" of a pool, given the total pool balance and pledge by the pool owner/staker.
+ * The effective balance is how the influence of a pool is calculated due to its balance.
+ * @param {Network} network
+ * @param {Amount} pledge_amount
+ * @param {Amount} pool_balance
+ * @returns {Amount}
+ */
+export function effective_pool_balance(network, pledge_amount, pool_balance) {
+  _assertClass(pledge_amount, Amount)
+  var ptr0 = pledge_amount.__destroy_into_raw()
+  _assertClass(pool_balance, Amount)
+  var ptr1 = pool_balance.__destroy_into_raw()
+  const ret = wasm.effective_pool_balance(network, ptr0, ptr1)
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1])
+  }
+  return Amount.__wrap(ret[0])
+}
+
+/**
+ * Given a destination address, an amount and a network type (mainnet, testnet, etc), this function
+ * creates an output of type Transfer, and returns it as bytes.
+ * @param {Amount} amount
+ * @param {string} address
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_transfer(amount, address, network) {
+  _assertClass(amount, Amount)
+  var ptr0 = amount.__destroy_into_raw()
+  const ptr1 = passStringToWasm0(
+    address,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.encode_output_transfer(ptr0, ptr1, len1, network)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Given a destination address, an amount, token ID (in address form) and a network type (mainnet, testnet, etc), this function
+ * creates an output of type Transfer for tokens, and returns it as bytes.
+ * @param {Amount} amount
+ * @param {string} address
+ * @param {string} token_id
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_output_token_transfer(
+  amount,
+  address,
+  token_id,
+  network,
+) {
+  _assertClass(amount, Amount)
+  var ptr0 = amount.__destroy_into_raw()
+  const ptr1 = passStringToWasm0(
+    address,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len2 = WASM_VECTOR_LEN
+  const ret = wasm.encode_output_token_transfer(
+    ptr0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v4 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v4
 }
 
 /**
@@ -943,73 +1916,13 @@ export function encode_output_delegate_staking(amount, delegation_id, network) {
 }
 
 /**
- * This function returns the staking pool data needed to create a staking pool in an output as bytes,
- * given its parameters and the network type (testnet, mainnet, etc).
- * @param {Amount} value
- * @param {string} staker
- * @param {string} vrf_public_key
- * @param {string} decommission_key
- * @param {number} margin_ratio_per_thousand
- * @param {Amount} cost_per_block
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_stake_pool_data(
-  value,
-  staker,
-  vrf_public_key,
-  decommission_key,
-  margin_ratio_per_thousand,
-  cost_per_block,
-  network,
-) {
-  _assertClass(value, Amount)
-  var ptr0 = value.__destroy_into_raw()
-  const ptr1 = passStringToWasm0(
-    staker,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len1 = WASM_VECTOR_LEN
-  const ptr2 = passStringToWasm0(
-    vrf_public_key,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len2 = WASM_VECTOR_LEN
-  const ptr3 = passStringToWasm0(
-    decommission_key,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len3 = WASM_VECTOR_LEN
-  _assertClass(cost_per_block, Amount)
-  var ptr4 = cost_per_block.__destroy_into_raw()
-  const ret = wasm.encode_stake_pool_data(
-    ptr0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    ptr3,
-    len3,
-    margin_ratio_per_thousand,
-    ptr4,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v6
-}
-
-/**
  * Given a pool id, staking data as bytes and the network type (mainnet, testnet, etc),
  * this function returns an output that creates that staking pool.
  * Note that the pool id is mandated to be taken from the hash of the first input.
  * It is not arbitrary.
+ *
+ * Note: a UTXO of this kind is consumed when decommissioning a pool (provided that the pool
+ * never staked).
  * @param {string} pool_id
  * @param {Uint8Array} pool_data
  * @param {Network} network
@@ -1040,67 +1953,46 @@ export function encode_output_create_stake_pool(pool_id, pool_data, network) {
 }
 
 /**
- * Returns the fee that needs to be paid by a transaction for issuing a new fungible token
- * @param {bigint} _current_block_height
+ * Given a pool id and a staker address, this function returns an output that is emitted
+ * when producing a block via that pool.
+ *
+ * Note: a UTXO of this kind is consumed when decommissioning a pool (provided that the pool
+ * has staked at least once).
+ * @param {string} pool_id
+ * @param {string} staker
  * @param {Network} network
- * @returns {Amount}
+ * @returns {Uint8Array}
  */
-export function fungible_token_issuance_fee(_current_block_height, network) {
-  const ret = wasm.fungible_token_issuance_fee(_current_block_height, network)
-  return Amount.__wrap(ret)
-}
-
-/**
- * Given the current block height and a network type (mainnet, testnet, etc),
- * this will return the fee that needs to be paid by a transaction for issuing a new NFT
- * The current block height information is used in case a network upgrade changed the value.
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Amount}
- */
-export function nft_issuance_fee(current_block_height, network) {
-  const ret = wasm.nft_issuance_fee(current_block_height, network)
-  return Amount.__wrap(ret)
-}
-
-/**
- * Given the current block height and a network type (mainnet, testnet, etc),
- * this will return the fee that needs to be paid by a transaction for changing the total supply of a token
- * by either minting or unminting tokens
- * The current block height information is used in case a network upgrade changed the value.
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Amount}
- */
-export function token_supply_change_fee(current_block_height, network) {
-  const ret = wasm.token_supply_change_fee(current_block_height, network)
-  return Amount.__wrap(ret)
-}
-
-/**
- * Given the current block height and a network type (mainnet, testnet, etc),
- * this will return the fee that needs to be paid by a transaction for freezing/unfreezing a token
- * The current block height information is used in case a network upgrade changed the value.
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Amount}
- */
-export function token_freeze_fee(current_block_height, network) {
-  const ret = wasm.token_freeze_fee(current_block_height, network)
-  return Amount.__wrap(ret)
-}
-
-/**
- * Given the current block height and a network type (mainnet, testnet, etc),
- * this will return the fee that needs to be paid by a transaction for changing the authority of a token
- * The current block height information is used in case a network upgrade changed the value.
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Amount}
- */
-export function token_change_authority_fee(current_block_height, network) {
-  const ret = wasm.token_change_authority_fee(current_block_height, network)
-  return Amount.__wrap(ret)
+export function encode_output_produce_block_from_stake(
+  pool_id,
+  staker,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    pool_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    staker,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.encode_output_produce_block_from_stake(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
 }
 
 /**
@@ -1171,34 +2063,6 @@ export function encode_output_issue_fungible_token(
   var v5 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
   wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
   return v5
-}
-
-/**
- * Returns the Fungible/NFT Token ID for the given inputs of a transaction
- * @param {Uint8Array} inputs
- * @param {Network} network
- * @returns {string}
- */
-export function get_token_id(inputs, network) {
-  let deferred3_0
-  let deferred3_1
-  try {
-    const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
-    const len0 = WASM_VECTOR_LEN
-    const ret = wasm.get_token_id(ptr0, len0, network)
-    var ptr2 = ret[0]
-    var len2 = ret[1]
-    if (ret[3]) {
-      ptr2 = 0
-      len2 = 0
-      throw takeFromExternrefTable0(ret[2])
-    }
-    deferred3_0 = ptr2
-    deferred3_1 = len2
-    return getStringFromWasm0(ptr2, len2)
-  } finally {
-    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
-  }
 }
 
 /**
@@ -1342,17 +2206,6 @@ export function encode_output_data_deposit(data) {
 }
 
 /**
- * Returns the fee that needs to be paid by a transaction for issuing a data deposit
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Amount}
- */
-export function data_deposit_fee(current_block_height, network) {
-  const ret = wasm.data_deposit_fee(current_block_height, network)
-  return Amount.__wrap(ret)
-}
-
-/**
  * Given the parameters needed to create hash timelock contract, and a network type (mainnet, testnet, etc),
  * this function creates an output.
  * @param {Amount} amount
@@ -1426,41 +2279,69 @@ export function encode_output_htlc(
 }
 
 /**
- * Given a signed transaction and input outpoint that spends an htlc utxo, extract a secret that is
- * encoded in the corresponding input signature
- * @param {Uint8Array} signed_tx_bytes
- * @param {boolean} strict_byte_size
- * @param {Uint8Array} htlc_outpoint_source_id
- * @param {number} htlc_output_index
+ * Given ask and give amounts and a conclude key create output that creates an order.
+ *
+ * 'ask_token_id': the parameter represents a Token if it's Some and coins otherwise.
+ * 'give_token_id': the parameter represents a Token if it's Some and coins otherwise.
+ * @param {Amount} ask_amount
+ * @param {string | null | undefined} ask_token_id
+ * @param {Amount} give_amount
+ * @param {string | null | undefined} give_token_id
+ * @param {string} conclude_address
+ * @param {Network} network
  * @returns {Uint8Array}
  */
-export function extract_htlc_secret(
-  signed_tx_bytes,
-  strict_byte_size,
-  htlc_outpoint_source_id,
-  htlc_output_index,
+export function encode_create_order_output(
+  ask_amount,
+  ask_token_id,
+  give_amount,
+  give_token_id,
+  conclude_address,
+  network,
 ) {
-  const ptr0 = passArray8ToWasm0(signed_tx_bytes, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ptr1 = passArray8ToWasm0(
-    htlc_outpoint_source_id,
+  _assertClass(ask_amount, Amount)
+  var ptr0 = ask_amount.__destroy_into_raw()
+  var ptr1 = isLikeNone(ask_token_id)
+    ? 0
+    : passStringToWasm0(
+        ask_token_id,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      )
+  var len1 = WASM_VECTOR_LEN
+  _assertClass(give_amount, Amount)
+  var ptr2 = give_amount.__destroy_into_raw()
+  var ptr3 = isLikeNone(give_token_id)
+    ? 0
+    : passStringToWasm0(
+        give_token_id,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      )
+  var len3 = WASM_VECTOR_LEN
+  const ptr4 = passStringToWasm0(
+    conclude_address,
     wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
   )
-  const len1 = WASM_VECTOR_LEN
-  const ret = wasm.extract_htlc_secret(
+  const len4 = WASM_VECTOR_LEN
+  const ret = wasm.encode_create_order_output(
     ptr0,
-    len0,
-    strict_byte_size,
     ptr1,
     len1,
-    htlc_output_index,
+    ptr2,
+    ptr3,
+    len3,
+    ptr4,
+    len4,
+    network,
   )
   if (ret[3]) {
     throw takeFromExternrefTable0(ret[2])
   }
-  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
   wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v3
+  return v6
 }
 
 /**
@@ -1519,363 +2400,6 @@ export function encode_input_for_withdraw_from_delegation(
   var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
   wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
   return v3
-}
-
-/**
- * Given the inputs, along each input's destination that can spend that input
- * (e.g. If we are spending a UTXO in input number 1 and it is owned by address mtc1xxxx, then it is mtc1xxxx in element number 2 in the vector/list.
- * for Account inputs that spend from a delegation it is the owning address of that delegation,
- * and in the case of AccountCommand inputs which change a token it is the token's authority destination)
- * and the outputs, estimate the transaction size.
- * ScriptHash and ClassicMultisig destinations are not supported.
- * @param {Uint8Array} inputs
- * @param {string[]} input_utxos_destinations
- * @param {Uint8Array} outputs
- * @param {Network} network
- * @returns {number}
- */
-export function estimate_transaction_size(
-  inputs,
-  input_utxos_destinations,
-  outputs,
-  network,
-) {
-  const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ptr1 = passArrayJsValueToWasm0(
-    input_utxos_destinations,
-    wasm.__wbindgen_malloc,
-  )
-  const len1 = WASM_VECTOR_LEN
-  const ptr2 = passArray8ToWasm0(outputs, wasm.__wbindgen_malloc)
-  const len2 = WASM_VECTOR_LEN
-  const ret = wasm.estimate_transaction_size(
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    network,
-  )
-  if (ret[2]) {
-    throw takeFromExternrefTable0(ret[1])
-  }
-  return ret[0] >>> 0
-}
-
-/**
- * Given inputs as bytes, outputs as bytes, and flags settings, this function returns
- * the transaction that contains them all, as bytes.
- * @param {Uint8Array} inputs
- * @param {Uint8Array} outputs
- * @param {bigint} flags
- * @returns {Uint8Array}
- */
-export function encode_transaction(inputs, outputs, flags) {
-  const ptr0 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ptr1 = passArray8ToWasm0(outputs, wasm.__wbindgen_malloc)
-  const len1 = WASM_VECTOR_LEN
-  const ret = wasm.encode_transaction(ptr0, len0, ptr1, len1, flags)
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v3
-}
-
-/**
- * Encode an input witness of the variant that contains no signature.
- * @returns {Uint8Array}
- */
-export function encode_witness_no_signature() {
-  const ret = wasm.encode_witness_no_signature()
-  var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v1
-}
-
-/**
- * Given a private key, inputs and an input number to sign, and the destination that owns that output (through the utxo),
- * and a network type (mainnet, testnet, etc), this function returns a witness to be used in a signed transaction, as bytes.
- * @param {SignatureHashType} sighashtype
- * @param {Uint8Array} private_key_bytes
- * @param {string} input_owner_destination
- * @param {Uint8Array} transaction_bytes
- * @param {Uint8Array} inputs
- * @param {number} input_num
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_witness(
-  sighashtype,
-  private_key_bytes,
-  input_owner_destination,
-  transaction_bytes,
-  inputs,
-  input_num,
-  network,
-) {
-  const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ptr1 = passStringToWasm0(
-    input_owner_destination,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len1 = WASM_VECTOR_LEN
-  const ptr2 = passArray8ToWasm0(transaction_bytes, wasm.__wbindgen_malloc)
-  const len2 = WASM_VECTOR_LEN
-  const ptr3 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
-  const len3 = WASM_VECTOR_LEN
-  const ret = wasm.encode_witness(
-    sighashtype,
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    ptr3,
-    len3,
-    input_num,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v5 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v5
-}
-
-/**
- * Given a private key, inputs and an input number to sign, and the destination that owns that output (through the utxo),
- * and a network type (mainnet, testnet, etc), and an htlc secret this function returns a witness to be used in a signed transaction, as bytes.
- * @param {SignatureHashType} sighashtype
- * @param {Uint8Array} private_key_bytes
- * @param {string} input_owner_destination
- * @param {Uint8Array} transaction_bytes
- * @param {Uint8Array} inputs
- * @param {number} input_num
- * @param {Uint8Array} secret
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_witness_htlc_secret(
-  sighashtype,
-  private_key_bytes,
-  input_owner_destination,
-  transaction_bytes,
-  inputs,
-  input_num,
-  secret,
-  network,
-) {
-  const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ptr1 = passStringToWasm0(
-    input_owner_destination,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len1 = WASM_VECTOR_LEN
-  const ptr2 = passArray8ToWasm0(transaction_bytes, wasm.__wbindgen_malloc)
-  const len2 = WASM_VECTOR_LEN
-  const ptr3 = passArray8ToWasm0(inputs, wasm.__wbindgen_malloc)
-  const len3 = WASM_VECTOR_LEN
-  const ptr4 = passArray8ToWasm0(secret, wasm.__wbindgen_malloc)
-  const len4 = WASM_VECTOR_LEN
-  const ret = wasm.encode_witness_htlc_secret(
-    sighashtype,
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    ptr3,
-    len3,
-    input_num,
-    ptr4,
-    len4,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v6
-}
-
-/**
- * Given an arbitrary number of public keys as bytes, number of minimum required signatures, and a network type, this function returns
- * the multisig challenge, as bytes.
- * @param {Uint8Array} public_keys_bytes
- * @param {number} min_required_signatures
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_multisig_challenge(
-  public_keys_bytes,
-  min_required_signatures,
-  network,
-) {
-  const ptr0 = passArray8ToWasm0(public_keys_bytes, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_multisig_challenge(
-    ptr0,
-    len0,
-    min_required_signatures,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v2
-}
-
-/**
- * Given a private key, inputs and an input number to sign, and multisig challenge,
- * and a network type (mainnet, testnet, etc), this function returns a witness to be used in a signed transaction, as bytes.
- *
- * `key_index` parameter is an index of a public key in the challenge, against which is the signature produces from private key is to be verified.
- * `input_witness` parameter can be either empty or a result of previous calls to this function.
- * @param {SignatureHashType} sighashtype
- * @param {Uint8Array} private_key_bytes
- * @param {number} key_index
- * @param {Uint8Array} input_witness
- * @param {Uint8Array} multisig_challenge
- * @param {Uint8Array} transaction_bytes
- * @param {Uint8Array} utxos
- * @param {number} input_num
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_witness_htlc_multisig(
-  sighashtype,
-  private_key_bytes,
-  key_index,
-  input_witness,
-  multisig_challenge,
-  transaction_bytes,
-  utxos,
-  input_num,
-  network,
-) {
-  const ptr0 = passArray8ToWasm0(private_key_bytes, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ptr1 = passArray8ToWasm0(input_witness, wasm.__wbindgen_malloc)
-  const len1 = WASM_VECTOR_LEN
-  const ptr2 = passArray8ToWasm0(multisig_challenge, wasm.__wbindgen_malloc)
-  const len2 = WASM_VECTOR_LEN
-  const ptr3 = passArray8ToWasm0(transaction_bytes, wasm.__wbindgen_malloc)
-  const len3 = WASM_VECTOR_LEN
-  const ptr4 = passArray8ToWasm0(utxos, wasm.__wbindgen_malloc)
-  const len4 = WASM_VECTOR_LEN
-  const ret = wasm.encode_witness_htlc_multisig(
-    sighashtype,
-    ptr0,
-    len0,
-    key_index,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    ptr3,
-    len3,
-    ptr4,
-    len4,
-    input_num,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v6
-}
-
-/**
- * Given an unsigned transaction and signatures, this function returns a SignedTransaction object as bytes.
- * @param {Uint8Array} transaction_bytes
- * @param {Uint8Array} signatures
- * @returns {Uint8Array}
- */
-export function encode_signed_transaction(transaction_bytes, signatures) {
-  const ptr0 = passArray8ToWasm0(transaction_bytes, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ptr1 = passArray8ToWasm0(signatures, wasm.__wbindgen_malloc)
-  const len1 = WASM_VECTOR_LEN
-  const ret = wasm.encode_signed_transaction(ptr0, len0, ptr1, len1)
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v3
-}
-
-/**
- * Given a `Transaction` encoded in bytes (not a signed transaction, but a signed transaction is tolerated by ignoring the extra bytes, by choice)
- * this function will return the transaction id.
- *
- * The second parameter, the boolean, is provided as means of asserting that the given bytes exactly match a `Transaction` object.
- * When set to `true`, the bytes provided must exactly match a single `Transaction` object.
- * When set to `false`, extra bytes can exist, but will be ignored.
- * This is useful when the provided bytes are of a `SignedTransaction` instead of a `Transaction`,
- * since the signatures are appended at the end of the `Transaction` object as a vector to create a `SignedTransaction`.
- * It is recommended to use a strict `Transaction` size and set the second parameter to `true`.
- * @param {Uint8Array} transaction_bytes
- * @param {boolean} strict_byte_size
- * @returns {string}
- */
-export function get_transaction_id(transaction_bytes, strict_byte_size) {
-  let deferred3_0
-  let deferred3_1
-  try {
-    const ptr0 = passArray8ToWasm0(transaction_bytes, wasm.__wbindgen_malloc)
-    const len0 = WASM_VECTOR_LEN
-    const ret = wasm.get_transaction_id(ptr0, len0, strict_byte_size)
-    var ptr2 = ret[0]
-    var len2 = ret[1]
-    if (ret[3]) {
-      ptr2 = 0
-      len2 = 0
-      throw takeFromExternrefTable0(ret[2])
-    }
-    deferred3_0 = ptr2
-    deferred3_1 = len2
-    return getStringFromWasm0(ptr2, len2)
-  } finally {
-    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
-  }
-}
-
-/**
- * Calculate the "effective balance" of a pool, given the total pool balance and pledge by the pool owner/staker.
- * The effective balance is how the influence of a pool is calculated due to its balance.
- * @param {Network} network
- * @param {Amount} pledge_amount
- * @param {Amount} pool_balance
- * @returns {Amount}
- */
-export function effective_pool_balance(network, pledge_amount, pool_balance) {
-  _assertClass(pledge_amount, Amount)
-  var ptr0 = pledge_amount.__destroy_into_raw()
-  _assertClass(pool_balance, Amount)
-  var ptr1 = pool_balance.__destroy_into_raw()
-  const ret = wasm.effective_pool_balance(network, ptr0, ptr1)
-  if (ret[2]) {
-    throw takeFromExternrefTable0(ret[1])
-  }
-  return Amount.__wrap(ret[0])
 }
 
 /**
@@ -2104,78 +2628,21 @@ export function encode_input_for_change_token_metadata_uri(
 }
 
 /**
- * Given ask and give amounts and a conclude key create output that creates an order.
+ * Given an order id and an amount in the order's ask currency, create an input that fills the order.
  *
- * 'ask_token_id': the parameter represents a Token if it's Some and coins otherwise.
- * 'give_token_id': the parameter represents a Token if it's Some and coins otherwise.
- * @param {Amount} ask_amount
- * @param {string | null | undefined} ask_token_id
- * @param {Amount} give_amount
- * @param {string | null | undefined} give_token_id
- * @param {string} conclude_address
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_create_order_output(
-  ask_amount,
-  ask_token_id,
-  give_amount,
-  give_token_id,
-  conclude_address,
-  network,
-) {
-  _assertClass(ask_amount, Amount)
-  var ptr0 = ask_amount.__destroy_into_raw()
-  var ptr1 = isLikeNone(ask_token_id)
-    ? 0
-    : passStringToWasm0(
-        ask_token_id,
-        wasm.__wbindgen_malloc,
-        wasm.__wbindgen_realloc,
-      )
-  var len1 = WASM_VECTOR_LEN
-  _assertClass(give_amount, Amount)
-  var ptr2 = give_amount.__destroy_into_raw()
-  var ptr3 = isLikeNone(give_token_id)
-    ? 0
-    : passStringToWasm0(
-        give_token_id,
-        wasm.__wbindgen_malloc,
-        wasm.__wbindgen_realloc,
-      )
-  var len3 = WASM_VECTOR_LEN
-  const ptr4 = passStringToWasm0(
-    conclude_address,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len4 = WASM_VECTOR_LEN
-  const ret = wasm.encode_create_order_output(
-    ptr0,
-    ptr1,
-    len1,
-    ptr2,
-    ptr3,
-    len3,
-    ptr4,
-    len4,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v6
-}
-
-/**
- * Given an amount to fill an order (which is described in terms of ask currency) and a destination
- * for result outputs create an input that fills the order.
+ * Note:
+ * 1) The nonce is only needed before the orders V1 fork activation. After the fork the nonce is
+ *    ignored and any value can be passed for the parameter.
+ * 2) FillOrder inputs should not be signed, i.e. use `encode_witness_no_signature` for the inputs
+ *    instead of `encode_witness`).
+ *    Note that in orders v0 FillOrder inputs can technically have a signature, it's just not checked.
+ *    But in orders V1 we actually require that those inputs don't have signatures.
+ *    Also, in orders V1 the provided destination is always ignored.
  * @param {string} order_id
  * @param {Amount} fill_amount
  * @param {string} destination
  * @param {bigint} nonce
+ * @param {bigint} current_block_height
  * @param {Network} network
  * @returns {Uint8Array}
  */
@@ -2184,6 +2651,7 @@ export function encode_input_for_fill_order(
   fill_amount,
   destination,
   nonce,
+  current_block_height,
   network,
 ) {
   const ptr0 = passStringToWasm0(
@@ -2207,6 +2675,7 @@ export function encode_input_for_fill_order(
     ptr2,
     len2,
     nonce,
+    current_block_height,
     network,
   )
   if (ret[3]) {
@@ -2218,26 +2687,136 @@ export function encode_input_for_fill_order(
 }
 
 /**
- * Given an order id create an input that concludes the order.
+ * Given an order id create an input that freezes the order.
+ *
+ * Note: order freezing is available only after the orders V1 fork activation.
  * @param {string} order_id
- * @param {bigint} nonce
+ * @param {bigint} current_block_height
  * @param {Network} network
  * @returns {Uint8Array}
  */
-export function encode_input_for_conclude_order(order_id, nonce, network) {
+export function encode_input_for_freeze_order(
+  order_id,
+  current_block_height,
+  network,
+) {
   const ptr0 = passStringToWasm0(
     order_id,
     wasm.__wbindgen_malloc,
     wasm.__wbindgen_realloc,
   )
   const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_conclude_order(ptr0, len0, nonce, network)
+  const ret = wasm.encode_input_for_freeze_order(
+    ptr0,
+    len0,
+    current_block_height,
+    network,
+  )
   if (ret[3]) {
     throw takeFromExternrefTable0(ret[2])
   }
   var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
   wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
   return v2
+}
+
+/**
+ * Given an order id create an input that concludes the order.
+ *
+ * Note: the nonce is only needed before the orders V1 fork activation. After the fork the nonce is
+ * ignored and any value can be passed for the parameter.
+ * @param {string} order_id
+ * @param {bigint} nonce
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_conclude_order(
+  order_id,
+  nonce,
+  current_block_height,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    order_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_conclude_order(
+    ptr0,
+    len0,
+    nonce,
+    current_block_height,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Verify a witness produced by one of the `encode_witness` functions.
+ *
+ * `input_owner_destination` must be specified if `witness` actually contains a signature
+ * (i.e. it's not InputWitness::NoSignature) and the input is not an HTLC one. Otherwise it must
+ * be null.
+ * @param {SignatureHashType} sighashtype
+ * @param {string | null | undefined} input_owner_destination
+ * @param {Uint8Array} witness
+ * @param {Uint8Array} transaction
+ * @param {Uint8Array} input_utxos
+ * @param {number} input_index
+ * @param {TxAdditionalInfo} additional_info
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ */
+export function internal_verify_witness(
+  sighashtype,
+  input_owner_destination,
+  witness,
+  transaction,
+  input_utxos,
+  input_index,
+  additional_info,
+  current_block_height,
+  network,
+) {
+  var ptr0 = isLikeNone(input_owner_destination)
+    ? 0
+    : passStringToWasm0(
+        input_owner_destination,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      )
+  var len0 = WASM_VECTOR_LEN
+  const ptr1 = passArray8ToWasm0(witness, wasm.__wbindgen_malloc)
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len2 = WASM_VECTOR_LEN
+  const ptr3 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
+  const len3 = WASM_VECTOR_LEN
+  const ret = wasm.internal_verify_witness(
+    sighashtype,
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    input_index,
+    additional_info,
+    current_block_height,
+    network,
+  )
+  if (ret[1]) {
+    throw takeFromExternrefTable0(ret[0])
+  }
 }
 
 /**
@@ -2431,16 +3010,20 @@ function __wbg_get_imports() {
       return ret
     }, arguments)
   }
-  imports.wbg.__wbg_crypto_ed58b8e10a292839 = function (arg0) {
+  imports.wbg.__wbg_crypto_574e78ad8b13b65f = function (arg0) {
     const ret = arg0.crypto
     return ret
   }
-  imports.wbg.__wbg_getRandomValues_bcb4912f16000dc4 = function () {
+  imports.wbg.__wbg_getRandomValues_b8f5dbd5f3995a9e = function () {
     return handleError(function (arg0, arg1) {
       arg0.getRandomValues(arg1)
     }, arguments)
   }
-  imports.wbg.__wbg_msCrypto_0a36e2ec3a343d26 = function (arg0) {
+  imports.wbg.__wbg_length_a446193dc22c12f8 = function (arg0) {
+    const ret = arg0.length
+    return ret
+  }
+  imports.wbg.__wbg_msCrypto_a61aeb35a24c1329 = function (arg0) {
     const ret = arg0.msCrypto
     return ret
   }
@@ -2464,20 +3047,26 @@ function __wbg_get_imports() {
     const ret = new Uint8Array(arg0 >>> 0)
     return ret
   }
-  imports.wbg.__wbg_node_02999533c4ea02e3 = function (arg0) {
+  imports.wbg.__wbg_node_905d3e251edff8a2 = function (arg0) {
     const ret = arg0.node
     return ret
   }
-  imports.wbg.__wbg_process_5c1d670bc53614b8 = function (arg0) {
+  imports.wbg.__wbg_parse_def2e24ef1252aff = function () {
+    return handleError(function (arg0, arg1) {
+      const ret = JSON.parse(getStringFromWasm0(arg0, arg1))
+      return ret
+    }, arguments)
+  }
+  imports.wbg.__wbg_process_dc0fbacc7c1c06f7 = function (arg0) {
     const ret = arg0.process
     return ret
   }
-  imports.wbg.__wbg_randomFillSync_ab2cfe79ebbf2740 = function () {
+  imports.wbg.__wbg_randomFillSync_ac0988aba3254290 = function () {
     return handleError(function (arg0, arg1) {
       arg0.randomFillSync(arg1)
     }, arguments)
   }
-  imports.wbg.__wbg_require_79b1e9274cde3c87 = function () {
+  imports.wbg.__wbg_require_60cc747a6bc5215a = function () {
     return handleError(function () {
       const ret = module.require
       return ret
@@ -2512,9 +3101,20 @@ function __wbg_get_imports() {
     const ret = arg0.subarray(arg1 >>> 0, arg2 >>> 0)
     return ret
   }
-  imports.wbg.__wbg_versions_c71aa1626a93e0a1 = function (arg0) {
+  imports.wbg.__wbg_versions_c01dfd4722a88165 = function (arg0) {
     const ret = arg0.versions
     return ret
+  }
+  imports.wbg.__wbindgen_debug_string = function (arg0, arg1) {
+    const ret = debugString(arg1)
+    const ptr1 = passStringToWasm0(
+      ret,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    )
+    const len1 = WASM_VECTOR_LEN
+    getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true)
+    getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true)
   }
   imports.wbg.__wbindgen_init_externref_table = function () {
     const table = wasm.__wbindgen_export_2

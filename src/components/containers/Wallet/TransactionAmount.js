@@ -21,16 +21,16 @@ const TransactionAmount = ({ transaction, title, extraStyleClasses = [] }) => {
           data-testid="transaction-amount"
         >
           <div data-testid="transaction-amount-from">
-            <span>{transaction.value?.from.amount}</span>{' '}
-            <span>{tokenMap[transaction.value?.from.token_id] || 'ML'}</span>
+            <span>{transaction.value?.from?.amount || ''}</span>{' '}
+            <span>{tokenMap[transaction.value?.from?.token_id] || 'ML'}</span>
           </div>
           <SwapIcon
             className={'balance-swap-icon'}
             data-testid="swap-icon"
           />
           <div data-testid="transaction-amount-to">
-            <span>{transaction.value?.to.amount}</span>{' '}
-            <span>{tokenMap[transaction.value?.to.token_id] || 'ML'}</span>
+            <span>{transaction.value?.to?.amount}</span>{' '}
+            <span>{tokenMap[transaction.value?.to?.token_id] || 'ML'}</span>
           </div>
         </div>
       ) : (
