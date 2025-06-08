@@ -194,6 +194,7 @@ const SendTransactionPage = () => {
       fee: transactionSize * transactionInformation.fee,
       wif: WIF,
       from: currentBtcAddress,
+      networkType: 'testnet'
     })
 
     const result = await Electrum.broadcastTransaction(transactionHex)

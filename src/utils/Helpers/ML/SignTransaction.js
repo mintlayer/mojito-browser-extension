@@ -26,6 +26,10 @@ import {
   encode_output_create_delegation,
   encode_output_delegate_staking,
   encode_input_for_withdraw_from_delegation,
+  encode_lock_until_time,
+  encode_lock_for_block_count,
+  encode_output_htlc,
+  encode_witness_htlc_secret,
   TokenUnfreezable,
   SourceId,
   SignatureHashType,
@@ -305,6 +309,42 @@ export function getTransactionBINrepresentation(
         )
       }
 
+      // @ts-ignore
+      if (output.type === 'Htlc') {
+        // @ts-ignore
+        let refund_timelock
+
+        // @ts-ignore
+        if (output.htlc.refund_timelock.type === 'UntilTime') {
+          // @ts-ignore
+          refund_timelock = encode_lock_until_time(
+            BigInt(output.htlc.refund_timelock.content.timestamp),
+          ) // TODO: check if timestamp is correct
+        }
+        // @ts-ignore
+        if (output.htlc.refund_timelock.type === 'ForBlockCount') {
+          // @ts-ignore
+          refund_timelock = encode_lock_for_block_count(
+            BigInt(output.htlc.refund_timelock.content),
+          )
+        }
+        return encode_output_htlc(
+          // @ts-ignore
+          Amount.from_atoms(output.value.amount.atoms),
+          // @ts-ignore
+          output.value.token_id,
+          // @ts-ignore
+          output.htlc.secret_hash.hex,
+          // @ts-ignore
+          output.htlc.spend_key,
+          // @ts-ignore
+          output.htlc.refund_key,
+          // @ts-ignore
+          refund_timelock,
+          network,
+        )
+      }
+
       return null
     },
   )
@@ -312,7 +352,12 @@ export function getTransactionBINrepresentation(
 
   const inputAddresses = transactionJSONrepresentation.inputs
     .filter(({ input }) => input.input_type === 'UTXO')
-    .map((input) => input?.utxo?.destination || input?.destination)
+    .map(
+      (input) =>
+        input?.utxo?.destination ||
+        input?.destination ||
+        input?.utxo?.htlc.refund_key,
+    )
 
   const transactionsize = estimate_transaction_size(
     mergeUint8Arrays(inputsArray),
@@ -336,6 +381,7 @@ export function getTransactionHEX(
     transactionBINrepresentation,
     transactionJSONrepresentation,
     addressesPrivateKeys,
+    secret = new Uint8Array(32).fill(0),
   },
   _network,
 ) {
@@ -362,6 +408,30 @@ export function getTransactionHEX(
           ? { tokenId: input.utxo.value.token_id }
           : {}),
       })
+    }
+    if (input.utxo.type === 'Htlc') {
+      let refund_timelock = new Uint8Array()
+
+      if (input.utxo.htlc.refund_timelock.type === 'UntilTime') {
+        refund_timelock = encode_lock_until_time(
+          BigInt(input.utxo.htlc.refund_timelock.content.timestamp),
+        ) // TODO: check if timestamp is correct
+      }
+      if (input.utxo.htlc.refund_timelock.type === 'ForBlockCount') {
+        refund_timelock = encode_lock_for_block_count(
+          BigInt(input.utxo.htlc.refund_timelock.content),
+        )
+      }
+
+      return encode_output_htlc(
+        Amount.from_atoms(input.utxo.value.amount.atoms),
+        input.utxo.value.token_id,
+        input.utxo.htlc.secret_hash.hex,
+        input.utxo.htlc.spend_key,
+        input.utxo.htlc.refund_key,
+        refund_timelock,
+        network,
+      )
     }
     if (input.utxo.type === 'LockThenTransfer') {
       return getOutputs({
@@ -392,31 +462,52 @@ export function getTransactionHEX(
 
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
-      let address =
-        input?.utxo?.destination ||
-        input?.input?.authority ||
-        input?.input?.destination
+      if (input?.utxo?.htlc) {
+        // TODO: distingush refund and spend HTLCs
+        const address = input?.utxo?.htlc?.spend_key // - refund key cause "Error verifying input #0: Public key to address mismatch"
+        // input?.utxo?.htlc?.spend_key // this works
+        const addressPrivateKey = addressesPrivateKeys[address]
 
-      // for delegation withdraws, the address is in outputs
-      if (
-        transactionJSONrepresentation.inputs[0].input.account_type ===
-        'DelegationBalance'
-      ) {
-        address = transactionJSONrepresentation.outputs[0].destination
+        const secretuint8Array = secret
+
+        const witness = encode_witness_htlc_secret(
+          SignatureHashType.ALL,
+          addressPrivateKey,
+          address,
+          transaction,
+          optUtxos,
+          index,
+          secretuint8Array,
+          network,
+        )
+        return witness
+      } else {
+        let address =
+          input?.utxo?.destination ||
+          input?.input?.authority ||
+          input?.input?.destination
+
+        // for delegation withdraws, the address is in outputs
+        if (
+          transactionJSONrepresentation.inputs[0].input.account_type ===
+          'DelegationBalance'
+        ) {
+          address = transactionJSONrepresentation.outputs[0].destination
+        }
+
+        const addressPrivateKey = addressesPrivateKeys[address]
+
+        const witness = encode_witness(
+          SignatureHashType.ALL,
+          addressPrivateKey,
+          address,
+          transaction,
+          optUtxos,
+          index,
+          network,
+        )
+        return witness
       }
-
-      const addressPrivateKey = addressesPrivateKeys[address]
-
-      const witness = encode_witness(
-        SignatureHashType.ALL,
-        addressPrivateKey,
-        address,
-        transaction,
-        optUtxos,
-        index,
-        network,
-      )
-      return witness
     },
   )
 
@@ -497,6 +588,8 @@ export const getTransactionDetails = (transaction) => {
     isChangeTokenMetadata: false,
     isFreezeToken: false,
     isUnfreezeToken: false,
+    isCreateHtlc: false,
+    isSpendHtlc: false,
     isDelegateWithdraw: false,
   }
 
@@ -504,6 +597,12 @@ export const getTransactionDetails = (transaction) => {
 
   if (intent) {
     flags.isBridgeRequest = true
+  }
+
+  if (
+    JSONRepresentation?.inputs?.some((input) => input?.utxo?.type === 'Htlc')
+  ) {
+    flags.isSpendHtlc = true
   }
 
   JSONRepresentation?.inputs?.forEach((input) => {
@@ -573,6 +672,9 @@ export const getTransactionDetails = (transaction) => {
         break
       case 'DelegateStaking':
         flags.isDelegateStaking = true
+        break
+      case 'Htlc':
+        flags.isCreateHtlc = true
         break
       default:
         break

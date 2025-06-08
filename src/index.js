@@ -37,6 +37,9 @@ import {
   SignInternalTransaction,
   SignExternalTransactionPage,
   OrderSwapPage,
+  GenerateSecretPage,
+  SignBitcoinTransactionPage,
+  GetDataPage,
 } from '@Pages'
 
 import {
@@ -52,7 +55,6 @@ import {
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
-
 import reportWebVitals from './utils/reportWebVitals'
 
 import '@Assets/styles/constants.css'
@@ -194,15 +196,54 @@ const App = () => {
     }
 
     if (action === 'signTransaction') {
+      if (request.data.chain === 'bitcoin') {
+        if (!unlocked) {
+          setNextAfterUnlock({
+            route: '/wallet/Bitcoin/sign-transaction',
+            state: { action: 'signTransaction', request },
+          })
+          return
+        }
+        navigate('/wallet/Bitcoin/sign-transaction', {
+          state: { action: 'signTransaction', request },
+        })
+      } else {
+        if (!unlocked) {
+          setNextAfterUnlock({
+            route: '/wallet/Mintlayer/sign-external-transaction',
+            state: { action: 'signTransaction', request },
+          })
+          return
+        }
+        navigate('/wallet/Mintlayer/sign-external-transaction', {
+          state: { action: 'signTransaction', request },
+        })
+      }
+    }
+
+    if (action === 'requestSecretHash') {
       if (!unlocked) {
         setNextAfterUnlock({
-          route: '/wallet/Mintlayer/sign-external-transaction',
-          state: { action: 'signTransaction', request },
+          route: '/wallet/Mintlayer/generate-secret',
+          state: { action: 'requestSecretHash', request },
         })
         return
       }
-      navigate('/wallet/Mintlayer/sign-external-transaction', {
-        state: { action: 'signTransaction', request },
+      navigate('/wallet/Mintlayer/generate-secret', {
+        state: { action: 'requestSecretHash', request },
+      })
+    }
+
+    if (action === 'requestData') {
+      if (!unlocked) {
+        setNextAfterUnlock({
+          route: '/wallet/Mintlayer/get-data',
+          state: { action: 'getData', request },
+        })
+        return
+      }
+      navigate('/wallet/Mintlayer/get-data', {
+        state: { action: 'getData', request },
       })
     }
 
@@ -319,8 +360,20 @@ const App = () => {
           element={<SignInternalTransaction />}
         />
         <Route
+          path="/wallet/Bitcoin/sign-transaction"
+          element={<SignBitcoinTransactionPage />}
+        />
+        <Route
           path="/wallet/:coinType/sign-challenge"
           element={<SignChallengePage />}
+        />
+        <Route
+          path="/wallet/:coinType/generate-secret"
+          element={<GenerateSecretPage />}
+        />
+        <Route
+          path="/wallet/:coinType/get-data"
+          element={<GetDataPage />}
         />
         <Route
           path="/wallet/:coinType"

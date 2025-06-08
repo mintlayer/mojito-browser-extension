@@ -1,9 +1,9 @@
 /* eslint-disable no-undef */
 import './ConnectionPage.css'
 import { useLocation } from 'react-router-dom'
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 import { AccountContext } from '@Contexts'
-import { Button } from '@BasicComponents'
+import { Button, Toggle } from '@BasicComponents'
 import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
 
 const storage =
@@ -23,10 +23,15 @@ const runtime =
 export const ConnectionPage = () => {
   const { state: external_state } = useLocation()
   const { addresses } = useContext(AccountContext)
-  const website = 'example.com' // This should be replaced with the actual website name or URL
+  const website = 'Unknown Website' // This should be replaced with the actual website name or URL
+  const [provideBitcoinData, setProvideBitcoinData] = useState(false)
 
   const state = external_state
   const origin = state?.request?.origin || website
+  const networkType = state?.request?.networkType || 'mainnet'
+  const permissions = state?.request?.permissions || []
+
+  const requireBTC = permissions.includes('bitcoin')
 
   const connectButtonExtraStyles = ['connectButton']
 
@@ -46,6 +51,35 @@ export const ConnectionPage = () => {
           receiving: addresses?.mlTestnetAddresses?.mlReceivingAddresses,
           change: addresses?.mlTestnetAddresses?.mlChangeAddresses,
         },
+      },
+      addressesByChain: {
+        mintlayer: {
+          ...(networkType === 'mainnet'
+              ? {
+                receiving: addresses?.mlMainnetAddresses?.mlReceivingAddresses,
+                change: addresses?.mlMainnetAddresses?.mlChangeAddresses,
+              }
+              : {
+                receiving: addresses?.mlTestnetAddresses?.mlReceivingAddresses,
+                change: addresses?.mlTestnetAddresses?.mlChangeAddresses,
+              }
+          ),
+        },
+        ...(provideBitcoinData && {
+          bitcoin: {
+            publicKeys: [addresses?.btcPublicKey],
+            ...(networkType === 'mainnet'
+                ? {
+                  receiving: [addresses?.btcMainnetAddress],
+                  change: [addresses?.btcMainnetAddress],
+                }
+                : {
+                  receiving: [addresses?.btcTestnetAddress],
+                  change: [addresses?.btcTestnetAddress],
+                }
+            ),
+          },
+        }),
       },
       timestamp: Date.now(),
     }
@@ -135,12 +169,39 @@ export const ConnectionPage = () => {
       </div>
 
       <div className="connect-page__content">
-        <ul className="connect-page__permissions">
-          <IconShield className="connect-page__icon" />
-          <li>View your public addresses</li>
-          <li>Request transaction signing</li>
-          <li>Track connection status</li>
-        </ul>
+        <div>
+          <ul className="connect-page__permissions">
+            <IconShield className="connect-page__icon" />
+            <li>View your public addresses</li>
+            <li>Request transaction signing</li>
+            <li>Track connection status</li>
+          </ul>
+
+          {requireBTC && (
+            <>
+              <div className="connect-page__bitcoin-section">
+                <div className="connect-page__bitcoin-toggle">
+                  <div>Provide Bitcoin data (addresses AND public keys)</div>
+                  <Toggle
+                    label="Provide Bitcoin data (addresses AND public keys)"
+                    name="provideBitcoinData"
+                    toggled={provideBitcoinData}
+                    onClick={setProvideBitcoinData}
+                  />
+                </div>
+
+                <div className="connect-page__info-block">
+                  <div className="connect-page__info-icon">i</div>
+                  <p className="connect-page__info-text">
+                    <strong>Note:</strong> This option is mandatory when connecting
+                    to HTLC Atomic Swaps dApps. It provides both Bitcoin addresses
+                    and public keys required for cross-chain transactions.
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* // TODO: Make this work */}
         {/* <label className="connect-page__remember">

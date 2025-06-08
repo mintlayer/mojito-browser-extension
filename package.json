@@ -13,8 +13,10 @@
     "bluebird": "^3.7.2",
     "buffer": "^6.0.3",
     "canvas": "^3.1.0",
+    "crypto-browserify": "^3.12.1",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
+    "ecpair": "2.1.0",
     "decimal.js": "^10.6.0",
     "jest-webgl-canvas-mock": "^2.5.3",
     "konva": "^9.3.20",
@@ -173,7 +175,6 @@
     "@types/node": "^22.15.24",
     "@types/tiny-secp256k1": "^2.0.1",
     "dotenv-webpack": "^8.1.0",
-    "ecpair": "^2.1.0",
     "env-cmd": "^10.1.0",
     "fake-indexeddb": "^6.0.1",
     "gh-pages": "^6.3.0",
@@ -185,6 +186,7 @@
     "pretty-quick": "^4.1.1",
     "react-app-rewire-alias": "^1.1.7",
     "react-scripts": "5.0.1",
+    "vm-browserify": "^1.1.2",
     "wallet-address-validator": "^0.2.4",
     "webextension-polyfill": "^0.12.0"
   }

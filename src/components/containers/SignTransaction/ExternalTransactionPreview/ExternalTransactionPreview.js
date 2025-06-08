@@ -4,6 +4,56 @@ import './ExternalTransactionPreview.css'
 
 import { AccountContext, SettingsContext } from '@Contexts'
 
+// Error Boundary Component for TransactionPreview
+class TransactionPreviewErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('TransactionPreview error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="transactionPreview">
+          <div className="preview-section summary">
+            <div className="preview-section-header">
+              <h3>Transaction Preview</h3>
+            </div>
+            <div className="transactionDetails">
+              <div className="signTxSection">
+                <h4>Unable to display transaction details</h4>
+                <p>An error occurred while parsing the transaction data. Please try again or contact support.</p>
+              </div>
+              {this.props.basicInfo && (
+                <>
+                  <div className="signTxSection">
+                    <h4>Request from:</h4>
+                    <p>{this.props.basicInfo.origin || 'Unknown'}</p>
+                  </div>
+                  <div className="signTxSection">
+                    <h4>Request id:</h4>
+                    <p>{this.props.basicInfo.requestId || 'Unknown'}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
 const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
   const inputWithToken = inputs.find(
     (input) => input.utxo?.value?.type === 'TokenV1',
@@ -12,12 +62,15 @@ const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
     const tokenId = inputWithToken.utxo.value.token_id
     return outputs.find(
       (output) =>
-        output.value.token_id === tokenId &&
+        output.value?.token_id === tokenId &&
+        output.destination &&
         !requiredAddresses.includes(output.destination),
     )
   }
   return outputs.find(
-    (output) => !requiredAddresses.includes(output.destination),
+    (output) =>
+      output.destination &&
+      !requiredAddresses.includes(output.destination),
   )
 }
 
@@ -44,8 +97,13 @@ const RequestDetails = ({ transactionData }) => {
   )
 }
 
-const NetworkFee = ({ fee }) => {
-  if (!fee) return ''
+const NetworkFee = ({ transactionData }) => {
+  let fee
+  if(transactionData.data.txData.JSONRepresentation.fee) {
+    fee = transactionData.data.txData.JSONRepresentation.fee.decimal
+  } else {
+    fee = 1
+  }
   return (
     <div className="signTxSection">
       <h4>Network fee:</h4>
@@ -59,10 +117,13 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
   const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
-    (input) => input.utxo.value.type === 'TokenV1',
+    (input) => input.utxo?.value?.type === 'TokenV1',
   )
   const tokenId = inputWithToken ? inputWithToken?.utxo.value.token_id : null
-  const title = inputWithToken ? 'Transfer token' : 'Transfer coins'
+
+  // Check if this is an NFT transfer by looking at the input type
+  const isNftTransfer = inputWithToken && inputWithToken.utxo?.type === 'IssueNft'
+  const title = isNftTransfer ? 'Transfer NFT' : inputWithToken ? 'Transfer token' : 'Transfer coins'
 
   const relevantOutput = findRelevantOutput(
     JSONRepresentation.inputs,
@@ -70,12 +131,36 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
     requiredAddresses,
   )
 
+  // If no relevant output found, try to find any output with the token ID
+  const fallbackOutput = !relevantOutput && inputWithToken
+    ? JSONRepresentation.outputs.find(output => output.value?.token_id === tokenId)
+    : null
+
+  const outputToUse = relevantOutput || fallbackOutput
+
+  if (!outputToUse) {
+    return (
+      <div className="transactionDetails">
+        <EstimatedChanges action={title} />
+        <div className="signTxSection">
+          <p>Unable to determine transfer details</p>
+          {inputWithToken && (
+            <>
+              <h4>Token id:</h4>
+              <p>{tokenId}</p>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="transactionDetails">
       <EstimatedChanges action={title} />
       <div className="signTxSection">
         <h4>Destination:</h4>
-        <p>{relevantOutput.destination}</p>
+        <p>{outputToUse.destination || 'Unknown'}</p>
         {inputWithToken && (
           <>
             <h4>Token id:</h4>
@@ -83,10 +168,8 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
           </>
         )}
         <h4>Amount:</h4>
-        <p>{relevantOutput.value.amount.decimal}</p>
+        <p>{outputToUse.value?.amount?.decimal || 'Unknown'}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -111,8 +194,6 @@ const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
         <h4>Token id:</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -135,8 +216,6 @@ const ChangeTokenMetadata = ({ transactionData }) => {
         <h4>New metadata:</h4>
         <p>{inputWithToken.input.new_metadata_uri}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -159,8 +238,6 @@ const ChangeTokenAuthority = ({ transactionData }) => {
         <h4>New authority:</h4>
         <p>{inputWithToken.input.new_authority}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -180,8 +257,6 @@ const LockTokenSupply = ({ transactionData }) => {
         <h4>Token id:</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -209,8 +284,6 @@ const BurnToken = ({ transactionData }) => {
           <h4>Mintlayer Coin</h4>
         </div>
       )}
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -219,8 +292,20 @@ const ConcludeOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const fee = JSONRepresentation.fee.decimal || 0
   const inputWithOrderID = JSONRepresentation.inputs.find(
-    (input) => input.input.order_id,
+    (input) => input.input?.order_id,
   )
+
+  if (!inputWithOrderID) {
+    return (
+      <div className="transactionDetails">
+        <EstimatedChanges action="Conclude order" />
+        <div className="signTxSection">
+          <p>Unable to determine order details</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="transactionDetails">
       <EstimatedChanges action="Conclude order" />
@@ -228,8 +313,6 @@ const ConcludeOrder = ({ transactionData }) => {
         <h4>Order ID:</h4>
         <p>{inputWithOrderID.input.order_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -238,8 +321,20 @@ const FillOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const fee = JSONRepresentation.fee.decimal || 0
   const inputWithOrderID = JSONRepresentation.inputs.find(
-    (input) => input.input.order_id,
+    (input) => input.input?.order_id,
   )
+
+  if (!inputWithOrderID) {
+    return (
+      <div className="transactionDetails">
+        <EstimatedChanges action="Fill order" />
+        <div className="signTxSection">
+          <p>Unable to determine order details</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="transactionDetails">
       <EstimatedChanges action="Fill order" />
@@ -247,8 +342,6 @@ const FillOrder = ({ transactionData }) => {
         <h4>Order id:</h4>
         <p>{inputWithOrderID.input.order_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -281,8 +374,6 @@ const CreateOrder = ({ transactionData }) => {
         <h4>Initially given:</h4>
         <p>{outputWithCreateOrder.initially_given.decimal}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -320,8 +411,6 @@ const IssueToken = ({ transactionData }) => {
           </>
         )}
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -340,8 +429,6 @@ const IssueNft = ({ transactionData }) => {
         <h4>Destination:</h4>
         <p>{outputWithIssueNft.destination}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -360,8 +447,6 @@ const DataDeposit = ({ transactionData }) => {
         <h4>Data:</h4>
         <p>{outputWithDataDeposit.data}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -380,8 +465,6 @@ const CreateDelegationId = ({ transactionData }) => {
         <h4>Pool Id:</h4>
         <p>{outputWithDataDeposit.pool_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -402,8 +485,6 @@ const DelegateStaking = ({ transactionData }) => {
         <h4>Amount:</h4>
         <p>{outputWithDataDeposit.amount.decimal}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
     </div>
   )
 }
@@ -424,8 +505,62 @@ const DelegateWithdraw = ({ transactionData }) => {
         <h4>Amount:</h4>
         <p>{inputWithWithdraw.amount.decimal}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const CreateHtlc = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+
+  const outputWithHtlc = JSONRepresentation.outputs.find(
+    (output) => output.type === 'Htlc',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Create HTLC" />
+      <div className="signTxSection">
+        <h4>Amount:</h4>
+        <p>{outputWithHtlc.value.amount.decimal}</p>
+        <h4>Secret Hash:</h4>
+        <p>{outputWithHtlc.htlc.secret_hash.hex}</p>
+        <h4>Spend Key:</h4>
+        <p>{outputWithHtlc.htlc.spend_key}</p>
+        <h4>Refund Key:</h4>
+        <p>{outputWithHtlc.htlc.refund_key}</p>
+        <h4>Refund Timelock:</h4>
+        <p>
+          {outputWithHtlc.htlc.refund_timelock.type}:{' '}
+          {outputWithHtlc.htlc.refund_timelock.content}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+const SpendHtlc = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+
+  const inputWithHtlc = JSONRepresentation.inputs.find(
+    (input) => input.utxo?.type === 'Htlc',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Spend HTLC" />
+      <div className="signTxSection">
+        <h4>Amount:</h4>
+        <p>{inputWithHtlc.utxo.value.amount.decimal}</p>
+        <h4>Secret Hash:</h4>
+        <p>{inputWithHtlc.utxo.htlc.secret_hash.hex}</p>
+        <h4>Spend Key:</h4>
+        <p>{inputWithHtlc.utxo.htlc.spend_key}</p>
+        <h4>Refund Key:</h4>
+        <p>{inputWithHtlc.utxo.htlc.refund_key}</p>
+        <h4>Refund Timelock:</h4>
+        <p>
+          {inputWithHtlc.utxo.htlc.refund_timelock.type}:{' '}
+          {inputWithHtlc.utxo.htlc.refund_timelock.content}
+        </p>
+      </div>
     </div>
   )
 }
@@ -435,10 +570,10 @@ const BridgeRequest = ({ transactionData }) => {
   const fee = JSONRepresentation.fee.decimal || 0
 
   const inputsWithTokens = JSONRepresentation.inputs.filter(
-    (input) => input.utxo.value.token_id,
+    (input) => input.utxo?.value?.token_id,
   )
   const outputsWithTokens = JSONRepresentation.outputs.filter(
-    (output) => output.value.token_id,
+    (output) => output.value?.token_id,
   )
 
   return (
@@ -446,12 +581,98 @@ const BridgeRequest = ({ transactionData }) => {
       <EstimatedChanges action="make a Bridge request" />
       <div className="signTxSection">
         <h4>Token id:</h4>
-        <p>{inputsWithTokens[0].utxo.value.token_id}</p>
+        <p>{inputsWithTokens[0]?.utxo?.value?.token_id || 'Unknown'}</p>
         <h4>Amount:</h4>
-        <p>{outputsWithTokens[0].value.amount.decimal}</p>
+        <p>{outputsWithTokens[0]?.value?.amount?.decimal || 'Unknown'}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const BurnCoin = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+
+  const outputWithBurnCoin = JSONRepresentation.outputs.find(
+    (output) => output.type === 'BurnCoin',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Burn coin" />
+      <div className="signTxSection">
+        <h4>Amount:</h4>
+        <p>{outputWithBurnCoin.value.amount.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const TokenMint = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+
+  const inputWithMint = JSONRepresentation.inputs.find(
+    (input) => input.input.command === 'MintTokens',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Mint tokens" />
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithMint.input.token_id}</p>
+        <h4>Amount:</h4>
+        <p>{inputWithMint.input.amount.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const TokenUnmint = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+
+  const inputWithUnmint = JSONRepresentation.inputs.find(
+    (input) => input.input.command === 'UnmintTokens',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Unmint tokens" />
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithUnmint.input.token_id}</p>
+        <h4>Amount:</h4>
+        <p>{inputWithUnmint.input.amount.decimal}</p>
+      </div>
+    </div>
+  )
+}
+
+const TokenMintWithLock = ({ transactionData, requiredAddresses }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+
+  const outputWithLock = JSONRepresentation.outputs.find(
+    (output) => output.type === 'LockThenTransfer',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Mint tokens with lock" />
+      <div className="signTxSection">
+        <h4>Destination:</h4>
+        <p>{outputWithLock.destination}</p>
+        <h4>Amount:</h4>
+        <p>{outputWithLock.value.amount.decimal}</p>
+        {outputWithLock.value.token_id && (
+          <>
+            <h4>Token id:</h4>
+            <p>{outputWithLock.value.token_id}</p>
+          </>
+        )}
+        <h4>Lock type:</h4>
+        <p>{outputWithLock.lock.type}</p>
+        {outputWithLock.lock.content && (
+          <>
+            <h4>Lock details:</h4>
+            <p>{JSON.stringify(outputWithLock.lock.content)}</p>
+          </>
+        )}
+      </div>
     </div>
   )
 }
@@ -515,7 +736,30 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-        {/* TODO: BURN COIN */}
+        {flags.isBurnCoin && (
+          <BurnCoin
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+        {flags.isTokenMint && (
+          <TokenMint
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+        {flags.isTokenUnmint && (
+          <TokenUnmint
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+        {flags.isTokenMintWithLock && (
+          <TokenMintWithLock
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
         {flags.isConcludeOrder && (
           <ConcludeOrder
             transactionData={transactionData}
@@ -576,16 +820,38 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
+        {flags.isCreateHtlc && (
+          <CreateHtlc
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+        {flags.isSpendHtlc && (
+          <SpendHtlc
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+
+        <NetworkFee transactionData={transactionData} />
+        <RequestDetails transactionData={transactionData} />
       </div>
     </div>
   )
 }
 
 const ExternalTransactionPreview = ({ data }) => {
+  const basicInfo = {
+    origin: data?.request?.origin,
+    requestId: data?.request?.requestId
+  }
+
   return (
-    <div className="transactionPreview">
-      <SummaryView data={data} />
-    </div>
+    <TransactionPreviewErrorBoundary basicInfo={basicInfo}>
+      <div className="transactionPreview">
+        <SummaryView data={data} />
+      </div>
+    </TransactionPreviewErrorBoundary>
   )
 }
 

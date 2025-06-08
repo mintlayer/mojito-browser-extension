@@ -51,6 +51,8 @@
                   pendingRequest: {
                     origin,
                     requestId: message.requestId,
+                    // networkType: message.params.networkType,
+                    // permission: message.params.permission,
                     action: 'connect',
                   },
                 },
@@ -150,8 +152,88 @@
           api.windows.update(popupWindowId, { focused: true })
           sendResponse({ error: 'Transaction signing window already open' })
         }
+      } else if (message.method === 'requestSecretHash') {
+        if (!connectedSites[origin]) {
+          sendResponse({ error: 'Not connected. Call connect first.' })
+        } else if (popupWindowId === false) {
+          pendingResponses.set(message.requestId, sendResponse)
+          api.windows.create(
+            {
+              url: api.runtime.getURL('popup.html'),
+              type: 'popup',
+              width: 800,
+              height: 600,
+              focused: true,
+            },
+            (win) => {
+              popupWindowId = win.id
+              api.storage.local.set(
+                {
+                  pendingRequest: {
+                    origin,
+                    requestId: message.requestId,
+                    action: 'requestSecretHash',
+                    data: message.params || {},
+                  },
+                },
+                () => {
+                  if (api.runtime.lastError) {
+                    console.error(
+                      '[Mintlayer] Storage set error:',
+                      api.runtime.lastError,
+                    )
+                  }
+                },
+              )
+            },
+          )
+          return true
+        } else if (typeof popupWindowId === 'number') {
+          api.windows.update(popupWindowId, { focused: true })
+          sendResponse({ error: 'Transaction signing window already open' })
+        }
       } else if (message.method === 'version') {
         sendResponse({ result: api.runtime.getManifest().version })
+      } else if (message.method === 'getData') {
+        if (!connectedSites[origin]) {
+          sendResponse({ error: 'Not connected. Call connect first.' })
+        } else if (popupWindowId === false) {
+          pendingResponses.set(message.requestId, sendResponse)
+          api.windows.create(
+            {
+              url: api.runtime.getURL('popup.html'),
+              type: 'popup',
+              width: 800,
+              height: 600,
+              focused: true,
+            },
+            (win) => {
+              popupWindowId = win.id
+              api.storage.local.set(
+                {
+                  pendingRequest: {
+                    origin,
+                    requestId: message.requestId,
+                    action: 'requestData',
+                    data: message.params || {},
+                  },
+                },
+                () => {
+                  if (api.runtime.lastError) {
+                    console.error(
+                      '[Mintlayer] Storage set error:',
+                      api.runtime.lastError,
+                    )
+                  }
+                },
+              )
+            },
+          )
+          return true
+        } else if (typeof popupWindowId === 'number') {
+          api.windows.update(popupWindowId, { focused: true })
+          sendResponse({ error: 'Transaction signing window already open' })
+        }
       } else if (message.method === 'getSession') {
         const sessionOrigin = message.origin || sender.origin
         const session = connectedSites[sessionOrigin]
@@ -204,6 +286,18 @@
         storedSendResponse({ result, error })
         pendingResponses.delete(requestId)
       } else if (result && message.method === 'signChallenge_reject') {
+        storedSendResponse({ result, error })
+        pendingResponses.delete(requestId)
+      } else if (result && message.method === 'requestSecretHash_approve') {
+        storedSendResponse({ result, error })
+        pendingResponses.delete(requestId)
+      } else if (result && message.method === 'requestSecretHash_reject') {
+        storedSendResponse({ result, error })
+        pendingResponses.delete(requestId)
+      } else if (result && message.method === 'getData_approve') {
+        storedSendResponse({ result, error })
+        pendingResponses.delete(requestId)
+      } else if (result && message.method === 'getData_reject') {
         storedSendResponse({ result, error })
         pendingResponses.delete(requestId)
       } else {

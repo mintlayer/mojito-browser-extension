@@ -1,0 +1,128 @@
+/* SignTransaction.css */
+.SignTransaction {
+  background-color: #ffffff;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
+  overflow: scroll;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.SignTransaction .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.signTxTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.SignTransaction .SignTxContent {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 80%;
+}
+
+.SignTransaction .mock_selector {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  margin-bottom: 20px;
+  position: absolute;
+  bottom: 30px;
+  left: 1px;
+  opacity: 0.1;
+  overflow: scroll;
+  right: 1px;
+}
+
+.SignTransaction .mock_selector:hover {
+  opacity: 1;
+}
+
+.SignTransaction .mock_selector div {
+  background-color: #f3f4f6;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-right: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.SignTransaction .mock_selector div:hover {
+  background-color: #e5e7eb;
+}
+
+.SignTransaction .transaction-preview-wrapper {
+  height: 100%;
+  overflow: scroll;
+  width: 100%;
+}
+
+.SignTransaction .transaction-raw-wrapper {
+  background-color: #f9fafb;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #4b5563;
+  word-break: break-all;
+  unicode-bidi: embed;
+  font-family: monospace;
+  white-space: pre;
+  height: 100%;
+  overflow: scroll;
+  width: 100%;
+}
+
+.SignTransaction .footer {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  bottom: 0;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.modal-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 5px;
+}
+
+.buttonSignTransaction {
+  width: 50%;
+}

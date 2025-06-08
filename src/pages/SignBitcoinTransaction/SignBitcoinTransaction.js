@@ -1,19 +1,18 @@
 /* eslint-disable no-undef */
 import { useLocation } from 'react-router-dom'
-import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 
-import './SignExternalTransaction.css'
+import './SignBitcoinTransaction.css'
 import { useState, useContext } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
 import { AppInfo } from '@Constants'
 import { Account } from '@Entities'
-import { ML } from '@Cryptos'
 import { AccountContext, SettingsContext } from '@Contexts'
+import { BTCTransaction } from '@Cryptos'
 
 const storage =
   typeof browser !== 'undefined' && browser.storage
@@ -29,7 +28,7 @@ const runtime =
       ? chrome.runtime
       : null
 
-export const SignTransactionPage = () => {
+export const SignBitcoinTransactionPage = () => {
   const { state: external_state } = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
@@ -42,13 +41,16 @@ export const SignTransactionPage = () => {
 
   const state = external_state || MOCKS[selectedMock]
 
+  const revealed_secret =
+    state?.request?.data?.txData?.JSONRepresentation.secret
+
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
-  const currentMlAddresses =
+  const currentBtcAddress =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+      ? addresses.btcMainnetAddress
+      : addresses.btcTestnetAddress
 
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
@@ -56,93 +58,150 @@ export const SignTransactionPage = () => {
     setIsModalOpen(true) // Open the modal
   }
 
+  const submitCreate = async () => {
+    const pass = password
+
+    const transactionJSONrepresentation =
+      state?.request?.data?.txData?.JSONRepresentation
+    console.log('transactionJSONrepresentation', transactionJSONrepresentation)
+
+    const { WIF } = await Account.unlockAccount(accountID, pass)
+
+    const htlc = await BTCTransaction.buildHTLCAndFundingAddress({
+      receiverPubKey: transactionJSONrepresentation.recipientPublicKey,
+      senderPubKey: transactionJSONrepresentation.refundPublicKey,
+      senderAddress: transactionJSONrepresentation.refund,
+      amount: transactionJSONrepresentation.amount, // atoms!!
+      // lock: transactionJSONrepresentation.lock,
+      lock: transactionJSONrepresentation.timeoutBlocks,
+      secretHashHex: JSON.parse(transactionJSONrepresentation.secretHash)
+        .secret_hash_hex,
+      wif: WIF,
+      networkType,
+      fundingKeyPair: {
+        publicKey: Buffer.from(
+          transactionJSONrepresentation.refundPublicKey,
+          'hex',
+        ),
+      }, // TODO: take another key from the wallet
+    })
+
+    console.log('htlc', htlc)
+
+    // address to send funds to
+    const address = htlc.p2wshAddress
+
+    const [, txHex, txId] = await BTCTransaction.buildTransaction({
+      to: address,
+      amount: parseInt(transactionJSONrepresentation.amount), // atoms
+      fee: 500, // TODO: update calculation of fee
+      wif: WIF,
+      from: currentBtcAddress,
+      networkType,
+    })
+
+    console.log('tx', txHex)
+
+    console.log('WIF', WIF)
+    console.log('network', network)
+
+    // const walletPrivKeys = ML.getWalletPrivKeysList(
+    //   privKey,
+    //   networkType,
+    //   changeAddressesLength,
+    // )
+
+    // const keysList = {
+    //   ...walletPrivKeys.mlReceivingPrivKeys,
+    //   ...walletPrivKeys.mlChangePrivKeys,
+    // }
+
+    const requestId = state?.request?.requestId
+    const method = 'signTransaction_approve'
+    const result = {
+      htlcAddress: htlc.p2wshAddress,
+      transactionId: txId,
+      signedTxHex: txHex,
+      redeemScript: htlc.redeemScriptHex,
+    }
+    console.log('transactionHex', txHex)
+    // eslint-disable-next-line no-undef
+    runtime.sendMessage(
+      {
+        action: 'popupResponse',
+        method,
+        requestId,
+        origin,
+        result,
+      },
+      () => {
+        // eslint-disable-next-line no-undef
+        storage.local.remove('pendingRequest', () => {
+          window.close()
+        })
+      },
+    )
+  }
+
+  const submitSpend = async () => {
+    const pass = password
+
+    const transactionJSONrepresentation =
+      state?.request?.data?.txData?.JSONRepresentation
+    console.log('transactionJSONrepresentation', transactionJSONrepresentation)
+
+    const { WIF } = await Account.unlockAccount(accountID, pass)
+
+    const tx = await BTCTransaction.buildHtlcClaimTx({
+      network,
+      utxo: transactionJSONrepresentation.utxo,
+      toAddress: transactionJSONrepresentation.to,
+      redeemScriptHex: transactionJSONrepresentation.redeemScriptHex,
+      secretHex: revealed_secret || secret,
+      wif: WIF,
+    })
+
+    const requestId = state?.request?.requestId
+    const method = 'signTransaction_approve'
+    const result = {
+      signedTxHex: tx,
+    }
+    // eslint-disable-next-line no-undef
+    runtime.sendMessage(
+      {
+        action: 'popupResponse',
+        method,
+        requestId,
+        origin,
+        result,
+      },
+      () => {
+        // eslint-disable-next-line no-undef
+        storage.local.remove('pendingRequest', () => {
+          window.close()
+        })
+      },
+    )
+  }
+
   const handleModalSubmit = async () => {
     try {
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
-
-      const transactionBINrepresentation =
-        SignTxHelpers.getTransactionBINrepresentation(
-          transactionJSONrepresentation,
-          network,
-        )
-
-      const pass = password
-
-      const unlockedAccount = await Account.unlockAccount(accountID, pass)
-
-      const mlPrivKeys = unlockedAccount.mlPrivKeys
-
-      const privKey =
-        networkType === 'mainnet'
-          ? mlPrivKeys.mlMainnetPrivateKey
-          : mlPrivKeys.mlTestnetPrivateKey
-
-      const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
-
-      const walletPrivKeys = ML.getWalletPrivKeysList(
-        privKey,
-        networkType,
-        changeAddressesLength,
+      console.log(
+        'transactionJSONrepresentation',
+        transactionJSONrepresentation,
       )
 
-      const keysList = {
-        ...walletPrivKeys.mlReceivingPrivKeys,
-        ...walletPrivKeys.mlChangePrivKeys,
+      if (transactionJSONrepresentation.secretHash) {
+        await submitCreate()
+        return
       }
 
-      let intentEncode
-
-      if (state?.request?.data?.txData?.intent) {
-        const intent = state?.request?.data?.txData?.intent
-        intentEncode = SignTxHelpers.getTransactionIntent({
-          intent,
-          transactionBINrepresentation,
-          transactionJSONrepresentation,
-          addressesPrivateKeys: keysList,
-        })
+      if (!transactionJSONrepresentation.secretHash) {
+        await submitSpend()
+        return
       }
-
-      const transactionHex = SignTxHelpers.getTransactionHEX(
-        {
-          transactionBINrepresentation,
-          transactionJSONrepresentation,
-          addressesPrivateKeys: keysList,
-          secret: secret
-            ? new Uint8Array(Buffer.from(secret, 'hex'))
-            : undefined,
-        },
-        network,
-      )
-
-      const requestId = state?.request?.requestId
-      const method = 'signTransaction_approve'
-      let result
-      if (intentEncode) {
-        result = {
-          transactionHex,
-          intentEncode,
-        }
-      } else {
-        result = transactionHex
-      }
-      console.log('transactionHex', transactionHex)
-      // eslint-disable-next-line no-undef
-      runtime.sendMessage(
-        {
-          action: 'popupResponse',
-          method,
-          requestId,
-          origin,
-          result,
-        },
-        () => {
-          // eslint-disable-next-line no-undef
-          storage.local.remove('pendingRequest', () => {
-            window.close()
-          })
-        },
-      )
     } catch (error) {
       console.error('Error during transaction signing:', error)
       setIsModalOpen(false)
@@ -187,10 +246,6 @@ export const SignTransactionPage = () => {
     setSecret(value)
   }
 
-  const isHTLCClaim = state?.request?.data?.txData?.JSONRepresentation?.inputs?.some(
-    (input) => input?.utxo?.type === 'Htlc',
-  )
-
   return (
     <div className="SignTransaction">
       <div className="header">
@@ -222,7 +277,8 @@ export const SignTransactionPage = () => {
           <>
             {mode === 'preview' && (
               <div className="transaction-preview-wrapper">
-                <SignTransaction.ExternalTransactionPreview data={state} />
+                <SignTransaction.JsonPreview data={state} />
+                {/*<SignTransaction.TransactionPreview data={state} />*/}
               </div>
             )}
             {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
@@ -242,7 +298,7 @@ export const SignTransactionPage = () => {
           onClickHandle={handleApprove}
           extraStyleClasses={extraButtonStyles}
         >
-          Approve and return to page
+          Approve and return to page.
         </Button>
       </div>
 
@@ -257,8 +313,10 @@ export const SignTransactionPage = () => {
               placeholder="Enter your password"
               autoFocus
             />
-            {
-              isHTLCClaim && (
+            {['spendHtlc'].includes(
+              state?.request?.data?.txData?.JSONRepresentation.type,
+            ) &&
+              !revealed_secret && (
                 <>
                   HTLC Secret:
                   <TextField
@@ -268,8 +326,7 @@ export const SignTransactionPage = () => {
                     autoFocus
                   />
                 </>
-              )
-            }
+              )}
             <div className="modal-buttons">
               <Button
                 onClickHandle={() => setIsModalOpen(false)}
@@ -292,4 +349,4 @@ export const SignTransactionPage = () => {
   )
 }
 
-export default SignTransactionPage
+export default SignBitcoinTransactionPage

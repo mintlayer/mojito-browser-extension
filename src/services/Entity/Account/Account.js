@@ -210,6 +210,7 @@ const unlockAccount = async (id, password) => {
       addresses.btcMainnetAddress = BTC_ADDRESS_TYPE_MAP[
         account.walletType
       ].getAddressFromPubKey(pubKey, mainnetNetwork)
+      addresses.btcMainnetPublicKey = pubKey
       addresses.btcTestnetAddress = BTC_ADDRESS_TYPE_MAP[
         account.walletType
       ].getAddressFromPubKey(pubKey, testnetNetwork)
