@@ -1,10 +1,12 @@
 /* eslint-disable no-undef */
-import { Client } from '@mintlayer/sdk'
+import { Client, Signer } from '@mintlayer/sdk'
 import { useContext, useEffect, useState } from 'react'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 class InMemoryAccountProvider {
+  addresses = {}
+
   constructor(addresses) {
     this.addresses = {
       testnet: {
@@ -26,8 +28,20 @@ class InMemoryAccountProvider {
     return
   }
 
-  async request(params) {
+  async request(method, params) {
     console.log('params', params)
+    const private_keys = this.private_keys || {}
+    const signer = new Signer(private_keys) // TODO: insert private keys here
+    if (method === 'signTransaction') {
+      const { txData } = params
+      if (!txData) {
+        throw new Error('Transaction is required for signing')
+      }
+      const signedTransaction = await signer.sign(txData)
+      console.log('signedTransaction', signedTransaction)
+      return signedTransaction
+    }
+
     throw new Error('Signing not supported in InMemoryAccountProvider')
   }
 }
