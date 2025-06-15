@@ -3,7 +3,6 @@ import { Client } from '@mintlayer/sdk'
 import { useContext, useEffect, useState } from 'react'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
-import { useNavigate } from 'react-router-dom'
 
 class InMemoryAccountProvider {
   constructor(addresses) {
@@ -28,6 +27,7 @@ class InMemoryAccountProvider {
   }
 
   async request(params) {
+    console.log('params', params)
     throw new Error('Signing not supported in InMemoryAccountProvider')
   }
 }
@@ -37,7 +37,6 @@ export const SignTransactionPage = () => {
   const [to, setTo] = useState('')
   const [amount, setAmount] = useState('')
 
-  const navigate = useNavigate()
   const { addresses } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
@@ -69,19 +68,11 @@ export const SignTransactionPage = () => {
   }, [currentMlAddresses.mlReceivingAddresses])
 
   const handleSend = async () => {
-    const transaction = await client.buildTransaction({
-      type: 'Transfer',
-      params: {
-        to: to,
-        amount: amount, // Example amount in satoshis
-      },
+    const transaction_signed = await client.transfer({
+      to: to,
+      amount: amount,
     })
-    navigate('/wallet/Mintlayer/sign-transaction', {
-      state: {
-        action: 'signTransaction',
-        request: { action: 'signTransaction', data: { txData: transaction } },
-      },
-    })
+    console.log('transaction_signed', transaction_signed)
   }
 
   return (
