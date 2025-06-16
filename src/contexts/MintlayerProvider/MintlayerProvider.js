@@ -90,21 +90,49 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setCurrentNetworkType(networkType)
     setCurrentHeight(onlineHeight)
 
-    const addresses_data_receive = await Promise.all(
-      currentMlAddresses.mlReceivingAddresses.map((address) =>
-        Mintlayer.getAddressData(address),
-      ),
+    const addresses_data_receive_res = await fetch(
+      'https://api.mintini.app/batch_data',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ids: currentMlAddresses.mlReceivingAddresses,
+          type: '/address/:address',
+          network: currentNetworkType === 'mainnet' ? 0 : 1,
+        }),
+      },
     )
-    const addresses_data_change = await Promise.all(
-      currentMlAddresses.mlChangeAddresses.map((address) =>
-        Mintlayer.getAddressData(address),
-      ),
+
+    const addresses_data_receive_data = await addresses_data_receive_res.json()
+
+    const addresses_data_change_res = await fetch(
+      'https://api.mintini.app/batch_data',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ids: currentMlAddresses.mlChangeAddresses,
+          type: '/address/:address',
+          network: currentNetworkType === 'mainnet' ? 0 : 1,
+        }),
+      },
     )
+
+    const addresses_data_change_data = await addresses_data_change_res.json()
+
+    const addresses_data_receive = addresses_data_receive_data.results
+
+    const addresses_data_change = addresses_data_change_data.results
+
     const addresses_data = [...addresses_data_receive, ...addresses_data_change]
 
     const first_unused_change_address_index = addresses_data_change.findIndex(
       (address_data) => {
-        const { unused } = JSON.parse(address_data)
+        const { unused } = address_data
         return unused === true
       },
     )
@@ -114,7 +142,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     const first_unused_receive_address_index = addresses_data_receive.findIndex(
       (address_data) => {
-        const { unused } = JSON.parse(address_data)
+        const { unused } = address_data
         return unused === true
       },
     )
@@ -135,41 +163,48 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const nftBalances = {}
     const transaction_ids = []
     const non_zero_addresses = []
-    addresses_data.forEach((address_data, index) => {
-      const { coin_balance, locked_coin_balance, transaction_history, tokens } =
-        JSON.parse(address_data)
-      available_balance = coin_balance
-        ? available_balance + BigInt(coin_balance.atoms)
-        : available_balance
-      locked_balance = locked_coin_balance
-        ? locked_balance + BigInt(locked_coin_balance.atoms)
-        : locked_balance
-      transaction_ids.push(...transaction_history)
 
-      if (coin_balance !== 0) {
-        if (
-          coin_balance.atoms !== '0' ||
-          (tokens.length > 0 &&
-            tokens.some((token) => token.amount.atoms !== '0'))
-        ) {
-          non_zero_addresses.push(addressList[index])
+    addresses_data
+      .filter(({ error }) => !error)
+      .forEach((address_data, index) => {
+        const {
+          coin_balance,
+          locked_coin_balance,
+          transaction_history,
+          tokens,
+        } = address_data
+        available_balance = coin_balance
+          ? available_balance + BigInt(coin_balance.atoms)
+          : available_balance
+        locked_balance = locked_coin_balance
+          ? locked_balance + BigInt(locked_coin_balance.atoms)
+          : locked_balance
+        transaction_ids.push(...transaction_history)
+
+        if (coin_balance !== 0) {
+          if (
+            coin_balance.atoms !== '0' ||
+            (tokens.length > 0 &&
+              tokens.some((token) => token.amount.atoms !== '0'))
+          ) {
+            non_zero_addresses.push(addressList[index])
+          }
         }
-      }
 
-      if (tokens) {
-        tokens.forEach((token) => {
-          const { token_id, amount } = token
-          if (!tokenBalances[token_id]) {
-            tokenBalances[token_id] = 0
-          }
-          if (amount.decimal === '1' && amount.atoms === '1') {
-            nftBalances[token_id] = 1
-          } else {
-            tokenBalances[token_id] += Number(amount.decimal)
-          }
-        })
-      }
-    })
+        if (tokens) {
+          tokens.forEach((token) => {
+            const { token_id, amount } = token
+            if (!tokenBalances[token_id]) {
+              tokenBalances[token_id] = 0
+            }
+            if (amount.decimal === '1' && amount.atoms === '1') {
+              nftBalances[token_id] = 1
+            } else {
+              tokenBalances[token_id] += Number(amount.decimal)
+            }
+          })
+        }
+      })
 
     const { tokensData: nftData, excludedTokenIds } =
       await Mintlayer.getNftsData(Object.keys(nftBalances))
@@ -222,10 +257,21 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setCurrentAccountId(accountID)
 
     // fetch transactions data
-    const transactions = transaction_ids.map((txid) =>
-      Mintlayer.getTransactionData(txid),
-    )
-    const transactions_data = await Promise.all(transactions)
+    const batchTxDataRes = await fetch('https://api.mintini.app/batch_data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ids: transaction_ids,
+        type: '/transaction/:txid',
+        network: currentNetworkType === 'mainnet' ? 0 : 1,
+      }),
+    })
+
+    const batchTxData = await batchTxDataRes.json()
+
+    const transactions_data = batchTxData.results
 
     const parsedTransactions = ML.getParsedTransactions(
       transactions_data,
@@ -234,11 +280,11 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setTransactions(parsedTransactions)
     setFetchingTransactions(false)
 
-    const addressesWithDelegation = parsedTransactions
-      .filter((tx) => tx.type === 'CreateDelegationId')
-      .map((tx) => tx.delegationOwner)
-    const uniqueAddressesWithDelegation = [...new Set(addressesWithDelegation)]
-    await fetchDelegations(uniqueAddressesWithDelegation)
+    // const addressesWithDelegation = parsedTransactions
+    //   .filter((tx) => tx.type === 'CreateDelegationId')
+    //   .map((tx) => tx.delegationOwner)
+    // const uniqueAddressesWithDelegation = [...new Set(addressesWithDelegation)]
+    // await fetchDelegations(uniqueAddressesWithDelegation)
 
     // fetch utxos
     const accountName = account && account.name
@@ -246,16 +292,45 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-    const fetchedUtxos = await Mintlayer.getWalletUtxos(non_zero_addresses)
-    const fetchedSpendableUtxos =
-      await Mintlayer.getWalletSpendableUtxos(non_zero_addresses)
+    const batchAccountDataRes = await fetch('https://api.mintini.app/account', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        addresses: non_zero_addresses,
+        network: currentNetworkType === 'mainnet' ? 0 : 1,
+      }),
+    })
+
+    const batchAccountData = await batchAccountDataRes.json()
+
+    setMlDelegationsBalance(11) // TODO: get delegations balance from batchAccountData
+    setMlDelegationList(batchAccountData.delegations || [])
+
+    const allUtxos_res = await fetch('https://api.mintini.app/batch_data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ids: non_zero_addresses,
+        type: '/address/:address/all-utxos',
+        network: currentNetworkType === 'mainnet' ? 0 : 1,
+      }),
+    })
+
+    const allUtxos = await allUtxos_res.json()
+
+    const fetchedUtxos = allUtxos.results
+    const fetchedSpendableUtxos = batchAccountData.utxos
 
     const parsedUtxos = fetchedUtxos
-      .map((utxo) => JSON.parse(utxo))
+      .map((utxo) => utxo)
       .filter((utxo) => utxo.length > 0)
 
     const parsedSpendableUtxos = fetchedSpendableUtxos
-      .map((utxo) => JSON.parse(utxo))
+      .map((utxo) => utxo)
       .filter((utxo) => utxo.length > 0)
 
     const available = parsedSpendableUtxos
