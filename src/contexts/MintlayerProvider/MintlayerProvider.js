@@ -124,9 +124,37 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     const addresses_data_change_data = await addresses_data_change_res.json()
 
-    const addresses_data_receive = addresses_data_receive_data.results
+    const addresses_data_receive = addresses_data_receive_data.results.map((address) => {
+      if (address.error) {
+        return {
+          ...address,
+          coin_balance: { atoms: '0', decimal: '0' },
+          locked_coin_balance: { atoms: '0', decimal: '0' },
+          tokens: [],
+          unused: true,
+        }
+      }
+      return {
+        ...address,
+        unused: address.unused || false,
+      }
+    })
 
-    const addresses_data_change = addresses_data_change_data.results
+    const addresses_data_change = addresses_data_change_data.results.map((address) => {
+      if (address.error) {
+        return {
+          ...address,
+          coin_balance: { atoms: '0', decimal: '0' },
+          locked_coin_balance: { atoms: '0', decimal: '0' },
+          tokens: [],
+          unused: true,
+        }
+      }
+      return {
+        ...address,
+        unused: address.unused || false,
+      }
+    })
 
     const addresses_data = [...addresses_data_receive, ...addresses_data_change]
 
@@ -151,6 +179,14 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       currentMlAddresses.mlReceivingAddresses[
         first_unused_receive_address_index
       ]
+
+    console.log('{\n' +
+      '      change: first_unused_change_address,\n' +
+      '      receive: first_unused_receive_address,\n' +
+      '    }', {
+      change: first_unused_change_address,
+      receive: first_unused_receive_address,
+    })
 
     setUnusedAddresses({
       change: first_unused_change_address,
@@ -323,7 +359,24 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const allUtxos = await allUtxos_res.json()
 
     const fetchedUtxos = allUtxos.results
-    const fetchedSpendableUtxos = batchAccountData.utxos
+
+    const spendableUtxos_res = await fetch('https://api.mintini.app/batch_data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ids: non_zero_addresses,
+        type: '/address/:address/all-utxos',
+        network: currentNetworkType === 'mainnet' ? 0 : 1,
+      }),
+    })
+
+    const spendableUtxos = await spendableUtxos_res.json()
+
+    const fetchedSpendableUtxos = spendableUtxos.results
+
+    // const fetchedSpendableUtxos = batchAccountData.utxos
 
     const parsedUtxos = fetchedUtxos
       .map((utxo) => utxo)
