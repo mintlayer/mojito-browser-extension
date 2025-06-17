@@ -39,6 +39,11 @@ const ActionButtons = ({ data }) => {
             mode={'nft'}
             onClick={data.setOpenNftPage}
           />
+          <Wallet.TransactionButton
+            title={'Swap'}
+            mode={'swap'}
+            onClick={data.setOpenSwapPage}
+          />
         </>
       )}
       <Wallet.TransactionButton
@@ -112,6 +117,9 @@ const WalletPage = () => {
   const setOpenNftPage = () => {
     navigate('/wallet/' + walletType.name + '/nft')
   }
+  const setOpenSwapPage = () => {
+    navigate('/wallet/' + walletType.name + '/order-swap')
+  }
 
   const { exchangeRate } = useExchangeRates(
     walletType.ticker.toLowerCase(),
@@ -134,6 +142,7 @@ const WalletPage = () => {
     setOpenShowAddress,
     setOpenSignPage,
     setOpenNftPage,
+    setOpenSwapPage,
     openShowAddress,
     walletAddress,
     unusedAddresses,
@@ -146,7 +155,7 @@ const WalletPage = () => {
       data-testid="wallet-page"
     >
       <VerticalGroup
-        bigGap
+        bigGap={isExtendedView}
         grow
       >
         <div className="balance-transactions-wrapper">
@@ -156,9 +165,9 @@ const WalletPage = () => {
             exchangeRate={exchangeRate}
             walletType={walletType}
           />
-          {!isExtendedView && <ActionButtons data={actionButtonData} />}
+          {/* {!isExtendedView && <ActionButtons data={actionButtonData} />} */}
         </div>
-        {isExtendedView && <ActionButtons data={actionButtonData} />}
+        <ActionButtons data={actionButtonData} />
         <Wallet.TransactionsList
           transactionsList={walletTransactionList}
           getConfirmations={BTC.getConfirmationsAmount}

@@ -7,6 +7,7 @@ import { ML } from '@Helpers'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
 import { batchRequestMintlayer } from '../../services/API/Mintlayer/Mintlayer'
+// import { Client } from '@mintlayer/sdk'
 
 const MintlayerContext = createContext()
 
@@ -33,6 +34,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const [lockedUtxos, setLockedUtxos] = useState([])
   const [transactions, setTransactions] = useState([])
   const [feerate, setFeerate] = useState(0)
+  // const [client, setClient] = useState(null)
 
   const [mlDelegationList, setMlDelegationList] = useState([])
   const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
@@ -339,6 +341,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const lockedUtxos = parsedUtxos
       // .flat()
       .filter((obj) => obj.utxo.type === 'LockThenTransfer')
+    console.log('-----------lockedUtxos', lockedUtxos)
+    console.log('-----------parsedUtxos', parsedUtxos)
 
     const availableNftInitialUtxos = parsedSpendableUtxos.filter(
       (item) => item.utxo.type === 'IssueNft',
@@ -491,7 +495,17 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     fetchingNft,
     allDataFetching,
     setAllDataFetching,
+    // client,
   }
+
+  // useEffect(() => {
+  //   const initializeClient = async () => {
+  //     const newClient = await Client.create({ network: networkType })
+  //     setClient(newClient)
+  //   }
+
+  //   initializeClient()
+  // }, [])
 
   return (
     <MintlayerContext.Provider value={propValue || value}>

@@ -33,6 +33,7 @@ import {
   NftSendPage,
   SignTransactionPage,
   SignChallengePage,
+  OrderSwapPage,
 } from '@Pages'
 
 import {
@@ -315,6 +316,10 @@ const App = () => {
         <Route
           path="/wallet/:coinType/nft/:tokenId/send"
           element={<NftSendPage />}
+        />
+        <Route
+          path="/wallet/:coinType/order-swap"
+          element={<OrderSwapPage />}
         />
         <Route
           exact

@@ -290,6 +290,14 @@ const isMlDelegationIdValid = (delegationId, network) => {
     : testnetRegex.test(delegationId)
 }
 
+const isMlOrderIdValid = (orderId, network) => {
+  const mainnetRegex = /^mordr[a-z0-9]{30,}$/
+  const testnetRegex = /^tordr[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(orderId)
+    : testnetRegex.test(orderId)
+}
+
 const formatAddress = (address) => {
   if (!address) {
     return 'Wrong address'
@@ -310,4 +318,5 @@ export {
   isMlDelegationIdValid,
   getTokenBalances,
   formatAddress,
+  isMlOrderIdValid,
 }
