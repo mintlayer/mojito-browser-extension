@@ -2,14 +2,24 @@
   position: relative;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   line-height: 60px;
-  width: 200px;
+  width: 190px;
+
+  @media screen and (min-width: 801px) {
+    width: 200px;
+  }
 }
 
 .logoContainer .logo {
-  width: 55px;
-  height: 55px;
+  width: 50px;
+  height: 50px;
   margin: 0;
+
+  @media screen and (min-width: 801px) {
+    width: 55px;
+    height: 55px;
+  }
 }
 
 .logoContainer .mojitoLettering {

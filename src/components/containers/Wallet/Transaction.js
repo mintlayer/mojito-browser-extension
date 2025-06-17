@@ -97,7 +97,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
         >
           <StakeIcon className="stake-icon" />
           <ArrowIcon
-            className={`arrow-icon ${
+            className={`arrow-icon-stake ${
               transaction.direction === 'out' && 'arrow-icon-out'
             }`}
           />

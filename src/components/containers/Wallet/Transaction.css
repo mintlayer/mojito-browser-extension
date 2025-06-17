@@ -51,6 +51,10 @@
   height: 45px;
 }
 
+.transaction-logo-type.transaction-logo-type-same .loop-icon path {
+  stroke: rgb(var(--color-white)) !important;
+}
+
 .transaction-detail {
   margin-left: 30px;
   flex-grow: 1;
@@ -77,9 +81,15 @@
   height: 36px;
 }
 
+.arrow-icon-stake {
+  width: 30px;
+  height: 36px;
+  margin-left: -7px;
+}
+
 .stake-icon {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
 }
 
 .unconfirmed-icon {

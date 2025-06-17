@@ -47,7 +47,7 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
       return <LogoRound />
     }
     if (walletType.name === 'Bitcoin') {
-      return <BtcLogo />
+      return <BtcLogo className="btcLogo" />
     }
     if (
       !tokenBalances ||

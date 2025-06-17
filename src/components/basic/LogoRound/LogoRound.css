@@ -1,9 +1,15 @@
 .logo-round {
   background: rgb(var(--color-main-green));
   border-radius: 50%;
-  height: 90px;
-  width: 90px;
-  min-width: 90px;
+  height: 80px;
+  width: 80px;
+  min-width: 80px;
+
+  @media screen and (min-width: 801px) {
+    height: 90px;
+    width: 90px;
+    min-width: 90px;
+  }
 }
 
 .logo-round-small {

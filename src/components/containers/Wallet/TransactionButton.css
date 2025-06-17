@@ -53,11 +53,21 @@
 }
 
 .icon-arrow {
-  width: 26px;
-  height: 26px;
+  width: 37px;
+  height: 37px;
 }
 
 .staking-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.sign-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.swap-icon {
   width: 36px;
   height: 36px;
 }
