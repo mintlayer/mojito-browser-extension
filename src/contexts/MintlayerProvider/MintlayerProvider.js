@@ -6,6 +6,7 @@ import { ML_ATOMS_PER_COIN } from '../../utils/Constants/AppInfo/AppInfo'
 import { ML } from '@Helpers'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
+import { batchRequestMintlayer } from '../../services/API/Mintlayer/Mintlayer'
 
 const MintlayerContext = createContext()
 
@@ -90,57 +91,34 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setCurrentNetworkType(networkType)
     setCurrentHeight(onlineHeight)
 
-    const addresses_data_receive_res = await fetch(
-      'https://api.mintini.app/batch_data',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ids: currentMlAddresses.mlReceivingAddresses,
-          type: '/address/:address',
-          network: currentNetworkType === 'mainnet' ? 0 : 1,
-        }),
-      },
-    )
-
-    const addresses_data_receive_data = await addresses_data_receive_res.json()
-
-    const addresses_data_change_res = await fetch(
-      'https://api.mintini.app/batch_data',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ids: currentMlAddresses.mlChangeAddresses,
-          type: '/address/:address',
-          network: currentNetworkType === 'mainnet' ? 0 : 1,
-        }),
-      },
-    )
-
-    const addresses_data_change_data = await addresses_data_change_res.json()
-
-    const addresses_data_receive = addresses_data_receive_data.results.map((address) => {
-      if (address.error) {
-        return {
-          ...address,
-          coin_balance: { atoms: '0', decimal: '0' },
-          locked_coin_balance: { atoms: '0', decimal: '0' },
-          tokens: [],
-          unused: true,
-        }
-      }
-      return {
-        ...address,
-        unused: address.unused || false,
-      }
+    const addresses_data_receive_data = await batchRequestMintlayer({
+      ids: currentMlAddresses.mlReceivingAddresses,
+      type: '/address/:address',
+    })
+    const addresses_data_change_data = await batchRequestMintlayer({
+      ids: currentMlAddresses.mlChangeAddresses,
+      type: '/address/:address',
     })
 
-    const addresses_data_change = addresses_data_change_data.results.map((address) => {
+    const addresses_data_receive = addresses_data_receive_data.map(
+      (address) => {
+        if (address.error) {
+          return {
+            ...address,
+            coin_balance: { atoms: '0', decimal: '0' },
+            locked_coin_balance: { atoms: '0', decimal: '0' },
+            tokens: [],
+            unused: true,
+          }
+        }
+        return {
+          ...address,
+          unused: address.unused || false,
+        }
+      },
+    )
+
+    const addresses_data_change = addresses_data_change_data.map((address) => {
       if (address.error) {
         return {
           ...address,
@@ -179,14 +157,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       currentMlAddresses.mlReceivingAddresses[
         first_unused_receive_address_index
       ]
-
-    console.log('{\n' +
-      '      change: first_unused_change_address,\n' +
-      '      receive: first_unused_receive_address,\n' +
-      '    }', {
-      change: first_unused_change_address,
-      receive: first_unused_receive_address,
-    })
 
     setUnusedAddresses({
       change: first_unused_change_address,
@@ -293,21 +263,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setCurrentAccountId(accountID)
 
     // fetch transactions data
-    const batchTxDataRes = await fetch('https://api.mintini.app/batch_data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ids: transaction_ids,
-        type: '/transaction/:txid',
-        network: currentNetworkType === 'mainnet' ? 0 : 1,
-      }),
+    const transactions_data = await batchRequestMintlayer({
+      ids: transaction_ids,
+      type: '/transaction/:txid',
     })
-
-    const batchTxData = await batchTxDataRes.json()
-
-    const transactions_data = batchTxData.results
 
     const parsedTransactions = ML.getParsedTransactions(
       transactions_data,
@@ -328,55 +287,23 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-    const batchAccountDataRes = await fetch('https://api.mintini.app/account', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        addresses: non_zero_addresses,
-        network: currentNetworkType === 'mainnet' ? 0 : 1,
-      }),
+    const delegations = await batchRequestMintlayer({
+      ids: non_zero_addresses,
+      type: '/address/:address/delegations',
     })
-
-    const batchAccountData = await batchAccountDataRes.json()
 
     setMlDelegationsBalance(11) // TODO: get delegations balance from batchAccountData
-    setMlDelegationList(batchAccountData.delegations || [])
+    setMlDelegationList(delegations || [])
 
-    const allUtxos_res = await fetch('https://api.mintini.app/batch_data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ids: non_zero_addresses,
-        type: '/address/:address/all-utxos',
-        network: currentNetworkType === 'mainnet' ? 0 : 1,
-      }),
+    const fetchedUtxos = await batchRequestMintlayer({
+      ids: non_zero_addresses,
+      type: '/address/:address/all-utxos',
     })
 
-    const allUtxos = await allUtxos_res.json()
-
-    const fetchedUtxos = allUtxos.results
-
-    const spendableUtxos_res = await fetch('https://api.mintini.app/batch_data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ids: non_zero_addresses,
-        type: '/address/:address/all-utxos',
-        network: currentNetworkType === 'mainnet' ? 0 : 1,
-      }),
+    const fetchedSpendableUtxos = await batchRequestMintlayer({
+      ids: non_zero_addresses,
+      type: '/address/:address/spendable-utxos',
     })
-
-    const spendableUtxos = await spendableUtxos_res.json()
-
-    const fetchedSpendableUtxos = spendableUtxos.results
-
-    // const fetchedSpendableUtxos = batchAccountData.utxos
 
     const parsedUtxos = fetchedUtxos
       .map((utxo) => utxo)

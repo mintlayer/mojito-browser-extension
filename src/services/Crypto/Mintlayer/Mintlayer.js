@@ -31,6 +31,7 @@ import init, {
   verify_challenge,
   encode_output_token_lock_then_transfer,
 } from './@mintlayerlib-js/wasm_wrappers.js'
+import { batchRequestMintlayer } from '../../API/Mintlayer/Mintlayer'
 
 const NETWORKS = {
   mainnet: 0,
@@ -113,19 +114,11 @@ export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
 // }
 
 const checkIfAddressesUsed = async (addresses, network) => {
-  const res = await fetch('https://api.mintini.app/batch_data', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      ids: addresses,
-      type: '/address/:txid',
-      network: network === 'mainnet' ? 0 : 1,
-    }),
+  const data = await batchRequestMintlayer({
+    ids: addresses,
+    type: '/address/:address',
   })
-  const data = await res.json()
-  return data.results.map((item) => {
+  return data.map((item) => {
     if (item.error) {
       return false
     }
@@ -187,26 +180,28 @@ export const getOutputs = ({
   tokenId,
   utxo,
 }) => {
-
-  console.log('{\n' +
-    '  amount,\n' +
-    '  address,\n' +
-    '  networkType,\n' +
-    '  type = \'Transfer\',\n' +
-    '  lock,\n' +
-    '  chainTip,\n' +
-    '  tokenId,\n' +
-    '  utxo,\n' +
-    '}', {
-    amount,
-    address,
-    networkType,
-    type,
-    lock,
-    chainTip,
-    tokenId,
-    utxo,
-  })
+  console.log(
+    '{\n' +
+      '  amount,\n' +
+      '  address,\n' +
+      '  networkType,\n' +
+      "  type = 'Transfer',\n" +
+      '  lock,\n' +
+      '  chainTip,\n' +
+      '  tokenId,\n' +
+      '  utxo,\n' +
+      '}',
+    {
+      amount,
+      address,
+      networkType,
+      type,
+      lock,
+      chainTip,
+      tokenId,
+      utxo,
+    },
+  )
 
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')

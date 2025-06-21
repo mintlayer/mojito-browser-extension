@@ -75,6 +75,47 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
   }
 }
 
+export const batchRequestMintlayer = async ({ ids, type }) => {
+  const networkType = LocalStorageService.getItem('networkType')
+  const customMintlayerServerList = LocalStorageService.getItem(
+    AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
+  )
+  const customMintlayerServer = customMintlayerServerList
+    ? networkType === AppInfo.NETWORK_TYPES.TESTNET
+      ? customMintlayerServerList.mintlayer_testnet
+      : customMintlayerServerList.mintlayer_mainnet
+    : null
+
+  const defaultMintlayerServers =
+    networkType === AppInfo.NETWORK_TYPES.TESTNET
+      ? EnvVars.TESTNET_MINTLAYER_SERVERS
+      : EnvVars.MAINNET_MINTLAYER_SERVERS
+
+  const combinedMintlayerServers = customMintlayerServer
+    ? [customMintlayerServer, ...defaultMintlayerServers]
+    : [...defaultMintlayerServers]
+
+  const res = await fetch(combinedMintlayerServers[0] + '/batch', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      ids,
+      type: '/address/:address',
+      network: networkType === 'mainnet' ? 0 : 1,
+    }),
+  })
+
+  const json = await res.json()
+  if (!res.ok) {
+    console.error('Batch request failed:', json)
+    throw new Error('Batch request failed')
+  }
+  const results = json.results || []
+  return results
+}
+
 const tryServers = async (endpoint, body = null, forceNetwork) => {
   const networkType = forceNetwork || LocalStorageService.getItem('networkType')
   const customMintlayerServerList = LocalStorageService.getItem(
