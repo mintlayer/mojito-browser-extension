@@ -180,29 +180,6 @@ export const getOutputs = ({
   tokenId,
   utxo,
 }) => {
-  console.log(
-    '{\n' +
-      '  amount,\n' +
-      '  address,\n' +
-      '  networkType,\n' +
-      "  type = 'Transfer',\n" +
-      '  lock,\n' +
-      '  chainTip,\n' +
-      '  tokenId,\n' +
-      '  utxo,\n' +
-      '}',
-    {
-      amount,
-      address,
-      networkType,
-      type,
-      lock,
-      chainTip,
-      tokenId,
-      utxo,
-    },
-  )
-
   if (type === 'LockThenTransfer' && !lock) {
     throw new Error('LockThenTransfer requires a lock')
   }

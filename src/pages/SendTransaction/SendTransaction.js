@@ -127,7 +127,6 @@ const SendTransactionPage = () => {
     )
     const unusedChangeAddress = unusedAddresses.change
     try {
-      console.log('address', address)
       const transactionSize =
         await MLTransaction.calculateTransactionSizeInBytes({
           utxos: utxos,
