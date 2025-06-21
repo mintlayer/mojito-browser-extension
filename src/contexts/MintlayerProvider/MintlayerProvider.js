@@ -292,7 +292,13 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       type: '/address/:address/delegations',
     })
 
-    setMlDelegationsBalance(11) // TODO: get delegations balance from batchAccountData
+    const totalDelegationBalance = delegations.reduce(
+      (acc, delegation) =>
+        acc + (delegation.balance ? Number(delegation.balance.atoms) : 0),
+      0,
+    )
+
+    setMlDelegationsBalance(totalDelegationBalance) // TODO: get delegations balance from batchAccountData
     setMlDelegationList(delegations || [])
 
     const fetchedUtxos = await batchRequestMintlayer({
@@ -306,15 +312,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     })
 
     const parsedUtxos = fetchedUtxos
-      .map((utxo) => utxo)
-      .filter((utxo) => utxo.length > 0)
 
     const parsedSpendableUtxos = fetchedSpendableUtxos
-      .map((utxo) => utxo)
-      .filter((utxo) => utxo.length > 0)
 
     const available = parsedSpendableUtxos
-      .flatMap((utxo) => [...utxo])
       .filter((item) => item.utxo.value)
       .filter((item) => {
         if (unconfirmedTransactions) {
@@ -337,11 +338,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     const availableUtxos = available.map((item) => item)
     const lockedUtxos = parsedUtxos
-      .flat()
+      // .flat()
       .filter((obj) => obj.utxo.type === 'LockThenTransfer')
 
     const availableNftInitialUtxos = parsedSpendableUtxos
-      .flatMap((utxo) => [...utxo])
       .filter((item) => item.utxo.type === 'IssueNft')
 
     setNftInitialUtxos(availableNftInitialUtxos)

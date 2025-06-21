@@ -102,7 +102,7 @@ export const batchRequestMintlayer = async ({ ids, type }) => {
     },
     body: JSON.stringify({
       ids,
-      type: '/address/:address',
+      type,
       network: networkType === 'mainnet' ? 0 : 1,
     }),
   })
@@ -112,7 +112,7 @@ export const batchRequestMintlayer = async ({ ids, type }) => {
     console.error('Batch request failed:', json)
     throw new Error('Batch request failed')
   }
-  const results = json.results || []
+  const results = json.results.flat() || []
   return results
 }
 

@@ -3,3 +3,15 @@
   transform: translateX(-200%);
   transition: transform 1s ease-in-out;
 }
+
+.locked-balance-list-item {
+
+}
+
+.locked-balance-list-item:nth-child(even) {
+  background-color: rgba(208, 192, 255, 0.2);
+}
+
+.locked-balance-cell {
+  padding: 10px;
+}
