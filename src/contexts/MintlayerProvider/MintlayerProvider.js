@@ -172,7 +172,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     addresses_data
       .filter(({ error }) => !error)
-      .forEach((address_data, index) => {
+      .forEach((address_data) => {
         const {
           coin_balance,
           locked_coin_balance,
@@ -187,14 +187,12 @@ const MintlayerProvider = ({ value: propValue, children }) => {
           : locked_balance
         transaction_ids.push(...transaction_history)
 
-        if (coin_balance !== 0) {
-          if (
-            coin_balance.atoms !== '0' ||
-            (tokens.length > 0 &&
-              tokens.some((token) => token.amount.atoms !== '0'))
-          ) {
-            non_zero_addresses.push(addressList[index])
-          }
+        if (
+          coin_balance.atoms !== '0' ||
+          (tokens.length > 0 &&
+            tokens.some((token) => token.amount.atoms !== '0'))
+        ) {
+          non_zero_addresses.push(address_data.id)
         }
 
         if (tokens) {
