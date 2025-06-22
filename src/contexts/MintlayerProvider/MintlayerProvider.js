@@ -264,7 +264,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     // fetch transactions data
     const transactions_data = await batchRequestMintlayer({
-      ids: transaction_ids,
+      ids: [...new Set(transaction_ids)],
       type: '/transaction/:txid',
     })
 
@@ -341,8 +341,9 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       // .flat()
       .filter((obj) => obj.utxo.type === 'LockThenTransfer')
 
-    const availableNftInitialUtxos = parsedSpendableUtxos
-      .filter((item) => item.utxo.type === 'IssueNft')
+    const availableNftInitialUtxos = parsedSpendableUtxos.filter(
+      (item) => item.utxo.type === 'IssueNft',
+    )
 
     setNftInitialUtxos(availableNftInitialUtxos)
     setUtxos(availableUtxos)

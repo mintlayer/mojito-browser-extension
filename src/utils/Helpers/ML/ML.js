@@ -35,7 +35,7 @@ const getParsedTransactions = (transactions, addresses) => {
       (transaction) =>
         unconfirmedTransactions.filter(
           (unconfirmedTransaction) =>
-            unconfirmedTransaction.txid === transaction.txid,
+            unconfirmedTransaction.txid === transaction.id,
         ).length > 0,
     )
 
@@ -44,7 +44,7 @@ const getParsedTransactions = (transactions, addresses) => {
       unconfirmedTransactions.filter(
         (unconfirmedTransaction) =>
           !sortedTransactions.some(
-            (transaction) => transaction.txid === unconfirmedTransaction.txid,
+            (transaction) => transaction.id === unconfirmedTransaction.txid,
           ),
       )
     LocalStorageService.setItem(
