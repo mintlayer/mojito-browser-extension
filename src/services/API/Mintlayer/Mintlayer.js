@@ -15,6 +15,7 @@ const MINTLAYER_ENDPOINTS = {
   GET_BLOCK_HASH: '/chain/:height',
   GET_BLOCK_DATA: '/block/:hash',
   GET_POOL_DATA: '/pool/:hash',
+  GET_ORDER_DATA: '/order/:hash',
 }
 
 const abortControllers = new Map()
@@ -401,6 +402,9 @@ const getFeesEstimates = async () => {
   return tryServers(MINTLAYER_ENDPOINTS.GET_FEES_ESTIMATES)
 }
 
+const getOrderById = (orderHash) =>
+  tryServers(MINTLAYER_ENDPOINTS.GET_ORDER_DATA.replace(':hash', orderHash))
+
 const broadcastTransaction = (transaction) =>
   tryServers(MINTLAYER_ENDPOINTS.POST_TRANSACTION, transaction)
 
@@ -433,6 +437,7 @@ export {
   getTokensData,
   getPoolsData,
   getNftsData,
+  getOrderById,
   MINTLAYER_ENDPOINTS,
   abortControllers,
   cancelAllRequests,

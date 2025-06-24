@@ -1,6 +1,7 @@
 import { AppInfo } from '@Constants'
 import { ArrayHelper } from '@Helpers'
 import { LocalStorageService } from '@Storage'
+import { Mintlayer as MlAPI } from '@APIs'
 
 const getAmountInCoins = (
   amointInAtoms,
@@ -57,172 +58,215 @@ const getParsedTransactions = (transactions, addresses) => {
     sortedTransactions.unshift(...unconfirmedTransactions)
   }
 
-  return sortedTransactions.map((transaction) => {
-    if (!transaction.outputs) {
-      return {
-        direction: transaction.direction,
-        destAddress: transaction.destAddress,
-        value: transaction.value,
-        confirmations: transaction.confirmations,
-        date: transaction.date,
-        txid: transaction.txid,
-        fee: transaction.fee,
-        isConfirmed: transaction.isConfirmed,
-        type: transaction.type,
-      }
-    }
-
-    let withInputUTXO = true
-
-    if (!transaction.inputs[0].utxo) {
-      withInputUTXO = false
-    }
-
-    const isInputMine = withInputUTXO
-      ? addresses.some((address) =>
-          transaction.inputs.find(
-            (input) => input?.utxo?.destination === address,
-          ),
-        ) // if at least one input is mine
-      : !addresses.some(
-          (address) => transaction.outputs[0].destination === address,
-        )
-
-    const direction = isInputMine ? 'out' : 'in'
-
-    let type = 'Transfer'
-    let destAddress
-    let value
-    let sameWalletTransaction = false
-    let delegationOwner
-
-    const token_id = transaction.outputs.find(
-      (output) => output?.value?.token_id,
-    )?.value?.token_id
-
-    const nft_id = transaction.outputs.find(
-      (output) => output?.type === 'IssueNft',
-    )?.token_id
-
-    // outbound transaction
-    if (direction === 'out' && transaction.inputs.length > 0) {
-      const destAddressOutput = transaction.outputs.find((output) => {
-        return !addresses.includes(output.destination)
-      })
-
-      if (!destAddressOutput) {
-        destAddress = transaction.outputs[0].destination
-        sameWalletTransaction = true
-      } else {
-        destAddress = destAddressOutput.destination
+  return Promise.all(
+    sortedTransactions.map(async (transaction) => {
+      if (!transaction.outputs) {
+        return {
+          direction: transaction.direction,
+          destAddress: transaction.destAddress,
+          value: transaction.value,
+          confirmations: transaction.confirmations,
+          date: transaction.date,
+          txid: transaction.txid,
+          fee: transaction.fee,
+          isConfirmed: transaction.isConfirmed,
+          type: transaction.type,
+        }
       }
 
-      const totalValue = transaction.outputs.reduce((acc, output) => {
-        if (!addresses.includes(output.destination)) {
-          if (output.type === 'Transfer') {
-            return acc + output.value.amount.decimal
-          }
-          if (output.type === 'LockThenTransfer') {
-            return acc + Number(output.value.amount.decimal)
-          }
-          if (output.type === 'CreateStakePool') {
-            type = 'CreateStakePool'
-            destAddress = output.pool_id
-            return acc + Number(output.data.amount.decimal)
-          }
-          if (output.type === 'DelegateStaking') {
-            type = 'DelegateStaking'
-            destAddress = output.delegation_id
-            return acc + Number(output.amount.decimal)
-          }
-          if (output.type === 'CreateDelegationId') {
-            type = 'CreateDelegationId'
-            destAddress = output.pool_id
-            sameWalletTransaction = false
-            return acc + Number(0)
-          }
-        }
-        if (addresses.includes(output.destination)) {
-          if (output.type === 'CreateStakePool') {
-            type = 'CreateStakePool'
-            destAddress = output.pool_id
-            return acc + Number(output.data.amount.decimal)
-          }
-          if (output.type === 'DelegateStaking') {
-            type = 'DelegateStaking'
-            destAddress = output.delegation_id
-            return acc + Number(output.amount.decimal)
-          }
-          if (output.type === 'CreateDelegationId') {
-            type = 'CreateDelegationId'
-            destAddress = output.pool_id
-            delegationOwner = output.destination
-            sameWalletTransaction = false
-            return acc + Number(0)
-          }
-        }
-        return acc
-      }, 0)
-      value = totalValue
-    }
+      let withInputUTXO = true
 
-    // inbound transaction
-    if (withInputUTXO && direction === 'in' && transaction.outputs.length > 0) {
-      destAddress = transaction.inputs[0].utxo.destination
-      const totalValue = transaction.outputs
-        .filter(({ destination }) => addresses.includes(destination))
-        .reduce((acc, output) => {
-          if (token_id) {
-            if (output.value.token_id === token_id) {
+      if (!transaction.inputs[0].utxo) {
+        withInputUTXO = false
+      }
+
+      const isInputMine = withInputUTXO
+        ? addresses.some((address) =>
+            transaction.inputs.find(
+              (input) =>
+                input?.utxo?.destination === address ||
+                input?.command === 'FillOrder',
+            ),
+          ) // if at least one input is mine or input.command is "FillOrder"
+        : !addresses.some(
+            (address) =>
+              transaction.outputs[0].destination === address &&
+              !transaction.inputs.find((input) => {
+                return input?.input.command === 'FillOrder'
+              }),
+          )
+
+      const direction = isInputMine ? 'out' : 'in'
+
+      let type = 'Transfer'
+      let destAddress
+      let value
+      let sameWalletTransaction = false
+      let delegationOwner
+      let orderInfo
+
+      const token_id = transaction.outputs.find(
+        (output) => output?.value?.token_id,
+      )?.value?.token_id
+
+      const nft_id = transaction.outputs.find(
+        (output) => output?.type === 'IssueNft',
+      )?.token_id
+
+      const order_id =
+        transaction.inputs.find(
+          (input) => input?.input?.command === 'FillOrder',
+        )?.input?.order_id || null
+
+      if (order_id) {
+        const orderData = await MlAPI.getOrderById(order_id)
+        orderInfo = JSON.parse(orderData)
+      }
+
+      // outbound transaction
+      if (direction === 'out' && transaction.inputs.length > 0) {
+        const destAddressOutput = transaction.outputs.find((output) => {
+          return !addresses.includes(output.destination)
+        })
+
+        if (!destAddressOutput) {
+          destAddress = transaction.outputs[0].destination
+          sameWalletTransaction = true
+        } else {
+          destAddress = destAddressOutput.destination
+        }
+
+        const totalValue = transaction.outputs.reduce((acc, output) => {
+          if (!addresses.includes(output.destination)) {
+            if (output.type === 'CreateOrder') {
+              type = 'CreateOrder'
+              destAddress = output.conclude_key
+              return 0
+            }
+            if (order_id) {
+              type = 'FillOrder'
+              destAddress = orderInfo.conclude_destination
+              return Number(orderInfo.initially_asked.decimal)
+            }
+            if (output.type === 'Transfer') {
               return acc + output.value.amount.decimal
             }
-          } else {
-            if (output.type === 'Transfer') {
-              if (output.value.type === 'Coin') {
+            if (output.type === 'LockThenTransfer') {
+              return acc + Number(output.value.amount.decimal)
+            }
+            if (output.type === 'CreateStakePool') {
+              type = 'CreateStakePool'
+              destAddress = output.pool_id
+              return acc + Number(output.data.amount.decimal)
+            }
+            if (output.type === 'DelegateStaking') {
+              type = 'DelegateStaking'
+              destAddress = output.delegation_id
+              return acc + Number(output.amount.decimal)
+            }
+            if (output.type === 'CreateDelegationId') {
+              type = 'CreateDelegationId'
+              destAddress = output.pool_id
+              sameWalletTransaction = false
+              return acc + Number(0)
+            }
+          }
+          if (addresses.includes(output.destination)) {
+            if (order_id) {
+              type = 'FillOrder'
+              destAddress = orderInfo.conclude_destination
+              return Number(orderInfo.initially_asked.decimal)
+            }
+            if (output.type === 'CreateStakePool') {
+              type = 'CreateStakePool'
+              destAddress = output.pool_id
+              return acc + Number(output.data.amount.decimal)
+            }
+            if (output.type === 'DelegateStaking') {
+              type = 'DelegateStaking'
+              destAddress = output.delegation_id
+              return acc + Number(output.amount.decimal)
+            }
+            if (output.type === 'CreateDelegationId') {
+              type = 'CreateDelegationId'
+              destAddress = output.pool_id
+              delegationOwner = output.destination
+              sameWalletTransaction = false
+              return acc + Number(0)
+            }
+          }
+          return acc
+        }, 0)
+        value = totalValue
+      }
+
+      // inbound transaction
+      if (
+        withInputUTXO &&
+        direction === 'in' &&
+        transaction.outputs.length > 0
+      ) {
+        destAddress = transaction.inputs[0].utxo.destination
+        const totalValue = transaction.outputs
+          .filter(({ destination }) => addresses.includes(destination))
+          .reduce((acc, output) => {
+            if (token_id) {
+              if (output.value.token_id === token_id) {
                 return acc + output.value.amount.decimal
               }
-            }
-            if (output.type === 'LockThenTransfer') {
-              if (output.value.type === 'Coin') {
-                return acc + Number(output.value.amount.decimal)
+            } else {
+              if (output.type === 'Transfer') {
+                if (output.value.type === 'Coin') {
+                  return acc + output.value.amount.decimal
+                }
+              }
+              if (output.type === 'LockThenTransfer') {
+                if (output.value.type === 'Coin') {
+                  return acc + Number(output.value.amount.decimal)
+                }
+              }
+              if (output.type === 'FillOrder') {
+                type = 'FillOrder'
+                destAddress = output.order_id
+                return acc + Number(output.data.amount.decimal)
               }
             }
-          }
-          return acc // return the accumulator if none of the conditions are met
-        }, 0)
-      value = totalValue
-    }
+            return acc // return the accumulator if none of the conditions are met
+          }, 0)
+        value = totalValue
+      }
 
-    // if there is no input utxo, that is staking reward
-    if (
-      !withInputUTXO &&
-      direction === 'in' &&
-      transaction.outputs.length > 0
-    ) {
-      destAddress = transaction.outputs.find(
-        (output) => !addresses.includes(output.destination),
-      )?.destination
+      // if there is no input utxo, that is staking reward
+      if (
+        !withInputUTXO &&
+        direction === 'in' &&
+        transaction.outputs.length > 0
+      ) {
+        destAddress = transaction.outputs.find(
+          (output) => !addresses.includes(output.destination),
+        )?.destination
 
-      const totalValue = transaction.outputs.reduce((acc, output) => {
-        if (addresses.includes(output.destination)) {
-          if (output.type === 'Transfer') {
-            return acc + output.value.amount.decimal
-          }
-          if (output.type === 'LockThenTransfer') {
-            if (
-              transaction.inputs[0].input?.account_type === 'DelegationBalance'
-            ) {
-              type = 'Delegate Withdrawal'
-              destAddress = transaction.inputs[0].input?.delegation_id
+        const totalValue = transaction.outputs.reduce((acc, output) => {
+          if (addresses.includes(output.destination)) {
+            if (output.type === 'Transfer') {
+              return acc + output.value.amount.decimal
             }
+            if (output.type === 'LockThenTransfer') {
+              if (
+                transaction.inputs[0].input?.account_type ===
+                'DelegationBalance'
+              ) {
+                type = 'Delegate Withdrawal'
+                destAddress = transaction.inputs[0].input?.delegation_id
+              }
 
-            return acc + Number(output.value.amount.decimal)
+              return acc + Number(output.value.amount.decimal)
+            }
           }
-        }
-        return acc
-      }, 0)
-      value = totalValue
-    }
+          return acc
+        }, 0)
+        value = totalValue
+      }
 
     const confirmations = transaction.confirmations
     const date = transaction.timestamp
@@ -231,23 +275,25 @@ const getParsedTransactions = (transactions, addresses) => {
     const isConfirmed = confirmations > 0
     const blockId = transaction.block_id
 
-    return {
-      blockId,
-      direction,
-      destAddress,
-      value: value || 0,
-      confirmations,
-      date,
-      txid,
-      fee,
-      isConfirmed,
-      type,
-      sameWalletTransaction,
-      token_id,
-      nft_id,
-      ...(delegationOwner && { delegationOwner }),
-    }
-  })
+      return {
+        blockId,
+        direction,
+        destAddress,
+        value: value || 0,
+        confirmations,
+        date,
+        txid,
+        fee,
+        isConfirmed,
+        type,
+        sameWalletTransaction,
+        token_id,
+        nft_id,
+        order_id,
+        ...(delegationOwner && { delegationOwner }),
+      }
+    }),
+  )
 }
 
 const getTokenBalances = (utxos) => {

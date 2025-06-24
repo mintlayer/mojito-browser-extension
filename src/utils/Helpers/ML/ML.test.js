@@ -32,7 +32,7 @@ describe('ML', () => {
   })
 
   describe('getParsedTransactions', () => {
-    it('should parse transactions', () => {
+    it('should parse transactions', async () => {
       const transactions = [
         {
           inputs: [
@@ -40,10 +40,12 @@ describe('ML', () => {
               utxo: {
                 destination: 'address2',
                 type: 'Transfer',
-                value: { amount: {
-                  atoms: '100000000',
-                  decimal: '0.001'
-                } },
+                value: {
+                  amount: {
+                    atoms: '100000000',
+                    decimal: '0.001',
+                  },
+                },
               },
             },
           ],
@@ -52,9 +54,15 @@ describe('ML', () => {
               destination: 'address1',
               value: { amount: AppInfo.ML_ATOMS_PER_COIN },
             },
-            { destination: 'address2', value: { amount: {
-              atoms: '200000000', decimal: '0.002'
-                } } },
+            {
+              destination: 'address2',
+              value: {
+                amount: {
+                  atoms: '200000000',
+                  decimal: '0.002',
+                },
+              },
+            },
           ],
           timestamp: 1000,
           confirmations: 1,
@@ -65,6 +73,7 @@ describe('ML', () => {
       const addresses = ['address1']
       const expectedParsedTransactions = [
         {
+          blockId: undefined,
           direction: 'in',
           destAddress: 'address2',
           // TODO: fix this test after switching to API balance
@@ -75,14 +84,16 @@ describe('ML', () => {
           txid: 'txid1',
           fee: '0.0000001',
           isConfirmed: true,
+          nft_id: undefined,
+          order_id: null,
           type: 'Transfer',
           sameWalletTransaction: false,
           token_id: undefined,
         },
       ]
-      expect(getParsedTransactions(transactions, addresses)).toEqual(
-        expectedParsedTransactions,
-      )
+
+      const parsedTx = await getParsedTransactions(transactions, addresses)
+      expect(parsedTx).toEqual(expectedParsedTransactions)
     })
   })
 })
