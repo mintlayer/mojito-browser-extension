@@ -6,6 +6,8 @@ import { ReactComponent as LoopIcon } from '@Assets/images/icon-loop.svg'
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
 import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
 import { ReactComponent as UnconfirmedIcon } from '@Assets/images/icon-sand.svg'
+import { ReactComponent as CreateOrderIcon } from '@Assets/images/icon-document.svg'
+import { ReactComponent as FillOrderIcon } from '@Assets/images/icon-document-filled.svg'
 import { Format, ML } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
 import { useNavigate } from 'react-router-dom'
@@ -70,7 +72,28 @@ const Transaction = ({ transaction, getConfirmations }) => {
       ) : (
         <></>
       )}
-      {transaction.sameWalletTransaction ? (
+      {transaction.type === 'CreateOrder' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          data-testid="transaction-icon"
+        >
+          <CreateOrderIcon className="stake-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.type === 'FillOrder' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          data-testid="transaction-icon"
+        >
+          <FillOrderIcon className="stake-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.sameWalletTransaction &&
+      !transaction.type === 'FillOrder' ? (
         <div
           className="transaction-logo-type transaction-logo-type-same"
           data-testid="transaction-icon"

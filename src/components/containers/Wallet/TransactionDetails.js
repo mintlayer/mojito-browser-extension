@@ -75,6 +75,29 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
       data-testid="transaction-details"
     >
       <div className="transaction-details-items-wrapper">
+        {transaction.type === 'FillOrder' && (
+          <>
+            <TransactionDetailsItem
+              title={'Transaction type:'}
+              content={'Fill Order'}
+              data-testid="transaction-type"
+            />
+            <TransactionDetailsItem
+              title={'Order ID:'}
+              content={transaction.order_id}
+              data-testid="transaction-order-id"
+            />
+          </>
+        )}
+        {transaction.type === 'CreateOrder' && (
+          <>
+            <TransactionDetailsItem
+              title={'Transaction type:'}
+              content={'Create Order'}
+              data-testid="transaction-type"
+            />
+          </>
+        )}
         <TransactionDetailsItem
           title={addressTitle}
           content={transactionAddress}
