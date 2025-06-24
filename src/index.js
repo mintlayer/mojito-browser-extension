@@ -11,6 +11,8 @@ import {
 import { Electrum, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup, Header, PopUp } from '@ComposedComponents'
 import { DeleteAccount } from '@ContainerComponents'
+import { Client } from '@mintlayer/sdk'
+import { AppInfo } from '@Constants'
 
 import {
   HomePage,
@@ -31,8 +33,9 @@ import {
   MessagePage,
   NftPage,
   NftSendPage,
-  SignTransactionPage,
   SignChallengePage,
+  SignInternalTransaction,
+  SignExternalTransactionPage,
   OrderSwapPage,
 } from '@Pages'
 
@@ -45,6 +48,7 @@ import {
   BitcoinProvider,
   ExchangeRatesProvider,
   MintlayerContext,
+  SettingsContext,
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
@@ -83,9 +87,16 @@ const App = () => {
     removeAccountPopupOpen,
     setRemoveAccountPopupOpen,
   } = useContext(AccountContext)
-  const { setAllDataFetching } = useContext(MintlayerContext)
+  const { setAllDataFetching, InMemoryAccountProvider, setClient } =
+    useContext(MintlayerContext)
+  const { networkType } = useContext(SettingsContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
   const [request, setRequest] = useState(null)
+
+  const currentMlAddresses =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? addresses.mlMainnetAddresses
+      : addresses.mlTestnetAddresses
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
@@ -102,6 +113,36 @@ const App = () => {
       }
     }
   }
+
+  useEffect(() => {
+    if (currentMlAddresses?.mlReceivingAddresses?.length > 0) {
+      const initClient = async () => {
+        const clientInstance = await Client.create({
+          network: networkType,
+          accountProvider: new InMemoryAccountProvider(
+            {
+              testnet: {
+                receiving: currentMlAddresses.mlReceivingAddresses || [],
+                change: currentMlAddresses.mlChangeAddresses || [],
+              },
+            },
+            navigate,
+          ),
+        })
+        await clientInstance.connect()
+        setClient(clientInstance)
+      }
+      initClient().catch((error) => {
+        console.error('Failed to initialize Mintlayer Connect SDK:', error)
+      })
+    }
+  }, [
+    currentMlAddresses,
+    navigate,
+    setClient,
+    InMemoryAccountProvider,
+    networkType,
+  ])
 
   useEffect(() => {
     const asyncInit = async () => {
@@ -155,12 +196,12 @@ const App = () => {
     if (action === 'signTransaction') {
       if (!unlocked) {
         setNextAfterUnlock({
-          route: '/wallet/Mintlayer/sign-transaction',
+          route: '/wallet/Mintlayer/sign-external-transaction',
           state: { action: 'signTransaction', request },
         })
         return
       }
-      navigate('/wallet/Mintlayer/sign-transaction', {
+      navigate('/wallet/Mintlayer/sign-external-transaction', {
         state: { action: 'signTransaction', request },
       })
     }
@@ -270,8 +311,12 @@ const App = () => {
           element={<ConnectionPage />}
         />
         <Route
-          path="/wallet/:coinType/sign-transaction"
-          element={<SignTransactionPage />}
+          path="/wallet/:coinType/sign-external-transaction"
+          element={<SignExternalTransactionPage />}
+        />
+        <Route
+          path="/wallet/Mintlayer/sign-internal-transaction"
+          element={<SignInternalTransaction />}
         />
         <Route
           path="/wallet/:coinType/sign-challenge"

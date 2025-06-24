@@ -11,6 +11,52 @@ import { batchRequestMintlayer } from '../../services/API/Mintlayer/Mintlayer'
 
 const MintlayerContext = createContext()
 
+class InMemoryAccountProvider {
+  addresses = {}
+  navigate = null
+
+  constructor(addresses, navigate) {
+    this.addresses = {
+      testnet: {
+        receiving: addresses.testnet.receiving || [],
+        change: addresses.testnet.change || [],
+      },
+    }
+    this.navigate = navigate
+  }
+
+  async connect() {
+    return this.addresses
+  }
+
+  async restore() {
+    return this.addresses
+  }
+
+  async disconnect() {
+    return
+  }
+
+  async request(method, params) {
+    console.log('methidparams', method, params)
+    if (method === 'signTransaction') {
+      const { txData } = params
+      if (!txData) {
+        throw new Error('Transaction is required for signing')
+      }
+      this.navigate('/wallet/Mintlayer/sign-internal-transaction', {
+        state: {
+          action: 'signTransaction',
+          request: { action: 'signTransaction', data: { txData } },
+        },
+      })
+      return
+    }
+
+    throw new Error('Signing not supported in InMemoryAccountProvider')
+  }
+}
+
 const MintlayerProvider = ({ value: propValue, children }) => {
   const { addresses, accountID, accountName } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
@@ -19,7 +65,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
-
+  const [txPreviewInfo, setTxPreviewInfo] = useState(null)
   const [currentAccountId, setCurrentAccountId] = useState('')
   const [onlineHeight, setOnlineHeight] = useState(0)
   const [currentHeight, setCurrentHeight] = useState(0)
@@ -34,7 +80,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const [lockedUtxos, setLockedUtxos] = useState([])
   const [transactions, setTransactions] = useState([])
   const [feerate, setFeerate] = useState(0)
-  // const [client, setClient] = useState(null)
+  const [client, setClient] = useState(null)
 
   const [mlDelegationList, setMlDelegationList] = useState([])
   const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
@@ -268,7 +314,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       type: '/transaction/:txid',
     })
 
-    const parsedTransactions = ML.getParsedTransactions(
+    const parsedTransactions = await ML.getParsedTransactions(
       transactions_data,
       addressList,
     )
@@ -495,17 +541,12 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     fetchingNft,
     allDataFetching,
     setAllDataFetching,
-    // client,
+    client,
+    setClient,
+    InMemoryAccountProvider,
+    txPreviewInfo,
+    setTxPreviewInfo,
   }
-
-  // useEffect(() => {
-  //   const initializeClient = async () => {
-  //     const newClient = await Client.create({ network: networkType })
-  //     setClient(newClient)
-  //   }
-
-  //   initializeClient()
-  // }, [])
 
   return (
     <MintlayerContext.Provider value={propValue || value}>
