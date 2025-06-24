@@ -2,15 +2,15 @@ import { useState, useContext, useEffect } from 'react'
 
 import { Loading, TextField } from '@ComposedComponents'
 import { Button, Error } from '@BasicComponents'
-import { CenteredLayout } from '@LayoutComponents'
+import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { ML as MlHelpers } from '@Helpers'
-import { AccountContext, SettingsContext } from '@Contexts'
+import { AccountContext, SettingsContext, MintlayerContext } from '@Contexts'
 
 import './OrderSwap.css'
 
 const OrderSwapPage = () => {
   const { balanceLoading } = useContext(AccountContext)
-  // const { client } = useContext(MintlayerContext)
+  const { client } = useContext(MintlayerContext)
   const { networkType } = useContext(SettingsContext)
   const [orderId, setOrderId] = useState('')
   const [orderIdValidity, setOrderIdValidity] = useState(false)
@@ -43,13 +43,17 @@ const OrderSwapPage = () => {
       return
     }
     setTxErrorMessage(null)
-    // isFormValid && client.createOrder({ conclude_destination: 'tmt1qxskh99uvaa8agqpdjt5psuq94fl5n6lg5dcd639', ask_token: 'tmltk1aa3vvztufv5m054klp960p6f6pf59ugxp394x7n42v0clgwhrw3q3mpcq3', ask_amount: 10, give_token: 'Coin', give_amount: 10 })
+    // isFormValid && client.createOrder({ conclude_destination: 'tmt1qxskh99uvaa8agqpdjt5psuq94fl5n6lg5dcd639', ask_token: 'tmltk1aa3vvztufv5m054klp960p6f6pf59ugxp394x7n42v0clgwhrw3q3mpcq3', ask_amount: 5, give_token: 'Coin', give_amount: 5 })
+    // isFormValid &&
+    //   client.transfer({
+    //     to: destinationAddress,
+    //     amount: amount,
+    //   })
     isFormValid &&
-      console.log('Submitting order swap with:', {
-        orderId,
+      client.fillOrder({
+        order_id: orderId,
         amount,
-        destinationAddress,
-        networkType,
+        destination: destinationAddress,
       })
   }
 
@@ -96,6 +100,7 @@ const OrderSwapPage = () => {
           <>
             <TextField
               label={'Order id'}
+              labelPosition="left"
               value={orderId}
               onChangeHandle={orderIdChangeHandler}
               validity={orderIdValidity}
@@ -108,6 +113,7 @@ const OrderSwapPage = () => {
 
             <TextField
               label={'Amount'}
+              labelPosition="left"
               value={amount}
               onChangeHandle={amountChangeHandler}
               validity={orderIdValidity}
@@ -120,6 +126,7 @@ const OrderSwapPage = () => {
 
             <TextField
               label={'Destination address'}
+              labelPosition="left"
               value={destinationAddress}
               onChangeHandle={destinationAddressChangeHandler}
               validity={destinationAddressValidity}
@@ -130,21 +137,22 @@ const OrderSwapPage = () => {
               focus={false}
             />
 
-            {txErrorMessage ? (
-              <>
-                <Error error={txErrorMessage} />
-              </>
-            ) : (
-              <></>
-            )}
-
             <CenteredLayout>
-              <Button
-                extraStyleClasses={['send-transaction-button']}
-                onClickHandle={onSubmit}
-              >
-                Swap Order
-              </Button>
+              <VerticalGroup>
+                {txErrorMessage ? (
+                  <>
+                    <Error error={txErrorMessage} />
+                  </>
+                ) : (
+                  <></>
+                )}
+                <Button
+                  extraStyleClasses={['go-preview-button']}
+                  onClickHandle={onSubmit}
+                >
+                  Swap Order
+                </Button>
+              </VerticalGroup>
             </CenteredLayout>
           </>
         )}

@@ -1,6 +1,7 @@
 .order-swap-title {
   font-size: 1.5rem;
   font-weight: bold;
+  margin-bottom: 1rem;
 
   @media screen and (min-width: 801px) {
     margin-bottom: 2rem;
