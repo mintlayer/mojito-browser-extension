@@ -1,8 +1,8 @@
-import React, { useContext } from 'react'
+import React, { useEffect, useContext } from 'react'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
-import './TransactionPreview.css'
+import './InternalTransactionPreview.css'
 
-import { AccountContext, SettingsContext } from '@Contexts'
+import { AccountContext, SettingsContext, MintlayerContext } from '@Contexts'
 
 const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
   const inputWithToken = inputs.find(
@@ -45,20 +45,8 @@ const EstimatedChanges = ({ action }) => {
     <div className="signTxSection">
       <h4>Estimated changes:</h4>
       <p>
-        You’re approving a one-time request to{' '}
         <span className="signTxAction">{action}</span>
       </p>
-    </div>
-  )
-}
-
-const RequestDetails = ({ transactionData }) => {
-  return (
-    <div className="signTxSection">
-      <h4>Request from:</h4>
-      <p>{transactionData.origin}</p>
-      <h4>Request id:</h4>
-      <p>{transactionData.requestId}</p>
     </div>
   )
 }
@@ -74,6 +62,7 @@ const NetworkFee = ({ fee }) => {
 }
 
 const TransferDetails = ({ transactionData, requiredAddresses }) => {
+  const { setTxPreviewInfo } = useContext(MintlayerContext)
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
   const fee = calculateFee(inputs, outputs, requiredAddresses)
@@ -89,6 +78,17 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
     JSONRepresentation.outputs,
     requiredAddresses,
   )
+  useEffect(() => {
+    if (relevantOutput) {
+      setTxPreviewInfo({
+        action: title,
+        destination: relevantOutput.destination,
+        tokenId: tokenId,
+        amount: relevantOutput.value.amount.decimal,
+        fee: fee,
+      })
+    }
+  }, [relevantOutput, setTxPreviewInfo, title, tokenId, fee])
 
   return (
     <div className="transactionDetails">
@@ -105,7 +105,6 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
         <h4>Amount:</h4>
         <p>{relevantOutput.value.amount.decimal}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -116,6 +115,7 @@ const FreezeTokenDetails = ({
   requiredAddresses,
   unfreeze,
 }) => {
+  const { setTxPreviewInfo } = useContext(MintlayerContext)
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
   const fee = calculateFee(inputs, outputs, requiredAddresses)
@@ -123,6 +123,14 @@ const FreezeTokenDetails = ({
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
   )
+
+  setTxPreviewInfo({
+    action: unfreeze ? 'Unfreeze token' : 'Freeze token',
+    destination: '',
+    tokenId: inputWithToken.input.token_id,
+    amount: '',
+    fee: fee,
+  })
   return (
     <div className="transactionDetails">
       <div className="signTxSection">
@@ -136,13 +144,13 @@ const FreezeTokenDetails = ({
         <h4>Token id:</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
 }
 
 const ChangeTokenMetadata = ({ transactionData, requiredAddresses }) => {
+  const { setTxPreviewInfo } = useContext(MintlayerContext)
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const { inputs, outputs } = JSONRepresentation
   const fee = calculateFee(inputs, outputs, requiredAddresses)
@@ -150,6 +158,15 @@ const ChangeTokenMetadata = ({ transactionData, requiredAddresses }) => {
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
   )
+
+  setTxPreviewInfo({
+    action: 'Change token metadata',
+    destination: '',
+    tokenId: inputWithToken.input.token_id,
+    amount: '',
+    fee: fee,
+  })
+
   return (
     <div className="transactionDetails">
       <EstimatedChanges action="Change token metadata" />
@@ -161,7 +178,6 @@ const ChangeTokenMetadata = ({ transactionData, requiredAddresses }) => {
         <h4>New metadata:</h4>
         <p>{inputWithToken.input.new_metadata_uri}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -186,7 +202,6 @@ const ChangeTokenAuthority = ({ transactionData, requiredAddresses }) => {
         <h4>New authority:</h4>
         <p>{inputWithToken.input.new_authority}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -208,7 +223,6 @@ const LockTokenSupply = ({ transactionData, requiredAddresses }) => {
         <h4>Token id:</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -238,7 +252,6 @@ const BurnToken = ({ transactionData, requiredAddresses }) => {
           <h4>Mintlayer Coin</h4>
         </div>
       )}
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -258,7 +271,6 @@ const ConcludeOrder = ({ transactionData, requiredAddresses }) => {
         <h4>Order ID:</h4>
         <p>{inputWithOrderID.input.order_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -278,7 +290,6 @@ const FillOrder = ({ transactionData, requiredAddresses }) => {
         <h4>Order id:</h4>
         <p>{inputWithOrderID.input.order_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -313,7 +324,6 @@ const CreateOrder = ({ transactionData, requiredAddresses }) => {
         <h4>Initially given:</h4>
         <p>{outputWithCreateOrder.initially_given.decimal}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -353,7 +363,6 @@ const IssueToken = ({ transactionData, requiredAddresses }) => {
           </>
         )}
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -374,7 +383,6 @@ const IssueNft = ({ transactionData, requiredAddresses }) => {
         <h4>Destination:</h4>
         <p>{outputWithIssueNft.destination}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -395,7 +403,6 @@ const DataDeposit = ({ transactionData, requiredAddresses }) => {
         <h4>Data:</h4>
         <p>{outputWithDataDeposit.data}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -416,7 +423,6 @@ const CreateDelegationId = ({ transactionData, requiredAddresses }) => {
         <h4>Pool Id:</h4>
         <p>{outputWithDataDeposit.pool_id}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -439,30 +445,6 @@ const DelegateStaking = ({ transactionData, requiredAddresses }) => {
         <h4>Amount:</h4>
         <p>{outputWithDataDeposit.amount.decimal}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
-      <NetworkFee fee={fee} />
-    </div>
-  )
-}
-
-const DelegateWithdraw = ({ transactionData, requiredAddresses }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
-
-  const inputWithWithdraw = JSONRepresentation.inputs.find(
-    (input) => input.input.account_type === 'DelegationBalance',
-  ).input
-  return (
-    <div className="transactionDetails">
-      <EstimatedChanges action="Withdraw from delegation" />
-      <div className="signTxSection">
-        <h4>Delegation Id:</h4>
-        <p>{inputWithWithdraw.delegation_id}</p>
-        <h4>Amount:</h4>
-        <p>{inputWithWithdraw.amount.decimal}</p>
-      </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -489,7 +471,6 @@ const BridgeRequest = ({ transactionData, requiredAddresses }) => {
         <h4>Amount:</h4>
         <p>{outputsWithTokens[0].value.amount.decimal}</p>
       </div>
-      <RequestDetails transactionData={transactionData} />
       <NetworkFee fee={fee} />
     </div>
   )
@@ -609,18 +590,12 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-        {flags.isDelegateWithdraw && (
-          <DelegateWithdraw
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
-        )}
       </div>
     </div>
   )
 }
 
-const TransactionPreview = ({ data }) => {
+const InternalTransactionPreview = ({ data }) => {
   return (
     <div className="transactionPreview">
       <SummaryView data={data} />
@@ -628,4 +603,4 @@ const TransactionPreview = ({ data }) => {
   )
 }
 
-export default TransactionPreview
+export default InternalTransactionPreview

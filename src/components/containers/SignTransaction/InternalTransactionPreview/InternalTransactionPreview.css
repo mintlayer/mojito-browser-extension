@@ -1,0 +1,126 @@
+.transactionPreview {
+  background: #ffffff;
+  border-radius: 12px;
+}
+
+.preview-section {
+  margin: 24px 0;
+  border-radius: 8px;
+}
+
+.preview-section h3 {
+  margin: 0 0 16px;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tx-icon {
+  width: 24px;
+  height: 24px;
+  stroke: #4a5568;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.summary-grid div {
+  background: #edf2f7;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.summary-grid strong {
+  color: #2d3748;
+}
+
+.extra-info {
+  margin-top: 12px;
+  padding: 12px;
+  background: #e2e8f0;
+  border-radius: 6px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.detail-item h4 {
+  margin: 0 0 12px;
+  color: #2d3748;
+  font-size: 1.1rem;
+}
+
+.detail-item p {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.transaction-table th,
+.transaction-table td {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.transaction-table th {
+  background: #edf2f7;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.transaction-table td {
+  background: #ffffff;
+  color: #4a5568;
+}
+
+.transaction-table tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+.transactionDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signTxSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.signTxAction {
+  color: rgb(var(--color-primary));
+}

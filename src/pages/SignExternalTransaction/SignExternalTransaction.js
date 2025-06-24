@@ -6,7 +6,7 @@ import { Button } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 
-import './SignTransaction.css'
+import './SignExternalTransaction.css'
 import { useState, useContext } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
@@ -59,10 +59,7 @@ export const SignTransactionPage = () => {
     try {
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
-      console.log(
-        'transactionJSONrepresentation',
-        transactionJSONrepresentation,
-      )
+
       const transactionBINrepresentation =
         SignTxHelpers.getTransactionBINrepresentation(
           transactionJSONrepresentation,
@@ -212,7 +209,7 @@ export const SignTransactionPage = () => {
           <>
             {mode === 'preview' && (
               <div className="transaction-preview-wrapper">
-                <SignTransaction.TransactionPreview data={state} />
+                <SignTransaction.ExternalTransactionPreview data={state} />
               </div>
             )}
             {mode === 'json' && <SignTransaction.JsonPreview data={state} />}

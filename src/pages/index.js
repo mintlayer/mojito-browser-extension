@@ -17,8 +17,9 @@ import LockedBalancePage from './LockedBalance/LockedBalance'
 import MessagePage from './MessagePage/MessagePage'
 import NftPage from './Nft/Nft'
 import NftSendPage from './NftSend/NftSend'
-import SignTransactionPage from './SignTransaction/SignTransaction'
 import SignChallengePage from './SignChallenge/SignChallenge'
+import SignExternalTransactionPage from './SignExternalTransaction/SignExternalTransaction'
+import SignInternalTransaction from './SignInternalTransaction/SignInternalTransaction'
 import OrderSwapPage from './OrderSwap/OrderSwap'
 
 export {
@@ -41,7 +42,8 @@ export {
   MessagePage,
   NftPage,
   NftSendPage,
-  SignTransactionPage,
   SignChallengePage,
+  SignExternalTransactionPage,
+  SignInternalTransaction,
   OrderSwapPage,
 }
