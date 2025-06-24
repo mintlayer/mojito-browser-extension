@@ -165,7 +165,6 @@ const WalletPage = () => {
             exchangeRate={exchangeRate}
             walletType={walletType}
           />
-          {/* {!isExtendedView && <ActionButtons data={actionButtonData} />} */}
         </div>
         <ActionButtons data={actionButtonData} />
         <Wallet.TransactionsList
