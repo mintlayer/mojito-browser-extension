@@ -112,7 +112,7 @@ export const batchRequestMintlayer = async ({ ids, type }) => {
     console.error('Batch request failed:', json)
     throw new Error('Batch request failed')
   }
-  const results = json.results.flat() || []
+  const results = (json.results ?? []).flat()
   return results
 }
 
