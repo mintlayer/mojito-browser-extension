@@ -76,6 +76,10 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
 }
 
 export const batchRequestMintlayer = async ({ ids, type }) => {
+  if (!ids || !ids.length) {
+    return [] // if no ids provided, return empty array
+  }
+
   const networkType = LocalStorageService.getItem('networkType')
   const customMintlayerServerList = LocalStorageService.getItem(
     AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
