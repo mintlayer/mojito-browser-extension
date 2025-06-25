@@ -296,8 +296,9 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       0,
     )
 
-    setMlDelegationsBalance(totalDelegationBalance) // TODO: get delegations balance from batchAccountData
+    setMlDelegationsBalance(totalDelegationBalance)
     setMlDelegationList(delegations || [])
+    setFetchingDelegations(false)
 
     const fetchedUtxos = await batchRequestMintlayer({
       ids: non_zero_addresses,
