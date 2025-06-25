@@ -286,7 +286,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
     const delegations = await batchRequestMintlayer({
-      ids: non_zero_addresses,
+      ids: addressList,
       type: '/address/:address/delegations',
     })
 
