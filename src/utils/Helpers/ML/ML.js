@@ -226,7 +226,7 @@ const getParsedTransactions = (transactions, addresses) => {
 
     const confirmations = transaction.confirmations
     const date = transaction.timestamp
-    const txid = transaction.id
+    const txid = transaction.id || transaction.txid
     const fee = transaction.fee.decimal
     const isConfirmed = confirmations > 0
     const blockId = transaction.block_id
