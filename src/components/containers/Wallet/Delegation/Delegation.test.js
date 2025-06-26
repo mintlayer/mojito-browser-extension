@@ -22,7 +22,10 @@ const memoryRouterFeature = {
 describe('Delegation', () => {
   const mockDelegation = {
     creation_time: 1645113600,
-    balance: 100000000,
+    balance: {
+      decimals: '0.001',
+      atoms: '100000000',
+    },
     pool_id: 'test_id',
   }
 

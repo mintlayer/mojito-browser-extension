@@ -17,7 +17,7 @@ const getNRandomElementsFromArray = (array, n) => {
 const removeDublicates = (arr) => {
   const seen = new Set()
   return arr.filter((item) => {
-    const k = JSON.stringify(item)
+    const k = item
     return seen.has(k) ? false : seen.add(k)
   })
 }
