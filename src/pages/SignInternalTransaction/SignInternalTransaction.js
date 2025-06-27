@@ -42,6 +42,7 @@ export const SignTransactionPage = () => {
   const [transactionId, setTransactionId] = useState(null)
   const [txErrorMessage, setTxErrorMessage] = useState(null)
   const loadingExtraClasses = ['loading-big']
+  const navigate = useNavigate()
 
   const [mode, setMode] = useState('preview')
 
@@ -71,38 +72,37 @@ export const SignTransactionPage = () => {
   }
 
   const handleModalSubmit = async () => {
+    setSendingTransaction(true)
     try {
-      setSendingTransaction(true)
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
-      console.log(
-        'transactionJSONrepresentation',
-        transactionJSONrepresentation,
-      )
       const transactionBINrepresentation =
         SignTxHelpers.getTransactionBINrepresentation(
           transactionJSONrepresentation,
           network,
         )
-      console.log('transactionBINrepresentation', transactionBINrepresentation)
 
-      const pass = password
-      const unlockedAccount = await Account.unlockAccount(accountID, pass)
+      let unlockedAccount
+      try {
+        unlockedAccount = await Account.unlockAccount(accountID, password)
+      } catch (unlockError) {
+        setTxErrorMessage('Incorrect password')
+        setPassword('')
+        return
+      }
+
       const mlPrivKeys = unlockedAccount.mlPrivKeys
-
       const privKey =
         networkType === 'mainnet'
           ? mlPrivKeys.mlMainnetPrivateKey
           : mlPrivKeys.mlTestnetPrivateKey
 
       const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
-
       const walletPrivKeys = ML.getWalletPrivKeysList(
         privKey,
         networkType,
         changeAddressesLength,
       )
-
       const keysList = {
         ...walletPrivKeys.mlReceivingPrivKeys,
         ...walletPrivKeys.mlChangePrivKeys,
@@ -117,17 +117,13 @@ export const SignTransactionPage = () => {
         network,
       )
 
-      console.log('transactionHex', transactionHex)
-
       const result = await Mintlayer.broadcastTransaction(transactionHex)
-      console.log('result', result)
       setTransactionId(JSON.parse(result))
 
       if (txPreviewInfo) {
         const account = LocalStorageService.getItem('unlockedAccount')
         const accountName = account.name
         const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkName}`
-
         const unconfirmedTransactions =
           LocalStorageService.getItem(unconfirmedTransactionString) || []
 
@@ -150,33 +146,18 @@ export const SignTransactionPage = () => {
           unconfirmedTransactions,
         )
       }
-
-      setSendingTransaction(false)
     } catch (error) {
-      if (error.address === '') {
-        // password is not correct
-        setTxErrorMessage('Incorrect password')
-        setPassword('')
-      } else if (
-        typeof error === 'string' &&
-        error.includes('Invalid amount')
-      ) {
-        // need to adjust fee
-        setPassword('')
-        setTxErrorMessage('Balance is not enough to cover the transaction')
-        console.error(error)
-      } else if (error.message.includes('minimum fee')) {
-        // need to adjust fee
-        setPassword('')
-        setTxErrorMessage('Transaction fee adjusted')
-        console.error(error)
-      } else {
-        // handle other errors
-        setPassword('')
-        setTxErrorMessage(error.message)
-        console.error(error)
-      }
+      SignTxHelpers.handleTxError(error, setTxErrorMessage, setPassword)
+    } finally {
+      setSendingTransaction(false)
     }
+  }
+
+  const handleDecline = () => {
+    setPassword('')
+    setSendingTransaction(false)
+    setTxErrorMessage('')
+    setIsModalOpen(false)
   }
 
   const handleReject = () => {
@@ -286,7 +267,7 @@ export const SignTransactionPage = () => {
               )}
               <div className="modal-buttons">
                 <Button
-                  onClickHandle={() => setIsModalOpen(false)}
+                  onClickHandle={handleDecline}
                   extraStyleClasses={extraButtonStyles}
                   alternate
                 >

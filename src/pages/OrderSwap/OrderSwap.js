@@ -22,7 +22,9 @@ const OrderSwapPage = () => {
   const [txErrorMessage, setTxErrorMessage] = useState(null)
   const [isFormValid, setIsFormValid] = useState(false)
   const [fieldPristinity, setFieldPristinity] = useState(true)
+  const [loading, setLoading] = useState(false)
   const inputExtraClasses = ['swap-order-input']
+  const loadingExtraClasses = ['loading-big']
 
   const onSubmit = async (event) => {
     event.preventDefault()
@@ -49,12 +51,43 @@ const OrderSwapPage = () => {
     //     to: destinationAddress,
     //     amount: amount,
     //   })
-    isFormValid &&
-      client.fillOrder({
-        order_id: orderId,
-        amount,
-        destination: destinationAddress,
-      })
+    try {
+      setLoading(true)
+      if (isFormValid) {
+        await client.fillOrder({
+          order_id: orderId,
+          amount,
+          destination: destinationAddress,
+        })
+      }
+    } catch (error) {
+      if (error?.message?.includes('Not enough token UTXOs')) {
+        setTxErrorMessage('Token blance is not enough to fill the order')
+        return
+      }
+
+      if (error?.message?.includes('Failed to fetch order')) {
+        setTxErrorMessage('Order not found or invalid order ID')
+        return
+      }
+
+      if (error?.message?.includes('Invalid addressable')) {
+        setTxErrorMessage('Invalid destination address')
+        return
+      }
+
+      if (error.includes('Invalid addressable')) {
+        setTxErrorMessage('Invalid destination address')
+        return
+      }
+
+      console.error('Error filling order:', error)
+      setTxErrorMessage(
+        error?.message || 'An error occurred while filling the order',
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   const orderIdChangeHandler = (value) => {
@@ -92,9 +125,9 @@ const OrderSwapPage = () => {
         onSubmit={onSubmit}
         className="order-swap-form"
       >
-        {balanceLoading ? (
-          <div className="loading-center">
-            <Loading />
+        {balanceLoading || loading ? (
+          <div className="swap-order-loading">
+            <Loading extraStyleClasses={loadingExtraClasses} />
           </div>
         ) : (
           <>
@@ -138,7 +171,10 @@ const OrderSwapPage = () => {
             />
 
             <CenteredLayout>
-              <VerticalGroup>
+              <VerticalGroup
+                fullWidth
+                center
+              >
                 {txErrorMessage ? (
                   <>
                     <Error error={txErrorMessage} />

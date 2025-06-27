@@ -17,3 +17,11 @@
 .swap-order-input {
   padding: 1rem;
 }
+
+.swap-order-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
