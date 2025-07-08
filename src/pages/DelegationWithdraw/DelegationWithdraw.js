@@ -57,7 +57,7 @@ const DelegationWithdrawPage = () => {
   )
 
   const delegationBalance = Format.BTCValue(
-    MLHelpers.getAmountInCoins(currentDelegationInfo?.balance || 0),
+    MLHelpers.getAmountInCoins(currentDelegationInfo?.balance.atoms || 0),
   )
 
   const maxValueToken = delegationBalance - totalFeeCrypto

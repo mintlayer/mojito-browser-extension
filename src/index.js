@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import React, { useState, useEffect, useContext } from 'react'
 import ReactDOM from 'react-dom/client'
 import {
@@ -31,6 +32,7 @@ import {
   NftPage,
   NftSendPage,
   SignTransactionPage,
+  SignChallengePage,
 } from '@Pages'
 
 import {
@@ -54,12 +56,18 @@ import '@Assets/styles/index.css'
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
 const storage =
-  // eslint-disable-next-line no-undef
-  typeof browser !== 'undefined' ? browser.storage : chrome.storage
+  typeof browser !== 'undefined' && browser.storage
+    ? browser.storage
+    : typeof chrome !== 'undefined' && chrome.storage
+      ? chrome.storage
+      : null
 
 const runtime =
-  // eslint-disable-next-line no-undef
-  typeof browser !== 'undefined' ? browser.runtime : chrome.runtime
+  typeof browser !== 'undefined' && browser.runtime
+    ? browser.runtime
+    : typeof chrome !== 'undefined' && chrome.runtime
+      ? chrome.runtime
+      : null
 
 const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
@@ -153,6 +161,19 @@ const App = () => {
       }
       navigate('/wallet/Mintlayer/sign-transaction', {
         state: { action: 'signTransaction', request },
+      })
+    }
+
+    if (action === 'signChallenge') {
+      if (!unlocked) {
+        setNextAfterUnlock({
+          route: '/wallet/Mintlayer/sign-challenge',
+          state: { action: 'signChallenge', request },
+        })
+        return
+      }
+      navigate('/wallet/Mintlayer/sign-challenge', {
+        state: { action: 'signChallenge', request },
       })
     }
 
@@ -250,6 +271,10 @@ const App = () => {
         <Route
           path="/wallet/:coinType/sign-transaction"
           element={<SignTransactionPage />}
+        />
+        <Route
+          path="/wallet/:coinType/sign-challenge"
+          element={<SignChallengePage />}
         />
         <Route
           path="/wallet/:coinType"

@@ -18,6 +18,7 @@ import MessagePage from './MessagePage/MessagePage'
 import NftPage from './Nft/Nft'
 import NftSendPage from './NftSend/NftSend'
 import SignTransactionPage from './SignTransaction/SignTransaction'
+import SignChallengePage from './SignChallenge/SignChallenge'
 
 export {
   CreateAccountPage,
@@ -40,4 +41,5 @@ export {
   NftPage,
   NftSendPage,
   SignTransactionPage,
+  SignChallengePage,
 }

@@ -1,5 +1,6 @@
 // mojito.js — injected SDK
 
+// eslint-disable-next-line no-extra-semi
 ;(function () {
   const NETWORKS = {
     mainnet: 'mainnet',
@@ -8,7 +9,7 @@
 
   const mojito = {
     isExtension: true,
-    version: '1.4.0',
+    version: '__APP_VERSION__',
     connectedAddresses: [],
     network: NETWORKS['testnet'], // default network
 

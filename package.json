@@ -1,6 +1,6 @@
 {
   "name": "browser-extension",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "dependencies": {
     "@bitcoin-js/tiny-secp256k1-asmjs": "^2.2.3",
@@ -10,11 +10,11 @@
     "bitcoinjs-lib": "^6.1.7",
     "bluebird": "^3.7.2",
     "buffer": "^6.0.3",
-    "canvas": "^2.11.2",
+    "canvas": "^3.1.0",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
     "jest-webgl-canvas-mock": "^2.5.3",
-    "konva": "^9.3.16",
+    "konva": "^9.3.20",
     "node-forge": "^1.3.1",
     "pbkdf2": "^3.1.2",
     "process": "^0.11.10",
@@ -25,7 +25,8 @@
     "react-qr-code": "^2.0.15",
     "react-router-dom": "^6.28.0",
     "stream-browserify": "^3.0.0",
-    "web-vitals": "^4.2.4"
+    "web-vitals": "^5.0.1",
+    "@mintlayer/sdk": "^1.0.12"
   },
   "scripts": {
     "start": "react-app-rewired start",
@@ -34,7 +35,7 @@
     "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --testPathIgnorePatterns='src/pages'",
     "coverage": "npm test -- --coverage ",
     "serve": "npm run build && http-server -p 8000 build/ ",
-    "e2e": "npx playwright test --workers=5",
+    "e2e": "npx playwright test",
     "e2e:debug": "npx playwright test --headed",
     "e2e:ui": "npx playwright test --ui",
     "eject": "react-scripts eject",
@@ -44,7 +45,7 @@
     "pretty-quick-check": "pretty-quick --check",
     "pretty-quick-check-branch": "pretty-quick --check --branch main",
     "prepare": "husky install",
-    "version-manifest": "node scripts/version-manifest.js"
+    "version": "node src/version/version-manifest.js && node src/version/version-mojito.js"
   },
   "eslintConfig": {
     "ignorePatterns": [
@@ -98,7 +99,8 @@
   },
   "jest": {
     "transformIgnorePatterns": [
-      "\"node_modules/(?!@toolz/allow)/\""
+      "\"node_modules/(?!@toolz/allow)/\"",
+      "/node_modules/playwright-core"
     ],
     "moduleNameMapper": {
       "@Assets/(.*)": "<rootDir>/src/assets/$1",
@@ -159,27 +161,26 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
-    "@playwright/test": "^1.49.1",
+    "@playwright/test": "^1.52.0",
     "@svgr/webpack": "^8.1.0",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.1.0",
-    "@testing-library/user-event": "^14.5.2",
-    "@types/node": "^22.10.2",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.15.24",
     "@types/tiny-secp256k1": "^2.0.1",
     "dotenv-webpack": "^8.1.0",
     "ecpair": "^2.1.0",
     "env-cmd": "^10.1.0",
-    "fake-indexeddb": "^6.0.0",
-    "gh-pages": "^6.2.0",
+    "fake-indexeddb": "^6.0.1",
+    "gh-pages": "^6.3.0",
     "http-server": "^14.1.1",
     "husky": "^9.1.7",
     "indexeddb-export-import": "^2.1.5",
     "jest-canvas-mock": "^2.5.2",
-    "prettier": "^3.4.2",
-    "pretty-quick": "^4.0.0",
+    "prettier": "^3.5.3",
+    "pretty-quick": "^4.1.1",
     "react-app-rewire-alias": "^1.1.7",
     "react-scripts": "5.0.1",
     "wallet-address-validator": "^0.2.4",

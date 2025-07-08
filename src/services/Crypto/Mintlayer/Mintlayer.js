@@ -31,8 +31,7 @@ import init, {
   verify_challenge,
   encode_output_token_lock_then_transfer,
 } from './@mintlayerlib-js/wasm_wrappers.js'
-
-import { Mintlayer } from '@APIs'
+import { batchRequestMintlayer } from '../../API/Mintlayer/Mintlayer'
 
 const NETWORKS = {
   mainnet: 0,
@@ -101,17 +100,31 @@ export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
   return { mlReceivingPrivKeys, mlChangePrivKeys }
 }
 
-const checkIfAddressUsed = async (address, network) => {
-  try {
-    const addressData = await Mintlayer.getAddressData(address, network)
-    const data = JSON.parse(addressData)
-    if (data.transaction_history.length > 0) {
-      return true
+// const checkIfAddressUsed = async (address, network) => {
+//   try {
+//     const addressData = await Mintlayer.getAddressData(address, network)
+//     const data = JSON.parse(addressData)
+//     if (data.transaction_history.length > 0) {
+//       return true
+//     }
+//     return false
+//   } catch (e) {
+//     return false
+//   }
+// }
+
+const checkIfAddressesUsed = async (addresses, network) => {
+  const data = await batchRequestMintlayer({
+    ids: addresses,
+    type: '/address/:address',
+  })
+  return data.map((item) => {
+    if (item.error) {
+      return false
     }
-    return false
-  } catch (e) {
-    return false
-  }
+    const parsedData = item
+    return parsedData.transaction_history.length > 0
+  })
 }
 
 export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
@@ -129,17 +142,13 @@ export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
 
   const checkAndGenerateAddresses = async (addressGenerator) => {
     const addresses = generateAddresses(addressGenerator, batch, 0)
-    let allUsed = await Promise.all(
-      addresses.map((address) => checkIfAddressUsed(address, network)),
-    )
+    let allUsed = await checkIfAddressesUsed(addresses, network)
 
     while (allUsed.every((used) => used)) {
       addresses.push(
         ...generateAddresses(addressGenerator, batch, addresses.length),
       )
-      allUsed = await Promise.all(
-        addresses.map((address) => checkIfAddressUsed(address, network)),
-      )
+      allUsed = await checkIfAddressesUsed(addresses, network)
     }
 
     return addresses
@@ -175,7 +184,6 @@ export const getOutputs = ({
     throw new Error('LockThenTransfer requires a lock')
   }
 
-  console.log('aaa', type, amount)
   const amountInstace = amount ? Amount.from_atoms(amount) : undefined
 
   const networkIndex = NETWORKS[networkType]

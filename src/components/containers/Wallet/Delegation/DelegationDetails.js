@@ -36,7 +36,7 @@ const DelegationDetails = ({ delegation }) => {
   const date = delegation.creation_time
     ? format(new Date(delegation.creation_time * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
-  const balance = Format.BTCValue(ML.getAmountInCoins(delegation.balance))
+  const balance = Format.BTCValue(ML.getAmountInCoins(delegation.balance.atoms))
   const buttonExtraStyles = ['delegation-details-button']
   const addressTitle = 'Spend address:'
   const delegationAddress = delegation ? delegation.spend_destination : ''

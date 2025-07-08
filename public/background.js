@@ -110,6 +110,46 @@
           api.windows.update(popupWindowId, { focused: true })
           sendResponse({ error: 'Transaction signing window already open' })
         }
+      } else if (message.method === 'signChallenge') {
+        if (!connectedSites[origin]) {
+          sendResponse({ error: 'Not connected. Call connect first.' })
+        } else if (popupWindowId === false) {
+          pendingResponses.set(message.requestId, sendResponse)
+          api.windows.create(
+            {
+              url: api.runtime.getURL('popup.html'),
+              type: 'popup',
+              width: 800,
+              height: 600,
+              focused: true,
+            },
+            (win) => {
+              popupWindowId = win.id
+              api.storage.local.set(
+                {
+                  pendingRequest: {
+                    origin,
+                    requestId: message.requestId,
+                    action: 'signChallenge',
+                    data: message.params || {},
+                  },
+                },
+                () => {
+                  if (api.runtime.lastError) {
+                    console.error(
+                      '[Mintlayer] Storage set error:',
+                      api.runtime.lastError,
+                    )
+                  }
+                },
+              )
+            },
+          )
+          return true
+        } else if (typeof popupWindowId === 'number') {
+          api.windows.update(popupWindowId, { focused: true })
+          sendResponse({ error: 'Transaction signing window already open' })
+        }
       } else if (message.method === 'version') {
         sendResponse({ result: api.runtime.getManifest().version })
       } else if (message.method === 'getSession') {
@@ -158,6 +198,12 @@
         storedSendResponse({ result, error })
         pendingResponses.delete(requestId)
       } else if (result && message.method === 'signTransaction_reject') {
+        storedSendResponse({ result, error })
+        pendingResponses.delete(requestId)
+      } else if (result && message.method === 'signChallenge_approve') {
+        storedSendResponse({ result, error })
+        pendingResponses.delete(requestId)
+      } else if (result && message.method === 'signChallenge_reject') {
         storedSendResponse({ result, error })
         pendingResponses.delete(requestId)
       } else {

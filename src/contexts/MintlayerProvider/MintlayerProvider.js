@@ -6,6 +6,7 @@ import { ML_ATOMS_PER_COIN } from '../../utils/Constants/AppInfo/AppInfo'
 import { ML } from '@Helpers'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
+import { batchRequestMintlayer } from '../../services/API/Mintlayer/Mintlayer'
 
 const MintlayerContext = createContext()
 
@@ -62,17 +63,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     if (!account) return
 
-    // const resetState = () => {
-    //   setTransactions([])
-    //   setBalance(0)
-    //   setLockedBalance(0)
-    //   setTokenBalances({})
-    //   setUtxos([])
-    //   // TODO: enable this when after remove popup confirmation
-    //   // setMlDelegationList([])
-    //   setMlDelegationsBalance(0)
-    // }
-
     setAllDataFetching(true)
     setFetchingTransactions(true)
     setFetchingBalances(true)
@@ -101,21 +91,54 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setCurrentNetworkType(networkType)
     setCurrentHeight(onlineHeight)
 
-    const addresses_data_receive = await Promise.all(
-      currentMlAddresses.mlReceivingAddresses.map((address) =>
-        Mintlayer.getAddressData(address),
-      ),
+    const addresses_data_receive_data = await batchRequestMintlayer({
+      ids: currentMlAddresses.mlReceivingAddresses,
+      type: '/address/:address',
+    })
+    const addresses_data_change_data = await batchRequestMintlayer({
+      ids: currentMlAddresses.mlChangeAddresses,
+      type: '/address/:address',
+    })
+
+    const addresses_data_receive = addresses_data_receive_data.map(
+      (address) => {
+        if (address.error) {
+          return {
+            ...address,
+            coin_balance: { atoms: '0', decimal: '0' },
+            locked_coin_balance: { atoms: '0', decimal: '0' },
+            tokens: [],
+            unused: true,
+          }
+        }
+        return {
+          ...address,
+          unused: address.unused || false,
+        }
+      },
     )
-    const addresses_data_change = await Promise.all(
-      currentMlAddresses.mlChangeAddresses.map((address) =>
-        Mintlayer.getAddressData(address),
-      ),
-    )
+
+    const addresses_data_change = addresses_data_change_data.map((address) => {
+      if (address.error) {
+        return {
+          ...address,
+          coin_balance: { atoms: '0', decimal: '0' },
+          locked_coin_balance: { atoms: '0', decimal: '0' },
+          tokens: [],
+          unused: true,
+        }
+      }
+      return {
+        ...address,
+        unused: address.unused || false,
+      }
+    })
+
     const addresses_data = [...addresses_data_receive, ...addresses_data_change]
 
     const first_unused_change_address_index = addresses_data_change.findIndex(
       (address_data) => {
-        const { unused } = JSON.parse(address_data)
+        const { unused } = address_data
         return unused === true
       },
     )
@@ -125,7 +148,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     const first_unused_receive_address_index = addresses_data_receive.findIndex(
       (address_data) => {
-        const { unused } = JSON.parse(address_data)
+        const { unused } = address_data
         return unused === true
       },
     )
@@ -146,41 +169,46 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const nftBalances = {}
     const transaction_ids = []
     const non_zero_addresses = []
-    addresses_data.forEach((address_data, index) => {
-      const { coin_balance, locked_coin_balance, transaction_history, tokens } =
-        JSON.parse(address_data)
-      available_balance = coin_balance
-        ? available_balance + BigInt(coin_balance.atoms)
-        : available_balance
-      locked_balance = locked_coin_balance
-        ? locked_balance + BigInt(locked_coin_balance.atoms)
-        : locked_balance
-      transaction_ids.push(...transaction_history)
 
-      if (coin_balance !== 0) {
+    addresses_data
+      .filter(({ error }) => !error)
+      .forEach((address_data) => {
+        const {
+          coin_balance,
+          locked_coin_balance,
+          transaction_history,
+          tokens,
+        } = address_data
+        available_balance = coin_balance
+          ? available_balance + BigInt(coin_balance.atoms)
+          : available_balance
+        locked_balance = locked_coin_balance
+          ? locked_balance + BigInt(locked_coin_balance.atoms)
+          : locked_balance
+        transaction_ids.push(...transaction_history)
+
         if (
           coin_balance.atoms !== '0' ||
           (tokens.length > 0 &&
             tokens.some((token) => token.amount.atoms !== '0'))
         ) {
-          non_zero_addresses.push(addressList[index])
+          non_zero_addresses.push(address_data.id)
         }
-      }
 
-      if (tokens) {
-        tokens.forEach((token) => {
-          const { token_id, amount } = token
-          if (!tokenBalances[token_id]) {
-            tokenBalances[token_id] = 0
-          }
-          if (amount.decimal === '1' && amount.atoms === '1') {
-            nftBalances[token_id] = 1
-          } else {
-            tokenBalances[token_id] += Number(amount.decimal)
-          }
-        })
-      }
-    })
+        if (tokens) {
+          tokens.forEach((token) => {
+            const { token_id, amount } = token
+            if (!tokenBalances[token_id]) {
+              tokenBalances[token_id] = 0
+            }
+            if (amount.decimal === '1' && amount.atoms === '1') {
+              nftBalances[token_id] = 1
+            } else {
+              tokenBalances[token_id] += Number(amount.decimal)
+            }
+          })
+        }
+      })
 
     const { tokensData: nftData, excludedTokenIds } =
       await Mintlayer.getNftsData(Object.keys(nftBalances))
@@ -233,10 +261,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setCurrentAccountId(accountID)
 
     // fetch transactions data
-    const transactions = transaction_ids.map((txid) =>
-      Mintlayer.getTransactionData(txid),
-    )
-    const transactions_data = await Promise.all(transactions)
+    const transactions_data = await batchRequestMintlayer({
+      ids: [...new Set(transaction_ids)],
+      type: '/transaction/:txid',
+    })
 
     const parsedTransactions = ML.getParsedTransactions(
       transactions_data,
@@ -245,11 +273,11 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setTransactions(parsedTransactions)
     setFetchingTransactions(false)
 
-    const addressesWithDelegation = parsedTransactions
-      .filter((tx) => tx.type === 'CreateDelegationId')
-      .map((tx) => tx.delegationOwner)
-    const uniqueAddressesWithDelegation = [...new Set(addressesWithDelegation)]
-    await fetchDelegations(uniqueAddressesWithDelegation)
+    // const addressesWithDelegation = parsedTransactions
+    //   .filter((tx) => tx.type === 'CreateDelegationId')
+    //   .map((tx) => tx.delegationOwner)
+    // const uniqueAddressesWithDelegation = [...new Set(addressesWithDelegation)]
+    // await fetchDelegations(uniqueAddressesWithDelegation)
 
     // fetch utxos
     const accountName = account && account.name
@@ -257,20 +285,36 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-    const fetchedUtxos = await Mintlayer.getWalletUtxos(non_zero_addresses)
-    const fetchedSpendableUtxos =
-      await Mintlayer.getWalletSpendableUtxos(non_zero_addresses)
+    const delegations = await batchRequestMintlayer({
+      ids: addressList,
+      type: '/address/:address/delegations',
+    })
+
+    const totalDelegationBalance = delegations.reduce(
+      (acc, delegation) =>
+        acc + (delegation.balance ? Number(delegation.balance.atoms) : 0),
+      0,
+    )
+
+    setMlDelegationsBalance(totalDelegationBalance)
+    setMlDelegationList(delegations || [])
+    setFetchingDelegations(false)
+
+    const fetchedUtxos = await batchRequestMintlayer({
+      ids: non_zero_addresses,
+      type: '/address/:address/all-utxos',
+    })
+
+    const fetchedSpendableUtxos = await batchRequestMintlayer({
+      ids: non_zero_addresses,
+      type: '/address/:address/spendable-utxos',
+    })
 
     const parsedUtxos = fetchedUtxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
 
     const parsedSpendableUtxos = fetchedSpendableUtxos
-      .map((utxo) => JSON.parse(utxo))
-      .filter((utxo) => utxo.length > 0)
 
     const available = parsedSpendableUtxos
-      .flatMap((utxo) => [...utxo])
       .filter((item) => item.utxo.value)
       .filter((item) => {
         if (unconfirmedTransactions) {
@@ -293,12 +337,12 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     const availableUtxos = available.map((item) => item)
     const lockedUtxos = parsedUtxos
-      .flat()
+      // .flat()
       .filter((obj) => obj.utxo.type === 'LockThenTransfer')
 
-    const availableNftInitialUtxos = parsedSpendableUtxos
-      .flatMap((utxo) => [...utxo])
-      .filter((item) => item.utxo.type === 'IssueNft')
+    const availableNftInitialUtxos = parsedSpendableUtxos.filter(
+      (item) => item.utxo.type === 'IssueNft',
+    )
 
     setNftInitialUtxos(availableNftInitialUtxos)
     setUtxos(availableUtxos)
