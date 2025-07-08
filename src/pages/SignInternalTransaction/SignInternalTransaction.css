@@ -26,7 +26,11 @@
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  height: 80%;
+  height: 70%;
+
+  @media screen and (min-width: 801px) {
+    height: 80%;
+  }
 }
 
 .SignTransaction .mock_selector {

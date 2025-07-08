@@ -21,25 +21,6 @@ const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
   )
 }
 
-const calculateFee = (inputs, outputs, addresses) => {
-  const totalAmountCoins = inputs.reduce((acc, input) => {
-    if (
-      input.utxo &&
-      input.utxo.type === 'Transfer' &&
-      !input?.utxo?.value?.token_id
-    ) {
-      return acc + Number(input.utxo.value.amount.decimal)
-    }
-    return acc
-  }, 0)
-
-  const change = outputs.find((output) =>
-    addresses.includes(output.destination),
-  )?.value.amount.decimal
-
-  return Number(totalAmountCoins) - Number(change)
-}
-
 const EstimatedChanges = ({ action }) => {
   return (
     <div className="signTxSection">
@@ -64,8 +45,7 @@ const NetworkFee = ({ fee }) => {
 const TransferDetails = ({ transactionData, requiredAddresses }) => {
   const { setTxPreviewInfo } = useContext(MintlayerContext)
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.utxo.value.type === 'TokenV1',
@@ -110,15 +90,10 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const FreezeTokenDetails = ({
-  transactionData,
-  requiredAddresses,
-  unfreeze,
-}) => {
+const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
   const { setTxPreviewInfo } = useContext(MintlayerContext)
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -149,11 +124,10 @@ const FreezeTokenDetails = ({
   )
 }
 
-const ChangeTokenMetadata = ({ transactionData, requiredAddresses }) => {
+const ChangeTokenMetadata = ({ transactionData }) => {
   const { setTxPreviewInfo } = useContext(MintlayerContext)
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -183,10 +157,9 @@ const ChangeTokenMetadata = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const ChangeTokenAuthority = ({ transactionData, requiredAddresses }) => {
+const ChangeTokenAuthority = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -207,10 +180,9 @@ const ChangeTokenAuthority = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const LockTokenSupply = ({ transactionData, requiredAddresses }) => {
+const LockTokenSupply = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -228,10 +200,9 @@ const LockTokenSupply = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const BurnToken = ({ transactionData, requiredAddresses }) => {
+const BurnToken = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const burnOutput = JSONRepresentation.outputs.find(
     (output) => output.type === 'BurnToken',
@@ -257,10 +228,9 @@ const BurnToken = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const ConcludeOrder = ({ transactionData, requiredAddresses }) => {
+const ConcludeOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input.order_id,
   )
@@ -276,10 +246,9 @@ const ConcludeOrder = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const FillOrder = ({ transactionData, requiredAddresses }) => {
+const FillOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input.order_id,
   )
@@ -295,10 +264,9 @@ const FillOrder = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const CreateOrder = ({ transactionData, requiredAddresses }) => {
+const CreateOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateOrder',
@@ -329,11 +297,9 @@ const CreateOrder = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const IssueToken = ({ transactionData, requiredAddresses }) => {
+const IssueToken = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
-  console.log('fee', fee)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'IssueFungibleToken',
@@ -368,10 +334,9 @@ const IssueToken = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const IssueNft = ({ transactionData, requiredAddresses }) => {
+const IssueNft = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithIssueNft = JSONRepresentation.outputs.find(
     (output) => output.type === 'IssueNft',
@@ -388,10 +353,9 @@ const IssueNft = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const DataDeposit = ({ transactionData, requiredAddresses }) => {
+const DataDeposit = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'DataDeposit',
@@ -408,10 +372,9 @@ const DataDeposit = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const CreateDelegationId = ({ transactionData, requiredAddresses }) => {
+const CreateDelegationId = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateDelegationId',
@@ -428,10 +391,9 @@ const CreateDelegationId = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const DelegateStaking = ({ transactionData, requiredAddresses }) => {
+const DelegateStaking = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'DelegateStaking',
@@ -450,10 +412,9 @@ const DelegateStaking = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const BridgeRequest = ({ transactionData, requiredAddresses }) => {
+const BridgeRequest = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputsWithTokens = JSONRepresentation.inputs.filter(
     (input) => input.utxo.value.token_id,
@@ -501,94 +462,43 @@ const SummaryView = ({ data }) => {
         {flags.isUnfreezeToken && (
           <FreezeTokenDetails
             transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
             unfreeze
           />
         )}
         {flags.isFreezeToken && (
-          <FreezeTokenDetails
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <FreezeTokenDetails transactionData={transactionData} />
         )}
         {flags.isChangeTokenMetadata && (
-          <ChangeTokenMetadata
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <ChangeTokenMetadata transactionData={transactionData} />
         )}
         {flags.isChangeTokenAuthority && (
-          <ChangeTokenAuthority
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <ChangeTokenAuthority transactionData={transactionData} />
         )}
         {flags.isLockTokenSupply && (
-          <LockTokenSupply
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <LockTokenSupply transactionData={transactionData} />
         )}
-        {flags.isBurnToken && (
-          <BurnToken
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
-        )}
+        {flags.isBurnToken && <BurnToken transactionData={transactionData} />}
         {/* TODO: BURN COIN */}
         {flags.isConcludeOrder && (
-          <ConcludeOrder
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <ConcludeOrder transactionData={transactionData} />
         )}
-        {flags.isFillOrder && (
-          <FillOrder
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
-        )}
+        {flags.isFillOrder && <FillOrder transactionData={transactionData} />}
         {flags.isCreateOrder && (
-          <CreateOrder
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <CreateOrder transactionData={transactionData} />
         )}
-        {flags.isIssueToken && (
-          <IssueToken
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
-        )}
-        {flags.isIssueNft && (
-          <IssueNft
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
-        )}
+        {flags.isIssueToken && <IssueToken transactionData={transactionData} />}
+        {flags.isIssueNft && <IssueNft transactionData={transactionData} />}
         {flags.isBridgeRequest && (
-          <BridgeRequest
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <BridgeRequest transactionData={transactionData} />
         )}
         {flags.isDataDeposit && (
-          <DataDeposit
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <DataDeposit transactionData={transactionData} />
         )}
         {flags.isCreateDelegationId && (
-          <CreateDelegationId
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <CreateDelegationId transactionData={transactionData} />
         )}
         {flags.isDelegateStaking && (
-          <DelegateStaking
-            transactionData={transactionData}
-            requiredAddresses={requiredAddresses}
-          />
+          <DelegateStaking transactionData={transactionData} />
         )}
       </div>
     </div>
