@@ -1,0 +1,38 @@
+.swap-select-wrapper {
+  position: relative;
+  width: 66%;
+}
+
+.swap-token-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  position: relative;
+  width: 100%;
+  font-weight: bold;
+  font-size: 20px;
+  border-radius: 36px;
+  padding: 11px 26px 11px 16px;
+  border: 1px solid #e0e0e0;
+  background: transparent;
+  color: #222;
+  cursor: pointer;
+}
+
+.swap-token-select::-ms-expand {
+  display: none;
+}
+
+.swap-token-select:hover {
+  outline: none;
+  border: 1px solid rgba(var(--color-light-green), 0.5);
+}
+
+.swap-token-symbol {
+  margin-left: 8px;
+  font-weight: 600;
+  color: #222;
+}
