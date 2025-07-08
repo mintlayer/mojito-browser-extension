@@ -23,6 +23,8 @@ import UpdateButton from './UpdateButton/UpdateButton'
 import LockedBalanceList from './LockedBalanceList/LockedBalanceList'
 import SliderMenu from './SliderMenu/SliderMenu'
 import Navigation from './Navigation/Navigation'
+import ManualSwap from './ManualSwap/ManualSwap'
+import SwapInterface from './SwapInterface/SwapInterface'
 
 export {
   Balance,
@@ -50,4 +52,6 @@ export {
   LockedBalanceList,
   SliderMenu,
   Navigation,
+  ManualSwap,
+  SwapInterface,
 }
