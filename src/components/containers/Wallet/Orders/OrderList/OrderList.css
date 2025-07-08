@@ -1,0 +1,30 @@
+.order-list {
+  overflow: auto;
+  padding: 7px;
+  width: 100%;
+
+  @media screen and (min-width: 801px) {
+    padding: 10px;
+    flex-grow: 1;
+  }
+}
+
+.empty-list {
+  background: rgb(var(--color-gray));
+  font-size: 1.5em;
+  list-style: none;
+  padding: 10px;
+  text-align: center;
+
+  padding: 26px 20px;
+  border-radius: 20px;
+  border: 1px;
+  border: 1px solid rgba(var(--color-light-green), 0.2);
+}
+
+.load-more-button-wrapper {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: 16px;
+}
