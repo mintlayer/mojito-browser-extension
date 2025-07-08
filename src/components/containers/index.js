@@ -15,6 +15,9 @@ import NftList from './Wallet/Nft/NftList'
 import DelegationList from './Wallet/Delegation/DelegationList'
 import DelegationDetails from './Wallet/Delegation/DelegationDetails'
 
+import OrderList from './Wallet/Orders/OrderList/OrderList'
+import OrderDetails from './Wallet/Orders/OrderDetails/OrderDetails'
+
 import SendTransaction from './SendTransaction/SendTransaction'
 
 import CryptoSharesChart from './Dashboard/CryptoSharesChart'
@@ -44,6 +47,8 @@ const Wallet = {
   DelegationList,
   DelegationDetails,
   NftList,
+  OrderList,
+  OrderDetails,
 }
 
 /* istanbul ignore next */
