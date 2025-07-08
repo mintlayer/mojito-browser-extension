@@ -14,6 +14,7 @@ import SkeletonLoader from './SkeletonLoader/SkeletonLoader'
 import Tooltip from './Tooltip/Tooltip'
 import Textarea from './Textarea/Textarea'
 import EmptyListMessage from './EmptyList/EmptyList'
+import SwapTokenLogo from './SwapTokenLogo/SwapTokenLogo'
 
 export {
   Arc,
@@ -32,4 +33,5 @@ export {
   Tooltip,
   Textarea,
   EmptyListMessage,
+  SwapTokenLogo,
 }
