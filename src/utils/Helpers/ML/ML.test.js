@@ -32,7 +32,7 @@ describe('ML', () => {
   })
 
   describe('getParsedTransactions', () => {
-    it('should parse transactions', async () => {
+    it('should parse transactions', () => {
       const transactions = [
         {
           inputs: [
@@ -92,7 +92,7 @@ describe('ML', () => {
         },
       ]
 
-      const parsedTx = await getParsedTransactions(transactions, addresses)
+      const parsedTx = getParsedTransactions(transactions, addresses)
       expect(parsedTx).toEqual(expectedParsedTransactions)
     })
   })

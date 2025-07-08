@@ -16,6 +16,9 @@ const MINTLAYER_ENDPOINTS = {
   GET_BLOCK_DATA: '/block/:hash',
   GET_POOL_DATA: '/pool/:hash',
   GET_ORDER_DATA: '/order/:hash',
+  GET_ORDERS_LIST: '/order',
+  GET_TOKEN: '/token/:tokenId',
+  GET_ORDERS_PAIR: '/order/pair/:pair',
 }
 
 const abortControllers = new Map()
@@ -291,6 +294,18 @@ const getWalletSpendableUtxos = (addresses) => {
   return Promise.all(utxosPromises)
 }
 
+const getTokenById = async (tokenId) => {
+  try {
+    const response = await tryServers(
+      MINTLAYER_ENDPOINTS.GET_TOKEN.replace(':tokenId', tokenId),
+    )
+    return JSON.parse(response)
+  } catch (error) {
+    console.error(`Failed to fetch data for token ${tokenId}:`, error)
+    throw error
+  }
+}
+
 const getTokensData = async (tokens) => {
   const tokensData = {}
   tokens.forEach((token) => {
@@ -405,12 +420,45 @@ const getFeesEstimates = async () => {
 const getOrderById = (orderHash) =>
   tryServers(MINTLAYER_ENDPOINTS.GET_ORDER_DATA.replace(':hash', orderHash))
 
+const getOrdersList = async () => {
+  return tryServers(MINTLAYER_ENDPOINTS.GET_ORDERS_LIST)
+}
+
 const broadcastTransaction = (transaction) =>
   tryServers(MINTLAYER_ENDPOINTS.POST_TRANSACTION, transaction)
 
 const cancelAllRequests = () => {
   abortControllers.forEach((controller) => controller.abort())
   abortControllers.clear()
+}
+
+const getAllTokensData = async (networkType) => {
+  try {
+    const network = networkType === 'mainnet' ? 0 : 1
+    const response = await fetch(
+      `https://api.mintini.app/dex_tokens?network=${network}`,
+    )
+    if (!response.ok) {
+      throw new Error('Failed to fetch all tokens data')
+    }
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error in getAllTokensData:', error)
+    throw error
+  }
+}
+
+const getOrdersListByPair = async (pair) => {
+  try {
+    const response = await tryServers(
+      MINTLAYER_ENDPOINTS.GET_ORDERS_PAIR.replace(':pair', pair),
+    )
+    return JSON.parse(response)
+  } catch (error) {
+    console.error(`Failed to fetch orders for pair ${pair}:`, error)
+    throw error
+  }
 }
 
 export {
@@ -434,6 +482,7 @@ export {
   getFeesEstimates,
   getBlocksData,
   getBlockDataByHash,
+  getTokenById,
   getTokensData,
   getPoolsData,
   getNftsData,
@@ -441,4 +490,7 @@ export {
   MINTLAYER_ENDPOINTS,
   abortControllers,
   cancelAllRequests,
+  getOrdersList,
+  getAllTokensData,
+  getOrdersListByPair,
 }
