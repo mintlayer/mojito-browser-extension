@@ -48,7 +48,7 @@ const BitcoinProvider = ({ value: propValue, children }) => {
         const response =
           await Electrum.getAddressTransactions(currentBtcAddress)
         const transactions = JSON.parse(response)
-        const parsedTransactions = await BTC.getParsedTransactions(
+        const parsedTransactions = BTC.getParsedTransactions(
           transactions,
           currentBtcAddress,
         )
