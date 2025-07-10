@@ -3,7 +3,7 @@
   align-items: center;
   padding: 12px 30px;
   margin-bottom: 10px;
-  border-radius: 10px;
+  border-radius: 22px;
   background: rgb(var(--color-gray));
   border: 1px solid rgba(var(--color-light-green), 0.2);
   word-break: break-all;

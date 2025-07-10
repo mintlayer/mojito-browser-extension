@@ -53,3 +53,7 @@
 .transaction-details-button:hover .transaction-explorer-button-icon {
   animation: moveArrowUpRight 0.3s ease-in-out;
 }
+
+.transaction-amount.transaction-amount-big span {
+  font-size: 1.5rem !important;
+}

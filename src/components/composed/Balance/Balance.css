@@ -13,18 +13,18 @@
   display: flex;
   align-items: center;
   min-width: max-content;
+  gap: 10px;
 }
 
 .wallet-logo-wrapper h3 {
   font-size: 1.4rem;
-  margin-left: 10px;
 
   @media screen and (min-width: 801px) {
     font-size: 1.6rem;
   }
 }
 
-.balance-wrapper svg {
+.btcLogo {
   width: 80px;
   height: 80px;
   min-width: 80px;
