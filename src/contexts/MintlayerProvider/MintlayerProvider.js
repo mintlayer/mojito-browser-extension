@@ -608,6 +608,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setOrdersPairInfo,
     fetchOrdersPairInfo,
     orderPairLoading,
+    tokenMap,
   }
 
   return (

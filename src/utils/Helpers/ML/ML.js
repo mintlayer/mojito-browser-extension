@@ -28,6 +28,76 @@ const getAmountInAtoms = (
   return BigInt(Math.round(amountInCoins * atomsPerCoin))
 }
 
+const getSwapDetails = (transaction) => {
+  // Extract transaction ID
+  // const tx_id = transaction.id
+
+  // Track input and output amounts by asset type (Coin or Token with token_id)
+  const inputAmounts = {}
+  const outputAmounts = {}
+
+  // Process inputs (ignoring FillOrder)
+  transaction.inputs.forEach((inputItem) => {
+    if (inputItem.input.input_type === 'UTXO' && inputItem.utxo) {
+      const { value } = inputItem.utxo
+      const amount = new Decimal(value.amount.decimal)
+      const assetKey =
+        value.type === 'Coin' ? 'Coin' : value.token_id || 'Unknown'
+
+      inputAmounts[assetKey] = inputAmounts[assetKey]
+        ? inputAmounts[assetKey].plus(amount)
+        : amount
+    }
+  })
+
+  // Process outputs
+  transaction.outputs.forEach((output) => {
+    const { value } = output
+    const amount = new Decimal(value.amount.decimal)
+    const assetKey =
+      value.type === 'Coin' ? 'Coin' : value.token_id || 'Unknown'
+
+    outputAmounts[assetKey] = outputAmounts[assetKey]
+      ? outputAmounts[assetKey].plus(amount)
+      : amount
+  })
+
+  // Identify the "from" and "to" assets
+  let fromAsset = null
+  let toAsset = null
+
+  const allAssets = new Set([
+    ...Object.keys(inputAmounts),
+    ...Object.keys(outputAmounts),
+  ])
+  allAssets.forEach((assetKey) => {
+    const inputAmt = inputAmounts[assetKey] || new Decimal(0)
+    const outputAmt = outputAmounts[assetKey] || new Decimal(0)
+
+    // Asset decreases (input > output): this is the "from" asset
+    if (inputAmt.greaterThan(outputAmt)) {
+      const amount = inputAmt.minus(outputAmt).toString()
+      fromAsset =
+        assetKey === 'Coin'
+          ? { Coin: 'Coin', amount }
+          : { token_id: assetKey, amount }
+    }
+    // Asset increases (output > input): this is the "to" asset
+    else if (outputAmt.greaterThan(inputAmt)) {
+      const amount = outputAmt.minus(inputAmt).toString()
+      toAsset =
+        assetKey === 'Coin'
+          ? { Coin: 'Coin', amount }
+          : { token_id: assetKey, amount }
+    }
+  })
+
+  if (fromAsset && toAsset) {
+    return { from: fromAsset, to: toAsset }
+  }
+  return null
+}
+
 const getParsedTransactions = (transactions, addresses) => {
   const account = LocalStorageService.getItem('unlockedAccount')
   const networkType = LocalStorageService.getItem('networkType')
@@ -153,7 +223,7 @@ const getParsedTransactions = (transactions, addresses) => {
               (input) => input.input.command === 'FillOrder',
             )
             if (fillOrderInput && fillOrderInput.input?.fill_atoms?.atoms) {
-              return Number(fillOrderInput.input.fill_atoms.atoms)
+              return getSwapDetails(transaction)
             }
           }
           if (output.type === 'Transfer') {
@@ -186,9 +256,8 @@ const getParsedTransactions = (transactions, addresses) => {
             const fillOrderInput = transaction.inputs.find(
               (input) => input.input.command === 'FillOrder',
             )
-            console.log('transactionOrder', transaction)
             if (fillOrderInput && fillOrderInput.input?.fill_atoms?.atoms) {
-              return Number(fillOrderInput.input.fill_atoms.atoms)
+              return getSwapDetails(transaction)
             }
           }
           if (output.type === 'CreateStakePool') {
@@ -373,4 +442,5 @@ export {
   formatAddress,
   isMlOrderIdValid,
   calculateExchangeRate,
+  getSwapDetails,
 }
