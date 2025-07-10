@@ -25,3 +25,51 @@
   height: 100%;
   width: 100%;
 }
+
+.order-tabs {
+  display: flex;
+  margin: 10px 0 15px 0;
+  border-radius: 10px;
+  min-height: max-content;
+}
+
+.swap-content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+
+  @media screen and (min-width: 801px) {
+    gap: 15px;
+  }
+}
+
+.swap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: max-content;
+}
+
+.swap-header-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.swap-title {
+  font-size: 1rem;
+  font-weight: bold;
+  padding-left: 5px;
+}
+
+.swap-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.swap-button {
+  align-self: center;
+  width: 40%;
+}
