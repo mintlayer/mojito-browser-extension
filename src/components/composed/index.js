@@ -25,6 +25,7 @@ import SliderMenu from './SliderMenu/SliderMenu'
 import Navigation from './Navigation/Navigation'
 import ManualSwap from './ManualSwap/ManualSwap'
 import SwapInterface from './SwapInterface/SwapInterface'
+import CopyButton from './CopyButton/CopyButton'
 
 export {
   Balance,
@@ -54,4 +55,5 @@ export {
   Navigation,
   ManualSwap,
   SwapInterface,
+  CopyButton,
 }
