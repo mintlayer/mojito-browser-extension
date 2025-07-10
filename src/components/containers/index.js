@@ -10,6 +10,8 @@ import Transaction from './Wallet/Transaction'
 import TransactionButton from './Wallet/TransactionButton'
 import TransactionDetails from './Wallet/TransactionDetails'
 import TransactionsList from './Wallet/TransactionsList'
+import TransactionAmount from './Wallet/TransactionAmount'
+
 import NftList from './Wallet/Nft/NftList'
 
 import DelegationList from './Wallet/Delegation/DelegationList'
@@ -42,6 +44,7 @@ const Wallet = {
   ShowAddress,
   Transaction,
   TransactionButton,
+  TransactionAmount,
   TransactionDetails,
   TransactionsList,
   DelegationList,

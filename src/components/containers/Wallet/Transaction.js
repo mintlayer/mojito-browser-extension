@@ -6,10 +6,10 @@ import { ReactComponent as LoopIcon } from '@Assets/images/icon-loop.svg'
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
 import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
 import { ReactComponent as UnconfirmedIcon } from '@Assets/images/icon-sand.svg'
-import { ReactComponent as CreateOrderIcon } from '@Assets/images/icon-document.svg'
-import { ReactComponent as FillOrderIcon } from '@Assets/images/icon-document-filled.svg'
-import { Format, ML } from '@Helpers'
+import { ReactComponent as SwapIcon } from '@Assets/images/icon-swap.svg'
+import { ML } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
+import TransactionAmount from './TransactionAmount'
 import { useNavigate } from 'react-router-dom'
 
 import TransactionDetails from './TransactionDetails'
@@ -77,7 +77,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
           className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
           data-testid="transaction-icon"
         >
-          <CreateOrderIcon className="stake-icon" />
+          <SwapIcon className="stake-icon" />
         </div>
       ) : (
         <></>
@@ -87,7 +87,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
           className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
           data-testid="transaction-icon"
         >
-          <FillOrderIcon className="stake-icon" />
+          <SwapIcon className="stake-icon" />
         </div>
       ) : (
         <></>
@@ -176,13 +176,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
           >
             Date: <span>{date}</span>
           </p>
-          <p
-            className="transaction-amount"
-            data-testid="transaction-amount"
-          >
-            Amount:{' '}
-            <span>{transaction && Format.BTCValue(transaction.value)}</span>
-          </p>
+          <TransactionAmount transaction={transaction} />
         </div>
       </div>
       {detailPopupOpen && (

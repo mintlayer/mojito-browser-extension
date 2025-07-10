@@ -9,38 +9,14 @@ import { AppInfo } from '@Constants'
 
 import './Balance.css'
 import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
+import CopyButton from '../CopyButton/CopyButton'
 
-const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
-  const { networkType } = useContext(SettingsContext)
-  const { coinType } = useParams()
-  const navigate = useNavigate()
+const WalletName = ({ walletType }) => {
   const { tokenBalances } = useContext(MintlayerContext)
   const name =
-    walletType.name.length > 25
-      ? ML.formatAddress(walletType.name)
+    walletType.name.length > 18
+      ? ML.formatAddress(walletType.name, 18)
       : walletType.name
-  // TODO Consider the correct format for 0,00 that might also be 0.00
-  const balanceInUSD =
-    networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? '0,00'
-      : NumbersHelper.floatStringToNumber(balance) * exchangeRate
-
-  const symbol = () => {
-    if (walletType.name === 'Mintlayer') {
-      return 'ML'
-    }
-    if (walletType.name === 'Bitcoin') {
-      return 'BTC'
-    }
-    if (
-      !tokenBalances ||
-      !tokenBalances[walletType.name] ||
-      !tokenBalances[walletType.name].token_info
-    ) {
-      return 'TKN'
-    }
-    return tokenBalances[walletType.name].token_info.token_ticker.string
-  }
 
   const logo = () => {
     if (walletType.name === 'Mintlayer') {
@@ -64,6 +40,44 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
       />
     )
   }
+  return (
+    <div className="wallet-logo-wrapper">
+      {logo()}
+      <h3>{name}</h3>
+      {tokenBalances[walletType.name]?.token_info && (
+        <CopyButton content={walletType.name} />
+      )}
+    </div>
+  )
+}
+
+const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
+  const { networkType } = useContext(SettingsContext)
+  const { tokenBalances } = useContext(MintlayerContext)
+  const { coinType } = useParams()
+  const navigate = useNavigate()
+  // TODO Consider the correct format for 0,00 that might also be 0.00
+  const balanceInUSD =
+    networkType === AppInfo.NETWORK_TYPES.TESTNET
+      ? '0,00'
+      : NumbersHelper.floatStringToNumber(balance) * exchangeRate
+
+  const symbol = () => {
+    if (walletType.name === 'Mintlayer') {
+      return 'ML'
+    }
+    if (walletType.name === 'Bitcoin') {
+      return 'BTC'
+    }
+    if (
+      !tokenBalances ||
+      !tokenBalances[walletType.name] ||
+      !tokenBalances[walletType.name].token_info
+    ) {
+      return 'TKN'
+    }
+    return tokenBalances[walletType.name].token_info.token_ticker.string
+  }
 
   const onLockedClick = () => {
     navigate('/wallet/' + coinType + '/locked-balance')
@@ -74,10 +88,7 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
       className="balance-wrapper"
       data-testid="current-balance"
     >
-      <div className="wallet-logo-wrapper">
-        {logo()}
-        <h3>{name}</h3>
-      </div>
+      <WalletName walletType={walletType} />
 
       <div className="balance">
         <p

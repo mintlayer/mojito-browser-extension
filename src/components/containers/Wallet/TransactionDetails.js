@@ -1,12 +1,12 @@
 import { useEffect, useState, useContext } from 'react'
 import { format } from 'date-fns'
 
-import { Format } from '@Helpers'
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 import { SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
+import TransactionAmount from './TransactionAmount'
 
 import './TransactionDetails.css'
 import { useParams } from 'react-router-dom'
@@ -79,7 +79,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
           <>
             <TransactionDetailsItem
               title={'Transaction type:'}
-              content={'Fill Order'}
+              content={'Swap'}
               data-testid="transaction-type"
             />
             <TransactionDetailsItem
@@ -93,23 +93,31 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
           <>
             <TransactionDetailsItem
               title={'Transaction type:'}
-              content={'Create Order'}
+              content={'Swap'}
               data-testid="transaction-type"
             />
           </>
         )}
-        <TransactionDetailsItem
-          title={addressTitle}
-          content={transactionAddress}
-          data-testid="transaction-address"
-        />
+
+        {transaction.type !== 'FillOrder' && (
+          <TransactionDetailsItem
+            title={addressTitle}
+            content={transactionAddress}
+            data-testid="transaction-address"
+          />
+        )}
         <TransactionDetailsItem
           title={'Date:'}
           content={date}
         />
         <TransactionDetailsItem
           title={'Amount:'}
-          content={Format.BTCValue(transaction.value)}
+          content={
+            <TransactionAmount
+              transaction={transaction}
+              extraStyleClasses={['transaction-amount-big']}
+            />
+          }
         />
         <TransactionDetailsItem
           title={'Tx:'}

@@ -1,9 +1,8 @@
 import React, { useContext, useState } from 'react'
 import { Button, Error, SwapTokenLogo } from '@BasicComponents'
+import { CopyButton } from '@ComposedComponents'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-swap.svg'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
-import { ReactComponent as CopyIcon } from '@Assets/images/icon-copy.svg'
-import { ReactComponent as SuccessIcon } from '@Assets/images/icon-success.svg'
 import { ML } from '@Helpers'
 
 import { MintlayerContext, SettingsContext, AccountContext } from '@Contexts'
@@ -13,16 +12,6 @@ import { Loading, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 
 const OrderDetailsItem = ({ title, content, row, copyContent }) => {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = () => {
-    if (copyContent) {
-      navigator.clipboard.writeText(copyContent)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1200)
-    }
-  }
-
   return (
     <div
       className={'order-details-item'}
@@ -34,20 +23,7 @@ const OrderDetailsItem = ({ title, content, row, copyContent }) => {
         data-testid="order-details-item-content"
       >
         {content}
-        {copyContent && (
-          <Button
-            type="button"
-            extraStyleClasses={['order-details-copy-btn']}
-            onClickHandle={handleCopy}
-            title="Copy"
-          >
-            {copied ? (
-              <SuccessIcon className="order-details-copy-icon" />
-            ) : (
-              <CopyIcon className="order-details-copy-icon" />
-            )}
-          </Button>
-        )}
+        {copyContent && <CopyButton content={copyContent} />}
       </div>
     </div>
   )
@@ -213,7 +189,7 @@ const OrderDetails = ({ order }) => {
                   value={amount}
                   onChangeHandle={amountChangeHandler}
                   validity={amountValidity}
-                  placeHolder={`Enter ${order.ask_currency.type === 'Coin' ? 'ML' : order.ask_currency.ticker} amount`}
+                  placeHolder={`${order.ask_currency.type === 'Coin' ? 'ML' : order.ask_currency.ticker} amount`}
                   extraStyleClasses={inputExtraClasses}
                   bigGap={false}
                   focus={false}
