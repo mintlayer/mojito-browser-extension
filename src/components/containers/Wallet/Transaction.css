@@ -130,14 +130,12 @@
   word-break: break-all;
 }
 
-.transaction-date,
-.transaction-amount {
+.transaction-date {
   font-size: 1.2rem;
   font-weight: 400;
 }
 
-.transaction-date span,
-.transaction-amount span {
+.transaction-date span {
   font-weight: 600;
 }
 

@@ -176,7 +176,10 @@ const Transaction = ({ transaction, getConfirmations }) => {
           >
             Date: <span>{date}</span>
           </p>
-          <TransactionAmount transaction={transaction} />
+          <TransactionAmount
+            transaction={transaction}
+            title={'Amount:'}
+          />
         </div>
       </div>
       {detailPopupOpen && (

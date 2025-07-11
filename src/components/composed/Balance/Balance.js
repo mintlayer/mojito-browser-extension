@@ -56,7 +56,7 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
   const { tokenBalances } = useContext(MintlayerContext)
   const { coinType } = useParams()
   const navigate = useNavigate()
-  // TODO Consider the correct format for 0,00 that might also be 0.00
+
   const balanceInUSD =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? '0,00'

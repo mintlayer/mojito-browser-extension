@@ -7,7 +7,7 @@ import { ReactComponent as SwapIcon } from '@Assets/images/icon-swap.svg'
 
 import './TransactionAmount.css'
 
-const TransactionAmount = ({ transaction, extraStyleClasses = [] }) => {
+const TransactionAmount = ({ transaction, title, extraStyleClasses = [] }) => {
   const classesList = ['transaction-amount', ...extraStyleClasses]
   const { styleClasses } = useStyleClasses(classesList)
   const { tokenMap } = useContext(MintlayerContext)
@@ -38,7 +38,8 @@ const TransactionAmount = ({ transaction, extraStyleClasses = [] }) => {
           className="transaction-amount"
           data-testid="transaction-amount"
         >
-          Amount: {transaction.value && Format.BTCValue(transaction.value)}
+          {title && title}{' '}
+          {transaction.value && Format.BTCValue(transaction.value)}
         </p>
       )}
     </>
