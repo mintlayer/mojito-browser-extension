@@ -31,8 +31,8 @@ const SwapInterface = () => {
     token_id: tb.token_info.token_id,
   }))
 
-  const [fromToken, setFromToken] = useState(walletTokens[0])
-  const [toToken, setToToken] = useState(coinData)
+  const [fromToken, setFromToken] = useState(coinData)
+  const [toToken, setToToken] = useState(allNetworkTokensData[0])
 
   const handleToTokenClick = () => {
     setTokenToPopupOpen(true)
