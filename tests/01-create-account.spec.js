@@ -113,8 +113,6 @@ test('Create account', async ({ page }) => {
     await confirmInputs[i].fill(backupInputsValues[i])
   }
 
-  await page.getByRole('button', { name: 'Continue' }).click()
-
   await page.getByRole('button', { name: 'Create Wallet' }).click()
 
   await page.waitForSelector(`:text("${WALLET_NAME}")`)
