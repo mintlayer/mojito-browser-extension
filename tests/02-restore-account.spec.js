@@ -50,12 +50,6 @@ const restoreAccountTest = async ({ page }) => {
 
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  await page.getByRole('button', { name: 'Confirm' }).click()
-
-  await page.getByRole('button', { name: 'Segwit' }).click()
-
-  await page.getByRole('button', { name: 'Confirm' }).click()
-
   await page.waitForSelector(`:text("${WALLET_NAME}")`)
   await expect(page.locator(`:text("${WALLET_NAME}")`)).toBeVisible()
 

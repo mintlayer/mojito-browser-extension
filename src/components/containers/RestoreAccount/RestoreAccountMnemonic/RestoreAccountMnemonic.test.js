@@ -8,7 +8,6 @@ import { AccountProvider, SettingsProvider } from '@Contexts'
 import { BTC } from '@Cryptos'
 
 const SETSTEPSAMPLE = jest.fn()
-const ONSTEPSFINISHEDSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
 const SAMPLE_MNEMONIC =
   'pave defy issue grant pear balance mad scatter summer weasel spend metal'
@@ -227,56 +226,6 @@ test('Renders restore account page with step 4', () => {
 
   act(() => {
     restoreAccountForm.submit()
-  })
-
-  act(() => {
-    restoreAccountForm.submit()
-  })
-})
-
-test('Renders set account page with step 5', () => {
-  render(
-    <AccountProvider>
-      <SettingsProvider>
-        <MemoryRouter future={memoryRouterFeature}>
-          <RestoreAccountMnemonic
-            step={5}
-            setStep={SETSTEPSAMPLE}
-          />
-        </MemoryRouter>
-      </SettingsProvider>
-    </AccountProvider>,
-  )
-  const description = screen.getByTestId('wallet-list-description')
-
-  expect(description).toBeInTheDocument()
-})
-
-test('Renders set account page with step 6', () => {
-  render(
-    <AccountProvider>
-      <SettingsProvider>
-        <MemoryRouter future={memoryRouterFeature}>
-          <RestoreAccountMnemonic
-            step={6}
-            setStep={SETSTEPSAMPLE}
-            onStepsFinished={ONSTEPSFINISHEDSAMPLE}
-          />
-        </MemoryRouter>
-      </SettingsProvider>
-    </AccountProvider>,
-  )
-  const descriptionParagraph = screen.getAllByTestId('description-paragraph')
-  const restoreAccountForm = screen.getByTestId('restore-account-form')
-  const buttons = screen.getAllByTestId('button')
-  const legacyRadioButton = screen.getByRole('button', { name: /Legacy/i })
-
-  expect(buttons).toHaveLength(6)
-  expect(descriptionParagraph).toHaveLength(1)
-
-  expect(legacyRadioButton).toBeInTheDocument()
-  act(() => {
-    legacyRadioButton.click()
   })
 
   act(() => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { AppInfo, Expressions } from '@Constants'
+import { Expressions } from '@Constants'
 import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
 import { Button } from '@BasicComponents'
@@ -11,52 +11,11 @@ import {
   Header,
   TextField,
   RestoreSeedField,
-  OptionButtons,
-  WalletList,
 } from '@ComposedComponents'
 
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
 
 import './RestoreAccountMnemonic.css'
-
-const WalletTypeTitle = ({ top, bottom }) => {
-  return (
-    <div>
-      <p className="walletTypeTopTitle">{top}</p>
-      <p className="walletTypeBottomTitle">{bottom}</p>
-    </div>
-  )
-}
-
-const bitcoinWalletTypes = [
-  {
-    name: (
-      <WalletTypeTitle
-        top={'Legacy'}
-        bottom={'Your address starts with "1..."'}
-      />
-    ),
-    value: BTC_ADDRESS_TYPE_ENUM.LEGACY,
-  },
-  {
-    name: (
-      <WalletTypeTitle
-        top={'P2SH'}
-        bottom={'Your address starts with "3..."'}
-      />
-    ),
-    value: BTC_ADDRESS_TYPE_ENUM.P2SH,
-  },
-  {
-    name: (
-      <WalletTypeTitle
-        top={'Segwit'}
-        bottom={'Your address starts with "BC1..."'}
-      />
-    ),
-    value: BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT,
-  },
-]
 
 const RestoreAccountMnemonic = ({
   step,
@@ -67,7 +26,6 @@ const RestoreAccountMnemonic = ({
 }) => {
   const inputExtraclasses = ['account-input']
   const passwordPattern = Expressions.PASSWORD
-  const radioButtonExtraClasses = ['address-type-button']
   const [wordsFields, setWordsFields] = useState([])
   const [accountWordsValid, setAccountWordsValid] = useState(false)
 
@@ -76,7 +34,6 @@ const RestoreAccountMnemonic = ({
 
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
-  const [accountWalletValid, setAccountWalletValid] = useState(true)
 
   const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
@@ -86,12 +43,9 @@ const RestoreAccountMnemonic = ({
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
 
-  const [btcAddressTypeValue, setBtcAddressTypeValue] = useState(undefined)
-  const [selectedWallets, setSelectedWallets] = useState(['btc', 'ml'])
+  const selectedWallets = ['btc', 'ml']
 
-  const btcAddressType = btcAddressTypeValue
-    ? btcAddressTypeValue.value
-    : BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
+  const btcAddressType = BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
 
   const navigate = useNavigate()
 
@@ -132,10 +86,9 @@ const RestoreAccountMnemonic = ({
 
   const goToNextStep = () => {
     const mnemonics = getMnemonics()
-    const isBtcSelected = selectedWallets.includes('btc')
-    const isLastStep = step >= 6
+    const isLastStep = step >= 4
 
-    if (step === 5 && !isBtcSelected) {
+    if (step === 4) {
       onStepsFinished(
         accountNameValue,
         accountPasswordValue,
@@ -145,14 +98,6 @@ const RestoreAccountMnemonic = ({
       )
     } else if (!isLastStep) {
       setStep(step + 1)
-    } else {
-      onStepsFinished(
-        accountNameValue,
-        accountPasswordValue,
-        mnemonics,
-        btcAddressType,
-        selectedWallets,
-      )
     }
   }
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
@@ -164,10 +109,6 @@ const RestoreAccountMnemonic = ({
       name: 'Seed Phrases',
       active: step === 3 || step === 4,
     },
-    {
-      name: 'Wallet Types',
-      active: step > 4,
-    },
   ]
 
   const stepsValidations = {
@@ -175,16 +116,12 @@ const RestoreAccountMnemonic = ({
     2: accountPasswordValid,
     3: true,
     4: accountWordsValid,
-    5: accountWalletValid,
-    6: btcAddressTypeValue,
   }
 
   const titles = {
     2: 'Create',
     3: 'Enter Seed Phrases',
     4: 'Continue',
-    5: 'Confirm',
-    6: 'Confirm',
   }
 
   const nameFieldValidity = (value) => {
@@ -203,15 +140,6 @@ const RestoreAccountMnemonic = ({
   const accountPasswordChangeHandler = (value) => {
     passwordFieldValidity(value)
     setAccountPasswordValue(value)
-  }
-
-  const walletValidity = (wallets) => {
-    setAccountWalletValid(wallets.length)
-  }
-
-  const onSelectWallet = (wallets) => {
-    setSelectedWallets(wallets)
-    walletValidity(wallets)
   }
 
   const genButtonTitle = (currentStep) => titles[currentStep] || 'Continue'
@@ -307,32 +235,7 @@ const RestoreAccountMnemonic = ({
               setAccountWordsValid={setAccountWordsValid}
             />
           )}
-          {step === 5 && (
-            <WalletList
-              selectedWallets={selectedWallets}
-              setSelectedWallets={onSelectWallet}
-              walletTypes={AppInfo.walletTypes}
-            />
-          )}
-          {step === 6 && (
-            <>
-              <p
-                className="words-description"
-                data-testid="description-paragraph"
-              >
-                Choose your BTC address type:
-              </p>
-              <CenteredLayout>
-                <OptionButtons
-                  value={btcAddressTypeValue && btcAddressTypeValue.value}
-                  options={bitcoinWalletTypes}
-                  onSelect={setBtcAddressTypeValue}
-                  column
-                  buttonExtraStyles={radioButtonExtraClasses}
-                />
-              </CenteredLayout>
-            </>
-          )}
+
           <CenteredLayout>
             <Button
               onClickHandle={handleSubmit}
