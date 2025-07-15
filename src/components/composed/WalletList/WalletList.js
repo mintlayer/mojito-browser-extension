@@ -3,6 +3,7 @@ import { OptionButtons } from '@ComposedComponents'
 
 import './WalletList.css'
 
+// This componetn currently not used in the app, but it is kept for future use
 const WalletList = ({ selectedWallets, setSelectedWallets, walletTypes }) => {
   const radioButtonExtraClasses = ['crate-wallet-button']
   return (
