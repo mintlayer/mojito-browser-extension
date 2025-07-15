@@ -88,8 +88,7 @@ const unlockAccount = async (id, password) => {
   try {
     const accounts = await IndexedDB.loadAccounts()
     const account = await IndexedDB.get(accounts, id)
-    const walletsToCreate =
-      account.walletsToCreate || AppInfo.DEFAULT_WALLETS_TO_CREATE
+    const walletsToCreate = AppInfo.DEFAULT_WALLETS_TO_CREATE
 
     if (!account.walletsToCreate)
       updateAccount(id, { walletsToCreate: AppInfo.DEFAULT_WALLETS_TO_CREATE })
@@ -136,7 +135,6 @@ const unlockAccount = async (id, password) => {
     }
 
     if (walletsToCreate.includes('ml')) {
-      // TODO: use only network-related addresses
       if (storedNetworkType === 'testnet') {
         const mlTestnetWalletAddresses = await ML.getWalletAddresses(
           mlTestnetPrivateKey,
