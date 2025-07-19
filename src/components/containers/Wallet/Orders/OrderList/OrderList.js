@@ -11,7 +11,7 @@ const OrderList = ({ orderList, ordersLoading }) => {
   const [showedOrders, setShowedOrders] = useState([])
 
   useEffect(() => {
-    setShowedOrders(orderList.slice(0, visibleCount))
+    orderList && setShowedOrders(orderList.slice(0, visibleCount))
   }, [visibleCount, orderList])
 
   const renderSkeletonLoaders = () =>
@@ -48,8 +48,11 @@ const OrderList = ({ orderList, ordersLoading }) => {
         data-testid={'order-list'}
       >
         {ordersLoading ? renderSkeletonLoaders() : renderOrders()}
-        {showedOrders.length < orderList.length && (
-          <div className="load-more-button-wrapper">
+        {orderList && showedOrders.length < orderList.length && (
+          <div
+            className="load-more-button-wrapper"
+            data-testid="load-more-button"
+          >
             <Button onClickHandle={handleLoadMore}>Load more</Button>
           </div>
         )}

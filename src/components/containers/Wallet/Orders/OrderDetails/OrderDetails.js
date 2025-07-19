@@ -11,7 +11,7 @@ import './OrderDetails.css'
 import { Loading, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 
-const OrderDetailsItem = ({ title, content, row, copyContent }) => {
+const OrderDetailsItem = ({ title, content, copyContent }) => {
   return (
     <div
       className={'order-details-item'}
@@ -37,19 +37,31 @@ const SwapInfoContent = ({ order, from }) => {
     ? order.ask_currency.ticker
     : order.give_currency.ticker
   return (
-    <div className="token-info-content">
+    <div
+      className="token-info-content"
+      data-testid="token-info-content"
+    >
       <SwapTokenLogo
         tokenId={tokenId}
         ticker={tokenTicker}
         size="big"
       />
-      <div className="token-info-content-text">
-        <p className="token-info-content-amount">
+      <div
+        className="token-info-content-text"
+        data-testid="token-info-text"
+      >
+        <p
+          className="token-info-content-amount"
+          data-testid="token-amount"
+        >
           {from
             ? `${order.ask_balance.decimal} ${order.ask_currency.type === 'Coin' ? 'ML' : order.ask_currency.ticker}`
             : `${order.give_balance.decimal} ${order.give_currency.type === 'Coin' ? 'ML' : order.give_currency.ticker}`}
         </p>
-        <p className="token-info-content-id">
+        <p
+          className="token-info-content-id"
+          data-testid="token-id"
+        >
           {from
             ? `${order.ask_currency.type === 'Token' ? `(${order.ask_currency.token_id})` : '(Mintlayer Coin)'}`
             : `${order.give_currency.type === 'Token' ? `(${order.give_currency.token_id})` : '(Mintlayer Coin)'}`}
@@ -103,24 +115,26 @@ const OrderDetails = ({ order }) => {
         })
       }
     } catch (error) {
-      if (error?.message?.includes('Not enough token UTXOs')) {
-        setTxErrorMessage('Token blance is not enough to fill the order')
-        return
-      }
+      if (typeof error === 'string') {
+        if (error?.message?.includes('Not enough token UTXOs')) {
+          setTxErrorMessage('Token blance is not enough to fill the order')
+          return
+        }
 
-      if (error?.message?.includes('Failed to fetch order')) {
-        setTxErrorMessage('Order not found or invalid order ID')
-        return
-      }
+        if (error?.message?.includes('Failed to fetch order')) {
+          setTxErrorMessage('Order not found or invalid order ID')
+          return
+        }
 
-      if (error?.message?.includes('Invalid addressable')) {
-        setTxErrorMessage('Invalid destination address')
-        return
-      }
+        if (error?.message?.includes('Invalid addressable')) {
+          setTxErrorMessage('Invalid destination address')
+          return
+        }
 
-      if (error.includes('Invalid addressable')) {
-        setTxErrorMessage('Invalid destination address')
-        return
+        if (error.includes('Invalid addressable')) {
+          setTxErrorMessage('Invalid destination address')
+          return
+        }
       }
 
       console.error('Error filling order:', error)
@@ -210,6 +224,6 @@ const OrderDetails = ({ order }) => {
   )
 }
 
-export { OrderDetailsItem }
+export { OrderDetailsItem, SwapInfoContent }
 
 export default OrderDetails

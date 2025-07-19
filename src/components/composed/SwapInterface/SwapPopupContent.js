@@ -14,8 +14,11 @@ const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
   const title = mode === 'from' ? 'Swap from' : 'Swap to'
 
   return (
-    <div className="token-popup-swap">
-      <h2>{title}</h2>
+    <div
+      className="token-popup-swap"
+      data-testid="swap-popup-content"
+    >
+      <h2 data-testid="swap-popup-title">{title}</h2>
       <input
         type="text"
         placeholder="Search by symbol or token id"
@@ -23,11 +26,12 @@ const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
         onChange={(e) => setSearch(e.target.value)}
         className="swap-token-search-input"
       />
-      <ul>
+      <ul data-testid="swap-token-list">
         <li
           onClick={() => {
             handleTokenChange(coin)
           }}
+          className="swap-token-item"
         >
           <SwapTokenLogo />
           ML Coins
@@ -38,6 +42,7 @@ const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
             onClick={() => {
               handleTokenChange(token)
             }}
+            className="swap-token-item"
           >
             <SwapTokenLogo
               tokenId={token.token_id}

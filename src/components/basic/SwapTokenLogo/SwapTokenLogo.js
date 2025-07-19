@@ -30,6 +30,7 @@ const SwapTokenLogo = ({ tokenId, ticker, size = 'small' }) => {
   return (
     <div
       className={`swap-token-logo ${size === 'big' ? 'swap-token-logo-big' : ''}`}
+      data-testid="swap-token-logo"
     >
       {logo}
     </div>

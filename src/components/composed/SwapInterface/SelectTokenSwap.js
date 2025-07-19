@@ -6,10 +6,14 @@ import './SelectTokenSwap.css'
 
 const SelectTokenSwap = ({ token, onClick }) => {
   return (
-    <div className="swap-select-wrapper">
+    <div
+      className="swap-select-wrapper"
+      data-testid="select-token-swap"
+    >
       <div
         className="swap-token-select"
         onClick={onClick}
+        data-testid="select-token-swap-content"
       >
         <SwapTokenLogo
           tokenId={token.token_id}
@@ -19,7 +23,10 @@ const SelectTokenSwap = ({ token, onClick }) => {
           ? `${token.symbol} (${ML.formatAddress(token.token_id, 16)})`
           : 'ML (Mintlayer)'}
       </div>
-      <ChevronDownIcon className="icon-chevron-down" />
+      <ChevronDownIcon
+        className="icon-chevron-down"
+        data-testid="chevron-down-icon"
+      />
     </div>
   )
 }

@@ -24,7 +24,10 @@ const OrderItem = ({ order }) => {
       <div
         className={'transaction-logo-type transaction-logo-out delegation-icon'}
       >
-        <SwapIcon className={'order-swap-icon'} />
+        <SwapIcon
+          className={'order-swap-icon'}
+          data-testid="swap-icon"
+        />
       </div>
       <div className="transaction-detail">
         <div>
@@ -39,7 +42,10 @@ const OrderItem = ({ order }) => {
               <span>{order.ask_balance.decimal} </span>
               <span>{order.ask_currency.ticker}</span>
             </div>
-            <SwapIcon className={'balance-swap-icon'} />
+            <SwapIcon
+              className={'balance-swap-icon'}
+              data-testid="swap-icon"
+            />
             <div>
               <span>{order.give_balance.decimal} </span>
               <span>{order.give_currency.ticker}</span>
