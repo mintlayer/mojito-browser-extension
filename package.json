@@ -3,9 +3,10 @@
   "version": "1.4.1",
   "private": true,
   "dependencies": {
-    "@bitcoin-js/tiny-secp256k1-asmjs": "^2.2.3",
+    "@bitcoinerlab/secp256k1": "^1.2.0",
     "@mintlayer/entropy-generator": "^1.0.4",
     "@mintlayer/sdk": "1.0.21",
+    "@noble/secp256k1": "^2.3.0",
     "bip32": "^4.0.0",
     "bip39": "^3.1.0",
     "bitcoinjs-lib": "^6.1.7",

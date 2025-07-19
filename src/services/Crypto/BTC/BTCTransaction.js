@@ -1,6 +1,6 @@
 import ECPairFactory from 'ecpair'
 import * as bitcoin from 'bitcoinjs-lib'
-import * as ecc from '@bitcoin-js/tiny-secp256k1-asmjs'
+import * as ecc from '@bitcoinerlab/secp256k1'
 
 import { Electrum } from '@APIs'
 import { Concurrency, BTC, BTCTransaction } from '@Helpers'
