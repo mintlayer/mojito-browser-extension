@@ -2,6 +2,7 @@ import { AppInfo } from '@Constants'
 import { ArrayHelper } from '@Helpers'
 import { LocalStorageService } from '@Storage'
 import Decimal from 'decimal.js'
+import { Mintlayer } from '@APIs'
 
 const calculateExchangeRate = (askAmount, giveAmount) => {
   const ask = new Decimal(askAmount)
@@ -431,6 +432,35 @@ const formatAddress = (address, limitSize = 24) => {
   return `${firstPart}...${lastPart}`
 }
 
+const getBatchData = async (ids, type) => {
+  const uniqueIds = [...new Set(ids)]
+
+  if (uniqueIds.length > AppInfo.BATCH_REQUEST_MINTLAYER_LIMIT) {
+    const chunks = []
+    for (
+      let i = 0;
+      i < uniqueIds.length;
+      i += AppInfo.BATCH_REQUEST_MINTLAYER_LIMIT
+    ) {
+      chunks.push(uniqueIds.slice(i, i + AppInfo.BATCH_REQUEST_MINTLAYER_LIMIT))
+    }
+
+    const allPromises = chunks.map((chunk) =>
+      Mintlayer.batchRequestMintlayer({
+        ids: chunk,
+        type: type,
+      }),
+    )
+    const allResults = await Promise.all(allPromises)
+    return allResults.flat()
+  }
+
+  return await Mintlayer.batchRequestMintlayer({
+    ids: uniqueIds,
+    type: type,
+  })
+}
+
 export {
   getParsedTransactions,
   getAmountInAtoms,
@@ -443,4 +473,5 @@ export {
   isMlOrderIdValid,
   calculateExchangeRate,
   getSwapDetails,
+  getBatchData,
 }

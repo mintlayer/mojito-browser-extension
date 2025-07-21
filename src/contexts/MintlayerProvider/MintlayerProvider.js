@@ -2,11 +2,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 
 import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
-import { ML_ATOMS_PER_COIN } from '../../utils/Constants/AppInfo/AppInfo'
 import { ML } from '@Helpers'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
-import { batchRequestMintlayer } from '../../services/API/Mintlayer/Mintlayer'
 
 const MintlayerContext = createContext()
 
@@ -194,14 +192,14 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setCurrentNetworkType(networkType)
     setCurrentHeight(onlineHeight)
 
-    const addresses_data_receive_data = await batchRequestMintlayer({
-      ids: currentMlAddresses.mlReceivingAddresses,
-      type: '/address/:address',
-    })
-    const addresses_data_change_data = await batchRequestMintlayer({
-      ids: currentMlAddresses.mlChangeAddresses,
-      type: '/address/:address',
-    })
+    const addresses_data_receive_data = await ML.getBatchData(
+      currentMlAddresses.mlReceivingAddresses,
+      '/address/:address',
+    )
+    const addresses_data_change_data = await ML.getBatchData(
+      currentMlAddresses.mlChangeAddresses,
+      '/address/:address',
+    )
 
     const addresses_data_receive = addresses_data_receive_data.map(
       (address) => {
@@ -365,18 +363,18 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setFetchingNft(false)
     setTokenBalances(mergedTokensData)
     setNftData(mergedNftsData)
-    setBalance(Number(available_balance) / ML_ATOMS_PER_COIN)
-    setLockedBalance(Number(locked_balance) / ML_ATOMS_PER_COIN)
+    setBalance(Number(available_balance) / AppInfo.ML_ATOMS_PER_COIN)
+    setLockedBalance(Number(locked_balance) / AppInfo.ML_ATOMS_PER_COIN)
     setFetchingBalances(false)
     setFetchingTokens(false)
     setCurrentAccountId(accountID)
     setAllNetworkTokensData(allNetworkTokensData)
 
     // fetch transactions data
-    const transactions_data = await batchRequestMintlayer({
-      ids: [...new Set(transaction_ids)],
-      type: '/transaction/:txid',
-    })
+    const transactions_data = await ML.getBatchData(
+      [...new Set(transaction_ids)],
+      '/transaction/:txid',
+    )
 
     const parsedTransactions = ML.getParsedTransactions(
       transactions_data,
@@ -391,10 +389,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-    const delegations = await batchRequestMintlayer({
-      ids: addressList,
-      type: '/address/:address/delegations',
-    })
+    const delegations = await ML.getBatchData(
+      addressList,
+      '/address/:address/delegations',
+    )
 
     const totalDelegationBalance = delegations.reduce(
       (acc, delegation) =>
@@ -406,15 +404,15 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setMlDelegationList(delegations || [])
     setFetchingDelegations(false)
 
-    const fetchedUtxos = await batchRequestMintlayer({
-      ids: non_zero_addresses,
-      type: '/address/:address/all-utxos',
-    })
+    const fetchedUtxos = await ML.getBatchData(
+      non_zero_addresses,
+      '/address/:address/all-utxos',
+    )
 
-    const fetchedSpendableUtxos = await batchRequestMintlayer({
-      ids: non_zero_addresses,
-      type: '/address/:address/spendable-utxos',
-    })
+    const fetchedSpendableUtxos = await ML.getBatchData(
+      non_zero_addresses,
+      '/address/:address/spendable-utxos',
+    )
 
     const parsedUtxos = fetchedUtxos
 
