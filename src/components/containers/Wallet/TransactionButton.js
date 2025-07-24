@@ -15,19 +15,31 @@ const TransactionButton = ({ title, mode, onClick, disabled }) => {
     'button-transaction',
     'button-transaction-staking',
   ]
+  const buttonSwapExtraClasses = [
+    'button-transaction',
+    'button-transaction-swap',
+  ]
+
+  const getButtonStyles = () => {
+    switch (mode) {
+      case 'up':
+        return buttonUpExtraClasses
+      case 'staking':
+        return buttonStakingExtraClasses
+      case 'swap':
+        return buttonSwapExtraClasses
+      default:
+        return buttonExtraClasses
+    }
+  }
+
   return (
     <div
       className="transaction-item"
       data-testid={'transaction-button-container'}
     >
       <Button
-        extraStyleClasses={
-          mode === 'up'
-            ? buttonUpExtraClasses
-            : mode === 'staking'
-              ? buttonStakingExtraClasses
-              : buttonExtraClasses
-        }
+        extraStyleClasses={getButtonStyles()}
         onClickHandle={onClick}
         disabled={disabled}
       >

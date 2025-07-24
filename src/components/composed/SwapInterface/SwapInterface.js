@@ -147,6 +147,7 @@ const SwapInterface = () => {
             coin={coinData}
             tokens={walletTokens}
             handleTokenChange={handleFromTokenChange}
+            mode="from"
           />
         </PopUp>
       )}
@@ -156,6 +157,7 @@ const SwapInterface = () => {
             coin={coinData}
             tokens={allNetworkTokensData}
             handleTokenChange={handleToTockenChange}
+            mode="to"
           />
         </PopUp>
       )}

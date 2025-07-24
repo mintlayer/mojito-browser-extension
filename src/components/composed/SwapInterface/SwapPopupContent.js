@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { SwapTokenLogo } from '@BasicComponents'
 import { ML } from '@Helpers'
 
-const SwapPopupContent = ({ tokens, coin, handleTokenChange }) => {
+const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
   const [search, setSearch] = useState('')
 
   // Filter tokens by symbol or token_id (case-insensitive)
@@ -11,10 +11,11 @@ const SwapPopupContent = ({ tokens, coin, handleTokenChange }) => {
       token.symbol?.toLowerCase().includes(search.toLowerCase()) ||
       token.token_id?.toLowerCase().includes(search.toLowerCase()),
   )
+  const title = mode === 'from' ? 'Swap from' : 'Swap to'
 
   return (
     <div className="token-popup-swap">
-      <h2>Swap from</h2>
+      <h2>{title}</h2>
       <input
         type="text"
         placeholder="Search by symbol or token id"

@@ -24,7 +24,7 @@ const OrderList = ({ orderList, ordersLoading }) => {
           className="empty-list"
           data-testid="order-empty"
         >
-          No orders available to swap in this wallet
+          No orders found
         </li>
       )
     }
