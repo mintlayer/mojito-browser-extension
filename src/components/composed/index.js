@@ -26,6 +26,7 @@ import Navigation from './Navigation/Navigation'
 import ManualSwap from './ManualSwap/ManualSwap'
 import SwapInterface from './SwapInterface/SwapInterface'
 import CopyButton from './CopyButton/CopyButton'
+import StakingWarning from './StakingWarning/StakingWarning'
 
 export {
   Balance,
@@ -56,4 +57,5 @@ export {
   ManualSwap,
   SwapInterface,
   CopyButton,
+  StakingWarning,
 }

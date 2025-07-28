@@ -16,7 +16,7 @@ import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 import './Wallet.css'
-import { StakingWarning } from '../../components/composed/StakingWarning/StakingWarning'
+import { StakingWarning } from '@ComposedComponents'
 
 const ActionButtons = ({ data }) => {
   return (
