@@ -14,3 +14,11 @@
   margin-top: 10px;
   color: rgb(var(--color-main-green));
 }
+
+.inputLabel.inputLabelLeft {
+  text-align: left;
+}
+
+.inputLabel.inputLabelRight {
+  text-align: right;
+}

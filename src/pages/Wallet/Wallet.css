@@ -11,9 +11,11 @@
   min-width: max-content;
   align-items: flex-end;
   max-width: 100%;
+  min-height: max-content;
 }
 
 .balance-transactions-wrapper {
   display: flex;
   justify-content: space-between;
+  min-height: max-content;
 }

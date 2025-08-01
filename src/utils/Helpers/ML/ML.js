@@ -1,7 +1,19 @@
 import { AppInfo } from '@Constants'
 import { ArrayHelper } from '@Helpers'
 import { LocalStorageService } from '@Storage'
+import Decimal from 'decimal.js'
 import { Mintlayer } from '@APIs'
+
+const calculateExchangeRate = (askAmount, giveAmount) => {
+  const ask = new Decimal(askAmount)
+  const give = new Decimal(giveAmount)
+
+  if (ask.isZero()) {
+    throw new Error('askAmount cannot be zero')
+  }
+
+  return give.dividedBy(ask).toString()
+}
 
 const getAmountInCoins = (
   amointInAtoms,
@@ -15,6 +27,76 @@ const getAmountInAtoms = (
   atomsPerCoin = AppInfo.ML_ATOMS_PER_COIN,
 ) => {
   return BigInt(Math.round(amountInCoins * atomsPerCoin))
+}
+
+const getSwapDetails = (transaction) => {
+  // Extract transaction ID
+  // const tx_id = transaction.id
+
+  // Track input and output amounts by asset type (Coin or Token with token_id)
+  const inputAmounts = {}
+  const outputAmounts = {}
+
+  // Process inputs (ignoring FillOrder)
+  transaction.inputs.forEach((inputItem) => {
+    if (inputItem.input.input_type === 'UTXO' && inputItem.utxo) {
+      const { value } = inputItem.utxo
+      const amount = new Decimal(value.amount.decimal)
+      const assetKey =
+        value.type === 'Coin' ? 'Coin' : value.token_id || 'Unknown'
+
+      inputAmounts[assetKey] = inputAmounts[assetKey]
+        ? inputAmounts[assetKey].plus(amount)
+        : amount
+    }
+  })
+
+  // Process outputs
+  transaction.outputs.forEach((output) => {
+    const { value } = output
+    const amount = new Decimal(value.amount.decimal)
+    const assetKey =
+      value.type === 'Coin' ? 'Coin' : value.token_id || 'Unknown'
+
+    outputAmounts[assetKey] = outputAmounts[assetKey]
+      ? outputAmounts[assetKey].plus(amount)
+      : amount
+  })
+
+  // Identify the "from" and "to" assets
+  let fromAsset = null
+  let toAsset = null
+
+  const allAssets = new Set([
+    ...Object.keys(inputAmounts),
+    ...Object.keys(outputAmounts),
+  ])
+  allAssets.forEach((assetKey) => {
+    const inputAmt = inputAmounts[assetKey] || new Decimal(0)
+    const outputAmt = outputAmounts[assetKey] || new Decimal(0)
+
+    // Asset decreases (input > output): this is the "from" asset
+    if (inputAmt.greaterThan(outputAmt)) {
+      const amount = inputAmt.minus(outputAmt).toString()
+      fromAsset =
+        assetKey === 'Coin'
+          ? { Coin: 'Coin', amount }
+          : { token_id: assetKey, amount }
+    }
+    // Asset increases (output > input): this is the "to" asset
+    else if (outputAmt.greaterThan(inputAmt)) {
+      const amount = outputAmt.minus(inputAmt).toString()
+      toAsset =
+        assetKey === 'Coin'
+          ? { Coin: 'Coin', amount }
+          : { token_id: assetKey, amount }
+    }
+  })
+
+  if (fromAsset && toAsset) {
+    return { from: fromAsset, to: toAsset }
+  }
+  return null
 }
 
 const getParsedTransactions = (transactions, addresses) => {
@@ -82,11 +164,17 @@ const getParsedTransactions = (transactions, addresses) => {
     const isInputMine = withInputUTXO
       ? addresses.some((address) =>
           transaction.inputs.find(
-            (input) => input?.utxo?.destination === address,
+            (input) =>
+              input?.utxo?.destination === address ||
+              input?.command === 'FillOrder',
           ),
-        ) // if at least one input is mine
+        ) // if at least one input is mine or input.command is "FillOrder"
       : !addresses.some(
-          (address) => transaction.outputs[0].destination === address,
+          (address) =>
+            transaction.outputs[0].destination === address &&
+            !transaction.inputs.find((input) => {
+              return input?.input.command === 'FillOrder'
+            }),
         )
 
     const direction = isInputMine ? 'out' : 'in'
@@ -105,6 +193,10 @@ const getParsedTransactions = (transactions, addresses) => {
       (output) => output?.type === 'IssueNft',
     )?.token_id
 
+    const order_id =
+      transaction.inputs.find((input) => input?.input?.command === 'FillOrder')
+        ?.input?.order_id || null
+
     // outbound transaction
     if (direction === 'out' && transaction.inputs.length > 0) {
       const destAddressOutput = transaction.outputs.find((output) => {
@@ -120,6 +212,21 @@ const getParsedTransactions = (transactions, addresses) => {
 
       const totalValue = transaction.outputs.reduce((acc, output) => {
         if (!addresses.includes(output.destination)) {
+          if (output.type === 'CreateOrder') {
+            type = 'CreateOrder'
+            destAddress = output.conclude_key
+            return output.give_value.amount.decimal
+          }
+          if (order_id) {
+            type = 'FillOrder'
+            destAddress = order_id
+            const fillOrderInput = transaction.inputs.find(
+              (input) => input.input.command === 'FillOrder',
+            )
+            if (fillOrderInput && fillOrderInput.input?.fill_atoms?.atoms) {
+              return getSwapDetails(transaction)
+            }
+          }
           if (output.type === 'Transfer') {
             return acc + output.value.amount.decimal
           }
@@ -144,6 +251,16 @@ const getParsedTransactions = (transactions, addresses) => {
           }
         }
         if (addresses.includes(output.destination)) {
+          if (order_id) {
+            type = 'FillOrder'
+            destAddress = order_id
+            const fillOrderInput = transaction.inputs.find(
+              (input) => input.input.command === 'FillOrder',
+            )
+            if (fillOrderInput && fillOrderInput.input?.fill_atoms?.atoms) {
+              return getSwapDetails(transaction)
+            }
+          }
           if (output.type === 'CreateStakePool') {
             type = 'CreateStakePool'
             destAddress = output.pool_id
@@ -187,6 +304,11 @@ const getParsedTransactions = (transactions, addresses) => {
               if (output.value.type === 'Coin') {
                 return acc + Number(output.value.amount.decimal)
               }
+            }
+            if (output.type === 'FillOrder') {
+              type = 'FillOrder'
+              destAddress = output.order_id
+              return acc + Number(output.data.amount.decimal)
             }
           }
           return acc // return the accumulator if none of the conditions are met
@@ -246,6 +368,7 @@ const getParsedTransactions = (transactions, addresses) => {
       sameWalletTransaction,
       token_id,
       nft_id,
+      order_id,
       ...(delegationOwner && { delegationOwner }),
     }
   })
@@ -291,11 +414,18 @@ const isMlDelegationIdValid = (delegationId, network) => {
     : testnetRegex.test(delegationId)
 }
 
-const formatAddress = (address) => {
+const isMlOrderIdValid = (orderId, network) => {
+  const mainnetRegex = /^mordr[a-z0-9]{30,}$/
+  const testnetRegex = /^tordr[a-z0-9]{30,}$/
+  return network === AppInfo.NETWORK_TYPES.MAINNET
+    ? mainnetRegex.test(orderId)
+    : testnetRegex.test(orderId)
+}
+
+const formatAddress = (address, limitSize = 24) => {
   if (!address) {
     return 'Wrong address'
   }
-  const limitSize = 24
   const halfLimit = limitSize / 2
   const firstPart = address.slice(0, halfLimit)
   const lastPart = address.slice(address.length - halfLimit, address.length)
@@ -340,5 +470,8 @@ export {
   isMlDelegationIdValid,
   getTokenBalances,
   formatAddress,
+  isMlOrderIdValid,
+  calculateExchangeRate,
+  getSwapDetails,
   getBatchData,
 }

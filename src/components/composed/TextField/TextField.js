@@ -8,6 +8,7 @@ import './TextField.css'
 
 const TextField = ({
   label,
+  labelPosition = 'center',
   placeHolder = 'Placeholder',
   alternate = false,
   password = false,
@@ -37,6 +38,15 @@ const TextField = ({
     if (isPristine || validity === null) return
     validity ? setFieldValidity('valid') : setFieldValidity('invalid')
   }, [validity, isPristine])
+
+  useEffect(() => {
+    labelPosition === 'left'
+      ? addStyleClass('inputLabelLeft')
+      : removeStyleClass('inputLabelLeft')
+    labelPosition === 'right'
+      ? addStyleClass('inputLabelRight')
+      : removeStyleClass('inputLabelRight')
+  }, [labelPosition, addStyleClass, removeStyleClass])
 
   useEffect(() => {
     setIsPristine(pristinity)

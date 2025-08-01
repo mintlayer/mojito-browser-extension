@@ -6,8 +6,10 @@ import { ReactComponent as LoopIcon } from '@Assets/images/icon-loop.svg'
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
 import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
 import { ReactComponent as UnconfirmedIcon } from '@Assets/images/icon-sand.svg'
-import { Format, ML } from '@Helpers'
+import { ReactComponent as SwapIcon } from '@Assets/images/icon-swap.svg'
+import { ML } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
+import TransactionAmount from './TransactionAmount'
 import { useNavigate } from 'react-router-dom'
 
 import TransactionDetails from './TransactionDetails'
@@ -70,7 +72,28 @@ const Transaction = ({ transaction, getConfirmations }) => {
       ) : (
         <></>
       )}
-      {transaction.sameWalletTransaction ? (
+      {transaction.type === 'CreateOrder' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          data-testid="transaction-icon"
+        >
+          <SwapIcon className="stake-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.type === 'FillOrder' ? (
+        <div
+          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          data-testid="transaction-icon"
+        >
+          <SwapIcon className="stake-icon" />
+        </div>
+      ) : (
+        <></>
+      )}
+      {transaction.sameWalletTransaction &&
+      !transaction.type === 'FillOrder' ? (
         <div
           className="transaction-logo-type transaction-logo-type-same"
           data-testid="transaction-icon"
@@ -97,7 +120,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
         >
           <StakeIcon className="stake-icon" />
           <ArrowIcon
-            className={`arrow-icon ${
+            className={`arrow-icon-stake ${
               transaction.direction === 'out' && 'arrow-icon-out'
             }`}
           />
@@ -153,13 +176,10 @@ const Transaction = ({ transaction, getConfirmations }) => {
           >
             Date: <span>{date}</span>
           </p>
-          <p
-            className="transaction-amount"
-            data-testid="transaction-amount"
-          >
-            Amount:{' '}
-            <span>{transaction && Format.BTCValue(transaction.value)}</span>
-          </p>
+          <TransactionAmount
+            transaction={transaction}
+            title={'Amount:'}
+          />
         </div>
       </div>
       {detailPopupOpen && (

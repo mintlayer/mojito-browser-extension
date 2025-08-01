@@ -32,7 +32,7 @@ const BitcoinProvider = ({ value: propValue, children }) => {
   const fetchAllData = async () => {
     const account = LocalStorageService.getItem('unlockedAccount')
 
-    if (!account) return
+    if (!account && !addresses) return
 
     setBtcTransactions([])
     setBtcUtxos([])

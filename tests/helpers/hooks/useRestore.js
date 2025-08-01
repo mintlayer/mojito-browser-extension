@@ -21,10 +21,6 @@ export const useRestoreWallet = async (page, walletType) => {
   await textarea[0].fill(mnemonicString)
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  await page.getByRole('button', { name: 'Confirm' }).click()
-  await page.getByRole('button', { name: 'Segwit' }).click()
-  await page.getByRole('button', { name: 'Confirm' }).click()
-
   await page.waitForSelector(`:text("${walletName}")`)
   await expect(page.locator(`:text("${walletName}")`)).toBeVisible()
   await page.waitForSelector(':text("Mintlayer (ML)")')

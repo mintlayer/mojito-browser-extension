@@ -1,0 +1,516 @@
+import React, { useEffect, useContext } from 'react'
+import { SignTransaction as SignTxHelpers } from '@Helpers'
+import './InternalTransactionPreview.css'
+
+import { AccountContext, SettingsContext, MintlayerContext } from '@Contexts'
+
+const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
+  const inputWithToken = inputs.find(
+    (input) => input.utxo?.value?.type === 'TokenV1',
+  )
+  if (inputWithToken) {
+    const tokenId = inputWithToken.utxo.value.token_id
+    return outputs.find(
+      (output) =>
+        output.value.token_id === tokenId &&
+        !requiredAddresses.includes(output.destination),
+    )
+  }
+  return outputs.find(
+    (output) => !requiredAddresses.includes(output.destination),
+  )
+}
+
+const EstimatedChanges = ({ action }) => {
+  return (
+    <div className="signTxSection">
+      <h4>Estimated changes:</h4>
+      <p>
+        <span className="signTxAction">{action}</span>
+      </p>
+    </div>
+  )
+}
+
+const NetworkFee = ({ fee }) => {
+  if (!fee) return ''
+  return (
+    <div className="signTxSection">
+      <h4>Network fee:</h4>
+      <p>{fee}</p>
+    </div>
+  )
+}
+
+const TransferDetails = ({ transactionData, requiredAddresses }) => {
+  const { setTxPreviewInfo } = useContext(MintlayerContext)
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.utxo.value.type === 'TokenV1',
+  )
+  const tokenId = inputWithToken ? inputWithToken?.utxo.value.token_id : null
+  const title = inputWithToken ? 'Transfer token' : 'Transfer coins'
+
+  const relevantOutput = findRelevantOutput(
+    JSONRepresentation.inputs,
+    JSONRepresentation.outputs,
+    requiredAddresses,
+  )
+  useEffect(() => {
+    if (relevantOutput) {
+      setTxPreviewInfo({
+        action: title,
+        destination: relevantOutput.destination,
+        tokenId: tokenId,
+        amount: relevantOutput.value.amount.decimal,
+        fee: fee,
+      })
+    }
+  }, [relevantOutput, setTxPreviewInfo, title, tokenId, fee])
+
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action={title} />
+      <div className="signTxSection">
+        <h4>Destination:</h4>
+        <p>{relevantOutput.destination}</p>
+        {inputWithToken && (
+          <>
+            <h4>Token id:</h4>
+            <p>{tokenId}</p>
+          </>
+        )}
+        <h4>Amount:</h4>
+        <p>{relevantOutput.value.amount.decimal}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
+  const { setTxPreviewInfo } = useContext(MintlayerContext)
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.input.token_id,
+  )
+
+  setTxPreviewInfo({
+    action: unfreeze ? 'Unfreeze token' : 'Freeze token',
+    destination: '',
+    tokenId: inputWithToken.input.token_id,
+    amount: '',
+    fee: fee,
+  })
+  return (
+    <div className="transactionDetails">
+      <div className="signTxSection">
+        <h4>Estimated changes:</h4>
+        <p>
+          You’re approving a one-time request to{' '}
+          {unfreeze ? 'unfreeze' : 'freeze'} token
+        </p>
+      </div>
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithToken.input.token_id}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const ChangeTokenMetadata = ({ transactionData }) => {
+  const { setTxPreviewInfo } = useContext(MintlayerContext)
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.input.token_id,
+  )
+
+  setTxPreviewInfo({
+    action: 'Change token metadata',
+    destination: '',
+    tokenId: inputWithToken.input.token_id,
+    amount: '',
+    fee: fee,
+  })
+
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Change token metadata" />
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithToken.input.token_id}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>New metadata:</h4>
+        <p>{inputWithToken.input.new_metadata_uri}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const ChangeTokenAuthority = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.input.token_id,
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Change token authority" />
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithToken.input.token_id}</p>
+      </div>
+      <div className="signTxSection">
+        <h4>New authority:</h4>
+        <p>{inputWithToken.input.new_authority}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const LockTokenSupply = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const inputWithToken = JSONRepresentation.inputs.find(
+    (input) => input.input.token_id,
+  )
+
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Lock token supply" />
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputWithToken.input.token_id}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const BurnToken = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const burnOutput = JSONRepresentation.outputs.find(
+    (output) => output.type === 'BurnToken',
+  )
+  const tokenId =
+    burnOutput?.value?.type === 'TokenV1' ? burnOutput.value.token_id : null
+
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Burn token" />
+      {tokenId ? (
+        <div className="signTxSection">
+          <h4>Token id:</h4>
+          <p>{tokenId}</p>
+        </div>
+      ) : (
+        <div className="signTxSection">
+          <h4>Mintlayer Coin</h4>
+        </div>
+      )}
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const ConcludeOrder = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+  const inputWithOrderID = JSONRepresentation.inputs.find(
+    (input) => input.input.order_id,
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Conclude order" />
+      <div className="signTxSection">
+        <h4>Order ID:</h4>
+        <p>{inputWithOrderID.input.order_id}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const FillOrder = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+  const inputWithOrderID = JSONRepresentation.inputs.find(
+    (input) => input.input.order_id,
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Fill order" />
+      <div className="signTxSection">
+        <h4>Order id:</h4>
+        <p>{inputWithOrderID.input.order_id}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const CreateOrder = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const outputWithCreateOrder = JSONRepresentation.outputs.find(
+    (output) => output.type === 'CreateOrder',
+  )
+  // TODO: double check the data structure with final transaction
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Create order" />
+      <div className="signTxSection">
+        <h4>Ask balance:</h4>
+        <p>{outputWithCreateOrder.ask_balance.decimal}</p>
+        <h4>Ask currency:</h4>
+        <p>{outputWithCreateOrder.ask_currency.type}</p>
+        <h4>Destination:</h4>
+        <p>{outputWithCreateOrder.conclude_destination}</p>
+        <h4>Give balance:</h4>
+        <p>{outputWithCreateOrder.give_balance.decimal}</p>
+        <h4>Give currency:</h4>
+        <p>Token id: {outputWithCreateOrder.give_currency.token_id}</p>
+        <p>type: {outputWithCreateOrder.give_currency.type}</p>
+        <h4>Initially asked:</h4>
+        <p>{outputWithCreateOrder.initially_asked.decimal}</p>
+        <h4>Initially given:</h4>
+        <p>{outputWithCreateOrder.initially_given.decimal}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const IssueToken = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const outputWithCreateOrder = JSONRepresentation.outputs.find(
+    (output) => output.type === 'IssueFungibleToken',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Issue token" />
+      <div className="signTxSection">
+        <h4>Authority:</h4>
+        <p>{outputWithCreateOrder.authority}</p>
+        <h4>Freezable:</h4>
+        <p>{outputWithCreateOrder.is_freezable ? 'True' : 'False'}</p>
+        <h4>Metadata:</h4>
+        <p>Hex: {outputWithCreateOrder.metadata_uri.hex}</p>
+        <p>String: {outputWithCreateOrder.metadata_uri.string}</p>
+        <h4>Number of decimals:</h4>
+        <p>{outputWithCreateOrder.number_of_decimals}</p>
+        <h4>Token ticker:</h4>
+        <p>Hex: {outputWithCreateOrder.token_ticker.hex}</p>
+        <p>String: {outputWithCreateOrder.token_ticker.string}</p>
+        <h4>Supply type:</h4>
+        <p>{outputWithCreateOrder.total_supply.type}</p>
+        {outputWithCreateOrder.total_supply?.amount?.decimal && (
+          <>
+            <h4>Total supply:</h4>
+            <p>{outputWithCreateOrder.total_supply.amount.decimal}</p>
+          </>
+        )}
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const IssueNft = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const outputWithIssueNft = JSONRepresentation.outputs.find(
+    (output) => output.type === 'IssueNft',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Issue NFT" />
+      <div className="signTxSection">
+        <h4>Destination:</h4>
+        <p>{outputWithIssueNft.destination}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const DataDeposit = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const outputWithDataDeposit = JSONRepresentation.outputs.find(
+    (output) => output.type === 'DataDeposit',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Data Deposit" />
+      <div className="signTxSection">
+        <h4>Data:</h4>
+        <p>{outputWithDataDeposit.data}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const CreateDelegationId = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const outputWithDataDeposit = JSONRepresentation.outputs.find(
+    (output) => output.type === 'CreateDelegationId',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Create Delegation" />
+      <div className="signTxSection">
+        <h4>Pool Id:</h4>
+        <p>{outputWithDataDeposit.pool_id}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const DelegateStaking = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const outputWithDataDeposit = JSONRepresentation.outputs.find(
+    (output) => output.type === 'DelegateStaking',
+  )
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Stake to delegation" />
+      <div className="signTxSection">
+        <h4>Delegation Id:</h4>
+        <p>{outputWithDataDeposit.delegation_id}</p>
+        <h4>Amount:</h4>
+        <p>{outputWithDataDeposit.amount.decimal}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const BridgeRequest = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const inputsWithTokens = JSONRepresentation.inputs.filter(
+    (input) => input.utxo.value.token_id,
+  )
+  const outputsWithTokens = JSONRepresentation.outputs.filter(
+    (output) => output.value.token_id,
+  )
+
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="make a Bridge request" />
+      <div className="signTxSection">
+        <h4>Token id:</h4>
+        <p>{inputsWithTokens[0].utxo.value.token_id}</p>
+        <h4>Amount:</h4>
+        <p>{outputsWithTokens[0].value.amount.decimal}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
+const SummaryView = ({ data }) => {
+  const { flags, transactionData } = SignTxHelpers.getTransactionDetails(data)
+  const { addresses } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+
+  const requiredAddresses =
+    networkType === 'mainnet'
+      ? addresses.mlMainnetAddresses.mlChangeAddresses
+      : addresses.mlTestnetAddresses.mlChangeAddresses
+
+  return (
+    <div className="preview-section summary">
+      <div className="preview-section-header">
+        <h3>Transaction Preview</h3>
+      </div>
+      <div>
+        {flags.isTransfer && (
+          <TransferDetails
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
+        )}
+        {flags.isUnfreezeToken && (
+          <FreezeTokenDetails
+            transactionData={transactionData}
+            unfreeze
+          />
+        )}
+        {flags.isFreezeToken && (
+          <FreezeTokenDetails transactionData={transactionData} />
+        )}
+        {flags.isChangeTokenMetadata && (
+          <ChangeTokenMetadata transactionData={transactionData} />
+        )}
+        {flags.isChangeTokenAuthority && (
+          <ChangeTokenAuthority transactionData={transactionData} />
+        )}
+        {flags.isLockTokenSupply && (
+          <LockTokenSupply transactionData={transactionData} />
+        )}
+        {flags.isBurnToken && <BurnToken transactionData={transactionData} />}
+        {/* TODO: BURN COIN */}
+        {flags.isConcludeOrder && (
+          <ConcludeOrder transactionData={transactionData} />
+        )}
+        {flags.isFillOrder && <FillOrder transactionData={transactionData} />}
+        {flags.isCreateOrder && (
+          <CreateOrder transactionData={transactionData} />
+        )}
+        {flags.isIssueToken && <IssueToken transactionData={transactionData} />}
+        {flags.isIssueNft && <IssueNft transactionData={transactionData} />}
+        {flags.isBridgeRequest && (
+          <BridgeRequest transactionData={transactionData} />
+        )}
+        {flags.isDataDeposit && (
+          <DataDeposit transactionData={transactionData} />
+        )}
+        {flags.isCreateDelegationId && (
+          <CreateDelegationId transactionData={transactionData} />
+        )}
+        {flags.isDelegateStaking && (
+          <DelegateStaking transactionData={transactionData} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+const InternalTransactionPreview = ({ data }) => {
+  return (
+    <div className="transactionPreview">
+      <SummaryView data={data} />
+    </div>
+  )
+}
+
+export default InternalTransactionPreview

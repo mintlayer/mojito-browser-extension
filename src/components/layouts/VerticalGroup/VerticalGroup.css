@@ -28,3 +28,7 @@
 .v-group.grow {
   flex-grow: 1;
 }
+
+.v-group.center {
+  align-items: center;
+}

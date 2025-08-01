@@ -8,6 +8,53 @@ import { LocalStorageService } from '@Storage'
 
 const MintlayerContext = createContext()
 
+class InMemoryAccountProvider {
+  addresses = {}
+  navigate = null
+
+  constructor(addresses, navigate) {
+    this.addresses = {
+      testnet: {
+        receiving: addresses.testnet.receiving || [],
+        change: addresses.testnet.change || [],
+      },
+    }
+    this.navigate = navigate
+  }
+
+  async connect() {
+    return this.addresses
+  }
+
+  async restore() {
+    return this.addresses
+  }
+
+  async disconnect() {
+    return
+  }
+
+  async request(method, params) {
+    console.log('methidparams', method, params)
+    if (method === 'signTransaction') {
+      const { txData } = params
+      console.log('++++++++++++++++++txData', txData)
+      if (!txData) {
+        throw new Error('Transaction is required for signing')
+      }
+      this.navigate('/wallet/Mintlayer/sign-internal-transaction', {
+        state: {
+          action: 'signTransaction',
+          request: { action: 'signTransaction', data: { txData } },
+        },
+      })
+      return
+    }
+
+    throw new Error('Signing not supported in InMemoryAccountProvider')
+  }
+}
+
 const MintlayerProvider = ({ value: propValue, children }) => {
   const { addresses, accountID, accountName } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
@@ -16,13 +63,14 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
-
+  const [txPreviewInfo, setTxPreviewInfo] = useState(null)
   const [currentAccountId, setCurrentAccountId] = useState('')
   const [onlineHeight, setOnlineHeight] = useState(0)
   const [currentHeight, setCurrentHeight] = useState(0)
   const [currentNetworkType, setCurrentNetworkType] = useState(networkType)
   const [balance, setBalance] = useState(0)
   const [tokenBalances, setTokenBalances] = useState({})
+  const [allNetworkTokensData, setAllNetworkTokensData] = useState([])
   const [lockedBalance, setLockedBalance] = useState(0)
   const [unusedAddresses, setUnusedAddresses] = useState({})
   const [utxos, setUtxos] = useState([])
@@ -31,6 +79,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const [lockedUtxos, setLockedUtxos] = useState([])
   const [transactions, setTransactions] = useState([])
   const [feerate, setFeerate] = useState(0)
+  const [client, setClient] = useState(null)
 
   const [mlDelegationList, setMlDelegationList] = useState([])
   const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
@@ -42,6 +91,60 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const [fetchingTokens, setFetchingTokens] = useState(true)
   const [fetchingNft, setFetchingNft] = useState(true)
   const [allDataFetching, setAllDataFetching] = useState(false)
+  const [ordersPairInfo, setOrdersPairInfo] = useState([])
+  const [tokenMap, setTokenMap] = useState({})
+  const [orderPairLoading, setOrderPairLoading] = useState(false)
+
+  const fetchOrdersPairInfo = async (orderPair, amount) => {
+    setOrderPairLoading(true)
+    const coinTicker =
+      networkType === AppInfo.NETWORK_TYPES.TESTNET ? 'TML' : 'ML'
+    const swapPairsCurrency = orderPair.split('_')
+    const ordersPairInfo = await Mintlayer.getOrdersListByPair(orderPair)
+    if (!ordersPairInfo || ordersPairInfo.length === 0) {
+      console.log('No orders found for this pair')
+      setOrderPairLoading(false)
+      setOrdersPairInfo([])
+      return []
+    }
+    if (ordersPairInfo && ordersPairInfo.length > 0) {
+      const pairWIthTikers = ordersPairInfo.reduce((acc, order) => {
+        if (
+          ((order.ask_currency.type === 'Coin' &&
+            swapPairsCurrency[0] === coinTicker) ||
+            (order.ask_currency.token_id &&
+              order.ask_currency.token_id === swapPairsCurrency[0])) &&
+          Number(order.ask_balance.decimal) >= Number(amount)
+        ) {
+          acc.push({
+            ...order,
+            ask_currency: {
+              ...order.ask_currency,
+              ticker:
+                order.ask_currency.type === 'Coin'
+                  ? coinTicker
+                  : tokenMap[order.ask_currency.token_id] || '',
+            },
+            give_currency: {
+              ...order.give_currency,
+              ticker:
+                order.give_currency.type === 'Coin'
+                  ? coinTicker
+                  : tokenMap[order.give_currency.token_id] || '',
+            },
+            quote_rate: ML.calculateExchangeRate(
+              order.ask_balance.decimal,
+              order.give_balance.decimal,
+            ),
+          })
+        }
+        return acc
+      }, [])
+      setOrdersPairInfo(pairWIthTikers)
+      setOrderPairLoading(false)
+      return pairWIthTikers
+    }
+  }
 
   const fetchAllData = async (force) => {
     // check if height is the same as online height or fetching is in progress to avoid multiple requests
@@ -249,6 +352,14 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       return acc
     }, {})
 
+    const newTokenMap = {}
+
+    const allNetworkTokensData = await Mintlayer.getAllTokensData(networkType)
+    allNetworkTokensData.forEach((token) => {
+      newTokenMap[token.token_id] = token.symbol || ''
+    })
+    setTokenMap(newTokenMap)
+
     setFetchingNft(false)
     setTokenBalances(mergedTokensData)
     setNftData(mergedNftsData)
@@ -257,6 +368,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     setFetchingBalances(false)
     setFetchingTokens(false)
     setCurrentAccountId(accountID)
+    setAllNetworkTokensData(allNetworkTokensData)
 
     // fetch transactions data
     const transactions_data = await ML.getBatchData(
@@ -270,12 +382,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     )
     setTransactions(parsedTransactions)
     setFetchingTransactions(false)
-
-    // const addressesWithDelegation = parsedTransactions
-    //   .filter((tx) => tx.type === 'CreateDelegationId')
-    //   .map((tx) => tx.delegationOwner)
-    // const uniqueAddressesWithDelegation = [...new Set(addressesWithDelegation)]
-    // await fetchDelegations(uniqueAddressesWithDelegation)
 
     // fetch utxos
     const accountName = account && account.name
@@ -353,6 +459,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const balanceLoading =
     currentAccountId !== accountID || networkType !== currentNetworkType
 
+  // Fetch delegations
   const fetchDelegations = async (uniqueAddressesWithDelegation) => {
     try {
       if (!addresses) return
@@ -489,6 +596,17 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     fetchingNft,
     allDataFetching,
     setAllDataFetching,
+    client,
+    setClient,
+    InMemoryAccountProvider,
+    txPreviewInfo,
+    setTxPreviewInfo,
+    allNetworkTokensData,
+    ordersPairInfo,
+    setOrdersPairInfo,
+    fetchOrdersPairInfo,
+    orderPairLoading,
+    tokenMap,
   }
 
   return (

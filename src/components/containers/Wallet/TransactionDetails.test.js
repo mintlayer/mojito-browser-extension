@@ -9,7 +9,7 @@ import { BTC } from '@Helpers'
 
 import TransactionDetails from './TransactionDetails'
 import { TransactionDetailsItem } from './TransactionDetails'
-import { SettingsProvider, AccountProvider } from '@Contexts'
+import { SettingsProvider, AccountProvider, MintlayerProvider } from '@Contexts'
 import { LocalStorageService } from '@Storage'
 
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
@@ -72,11 +72,12 @@ test('Render transaction component', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <TransactionDetails
-          transaction={TRANSCTIONSAMPLE}
-          getConfirmations={BTC.getConfirmationsAmount}
-        />
-        ,
+        <MintlayerProvider>
+          <TransactionDetails
+            transaction={TRANSCTIONSAMPLE}
+            getConfirmations={BTC.getConfirmationsAmount}
+          />
+        </MintlayerProvider>
       </SettingsProvider>
       ,
     </AccountProvider>,
@@ -106,11 +107,12 @@ test('Render transaction out component', async () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <TransactionDetails
-          transaction={TRANSCTIONSAMPLEOUT}
-          getConfirmations={BTC.getConfirmationsAmount}
-        />
-        ,
+        <MintlayerProvider>
+          <TransactionDetails
+            transaction={TRANSCTIONSAMPLEOUT}
+            getConfirmations={BTC.getConfirmationsAmount}
+          />
+        </MintlayerProvider>
       </SettingsProvider>
       ,
     </AccountProvider>,

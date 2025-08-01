@@ -18,10 +18,6 @@
   max-height: 40px;
 }
 
-.btn:hover svg path {
-  fill: rgb(var(--color-green));
-}
-
 .btn:disabled,
 .btn:disabled:hover,
 .btn:disabled:focus {

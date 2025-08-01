@@ -1,0 +1,33 @@
+.manual-swap {
+  display: flex;
+  width: 100%;
+}
+
+.order-swap-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+
+  @media screen and (min-width: 801px) {
+    margin-bottom: 2rem;
+  }
+}
+
+.order-swap-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.swap-order-input {
+  padding: 1rem;
+}
+
+.swap-order-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
