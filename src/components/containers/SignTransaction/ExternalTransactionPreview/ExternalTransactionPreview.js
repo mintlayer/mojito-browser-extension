@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
-import './TransactionPreview.css'
+import './ExternalTransactionPreview.css'
 
 import { AccountContext, SettingsContext } from '@Contexts'
 
@@ -19,25 +19,6 @@ const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
   return outputs.find(
     (output) => !requiredAddresses.includes(output.destination),
   )
-}
-
-const calculateFee = (inputs, outputs, addresses) => {
-  const totalAmountCoins = inputs.reduce((acc, input) => {
-    if (
-      input.utxo &&
-      input.utxo.type === 'Transfer' &&
-      !input?.utxo?.value?.token_id
-    ) {
-      return acc + Number(input.utxo.value.amount.decimal)
-    }
-    return acc
-  }, 0)
-
-  const change = outputs.find((output) =>
-    addresses.includes(output.destination),
-  )?.value.amount.decimal
-
-  return Number(totalAmountCoins) - Number(change)
 }
 
 const EstimatedChanges = ({ action }) => {
@@ -75,8 +56,7 @@ const NetworkFee = ({ fee }) => {
 
 const TransferDetails = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.utxo.value.type === 'TokenV1',
@@ -111,14 +91,9 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const FreezeTokenDetails = ({
-  transactionData,
-  requiredAddresses,
-  unfreeze,
-}) => {
+const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -142,10 +117,9 @@ const FreezeTokenDetails = ({
   )
 }
 
-const ChangeTokenMetadata = ({ transactionData, requiredAddresses }) => {
+const ChangeTokenMetadata = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -167,10 +141,9 @@ const ChangeTokenMetadata = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const ChangeTokenAuthority = ({ transactionData, requiredAddresses }) => {
+const ChangeTokenAuthority = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -192,10 +165,9 @@ const ChangeTokenAuthority = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const LockTokenSupply = ({ transactionData, requiredAddresses }) => {
+const LockTokenSupply = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -214,10 +186,9 @@ const LockTokenSupply = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const BurnToken = ({ transactionData, requiredAddresses }) => {
+const BurnToken = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const burnOutput = JSONRepresentation.outputs.find(
     (output) => output.type === 'BurnToken',
@@ -244,10 +215,9 @@ const BurnToken = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const ConcludeOrder = ({ transactionData, requiredAddresses }) => {
+const ConcludeOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input.order_id,
   )
@@ -264,10 +234,9 @@ const ConcludeOrder = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const FillOrder = ({ transactionData, requiredAddresses }) => {
+const FillOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input.order_id,
   )
@@ -284,10 +253,9 @@ const FillOrder = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const CreateOrder = ({ transactionData, requiredAddresses }) => {
+const CreateOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateOrder',
@@ -319,10 +287,9 @@ const CreateOrder = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const IssueToken = ({ transactionData, requiredAddresses }) => {
+const IssueToken = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
   console.log('fee', fee)
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
@@ -359,10 +326,9 @@ const IssueToken = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const IssueNft = ({ transactionData, requiredAddresses }) => {
+const IssueNft = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithIssueNft = JSONRepresentation.outputs.find(
     (output) => output.type === 'IssueNft',
@@ -380,10 +346,9 @@ const IssueNft = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const DataDeposit = ({ transactionData, requiredAddresses }) => {
+const DataDeposit = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'DataDeposit',
@@ -401,10 +366,9 @@ const DataDeposit = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const CreateDelegationId = ({ transactionData, requiredAddresses }) => {
+const CreateDelegationId = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateDelegationId',
@@ -422,10 +386,9 @@ const CreateDelegationId = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const DelegateStaking = ({ transactionData, requiredAddresses }) => {
+const DelegateStaking = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'DelegateStaking',
@@ -445,10 +408,9 @@ const DelegateStaking = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const DelegateWithdraw = ({ transactionData, requiredAddresses }) => {
+const DelegateWithdraw = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithWithdraw = JSONRepresentation.inputs.find(
     (input) => input.input.account_type === 'DelegationBalance',
@@ -468,10 +430,9 @@ const DelegateWithdraw = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const BridgeRequest = ({ transactionData, requiredAddresses }) => {
+const BridgeRequest = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const { inputs, outputs } = JSONRepresentation
-  const fee = calculateFee(inputs, outputs, requiredAddresses)
+  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputsWithTokens = JSONRepresentation.inputs.filter(
     (input) => input.utxo.value.token_id,
@@ -620,7 +581,7 @@ const SummaryView = ({ data }) => {
   )
 }
 
-const TransactionPreview = ({ data }) => {
+const ExternalTransactionPreview = ({ data }) => {
   return (
     <div className="transactionPreview">
       <SummaryView data={data} />
@@ -628,4 +589,4 @@ const TransactionPreview = ({ data }) => {
   )
 }
 
-export default TransactionPreview
+export default ExternalTransactionPreview

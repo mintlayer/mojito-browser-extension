@@ -10,10 +10,15 @@ import Transaction from './Wallet/Transaction'
 import TransactionButton from './Wallet/TransactionButton'
 import TransactionDetails from './Wallet/TransactionDetails'
 import TransactionsList from './Wallet/TransactionsList'
+import TransactionAmount from './Wallet/TransactionAmount'
+
 import NftList from './Wallet/Nft/NftList'
 
 import DelegationList from './Wallet/Delegation/DelegationList'
 import DelegationDetails from './Wallet/Delegation/DelegationDetails'
+
+import OrderList from './Wallet/Orders/OrderList/OrderList'
+import OrderDetails from './Wallet/Orders/OrderDetails/OrderDetails'
 
 import SendTransaction from './SendTransaction/SendTransaction'
 
@@ -30,7 +35,8 @@ import SettingsBackup from './Settings/SettingsBackup/SettingsBackup'
 import SignMessage from './Message/SignMessage/SignMessage'
 import VerifyMessage from './Message/VerifyMessage/VerifyMessage'
 
-import TransactionPreview from './SignTransaction/TransactionPreview/TransactionPreview'
+import ExternalTransactionPreview from './SignTransaction/ExternalTransactionPreview/ExternalTransactionPreview'
+import InternalTransactionPreview from './SignTransaction/InternalTransactionPreview/InternalTransactionPreview'
 import JsonPreview from './SignTransaction/JsonPreview/JsonPreview'
 
 /* istanbul ignore next */
@@ -38,11 +44,14 @@ const Wallet = {
   ShowAddress,
   Transaction,
   TransactionButton,
+  TransactionAmount,
   TransactionDetails,
   TransactionsList,
   DelegationList,
   DelegationDetails,
   NftList,
+  OrderList,
+  OrderDetails,
 }
 
 /* istanbul ignore next */
@@ -76,7 +85,8 @@ const Message = {
 }
 
 const SignTransaction = {
-  TransactionPreview,
+  ExternalTransactionPreview,
+  InternalTransactionPreview,
   JsonPreview,
 }
 

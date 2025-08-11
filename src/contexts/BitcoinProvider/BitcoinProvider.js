@@ -12,11 +12,6 @@ const BitcoinProvider = ({ value: propValue, children }) => {
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
-  const currentBtcAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.btcMainnetAddress
-      : addresses.btcTestnetAddress
-
   const [currentBlockHeight, setCurrentBlockHeight] = useState(0)
   const [onlineHeight, setOnlineHeight] = useState(0)
   const [currentNetworkType, setCurrentNetworkType] = useState(networkType)
@@ -32,7 +27,20 @@ const BitcoinProvider = ({ value: propValue, children }) => {
   const fetchAllData = async () => {
     const account = LocalStorageService.getItem('unlockedAccount')
 
-    if (!account) return
+    if (!account || !addresses) {
+      console.log('Account or addresses not available yet')
+      return
+    }
+
+    const currentBtcAddress =
+      networkType === AppInfo.NETWORK_TYPES.MAINNET
+        ? addresses?.btcMainnetAddress
+        : addresses?.btcTestnetAddress
+
+    if (!currentBtcAddress) {
+      console.log('Bitcoin address not available for current network')
+      return
+    }
 
     setBtcTransactions([])
     setBtcUtxos([])
@@ -102,7 +110,7 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     }
     getData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onlineHeight, accountID, networkType])
+  }, [onlineHeight, accountID, networkType, addresses])
 
   useEffect(() => {
     const getData = async () => {

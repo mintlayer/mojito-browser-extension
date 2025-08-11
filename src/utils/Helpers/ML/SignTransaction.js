@@ -35,6 +35,36 @@ import {
 } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
 import { getOutputs } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
 
+export const handleTxError = (error, setTxErrorMessage, setPassword) => {
+  const errorMsg =
+    error?.message ||
+    error?.data?.message ||
+    error?.toString?.() ||
+    'An unexpected error occurred'
+
+  if (error.address === '') {
+    setTxErrorMessage('Incorrect password')
+    setPassword('')
+  } else if (typeof error === 'string' && error.includes('Invalid amount')) {
+    setTxErrorMessage('Balance is not enough to cover the transaction')
+    setPassword('')
+    console.error(error)
+  } else if (errorMsg.includes('minimum fee')) {
+    setTxErrorMessage('Transaction fee adjusted')
+    setPassword('')
+    console.error(error)
+  } else if (errorMsg.includes('Constrained value accumulator error')) {
+    setTxErrorMessage(
+      'The selected order doesnt have enough funds to complete the transaction',
+    )
+    setPassword('')
+    console.error(error)
+  } else {
+    setTxErrorMessage(errorMsg)
+    console.error(error)
+  }
+}
+
 function mergeUint8Arrays(arrays) {
   const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0)
 

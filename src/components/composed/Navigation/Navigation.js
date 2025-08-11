@@ -118,7 +118,7 @@ const Navigation = ({ customNavigation }) => {
             id: 5,
             label: 'Test Sign Transaction',
             icon: <SettingsImg />,
-            link: '/wallet/Mintlayer/sign-transaction',
+            link: '/wallet/Mintlayer/sign-external-transaction',
           },
         ]
       : []),

@@ -6,21 +6,20 @@
 .button-transaction,
 .button-transaction-up,
 .button-transaction-staking {
-  width: 55px;
-  height: 55px;
-  min-width: 55px;
-  min-height: 55px;
+  width: 58px;
+  height: 58px;
+  min-width: 58px;
+  min-height: 58px;
   margin-bottom: 10px;
-  border-radius: 10px;
+  border-radius: 19px;
   padding: 0;
 
   @media screen and (min-width: 801px) {
-    width: 60px;
-    height: 60px;
-    min-width: 60px;
-    min-height: 60px;
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
     margin-bottom: 10px;
-    border-radius: 10px;
     padding: 0;
   }
 }
@@ -53,11 +52,21 @@
 }
 
 .icon-arrow {
-  width: 26px;
-  height: 26px;
+  width: 37px;
+  height: 37px;
 }
 
 .staking-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.sign-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.swap-icon {
   width: 36px;
   height: 36px;
 }

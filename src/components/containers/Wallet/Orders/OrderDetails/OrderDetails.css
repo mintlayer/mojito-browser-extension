@@ -1,0 +1,143 @@
+.order-details {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 510px;
+  height: 500px;
+
+  @media screen and (min-width: 801px) {
+    height: 605px;
+  }
+}
+
+.order-details-items-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 368px;
+  width: 100%;
+  padding: 10px;
+  overflow: auto;
+  gap: 18px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.order-details-swap-row {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: #f5f8f7;
+  border-radius: 35px;
+  gap: 13px;
+  min-height: max-content;
+  padding: 31px 30px;
+  color: #222;
+  box-shadow: none;
+
+  @media screen and (min-width: 801px) {
+    gap: 30px;
+    padding: 46px 30px;
+  }
+}
+
+.order-details-item {
+  min-height: max-content;
+}
+
+.order-details-item h2 {
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.order-details-content {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  word-break: break-word;
+  cursor: auto;
+}
+
+.order-details-button {
+  width: 50%;
+}
+
+.order-details-button-icon {
+  width: 18px;
+  height: 18px;
+  max-width: 18px;
+  max-height: 18px;
+  margin-left: 10px;
+}
+
+.order-details-button:hover .order-details-button-icon {
+  animation: moveArrowRight 0.3s ease-in-out;
+}
+
+.order-details-input {
+  padding: 0.7rem;
+  border: 1px solid rgb(var(--color-dark-gray));
+}
+
+.order-details-inputs-wrapper {
+  display: flex;
+  gap: 10px;
+}
+
+.token-info-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 24px;
+  padding: 8px 12px;
+  border: 1px solid lightgray;
+  border-radius: 35px;
+}
+
+.token-info-content-text {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 4px;
+}
+
+.token-info-content-amount {
+  font-size: 1.2rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.token-info-content-id {
+  font-size: 1rem;
+  font-weight: 400;
+  color: rgb(var(--color-dark-gray));
+}
+
+.details-swap-arrow-button {
+  align-self: center;
+  width: 36px;
+  height: 36px;
+  max-width: 36px;
+  max-height: 36px;
+  padding: 0;
+}
+
+.details-icon-arrow-swap {
+  width: 60%;
+  height: 60%;
+  max-width: 60%;
+  max-height: 60%;
+}
+
+.order-details-exchange-rate {
+  display: flex;
+  gap: 8px;
+  padding: 0 25px;
+  font-size: 0.7rem;
+}
+
+.order-details-exchange-rate span {
+  font-size: 0.8rem;
+}

@@ -89,8 +89,11 @@ const getAddressTransactions = (address) =>
 const getAddress = (address) =>
   tryServers(ELECTRUM_ENDPOINTS.GET_ADDRESS.replace(':address', address))
 
-const getAddressUtxo = (address) =>
-  tryServers(ELECTRUM_ENDPOINTS.GET_ADDRESS_UTXO.replace(':address', address))
+const getAddressUtxo = (address) => {
+  return tryServers(
+    ELECTRUM_ENDPOINTS.GET_ADDRESS_UTXO.replace(':address', address),
+  )
+}
 
 const getLastBlockHeight = () =>
   tryServers(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HEIGHT)

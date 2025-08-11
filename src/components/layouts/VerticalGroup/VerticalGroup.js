@@ -10,6 +10,7 @@ const VerticalGroup = ({
   smallGap = false,
   fullWidth = false,
   grow = false,
+  center = false,
 }) => {
   const classesList = ['v-group']
   bigGap && classesList.push('bigGap')
@@ -17,6 +18,7 @@ const VerticalGroup = ({
   smallGap && classesList.push('smallGap')
   fullWidth && classesList.push('fullWidth')
   grow && classesList.push('grow')
+  center && classesList.push('center')
   const { styleClasses, addStyleClass, removeStyleClass } =
     useStyleClasses(classesList)
 
@@ -39,6 +41,10 @@ const VerticalGroup = ({
   useEffect(() => {
     grow && addStyleClass('grow')
   }, [grow, addStyleClass, removeStyleClass])
+
+  useEffect(() => {
+    center && addStyleClass('center')
+  }, [center, addStyleClass, removeStyleClass])
 
   return (
     <div

@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 
 import Transaction from './Transaction'
 import { BTC } from '@Helpers'
-import { SettingsProvider, AccountProvider } from '@Contexts'
+import { SettingsProvider, AccountProvider, MintlayerProvider } from '@Contexts'
 
 const TRANSCTIONSAMPLE = {
   txid: 'txid',
@@ -31,14 +31,14 @@ const date = format(new Date(TRANSCTIONSAMPLE.date * 1000), 'dd/MM/yyyy HH:mm')
 test('Render transaction component', async () => {
   render(
     <AccountProvider>
-      <SettingsProvider>
-        <Transaction
-          transaction={TRANSCTIONSAMPLE}
-          getConfirmations={BTC.getConfirmationsAmount}
-        />
-        ,
+      <SettingsProvider value={{ networkType: 'testnet' }}>
+        <MintlayerProvider>
+          <Transaction
+            transaction={TRANSCTIONSAMPLE}
+            getConfirmations={BTC.getConfirmationsAmount}
+          />
+        </MintlayerProvider>
       </SettingsProvider>
-      ,
     </AccountProvider>,
   )
   const transaction = screen.getByTestId('transaction')
@@ -65,9 +65,10 @@ test('Render transaction out component', async () => {
   render(
     <AccountProvider>
       <SettingsProvider>
-        <Transaction transaction={TRANSCTIONSAMPLEOUT} />
+        <MintlayerProvider>
+          <Transaction transaction={TRANSCTIONSAMPLEOUT} />
+        </MintlayerProvider>
       </SettingsProvider>
-      ,
     </AccountProvider>,
   )
   const transaction = screen.getByTestId('transaction')

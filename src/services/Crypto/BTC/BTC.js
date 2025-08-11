@@ -1,6 +1,6 @@
 import { BIP32Factory } from 'bip32'
 import * as Bip39 from 'bip39'
-import * as ecc from '@bitcoin-js/tiny-secp256k1-asmjs'
+import * as ecc from '@bitcoinerlab/secp256k1'
 import { BTC } from '@Helpers'
 import BTC_ADDRESS_TYPE_MAP from './BTC.addressType'
 

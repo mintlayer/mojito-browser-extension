@@ -12,7 +12,7 @@ const decimalSeparator = '.'
 const thousandsSeparator = ' '
 const amountRegex = /^\d+(.\d+)?$/
 const minEntropyLength = 192
-const DEFAULT_WALLETS_TO_CREATE = ['btc']
+const DEFAULT_WALLETS_TO_CREATE = ['btc', 'ml']
 const ML_ATOMS_PER_COIN = 100000000000
 const DEFAULT_ML_WALLET_OFFSET = 21
 const APPROPRIATE_COST_PER_BLOCK = 190
@@ -21,6 +21,7 @@ const UNCONFIRMED_TRANSACTION_NAME = 'ml_unconfirmed_transaction'
 const APP_LOCAL_STORAGE_CUSTOM_SERVERS = 'customAPIServers'
 const MAX_UPLOAD_FILE_SIZE = 2 * 1024 // 2 kb
 const SIGNED_MESSAGE_STRING_SEPARATOR = '.'
+const BATCH_REQUEST_MINTLAYER_LIMIT = 150
 
 const NETWORK_TYPES = {
   MAINNET: 'mainnet',
@@ -103,6 +104,11 @@ const WALLETS_NAVIGATION = [
         name: 'Sign/Verify Message',
         link: '/wallet/Mintlayer/sign-message',
       },
+      {
+        id: '2.6',
+        name: 'Swap',
+        link: '/wallet/Mintlayer/order-swap',
+      },
     ],
   },
 ]
@@ -132,4 +138,5 @@ export {
   MAX_UPLOAD_FILE_SIZE,
   WALLETS_NAVIGATION,
   SIGNED_MESSAGE_STRING_SEPARATOR,
+  BATCH_REQUEST_MINTLAYER_LIMIT,
 }

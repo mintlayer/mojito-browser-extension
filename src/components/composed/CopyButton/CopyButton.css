@@ -1,0 +1,14 @@
+.copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 8px;
+}
+
+.copy-icon {
+  width: 15px;
+  height: 15px;
+  max-width: 100%;
+}

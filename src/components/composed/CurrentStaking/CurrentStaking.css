@@ -1,6 +1,7 @@
 .staking-title {
   font-size: 24px;
   font-weight: 600;
+  min-height: max-content;
 }
 
 .total-staked {
