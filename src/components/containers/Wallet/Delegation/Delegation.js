@@ -39,7 +39,7 @@ const Delegation = ({ delegation }) => {
   }
 
   const value = delegationOject.balance
-    ? ML.getAmountInCoins(delegation.balance.atoms, AppInfo.ML_ATOMS_PER_COIN)
+    ? ML.getAmountInCoins(delegation.balance, AppInfo.ML_ATOMS_PER_COIN)
     : 0
 
   const buttonExtraStyles = ['delegation-action-button']

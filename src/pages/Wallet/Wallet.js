@@ -11,7 +11,12 @@ import {
   useMlWalletInfo,
   useMediaQuery,
 } from '@Hooks'
-import { AccountContext, SettingsContext } from '@Contexts'
+import {
+  AccountContext,
+  SettingsContext,
+  MintlayerContext,
+  BitcoinContext,
+} from '@Contexts'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 
@@ -19,6 +24,13 @@ import './Wallet.css'
 import { StakingWarning } from '@ComposedComponents'
 
 const ActionButtons = ({ data }) => {
+  const { unusedAddresses: mintlayerUnusedAddresses } =
+    useContext(MintlayerContext)
+  const { unusedAddresses: bitcoinUnusedAddresses } = useContext(BitcoinContext)
+  const requredAddress =
+    data.walletType.name === 'Mintlayer'
+      ? mintlayerUnusedAddresses.receive
+      : bitcoinUnusedAddresses.receivingAddress.address
   return (
     <div className="transactions-buttons-wrapper">
       {data.walletType.name === 'Mintlayer' && (
@@ -47,6 +59,11 @@ const ActionButtons = ({ data }) => {
         </>
       )}
       <Wallet.TransactionButton
+        title={'Addresses'}
+        onClick={data.setOpenAddressPage}
+        mode={'addresses'}
+      />
+      <Wallet.TransactionButton
         title={'Send'}
         mode={'up'}
         onClick={data.setOpenTransactionForm}
@@ -57,11 +74,7 @@ const ActionButtons = ({ data }) => {
       />
       {data.openShowAddress && (
         <PopUp setOpen={data.setOpenShowAddress}>
-          <Wallet.ShowAddress
-            address={data.walletAddress}
-            unusedAddress={data.unusedAddresses?.receive}
-            transactions={data.walletTransactionList}
-          ></Wallet.ShowAddress>
+          <Wallet.ShowAddress address={requredAddress}></Wallet.ShowAddress>
         </PopUp>
       )}
     </div>
@@ -120,6 +133,9 @@ const WalletPage = () => {
   const setOpenSwapPage = () => {
     navigate('/wallet/' + walletType.name + '/order-swap')
   }
+  const setOpenAddressPage = () => {
+    navigate('/wallet/' + walletType.name + '/address')
+  }
 
   const { exchangeRate } = useExchangeRates(
     walletType.ticker.toLowerCase(),
@@ -139,12 +155,13 @@ const WalletPage = () => {
     currentMlAddresses,
     setOpenStaking,
     setOpenTransactionForm,
-    setOpenShowAddress,
     setOpenSignPage,
     setOpenNftPage,
     setOpenSwapPage,
-    openShowAddress,
+    setOpenAddressPage,
     walletAddress,
+    openShowAddress,
+    setOpenShowAddress,
     unusedAddresses,
     walletTransactionList,
   }

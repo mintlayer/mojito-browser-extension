@@ -85,7 +85,6 @@ const SendTransaction = ({
     setPassValidity(false)
     setPass('')
     setPassErrorMessage('')
-    // setTxErrorMessage('')
     setOpenSendFundConfirmation(state)
   }
 

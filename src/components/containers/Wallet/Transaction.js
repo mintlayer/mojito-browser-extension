@@ -163,7 +163,12 @@ const Transaction = ({ transaction, getConfirmations }) => {
           className="transaction-id"
           data-testid="transaction-otherPart"
         >
-          {transaction.otherPart && ML.formatAddress(transaction.otherPart[0])}
+          {transaction.direction === 'in' &&
+            transaction.from &&
+            ML.formatAddress(transaction.from[0])}
+          {transaction.direction === 'out' &&
+            transaction.to &&
+            ML.formatAddress(transaction.to[0])}
           {transaction.otherPart &&
             [...new Set(transaction.otherPart)].length > 1 &&
             ` (+${transaction.otherPart.length - 1})`}
