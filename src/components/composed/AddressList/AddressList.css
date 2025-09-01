@@ -1,0 +1,146 @@
+.address-table {
+  width: 100%;
+  height: 96%;
+  display: block;
+}
+
+.address-table-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 465px;
+  overflow: hidden;
+  height: 100%;
+
+  @media screen and (min-width: 801px) {
+    flex-grow: 1;
+  }
+}
+
+.address-table thead {
+  display: block;
+  width: 100%;
+}
+
+.address-table tbody {
+  display: block;
+  height: 400px;
+  overflow-y: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.address-table thead tr,
+.address-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.address-title {
+  text-align: left;
+  padding: 14px 24px;
+  background: rgba(var(--color-green), 0.8);
+  width: 33.33%;
+  color: rgb(var(--color-black));
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.address-title:nth-child(1) {
+  border-top-left-radius: var(--round-size);
+  width: 40%;
+}
+
+.address-title:nth-child(2) {
+  width: 15%;
+}
+
+.address-title:nth-child(3) {
+  border-top-right-radius: var(--round-size);
+  width: 45%;
+}
+
+.address-loading-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 465px;
+}
+
+.address-row {
+  border-bottom: 1px solid rgba(var(--color-green), 0.2);
+}
+
+.address-row:hover {
+  background-color: rgba(var(--color-green), 0.1);
+}
+
+.address-cell,
+.used-cell,
+.balance-cell {
+  padding: 14px 24px;
+  vertical-align: baseline;
+  color: rgb(var(--color-black));
+}
+
+.address-cell {
+  width: 40%;
+}
+
+.used-cell {
+  width: 15%;
+}
+
+.balance-cell {
+  width: 45%;
+}
+
+.address-value {
+  font-family: monospace;
+  font-size: 0.9em;
+  max-width: 200px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.address-value:hover {
+  color: rgba(var(--color-green), 1);
+}
+
+.used-status.used {
+  color: rgba(var(--color-black), 1);
+  font-weight: 500;
+}
+
+.used-status.unused {
+  color: rgba(var(--color-green), 1);
+}
+
+.no-addresses {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(var(--color-black), 0.6);
+  font-style: italic;
+}
+
+/* Custom scrollbar for webkit browsers */
+.address-table tbody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.address-table tbody::-webkit-scrollbar-track {
+  background: rgba(var(--color-green), 0.1);
+}
+
+.address-table tbody::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-green), 0.3);
+  border-radius: 3px;
+}
+
+.address-table tbody::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--color-green), 0.5);
+}
