@@ -2,6 +2,7 @@ import { Electrum } from '@APIs'
 import * as bitcoin from 'bitcoinjs-lib'
 import { AppInfo } from '@Constants'
 import { LocalStorageService } from '@Storage'
+import Decimal from 'decimal.js'
 
 const AVERAGE_MIN_PER_BLOCK = 15
 const SATOSHI_BTC_CONVERSION_FACTOR = 100_000_000
@@ -36,8 +37,12 @@ const convertSatoshiToBtc = (satoshiAmount) =>
 const convertBtcToSatoshi = (satoshiAmount) =>
   Math.round(satoshiAmount * SATOSHI_BTC_CONVERSION_FACTOR)
 
-const calculateBalanceFromUtxoList = (list) =>
-  list.reduce((accumulator, transaction) => accumulator + transaction.value, 0)
+const calculateBalanceFromUtxoList = (list) => {
+  return list.reduce(
+    (accumulator, transaction) => accumulator + transaction.value,
+    0,
+  )
+}
 
 const getConfirmationsAmount = async (transaction) => {
   if (!transaction)
@@ -48,62 +53,57 @@ const getConfirmationsAmount = async (transaction) => {
   return lastBlockHeight - transaction.blockHeight + 1
 }
 
-const getParsedTransactions = (rawTransactions, baseAddress) => {
-  const getDirection = (transaction) =>
-    transaction.vin.find(
-      (item) => item.prevout.scriptpubkey_address === baseAddress,
-    )
-      ? 'out'
-      : 'in'
+const getParsedTransactions = (rawTransactions, myAddresses) => {
+  const mySet = new Set(
+    Array.isArray(myAddresses) ? myAddresses : [myAddresses].filter(Boolean),
+  )
 
-  const getTransactionAmountInSatoshi = (direction, transaction) =>
-    direction === 'in'
-      ? transaction.vout.find(
-          (item) => item.scriptpubkey_address === baseAddress,
-        ).value
-      : transaction.vout
-          .filter((item) => item.scriptpubkey_address !== baseAddress)
-          .reduce((acc, item) => acc + item.value, 0)
+  const isMineIn = (vin) =>
+    vin?.prevout && mySet.has(vin.prevout.scriptpubkey_address)
+  const isMineOut = (vout) => mySet.has(vout?.scriptpubkey_address)
 
-  const equalsBase = (item) => item.scriptpubkey_address === baseAddress
-  const shouldAddAddressToList = (transaction, item) =>
-    transaction.vout.every(equalsBase) ||
-    item.scriptpubkey_address !== baseAddress
+  const toSats = (n) => Number(n) || 0
 
-  const getTransactionOtherParts = (direction, transaction) =>
-    direction === 'in'
-      ? transaction.vin
-          .filter((item) => item.prevout.scriptpubkey_address !== baseAddress)
-          .reduce((acc, item) => {
-            acc.push(item.prevout.scriptpubkey_address)
-            return acc
-          }, [])
-      : transaction.vout.reduce((arr, item) => {
-          shouldAddAddressToList(transaction, item) &&
-            arr.push(item.scriptpubkey_address)
-          return arr
-        }, [])
+  return (rawTransactions || []).map((tx) => {
+    const inputs = tx.vin || []
+    const outputs = tx.vout || []
 
-  const parsedTransactions = rawTransactions.map((transaction) => {
-    const direction = getDirection(transaction)
-    const satoshi = getTransactionAmountInSatoshi(direction, transaction)
-    const value = convertSatoshiToBtc(satoshi)
-    const date = transaction.status.block_time
-    const blockHeight = transaction.status.block_height
+    const inputSum = inputs.reduce((s, i) => s + toSats(i?.prevout?.value), 0)
+    const outputSum = outputs.reduce((s, o) => s + toSats(o?.value), 0)
+    const feeSats = toSats(tx.fee ?? (inputSum > 0 ? inputSum - outputSum : 0))
 
-    const otherPart = getTransactionOtherParts(direction, transaction)
+    const hasInputFromMe = inputs.some(isMineIn)
+    const toMeSats = outputs
+      .filter(isMineOut)
+      .reduce((s, o) => s + toSats(o.value), 0)
+    const toOthersSats = outputs
+      .filter((o) => !isMineOut(o))
+      .reduce((s, o) => s + toSats(o.value), 0)
+
+    const direction = hasInputFromMe ? 'out' : 'in'
+
+    let amountSats = 0
+    let changeSats = 0
+    if (direction === 'in') {
+      amountSats = toMeSats // received
+      changeSats = 0
+    } else {
+      amountSats = toOthersSats // sent to others (excludes change)
+      changeSats = toMeSats // change back to me
+    }
 
     return {
-      txid: transaction.txid,
-      date,
+      txid: tx.txid,
+      date: tx.status?.block_time,
+      blockHeight: tx.status?.block_height,
       direction,
-      value,
-      blockHeight,
-      otherPart,
+      value: convertSatoshiToBtc(amountSats),
+      change: convertSatoshiToBtc(changeSats),
+      fee: convertSatoshiToBtc(feeSats),
+      from: inputs.map((i) => i?.prevout?.scriptpubkey_address).filter(Boolean),
+      to: outputs.map((o) => o?.scriptpubkey_address).filter(Boolean),
     }
   })
-
-  return parsedTransactions
 }
 
 const getYesterdayFiatBalances = (cryptos, yesterdayExchangeRateList) => {
@@ -202,6 +202,64 @@ const getNetwork = () => {
   return bitcoin.networks[networkType]
 }
 
+const checkFee = (psbt, fee, maxFee, maxFeeRate) => {
+  try {
+    const feeDec = new Decimal(fee)
+    const tx = psbt.extractTransaction()
+    const vsize = new Decimal(tx.virtualSize())
+
+    const feeRate = feeDec.div(vsize)
+
+    if (feeDec.gt(maxFee)) {
+      console.warn(
+        'Transaction fee too high (absolute):',
+        feeDec.toString(),
+        'sats',
+      )
+      return false
+    }
+
+    if (feeRate.gt(maxFeeRate)) {
+      console.warn('Fee rate too high:', feeRate.toFixed(2), 'sat/vB')
+      return false
+    }
+
+    console.log(
+      'Fee looks safe:',
+      feeDec.toString(),
+      'sats ~',
+      feeRate.toFixed(2),
+      'sat/vB',
+    )
+    return true
+  } catch (err) {
+    console.error('checkFee error:', err.message)
+    return false
+  }
+}
+
+const getBtcAddressLink = (address, networkType) => {
+  if (!address) {
+    return ''
+  }
+  const baseUrl =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? AppInfo.BTC_EXPLORER_MAINNET
+      : AppInfo.BTC_EXPLORER_TESTNET
+  return `${baseUrl}address/${address}`
+}
+
+const getBtcTransactionLink = (txId, networkType) => {
+  if (!txId) {
+    return ''
+  }
+  const baseUrl =
+    networkType === AppInfo.NETWORK_TYPES.MAINNET
+      ? AppInfo.BTC_EXPLORER_MAINNET
+      : AppInfo.BTC_EXPLORER_TESTNET
+  return `${baseUrl}tx/${txId}`
+}
+
 export {
   parseFeesEstimates,
   calculateBalanceFromUtxoList,
@@ -213,6 +271,9 @@ export {
   calculateBalances,
   getStats,
   getNetwork,
+  checkFee,
+  getBtcAddressLink,
+  getBtcTransactionLink,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
   MAX_BTC,
