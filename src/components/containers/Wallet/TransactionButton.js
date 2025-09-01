@@ -3,6 +3,7 @@ import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation
 import { ReactComponent as SignIcon } from '@Assets/images/icon-sign.svg'
 import { ReactComponent as NftIcon } from '@Assets/images/icon-nft.svg'
 import { ReactComponent as SwapIcon } from '@Assets/images/icon-arrow-swap.svg'
+import { ReactComponent as AddressesIcon } from '@Assets/images/icon-inbox.svg'
 
 import { Button } from '@BasicComponents'
 
@@ -51,6 +52,8 @@ const TransactionButton = ({ title, mode, onClick, disabled }) => {
           <NftIcon />
         ) : mode === 'swap' ? (
           <SwapIcon className="swap-icon" />
+        ) : mode === 'addresses' ? (
+          <AddressesIcon className="swap-icon" />
         ) : (
           <ArrowIcon className="icon-arrow" />
         )}

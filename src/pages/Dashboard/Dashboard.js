@@ -118,8 +118,8 @@ const DashboardPage = () => {
       })
     }
 
-    const btcAddress = addresses.btcMainnetAddress
-      ? addresses.btcTestnetAddress
+    const btcAddress = addresses.btcAddresses
+      ? addresses.btcAddresses.btcReceivingAddresses[0]
       : false
     if (btcAddress) {
       const change24h =
