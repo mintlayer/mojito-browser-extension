@@ -1,75 +1,189 @@
-import ECPairFactory from 'ecpair'
 import * as bitcoin from 'bitcoinjs-lib'
-import * as ecc from '@bitcoinerlab/secp256k1'
+import coinSelect from 'coinselect'
+import { AppInfo } from '@Constants'
 
 import { Electrum } from '@APIs'
-import { Concurrency, BTC, BTCTransaction } from '@Helpers'
+import { BTC } from '@Helpers'
 
-const getFullTransactionsFromUtxoList = async (utxoList) =>
-  await Concurrency.map(utxoList, async (utxo) =>
-    JSON.parse(await Electrum.getTransactionData(utxo.txid)),
-  )
-
-const getHexTransactions = async (transactionList) =>
-  await Concurrency.map(transactionList, async (utxo) => ({
-    txid: utxo.txid,
-    raw: await Electrum.getTransactionHex(utxo.txid),
-  }))
-
-const getTransactionData = async ({ from, amount, fee }) => {
-  const EcPair = ECPairFactory(ecc)
-  const selectedUtxo = await BTCTransaction.selectNeededUtxos(from, amount, fee)
-  const fullTransactions = await getFullTransactionsFromUtxoList(selectedUtxo)
-  const rawTransactions = await getHexTransactions(fullTransactions)
-  const change = BTC.calculateBalanceFromUtxoList(selectedUtxo) - fee - amount
-
-  return {
-    EcPair,
-    fullTransactions,
-    selectedUtxo,
-    rawTransactions,
-    change,
+const getMasterFingerprint = (node) => {
+  if (node?.fingerprint) {
+    if (Buffer.isBuffer(node.fingerprint)) return node.fingerprint
+    if (Number.isInteger(node.fingerprint)) {
+      const b = Buffer.alloc(4)
+      b.writeUInt32BE(node.fingerprint >>> 0, 0)
+      return b
+    }
   }
+  const h160 = bitcoin.crypto.hash160(node.publicKey)
+  return Buffer.from(h160.subarray(0, 4))
 }
 
-const buildTransaction = async ({ to, amount, fee, wif, from }) => {
-  if (!BTCTransaction.isValidAmount(amount))
-    return Promise.reject('Amount out of bounds.')
-  if (!BTCTransaction.isValidAmount(fee))
-    return Promise.reject('Fee out of bounds.')
+const getFormattedFeeUtxos = async (walletUtxo, walletType) => {
+  const results = []
 
-  const { EcPair, fullTransactions, selectedUtxo, rawTransactions, change } =
-    await getTransactionData({ from, fee, amount })
+  for (const utxo of walletUtxo) {
+    const formatted = {
+      txId: utxo.txid,
+      vout: utxo.vout,
+      value: utxo.value,
+    }
+
+    if (walletType === 'legacy' || walletType === 'p2sh') {
+      const rawTxHex = await Electrum.getTransactionHex(utxo.txid)
+      formatted.nonWitnessUtxo = Buffer.from(rawTxHex, 'hex')
+    } else if (walletType === 'nativeSegwit') {
+      formatted.witnessUtxo = {
+        script: bitcoin.address.toOutputScript(utxo.address, BTC.getNetwork()),
+        value: utxo.value,
+      }
+    } else {
+      throw new Error(`Unknown wallet type: ${walletType}`)
+    }
+
+    results.push(formatted)
+  }
+
+  return results
+}
+
+const getFormattedUtxos = async (
+  walletUtxo,
+  walletType,
+  addressesData,
+  hdWallet,
+) => {
+  const results = []
+
+  const allAddresses = [
+    ...addressesData.btcReceivingAddresses,
+    ...addressesData.btcChangeAddresses,
+  ]
+
+  for (const utxo of walletUtxo) {
+    const addrData = allAddresses.find((a) => a.address === utxo.address)
+    const pubkey = Buffer.isBuffer(addrData.pubkey)
+      ? addrData.pubkey
+      : Buffer.from(addrData.pubkey, 'hex')
+    const bip32Derivation = [
+      {
+        masterFingerprint: getMasterFingerprint(hdWallet),
+        path: addrData.derivationPath,
+        pubkey: pubkey,
+      },
+    ]
+    const formatted = {
+      txId: utxo.txid,
+      vout: utxo.vout,
+      value: utxo.value,
+      bip32Derivation: bip32Derivation,
+    }
+
+    if (walletType === 'legacy' || walletType === 'p2sh') {
+      const rawTxHex = await Electrum.getTransactionHex(utxo.txid)
+      formatted.nonWitnessUtxo = Buffer.from(rawTxHex, 'hex')
+    } else if (walletType === 'nativeSegwit') {
+      formatted.witnessUtxo = {
+        script: bitcoin.address.toOutputScript(utxo.address, BTC.getNetwork()),
+        value: utxo.value,
+      }
+    } else {
+      throw new Error(`Unknown wallet type: ${walletType}`)
+    }
+
+    results.push(formatted)
+  }
+
+  return results
+}
+
+const calculateBtcTransactionFee = async ({
+  to,
+  amount,
+  utxos,
+  feeRate,
+  walletType,
+}) => {
+  const targets = [
+    {
+      address: to,
+      value: amount,
+    },
+  ]
+  const formatedUtxos = await getFormattedFeeUtxos(utxos, walletType)
+  const { fee } = coinSelect(formatedUtxos, targets, feeRate)
+  return fee
+}
+
+const buildTransaction = async ({
+  to,
+  amount,
+  utxos,
+  feeRate,
+  walletType,
+  changeAddress,
+  root,
+}) => {
+  const targets = [
+    {
+      address: to,
+      value: amount,
+    },
+  ]
+
+  const formatedUtxos = await getFormattedUtxos(
+    utxos,
+    walletType,
+    root.btcAddresses,
+    root.btcHDWallet,
+  )
+  const { inputs, outputs, fee } = coinSelect(formatedUtxos, targets, feeRate)
+  if (!inputs || !outputs) return
 
   const transactionBuilder = new bitcoin.Psbt({
     network: BTC.getNetwork(),
   })
 
-  fullTransactions.forEach((transaction) => {
-    const idx = selectedUtxo.find((utxo) => utxo.txid === transaction.txid).vout
-    const input = {
-      hash: transaction.txid,
-      index: idx,
+  inputs.forEach((input) => {
+    const psbtInput = {
+      hash: input.txId || input.txid,
+      index: input.vout,
+      bip32Derivation: input.bip32Derivation,
     }
 
-    const raw = rawTransactions.find(
-      (rawTransaction) => rawTransaction.txid === transaction.txid,
-    ).raw
-    input.nonWitnessUtxo = Buffer.from(raw, 'hex')
-    transactionBuilder.addInput(input)
+    if (input.nonWitnessUtxo) {
+      psbtInput.nonWitnessUtxo = input.nonWitnessUtxo
+    } else if (input.witnessUtxo) {
+      psbtInput.witnessUtxo = input.witnessUtxo
+    }
+
+    transactionBuilder.addInput(psbtInput)
   })
 
-  transactionBuilder.addOutput({
-    address: to,
-    value: amount,
-  })
-  transactionBuilder.addOutput({
-    address: from,
-    value: change,
+  outputs.forEach((output) => {
+    if (!output.address) {
+      output.address = changeAddress
+    }
+
+    transactionBuilder.addOutput({
+      address: output.address,
+      value: output.value,
+    })
   })
 
-  transactionBuilder.signAllInputs(EcPair.fromWIF(wif, BTC.getNetwork()))
+  transactionBuilder.signAllInputsHD(root.btcHDWallet)
   transactionBuilder.finalizeAllInputs()
+
+  const feeValidity = BTC.checkFee(
+    transactionBuilder,
+    fee,
+    AppInfo.BTC_MAX_TRANSACTION_FEE,
+    AppInfo.BTC_MAX_FEERATE,
+  )
+
+  if (!feeValidity) {
+    console.error('Transaction fee is not valid:', feeValidity)
+    return
+  }
 
   return [
     transactionBuilder.extractTransaction(),
@@ -77,4 +191,4 @@ const buildTransaction = async ({ to, amount, fee, wif, from }) => {
   ]
 }
 
-export { buildTransaction }
+export { buildTransaction, calculateBtcTransactionFee }
