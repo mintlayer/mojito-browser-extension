@@ -21,6 +21,7 @@ import SignChallengePage from './SignChallenge/SignChallenge'
 import SignExternalTransactionPage from './SignExternalTransaction/SignExternalTransaction'
 import SignInternalTransaction from './SignInternalTransaction/SignInternalTransaction'
 import OrderSwapPage from './OrderSwap/OrderSwap'
+import AddressPage from './AddressPage/AddressPage'
 
 export {
   CreateAccountPage,
@@ -46,4 +47,5 @@ export {
   SignExternalTransactionPage,
   SignInternalTransaction,
   OrderSwapPage,
+  AddressPage,
 }
