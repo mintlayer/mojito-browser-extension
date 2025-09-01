@@ -13,6 +13,7 @@ const useBtcWalletInfo = (address) => {
     setFetchingBalances,
     setFetchingTransactions,
     setFetchingUtxos,
+    unusedAddresses,
   } = useContext(BitcoinContext)
 
   return {
@@ -26,6 +27,7 @@ const useBtcWalletInfo = (address) => {
     setFetchingBalances,
     setFetchingTransactions,
     setFetchingUtxos,
+    unusedAddresses,
   }
 }
 
