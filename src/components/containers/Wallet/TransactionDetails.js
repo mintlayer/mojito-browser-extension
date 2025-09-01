@@ -4,13 +4,25 @@ import { format } from 'date-fns'
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 import { SettingsContext } from '@Contexts'
-import { AppInfo } from '@Constants'
+import { ML, BTC } from '@Helpers'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 import TransactionAmount from './TransactionAmount'
 
 import './TransactionDetails.css'
 import { useParams } from 'react-router-dom'
 import { CenteredLayout } from '@LayoutComponents'
+
+const getAddress = (transaction) => {
+  let address = 'N/A'
+
+  if (transaction.direction === 'out') {
+    address = transaction.destAddress || transaction.to[0]
+  } else {
+    address = transaction.destAddress || transaction.from[0]
+  }
+
+  return address
+}
 
 const TransactionDetailsItem = ({ title, content }) => {
   return (
@@ -40,22 +52,19 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
   }
 
   const [confirmations, setConfirmations] = useState(null)
-  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
   const date = transaction.date
     ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
   const buttonExtraStyles = ['transaction-details-button']
   const addressTitle = transaction?.direction === 'out' ? 'To:' : 'From:'
-  const transactionAddress =
-    transaction.destAddress || [...new Set(transaction?.otherPart)].join('; ')
-  const externalBtcLink = `https://blockstream.info${
-    isTestnet ? '/testnet' : ''
-  }/tx/${transaction?.txid}`
+  const transactionAddress = getAddress(transaction)
+  const externalBtcLink = BTC.getBtcTransactionLink(
+    transaction?.txid,
+    networkType,
+  )
 
-  const externalMlLink = `https://${
-    isTestnet ? 'lovelace.' : ''
-  }explorer.mintlayer.org/tx/${transaction?.txid}`
+  const externalMlLink = ML.getMlTransactionLink(transaction?.txid, networkType)
 
   const explorerLink =
     walletType.name === 'Bitcoin' ? externalBtcLink : externalMlLink

@@ -4,19 +4,19 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { SendBtcTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
-import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
+import {
+  AccountContext,
+  SettingsContext,
+  TransactionContext,
+  BitcoinContext,
+} from '@Contexts'
 import { BTCTransaction } from '@Cryptos'
 import { Account } from '@Entities'
-import {
-  BTC as BTCHelper,
-  BTCTransaction as BTCTransactionHelper,
-  Format,
-  NumbersHelper,
-} from '@Helpers'
+import { BTC as BTCHelper, Format } from '@Helpers'
 import { Electrum } from '@APIs'
 import { AppInfo } from '@Constants'
 import { MLTransaction, ML as MLHelpers } from '@Helpers'
-import { ML } from '@Cryptos'
+import { ML, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
 import './SendBtcTransaction.css'
 
@@ -36,10 +36,10 @@ const SendBtcTransactionPage = () => {
 
   const { networkType } = useContext(SettingsContext)
   const { setFeeLoading } = useContext(TransactionContext)
-  const currentBtcAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.btcMainnetAddress
-      : addresses.btcTestnetAddress
+  const { unusedAddresses: unusedBtcAddresses, btcUtxos } =
+    useContext(BitcoinContext)
+
+  const currentBtcAddress = addresses.btcAddresses.btcReceivingAddresses[0]
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddresses
@@ -98,21 +98,22 @@ const SendBtcTransactionPage = () => {
     currentMlAddresses && currentMlAddresses.mlChangeAddresses.length
 
   const calculateBtcTotalFee = async (transactionInfo) => {
-    const transactionSize =
-      await BTCTransactionHelper.calculateTransactionSizeInBytes({
-        addressFrom: currentBtcAddress,
-        amountToTranfer: BTCHelper.convertBtcToSatoshi(transactionInfo.amount),
-        fee: transactionInfo.fee,
-      })
+    const currentAccount = await Account.getAccount(accountID)
+    const btcWalletType =
+      currentAccount.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
 
-    const totalFee = NumbersHelper.floatStringToNumber(
-      Format.BTCValue(
-        BTCHelper.convertSatoshiToBtc(transactionSize * transactionInfo.fee),
-      ),
-    )
+    const totalFee = await BTCTransaction.calculateBtcTransactionFee({
+      to: transactionInfo.to,
+      amount: BTCHelper.convertBtcToSatoshi(transactionInfo.amount),
+      utxos: btcUtxos || [],
+      feeRate: transactionInfo.fee,
+      walletType: btcWalletType,
+    })
 
-    setTotalFeeFiat(Format.fiatValue(totalFee * exchangeRate))
-    setTotalFeeCrypto(totalFee)
+    const formatedFee = Format.BTCValue(BTCHelper.convertSatoshiToBtc(totalFee))
+
+    setTotalFeeFiat(Format.fiatValue(formatedFee * exchangeRate))
+    setTotalFeeCrypto(formatedFee)
   }
 
   const calculateMlTotalFee = async (transactionInfo) => {
@@ -125,7 +126,8 @@ const SendBtcTransactionPage = () => {
       transactionInfo.amount,
       Math.pow(10, atoms),
     )
-    const unusedChangeAddress = unusedAddresses.change
+    const unusedChangeAddress =
+      unusedAddresses.change || unusedAddresses.changeAddress.address
     try {
       const transactionSize =
         await MLTransaction.calculateTransactionSizeInBytes({
@@ -171,30 +173,28 @@ const SendBtcTransactionPage = () => {
     setTransactionInformation(transactionInfo)
   }
 
-  const confirmBtcTransaction = async (password) => {
+   const confirmBtcTransaction = async (password) => {
     // eslint-disable-next-line no-unused-vars
-    const { WIF } = await Account.unlockAccount(accountID, password)
+    const { btcPrivateKeys } = await Account.unlockAccount(accountID, password)
     const transactionAmountInSatoshi = BTCHelper.convertBtcToSatoshi(
       transactionInformation.amount,
     )
 
-    const transactionSize =
-      await BTCTransactionHelper.calculateTransactionSizeInBytes({
-        addressFrom: currentBtcAddress,
-        amountToTranfer: BTCHelper.convertBtcToSatoshi(
-          transactionInformation.amount,
-        ),
-        fee: transactionInformation.fee,
-      })
+    const currentAccount = await Account.getAccount(accountID)
+    const btcWalletType =
+      currentAccount.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
 
     // eslint-disable-next-line no-unused-vars
     const [__, transactionHex] = await BTCTransaction.buildTransaction({
       to: transactionInformation.to,
       amount: transactionAmountInSatoshi,
-      fee: transactionSize * transactionInformation.fee,
-      wif: WIF,
-      from: currentBtcAddress,
-      networkType: 'testnet',
+      utxos: btcUtxos || [],
+      feeRate: transactionInformation.fee,
+      walletType: btcWalletType,
+      changeAddress:
+        unusedBtcAddresses.changeAddress.address ||
+        addresses.btcAddresses.btcChangeAddresses[0],
+      root: btcPrivateKeys,
     })
 
     const result = await Electrum.broadcastTransaction(transactionHex)
@@ -215,7 +215,7 @@ const SendBtcTransactionPage = () => {
         ? mlPrivKeys.mlMainnetPrivateKey
         : mlPrivKeys.mlTestnetPrivateKey
 
-    const walletPrivKeys = await ML.getWalletPrivKeysList(
+    const walletPrivKeys = ML.getWalletPrivKeysList(
       privKey,
       networkType,
       changeAddressesLength,
@@ -267,11 +267,7 @@ const SendBtcTransactionPage = () => {
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueToken}
             onSendTransaction={createTransaction}
-            calculateTotalFee={
-              walletType.name === 'Bitcoin'
-                ? calculateBtcTotalFee
-                : calculateMlTotalFee
-            }
+            calculateTotalFee={calculateMlTotalFee}
             setFormValidity={setFormValid}
             isFormValid={isFormValid}
             confirmTransaction={
