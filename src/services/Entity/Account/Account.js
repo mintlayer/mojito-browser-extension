@@ -1,11 +1,11 @@
-import { BTC, ML, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
+import { BTC, ML, BTC_ADDRESS_TYPE_MAP, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 import { IndexedDB } from '@Databases'
-import * as bitcoin from 'bitcoinjs-lib'
 import { AppInfo } from '@Constants'
 import {
   getEncryptedPrivateKeys,
   getEncryptedHtlsSecret,
 } from './AccountHelpers'
+import { BTC as BtcHelpers } from '@Helpers'
 
 import loadAccountSubRoutines from './loadWorkers'
 import { LocalStorageService } from '@Storage'
@@ -71,7 +71,6 @@ const backupAccountToJSON = async (account) => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  // TODO: Change the name of the file
   a.download = `mojito_${account.name}.json`
   a.click()
 }
@@ -159,9 +158,6 @@ const saveProvidedHtlsSecret = async ({ accountId, password, data }) => {
 }
 
 const unlockAccount = async (id, password) => {
-  const mainnetNetwork = bitcoin.networks['bitcoin']
-  const testnetNetwork = bitcoin.networks['testnet']
-
   const storedNetworkType = LocalStorageService.getItem('networkType')
 
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
@@ -200,22 +196,33 @@ const unlockAccount = async (id, password) => {
       tag: account.tag.mlMainnetPrivKeyTag,
       key,
     })
-
     // this error just exists if the jobe was run in a worker
     /* istanbul ignore next */
-    const btcAddressType = BTC_ADDRESS_TYPE_MAP[account.walletType]
+    const btcAddressType =
+      account.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
     if (seed.error) throw new Error(seed.error)
-    const [pubKey, WIF] = BTC.getKeysFromSeed(Buffer.from(seed), btcAddressType)
+
+    const btcHDWallet = BTC.getHDWalletFromSeed(Buffer.from(seed))
+    const btcAddresses = await BTC_ADDRESS_TYPE_MAP[
+      account.walletType
+    ].getAddresses(
+      btcHDWallet,
+      BtcHelpers.getNetwork(),
+      AppInfo.BTC_DEFAULT_ADDRESSES_BATCH,
+      btcAddressType,
+    )
+    const btcReceivingAddresses =
+      btcAddresses &&
+      btcAddresses.btcReceivingAddresses.map((item) => item.address)
+    const btcChangeAddresses =
+      btcAddresses &&
+      btcAddresses.btcChangeAddresses.map((item) => item.address)
 
     if (walletsToCreate.includes('btc')) {
-      addresses.btcMainnetAddress = BTC_ADDRESS_TYPE_MAP[
-        account.walletType
-      ].getAddressFromPubKey(pubKey, mainnetNetwork)
-      addresses.btcMainnetPublicKey = pubKey
-      addresses.btcTestnetAddress = BTC_ADDRESS_TYPE_MAP[
-        account.walletType
-      ].getAddressFromPubKey(pubKey, testnetNetwork)
-      addresses.btcTestnetPublicKey = pubKey
+      addresses.btcAddresses = {
+        btcReceivingAddresses,
+        btcChangeAddresses,
+      }
     }
 
     if (walletsToCreate.includes('ml')) {
@@ -240,7 +247,7 @@ const unlockAccount = async (id, password) => {
 
     return {
       addresses,
-      WIF,
+      btcPrivateKeys: { btcHDWallet, btcAddresses },
       name: account.name,
       mlPrivKeys: { mlMainnetPrivateKey, mlTestnetPrivateKey },
     }
@@ -248,7 +255,7 @@ const unlockAccount = async (id, password) => {
     console.error(e)
     return Promise.reject({
       address: '',
-      WIF: '',
+      btcPrivateKeys: '',
       name: '',
       mlPrivKeys: { mlMainnetPrivateKey: '', mlTestnetPrivateKey: '' },
     })
