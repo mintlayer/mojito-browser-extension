@@ -94,7 +94,7 @@ export const SignBitcoinTransactionPage = () => {
     const [, txHex, txId] = await BTCTransaction.buildTransaction({
       to: address,
       amount: parseInt(transactionJSONrepresentation.amount), // atoms
-      fee: 500, // TODO: update calculation of fee
+      fee: 2000, // TODO: update calculation of fee
       wif: WIF,
       from: currentBtcAddress,
       networkType,
@@ -184,6 +184,49 @@ export const SignBitcoinTransactionPage = () => {
     )
   }
 
+  const submitRefund = async () => {
+    const pass = password
+
+    const transactionJSONrepresentation =
+      state?.request?.data?.txData?.JSONRepresentation
+    console.log('transactionJSONrepresentation', transactionJSONrepresentation)
+
+    const { WIF } = await Account.unlockAccount(accountID, pass)
+
+    const tx = await BTCTransaction.buildHtlcRefundTx({
+      network,
+      utxo: transactionJSONrepresentation.utxo,
+      toAddress: transactionJSONrepresentation.to,
+      redeemScriptHex: transactionJSONrepresentation.redeemScriptHex,
+      wif: WIF,
+    })
+
+    const requestId = state?.request?.requestId
+    const method = 'signTransaction_approve'
+    const result = {
+      signedTxHex: tx,
+    }
+
+    console.log('result', result)
+
+    // eslint-disable-next-line no-undef
+    runtime.sendMessage(
+      {
+        action: 'popupResponse',
+        method,
+        requestId,
+        origin,
+        result,
+      },
+      () => {
+        // eslint-disable-next-line no-undef
+        storage.local.remove('pendingRequest', () => {
+          window.close()
+        })
+      },
+    )
+  }
+
   const handleModalSubmit = async () => {
     try {
       const transactionJSONrepresentation =
@@ -192,6 +235,11 @@ export const SignBitcoinTransactionPage = () => {
         'transactionJSONrepresentation',
         transactionJSONrepresentation,
       )
+
+      if (transactionJSONrepresentation.type === 'refundHtlc') {
+        await submitRefund()
+        return
+      }
 
       if (transactionJSONrepresentation.secretHash) {
         await submitCreate()

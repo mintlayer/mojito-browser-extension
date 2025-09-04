@@ -37,7 +37,15 @@ import {
   TotalSupply,
   Amount,
 } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
-import { getOutputs } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
+import {
+  getOutputs,
+  getPublicKeyFromPrivate,
+} from '../../../services/Crypto/Mintlayer/Mintlayer.js'
+import {
+  encode_multisig_challenge,
+  encode_witness_htlc_multisig,
+} from '../../../services/Crypto/Mintlayer/@mintlayerlib-js'
+import { stringToUint8Array } from '../Array/Array'
 
 export const handleTxError = (error, setTxErrorMessage, setPassword) => {
   const errorMsg =
@@ -350,6 +358,8 @@ export function getTransactionBINrepresentation(
   )
   const outputsArray = outputsArrayItems
 
+  console.log('transactionJSONrepresentation', transactionJSONrepresentation)
+
   const inputAddresses = transactionJSONrepresentation.inputs
     .filter(({ input }) => input.input_type === 'UTXO')
     .map(
@@ -358,6 +368,9 @@ export function getTransactionBINrepresentation(
         input?.destination ||
         input?.utxo?.htlc.refund_key,
     )
+
+  console.log('inputsArray', inputsArray)
+  console.log('outputsArray', outputsArray)
 
   const transactionsize = estimate_transaction_size(
     mergeUint8Arrays(inputsArray),
@@ -381,7 +394,7 @@ export function getTransactionHEX(
     transactionBINrepresentation,
     transactionJSONrepresentation,
     addressesPrivateKeys,
-    secret = new Uint8Array(32).fill(0),
+    secret = null,
   },
   _network,
 ) {
@@ -463,25 +476,66 @@ export function getTransactionHEX(
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
       if (input?.utxo?.htlc) {
-        // TODO: distingush refund and spend HTLCs
-        const address = input?.utxo?.htlc?.spend_key // - refund key cause "Error verifying input #0: Public key to address mismatch"
-        // input?.utxo?.htlc?.spend_key // this works
-        const addressPrivateKey = addressesPrivateKeys[address]
+        console.log('htlc')
+        if (secret) {
+          const address = input?.utxo?.htlc?.spend_key
+          const addressPrivateKey = addressesPrivateKeys[address]
 
-        const secretuint8Array = secret
+          const secretuint8Array = secret
 
-        const witness = encode_witness_htlc_secret(
-          SignatureHashType.ALL,
-          addressPrivateKey,
-          address,
-          transaction,
-          optUtxos,
-          index,
-          secretuint8Array,
-          network,
-        )
-        return witness
+          const witness = encode_witness_htlc_secret(
+            SignatureHashType.ALL,
+            addressPrivateKey,
+            address,
+            transaction,
+            optUtxos,
+            index,
+            secretuint8Array,
+            network,
+          )
+          return witness
+        } else {
+          console.log('Build refund TX')
+          // refund
+          // Multisig
+          const refund_address = input?.utxo?.htlc?.refund_key
+          const spend_address = input?.utxo?.htlc?.spend_key
+          // refund is first
+          const uint8ArrayOfAddresses = [
+            ...stringToUint8Array(refund_address),
+            ...stringToUint8Array(spend_address),
+          ]
+          console.log('uint8ArrayOfAddresses', uint8ArrayOfAddresses)
+          const addressPrivateKey = addressesPrivateKeys[refund_address]
+          const addressPublicKey = getPublicKeyFromPrivate(addressPrivateKey)
+
+          try {
+            encode_multisig_challenge(addressPublicKey, 1, network)
+          } catch (error) {
+            console.error('encode_multisig_challenge error', error)
+          }
+
+          const multisig = encode_multisig_challenge(
+            addressPublicKey,
+            1,
+            network,
+          )
+          console.log('multisig', multisig)
+          const witness = encode_witness_htlc_multisig(
+            SignatureHashType.ALL,
+            addressPrivateKey,
+            0,
+            new Uint8Array(0), // First sign
+            multisig,
+            transaction,
+            optUtxos,
+            index,
+            network,
+          )
+          return witness
+        }
       } else {
+        console.log('not detected htlc')
         let address =
           input?.utxo?.destination ||
           input?.input?.authority ||
@@ -496,6 +550,8 @@ export function getTransactionHEX(
         }
 
         const addressPrivateKey = addressesPrivateKeys[address]
+        console.log(address)
+        console.log(addressPrivateKey)
 
         const witness = encode_witness(
           SignatureHashType.ALL,

@@ -99,7 +99,7 @@ const buildHTLCAndFundingAddress = async (input) => {
     receiverPubKey,
     senderPubKey,
     secretHashHex,
-    lockBlockCount,
+    lock: lockBlockCount,
     networkType = 'testnet',
   } = input
 
@@ -114,7 +114,7 @@ const buildHTLCAndFundingAddress = async (input) => {
     bitcoin.opcodes.OP_EQUALVERIFY,
     Buffer.from(receiverPubKey, 'hex'),
     bitcoin.opcodes.OP_ELSE,
-    bitcoin.script.number.encode(lockBlockCount),
+    bitcoin.script.number.encode(parseInt(lockBlockCount)),
     bitcoin.opcodes.OP_CHECKSEQUENCEVERIFY,
     bitcoin.opcodes.OP_DROP,
     Buffer.from(senderPubKey, 'hex'),
@@ -204,44 +204,151 @@ const buildHtlcClaimTx = async (params) => {
 }
 
 const buildHtlcRefundTx = async (params) => {
-  const { network, utxo, toAddress, keyPair, redeemScriptHex, lockBlockCount } =
-    params
+  const {
+    networkType = 'testnet',
+    utxo,
+    toAddress,
+    wif,
+    redeemScriptHex,
+  } = params
+
+  // Validate inputs
+  if (!utxo?.txid || !Number.isInteger(utxo.vout)) {
+    throw new Error('Invalid UTXO: txid or vout missing/invalid')
+  }
+  if (!redeemScriptHex || !/^[0-9a-fA-F]+$/.test(redeemScriptHex)) {
+    throw new Error('Invalid redeemScriptHex: must be a valid hex string')
+  }
+  if (!toAddress || !wif) {
+    throw new Error('toAddress or wif missing')
+  }
+
+  // Ensure amount is in satoshis
+  const amountInSatoshis = utxo.value
+  // if (typeof utxo.amount === 'string') {
+  //   amountInSatoshis = Math.round(parseFloat(utxo.amount) * 1e8)
+  // } else if (typeof utxo.amount === 'number') {
+  //   amountInSatoshis =
+  //     utxo.amount < 1000 ? Math.round(utxo.amount * 1e8) : utxo.amount
+  // } else {
+  //   throw new Error('Invalid utxo.amount: must be a number or string in BTC')
+  // }
+
+  const network = bitcoin.networks[networkType]
+
+  // Parse redeemScript
+  let redeemScript
+  try {
+    redeemScript = Buffer.from(redeemScriptHex, 'hex')
+  } catch (e) {
+    throw new Error(`Failed to parse redeemScriptHex: ${e.message}`)
+  }
+
+  // Placeholder for parseLockBlockCount (assuming it extracts relative locktime)
+  const lockBlockCount = parseLockBlockCount(redeemScriptHex)
+  if (!Number.isInteger(lockBlockCount)) {
+    throw new Error('Invalid lockBlockCount: must be an integer')
+  }
+
+  // Create P2WSH script
+  let p2wshOutput
+  try {
+    p2wshOutput = bitcoin.payments.p2wsh({
+      redeem: { output: redeemScript, network },
+      network,
+    }).output
+  } catch (e) {
+    throw new Error(`Failed to create P2WSH output: ${e.message}`)
+  }
+
+  // Validate that p2wshOutput is a Buffer
+  if (!Buffer.isBuffer(p2wshOutput)) {
+    throw new Error('P2WSH output is not a Buffer')
+  }
 
   const psbt = new bitcoin.Psbt({ network })
-  const redeemScript = Buffer.from(redeemScriptHex, 'hex')
 
+  // Add input with witnessUtxo
   psbt.addInput({
     hash: utxo.txid,
     index: utxo.vout,
     sequence: lockBlockCount,
     witnessUtxo: {
-      script: bitcoin.payments.p2wsh({
-        redeem: { output: redeemScript },
-        network,
-      }).output,
-      value: utxo.amount,
+      script: p2wshOutput,
+      value: amountInSatoshis,
     },
-    redeemScript,
+    witnessScript: redeemScript,
   })
 
+  // Add output
+  const fee = '1000' // Fixed fee in satoshis
+  if (amountInSatoshis <= fee) {
+    throw new Error('UTXO amount too low to cover fee')
+  }
   psbt.addOutput({
     address: toAddress,
-    value: utxo.amount - 500, // fee
+    value: amountInSatoshis - fee,
   })
 
-  psbt.setVersion(2) // for CHECKSEQUENCEVERIFY
-  psbt.signInput(0, keyPair)
-  psbt.finalizeInput(0, (_, input) => {
-    const sig = input.partialSig[0].signature
-    const witness = bitcoin.script.witnessStackToScriptWitness([
-      sig,
-      Buffer.from([]), // OP_FALSE
-      redeemScript,
-    ])
-    return { finalScriptWitness: witness }
-  })
+  // Set version for CHECKSEQUENCEVERIFY
+  psbt.setVersion(2)
 
-  return psbt.extractTransaction().toHex()
+  // Sign the input
+  const ECPair = ECPairFactory(ecc)
+  let keyPair
+  try {
+    keyPair = ECPair.fromWIF(wif, network)
+  } catch (e) {
+    throw new Error(`Invalid WIF: ${e.message}`)
+  }
+
+  try {
+    psbt.signInput(0, keyPair)
+  } catch (e) {
+    throw new Error(`Failed to sign input: ${e.message}`)
+  }
+
+  // Finalize input with custom witness stack
+  try {
+    psbt.finalizeInput(0, (_, input) => {
+      const sig = input.partialSig[0].signature
+      const witness = witnessStackToScriptWitness([
+        sig,
+        Buffer.from([]), // OP_FALSE for refund path
+        redeemScript,
+      ])
+      return { finalScriptWitness: witness }
+    })
+  } catch (e) {
+    throw new Error(`Failed to finalize input: ${e.message}`)
+  }
+
+  // Extract and return transaction hex
+  try {
+    return psbt.extractTransaction().toHex()
+  } catch (e) {
+    throw new Error(`Failed to extract transaction: ${e.message}`)
+  }
+}
+
+export function parseLockBlockCount(redeemScriptHex) {
+  const chunks = bitcoin.script.decompile(Buffer.from(redeemScriptHex, 'hex'))
+  if (!chunks) throw new Error('Invalid redeemScript')
+
+  const csvIndex = chunks.findIndex(
+    (op) => op === bitcoin.opcodes.OP_CHECKSEQUENCEVERIFY,
+  )
+  if (csvIndex === -1) throw new Error('No CHECKSEQUENCEVERIFY in redeemScript')
+
+  const lockChunk = chunks[csvIndex - 1]
+  if (typeof lockChunk === 'number') {
+    // OP_1 … OP_16
+    return lockChunk - bitcoin.opcodes.OP_RESERVED // OP_0 = 0x00
+  } else if (Buffer.isBuffer(lockChunk)) {
+    return bitcoin.script.number.decode(lockChunk)
+  } else {
+    throw new Error('LockBlockCount not found before CHECKSEQUENCEVERIFY')
+  }
 }
 
 export {

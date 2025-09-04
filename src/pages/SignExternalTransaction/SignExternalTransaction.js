@@ -52,6 +52,32 @@ export const SignTransactionPage = () => {
 
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
+  const isHTLCCreateTx =
+    state?.request?.data?.txData?.JSONRepresentation?.outputs?.some(
+      (output) => output?.type === 'Htlc',
+    )
+
+  const isHTLCTx =
+    state?.request?.data?.txData?.JSONRepresentation?.inputs?.some(
+      (input) => input?.utxo?.type === 'Htlc',
+    )
+
+  const HtlcInput =
+    state?.request?.data?.txData?.JSONRepresentation?.inputs.find(
+      (input) => input?.utxo?.type === 'Htlc',
+    )
+
+  const HtlcOutput =
+    state?.request?.data?.txData?.JSONRepresentation?.outputs?.find(
+      (output) => output?.type === 'Htlc',
+    )
+
+  const isHTLCClaim =
+    isHTLCTx &&
+    state?.request?.data?.txData?.JSONRepresentation?.outputs?.some(
+      (output) => output?.destination === HtlcInput.utxo.htlc.spend_key,
+    )
+
   const handleApprove = async () => {
     setIsModalOpen(true) // Open the modal
   }
@@ -115,6 +141,65 @@ export const SignTransactionPage = () => {
         network,
       )
 
+      let refundTx
+
+      console.log('isHTLCCreateTx', isHTLCCreateTx)
+
+      if (isHTLCCreateTx) {
+        console.log('isHTLCCreateTx')
+        refundTx = {
+          transactionJSONrepresentation: null,
+          transactionBINrepresentation: null,
+          witness: null,
+        }
+
+        refundTx.transactionJSONrepresentation = {
+          id: null,
+          inputs: [
+            {
+              input: {
+                index: 0,
+                input_type: 'UTXO',
+                source_id: transactionJSONrepresentation.id,
+                source_type: 'Transaction',
+              },
+              utxo: HtlcOutput,
+            },
+          ],
+          outputs: [
+            {
+              destination: HtlcOutput.htlc.refund_key,
+              type: 'Transfer',
+              value: {
+                amount: {
+                  atoms: HtlcOutput.value.amount.atoms,
+                  decimal: HtlcOutput.value.amount.decimal,
+                },
+                type: 'Coin',
+              },
+            },
+          ],
+        }
+
+        refundTx.transactionBINrepresentation =
+          SignTxHelpers.getTransactionBINrepresentation(
+            refundTx.transactionJSONrepresentation,
+            network,
+          )
+
+        refundTx.transactionHex = SignTxHelpers.getTransactionHEX(
+          {
+            transactionBINrepresentation: refundTx.transactionBINrepresentation,
+            transactionJSONrepresentation:
+              refundTx.transactionJSONrepresentation,
+            addressesPrivateKeys: keysList,
+          },
+          network,
+        )
+      }
+
+      console.log('refundTx', refundTx)
+
       const requestId = state?.request?.requestId
       const method = 'signTransaction_approve'
       let result
@@ -123,10 +208,15 @@ export const SignTransactionPage = () => {
           transactionHex,
           intentEncode,
         }
+      } else if (refundTx?.transactionHex) {
+        result = {
+          transactionHex,
+          refundTx,
+        }
       } else {
         result = transactionHex
       }
-      console.log('transactionHex', transactionHex)
+      console.log('result', result)
       // eslint-disable-next-line no-undef
       runtime.sendMessage(
         {
@@ -186,10 +276,6 @@ export const SignTransactionPage = () => {
   const secretChangeHandler = (value) => {
     setSecret(value)
   }
-
-  const isHTLCClaim = state?.request?.data?.txData?.JSONRepresentation?.inputs?.some(
-    (input) => input?.utxo?.type === 'Htlc',
-  )
 
   return (
     <div className="SignTransaction">
@@ -257,19 +343,17 @@ export const SignTransactionPage = () => {
               placeholder="Enter your password"
               autoFocus
             />
-            {
-              isHTLCClaim && (
-                <>
-                  HTLC Secret:
-                  <TextField
-                    value={secret}
-                    onChangeHandle={secretChangeHandler}
-                    placeholder="Enter htlc secret in hex format"
-                    autoFocus
-                  />
-                </>
-              )
-            }
+            {isHTLCClaim && (
+              <>
+                HTLC Secret:
+                <TextField
+                  value={secret}
+                  onChangeHandle={secretChangeHandler}
+                  placeholder="Enter htlc secret in hex format"
+                  autoFocus
+                />
+              </>
+            )}
             <div className="modal-buttons">
               <Button
                 onClickHandle={() => setIsModalOpen(false)}
