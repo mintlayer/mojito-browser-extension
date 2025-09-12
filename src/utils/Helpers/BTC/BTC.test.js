@@ -113,7 +113,8 @@ test('Transactions parse', async () => {
   expect(typeof parsedTransactions[randomIndex].txid).toBe('string')
   expect(typeof parsedTransactions[randomIndex].direction).toBe('string')
   expect(typeof parsedTransactions[randomIndex].value).toBe('number')
-  expect(parsedTransactions[randomIndex].otherPart.length).toBeGreaterThan(0)
+  expect(parsedTransactions[randomIndex].from.length).toBeGreaterThan(0)
+  expect(parsedTransactions[randomIndex].to.length).toBeGreaterThan(0)
 })
 
 test('Check confirmations amount - error', async () => {

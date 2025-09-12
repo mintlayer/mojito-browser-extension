@@ -32,6 +32,7 @@ const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
             handleTokenChange(coin)
           }}
           className="swap-token-item"
+          key={coin.coin}
         >
           <SwapTokenLogo />
           ML Coins

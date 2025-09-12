@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react'
 import { InputBTC, InputFloat } from '@BasicComponents'
-// import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
-import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
+import { SettingsContext, TransactionContext } from '@Contexts'
+import { useParams } from 'react-router-dom'
 
 import './CryptoFiatField.css'
 import { BTC, Format, NumbersHelper } from '@Helpers'
@@ -21,7 +21,6 @@ const CryptoFiatField = ({
   setAmountValidity,
   totalFeeInCrypto,
 }) => {
-  const { walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const { transactionMode } = useContext(TransactionContext)
   const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
@@ -30,6 +29,7 @@ const CryptoFiatField = ({
   const [maxFiatValue, setMaxFiatValue] = useState(
     maxCryptoValue * exchangeRate,
   )
+  const { coinType } = useParams()
 
   const [bottomValue, setBottomValue] = useState('')
   // eslint-disable-next-line no-unused-vars
@@ -115,7 +115,7 @@ const CryptoFiatField = ({
 
     if (
       transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
-      walletType.name === 'Mintlayer'
+      coinType === 'Mintlayer'
     ) {
       setAmountValidity(true)
       setValidity('valid')
@@ -159,7 +159,12 @@ const CryptoFiatField = ({
   }
 
   const safeSpend = (value) => {
-    const result = value - totalFeeInCrypto - 0.5 // default fee in mainnet is 0.5 TODO: calculate fee
+    let result = 0
+    if (coinType === 'Bitcoin') {
+      result = value - totalFeeInCrypto - 0.00001
+    } else {
+      result = value - totalFeeInCrypto - 0.5
+    }
     if (result < 0) {
       return 0
     }
@@ -197,19 +202,6 @@ const CryptoFiatField = ({
           data-testid="crypto-fiat-switch-button"
           onClick={changeButtonClickHandler}
         >
-          {/* {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
-            <>
-              <ArrowIcon
-                className="crypto-fiat-icon-reverse"
-                data-testid="arrow-icon"
-              />
-              <ArrowIcon
-                className="crypto-fiat-icon"
-                data-testid="arrow-icon"
-              />
-            </>
-          )} */}
-
           <span className="current-value-type">{currentValueType}</span>
         </button>
       </div>

@@ -141,5 +141,6 @@
 
 .delegation-staking-icon.decommissioned,
 .transaction-logo-type.decommissioned {
-  background: rgb(var(--color-red));
+  background-color: rgb(var(--color-red)) !important;
+  color: rgb(var(--color-white)) !important;
 }

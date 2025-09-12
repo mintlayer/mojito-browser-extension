@@ -9,11 +9,12 @@ const SettingsPage = ({ unlocked }) => {
       value: 'testnet',
       visible: true,
     },
-    {
-      component: <Settings.SettingsAPI />,
-      value: 'api',
-      visible: true,
-    },
+    // Disable API settings since start using batch requests
+    // {
+    //   component: <Settings.SettingsAPI />,
+    //   value: 'api',
+    //   visible: true,
+    // },
     {
       component: <Settings.SettingsBackup />,
       value: 'backup',

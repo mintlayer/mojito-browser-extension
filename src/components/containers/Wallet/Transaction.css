@@ -103,7 +103,11 @@
   height: 40px;
   margin-left: 5px;
   margin-top: -5px;
-  color: #fff;
+  color: rgb(var(--color-black));
+}
+
+.delegation-icon svg {
+  color: rgb(var(--color-black));
 }
 
 .arrow-icon-out {

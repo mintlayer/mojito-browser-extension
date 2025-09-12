@@ -37,6 +37,7 @@ import {
   SignInternalTransaction,
   SignExternalTransactionPage,
   OrderSwapPage,
+  AddressPage,
 } from '@Pages'
 
 import {
@@ -370,6 +371,10 @@ const App = () => {
           exact
           path="/"
           element={<HomePage />}
+        />
+        <Route
+          path="/wallet/:coinType/address"
+          element={<AddressPage />}
         />
       </Routes>
     </main>

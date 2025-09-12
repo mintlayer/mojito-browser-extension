@@ -12,7 +12,9 @@ const TRANSCTIONSAMPLE = {
   direction: 'in',
   type: 'Transfer',
   date: 1588888888,
-  otherPart: ['2MvTz52JfiHsDgbjRJLEY44hz8aebHGQZyb'],
+  destAddress: 'tmt1q8tksy2axua4f4rt3xhpezzegpekmk7ynq2gwd84',
+  from: ['tmt1q8tksy2axua4f4rt3xhpezzegpekmk7ynq2gwd84'],
+  to: ['tmt1q8tksy2axua4f4rt3xhpezzegpekmk7ynq2gwd84'],
 }
 
 const TRANSCTIONSAMPLEOUT = {
@@ -20,9 +22,11 @@ const TRANSCTIONSAMPLEOUT = {
   value: 1,
   direction: 'out',
   date: 1588888888,
-  otherPart: [
-    '2MvTz52JfiHsDgbjRJLEY44hz8aebHGQZyb',
-    '2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom',
+  destAddress: 'tmt1q8tksy2axua4f4rt3xhpezzegpekmk7ynq2gwd84',
+  from: ['tmt1q8tksy2axua4f4rt3xhpezzegpekmk7ynq2gwd84'],
+  to: [
+    'tmt1q8tksy2axua4f4rt3xhpezzegpekmk7ynq2gwd84',
+    'tmt1q8tksy2axua4f4rt3xhpezzegpekmk7ynq2gwd84',
   ],
 }
 
@@ -49,7 +53,10 @@ test('Render transaction component', async () => {
 
   await act(async () => expect(transaction).toBeInTheDocument())
   expect(transactionOtherPart.textContent.slice(0, 10)).toBe(
-    TRANSCTIONSAMPLE.otherPart[0].slice(0, 10),
+    TRANSCTIONSAMPLE.destAddress.slice(0, 10),
+  )
+  expect(transactionOtherPart.textContent.slice(0, 10)).toBe(
+    TRANSCTIONSAMPLE.from[0].slice(0, 10),
   )
   expect(transactionDate.textContent).toBe('Date: ' + date)
   expect(transactionAmount.textContent).toBe(
@@ -79,9 +86,11 @@ test('Render transaction out component', async () => {
 
   await act(async () => expect(transaction).toBeInTheDocument())
   expect(transactionOtherPart.textContent.slice(0, 10)).toBe(
-    TRANSCTIONSAMPLE.otherPart[0].slice(0, 10),
+    TRANSCTIONSAMPLE.destAddress.slice(0, 10),
   )
-  expect(transactionOtherPart.textContent).toContain('+1')
+  expect(transactionOtherPart.textContent.slice(0, 10)).toBe(
+    TRANSCTIONSAMPLE.to[0].slice(0, 10),
+  )
   expect(transactionDate.textContent).toBe('Date: ' + date)
   expect(transactionAmount.textContent).toBe(
     'Amount: ' + TRANSCTIONSAMPLE.value,

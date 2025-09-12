@@ -15,8 +15,12 @@ const ELECTRUM_ENDPOINTS = {
   POST_TRANSACTION: '/tx',
 }
 
+const abortControllers = new Map()
+
 const requestElectrum = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
+  const controller = new AbortController()
+  abortControllers.set(url, controller)
 
   try {
     const result = await request(url, { method, body })
@@ -26,6 +30,8 @@ const requestElectrum = async (url, body = null, request = fetch) => {
   } catch (error) {
     console.error(error)
     throw error
+  } finally {
+    abortControllers.delete(url)
   }
 }
 
@@ -111,6 +117,20 @@ const getFeesEstimates = async () => {
 const broadcastTransaction = (transaction) =>
   tryServers(ELECTRUM_ENDPOINTS.POST_TRANSACTION, transaction)
 
+const cancelAllRequests = () => {
+  abortControllers.forEach((controller) => controller.abort())
+  abortControllers.clear()
+}
+
+const getWalletAddressesInfo = async (addresses) => {
+  const results = await Promise.all(
+    addresses.map((address) => getAddress(address)),
+  )
+  return results.map((data) => {
+    return JSON.parse(data)
+  })
+}
+
 export {
   getLastBlockHash,
   getTransactionData,
@@ -123,5 +143,7 @@ export {
   getLastBlockHeight,
   getFeesEstimates,
   broadcastTransaction,
+  cancelAllRequests,
+  getWalletAddressesInfo,
   ELECTRUM_ENDPOINTS,
 }

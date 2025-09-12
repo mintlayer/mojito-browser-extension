@@ -1,22 +1,13 @@
 /* eslint-disable no-restricted-globals */
-import {
-  generateMnemonic,
-  generateAddr,
-  generateKeysFromMnemonic,
-  getSeedFromMnemonic,
-} from './BTC'
+import { generateMnemonic, getSeedFromMnemonic } from './BTC'
 
 const WalletWorkerEnum = {
   GENERATE_MNEMONIC: 'GENERATE_MNEMONIC',
-  GENERATE_ADDRESS: 'GENERATE_ADDRESS',
-  GENERATE_KEYS_FROM_MNEMONIC: 'GENERATE_KEYS_FROM_MNEMONIC',
   GET_SEED_FROM_MNEMONIC: 'GET_SEED_FROM_MNEMONIC',
 }
 
 const WalletWorkerJobs = {
   GENERATE_MNEMONIC: generateMnemonic,
-  GENERATE_ADDRESS: generateAddr,
-  GENERATE_KEYS_FROM_MNEMONIC: generateKeysFromMnemonic,
   GET_SEED_FROM_MNEMONIC: getSeedFromMnemonic,
 }
 
