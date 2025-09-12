@@ -12,17 +12,10 @@ import './TransactionDetails.css'
 import { useParams } from 'react-router-dom'
 import { CenteredLayout } from '@LayoutComponents'
 
-const getAddress = (transaction) => {
-  let address = 'N/A'
-
-  if (transaction.direction === 'out') {
-    address = transaction.destAddress || transaction.to[0]
-  } else {
-    address = transaction.destAddress || transaction.from[0]
-  }
-
-  return address
-}
+const getAddress = (tx) =>
+  tx.direction === 'out'
+    ? tx.destAddress || tx.to?.[0] || 'N/A'
+    : tx.destAddress || tx.from?.[0] || 'N/A'
 
 const TransactionDetailsItem = ({ title, content }) => {
   return (
