@@ -197,8 +197,6 @@ const SendTransactionPage = () => {
       root: btcPrivateKeys,
     })
 
-    console.log('Built transaction hex:', transactionHex)
-
     const result = await Electrum.broadcastTransaction(transactionHex)
     return result
   }
@@ -256,6 +254,9 @@ const SendTransactionPage = () => {
     }
   }
 
+  const calculateTotalFee =
+    walletType.name === 'Bitcoin' ? calculateBtcTotalFee : calculateMlTotalFee
+
   return (
     <>
       <div className="page">
@@ -269,7 +270,7 @@ const SendTransactionPage = () => {
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueToken}
             onSendTransaction={createTransaction}
-            calculateTotalFee={calculateMlTotalFee}
+            calculateTotalFee={calculateTotalFee}
             setFormValidity={setFormValid}
             isFormValid={isFormValid}
             confirmTransaction={

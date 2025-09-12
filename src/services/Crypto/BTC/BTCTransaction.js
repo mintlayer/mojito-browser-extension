@@ -191,4 +191,10 @@ const buildTransaction = async ({
   ]
 }
 
-export { buildTransaction, calculateBtcTransactionFee }
+export {
+  buildTransaction,
+  calculateBtcTransactionFee,
+  getMasterFingerprint,
+  getFormattedFeeUtxos,
+  getFormattedUtxos,
+}
