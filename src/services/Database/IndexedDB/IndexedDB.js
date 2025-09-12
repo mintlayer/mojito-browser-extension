@@ -1,4 +1,7 @@
-import { accountsMigration_01_add_mlwallet_private_keys } from '../migrations/migrations'
+import {
+  accountsMigration_01_add_mlwallet_private_keys,
+  accountsMigration_02_add_htls_secrets_field,
+} from '../migrations/migrations'
 // eslint-disable-next-line no-restricted-globals
 const glob = typeof window !== 'undefined' ? window : self
 /* istanbul ignore next */
@@ -8,7 +11,7 @@ const IDB =
   glob.webkitIndexedDB ||
   glob.msIndexedDB
 
-const SCHEMAVERSION = 2
+const SCHEMAVERSION = 3
 const DATABASENAME = 'mojito'
 const ACCOUNTSSTORENAME = 'accounts'
 
@@ -26,6 +29,7 @@ const createOrUpdateDatabase = (event) => {
   }
   // Apply migrations here
   accountsMigration_01_add_mlwallet_private_keys()
+  accountsMigration_02_add_htls_secrets_field()
 }
 
 const openDatabase = (DB = IDB) => {
