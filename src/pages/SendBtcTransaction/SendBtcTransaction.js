@@ -254,6 +254,9 @@ const SendBtcTransactionPage = () => {
     }
   }
 
+  const calculateTotalFee =
+    walletType.name === 'Bitcoin' ? calculateBtcTotalFee : calculateMlTotalFee
+
   return (
     <>
       <div className="page">
@@ -267,7 +270,7 @@ const SendBtcTransactionPage = () => {
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueToken}
             onSendTransaction={createTransaction}
-            calculateTotalFee={calculateMlTotalFee}
+            calculateTotalFee={calculateTotalFee}
             setFormValidity={setFormValid}
             isFormValid={isFormValid}
             confirmTransaction={
