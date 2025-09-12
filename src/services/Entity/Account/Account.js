@@ -2,7 +2,10 @@ import { BTC, ML, BTC_ADDRESS_TYPE_MAP } from '@Cryptos'
 import { IndexedDB } from '@Databases'
 import * as bitcoin from 'bitcoinjs-lib'
 import { AppInfo } from '@Constants'
-import { getEncryptedPrivateKeys } from './AccountHelpers'
+import {
+  getEncryptedPrivateKeys,
+  getEncryptedHtlsSecret,
+} from './AccountHelpers'
 
 import loadAccountSubRoutines from './loadWorkers'
 import { LocalStorageService } from '@Storage'
@@ -35,6 +38,7 @@ const saveAccount = async (data) => {
     },
     walletType,
     walletsToCreate,
+    htlsSecrets: {},
   }
 
   const accounts = await IndexedDB.loadAccounts()
@@ -74,6 +78,83 @@ const backupAccountToJSON = async (account) => {
 
 const restoreAccountFromJSON = async (json) => {
   await IndexedDB.restoreAccountFromJSON(json)
+}
+
+const checkPasswordValidity = async (id, password) => {
+  const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
+  try {
+    const accounts = await IndexedDB.loadAccounts()
+    const account = await IndexedDB.get(accounts, id)
+    if (!account?.salt || !account?.seed?.btcEncryptedSeed) return false
+
+    const { key } = await generateEncryptionKey({
+      password,
+      salt: account.salt,
+    })
+
+    const decrypted = await decryptSeed({
+      data: account.seed.btcEncryptedSeed,
+      iv: account.iv.btcIv,
+      tag: account.tag.btcTag,
+      key,
+    })
+
+    if (!decrypted || decrypted.error) return false
+    return true
+  } catch {
+    return false
+  }
+}
+
+const unlockHtlsSecret = async ({ accountId, password, hash }) => {
+  const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
+  const accounts = await IndexedDB.loadAccounts()
+  const account = await IndexedDB.get(accounts, accountId)
+  const isPasswordValid = await checkPasswordValidity(accountId, password)
+  if (!isPasswordValid) return Promise.reject('Invalid password')
+  if (!account) return Promise.reject('Account not found')
+  if (!account.htlsSecrets || !account.htlsSecrets[hash])
+    return Promise.reject('No secret found for the provided hash')
+
+  const { key } = await generateEncryptionKey({
+    password,
+    salt: account.salt,
+  })
+
+  const data = account.htlsSecrets[hash]
+  const decrypted = await decryptSeed({
+    data: data.encryptedHtlsSecret,
+    iv: data.htlsIv,
+    tag: data.htlsTag,
+    key,
+  })
+  if (!decrypted || decrypted.error)
+    return Promise.reject(
+      'Failed to decrypt the secret. Possibly wrong password.',
+    )
+
+  return new TextDecoder().decode(decrypted)
+}
+
+const saveProvidedHtlsSecret = async ({ accountId, password, data }) => {
+  const accounts = await IndexedDB.loadAccounts()
+  const account = await IndexedDB.get(accounts, accountId)
+  const isPasswordValid = await checkPasswordValidity(accountId, password)
+  if (!isPasswordValid) return Promise.reject('Invalid password')
+  if (!account) return Promise.reject('Account not found')
+
+  const { encryptedHtlsSecret, htlsIv, htlsTag } = await getEncryptedHtlsSecret(
+    password,
+    account.salt,
+    data.secret,
+  )
+
+  const updatedHtlsSecrets = {
+    ...account.htlsSecrets,
+    [data.hash]: { encryptedHtlsSecret, htlsIv, htlsTag, txHash: data.txHash },
+  }
+
+  await updateAccount(accountId, { htlsSecrets: updatedHtlsSecrets })
 }
 
 const unlockAccount = async (id, password) => {
@@ -179,4 +260,7 @@ export {
   deleteAccount,
   backupAccountToJSON,
   restoreAccountFromJSON,
+  unlockHtlsSecret,
+  saveProvidedHtlsSecret,
+  checkPasswordValidity,
 }

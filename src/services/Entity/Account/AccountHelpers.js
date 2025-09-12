@@ -13,11 +13,11 @@ const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
     return { encryptedData, iv, tag }
   }
 
-  const mlTestnetPrivateKey = await ML.getPrivateKeyFromMnemonic(
+  const mlTestnetPrivateKey = ML.getPrivateKeyFromMnemonic(
     mnemonic,
     AppInfo.NETWORK_TYPES.TESTNET,
   )
-  const mlMainnetPrivateKey = await ML.getPrivateKeyFromMnemonic(
+  const mlMainnetPrivateKey = ML.getPrivateKeyFromMnemonic(
     mnemonic,
     AppInfo.NETWORK_TYPES.MAINNET,
   )
@@ -53,4 +53,17 @@ const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
   }
 }
 
-export { getEncryptedPrivateKeys }
+const getEncryptedHtlsSecret = async (password, salt, secret) => {
+  const { generateEncryptionKey, encryptSeed } = await loadAccountSubRoutines()
+  const { key } = await generateEncryptionKey({ password, salt })
+
+  const {
+    encryptedData: encryptedHtlsSecret,
+    iv: htlsIv,
+    tag: htlsTag,
+  } = await encryptSeed({ data: secret, key })
+
+  return { encryptedHtlsSecret, htlsIv, htlsTag }
+}
+
+export { getEncryptedPrivateKeys, getEncryptedHtlsSecret }
