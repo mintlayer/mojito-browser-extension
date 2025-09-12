@@ -6,7 +6,6 @@ import {
   getEncryptedHtlsSecret,
 } from './AccountHelpers'
 import { BTC as BtcHelpers } from '@Helpers'
-
 import loadAccountSubRoutines from './loadWorkers'
 import { LocalStorageService } from '@Storage'
 
