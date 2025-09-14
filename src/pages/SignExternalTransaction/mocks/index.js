@@ -2061,7 +2061,7 @@ export const MOCKS = {
                     type: 'ForBlockCount',
                   },
                   secret_hash: {
-                    hex: null, // should be filled in by the wallet
+                    hex: '0000000000000000000000000000000000000000', // should be filled in by the wallet
                     string: null,
                   },
                   spend_key: 'tmt1q9mfg7d6ul2nt5yhmm7l7r6wwyqkd822rymr83uc',
@@ -2582,6 +2582,128 @@ export const MOCKS = {
                 },
               },
             ],
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
+  createHtlcWRefund: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  index: 1,
+                  source_id:
+                    '3fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f14',
+                  source_type: 'Transaction',
+                  input_type: 'UTXO',
+                },
+                utxo: {
+                  destination: 'tmt1qxn6genn5dl765l9gvnnjjz7eskxu06fhu83cpk5',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '6565137000000',
+                      decimal: '65.65137',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 1,
+                  source_id:
+                    '4e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f',
+                  source_type: 'Transaction',
+                  input_type: 'UTXO',
+                },
+                utxo: {
+                  destination: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '2000000000000',
+                      decimal: '20',
+                    },
+                    token_id:
+                      'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                    type: 'TokenV1',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                type: 'Htlc',
+                htlc: {
+                  refund_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                  refund_timelock: {
+                    type: 'ForBlockCount',
+                    content: '5',
+                  },
+                  secret_hash: {
+                    hex: '0000000000000000000000000000000000000000',
+                    string: null,
+                  },
+                  spend_key: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                },
+                value: {
+                  amount: {
+                    decimal: '10',
+                    atoms: '1000000000000',
+                  },
+                  type: 'TokenV1',
+                  token_id:
+                    'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                },
+              },
+              {
+                type: 'Transfer',
+                value: {
+                  type: 'Coin',
+                  amount: {
+                    atoms: '6416937000000',
+                    decimal: '64.16937',
+                  },
+                },
+                destination: 'tmt1q8fx589gdhcpprz0mcewca7a7h4wmtzeqccj4jdv',
+              },
+              {
+                type: 'Transfer',
+                value: {
+                  type: 'TokenV1',
+                  token_id:
+                    'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                },
+                destination: 'tmt1q8fx589gdhcpprz0mcewca7a7h4wmtzeqccj4jdv',
+              },
+            ],
+            fee: {
+              atoms: '148200000000',
+              decimal: '1.482',
+            },
+            id: '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          },
+          BINRepresentation: {},
+          HEXRepresentation_unsigned:
+            '01000800003fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f140100000000004e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f010000000c0a023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e80000000000000000000000000000000000000000014feab906d667b56c49e3c86b8bf9e1ea10bdff2d02140147540a3dcb25b89c803930dd23f1b01aaa1af59000000b401c400fd60501d26a1ca86df0108c4fde32ec77ddf5eaedac590600023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e801d26a1ca86df0108c4fde32ec77ddf5eaedac5906',
+          transaction_id:
+            '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          htlc: {
+            spend_pubkey:
+              '0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
           },
         },
       },

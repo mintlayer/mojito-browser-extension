@@ -45,7 +45,10 @@ export const SignTransactionPage = () => {
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = ['buttonSignTransaction']
 
-  const state = external_state || MOCKS[selectedMock]
+  // State to hold the potentially modified transaction data
+  const [transactionState, setTransactionState] = useState(null)
+
+  const state = transactionState || external_state || MOCKS[selectedMock]
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
@@ -88,9 +91,21 @@ export const SignTransactionPage = () => {
   }
 
   useEffect(() => {
+    // Initialize transaction state from external state or mocks
+    const initialState = external_state || MOCKS[selectedMock]
+
+    if (!transactionState && initialState) {
+      setTransactionState(initialState)
+    }
+  }, [external_state, selectedMock, transactionState])
+
+  useEffect(() => {
     // SECRET FOR HTLC
     // Check if this is a create HTLC transaction and if secret_hash needs to be filled in
-    const transactionJSON = state?.request?.data?.txData?.JSONRepresentation
+    const currentState =
+      transactionState || external_state || MOCKS[selectedMock]
+    const transactionJSON =
+      currentState?.request?.data?.txData?.JSONRepresentation
 
     if (!transactionJSON || !transactionJSON.outputs) {
       return
@@ -104,7 +119,9 @@ export const SignTransactionPage = () => {
           output.htlc &&
           (!output.htlc.secret_hash ||
             !output.htlc.secret_hash.hex ||
-            output.htlc.secret_hash.hex === null)
+            output.htlc.secret_hash.hex === null ||
+            output.htlc.secret_hash.hex ===
+              '0000000000000000000000000000000000000000')
         )
       },
     )
@@ -116,8 +133,28 @@ export const SignTransactionPage = () => {
         setGeneratedSecret(secretObj.secretHex)
         setGeneratedSecretHash(secretObj.secretHashHex)
 
+        // Create a deep copy of the current state to avoid mutation
+        const updatedState = JSON.parse(JSON.stringify(currentState))
+        const updatedTransactionJSON =
+          updatedState.request.data.txData.JSONRepresentation
+
+        // Find and update HTLC outputs in the copied state
+        const updatedHtlcOutputs = updatedTransactionJSON.outputs.filter(
+          (output) => {
+            return (
+              output.type === 'Htlc' &&
+              output.htlc &&
+              (!output.htlc.secret_hash ||
+                !output.htlc.secret_hash.hex ||
+                output.htlc.secret_hash.hex === null ||
+                output.htlc.secret_hash.hex ===
+                  '0000000000000000000000000000000000000000')
+            )
+          },
+        )
+
         // Update the transaction JSON to fill in the secret_hash
-        htlcOutputsNeedingSecret.forEach((output) => {
+        updatedHtlcOutputs.forEach((output) => {
           if (output.htlc.secret_hash) {
             output.htlc.secret_hash.hex = secretObj.secretHashHex
             output.htlc.secret_hash.string = null // Keep string as null as per existing pattern
@@ -129,16 +166,19 @@ export const SignTransactionPage = () => {
           }
         })
 
+        // Update the transaction state to trigger re-render
+        setTransactionState(updatedState)
+
         console.log('Generated secret for HTLC transaction:', {
           secret: secretObj.secretHex,
           secretHash: secretObj.secretHashHex,
-          affectedOutputs: htlcOutputsNeedingSecret.length,
+          affectedOutputs: updatedHtlcOutputs.length,
         })
       } catch (error) {
         console.error('Failed to generate secret for HTLC transaction:', error)
       }
     }
-  }, [state, generatedSecret])
+  }, [transactionState, external_state, selectedMock, generatedSecret])
 
   const handleModalSubmit = async () => {
     try {
@@ -350,6 +390,11 @@ export const SignTransactionPage = () => {
 
   const selectMock = (name) => {
     setSelectedMock(name)
+    // Reset transaction state when switching mocks to trigger re-initialization
+    setTransactionState(null)
+    // Reset generated secret state when switching mocks
+    setGeneratedSecret(null)
+    setGeneratedSecretHash(null)
   }
 
   const switchHandle = () => {
