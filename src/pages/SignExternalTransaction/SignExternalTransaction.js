@@ -189,13 +189,21 @@ export const SignTransactionPage = () => {
         })
       }
 
+      const secretPresaved = Account.unlockHtlsSecret({
+        accountId: accountID,
+        password: pass,
+        hash: HtlcInput.utxo.htlc.secret_hash.hex,
+      })
+
+      const secret_ = secretPresaved || secret
+
       const transactionHex = SignTxHelpers.getTransactionHEX(
         {
           transactionBINrepresentation,
           transactionJSONrepresentation,
           addressesPrivateKeys: keysList,
-          secret: secret
-            ? new Uint8Array(Buffer.from(secret, 'hex'))
+          secret: secret_
+            ? new Uint8Array(Buffer.from(secret_, 'hex'))
             : undefined,
         },
         network,
@@ -206,6 +214,18 @@ export const SignTransactionPage = () => {
       console.log('isHTLCCreateTx', isHTLCCreateTx)
 
       if (isHTLCCreateTx) {
+
+        // save secret to account
+        await Account.saveProvidedHtlsSecret({
+          accountId: accountID,
+          password: pass,
+          data: {
+            secret: generatedSecret,
+            hash: generatedSecretHash,
+            txHash: transactionHex,
+          },
+        })
+
         console.log('isHTLCCreateTx')
         refundTx = {
           transactionJSONrepresentation: null,

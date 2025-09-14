@@ -214,6 +214,7 @@ const unlockAccount = async (id, password) => {
       addresses.btcTestnetAddress = BTC_ADDRESS_TYPE_MAP[
         account.walletType
       ].getAddressFromPubKey(pubKey, testnetNetwork)
+      addresses.btcTestnetPublicKey = pubKey
     }
 
     if (walletsToCreate.includes('ml')) {

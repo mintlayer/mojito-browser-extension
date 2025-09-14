@@ -6,6 +6,12 @@ import { AccountContext } from '@Contexts'
 import { Button, Toggle } from '@BasicComponents'
 import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
 
+const toHexString = (obj) => {
+  return Object.values(obj)
+    .map(n => n.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 const storage =
   typeof browser !== 'undefined' && browser.storage
     ? browser.storage
@@ -30,7 +36,7 @@ export const ConnectionPage = () => {
 
   const state = external_state
   const origin = state?.request?.origin || website
-  const networkType = state?.request?.networkType || 'mainnet'
+  const networkType = state?.request?.networkType || 'testnet'
   const permissions = state?.request?.permissions || []
 
   const requireBTC = permissions.includes('bitcoin')
@@ -39,7 +45,8 @@ export const ConnectionPage = () => {
 
   const handleConnect = () => {
     const remember = document.querySelector('.connect-page__checkbox')?.checked
-
+    console.log(addresses)
+    console.log('networkType', networkType)
     const sessionKey = `session_${origin}`
     const sessionData = {
       origin,
@@ -62,8 +69,8 @@ export const ConnectionPage = () => {
                 change: addresses?.mlMainnetAddresses?.mlChangeAddresses,
                 publicKeys: {
                   receiving:
-                    addresses?.mlMainnetAddresses?.mlReceivingPublicKeys,
-                  change: addresses?.mlMainnetAddresses?.mlChangePublicKeys,
+                    addresses?.mlMainnetAddresses?.mlReceivingPublicKeys.map(toHexString),
+                  change: addresses?.mlMainnetAddresses?.mlChangePublicKeys.map(toHexString),
                 },
               }
             : {
@@ -71,28 +78,38 @@ export const ConnectionPage = () => {
                 change: addresses?.mlTestnetAddresses?.mlChangeAddresses,
                 publicKeys: {
                   receiving:
-                    addresses?.mlTestnetAddresses?.mlReceivingPublicKeys,
-                  change: addresses?.mlTestnetAddresses?.mlChangePublicKeys,
+                    addresses?.mlTestnetAddresses?.mlReceivingPublicKeys.map(toHexString),
+                  change: addresses?.mlTestnetAddresses?.mlChangePublicKeys.map(toHexString),
                 },
               }),
         },
         ...(provideBitcoinData && {
           bitcoin: {
-            publicKeys: [addresses?.btcPublicKey],
+            publicKeys: [addresses?.btcTestnetPublicKey.data].map(toHexString),
             ...(networkType === 'mainnet'
               ? {
                   receiving: [addresses?.btcMainnetAddress],
                   change: [addresses?.btcMainnetAddress],
+                  publicKeys: {
+                    receiving: [addresses?.btcMainnetPublicKey.data].map(toHexString),
+                    change: [addresses?.btcMainnetPublicKey.data].map(toHexString),
+                  },
                 }
               : {
                   receiving: [addresses?.btcTestnetAddress],
                   change: [addresses?.btcTestnetAddress],
+                  publicKeys: {
+                    receiving: [addresses?.btcTestnetPublicKey.data].map(toHexString),
+                    change: [addresses?.btcTestnetPublicKey.data].map(toHexString),
+                  },
                 }),
           },
         }),
       },
       timestamp: Date.now(),
     }
+
+    console.log('sessionData', sessionData)
 
     const requestId = state?.request?.requestId
     const response = {
