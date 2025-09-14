@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import { useLocation } from 'react-router-dom'
-import { SignTransaction as SignTxHelpers } from '@Helpers'
+import { SignTransaction as SignTxHelpers, Secret } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
@@ -34,6 +34,11 @@ export const SignTransactionPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [secret, setSecret] = useState('')
+
+  // Secret management state for HTLC transactions
+  const [generatedSecret, setGeneratedSecret] = useState(null)
+  const [generatedSecretHash, setGeneratedSecretHash] = useState(null)
+  const [secretError, setSecretError] = useState('')
 
   const [mode, setMode] = useState('preview')
 
@@ -84,12 +89,61 @@ export const SignTransactionPage = () => {
 
   useEffect(() => {
     // SECRET FOR HTLC
-    // need to check is that create HTLC transaction and is there secret_hash filled in
-    // if not - need to create that secret and fill in
-  }, [])
+    // Check if this is a create HTLC transaction and if secret_hash needs to be filled in
+    const transactionJSON = state?.request?.data?.txData?.JSONRepresentation
+
+    if (!transactionJSON || !transactionJSON.outputs) {
+      return
+    }
+
+    // Find HTLC outputs that need secret generation
+    const htlcOutputsNeedingSecret = transactionJSON.outputs.filter(output => {
+      return output.type === 'Htlc' &&
+             output.htlc &&
+             (!output.htlc.secret_hash ||
+              !output.htlc.secret_hash.hex ||
+              output.htlc.secret_hash.hex === null)
+    })
+
+    // If we found HTLC outputs that need secrets, generate one
+    if (htlcOutputsNeedingSecret.length > 0 && !generatedSecret) {
+      try {
+        const secretObj = Secret.generateSecretObject()
+        setGeneratedSecret(secretObj.secretHex)
+        setGeneratedSecretHash(secretObj.secretHashHex)
+
+        // Update the transaction JSON to fill in the secret_hash
+        htlcOutputsNeedingSecret.forEach(output => {
+          if (output.htlc.secret_hash) {
+            output.htlc.secret_hash.hex = secretObj.secretHashHex
+            output.htlc.secret_hash.string = null // Keep string as null as per existing pattern
+          } else {
+            output.htlc.secret_hash = {
+              hex: secretObj.secretHashHex,
+              string: null
+            }
+          }
+        })
+
+        console.log('Generated secret for HTLC transaction:', {
+          secret: secretObj.secretHex,
+          secretHash: secretObj.secretHashHex,
+          affectedOutputs: htlcOutputsNeedingSecret.length
+        })
+      } catch (error) {
+        console.error('Failed to generate secret for HTLC transaction:', error)
+      }
+    }
+  }, [state, generatedSecret])
 
   const handleModalSubmit = async () => {
     try {
+      // Validate secret if it's an HTLC claim transaction
+      if (isHTLCClaim && secret && !Secret.validateSecretHex(secret.trim())) {
+        setSecretError('Invalid secret format. Please enter a valid 64-character hex string.')
+        return
+      }
+
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
 
@@ -281,6 +335,17 @@ export const SignTransactionPage = () => {
 
   const secretChangeHandler = (value) => {
     setSecret(value)
+
+    // Validate secret format if value is provided
+    if (value && value.trim()) {
+      if (Secret.validateSecretHex(value.trim())) {
+        setSecretError('')
+      } else {
+        setSecretError('Invalid secret format. Must be 64 hex characters (32 bytes).')
+      }
+    } else {
+      setSecretError('')
+    }
   }
 
   return (
@@ -320,6 +385,43 @@ export const SignTransactionPage = () => {
             {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
           </>
         )}
+
+        {/* HTLC Secret Information */}
+        {isHTLCCreateTx && generatedSecret && (
+          <div className="htlc-secret-section">
+            <h3>HTLC Secret Generated</h3>
+            <div className="secret-info">
+              <div className="secret-item">
+                <label>Secret (Hex):</label>
+                <div className="secret-value">
+                  <span>{generatedSecret}</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(generatedSecret)}
+                    title="Copy secret"
+                  >
+                    📋
+                  </button>
+                </div>
+              </div>
+              <div className="secret-item">
+                <label>Secret Hash (Hex):</label>
+                <div className="secret-value">
+                  <span>{generatedSecretHash}</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(generatedSecretHash)}
+                    title="Copy secret hash"
+                  >
+                    📋
+                  </button>
+                </div>
+              </div>
+              <div className="secret-actions">
+                {/* TODO: Add "Save Secret" button functionality here */}
+                <p><em>💡 Save this secret - you'll need it to claim the HTLC later!</em></p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="footer">
@@ -351,13 +453,23 @@ export const SignTransactionPage = () => {
             />
             {isHTLCClaim && (
               <>
-                HTLC Secret:
-                <TextField
-                  value={secret}
-                  onChangeHandle={secretChangeHandler}
-                  placeholder="Enter htlc secret in hex format"
-                  autoFocus
-                />
+                <div className="htlc-secret-input">
+                  <label>HTLC Secret:</label>
+                  <TextField
+                    value={secret}
+                    onChangeHandle={secretChangeHandler}
+                    placeholder="Enter htlc secret in hex format (64 characters)"
+                    autoFocus
+                  />
+                  {secretError && (
+                    <div className="secret-error">
+                      {secretError}
+                    </div>
+                  )}
+                  <div className="secret-hint">
+                    <small>💡 Enter the 32-byte secret in hexadecimal format</small>
+                  </div>
+                </div>
               </>
             )}
             <div className="modal-buttons">
