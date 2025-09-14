@@ -245,7 +245,7 @@ export const SignTransactionPage = () => {
 
       const secret_ = secretPresaved || secret
 
-      const transactionHex = SignTxHelpers.getTransactionHEX(
+      const { txHash: transactionHex } = SignTxHelpers.getTransactionHEX(
         {
           transactionBINrepresentation,
           transactionJSONrepresentation,
@@ -314,15 +314,21 @@ export const SignTransactionPage = () => {
             network,
           )
 
-        refundTx.transactionHex = SignTxHelpers.getTransactionHEX(
+        const { txHash: refundTxHex, htlcRefund: refundTxHtlc } = SignTxHelpers.getTransactionHEX(
           {
             transactionBINrepresentation: refundTx.transactionBINrepresentation,
             transactionJSONrepresentation:
               refundTx.transactionJSONrepresentation,
             addressesPrivateKeys: keysList,
+            ...(state?.request?.data?.txData?.htlc && { htlc: {
+              spend_pubkey: state?.request?.data?.txData?.htlc?.spend_pubkey,
+              } }),
           },
           network,
         )
+
+        refundTx.transactionHex = refundTxHex
+        refundTx.htlc = refundTxHtlc
       }
 
       console.log('refundTx', refundTx)

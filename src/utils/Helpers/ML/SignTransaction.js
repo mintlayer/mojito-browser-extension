@@ -45,7 +45,6 @@ import {
   encode_multisig_challenge,
   encode_witness_htlc_multisig,
 } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js'
-import { stringToUint8Array } from '../Array/Array'
 
 export const handleTxError = (error, setTxErrorMessage, setPassword) => {
   const errorMsg =
@@ -474,6 +473,8 @@ export function getTransactionHEX(
     }
   }
 
+  const htlcRefund = {}
+
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
       if (input?.utxo?.htlc) {
@@ -505,24 +506,34 @@ export function getTransactionHEX(
           const addressPrivateKey = addressesPrivateKeys[refund_address]
           const addressPublicKey = getPublicKeyFromPrivate(addressPrivateKey)
 
+
+          const hexToUint8Array = (hex) => {
+            if (hex.startsWith('0x')) hex = hex.slice(2)
+            const bytes = hex.match(/.{2}/g).map(b => parseInt(b, 16))
+            return new Uint8Array(bytes)
+          }
+          console.log('addressPublicKey', addressPublicKey)
+          console.log('spend_pubkey', spend_pubkey)
+          console.log('uint8ArrayOfAddresses', hexToUint8Array(spend_pubkey))
+
           // refund is first
-          const uint8ArrayOfAddresses = [
-            ...stringToUint8Array(addressPublicKey),
-            ...stringToUint8Array(spend_pubkey),
-          ]
+          const uint8ArrayOfAddresses =
+             [...addressPublicKey, ...hexToUint8Array(spend_pubkey)]
+
           console.log('uint8ArrayOfAddresses', uint8ArrayOfAddresses)
 
-          try {
-            encode_multisig_challenge(addressPublicKey, 1, network)
-          } catch (error) {
-            console.error('encode_multisig_challenge error', error)
-          }
-
           const multisig_challenge = encode_multisig_challenge(
-            addressPublicKey,
+            uint8ArrayOfAddresses,
             2,
             network,
           )
+
+          const hexString = (obj) => Object.values(obj)
+            .map(n => n.toString(16).padStart(2, '0'))
+            .join('')
+
+          htlcRefund.multisig_challenge = hexString(multisig_challenge)
+
           console.log('multisig', multisig_challenge)
           const witness = encode_witness_htlc_multisig(
             SignatureHashType.ALL,
@@ -535,7 +546,9 @@ export function getTransactionHEX(
             index,
             network,
           )
-          return { witness, multisig_challenge }
+          htlcRefund.witness_input = hexString(witness)
+
+          return witness
         }
       } else {
         console.log('not detected htlc')
@@ -579,7 +592,7 @@ export function getTransactionHEX(
     '',
   )
 
-  return txHash
+  return { txHash, htlcRefund }
 }
 
 export function getTransactionIntent({
