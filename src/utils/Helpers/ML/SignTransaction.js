@@ -395,6 +395,7 @@ export function getTransactionHEX(
     transactionJSONrepresentation,
     addressesPrivateKeys,
     secret = null,
+    htlc = {},
   },
   _network,
 ) {
@@ -499,15 +500,17 @@ export function getTransactionHEX(
           // refund
           // Multisig
           const refund_address = input?.utxo?.htlc?.refund_key
-          const spend_address = input?.utxo?.htlc?.spend_key
-          // refund is first
-          const uint8ArrayOfAddresses = [
-            ...stringToUint8Array(refund_address),
-            ...stringToUint8Array(spend_address),
-          ]
-          console.log('uint8ArrayOfAddresses', uint8ArrayOfAddresses)
+          const spend_pubkey = htlc.spend_pubkey
+
           const addressPrivateKey = addressesPrivateKeys[refund_address]
           const addressPublicKey = getPublicKeyFromPrivate(addressPrivateKey)
+
+          // refund is first
+          const uint8ArrayOfAddresses = [
+            ...stringToUint8Array(addressPublicKey),
+            ...stringToUint8Array(spend_pubkey),
+          ]
+          console.log('uint8ArrayOfAddresses', uint8ArrayOfAddresses)
 
           try {
             encode_multisig_challenge(addressPublicKey, 1, network)
@@ -515,24 +518,24 @@ export function getTransactionHEX(
             console.error('encode_multisig_challenge error', error)
           }
 
-          const multisig = encode_multisig_challenge(
+          const multisig_challenge = encode_multisig_challenge(
             addressPublicKey,
-            1,
+            2,
             network,
           )
-          console.log('multisig', multisig)
+          console.log('multisig', multisig_challenge)
           const witness = encode_witness_htlc_multisig(
             SignatureHashType.ALL,
             addressPrivateKey,
-            0,
-            new Uint8Array(0), // First sign
-            multisig,
+            htlc.witness_input ? 1 : 0,
+            htlc.witness_input || new Uint8Array(0), // First sign
+            multisig_challenge,
             transaction,
             optUtxos,
             index,
             network,
           )
-          return witness
+          return { witness, multisig_challenge }
         }
       } else {
         console.log('not detected htlc')
