@@ -97,13 +97,17 @@ export const SignTransactionPage = () => {
     }
 
     // Find HTLC outputs that need secret generation
-    const htlcOutputsNeedingSecret = transactionJSON.outputs.filter(output => {
-      return output.type === 'Htlc' &&
-             output.htlc &&
-             (!output.htlc.secret_hash ||
-              !output.htlc.secret_hash.hex ||
-              output.htlc.secret_hash.hex === null)
-    })
+    const htlcOutputsNeedingSecret = transactionJSON.outputs.filter(
+      (output) => {
+        return (
+          output.type === 'Htlc' &&
+          output.htlc &&
+          (!output.htlc.secret_hash ||
+            !output.htlc.secret_hash.hex ||
+            output.htlc.secret_hash.hex === null)
+        )
+      },
+    )
 
     // If we found HTLC outputs that need secrets, generate one
     if (htlcOutputsNeedingSecret.length > 0 && !generatedSecret) {
@@ -113,14 +117,14 @@ export const SignTransactionPage = () => {
         setGeneratedSecretHash(secretObj.secretHashHex)
 
         // Update the transaction JSON to fill in the secret_hash
-        htlcOutputsNeedingSecret.forEach(output => {
+        htlcOutputsNeedingSecret.forEach((output) => {
           if (output.htlc.secret_hash) {
             output.htlc.secret_hash.hex = secretObj.secretHashHex
             output.htlc.secret_hash.string = null // Keep string as null as per existing pattern
           } else {
             output.htlc.secret_hash = {
               hex: secretObj.secretHashHex,
-              string: null
+              string: null,
             }
           }
         })
@@ -128,7 +132,7 @@ export const SignTransactionPage = () => {
         console.log('Generated secret for HTLC transaction:', {
           secret: secretObj.secretHex,
           secretHash: secretObj.secretHashHex,
-          affectedOutputs: htlcOutputsNeedingSecret.length
+          affectedOutputs: htlcOutputsNeedingSecret.length,
         })
       } catch (error) {
         console.error('Failed to generate secret for HTLC transaction:', error)
@@ -140,7 +144,9 @@ export const SignTransactionPage = () => {
     try {
       // Validate secret if it's an HTLC claim transaction
       if (isHTLCClaim && secret && !Secret.validateSecretHex(secret.trim())) {
-        setSecretError('Invalid secret format. Please enter a valid 64-character hex string.')
+        setSecretError(
+          'Invalid secret format. Please enter a valid 64-character hex string.',
+        )
         return
       }
 
@@ -189,11 +195,13 @@ export const SignTransactionPage = () => {
         })
       }
 
-      const secretPresaved = Account.unlockHtlsSecret({
-        accountId: accountID,
-        password: pass,
-        hash: HtlcInput.utxo.htlc.secret_hash.hex,
-      })
+      const secretPresaved = HtlcInput?.utxo?.htlc
+        ? Account.unlockHtlsSecret({
+            accountId: accountID,
+            password: pass,
+            hash: HtlcInput.utxo.htlc.secret_hash.hex,
+          })
+        : null
 
       const secret_ = secretPresaved || secret
 
@@ -214,7 +222,6 @@ export const SignTransactionPage = () => {
       console.log('isHTLCCreateTx', isHTLCCreateTx)
 
       if (isHTLCCreateTx) {
-
         // save secret to account
         await Account.saveProvidedHtlsSecret({
           accountId: accountID,
@@ -361,7 +368,9 @@ export const SignTransactionPage = () => {
       if (Secret.validateSecretHex(value.trim())) {
         setSecretError('')
       } else {
-        setSecretError('Invalid secret format. Must be 64 hex characters (32 bytes).')
+        setSecretError(
+          'Invalid secret format. Must be 64 hex characters (32 bytes).',
+        )
       }
     } else {
       setSecretError('')
@@ -416,7 +425,9 @@ export const SignTransactionPage = () => {
                 <div className="secret-value">
                   <span>{generatedSecret}</span>
                   <button
-                    onClick={() => navigator.clipboard.writeText(generatedSecret)}
+                    onClick={() =>
+                      navigator.clipboard.writeText(generatedSecret)
+                    }
                     title="Copy secret"
                   >
                     📋
@@ -428,7 +439,9 @@ export const SignTransactionPage = () => {
                 <div className="secret-value">
                   <span>{generatedSecretHash}</span>
                   <button
-                    onClick={() => navigator.clipboard.writeText(generatedSecretHash)}
+                    onClick={() =>
+                      navigator.clipboard.writeText(generatedSecretHash)
+                    }
                     title="Copy secret hash"
                   >
                     📋
@@ -437,7 +450,12 @@ export const SignTransactionPage = () => {
               </div>
               <div className="secret-actions">
                 {/* TODO: Add "Save Secret" button functionality here */}
-                <p><em>💡 Save this secret - you'll need it to claim the HTLC later!</em></p>
+                <p>
+                  <em>
+                    💡 Save this secret - you'll need it to claim the HTLC
+                    later!
+                  </em>
+                </p>
               </div>
             </div>
           </div>
@@ -482,12 +500,12 @@ export const SignTransactionPage = () => {
                     autoFocus
                   />
                   {secretError && (
-                    <div className="secret-error">
-                      {secretError}
-                    </div>
+                    <div className="secret-error">{secretError}</div>
                   )}
                   <div className="secret-hint">
-                    <small>💡 Enter the 32-byte secret in hexadecimal format</small>
+                    <small>
+                      💡 Enter the 32-byte secret in hexadecimal format
+                    </small>
                   </div>
                 </div>
               </>
