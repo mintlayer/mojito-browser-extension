@@ -2061,7 +2061,7 @@ export const MOCKS = {
                     type: 'ForBlockCount',
                   },
                   secret_hash: {
-                    hex: 'd5777dbd9541baea8a562381387323773b18e0f6',
+                    hex: null, // should be filled in by the wallet
                     string: null,
                   },
                   spend_key: 'tmt1q9mfg7d6ul2nt5yhmm7l7r6wwyqkd822rymr83uc',

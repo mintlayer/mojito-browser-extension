@@ -30,7 +30,10 @@ class TransactionPreviewErrorBoundary extends React.Component {
             <div className="transactionDetails">
               <div className="signTxSection">
                 <h4>Unable to display transaction details</h4>
-                <p>An error occurred while parsing the transaction data. Please try again or contact support.</p>
+                <p>
+                  An error occurred while parsing the transaction data. Please
+                  try again or contact support.
+                </p>
               </div>
               {this.props.basicInfo && (
                 <>
@@ -69,8 +72,7 @@ const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
   }
   return outputs.find(
     (output) =>
-      output.destination &&
-      !requiredAddresses.includes(output.destination),
+      output.destination && !requiredAddresses.includes(output.destination),
   )
 }
 
@@ -99,7 +101,7 @@ const RequestDetails = ({ transactionData }) => {
 
 const NetworkFee = ({ transactionData }) => {
   let fee
-  if(transactionData.data.txData.JSONRepresentation.fee) {
+  if (transactionData.data.txData.JSONRepresentation.fee) {
     fee = transactionData.data.txData.JSONRepresentation.fee.decimal
   } else {
     fee = 1
@@ -114,7 +116,6 @@ const NetworkFee = ({ transactionData }) => {
 
 const TransferDetails = ({ transactionData, requiredAddresses }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.utxo?.value?.type === 'TokenV1',
@@ -122,8 +123,13 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
   const tokenId = inputWithToken ? inputWithToken?.utxo.value.token_id : null
 
   // Check if this is an NFT transfer by looking at the input type
-  const isNftTransfer = inputWithToken && inputWithToken.utxo?.type === 'IssueNft'
-  const title = isNftTransfer ? 'Transfer NFT' : inputWithToken ? 'Transfer token' : 'Transfer coins'
+  const isNftTransfer =
+    inputWithToken && inputWithToken.utxo?.type === 'IssueNft'
+  const title = isNftTransfer
+    ? 'Transfer NFT'
+    : inputWithToken
+      ? 'Transfer token'
+      : 'Transfer coins'
 
   const relevantOutput = findRelevantOutput(
     JSONRepresentation.inputs,
@@ -132,9 +138,12 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
   )
 
   // If no relevant output found, try to find any output with the token ID
-  const fallbackOutput = !relevantOutput && inputWithToken
-    ? JSONRepresentation.outputs.find(output => output.value?.token_id === tokenId)
-    : null
+  const fallbackOutput =
+    !relevantOutput && inputWithToken
+      ? JSONRepresentation.outputs.find(
+          (output) => output.value?.token_id === tokenId,
+        )
+      : null
 
   const outputToUse = relevantOutput || fallbackOutput
 
@@ -176,7 +185,6 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
 
 const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -200,7 +208,6 @@ const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
 
 const ChangeTokenMetadata = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -222,7 +229,6 @@ const ChangeTokenMetadata = ({ transactionData }) => {
 
 const ChangeTokenAuthority = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -244,7 +250,6 @@ const ChangeTokenAuthority = ({ transactionData }) => {
 
 const LockTokenSupply = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithToken = JSONRepresentation.inputs.find(
     (input) => input.input.token_id,
@@ -263,7 +268,6 @@ const LockTokenSupply = ({ transactionData }) => {
 
 const BurnToken = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const burnOutput = JSONRepresentation.outputs.find(
     (output) => output.type === 'BurnToken',
@@ -290,7 +294,6 @@ const BurnToken = ({ transactionData }) => {
 
 const ConcludeOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input?.order_id,
   )
@@ -319,7 +322,6 @@ const ConcludeOrder = ({ transactionData }) => {
 
 const FillOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input?.order_id,
   )
@@ -348,7 +350,6 @@ const FillOrder = ({ transactionData }) => {
 
 const CreateOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateOrder',
@@ -380,8 +381,6 @@ const CreateOrder = ({ transactionData }) => {
 
 const IssueToken = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
-  console.log('fee', fee)
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'IssueFungibleToken',
@@ -417,7 +416,6 @@ const IssueToken = ({ transactionData }) => {
 
 const IssueNft = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithIssueNft = JSONRepresentation.outputs.find(
     (output) => output.type === 'IssueNft',
@@ -435,7 +433,6 @@ const IssueNft = ({ transactionData }) => {
 
 const DataDeposit = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'DataDeposit',
@@ -453,7 +450,6 @@ const DataDeposit = ({ transactionData }) => {
 
 const CreateDelegationId = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateDelegationId',
@@ -471,7 +467,6 @@ const CreateDelegationId = ({ transactionData }) => {
 
 const DelegateStaking = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'DelegateStaking',
@@ -491,7 +486,6 @@ const DelegateStaking = ({ transactionData }) => {
 
 const DelegateWithdraw = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithWithdraw = JSONRepresentation.inputs.find(
     (input) => input.input.account_type === 'DelegationBalance',
@@ -567,7 +561,6 @@ const SpendHtlc = ({ transactionData, requiredAddresses }) => {
 
 const BridgeRequest = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
-  const fee = JSONRepresentation.fee.decimal || 0
 
   const inputsWithTokens = JSONRepresentation.inputs.filter(
     (input) => input.utxo?.value?.token_id,
@@ -843,7 +836,7 @@ const SummaryView = ({ data }) => {
 const ExternalTransactionPreview = ({ data }) => {
   const basicInfo = {
     origin: data?.request?.origin,
-    requestId: data?.request?.requestId
+    requestId: data?.request?.requestId,
   }
 
   return (

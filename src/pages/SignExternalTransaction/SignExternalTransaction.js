@@ -7,7 +7,7 @@ import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 
 import './SignExternalTransaction.css'
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
 import { AppInfo } from '@Constants'
@@ -81,6 +81,12 @@ export const SignTransactionPage = () => {
   const handleApprove = async () => {
     setIsModalOpen(true) // Open the modal
   }
+
+  useEffect(() => {
+    // SECRET FOR HTLC
+    // need to check is that create HTLC transaction and is there secret_hash filled in
+    // if not - need to create that secret and fill in
+  }, [])
 
   const handleModalSubmit = async () => {
     try {

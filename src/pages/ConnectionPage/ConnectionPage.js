@@ -24,7 +24,9 @@ export const ConnectionPage = () => {
   const { state: external_state } = useLocation()
   const { addresses } = useContext(AccountContext)
   const website = 'Unknown Website' // This should be replaced with the actual website name or URL
-  const [provideBitcoinData, setProvideBitcoinData] = useState(false)
+  const [, setProvideBitcoinData] = useState(false)
+
+  const provideBitcoinData = true
 
   const state = external_state
   const origin = state?.request?.origin || website
@@ -55,29 +57,37 @@ export const ConnectionPage = () => {
       addressesByChain: {
         mintlayer: {
           ...(networkType === 'mainnet'
-              ? {
+            ? {
                 receiving: addresses?.mlMainnetAddresses?.mlReceivingAddresses,
                 change: addresses?.mlMainnetAddresses?.mlChangeAddresses,
+                publicKeys: {
+                  receiving:
+                    addresses?.mlMainnetAddresses?.mlReceivingPublicKeys,
+                  change: addresses?.mlMainnetAddresses?.mlChangePublicKeys,
+                },
               }
-              : {
+            : {
                 receiving: addresses?.mlTestnetAddresses?.mlReceivingAddresses,
                 change: addresses?.mlTestnetAddresses?.mlChangeAddresses,
-              }
-          ),
+                publicKeys: {
+                  receiving:
+                    addresses?.mlTestnetAddresses?.mlReceivingPublicKeys,
+                  change: addresses?.mlTestnetAddresses?.mlChangePublicKeys,
+                },
+              }),
         },
         ...(provideBitcoinData && {
           bitcoin: {
             publicKeys: [addresses?.btcPublicKey],
             ...(networkType === 'mainnet'
-                ? {
+              ? {
                   receiving: [addresses?.btcMainnetAddress],
                   change: [addresses?.btcMainnetAddress],
                 }
-                : {
+              : {
                   receiving: [addresses?.btcTestnetAddress],
                   change: [addresses?.btcTestnetAddress],
-                }
-            ),
+                }),
           },
         }),
       },
@@ -90,7 +100,7 @@ export const ConnectionPage = () => {
       method: 'connect',
       requestId,
       origin,
-      result: sessionData.address,
+      result: sessionData,
     }
 
     const saveAndClose = () => {
@@ -193,9 +203,10 @@ export const ConnectionPage = () => {
                 <div className="connect-page__info-block">
                   <div className="connect-page__info-icon">i</div>
                   <p className="connect-page__info-text">
-                    <strong>Note:</strong> This option is mandatory when connecting
-                    to HTLC Atomic Swaps dApps. It provides both Bitcoin addresses
-                    and public keys required for cross-chain transactions.
+                    <strong>Note:</strong> This option is mandatory when
+                    connecting to HTLC Atomic Swaps dApps. It provides both
+                    Bitcoin addresses and public keys required for cross-chain
+                    transactions.
                   </p>
                 </div>
               </div>
