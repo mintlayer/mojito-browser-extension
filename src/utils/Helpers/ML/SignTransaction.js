@@ -500,33 +500,41 @@ export function getTransactionHEX(
           console.log('Build refund TX')
           // refund
           // Multisig
-          const refund_address = input?.utxo?.htlc?.refund_key
-          const spend_pubkey = htlc.spend_pubkey
 
-          const addressPrivateKey = addressesPrivateKeys[refund_address]
-          const addressPublicKey = getPublicKeyFromPrivate(addressPrivateKey)
-
+          let addressPrivateKey
+          let addressPublicKey
+          let multisig_challenge
+          let witness_input
+          let key_index = 0
 
           const hexToUint8Array = (hex) => {
             if (hex.startsWith('0x')) hex = hex.slice(2)
             const bytes = hex.match(/.{2}/g).map(b => parseInt(b, 16))
             return new Uint8Array(bytes)
           }
-          console.log('addressPublicKey', addressPublicKey)
-          console.log('spend_pubkey', spend_pubkey)
-          console.log('uint8ArrayOfAddresses', hexToUint8Array(spend_pubkey))
 
-          // refund is first
-          const uint8ArrayOfAddresses =
-             [...addressPublicKey, ...hexToUint8Array(spend_pubkey)]
+          if(htlc.multisig_challenge){
+            addressPrivateKey = addressesPrivateKeys[input?.utxo?.htlc?.spend_key]
+            addressPublicKey = getPublicKeyFromPrivate(addressPrivateKey)
+            key_index = 1
+            multisig_challenge = hexToUint8Array(htlc.multisig_challenge)
+            witness_input = hexToUint8Array(htlc.witness_input)
+          } else {
+            const spend_pubkey = htlc.spend_pubkey
+            addressPrivateKey = addressesPrivateKeys[input?.utxo?.htlc?.refund_key]
+            addressPublicKey = getPublicKeyFromPrivate(addressPrivateKey)
+            witness_input = new Uint8Array(0)
+            const uint8ArrayOfAddresses =
+              [...addressPublicKey, ...hexToUint8Array(spend_pubkey)]
 
-          console.log('uint8ArrayOfAddresses', uint8ArrayOfAddresses)
+            console.log('uint8ArrayOfAddresses', uint8ArrayOfAddresses)
 
-          const multisig_challenge = encode_multisig_challenge(
-            uint8ArrayOfAddresses,
-            2,
-            network,
-          )
+            multisig_challenge = encode_multisig_challenge(
+              uint8ArrayOfAddresses,
+              2,
+              network,
+            )
+          }
 
           const hexString = (obj) => Object.values(obj)
             .map(n => n.toString(16).padStart(2, '0'))
@@ -538,8 +546,8 @@ export function getTransactionHEX(
           const witness = encode_witness_htlc_multisig(
             SignatureHashType.ALL,
             addressPrivateKey,
-            htlc.witness_input ? 1 : 0,
-            htlc.witness_input || new Uint8Array(0), // First sign
+            key_index,
+            witness_input, // First sign
             multisig_challenge,
             transaction,
             optUtxos,

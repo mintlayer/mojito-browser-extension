@@ -235,7 +235,9 @@ export const SignTransactionPage = () => {
         })
       }
 
-      const secretPresaved = HtlcInput?.utxo?.htlc
+      console.log('HtlcInput', HtlcInput)
+
+      const secretPresaved = HtlcInput?.utxo?.htlc && state?.request?.data?.txData?.htlc?.witness_input === undefined
         ? Account.unlockHtlsSecret({
             accountId: accountID,
             password: pass,
@@ -250,6 +252,12 @@ export const SignTransactionPage = () => {
           transactionBINrepresentation,
           transactionJSONrepresentation,
           addressesPrivateKeys: keysList,
+          ...(
+            state?.request?.data?.txData?.htlc?.witness_input && { htlc: {
+                witness_input: state?.request?.data?.txData?.htlc?.witness_input,
+                multisig_challenge: state?.request?.data?.txData?.htlc?.multisig_challenge,
+            } }
+          ),
           secret: secret_
             ? new Uint8Array(Buffer.from(secret_, 'hex'))
             : undefined,
