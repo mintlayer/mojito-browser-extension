@@ -2,7 +2,6 @@ import { expect, test, beforeEach } from '@playwright/test'
 import { useRestoreWallet } from './helpers//hooks/useRestore'
 import { useSetTestnet } from './helpers/hooks/useSetTestnet'
 import { receiverData } from './data/index.js'
-import { formatAddress } from './helpers/helpers.js'
 
 let page
 
@@ -11,10 +10,6 @@ beforeEach(async ({ page: newPage }) => {
   await useRestoreWallet(page, 'sender')
   await useSetTestnet(page)
 })
-
-const formatedReceiverAddress = formatAddress(
-  receiverData.BTC_RECEIVING_ADDRESS,
-)
 
 test('Create BTC transaction', async () => {
   test.setTimeout(300000)

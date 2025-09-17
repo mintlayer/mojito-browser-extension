@@ -87,7 +87,7 @@ const setup = async (location, mode = 'default') => {
     v7_partialHydration: true,
   }
 
-  await render(
+  render(
     <AccountProvider value={value}>
       <SettingsProvider value={{ networkType: 'testnet', toggleNetworkType }}>
         <MintlayerProvider value={mintlayerProviderValue}>
