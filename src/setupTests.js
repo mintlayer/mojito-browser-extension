@@ -6,6 +6,7 @@ import '@testing-library/jest-dom'
 import 'fake-indexeddb/auto'
 import 'jest-canvas-mock'
 import 'jest-webgl-canvas-mock'
+import { Buffer } from 'buffer'
 
 // Polyfills for crypto libraries
 import { TextEncoder, TextDecoder } from 'util'
@@ -20,5 +21,4 @@ if (typeof global.crypto === 'undefined') {
 }
 
 // Buffer polyfill
-import { Buffer } from 'buffer'
 global.Buffer = Buffer
