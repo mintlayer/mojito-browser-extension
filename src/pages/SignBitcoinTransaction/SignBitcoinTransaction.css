@@ -126,3 +126,102 @@
 .buttonSignTransaction {
   width: 50%;
 }
+
+/* HTLC Secret Management Styles */
+.htlc-secret-section {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.htlc-secret-section h3 {
+  margin: 0 0 12px 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.secret-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.secret-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.secret-item label {
+  font-weight: 500;
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.secret-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 8px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  word-break: break-all;
+}
+
+.secret-value span {
+  flex: 1;
+  color: #374151;
+}
+
+.secret-value button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.secret-value button:hover {
+  background-color: #f3f4f6;
+}
+
+.secret-warning {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  color: #92400e;
+  font-size: 0.875rem;
+}
+
+.htlc-secret-input {
+  width: 100%;
+  text-align: left;
+}
+
+.htlc-secret-input label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.secret-error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 4px;
+  padding: 4px 0;
+}
+
+.secret-hint {
+  margin-top: 4px;
+  color: #6b7280;
+}

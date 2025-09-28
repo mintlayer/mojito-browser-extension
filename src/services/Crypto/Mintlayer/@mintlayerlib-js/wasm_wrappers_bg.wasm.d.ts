@@ -1,9 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory
-export const __wbg_amount_free: (a: number, b: number) => void
-export const amount_from_atoms: (a: number, b: number) => number
-export const amount_atoms: (a: number) => [number, number]
 export const encode_outpoint_source_id: (
   a: number,
   b: number,
@@ -86,7 +83,8 @@ export const make_transaction_intent_message_to_sign: (
 export const encode_signed_transaction_intent: (
   a: number,
   b: number,
-  c: any,
+  c: number,
+  d: number,
 ) => [number, number, number, number]
 export const verify_transaction_intent: (
   a: number,
@@ -97,6 +95,184 @@ export const verify_transaction_intent: (
   f: number,
   g: number,
 ) => [number, number]
+export const staking_pool_spend_maturity_block_count: (
+  a: bigint,
+  b: number,
+) => bigint
+export const encode_lock_for_block_count: (a: bigint) => [number, number]
+export const encode_lock_for_seconds: (a: bigint) => [number, number]
+export const encode_lock_until_time: (a: bigint) => [number, number]
+export const encode_lock_until_height: (a: bigint) => [number, number]
+export const encode_stake_pool_data: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+) => [number, number, number, number]
+export const fungible_token_issuance_fee: (a: bigint, b: number) => number
+export const nft_issuance_fee: (a: bigint, b: number) => number
+export const token_supply_change_fee: (a: bigint, b: number) => number
+export const token_freeze_fee: (a: bigint, b: number) => number
+export const token_change_authority_fee: (a: bigint, b: number) => number
+export const get_token_id: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: number,
+) => [number, number, number, number]
+export const get_order_id: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number, number]
+export const get_delegation_id: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number, number]
+export const get_pool_id: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number, number]
+export const data_deposit_fee: (a: bigint, b: number) => number
+export const extract_htlc_secret: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+) => [number, number, number, number]
+export const estimate_transaction_size: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+) => [number, number, number]
+export const encode_transaction: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: bigint,
+) => [number, number, number, number]
+export const decode_signed_transaction_to_js: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number]
+export const encode_witness_no_signature: () => [number, number]
+export const encode_witness: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: any,
+  l: bigint,
+  m: number,
+) => [number, number, number, number]
+export const encode_witness_htlc_secret: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: number,
+  l: number,
+  m: any,
+  n: bigint,
+  o: number,
+) => [number, number, number, number]
+export const encode_multisig_challenge: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+) => [number, number, number, number]
+export const multisig_challenge_to_address: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number, number]
+export const encode_witness_htlc_multisig: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: number,
+  l: number,
+  m: number,
+  n: any,
+  o: bigint,
+  p: number,
+) => [number, number, number, number]
+export const encode_signed_transaction: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+) => [number, number, number, number]
+export const encode_partially_signed_transaction: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: any,
+  l: number,
+) => [number, number, number, number]
+export const decode_partially_signed_transaction_to_js: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number]
+export const encode_destination: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number, number]
+export const get_transaction_id: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number, number]
+export const effective_pool_balance: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number]
 export const encode_output_transfer: (
   a: number,
   b: number,
@@ -111,14 +287,6 @@ export const encode_output_token_transfer: (
   e: number,
   f: number,
 ) => [number, number, number, number]
-export const staking_pool_spend_maturity_block_count: (
-  a: bigint,
-  b: number,
-) => bigint
-export const encode_lock_for_block_count: (a: bigint) => [number, number]
-export const encode_lock_for_seconds: (a: bigint) => [number, number]
-export const encode_lock_until_time: (a: bigint) => [number, number]
-export const encode_lock_until_height: (a: bigint) => [number, number]
 export const encode_output_lock_then_transfer: (
   a: number,
   b: number,
@@ -159,18 +327,6 @@ export const encode_output_delegate_staking: (
   c: number,
   d: number,
 ) => [number, number, number, number]
-export const encode_stake_pool_data: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: number,
-  g: number,
-  h: number,
-  i: number,
-  j: number,
-) => [number, number, number, number]
 export const encode_output_create_stake_pool: (
   a: number,
   b: number,
@@ -178,11 +334,13 @@ export const encode_output_create_stake_pool: (
   d: number,
   e: number,
 ) => [number, number, number, number]
-export const fungible_token_issuance_fee: (a: bigint, b: number) => number
-export const nft_issuance_fee: (a: bigint, b: number) => number
-export const token_supply_change_fee: (a: bigint, b: number) => number
-export const token_freeze_fee: (a: bigint, b: number) => number
-export const token_change_authority_fee: (a: bigint, b: number) => number
+export const encode_output_produce_block_from_stake: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+) => [number, number, number, number]
 export const encode_output_issue_fungible_token: (
   a: number,
   b: number,
@@ -196,11 +354,6 @@ export const encode_output_issue_fungible_token: (
   j: number,
   k: bigint,
   l: number,
-) => [number, number, number, number]
-export const get_token_id: (
-  a: number,
-  b: number,
-  c: number,
 ) => [number, number, number, number]
 export const encode_output_issue_nft: (
   a: number,
@@ -230,7 +383,6 @@ export const encode_output_data_deposit: (
   a: number,
   b: number,
 ) => [number, number, number, number]
-export const data_deposit_fee: (a: bigint, b: number) => number
 export const encode_output_htlc: (
   a: number,
   b: number,
@@ -245,13 +397,16 @@ export const encode_output_htlc: (
   k: number,
   l: number,
 ) => [number, number, number, number]
-export const extract_htlc_secret: (
+export const encode_create_order_output: (
   a: number,
   b: number,
   c: number,
   d: number,
   e: number,
   f: number,
+  g: number,
+  h: number,
+  i: number,
 ) => [number, number, number, number]
 export const encode_input_for_utxo: (
   a: number,
@@ -265,89 +420,6 @@ export const encode_input_for_withdraw_from_delegation: (
   d: bigint,
   e: number,
 ) => [number, number, number, number]
-export const estimate_transaction_size: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: number,
-  g: number,
-) => [number, number, number]
-export const encode_transaction: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: bigint,
-) => [number, number, number, number]
-export const encode_witness_no_signature: () => [number, number]
-export const encode_witness: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: number,
-  g: number,
-  h: number,
-  i: number,
-  j: number,
-  k: number,
-) => [number, number, number, number]
-export const encode_witness_htlc_secret: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: number,
-  g: number,
-  h: number,
-  i: number,
-  j: number,
-  k: number,
-  l: number,
-  m: number,
-) => [number, number, number, number]
-export const encode_multisig_challenge: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-) => [number, number, number, number]
-export const encode_witness_htlc_multisig: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: number,
-  g: number,
-  h: number,
-  i: number,
-  j: number,
-  k: number,
-  l: number,
-  m: number,
-  n: number,
-) => [number, number, number, number]
-export const encode_signed_transaction: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-) => [number, number, number, number]
-export const get_transaction_id: (
-  a: number,
-  b: number,
-  c: number,
-) => [number, number, number, number]
-export const effective_pool_balance: (
-  a: number,
-  b: number,
-  c: number,
-) => [number, number, number]
 export const encode_input_for_mint_tokens: (
   a: number,
   b: number,
@@ -396,7 +468,30 @@ export const encode_input_for_change_token_metadata_uri: (
   e: bigint,
   f: number,
 ) => [number, number, number, number]
-export const encode_create_order_output: (
+export const encode_input_for_fill_order: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: bigint,
+  g: bigint,
+  h: number,
+) => [number, number, number, number]
+export const encode_input_for_freeze_order: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: number,
+) => [number, number, number, number]
+export const encode_input_for_conclude_order: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: bigint,
+  e: number,
+) => [number, number, number, number]
+export const internal_verify_witness: (
   a: number,
   b: number,
   c: number,
@@ -406,22 +501,14 @@ export const encode_create_order_output: (
   g: number,
   h: number,
   i: number,
-) => [number, number, number, number]
-export const encode_input_for_fill_order: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: bigint,
-  g: number,
-) => [number, number, number, number]
-export const encode_input_for_conclude_order: (
-  a: number,
-  b: number,
-  c: bigint,
-  d: number,
-) => [number, number, number, number]
+  j: number,
+  k: any,
+  l: bigint,
+  m: number,
+) => [number, number]
+export const __wbg_amount_free: (a: number, b: number) => void
+export const amount_from_atoms: (a: number, b: number) => number
+export const amount_atoms: (a: number) => [number, number]
 export const rustsecp256k1_v0_10_0_context_create: (a: number) => number
 export const rustsecp256k1_v0_10_0_context_destroy: (a: number) => void
 export const rustsecp256k1_v0_10_0_default_illegal_callback_fn: (

@@ -237,13 +237,15 @@ export const SignTransactionPage = () => {
 
       console.log('HtlcInput', HtlcInput)
 
-      const secretPresaved = HtlcInput?.utxo?.htlc && state?.request?.data?.txData?.htlc?.witness_input === undefined
-        ? Account.unlockHtlsSecret({
-            accountId: accountID,
-            password: pass,
-            hash: HtlcInput.utxo.htlc.secret_hash.hex,
-          })
-        : null
+      const secretPresaved =
+        HtlcInput?.utxo?.htlc &&
+        state?.request?.data?.txData?.htlc?.witness_input === undefined
+          ? Account.unlockHtlsSecret({
+              accountId: accountID,
+              password: pass,
+              hash: HtlcInput.utxo.htlc.secret_hash.hex,
+            })
+          : null
 
       const secret_ = secretPresaved || secret
 
@@ -252,12 +254,13 @@ export const SignTransactionPage = () => {
           transactionBINrepresentation,
           transactionJSONrepresentation,
           addressesPrivateKeys: keysList,
-          ...(
-            state?.request?.data?.txData?.htlc?.witness_input && { htlc: {
-                witness_input: state?.request?.data?.txData?.htlc?.witness_input,
-                multisig_challenge: state?.request?.data?.txData?.htlc?.multisig_challenge,
-            } }
-          ),
+          ...(state?.request?.data?.txData?.htlc?.witness_input && {
+            htlc: {
+              witness_input: state?.request?.data?.txData?.htlc?.witness_input,
+              multisig_challenge:
+                state?.request?.data?.txData?.htlc?.multisig_challenge,
+            },
+          }),
           secret: secret_
             ? new Uint8Array(Buffer.from(secret_, 'hex'))
             : undefined,
@@ -288,6 +291,17 @@ export const SignTransactionPage = () => {
           witness: null,
         }
 
+        const FEE = 0.5
+
+        const change = {
+          atoms: (
+            BigInt(HtlcOutput.value.amount.atoms) - BigInt(FEE * 1e11)
+          ).toString(),
+          decimal: (
+            parseFloat(HtlcOutput.value.amount.decimal) - FEE
+          ).toString(),
+        }
+
         refundTx.transactionJSONrepresentation = {
           id: null,
           inputs: [
@@ -306,10 +320,7 @@ export const SignTransactionPage = () => {
               destination: HtlcOutput.htlc.refund_key,
               type: 'Transfer',
               value: {
-                amount: {
-                  atoms: HtlcOutput.value.amount.atoms,
-                  decimal: HtlcOutput.value.amount.decimal,
-                },
+                amount: change,
                 type: 'Coin',
               },
             },
@@ -322,18 +333,23 @@ export const SignTransactionPage = () => {
             network,
           )
 
-        const { txHash: refundTxHex, htlcRefund: refundTxHtlc } = SignTxHelpers.getTransactionHEX(
-          {
-            transactionBINrepresentation: refundTx.transactionBINrepresentation,
-            transactionJSONrepresentation:
-              refundTx.transactionJSONrepresentation,
-            addressesPrivateKeys: keysList,
-            ...(state?.request?.data?.txData?.htlc && { htlc: {
-              spend_pubkey: state?.request?.data?.txData?.htlc?.spend_pubkey,
-              } }),
-          },
-          network,
-        )
+        const { txHash: refundTxHex, htlcRefund: refundTxHtlc } =
+          SignTxHelpers.getTransactionHEX(
+            {
+              transactionBINrepresentation:
+                refundTx.transactionBINrepresentation,
+              transactionJSONrepresentation:
+                refundTx.transactionJSONrepresentation,
+              addressesPrivateKeys: keysList,
+              ...(state?.request?.data?.txData?.htlc && {
+                htlc: {
+                  spend_pubkey:
+                    state?.request?.data?.txData?.htlc?.spend_pubkey,
+                },
+              }),
+            },
+            network,
+          )
 
         refundTx.transactionHex = refundTxHex
         refundTx.htlc = refundTxHtlc

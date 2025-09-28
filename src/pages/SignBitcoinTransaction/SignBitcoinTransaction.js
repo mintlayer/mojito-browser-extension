@@ -6,13 +6,14 @@ import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 
 import './SignBitcoinTransaction.css'
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
 import { AppInfo } from '@Constants'
 import { Account } from '@Entities'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { BTCTransaction } from '@Cryptos'
+import { Secret } from '@Helpers'
 
 const storage =
   typeof browser !== 'undefined' && browser.storage
@@ -34,12 +35,20 @@ export const SignBitcoinTransactionPage = () => {
   const [password, setPassword] = useState('')
   const [secret, setSecret] = useState('')
 
+  // Secret management state for HTLC transactions
+  const [generatedSecret, setGeneratedSecret] = useState(null)
+  const [generatedSecretHash, setGeneratedSecretHash] = useState(null)
+  const [secretError, setSecretError] = useState('')
+
   const [mode, setMode] = useState('preview')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = ['buttonSignTransaction']
 
-  const state = external_state || MOCKS[selectedMock]
+  // State to hold the potentially modified transaction data
+  const [transactionState, setTransactionState] = useState(null)
+
+  const state = transactionState || external_state || MOCKS[selectedMock]
 
   const revealed_secret =
     state?.request?.data?.txData?.JSONRepresentation.secret
@@ -53,6 +62,58 @@ export const SignBitcoinTransactionPage = () => {
       : addresses.btcTestnetAddress
 
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
+
+  // Helper functions to detect transaction types
+  const isHTLCCreateTx =
+    state?.request?.data?.txData?.JSONRepresentation?.secretHash
+  const isHTLCSpendTx =
+    state?.request?.data?.txData?.JSONRepresentation?.type === 'spendHtlc'
+  // const isHTLCRefundTx = state?.request?.data?.txData?.JSONRepresentation?.type === 'refundHtlc'
+
+  useEffect(() => {
+    // SECRET FOR HTLC
+    // Check if this is a create HTLC transaction and if secret needs to be generated
+    const currentState =
+      transactionState || external_state || MOCKS[selectedMock]
+    const transactionJSON =
+      currentState?.request?.data?.txData?.JSONRepresentation
+
+    if (!transactionJSON) {
+      return
+    }
+
+    // If this is an HTLC create transaction and we haven't generated a secret yet
+    if (isHTLCCreateTx && !generatedSecret) {
+      try {
+        const secretObj = Secret.generateSecretObject()
+        setGeneratedSecret(secretObj.secretHex)
+        setGeneratedSecretHash(secretObj.secretHashHex)
+
+        // Create a deep copy of the current state to avoid mutation
+        const updatedState = JSON.parse(JSON.stringify(currentState))
+        const updatedTransactionJSON =
+          updatedState.request.data.txData.JSONRepresentation
+
+        // Update the transaction with the generated secret hash
+        if (updatedTransactionJSON.secretHash) {
+          updatedTransactionJSON.secretHash = JSON.stringify({
+            secret_hash_hex: secretObj.secretHashHex,
+          })
+        }
+
+        // Update the transaction state
+        setTransactionState(updatedState)
+      } catch (error) {
+        console.error('Error generating secret:', error)
+      }
+    }
+  }, [
+    external_state,
+    selectedMock,
+    transactionState,
+    isHTLCCreateTx,
+    generatedSecret,
+  ])
 
   const handleApprove = async () => {
     setIsModalOpen(true) // Open the modal
@@ -120,11 +181,33 @@ export const SignBitcoinTransactionPage = () => {
     const method = 'signTransaction_approve'
     const result = {
       htlcAddress: htlc.p2wshAddress,
+      secretHashHex: JSON.parse(transactionJSONrepresentation.secretHash)
+        .secret_hash_hex,
       transactionId: txId,
       signedTxHex: txHex,
       redeemScript: htlc.redeemScriptHex,
     }
     console.log('transactionHex', txHex)
+
+    // Save generated secret to account if this is an HTLC create transaction
+    if (isHTLCCreateTx && generatedSecret && generatedSecretHash) {
+      try {
+        await Account.saveProvidedHtlsSecret({
+          accountId: accountID,
+          password: pass,
+          data: {
+            secret: generatedSecret,
+            hash: generatedSecretHash,
+            txHash: txHex,
+          },
+        })
+        console.log('Secret saved successfully')
+      } catch (error) {
+        console.error('Error saving secret:', error)
+        // Continue with transaction even if secret saving fails
+      }
+    }
+
     // eslint-disable-next-line no-undef
     runtime.sendMessage(
       {
@@ -152,12 +235,38 @@ export const SignBitcoinTransactionPage = () => {
 
     const { WIF } = await Account.unlockAccount(accountID, pass)
 
+    // Try to retrieve previously saved secret for HTLC spend transactions
+    let secretPresaved = null
+    if (isHTLCSpendTx && transactionJSONrepresentation.utxo?.secretHash) {
+      try {
+        const secretHash =
+          typeof transactionJSONrepresentation.utxo.secretHash === 'string'
+            ? JSON.parse(transactionJSONrepresentation.utxo.secretHash)
+                .secret_hash_hex
+            : transactionJSONrepresentation.utxo.secretHash.secret_hash_hex
+
+        secretPresaved = await Account.unlockHtlsSecret({
+          accountId: accountID,
+          password: pass,
+          hash: secretHash,
+        })
+        console.log('Retrieved saved secret')
+      } catch (error) {
+        console.log(
+          'No saved secret found, will use manual input:',
+          error.message,
+        )
+      }
+    }
+
+    const finalSecret = secretPresaved || revealed_secret || secret
+
     const tx = await BTCTransaction.buildHtlcClaimTx({
       network,
       utxo: transactionJSONrepresentation.utxo,
       toAddress: transactionJSONrepresentation.to,
       redeemScriptHex: transactionJSONrepresentation.redeemScriptHex,
-      secretHex: revealed_secret || secret,
+      secretHex: finalSecret,
       wif: WIF,
     })
 
@@ -229,6 +338,14 @@ export const SignBitcoinTransactionPage = () => {
 
   const handleModalSubmit = async () => {
     try {
+      // Validate secret if it's an HTLC spend transaction and secret is manually entered
+      if (isHTLCSpendTx && secret && !Secret.validateSecretHex(secret.trim())) {
+        setSecretError(
+          'Invalid secret format. Please enter a valid 64-character hex string.',
+        )
+        return
+      }
+
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
       console.log(
@@ -252,6 +369,10 @@ export const SignBitcoinTransactionPage = () => {
       }
     } catch (error) {
       console.error('Error during transaction signing:', error)
+      // If it's a secret validation error, keep the modal open
+      if (error.message && error.message.includes('secret')) {
+        return
+      }
       setIsModalOpen(false)
     }
   }
@@ -292,6 +413,19 @@ export const SignBitcoinTransactionPage = () => {
 
   const secretChangeHandler = (value) => {
     setSecret(value)
+
+    // Validate secret format if value is provided
+    if (value && value.trim()) {
+      if (Secret.validateSecretHex(value.trim())) {
+        setSecretError('')
+      } else {
+        setSecretError(
+          'Invalid secret format. Must be 64 hex characters (32 bytes).',
+        )
+      }
+    } else {
+      setSecretError('')
+    }
   }
 
   return (
@@ -332,6 +466,47 @@ export const SignBitcoinTransactionPage = () => {
             {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
           </>
         )}
+
+        {/* HTLC Secret Information */}
+        {isHTLCCreateTx && generatedSecret && (
+          <div className="htlc-secret-section">
+            <h3>HTLC Secret Generated</h3>
+            <div className="secret-info">
+              <div className="secret-item">
+                <label>Secret (Hex):</label>
+                <div className="secret-value">
+                  <span>{generatedSecret}</span>
+                  <button
+                    onClick={() =>
+                      navigator.clipboard.writeText(generatedSecret)
+                    }
+                    title="Copy secret"
+                  >
+                    📋
+                  </button>
+                </div>
+              </div>
+              <div className="secret-item">
+                <label>Secret Hash (Hex):</label>
+                <div className="secret-value">
+                  <span>{generatedSecretHash}</span>
+                  <button
+                    onClick={() =>
+                      navigator.clipboard.writeText(generatedSecretHash)
+                    }
+                    title="Copy secret hash"
+                  >
+                    📋
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="secret-warning">
+              <strong>⚠️ Important:</strong> Save this secret securely! You will
+              need it to claim the HTLC later.
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="footer">
@@ -361,20 +536,27 @@ export const SignBitcoinTransactionPage = () => {
               placeholder="Enter your password"
               autoFocus
             />
-            {['spendHtlc'].includes(
-              state?.request?.data?.txData?.JSONRepresentation.type,
-            ) &&
-              !revealed_secret && (
-                <>
-                  HTLC Secret:
+            {isHTLCSpendTx && !revealed_secret && (
+              <>
+                <div className="htlc-secret-input">
+                  <label>HTLC Secret:</label>
                   <TextField
                     value={secret}
                     onChangeHandle={secretChangeHandler}
-                    placeholder="Enter htlc secret in hex format"
+                    placeholder="Enter htlc secret in hex format (64 characters)"
                     autoFocus
                   />
-                </>
-              )}
+                  {secretError && (
+                    <div className="secret-error">{secretError}</div>
+                  )}
+                  <div className="secret-hint">
+                    <small>
+                      💡 Enter the 32-byte secret in hexadecimal format
+                    </small>
+                  </div>
+                </div>
+              </>
+            )}
             <div className="modal-buttons">
               <Button
                 onClickHandle={() => setIsModalOpen(false)}
