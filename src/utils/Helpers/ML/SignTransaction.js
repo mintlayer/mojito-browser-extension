@@ -493,8 +493,8 @@ export function getTransactionHEX(
           const secretuint8Array = secret
 
           const additionalData = {
-            pool_data: {},
-            order_data: {},
+            pool_info: {},
+            order_info: {},
           }
 
           const witness = encode_witness_htlc_secret(

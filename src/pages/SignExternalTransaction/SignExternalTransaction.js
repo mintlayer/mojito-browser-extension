@@ -75,11 +75,6 @@ export const SignTransactionPage = () => {
       (input) => input?.utxo?.type === 'Htlc',
     )
 
-  const HtlcOutput =
-    state?.request?.data?.txData?.JSONRepresentation?.outputs?.find(
-      (output) => output?.type === 'Htlc',
-    )
-
   const isHTLCClaim =
     isHTLCTx &&
     state?.request?.data?.txData?.JSONRepresentation?.outputs?.some(
@@ -238,9 +233,9 @@ export const SignTransactionPage = () => {
       console.log('HtlcInput', HtlcInput)
 
       const secretPresaved =
-        HtlcInput?.utxo?.htlc &&
+        HtlcInput?.utxo?.htlc && !secret &&
         state?.request?.data?.txData?.htlc?.witness_input === undefined
-          ? Account.unlockHtlsSecret({
+          ? await Account.unlockHtlsSecret({
               accountId: accountID,
               password: pass,
               hash: HtlcInput.utxo.htlc.secret_hash.hex,
@@ -248,6 +243,12 @@ export const SignTransactionPage = () => {
           : null
 
       const secret_ = secretPresaved || secret
+
+      console.log('secret_', secret_)
+
+      console.log(new Uint8Array(Buffer.from(secret_, 'hex')))
+
+      console.log('^^^^')
 
       const { txHash: transactionHex } = SignTxHelpers.getTransactionHEX(
         {
@@ -268,8 +269,6 @@ export const SignTransactionPage = () => {
         network,
       )
 
-      let refundTx
-
       console.log('isHTLCCreateTx', isHTLCCreateTx)
 
       if (isHTLCCreateTx) {
@@ -283,79 +282,7 @@ export const SignTransactionPage = () => {
             txHash: transactionHex,
           },
         })
-
-        console.log('isHTLCCreateTx')
-        refundTx = {
-          transactionJSONrepresentation: null,
-          transactionBINrepresentation: null,
-          witness: null,
-        }
-
-        const FEE = 0.5
-
-        const change = {
-          atoms: (
-            BigInt(HtlcOutput.value.amount.atoms) - BigInt(FEE * 1e11)
-          ).toString(),
-          decimal: (
-            parseFloat(HtlcOutput.value.amount.decimal) - FEE
-          ).toString(),
-        }
-
-        refundTx.transactionJSONrepresentation = {
-          id: null,
-          inputs: [
-            {
-              input: {
-                index: 0,
-                input_type: 'UTXO',
-                source_id: transactionJSONrepresentation.id,
-                source_type: 'Transaction',
-              },
-              utxo: HtlcOutput,
-            },
-          ],
-          outputs: [
-            {
-              destination: HtlcOutput.htlc.refund_key,
-              type: 'Transfer',
-              value: {
-                amount: change,
-                type: 'Coin',
-              },
-            },
-          ],
-        }
-
-        refundTx.transactionBINrepresentation =
-          SignTxHelpers.getTransactionBINrepresentation(
-            refundTx.transactionJSONrepresentation,
-            network,
-          )
-
-        const { txHash: refundTxHex, htlcRefund: refundTxHtlc } =
-          SignTxHelpers.getTransactionHEX(
-            {
-              transactionBINrepresentation:
-                refundTx.transactionBINrepresentation,
-              transactionJSONrepresentation:
-                refundTx.transactionJSONrepresentation,
-              addressesPrivateKeys: keysList,
-              ...(state?.request?.data?.txData?.htlc && {
-                htlc: {
-                  spend_pubkey:
-                    state?.request?.data?.txData?.htlc?.spend_pubkey,
-                },
-              }),
-            },
-            network,
-          )
-
-        refundTx.transactionHex = refundTxHex
-        refundTx.htlc = refundTxHtlc
       }
-
-      console.log('refundTx', refundTx)
 
       const requestId = state?.request?.requestId
       const method = 'signTransaction_approve'
@@ -364,11 +291,6 @@ export const SignTransactionPage = () => {
         result = {
           transactionHex,
           intentEncode,
-        }
-      } else if (refundTx?.transactionHex) {
-        result = {
-          transactionHex,
-          refundTx,
         }
       } else {
         result = transactionHex

@@ -128,10 +128,15 @@ const unlockHtlsSecret = async ({ accountId, password, hash }) => {
     tag: data.htlsTag,
     key,
   })
+
+  console.log('decrypted', decrypted)
+
   if (!decrypted || decrypted.error)
     return Promise.reject(
       'Failed to decrypt the secret. Possibly wrong password.',
     )
+
+  console.log('return', new TextDecoder().decode(decrypted))
 
   return new TextDecoder().decode(decrypted)
 }
