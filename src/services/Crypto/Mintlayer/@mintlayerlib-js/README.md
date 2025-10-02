@@ -18,14 +18,12 @@ cargo install wasm-pack
 Also make sure you have `clang` installed. It's required.
 
 **Note for mac users**: `llvm` installed by Xcode doesn't support wasm targets, but the homebrew version does, these commands may make it possible to compile to wasm targets. Note that using these commands could have other side effects on your toolchain. Please consider researching the clang toolchain and how it works before using them. We do not recommend copying and pasting commands without fully understanding the side-effects.
-
 ```
 brew install llvm
 AR=/opt/homebrew/opt/llvm/bin/llvm-ar CC=/opt/homebrew/opt/llvm/bin/clang wasm-pack build --target web
 ```
 
 Also, install TypeScript:
-
 ```
 npm install -g typescript
 ```
@@ -33,22 +31,19 @@ npm install -g typescript
 ### Build the wasm package
 
 In the wasm Cargo.toml directory, execute one of the following:
+  * for running the tests in a web browser:
+    ```
+    wasm-pack build --target web
+    ```
 
-- for running the tests in a web browser:
-
-  ```
-  wasm-pack build --target web
-  ```
-
-- for running the tests in Node.js:
-  ```
-  wasm-pack build --target nodejs
-  ```
+  * for running the tests in Node.js:
+    ```
+    wasm-pack build --target nodejs
+    ```
 
 ### Compile the tests via `tsc`
 
 In the wasm Cargo.toml directory, run:
-
 ```
 tsc --project js-bindings-test/tsconfig.json
 ```
@@ -78,7 +73,6 @@ To run the tests, choose the file `js-bindings-test/index.html` in the browser. 
 ### Run the tests in Node.js
 
 In the wasm Cargo.toml directory, execute the following:
-
 ```
 node --enable-source-maps js-bindings-test/node-entry.js
 ```
@@ -91,18 +85,16 @@ mean that some of the tests are never run).
 **Note: unused local definitions are caught by the TypeScript compiler itself, via the `noUnusedLocals` setting.**
 
 To run `knip` locally, first install it:
-
 ```
 npm install -g knip
 ```
 
 And then run (in the wasm Cargo.toml directory):
-
 ```
 (cd js-bindings-test && npx knip)
 ```
 
-**Note: to explicitly exclude an export from `knip`'s report, annotate it with `/** @public \*/`.\*\*
+**Note: to explicitly exclude an export from `knip`'s report, annotate it with `/** @public */`.**
 
 ### Further documentation on wasm
 

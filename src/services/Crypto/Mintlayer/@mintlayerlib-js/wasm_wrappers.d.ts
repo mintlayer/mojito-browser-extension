@@ -355,12 +355,13 @@ export function encode_witness(
   network: Network,
 ): Uint8Array
 /**
- * Given a private key, inputs and an input number to sign, and the destination that owns that output (through the utxo),
- * and a network type (mainnet, testnet, etc), and an htlc secret this function returns a witness to be used in a signed transaction, as bytes.
+ * Sign the specified HTLC input of the transaction and encode the signature as InputWitness.
+ *
+ * This function must be used for HTLC spending.
  *
  * `input_utxos` and `additional_info` have the same format and requirements as in `encode_witness`.
  */
-export function encode_witness_htlc_secret(
+export function encode_witness_htlc_spend(
   sighashtype: SignatureHashType,
   private_key: Uint8Array,
   input_owner_destination: string,
@@ -389,20 +390,40 @@ export function multisig_challenge_to_address(
   network: Network,
 ): string
 /**
- * Given a private key, inputs and an input number to sign, and multisig challenge,
- * and a network type (mainnet, testnet, etc), this function returns a witness to be used in a signed transaction, as bytes.
+ * Sign the specified HTLC input of the transaction and encode the signature as InputWitness.
  *
- * `key_index` parameter is an index of the public key in the challenge corresponding to the specified private key.
+ * This function must be used for HTLC refunding when the refund address is a multisig one.
+ *
+ * `key_index` parameter is an index of the public key in the multisig challenge corresponding to
+ * the specified private key.
  * `input_witness` parameter can be either empty or a result of previous calls to this function.
  *
  * `input_utxos` and `additional_info` have the same format and requirements as in `encode_witness`.
  */
-export function encode_witness_htlc_multisig(
+export function encode_witness_htlc_refund_multisig(
   sighashtype: SignatureHashType,
   private_key: Uint8Array,
   key_index: number,
   input_witness: Uint8Array,
   multisig_challenge: Uint8Array,
+  transaction: Uint8Array,
+  input_utxos: Uint8Array,
+  input_index: number,
+  additional_info: TxAdditionalInfo,
+  current_block_height: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Sign the specified HTLC input of the transaction and encode the signature as InputWitness.
+ *
+ * This function must be used for HTLC refunding when the refund address is a single-sig one.
+ *
+ * `input_utxos` and `additional_info` have the same format and requirements as in `encode_witness`.
+ */
+export function encode_witness_htlc_refund_single_sig(
+  sighashtype: SignatureHashType,
+  private_key: Uint8Array,
+  input_owner_destination: string,
   transaction: Uint8Array,
   input_utxos: Uint8Array,
   input_index: number,
@@ -1106,7 +1127,7 @@ export interface InitOutput {
     l: bigint,
     m: number,
   ) => [number, number, number, number]
-  readonly encode_witness_htlc_secret: (
+  readonly encode_witness_htlc_spend: (
     a: number,
     b: number,
     c: number,
@@ -1134,7 +1155,7 @@ export interface InitOutput {
     b: number,
     c: number,
   ) => [number, number, number, number]
-  readonly encode_witness_htlc_multisig: (
+  readonly encode_witness_htlc_refund_multisig: (
     a: number,
     b: number,
     c: number,
@@ -1151,6 +1172,21 @@ export interface InitOutput {
     n: any,
     o: bigint,
     p: number,
+  ) => [number, number, number, number]
+  readonly encode_witness_htlc_refund_single_sig: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+    i: number,
+    j: number,
+    k: any,
+    l: bigint,
+    m: number,
   ) => [number, number, number, number]
   readonly encode_signed_transaction: (
     a: number,
@@ -1327,6 +1363,9 @@ export interface InitOutput {
     h: number,
     i: number,
   ) => [number, number, number, number]
+  readonly __wbg_amount_free: (a: number, b: number) => void
+  readonly amount_from_atoms: (a: number, b: number) => number
+  readonly amount_atoms: (a: number) => [number, number]
   readonly encode_input_for_utxo: (
     a: number,
     b: number,
@@ -1425,9 +1464,6 @@ export interface InitOutput {
     l: bigint,
     m: number,
   ) => [number, number]
-  readonly __wbg_amount_free: (a: number, b: number) => void
-  readonly amount_from_atoms: (a: number, b: number) => number
-  readonly amount_atoms: (a: number) => [number, number]
   readonly rustsecp256k1_v0_10_0_context_create: (a: number) => number
   readonly rustsecp256k1_v0_10_0_context_destroy: (a: number) => void
   readonly rustsecp256k1_v0_10_0_default_illegal_callback_fn: (

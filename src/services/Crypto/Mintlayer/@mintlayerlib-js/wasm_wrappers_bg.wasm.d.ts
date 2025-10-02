@@ -187,7 +187,7 @@ export const encode_witness: (
   l: bigint,
   m: number,
 ) => [number, number, number, number]
-export const encode_witness_htlc_secret: (
+export const encode_witness_htlc_spend: (
   a: number,
   b: number,
   c: number,
@@ -215,7 +215,7 @@ export const multisig_challenge_to_address: (
   b: number,
   c: number,
 ) => [number, number, number, number]
-export const encode_witness_htlc_multisig: (
+export const encode_witness_htlc_refund_multisig: (
   a: number,
   b: number,
   c: number,
@@ -232,6 +232,21 @@ export const encode_witness_htlc_multisig: (
   n: any,
   o: bigint,
   p: number,
+) => [number, number, number, number]
+export const encode_witness_htlc_refund_single_sig: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: any,
+  l: bigint,
+  m: number,
 ) => [number, number, number, number]
 export const encode_signed_transaction: (
   a: number,
@@ -408,6 +423,9 @@ export const encode_create_order_output: (
   h: number,
   i: number,
 ) => [number, number, number, number]
+export const __wbg_amount_free: (a: number, b: number) => void
+export const amount_from_atoms: (a: number, b: number) => number
+export const amount_atoms: (a: number) => [number, number]
 export const encode_input_for_utxo: (
   a: number,
   b: number,
@@ -506,9 +524,6 @@ export const internal_verify_witness: (
   l: bigint,
   m: number,
 ) => [number, number]
-export const __wbg_amount_free: (a: number, b: number) => void
-export const amount_from_atoms: (a: number, b: number) => number
-export const amount_atoms: (a: number) => [number, number]
 export const rustsecp256k1_v0_10_0_context_create: (a: number) => number
 export const rustsecp256k1_v0_10_0_context_destroy: (a: number) => void
 export const rustsecp256k1_v0_10_0_default_illegal_callback_fn: (

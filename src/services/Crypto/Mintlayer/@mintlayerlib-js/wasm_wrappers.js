@@ -1181,8 +1181,9 @@ export function encode_witness(
 }
 
 /**
- * Given a private key, inputs and an input number to sign, and the destination that owns that output (through the utxo),
- * and a network type (mainnet, testnet, etc), and an htlc secret this function returns a witness to be used in a signed transaction, as bytes.
+ * Sign the specified HTLC input of the transaction and encode the signature as InputWitness.
+ *
+ * This function must be used for HTLC spending.
  *
  * `input_utxos` and `additional_info` have the same format and requirements as in `encode_witness`.
  * @param {SignatureHashType} sighashtype
@@ -1197,7 +1198,7 @@ export function encode_witness(
  * @param {Network} network
  * @returns {Uint8Array}
  */
-export function encode_witness_htlc_secret(
+export function encode_witness_htlc_spend(
   sighashtype,
   private_key,
   input_owner_destination,
@@ -1223,7 +1224,7 @@ export function encode_witness_htlc_secret(
   const len3 = WASM_VECTOR_LEN
   const ptr4 = passArray8ToWasm0(secret, wasm.__wbindgen_malloc)
   const len4 = WASM_VECTOR_LEN
-  const ret = wasm.encode_witness_htlc_secret(
+  const ret = wasm.encode_witness_htlc_spend(
     sighashtype,
     ptr0,
     len0,
@@ -1306,10 +1307,12 @@ export function multisig_challenge_to_address(multisig_challenge, network) {
 }
 
 /**
- * Given a private key, inputs and an input number to sign, and multisig challenge,
- * and a network type (mainnet, testnet, etc), this function returns a witness to be used in a signed transaction, as bytes.
+ * Sign the specified HTLC input of the transaction and encode the signature as InputWitness.
  *
- * `key_index` parameter is an index of the public key in the challenge corresponding to the specified private key.
+ * This function must be used for HTLC refunding when the refund address is a multisig one.
+ *
+ * `key_index` parameter is an index of the public key in the multisig challenge corresponding to
+ * the specified private key.
  * `input_witness` parameter can be either empty or a result of previous calls to this function.
  *
  * `input_utxos` and `additional_info` have the same format and requirements as in `encode_witness`.
@@ -1326,7 +1329,7 @@ export function multisig_challenge_to_address(multisig_challenge, network) {
  * @param {Network} network
  * @returns {Uint8Array}
  */
-export function encode_witness_htlc_multisig(
+export function encode_witness_htlc_refund_multisig(
   sighashtype,
   private_key,
   key_index,
@@ -1349,7 +1352,7 @@ export function encode_witness_htlc_multisig(
   const len3 = WASM_VECTOR_LEN
   const ptr4 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
   const len4 = WASM_VECTOR_LEN
-  const ret = wasm.encode_witness_htlc_multisig(
+  const ret = wasm.encode_witness_htlc_refund_multisig(
     sighashtype,
     ptr0,
     len0,
@@ -1373,6 +1376,69 @@ export function encode_witness_htlc_multisig(
   var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
   wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
   return v6
+}
+
+/**
+ * Sign the specified HTLC input of the transaction and encode the signature as InputWitness.
+ *
+ * This function must be used for HTLC refunding when the refund address is a single-sig one.
+ *
+ * `input_utxos` and `additional_info` have the same format and requirements as in `encode_witness`.
+ * @param {SignatureHashType} sighashtype
+ * @param {Uint8Array} private_key
+ * @param {string} input_owner_destination
+ * @param {Uint8Array} transaction
+ * @param {Uint8Array} input_utxos
+ * @param {number} input_index
+ * @param {TxAdditionalInfo} additional_info
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_witness_htlc_refund_single_sig(
+  sighashtype,
+  private_key,
+  input_owner_destination,
+  transaction,
+  input_utxos,
+  input_index,
+  additional_info,
+  current_block_height,
+  network,
+) {
+  const ptr0 = passArray8ToWasm0(private_key, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    input_owner_destination,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len2 = WASM_VECTOR_LEN
+  const ptr3 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
+  const len3 = WASM_VECTOR_LEN
+  const ret = wasm.encode_witness_htlc_refund_single_sig(
+    sighashtype,
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    input_index,
+    additional_info,
+    current_block_height,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v5 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v5
 }
 
 /**

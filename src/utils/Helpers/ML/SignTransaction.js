@@ -29,8 +29,8 @@ import {
   encode_lock_until_time,
   encode_lock_for_block_count,
   encode_output_htlc,
-  encode_witness_htlc_secret,
-  encode_partially_signed_transaction,
+  encode_witness_htlc_spend,
+  encode_witness_htlc_refund_single_sig,
   TokenUnfreezable,
   SourceId,
   SignatureHashType,
@@ -40,13 +40,7 @@ import {
 } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
 import {
   getOutputs,
-  getPublicKeyFromPrivate,
 } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
-import {
-  encode_destination,
-  encode_multisig_challenge,
-  encode_witness_htlc_multisig,
-} from '../../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
 const blockHeight = 0n
 
@@ -404,7 +398,6 @@ export function getTransactionHEX(
   },
   _network,
 ) {
-  let isPartial = false
   const network = _network
   const networkType = network === 1 ? 'testnet' : 'mainnet'
   const inputsArray = transactionBINrepresentation.inputs
@@ -497,7 +490,7 @@ export function getTransactionHEX(
             order_info: {},
           }
 
-          const witness = encode_witness_htlc_secret(
+          const witness = encode_witness_htlc_spend(
             SignatureHashType.ALL,
             addressPrivateKey,
             address,
@@ -512,69 +505,19 @@ export function getTransactionHEX(
           return witness
         } else {
           console.log('Build refund TX')
-          // refund
-          // Multisig
 
-          let addressPrivateKey
-          let addressPublicKey
-          let multisig_challenge
-          let witness_input
-          let key_index = 0
-
-          const hexToUint8Array = (hex) => {
-            if (hex.startsWith('0x')) hex = hex.slice(2)
-            const bytes = hex.match(/.{2}/g).map((b) => parseInt(b, 16))
-            return new Uint8Array(bytes)
-          }
-
-          if (htlc.multisig_challenge) {
-            addressPrivateKey =
-              addressesPrivateKeys[input?.utxo?.htlc?.spend_key]
-            addressPublicKey = getPublicKeyFromPrivate(addressPrivateKey)
-            key_index = 1
-            multisig_challenge = hexToUint8Array(htlc.multisig_challenge)
-            witness_input = hexToUint8Array(htlc.witness_input)
-          } else {
-            const spend_pubkey = htlc.spend_pubkey
-            addressPrivateKey =
-              addressesPrivateKeys[input?.utxo?.htlc?.refund_key]
-            addressPublicKey = getPublicKeyFromPrivate(addressPrivateKey)
-            witness_input = new Uint8Array(0)
-            const uint8ArrayOfAddresses = [
-              ...addressPublicKey,
-              ...hexToUint8Array(spend_pubkey),
-            ]
-
-            console.log('uint8ArrayOfAddresses', uint8ArrayOfAddresses)
-
-            isPartial = true
-
-            multisig_challenge = encode_multisig_challenge(
-              uint8ArrayOfAddresses,
-              2,
-              network,
-            )
-          }
-
-          const hexString = (obj) =>
-            Object.values(obj)
-              .map((n) => n.toString(16).padStart(2, '0'))
-              .join('')
-
-          htlcRefund.multisig_challenge = hexString(multisig_challenge)
+          const address = input?.utxo?.htlc?.refund_key
+          const addressPrivateKey = addressesPrivateKeys[address]
 
           const additionalInfo = {
             pool_info: {},
             order_info: {},
           }
 
-          console.log('multisig', multisig_challenge)
-          const witness = encode_witness_htlc_multisig(
+          const witness = encode_witness_htlc_refund_single_sig(
             SignatureHashType.ALL,
             addressPrivateKey,
-            key_index,
-            witness_input, // First sign
-            multisig_challenge,
+            address,
             transaction,
             optUtxos,
             index,
@@ -582,7 +525,6 @@ export function getTransactionHEX(
             blockHeight,
             network,
           )
-          htlcRefund.witness_input = hexString(witness)
 
           return witness
         }
@@ -625,45 +567,6 @@ export function getTransactionHEX(
       }
     },
   )
-
-  if (isPartial) {
-    const destinations = transactionJSONrepresentation.inputs.map((input) => {
-      return (
-        input?.utxo?.destination ||
-        input?.input?.authority ||
-        input?.input?.destination ||
-        input?.utxo?.htlc?.refund_key
-      )
-    })
-
-    console.log('destinations', destinations)
-    console.log('encodedWitnesses', encodedWitnesses)
-
-    const additionalInfo = {
-      pool_info: {},
-      order_info: {},
-    }
-
-    const htlc_secrets = []
-    htlc_secrets.push(0)
-
-    const encodedSignedTransaction = encode_partially_signed_transaction(
-      transaction,
-      Uint8Array.from([1, ...encodedWitnesses[0]]),
-      optUtxos,
-      [1, ...encode_destination(destinations[0], network)],
-      htlc_secrets,
-      additionalInfo,
-      network,
-    )
-
-    const txHash = encodedSignedTransaction.reduce(
-      (acc, byte) => acc + byte.toString(16).padStart(2, '0'),
-      '',
-    )
-
-    return { txHash, htlcRefund }
-  }
 
   const encodedSignedTransaction = encode_signed_transaction(
     transaction,
