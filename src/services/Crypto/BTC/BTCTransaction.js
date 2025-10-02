@@ -179,7 +179,7 @@ const buildHtlcClaimTx = async (params) => {
 
   psbt.addOutput({
     address: toAddress,
-    value: utxo.value - 2000, // fee
+    value: utxo.value - 500, // fee
   })
 
   console.log('psbt2', psbt)

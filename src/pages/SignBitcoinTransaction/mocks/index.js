@@ -43,6 +43,30 @@ export const MOCKS = {
       },
     },
   },
+  spendHtlc2: {
+    request: {
+      data: {
+        txData: {
+          JSONRepresentation: {
+            redeemScriptHex:
+              '63a914dc62ec52fdb0efb9496a73222f3120db8364b5698821027b87bd06d549c49e3809adacefc62ea8beec177c32aeffaf5c00ac04ffd0074967029000b27521023cf249c6c8927d7db3a6537f1ca2c95a8b707a376243218a16a3048ebb07d88068ac',
+            secret:
+              '7703871476aa43d952519fd41486842a3435db486e9b91f31b1e4730abf31738',
+            to: 'tb1qz5e8eqw4r960nz5xjcw0fvek3xfcyhn32gdksg',
+            type: 'spendHtlc',
+            utxo: {
+              status: {
+                confirmed: false,
+              },
+              txid: '5a086b453f5d9b98e1f365980186e90a9916f956e79cc70c30e8a98160e033f8',
+              value: 1000,
+              vout: 0,
+            },
+          },
+        },
+      },
+    },
+  },
   refundHtlc: {
     request: {
       data: {
