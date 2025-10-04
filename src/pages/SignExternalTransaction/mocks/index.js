@@ -3079,4 +3079,112 @@ export const MOCKS = {
       requestId: 'wymzne7u81',
     },
   },
+  refundHTLC3: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          JSONRepresentation: {
+            fee: {
+              atoms: '45000000000',
+              decimal: '0.45',
+            },
+            id: '04f4f38533c9b08de4cf07efb347baa4da474b28d9f0ea4de945f03e9d6e9589',
+            inputs: [
+              {
+                input: {
+                  index: 0,
+                  input_type: 'UTXO',
+                  source_id:
+                    'b11bdf1e0f70d4bb6ff9d15b96d3fa65ba2fdc51077fd3b4054550a8aa5d587d',
+                  source_type: 0,
+                },
+                utxo: {
+                  htlc: {
+                    refund_key: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                    refund_timelock: {
+                      content: 144,
+                      type: 'ForBlockCount',
+                    },
+                    secret: null,
+                    secret_hash: {
+                      hex: '41390d5049c8ec381acf5647b37efe06df88a504',
+                      string: null,
+                    },
+                    spend_key: 'tmt1q9r4gz3aevjm38yq8ycd6gl3kqd25xh4jqzjthdc',
+                  },
+                  type: 'Htlc',
+                  value: {
+                    amount: {
+                      atoms: '500000000000',
+                      decimal: '5',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    'b593c3ea704ab34b0d0f548c4a1e1006daf1c4a9a3597e5019a74b9575efd350',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1522323104300000',
+                      decimal: '15223.231043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q9874wgx6enm2mzfu0yxhzleu84pp00l95l7er5z',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '500000000000',
+                    decimal: '5',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1522278104300000',
+                    decimal: '15222.781043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+          BINRepresentation: {},
+          HEXRepresentation_unsigned:
+            '01000800003fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f140100000000004e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f010000000c0a023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e80000000000000000000000000000000000000000014feab906d667b56c49e3c86b8bf9e1ea10bdff2d02140147540a3dcb25b89c803930dd23f1b01aaa1af59000000b401c400fd60501d26a1ca86df0108c4fde32ec77ddf5eaedac590600023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e801d26a1ca86df0108c4fde32ec77ddf5eaedac5906',
+          transaction_id:
+            '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          htlc: {
+            multisig_challenge:
+              '02080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+            witness_input:
+              '010131020125020400004d289db78cd77834d8fceeb16500731ed5d4abfe5a2a41c1804694d0257b99c46163c3c4cecb184604ffc7ef03ce69a7dab89a5f42947ecbd6fb14620a20f7b502080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
 }
