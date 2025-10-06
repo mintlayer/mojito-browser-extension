@@ -37,7 +37,7 @@ const ML_TRANSACTION_MODES = {
   DELEGATION: 'delegation',
   STAKING: 'staking',
   WITHDRAW: 'withdraw',
-  NFT: 'nft',
+  NFT_SEND: 'nft',
 }
 const walletTypes = [
   {
