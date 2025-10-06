@@ -412,6 +412,27 @@ const DelegateStaking = ({ transactionData }) => {
   )
 }
 
+const DelegateWithdraw = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee.decimal || 0
+
+  const inputWithWithdraw = JSONRepresentation.inputs.find(
+    (input) => input.input.account_type === 'DelegationBalance',
+  ).input
+  return (
+    <div className="transactionDetails">
+      <EstimatedChanges action="Withdraw from delegation" />
+      <div className="signTxSection">
+        <h4>Delegation Id:</h4>
+        <p>{inputWithWithdraw.delegation_id}</p>
+        <h4>Amount:</h4>
+        <p>{inputWithWithdraw.amount.decimal}</p>
+      </div>
+      <NetworkFee fee={fee} />
+    </div>
+  )
+}
+
 const BridgeRequest = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const fee = JSONRepresentation.fee.decimal || 0
@@ -499,6 +520,12 @@ const SummaryView = ({ data }) => {
         )}
         {flags.isDelegateStaking && (
           <DelegateStaking transactionData={transactionData} />
+        )}
+        {flags.isDelegateWithdraw && (
+          <DelegateWithdraw
+            transactionData={transactionData}
+            requiredAddresses={requiredAddresses}
+          />
         )}
       </div>
     </div>
