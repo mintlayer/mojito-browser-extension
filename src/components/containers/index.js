@@ -20,7 +20,8 @@ import DelegationDetails from './Wallet/Delegation/DelegationDetails'
 import OrderList from './Wallet/Orders/OrderList/OrderList'
 import OrderDetails from './Wallet/Orders/OrderDetails/OrderDetails'
 
-import SendTransaction from './SendTransaction/SendTransaction'
+import SendBtcTransaction from './SendTransaction/SendBtcTransaction'
+import SendMlTransaction from './SendTransaction/SendMlTransaction'
 
 import CryptoSharesChart from './Dashboard/CryptoSharesChart'
 import Statistics from './Dashboard/Statistics'
@@ -96,7 +97,8 @@ export {
   DeleteAccount,
   Wallet,
   Login,
-  SendTransaction,
+  SendBtcTransaction,
+  SendMlTransaction,
   Dashboard,
   Settings,
   Message,

@@ -1,6 +1,6 @@
 import { render, screen, act, fireEvent } from '@testing-library/react'
 
-import SendTransaction from './SendTransaction'
+import SendBtcTransaction from './SendBtcTransaction'
 
 import {
   AccountProvider,
@@ -23,7 +23,7 @@ test('Send Transaction', async () => {
         <SettingsProvider>
           <TransactionProvider>
             <MintlayerContext.Provider value={{}}>
-              <SendTransaction
+              <SendBtcTransaction
                 transactionData={TRANSACTIONDATASAMPLE}
                 setFormValidity={() => {}}
                 calculateTotalFee={() => {}}

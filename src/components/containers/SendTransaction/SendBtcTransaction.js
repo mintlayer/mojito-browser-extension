@@ -12,10 +12,10 @@ import AddressField from './AddressField'
 import AmountField from './AmountField'
 import FeesField from './FeesField'
 
-import './SendTransaction.css'
+import './SendBtcTransaction.css'
 import { Error } from '@BasicComponents'
 
-const SendTransaction = ({
+const SendBtcTransaction = ({
   totalFeeFiat,
   totalFeeCrypto,
   setTotalFeeCrypto,
@@ -55,24 +55,8 @@ const SendTransaction = ({
   const [allowClosing, setAllowClosing] = useState(true)
   const [askPassword, setAskPassword] = useState(false)
   const [pass, setPass] = useState(null)
-  const [poolData, setPoolData] = useState(null)
-  const isBitcoinWallet = walletType.name === 'Bitcoin'
   const NC = useContext(MintlayerContext)
   const loadingExtraClasses = ['loading-big']
-
-  useEffect(() => {
-    if (
-      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
-      NC &&
-      addressTo
-    ) {
-      const fetchPoolData = async () => {
-        const poolData = await NC.getPoolsData([addressTo])
-        setPoolData(poolData)
-      }
-      fetchPoolData()
-    }
-  }, [addressTo, transactionMode, NC])
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =
     useState(false)
@@ -85,7 +69,6 @@ const SendTransaction = ({
     setPassValidity(false)
     setPass('')
     setPassErrorMessage('')
-    // setTxErrorMessage('')
     setOpenSendFundConfirmation(state)
   }
 
@@ -184,8 +167,6 @@ const SendTransaction = ({
       fee,
     })
 
-    // TODO process this when/if we will have currency switcher
-    // if (!exchangeRate) return
     if (amount.currency === transactionData.tokenName) {
       setOriginalAmount(amount.value)
       setAmountInCrypto(amount.value ? Format.BTCValue(amount.value) : '0,00')
@@ -197,6 +178,7 @@ const SendTransaction = ({
       )
       return
     }
+
     setOriginalAmount(amount.value)
     setAmountInFiat(Format.fiatValue(amount.value))
     setAmountInCrypto(
@@ -207,20 +189,7 @@ const SendTransaction = ({
   }
 
   const addressChanged = (e) => {
-    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING) {
-      setAddressTo(currentDelegationInfo.delegation_id)
-      return
-    }
     setAddressTo(e.target.value)
-
-    // trigger calculation of total fee
-    if (!isBitcoinWallet) {
-      calculateTotalFee({
-        to: e.target.value,
-        amount: NumbersHelper.floatStringToNumber(amountInCrypto),
-        fee,
-      })
-    }
   }
 
   const changePassHandle = (value) => {
@@ -228,46 +197,19 @@ const SendTransaction = ({
   }
 
   useEffect(() => {
-    if (
-      transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING &&
-      currentDelegationInfo.delegation_id
-    ) {
-      setAddressTo(currentDelegationInfo.delegation_id)
-    }
-  }, [currentDelegationInfo, transactionMode])
-
-  useEffect(() => {
-    if (
-      transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
-      preEnterAddress
-    ) {
-      setAddressTo(preEnterAddress)
-    }
-  }, [preEnterAddress, transactionMode])
-
-  useEffect(() => {
-    if (!isBitcoinWallet) setFeeValidity(true)
-    if (
-      (transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION ||
-        transactionMode === AppInfo.ML_TRANSACTION_MODES.NFT) &&
-      walletType.name === 'Mintlayer'
-    ) {
-      setAmountValidity(true)
-    }
     setFormValidity(!!(addressValidity && amountValidity && feeValidity))
   }, [
     addressValidity,
     amountValidity,
     feeValidity,
     setFormValidity,
-    isBitcoinWallet,
     transactionMode,
     walletType,
   ])
 
   useEffect(
     () => {
-      if (fee && amountInCrypto && isBitcoinWallet) {
+      if (fee && amountInCrypto) {
         calculateTotalFee({
           amount: NumbersHelper.floatStringToNumber(amountInCrypto),
           fee,
@@ -278,20 +220,6 @@ const SendTransaction = ({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [fee, amountInCrypto],
-  )
-
-  useEffect(
-    () => {
-      if (preEnterAddress) {
-        calculateTotalFee({
-          to: preEnterAddress,
-          amount: NumbersHelper.floatStringToNumber(amountInCrypto),
-          fee,
-        })
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isFormValid, amountInCrypto, fee, preEnterAddress],
   )
 
   useEffect(() => {
@@ -325,10 +253,7 @@ const SendTransaction = ({
     transactionMode,
   ])
 
-  const sendTransactionButtonTitle =
-    transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
-      ? 'Create'
-      : 'Send'
+  const sendTransactionButtonTitle = 'Send'
 
   return (
     <div className="transaction-form">
@@ -338,16 +263,6 @@ const SendTransaction = ({
         </div>
       ) : (
         <>
-          {transactionMode === AppInfo.ML_TRANSACTION_MODES.NFT && (
-            <div className="nft-transaction-info">
-              <h2>Nft Id: </h2>
-              <p>
-                {transactionData.tokenId
-                  ? transactionData.tokenId
-                  : 'No NFT id'}
-              </p>
-            </div>
-          )}
           <AddressField
             addressChanged={addressChanged}
             preEnterAddress={preEnterAddress}
@@ -357,24 +272,21 @@ const SendTransaction = ({
             walletType={walletType}
           />
 
-          {transactionMode !== AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
-            transactionMode !== AppInfo.ML_TRANSACTION_MODES.NFT && (
-              <AmountField
-                transactionData={transactionData}
-                amountChanged={amountChanged}
-                exchangeRate={exchangeRate}
-                maxValueInToken={maxValueInToken}
-                setAmountValidity={setAmountValidity}
-                errorMessage={passErrorMessage}
-                totalFeeInCrypto={totalFeeCrypto}
-                transactionMode={transactionMode}
-              />
-            )}
+          <AmountField
+            transactionData={transactionData}
+            amountChanged={amountChanged}
+            exchangeRate={exchangeRate}
+            maxValueInToken={maxValueInToken}
+            setAmountValidity={setAmountValidity}
+            errorMessage={passErrorMessage}
+            totalFeeInCrypto={totalFeeCrypto}
+            transactionMode={transactionMode}
+          />
 
           {/* TODO style error from transaction */}
           <FeesField
             feeChanged={feeChanged}
-            value={isBitcoinWallet ? 'norm' : totalFeeCrypto}
+            value={'norm'}
             setFeeValidity={setFeeValidity}
             walletType={walletType}
           />
@@ -428,7 +340,6 @@ const SendTransaction = ({
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
                 walletType={walletType}
-                poolData={poolData}
               ></SendTransactionConfirmation>
             ) : feeLoading ? (
               <div className="loading-center">
@@ -457,18 +368,9 @@ const SendTransaction = ({
             <VerticalGroup bigGap>
               <h2>Your transaction was sent.</h2>
               <h3 className="result-title">Txid: {transactionTxid}</h3>
-              {transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW && (
-                <p>
-                  {
-                    'Your unstaked tokens will be available to use after cooling period (7,200 blocks or ~10 days)'
-                  }
-                </p>
-              )}
               <CenteredLayout>
                 <Button onClickHandle={goBackToWallet}>
-                  {transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
-                    ? 'Go to Staking'
-                    : 'Back to Dashboard'}
+                  Back to Dashboard
                 </Button>
               </CenteredLayout>
             </VerticalGroup>
@@ -479,4 +381,4 @@ const SendTransaction = ({
   )
 }
 
-export default SendTransaction
+export default SendBtcTransaction

@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { SendTransaction } from '@ContainerComponents'
+import { SendBtcTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
 import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
@@ -18,9 +18,9 @@ import { AppInfo } from '@Constants'
 import { MLTransaction, ML as MLHelpers } from '@Helpers'
 import { ML } from '@Cryptos'
 
-import './SendTransaction.css'
+import './SendBtcTransaction.css'
 
-const SendTransactionPage = () => {
+const SendBtcTransactionPage = () => {
   const { addresses, accountID } = useContext(AccountContext)
 
   const { coinType } = useParams()
@@ -257,7 +257,7 @@ const SendTransactionPage = () => {
     <>
       <div className="page">
         <VerticalGroup smallGap>
-          <SendTransaction
+          <SendBtcTransaction
             totalFeeFiat={totalFeeFiat}
             totalFeeCrypto={totalFeeCrypto}
             setTotalFeeCrypto={setTotalFeeCrypto}
@@ -287,4 +287,4 @@ const SendTransactionPage = () => {
   )
 }
 
-export default SendTransactionPage
+export default SendBtcTransactionPage

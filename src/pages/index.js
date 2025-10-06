@@ -5,7 +5,8 @@ import LoginPage from './Login/Login'
 import SetAccountPasswordPage from './Login/SetAccountPassword'
 import RestoreAccountPage from './RestoreAccount/RestoreAccount'
 import WalletPage from './Wallet/Wallet'
-import SendTransactionPage from './SendTransaction/SendTransaction'
+import SendBtcTransactionPage from './SendBtcTransaction/SendBtcTransaction'
+import SendMlTransactionPage from './SendMlTransaction/SendMlTransaction'
 import DashboardPage from './Dashboard/Dashboard'
 import SettingsPage from './Settings/Settings'
 import StakingPage from './Staking/Staking'
@@ -30,7 +31,8 @@ export {
   SetAccountPasswordPage,
   RestoreAccountPage,
   WalletPage,
-  SendTransactionPage,
+  SendBtcTransactionPage,
+  SendMlTransactionPage,
   DashboardPage,
   SettingsPage,
   StakingPage,

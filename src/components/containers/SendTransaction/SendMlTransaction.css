@@ -1,0 +1,72 @@
+.form-field {
+  display: flex;
+  flex-direction: row;
+  height: 7.6rem;
+}
+
+.form-field .address-field {
+  font-size: 1.4rem;
+}
+
+.form-field input {
+  height: 3rem;
+}
+
+.form-field button {
+  height: 3.75rem;
+}
+
+.form-field label {
+  font-size: 1.5rem;
+}
+
+.form-field > * {
+  align-self: center;
+}
+
+.form-field > *:first-child {
+  width: 9rem;
+}
+
+.form-field:nth-child(2) > *:first-child,
+.form-field:nth-child(3) > *:first-child {
+  align-self: unset;
+  margin-top: 1.75rem;
+}
+
+.send-transaction-button {
+  margin-top: 0.8rem;
+}
+
+.transaction-form input.invalid,
+.transaction-form input.valid {
+  padding: 1.8rem 1.685rem;
+}
+
+.result-title {
+  word-wrap: break-word;
+}
+
+.loading-text {
+  font-size: 24px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.nft-transaction-info {
+  display: flex;
+  align-items: center;
+  gap: 3.4rem;
+  margin: 15px 0;
+}
+
+.nft-transaction-info h2 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  min-width: max-content;
+}
+
+.nft-transaction-info p {
+  font-size: 1.4rem;
+  word-break: break-all;
+}

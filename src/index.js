@@ -21,7 +21,8 @@ import {
   WalletPage,
   SetAccountPasswordPage,
   CreateRestorePage,
-  SendTransactionPage,
+  SendBtcTransactionPage,
+  SendMlTransactionPage,
   DashboardPage,
   SettingsPage,
   StakingPage,
@@ -121,9 +122,11 @@ const App = () => {
           network: networkType,
           accountProvider: new InMemoryAccountProvider(
             {
-              testnet: {
-                receiving: currentMlAddresses.mlReceivingAddresses || [],
-                change: currentMlAddresses.mlChangeAddresses || [],
+              addressesByChain: {
+                mintlayer: {
+                  receiving: currentMlAddresses.mlReceivingAddresses || [],
+                  change: currentMlAddresses.mlChangeAddresses || [],
+                },
               },
             },
             navigate,
@@ -327,8 +330,12 @@ const App = () => {
           element={<WalletPage />}
         />
         <Route
-          path="/wallet/:coinType/send-transaction"
-          element={<SendTransactionPage />}
+          path="/wallet/:coinType/send-btc-transaction"
+          element={<SendBtcTransactionPage />}
+        />
+        <Route
+          path="/wallet/:coinType/send-ml-transaction"
+          element={<SendMlTransactionPage />}
         />
         <Route
           path="/wallet/:coinType/staking"
