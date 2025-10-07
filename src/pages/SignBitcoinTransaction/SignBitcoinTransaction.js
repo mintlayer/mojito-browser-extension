@@ -8,6 +8,7 @@ import { SignTransaction } from '@ContainerComponents'
 import './SignBitcoinTransaction.css'
 import { useState, useContext, useEffect } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
+import * as bitcoin from 'bitcoinjs-lib'
 
 import { AppInfo } from '@Constants'
 import { Account } from '@Entities'
@@ -28,6 +29,45 @@ const runtime =
     : typeof chrome !== 'undefined' && chrome.runtime
       ? chrome.runtime
       : null
+
+function parseSecretHashFromRedeemScript(redeemScriptHex) {
+  // Decompile the redeem script hex into chunks
+  const chunks = bitcoin.script.decompile(Buffer.from(redeemScriptHex, 'hex'))
+  if (!chunks) throw new Error('Invalid redeemScript')
+
+  // HTLC script structure:
+  // OP_IF
+  //   OP_HASH160
+  //   <secretHash>        <- This is at index 2
+  //   OP_EQUALVERIFY
+  //   <receiverPubKey>
+  // OP_ELSE
+  //   <lockBlockCount>
+  //   OP_CHECKSEQUENCEVERIFY
+  //   OP_DROP
+  //   <senderPubKey>
+  // OP_ENDIF
+  // OP_CHECKSIG
+
+  // Verify the script starts with OP_IF and has OP_HASH160
+  if (chunks[0] !== bitcoin.opcodes.OP_IF) {
+    throw new Error('Invalid HTLC script: does not start with OP_IF')
+  }
+
+  if (chunks[1] !== bitcoin.opcodes.OP_HASH160) {
+    throw new Error('Invalid HTLC script: OP_HASH160 not found at expected position')
+  }
+
+  // The secret hash should be at index 2
+  const secretHashChunk = chunks[2]
+
+  if (!Buffer.isBuffer(secretHashChunk)) {
+    throw new Error('Secret hash not found at expected position in redeemScript')
+  }
+
+  // Convert the secret hash buffer to hex string
+  return secretHashChunk.toString('hex')
+}
 
 export const SignBitcoinTransactionPage = () => {
   const { state: external_state } = useLocation()
@@ -235,15 +275,24 @@ export const SignBitcoinTransactionPage = () => {
 
     const { WIF } = await Account.unlockAccount(accountID, pass)
 
+    // Parse secret hash from redeem script as fallback
+    const secretHashFromRedeemScript = parseSecretHashFromRedeemScript(
+      transactionJSONrepresentation.redeemScriptHex,
+    )
+
+    console.log('secretHashFromRedeemScript', secretHashFromRedeemScript)
+
     // Try to retrieve previously saved secret for HTLC spend transactions
     let secretPresaved = null
-    if (isHTLCSpendTx && transactionJSONrepresentation.utxo?.secretHash) {
+    if (isHTLCSpendTx) {
       try {
-        const secretHash =
-          typeof transactionJSONrepresentation.utxo.secretHash === 'string'
+        // Use secret hash from utxo if available, otherwise use parsed from redeem script
+        const secretHash = transactionJSONrepresentation.utxo?.secretHash
+          ? typeof transactionJSONrepresentation.utxo.secretHash === 'string'
             ? JSON.parse(transactionJSONrepresentation.utxo.secretHash)
                 .secret_hash_hex
             : transactionJSONrepresentation.utxo.secretHash.secret_hash_hex
+          : secretHashFromRedeemScript
 
         secretPresaved = await Account.unlockHtlsSecret({
           accountId: accountID,

@@ -479,7 +479,10 @@ export function getTransactionHEX(
     (input, index) => {
       if (input?.utxo?.htlc) {
         console.log('htlc')
-        if (secret) {
+        const spend_address = input?.utxo?.htlc?.spend_key
+        const refund_address = input?.utxo?.htlc?.refund_key
+
+        if (secret && addressesPrivateKeys[spend_address]) {
           const address = input?.utxo?.htlc?.spend_key
           const addressPrivateKey = addressesPrivateKeys[address]
 
@@ -503,7 +506,7 @@ export function getTransactionHEX(
             network,
           )
           return witness
-        } else {
+        } else if(addressesPrivateKeys[refund_address]) {
           console.log('Build refund TX')
 
           const address = input?.utxo?.htlc?.refund_key
@@ -527,6 +530,8 @@ export function getTransactionHEX(
           )
 
           return witness
+        } else {
+          return null
         }
       } else {
         console.log('not detected htlc')
