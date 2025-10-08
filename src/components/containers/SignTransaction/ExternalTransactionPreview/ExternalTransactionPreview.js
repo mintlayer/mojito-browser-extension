@@ -88,13 +88,17 @@ const EstimatedChanges = ({ action }) => {
   )
 }
 
-const RequestDetails = ({ transactionData }) => {
+const RequestDetails = ({ transactionData, className = '', showId = true }) => {
   return (
-    <div className="signTxSection">
+    <div className={`signTxSection ${className}`}>
       <h4>Request from:</h4>
       <p>{transactionData.origin}</p>
-      <h4>Request id:</h4>
-      <p>{transactionData.requestId}</p>
+      {showId && (
+        <>
+          <h4>Request id:</h4>
+          <p>{transactionData.requestId}</p>
+        </>
+      )}
     </div>
   )
 }
@@ -385,31 +389,66 @@ const IssueToken = ({ transactionData }) => {
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'IssueFungibleToken',
   )
+  const fee = JSONRepresentation.fee ? JSONRepresentation.fee.decimal : 1
+  const tickerString = outputWithCreateOrder?.token_ticker?.string
+  const supplyType = outputWithCreateOrder?.total_supply?.type
+  const fixedSupplyAmount = outputWithCreateOrder?.total_supply?.amount?.decimal
   return (
     <div className="transactionDetails">
-      <EstimatedChanges action="Issue token" />
-      <div className="signTxSection">
-        <h4>Authority:</h4>
-        <p>{outputWithCreateOrder.authority}</p>
-        <h4>Freezable:</h4>
-        <p>{outputWithCreateOrder.is_freezable ? 'True' : 'False'}</p>
-        <h4>Metadata:</h4>
-        <p>Hex: {outputWithCreateOrder.metadata_uri.hex}</p>
-        <p>String: {outputWithCreateOrder.metadata_uri.string}</p>
-        <h4>Number of decimals:</h4>
-        <p>{outputWithCreateOrder.number_of_decimals}</p>
-        <h4>Token ticker:</h4>
-        <p>Hex: {outputWithCreateOrder.token_ticker.hex}</p>
-        <p>String: {outputWithCreateOrder.token_ticker.string}</p>
-        <h4>Supply type:</h4>
-        <p>{outputWithCreateOrder.total_supply.type}</p>
-        {outputWithCreateOrder.total_supply?.amount?.decimal && (
-          <>
-            <h4>Total supply:</h4>
-            <p>{outputWithCreateOrder.total_supply.amount.decimal}</p>
-          </>
-        )}
+      <div className="signTxSection issuetoken-assets">
+        <h4>Asset changes:</h4>
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">ML</span>
+          <span className="issuetoken-asset-delta negative">-{fee}</span>
+        </div>
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">{tickerString || 'Token'}</span>
+          <span className="issuetoken-asset-delta positive">
+            {supplyType === 'Fixed' && fixedSupplyAmount ? `+${fixedSupplyAmount}` : 'Created'}
+          </span>
+        </div>
       </div>
+      <div className="signTxSection issuetoken-network">
+        <div className="network-row">
+          <h4>Network:</h4>
+          <span className="network-value"><img src="/logo32.png" alt="Mintlayer" className="ml-logo-img" /> Mintlayer</span>
+        </div>
+        <div className="network-row">
+          <h4>Network fee:</h4>
+          <span className="network-value">{fee} ML</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const IssueTokenAdvancedDetails = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const outputWithCreateOrder = JSONRepresentation.outputs.find(
+    (output) => output.type === 'IssueFungibleToken',
+  )
+  return (
+    <div className="issuetoken-advanced-grid">
+      <h4>Authority:</h4>
+      <p>{outputWithCreateOrder.authority}</p>
+      <h4>Freezable:</h4>
+      <p>{outputWithCreateOrder.is_freezable ? 'True' : 'False'}</p>
+      <h4>Metadata:</h4>
+      <p>Hex: {outputWithCreateOrder.metadata_uri.hex}</p>
+      <p>String: {outputWithCreateOrder.metadata_uri.string}</p>
+      <h4>Number of decimals:</h4>
+      <p>{outputWithCreateOrder.number_of_decimals}</p>
+      <h4>Token ticker:</h4>
+      <p>Hex: {outputWithCreateOrder.token_ticker.hex}</p>
+      <p>String: {outputWithCreateOrder.token_ticker.string}</p>
+      <h4>Supply type:</h4>
+      <p>{outputWithCreateOrder.total_supply.type}</p>
+      {outputWithCreateOrder.total_supply?.amount?.decimal && (
+        <>
+          <h4>Total supply:</h4>
+          <p>{outputWithCreateOrder.total_supply.amount.decimal}</p>
+        </>
+      )}
     </div>
   )
 }
@@ -674,6 +713,7 @@ const SummaryView = ({ data }) => {
   const { flags, transactionData } = SignTxHelpers.getTransactionDetails(data)
   const { addresses } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
+  const [isAdvancedOpen, setIsAdvancedOpen] = React.useState(false)
 
   const requiredAddresses =
     networkType === 'mainnet'
@@ -681,9 +721,13 @@ const SummaryView = ({ data }) => {
       : addresses.mlTestnetAddresses.mlChangeAddresses
 
   return (
-    <div className="preview-section summary">
+    <div className={`preview-section summary ${flags.isIssueToken ? 'issuetoken' : ''}`}>
       <div className="preview-section-header">
-        <h3>Transaction Preview</h3>
+        {flags.isIssueToken ? (
+          <p className="preview-hint">Balance changes are estimates. Amounts and affected assets are not guaranteed.</p>
+        ) : (
+          <h3>Transaction Preview</h3>
+        )}
       </div>
       <div>
         {flags.isTransfer && (
@@ -825,9 +869,31 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-
-        <NetworkFee transactionData={transactionData} />
-        <RequestDetails transactionData={transactionData} />
+        {flags.isIssueToken ? (
+          <>
+            <RequestDetails transactionData={transactionData} className="request-details" showId={false} />
+            <div className="signTxSection issuetoken-advanced-cta">
+              <p className="issuetoken-trust">Confirm only if you trust this site.</p>
+              <button
+                type="button"
+                className="issuetoken-adv-toggle"
+                onClick={() => setIsAdvancedOpen((o) => !o)}
+              >
+                {isAdvancedOpen ? 'Hide details' : 'Additional details'}
+              </button>
+            </div>
+            <div className="signTxSection issuetoken-advanced" style={{ display: isAdvancedOpen ? 'flex' : 'none' }}>
+              <IssueTokenAdvancedDetails transactionData={transactionData} />
+              <h4>Request id:</h4>
+              <p>{transactionData.requestId}</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <NetworkFee transactionData={transactionData} />
+            <RequestDetails transactionData={transactionData} />
+          </>
+        )}
       </div>
     </div>
   )
