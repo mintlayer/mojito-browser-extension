@@ -111,12 +111,12 @@ const RequestDetails = ({
         </>
       ) : (
         <>
-          <h4>Request from:</h4>
-          <p>{transactionData.origin}</p>
+      <h4>Request from:</h4>
+      <p>{transactionData.origin}</p>
           {showId && (
             <>
-              <h4>Request id:</h4>
-              <p>{transactionData.requestId}</p>
+      <h4>Request id:</h4>
+      <p>{transactionData.requestId}</p>
             </>
           )}
         </>
@@ -380,26 +380,51 @@ const CreateOrder = ({ transactionData }) => {
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateOrder',
   )
-  // TODO: double check the data structure with final transaction
+  const fee = JSONRepresentation.fee?.decimal
+
+  const askCurrency = outputWithCreateOrder?.ask_currency?.type
+  const giveBalance = outputWithCreateOrder?.give_balance?.decimal
+  const giveCurrencyType = outputWithCreateOrder?.give_currency?.type
+  const giveTokenId = outputWithCreateOrder?.give_currency?.token_id
+  const initiallyAsked = outputWithCreateOrder?.initially_asked?.decimal
+  const initiallyGiven = outputWithCreateOrder?.initially_given?.decimal
+  const destination = outputWithCreateOrder?.conclude_destination
+
+  const giveCurrencyLabel =
+    giveCurrencyType === 'TokenV1'
+      ? `Token (${giveTokenId})`
+      : giveCurrencyType === 'Coin'
+        ? 'ML'
+        : giveCurrencyType || 'Unknown'
+
   return (
     <div className="transactionDetails">
-      <EstimatedChanges action="Create order" />
-      <div className="signTxSection">
-        <h4>Ask balance:</h4>
-        <p>{outputWithCreateOrder.ask_balance.decimal}</p>
-        <h4>Ask currency:</h4>
-        <p>{outputWithCreateOrder.ask_currency.type}</p>
-        <h4>Destination:</h4>
-        <p>{outputWithCreateOrder.conclude_destination}</p>
-        <h4>Give balance:</h4>
-        <p>{outputWithCreateOrder.give_balance.decimal}</p>
-        <h4>Give currency:</h4>
-        <p>Token id: {outputWithCreateOrder.give_currency.token_id}</p>
-        <p>type: {outputWithCreateOrder.give_currency.type}</p>
-        <h4>Initially asked:</h4>
-        <p>{outputWithCreateOrder.initially_asked.decimal}</p>
-        <h4>Initially given:</h4>
-        <p>{outputWithCreateOrder.initially_given.decimal}</p>
+      <div className="signTxSection issuetoken-assets">
+        <h4>Asset changes:</h4>
+        {fee !== undefined && (
+          <div className="issuetoken-asset-row">
+            <span className="issuetoken-asset-name">ML</span>
+            <span className="issuetoken-asset-delta negative">-{fee}</span>
+          </div>
+        )}
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">Locked in order</span>
+          <span className="issuetoken-asset-delta neutral">{giveBalance} {giveCurrencyLabel}</span>
+        </div>
+        <p className="order-hint">These tokens will be temporarily locked until the order is executed or canceled.</p>
+        <div className="order-subrows">
+          <div className="network-row"><h4>Ask currency:</h4><span className="network-value">{askCurrency === 'Coin' ? 'ML' : askCurrency}</span></div>
+          <div className="network-row"><h4>Give currency:</h4><span className="network-value">{giveCurrencyLabel}</span></div>
+          <div className="network-row"><h4>Destination:</h4><span className="network-value" style={{ wordBreak: 'break-all' }}>{destination}</span></div>
+          <div className="network-row"><h4>Initially asked:</h4><span className="network-value">{initiallyAsked}</span></div>
+          <div className="network-row"><h4>Initially given:</h4><span className="network-value">{initiallyGiven}</span></div>
+        </div>
+      </div>
+      <div className="signTxSection issuetoken-network">
+        <div className="network-row"><h4>Network:</h4><span className="network-value"><img src="/logo32.png" alt="" className="ml-logo-img" /> Mintlayer</span></div>
+        {fee !== undefined && (
+          <div className="network-row"><h4>Network fee:</h4><span className="network-value">{fee} ML</span></div>
+        )}
       </div>
     </div>
   )
@@ -459,26 +484,26 @@ const IssueTokenAdvancedDetails = ({ transactionData }) => {
   )
   return (
     <div className="issuetoken-advanced-grid">
-      <h4>Authority:</h4>
-      <p>{outputWithCreateOrder.authority}</p>
-      <h4>Freezable:</h4>
-      <p>{outputWithCreateOrder.is_freezable ? 'True' : 'False'}</p>
-      <h4>Metadata:</h4>
-      <p>Hex: {outputWithCreateOrder.metadata_uri.hex}</p>
-      <p>String: {outputWithCreateOrder.metadata_uri.string}</p>
-      <h4>Number of decimals:</h4>
-      <p>{outputWithCreateOrder.number_of_decimals}</p>
-      <h4>Token ticker:</h4>
-      <p>Hex: {outputWithCreateOrder.token_ticker.hex}</p>
-      <p>String: {outputWithCreateOrder.token_ticker.string}</p>
-      <h4>Supply type:</h4>
-      <p>{outputWithCreateOrder.total_supply.type}</p>
-      {outputWithCreateOrder.total_supply?.amount?.decimal && (
-        <>
-          <h4>Total supply:</h4>
-          <p>{outputWithCreateOrder.total_supply.amount.decimal}</p>
-        </>
-      )}
+        <h4>Authority:</h4>
+        <p>{outputWithCreateOrder.authority}</p>
+        <h4>Freezable:</h4>
+        <p>{outputWithCreateOrder.is_freezable ? 'True' : 'False'}</p>
+        <h4>Metadata:</h4>
+        <p>Hex: {outputWithCreateOrder.metadata_uri.hex}</p>
+        <p>String: {outputWithCreateOrder.metadata_uri.string}</p>
+        <h4>Number of decimals:</h4>
+        <p>{outputWithCreateOrder.number_of_decimals}</p>
+        <h4>Token ticker:</h4>
+        <p>Hex: {outputWithCreateOrder.token_ticker.hex}</p>
+        <p>String: {outputWithCreateOrder.token_ticker.string}</p>
+        <h4>Supply type:</h4>
+        <p>{outputWithCreateOrder.total_supply.type}</p>
+        {outputWithCreateOrder.total_supply?.amount?.decimal && (
+          <>
+            <h4>Total supply:</h4>
+            <p>{outputWithCreateOrder.total_supply.amount.decimal}</p>
+          </>
+        )}
     </div>
   )
 }
@@ -720,10 +745,10 @@ const TokenMintAdvancedDetails = ({ transactionData }) => {
   )
   return (
     <>
-      <h4>Token id:</h4>
-      <p>{inputWithMint.input.token_id}</p>
-      <h4>Amount:</h4>
-      <p>{inputWithMint.input.amount.decimal}</p>
+        <h4>Token id:</h4>
+        <p>{inputWithMint.input.token_id}</p>
+        <h4>Amount:</h4>
+        <p>{inputWithMint.input.amount.decimal}</p>
     </>
   )
 }
@@ -769,10 +794,10 @@ const TokenUnmintAdvancedDetails = ({ transactionData }) => {
   )
   return (
     <>
-      <h4>Token id:</h4>
-      <p>{inputWithUnmint.input.token_id}</p>
-      <h4>Amount:</h4>
-      <p>{inputWithUnmint.input.amount.decimal}</p>
+        <h4>Token id:</h4>
+        <p>{inputWithUnmint.input.token_id}</p>
+        <h4>Amount:</h4>
+        <p>{inputWithUnmint.input.amount.decimal}</p>
     </>
   )
 }
@@ -838,24 +863,24 @@ const TokenMintWithLockAdvancedDetails = ({ transactionData }) => {
   )
   return (
     <>
-      <h4>Destination:</h4>
-      <p>{outputWithLock.destination}</p>
-      <h4>Amount:</h4>
-      <p>{outputWithLock.value.amount.decimal}</p>
-      {outputWithLock.value.token_id && (
-        <>
-          <h4>Token id:</h4>
-          <p>{outputWithLock.value.token_id}</p>
-        </>
-      )}
-      <h4>Lock type:</h4>
-      <p>{outputWithLock.lock.type}</p>
-      {outputWithLock.lock.content && (
-        <>
-          <h4>Lock details:</h4>
-          <p>{JSON.stringify(outputWithLock.lock.content)}</p>
-        </>
-      )}
+        <h4>Destination:</h4>
+        <p>{outputWithLock.destination}</p>
+        <h4>Amount:</h4>
+        <p>{outputWithLock.value.amount.decimal}</p>
+        {outputWithLock.value.token_id && (
+          <>
+            <h4>Token id:</h4>
+            <p>{outputWithLock.value.token_id}</p>
+          </>
+        )}
+        <h4>Lock type:</h4>
+        <p>{outputWithLock.lock.type}</p>
+        {outputWithLock.lock.content && (
+          <>
+            <h4>Lock details:</h4>
+            <p>{JSON.stringify(outputWithLock.lock.content)}</p>
+          </>
+        )}
     </>
   )
 }
@@ -874,17 +899,17 @@ const SummaryView = ({ data }) => {
   return (
     <div
       className={`preview-section summary ${
-        flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint ? 'issuetoken' : ''
+        flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder ? 'issuetoken' : ''
       }`}
     >
       <div className="preview-section-header">
-        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint ? (
+        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder ? (
           <p className="preview-hint">
             Balance changes are estimates. Amounts and affected assets are not
             guaranteed.
           </p>
         ) : (
-          <h3>Transaction Preview</h3>
+        <h3>Transaction Preview</h3>
         )}
       </div>
       <div>
@@ -1027,7 +1052,7 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock ? (
+        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder ? (
           <>
             <RequestDetails
               transactionData={transactionData}
@@ -1063,14 +1088,24 @@ const SummaryView = ({ data }) => {
               {flags.isTokenMintWithLock && (
                 <TokenMintWithLockAdvancedDetails transactionData={transactionData} />
               )}
-              <h4>Request id:</h4>
-              <p>{transactionData.requestId}</p>
+              {flags.isCreateOrder && (
+                <>
+                  <h4>Request id:</h4>
+                  <p>{transactionData.requestId}</p>
+                </>
+              )}
+              {!flags.isCreateOrder && (
+                <>
+                  <h4>Request id:</h4>
+                  <p>{transactionData.requestId}</p>
+                </>
+              )}
             </div>
           </>
         ) : (
           <>
-            <NetworkFee transactionData={transactionData} />
-            <RequestDetails transactionData={transactionData} />
+        <NetworkFee transactionData={transactionData} />
+        <RequestDetails transactionData={transactionData} />
           </>
         )}
       </div>
