@@ -88,15 +88,37 @@ const EstimatedChanges = ({ action }) => {
   )
 }
 
-const RequestDetails = ({ transactionData, className = '', showId = true }) => {
+const RequestDetails = ({
+  transactionData,
+  className = '',
+  showId = true,
+  oneLine = false,
+}) => {
   return (
     <div className={`signTxSection ${className}`}>
-      <h4>Request from:</h4>
-      <p>{transactionData.origin}</p>
-      {showId && (
+      {oneLine ? (
         <>
-          <h4>Request id:</h4>
-          <p>{transactionData.requestId}</p>
+          <div className="inline-row">
+            <h4>Request from:</h4>
+            <p className="inline-value">{transactionData.origin}</p>
+          </div>
+          {showId && (
+            <div className="inline-row">
+              <h4>Request id:</h4>
+              <p className="inline-value">{transactionData.requestId}</p>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <h4>Request from:</h4>
+          <p>{transactionData.origin}</p>
+          {showId && (
+            <>
+              <h4>Request id:</h4>
+              <p>{transactionData.requestId}</p>
+            </>
+          )}
         </>
       )}
     </div>
@@ -402,16 +424,31 @@ const IssueToken = ({ transactionData }) => {
           <span className="issuetoken-asset-delta negative">-{fee}</span>
         </div>
         <div className="issuetoken-asset-row">
-          <span className="issuetoken-asset-name">{tickerString || 'Token'}</span>
-          <span className="issuetoken-asset-delta positive">
-            {supplyType === 'Fixed' && fixedSupplyAmount ? `+${fixedSupplyAmount}` : 'Created'}
+          <span className="issuetoken-asset-name">
+            {tickerString || 'Token'}
           </span>
+          <span className="issuetoken-asset-delta positive">Created</span>
         </div>
+        {supplyType === 'Fixed' && fixedSupplyAmount && (
+          <div className="issuetoken-asset-row">
+            <span className="issuetoken-asset-name">Fixed supply</span>
+            <span className="issuetoken-asset-delta neutral">
+              {fixedSupplyAmount}
+            </span>
+          </div>
+        )}
       </div>
       <div className="signTxSection issuetoken-network">
         <div className="network-row">
           <h4>Network:</h4>
-          <span className="network-value"><img src="/logo32.png" alt="Mintlayer" className="ml-logo-img" /> Mintlayer</span>
+          <span className="network-value">
+            <img
+              src="/logo32.png"
+              alt="Mintlayer"
+              className="ml-logo-img"
+            />{' '}
+            Mintlayer
+          </span>
         </div>
         <div className="network-row">
           <h4>Network fee:</h4>
@@ -644,16 +681,57 @@ const TokenMint = ({ transactionData, requiredAddresses }) => {
   const inputWithMint = JSONRepresentation.inputs.find(
     (input) => input.input.command === 'MintTokens',
   )
+  const fee = JSONRepresentation.fee ? JSONRepresentation.fee.decimal : 1
   return (
     <div className="transactionDetails">
-      <EstimatedChanges action="Mint tokens" />
-      <div className="signTxSection">
-        <h4>Token id:</h4>
-        <p>{inputWithMint.input.token_id}</p>
-        <h4>Amount:</h4>
-        <p>{inputWithMint.input.amount.decimal}</p>
+      <div className="signTxSection issuetoken-assets">
+        <h4>Asset changes:</h4>
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">ML</span>
+          <span className="issuetoken-asset-delta negative">-{fee}</span>
+        </div>
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">
+            {inputWithMint.input.token_id}
+          </span>
+          <span className="issuetoken-asset-delta positive">
+            +{inputWithMint.input.amount.decimal}
+          </span>
+        </div>
+      </div>
+      <div className="signTxSection issuetoken-network">
+        <div className="network-row">
+          <h4>Network:</h4>
+          <span className="network-value">
+            <img
+              src="/logo32.png"
+              alt="Mintlayer"
+              className="ml-logo-img"
+            />{' '}
+            Mintlayer
+          </span>
+        </div>
+        <div className="network-row">
+          <h4>Network fee:</h4>
+          <span className="network-value">{fee} ML</span>
+        </div>
       </div>
     </div>
+  )
+}
+
+const TokenMintAdvancedDetails = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const inputWithMint = JSONRepresentation.inputs.find(
+    (input) => input.input.command === 'MintTokens',
+  )
+  return (
+    <>
+      <h4>Token id:</h4>
+      <p>{inputWithMint.input.token_id}</p>
+      <h4>Amount:</h4>
+      <p>{inputWithMint.input.amount.decimal}</p>
+    </>
   )
 }
 
@@ -721,10 +799,15 @@ const SummaryView = ({ data }) => {
       : addresses.mlTestnetAddresses.mlChangeAddresses
 
   return (
-    <div className={`preview-section summary ${flags.isIssueToken ? 'issuetoken' : ''}`}>
+    <div
+      className={`preview-section summary ${flags.isIssueToken || flags.isTokenMint ? 'issuetoken' : ''}`}
+    >
       <div className="preview-section-header">
-        {flags.isIssueToken ? (
-          <p className="preview-hint">Balance changes are estimates. Amounts and affected assets are not guaranteed.</p>
+        {flags.isIssueToken || flags.isTokenMint ? (
+          <p className="preview-hint">
+            Balance changes are estimates. Amounts and affected assets are not
+            guaranteed.
+          </p>
         ) : (
           <h3>Transaction Preview</h3>
         )}
@@ -869,11 +952,18 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-        {flags.isIssueToken ? (
+        {flags.isIssueToken || flags.isTokenMint ? (
           <>
-            <RequestDetails transactionData={transactionData} className="request-details" showId={false} />
+            <RequestDetails
+              transactionData={transactionData}
+              className="request-details"
+              showId={false}
+              oneLine
+            />
             <div className="signTxSection issuetoken-advanced-cta">
-              <p className="issuetoken-trust">Confirm only if you trust this site.</p>
+              <p className="issuetoken-trust">
+                Confirm only if you trust this site.
+              </p>
               <button
                 type="button"
                 className="issuetoken-adv-toggle"
@@ -882,8 +972,16 @@ const SummaryView = ({ data }) => {
                 {isAdvancedOpen ? 'Hide details' : 'Additional details'}
               </button>
             </div>
-            <div className="signTxSection issuetoken-advanced" style={{ display: isAdvancedOpen ? 'flex' : 'none' }}>
-              <IssueTokenAdvancedDetails transactionData={transactionData} />
+            <div
+              className="signTxSection issuetoken-advanced"
+              style={{ display: isAdvancedOpen ? 'flex' : 'none' }}
+            >
+              {flags.isIssueToken && (
+                <IssueTokenAdvancedDetails transactionData={transactionData} />
+              )}
+              {flags.isTokenMint && (
+                <TokenMintAdvancedDetails transactionData={transactionData} />
+              )}
               <h4>Request id:</h4>
               <p>{transactionData.requestId}</p>
             </div>

@@ -164,6 +164,10 @@
   color: #dc2626;
 }
 
+.issuetoken-asset-delta.neutral {
+  color: #2d3748;
+}
+
 .issuetoken-advanced {
   gap: 12px;
   display: none;
@@ -183,21 +187,53 @@
   gap: 8px;
 }
 
-.issuetoken-advanced[data-open="true"] { display: flex; flex-direction: column; }
+.issuetoken-advanced[data-open='true'] {
+  display: flex;
+  flex-direction: column;
+}
 
-.issuetoken-advanced-cta { display: flex; flex-direction: column; gap: 8px; }
+.issuetoken-advanced-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 /* Compact request details for #7 */
-.preview-section.issuetoken .request-details { padding: 12px; gap: 8px; }
+.preview-section.issuetoken .request-details {
+  padding: 20px;
+  gap: 8px;
+}
 
-.issuetoken-network .network-row { display: flex; justify-content: space-between; align-items: center; }
-.issuetoken-network .network-value { display: inline-flex; align-items: center; gap: 6px; }
+.issuetoken-network .network-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.issuetoken-network .network-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 
-.ml-logo-img { width: 16px; height: 16px; border-radius: 4px; }
+.ml-logo-img {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
 
 .issuetoken-trust {
   color: #718096;
   font-size: 12px;
+}
+
+/* Inline label-value rows to align like Asset changes */
+.inline-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.inline-row .inline-value {
+  text-align: right;
 }
 
 /* reverted custom IssueToken header/details styles removed */
