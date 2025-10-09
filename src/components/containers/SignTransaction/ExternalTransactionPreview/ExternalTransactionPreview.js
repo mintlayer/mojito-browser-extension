@@ -441,14 +441,7 @@ const IssueToken = ({ transactionData }) => {
       <div className="signTxSection issuetoken-network">
         <div className="network-row">
           <h4>Network:</h4>
-          <span className="network-value">
-            <img
-              src="/logo32.png"
-              alt="Mintlayer"
-              className="ml-logo-img"
-            />{' '}
-            Mintlayer
-          </span>
+          <span className="network-value"><img src="/logo32.png" alt="" className="ml-logo-img" /> Mintlayer</span>
         </div>
         <div className="network-row">
           <h4>Network fee:</h4>
@@ -705,7 +698,7 @@ const TokenMint = ({ transactionData, requiredAddresses }) => {
           <span className="network-value">
             <img
               src="/logo32.png"
-              alt="Mintlayer"
+              alt=""
               className="ml-logo-img"
             />{' '}
             Mintlayer
@@ -758,7 +751,7 @@ const TokenUnmint = ({ transactionData, requiredAddresses }) => {
       <div className="signTxSection issuetoken-network">
         <div className="network-row">
           <h4>Network:</h4>
-          <span className="network-value"><img src="/logo32.png" alt="Mintlayer" className="ml-logo-img" /> Mintlayer</span>
+          <span className="network-value"><img src="/logo32.png" alt="" className="ml-logo-img" /> Mintlayer</span>
         </div>
         <div className="network-row">
           <h4>Network fee:</h4>
@@ -790,30 +783,80 @@ const TokenMintWithLock = ({ transactionData, requiredAddresses }) => {
   const outputWithLock = JSONRepresentation.outputs.find(
     (output) => output.type === 'LockThenTransfer',
   )
+  const fee = JSONRepresentation.fee?.decimal
+  const tokenId = outputWithLock?.value?.token_id || 'Token'
+  const lockOutputs = JSONRepresentation.outputs.filter(
+    (o) => o.type === 'LockThenTransfer',
+  )
+  const totalLocked = lockOutputs.reduce((acc, o) => {
+    const v = Number(o?.value?.amount?.decimal || 0)
+    return acc + (isNaN(v) ? 0 : v)
+  }, 0)
   return (
     <div className="transactionDetails">
-      <EstimatedChanges action="Mint tokens with lock" />
-      <div className="signTxSection">
-        <h4>Destination:</h4>
-        <p>{outputWithLock.destination}</p>
-        <h4>Amount:</h4>
-        <p>{outputWithLock.value.amount.decimal}</p>
-        {outputWithLock.value.token_id && (
-          <>
-            <h4>Token id:</h4>
-            <p>{outputWithLock.value.token_id}</p>
-          </>
+      <div className="signTxSection issuetoken-assets">
+        <h4>Asset changes:</h4>
+        {fee !== undefined && (
+          <div className="issuetoken-asset-row">
+            <span className="issuetoken-asset-name">ML</span>
+            <span className="issuetoken-asset-delta negative">-{fee}</span>
+          </div>
         )}
-        <h4>Lock type:</h4>
-        <p>{outputWithLock.lock.type}</p>
-        {outputWithLock.lock.content && (
-          <>
-            <h4>Lock details:</h4>
-            <p>{JSON.stringify(outputWithLock.lock.content)}</p>
-          </>
-        )}
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">{tokenId}</span>
+          <span className="issuetoken-asset-delta neutral">Issued (locked): {totalLocked}</span>
+        </div>
+      </div>
+      {/* Network section intentionally omitted here to avoid duplication; already shown above for mint-with-lock flows */}
+      <div className="signTxSection issuetoken-impact">
+        <h4>Your balance impact now:</h4>
+        <p>No immediate change (tokens locked)</p>
+      </div>
+      <div className="signTxSection locked-list">
+        <h4>Recipients (locked):</h4>
+        {lockOutputs.map((o, idx) => {
+          const isMine = Array.isArray(requiredAddresses)
+            ? requiredAddresses.includes(o.destination)
+            : false
+          return (
+            <div className="locked-item" key={`locked-${idx}`}>
+              <div className="inline-row"><h4>Destination:</h4><p className="inline-value">{o.destination}{isMine ? ' (your address, locked)' : ''}</p></div>
+              <div className="inline-row"><h4>Amount:</h4><p className="inline-value">{o.value?.amount?.decimal}</p></div>
+              <div className="inline-row"><h4>Lock:</h4><p className="inline-value">{o.lock?.type} {o.lock?.content !== undefined ? o.lock.content : ''}</p></div>
+            </div>
+          )
+        })}
       </div>
     </div>
+  )
+}
+
+const TokenMintWithLockAdvancedDetails = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const outputWithLock = JSONRepresentation.outputs.find(
+    (output) => output.type === 'LockThenTransfer',
+  )
+  return (
+    <>
+      <h4>Destination:</h4>
+      <p>{outputWithLock.destination}</p>
+      <h4>Amount:</h4>
+      <p>{outputWithLock.value.amount.decimal}</p>
+      {outputWithLock.value.token_id && (
+        <>
+          <h4>Token id:</h4>
+          <p>{outputWithLock.value.token_id}</p>
+        </>
+      )}
+      <h4>Lock type:</h4>
+      <p>{outputWithLock.lock.type}</p>
+      {outputWithLock.lock.content && (
+        <>
+          <h4>Lock details:</h4>
+          <p>{JSON.stringify(outputWithLock.lock.content)}</p>
+        </>
+      )}
+    </>
   )
 }
 
@@ -984,7 +1027,7 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint ? (
+        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock ? (
           <>
             <RequestDetails
               transactionData={transactionData}
@@ -1016,6 +1059,9 @@ const SummaryView = ({ data }) => {
               )}
               {flags.isTokenUnmint && (
                 <TokenUnmintAdvancedDetails transactionData={transactionData} />
+              )}
+              {flags.isTokenMintWithLock && (
+                <TokenMintWithLockAdvancedDetails transactionData={transactionData} />
               )}
               <h4>Request id:</h4>
               <p>{transactionData.requestId}</p>
