@@ -741,16 +741,46 @@ const TokenUnmint = ({ transactionData, requiredAddresses }) => {
   const inputWithUnmint = JSONRepresentation.inputs.find(
     (input) => input.input.command === 'UnmintTokens',
   )
+  const fee = JSONRepresentation.fee ? JSONRepresentation.fee.decimal : 1
   return (
     <div className="transactionDetails">
-      <EstimatedChanges action="Unmint tokens" />
-      <div className="signTxSection">
-        <h4>Token id:</h4>
-        <p>{inputWithUnmint.input.token_id}</p>
-        <h4>Amount:</h4>
-        <p>{inputWithUnmint.input.amount.decimal}</p>
+      <div className="signTxSection issuetoken-assets">
+        <h4>Asset changes:</h4>
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">ML</span>
+          <span className="issuetoken-asset-delta negative">-{fee}</span>
+        </div>
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">{inputWithUnmint.input.token_id}</span>
+          <span className="issuetoken-asset-delta negative">-{inputWithUnmint.input.amount.decimal}</span>
+        </div>
+      </div>
+      <div className="signTxSection issuetoken-network">
+        <div className="network-row">
+          <h4>Network:</h4>
+          <span className="network-value"><img src="/logo32.png" alt="Mintlayer" className="ml-logo-img" /> Mintlayer</span>
+        </div>
+        <div className="network-row">
+          <h4>Network fee:</h4>
+          <span className="network-value">{fee} ML</span>
+        </div>
       </div>
     </div>
+  )
+}
+
+const TokenUnmintAdvancedDetails = ({ transactionData }) => {
+  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const inputWithUnmint = JSONRepresentation.inputs.find(
+    (input) => input.input.command === 'UnmintTokens',
+  )
+  return (
+    <>
+      <h4>Token id:</h4>
+      <p>{inputWithUnmint.input.token_id}</p>
+      <h4>Amount:</h4>
+      <p>{inputWithUnmint.input.amount.decimal}</p>
+    </>
   )
 }
 
@@ -800,10 +830,12 @@ const SummaryView = ({ data }) => {
 
   return (
     <div
-      className={`preview-section summary ${flags.isIssueToken || flags.isTokenMint ? 'issuetoken' : ''}`}
+      className={`preview-section summary ${
+        flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint ? 'issuetoken' : ''
+      }`}
     >
       <div className="preview-section-header">
-        {flags.isIssueToken || flags.isTokenMint ? (
+        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint ? (
           <p className="preview-hint">
             Balance changes are estimates. Amounts and affected assets are not
             guaranteed.
@@ -952,7 +984,7 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-        {flags.isIssueToken || flags.isTokenMint ? (
+        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint ? (
           <>
             <RequestDetails
               transactionData={transactionData}
@@ -981,6 +1013,9 @@ const SummaryView = ({ data }) => {
               )}
               {flags.isTokenMint && (
                 <TokenMintAdvancedDetails transactionData={transactionData} />
+              )}
+              {flags.isTokenUnmint && (
+                <TokenUnmintAdvancedDetails transactionData={transactionData} />
               )}
               <h4>Request id:</h4>
               <p>{transactionData.requestId}</p>
