@@ -233,7 +233,8 @@ export const SignTransactionPage = () => {
       console.log('HtlcInput', HtlcInput)
 
       const secretPresaved =
-        HtlcInput?.utxo?.htlc && !secret &&
+        HtlcInput?.utxo?.htlc &&
+        !secret &&
         state?.request?.data?.txData?.htlc?.witness_input === undefined
           ? await Account.unlockHtlsSecret({
               accountId: accountID,

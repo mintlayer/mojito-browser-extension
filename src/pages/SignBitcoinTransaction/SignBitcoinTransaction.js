@@ -55,14 +55,18 @@ function parseSecretHashFromRedeemScript(redeemScriptHex) {
   }
 
   if (chunks[1] !== bitcoin.opcodes.OP_HASH160) {
-    throw new Error('Invalid HTLC script: OP_HASH160 not found at expected position')
+    throw new Error(
+      'Invalid HTLC script: OP_HASH160 not found at expected position',
+    )
   }
 
   // The secret hash should be at index 2
   const secretHashChunk = chunks[2]
 
   if (!Buffer.isBuffer(secretHashChunk)) {
-    throw new Error('Secret hash not found at expected position in redeemScript')
+    throw new Error(
+      'Secret hash not found at expected position in redeemScript',
+    )
   }
 
   // Convert the secret hash buffer to hex string

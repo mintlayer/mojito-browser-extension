@@ -38,9 +38,7 @@ import {
   TotalSupply,
   Amount,
 } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
-import {
-  getOutputs,
-} from '../../../services/Crypto/Mintlayer/Mintlayer.js'
+import { getOutputs } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
 
 const blockHeight = 0n
 
@@ -506,7 +504,7 @@ export function getTransactionHEX(
             network,
           )
           return witness
-        } else if(addressesPrivateKeys[refund_address]) {
+        } else if (addressesPrivateKeys[refund_address]) {
           console.log('Build refund TX')
 
           const address = input?.utxo?.htlc?.refund_key

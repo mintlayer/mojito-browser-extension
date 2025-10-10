@@ -8,7 +8,7 @@ import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
 
 const toHexString = (obj) => {
   return Object.values(obj)
-    .map(n => n.toString(16).padStart(2, '0'))
+    .map((n) => n.toString(16).padStart(2, '0'))
     .join('')
 }
 
@@ -69,8 +69,13 @@ export const ConnectionPage = () => {
                 change: addresses?.mlMainnetAddresses?.mlChangeAddresses,
                 publicKeys: {
                   receiving:
-                    addresses?.mlMainnetAddresses?.mlReceivingPublicKeys.map(toHexString),
-                  change: addresses?.mlMainnetAddresses?.mlChangePublicKeys.map(toHexString),
+                    addresses?.mlMainnetAddresses?.mlReceivingPublicKeys.map(
+                      toHexString,
+                    ),
+                  change:
+                    addresses?.mlMainnetAddresses?.mlChangePublicKeys.map(
+                      toHexString,
+                    ),
                 },
               }
             : {
@@ -78,8 +83,13 @@ export const ConnectionPage = () => {
                 change: addresses?.mlTestnetAddresses?.mlChangeAddresses,
                 publicKeys: {
                   receiving:
-                    addresses?.mlTestnetAddresses?.mlReceivingPublicKeys.map(toHexString),
-                  change: addresses?.mlTestnetAddresses?.mlChangePublicKeys.map(toHexString),
+                    addresses?.mlTestnetAddresses?.mlReceivingPublicKeys.map(
+                      toHexString,
+                    ),
+                  change:
+                    addresses?.mlTestnetAddresses?.mlChangePublicKeys.map(
+                      toHexString,
+                    ),
                 },
               }),
         },
@@ -91,16 +101,24 @@ export const ConnectionPage = () => {
                   receiving: [addresses?.btcMainnetAddress],
                   change: [addresses?.btcMainnetAddress],
                   publicKeys: {
-                    receiving: [addresses?.btcMainnetPublicKey.data].map(toHexString),
-                    change: [addresses?.btcMainnetPublicKey.data].map(toHexString),
+                    receiving: [addresses?.btcMainnetPublicKey.data].map(
+                      toHexString,
+                    ),
+                    change: [addresses?.btcMainnetPublicKey.data].map(
+                      toHexString,
+                    ),
                   },
                 }
               : {
                   receiving: [addresses?.btcTestnetAddress],
                   change: [addresses?.btcTestnetAddress],
                   publicKeys: {
-                    receiving: [addresses?.btcTestnetPublicKey.data].map(toHexString),
-                    change: [addresses?.btcTestnetPublicKey.data].map(toHexString),
+                    receiving: [addresses?.btcTestnetPublicKey.data].map(
+                      toHexString,
+                    ),
+                    change: [addresses?.btcTestnetPublicKey.data].map(
+                      toHexString,
+                    ),
                   },
                 }),
           },

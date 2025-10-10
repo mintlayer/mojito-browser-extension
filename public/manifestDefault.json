@@ -25,10 +25,7 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": [
-    "scripting",
-    "storage"
-  ],
+  "permissions": ["scripting", "storage"],
   "content_scripts": [
     {
       "run_at": "document_start",
@@ -40,19 +37,13 @@
         "*://lovelace.explorer.mintlayer.org/*",
         "*://blockexplorer-staging.mintlayer.org/*"
       ],
-      "js": [
-        "explorer/content-script.js"
-      ]
+      "js": ["explorer/content-script.js"]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "mojito.js"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "resources": ["mojito.js"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

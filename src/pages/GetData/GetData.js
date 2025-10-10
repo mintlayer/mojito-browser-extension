@@ -27,7 +27,9 @@ export const SignChallengePage = () => {
   const { addresses } = useContext(AccountContext)
 
   const address = addresses?.btcTestnetAddress
-  const publicKey = addresses?.btcMainnetPublicKey.data.map(b => b.toString(16).padStart(2, '0')).join('')
+  const publicKey = addresses?.btcMainnetPublicKey.data
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
 
   console.log('addresses', addresses)
 

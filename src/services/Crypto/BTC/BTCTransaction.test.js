@@ -1,13 +1,11 @@
-import {
-  buildTransaction,
-} from './BTCTransaction'
+import { buildTransaction } from './BTCTransaction'
 
 // Mock the dependencies that buildTransaction uses
 jest.mock('@APIs', () => ({
   Electrum: {
     getTransactionData: jest.fn(),
     getTransactionHex: jest.fn(),
-  }
+  },
 }))
 
 jest.mock('@Helpers', () => ({
@@ -20,7 +18,7 @@ jest.mock('@Helpers', () => ({
   BTCTransaction: {
     selectNeededUtxos: jest.fn(),
     isValidAmount: jest.fn(),
-  }
+  },
 }))
 
 describe('buildTransaction', () => {
@@ -41,9 +39,9 @@ describe('buildTransaction', () => {
     const { BTCTransaction } = require('@Helpers')
     BTCTransaction.isValidAmount.mockReturnValue(false)
 
-    await expect(buildTransaction({ ...mockParams, amount: -1 }))
-      .rejects
-      .toBe('Amount out of bounds.')
+    await expect(buildTransaction({ ...mockParams, amount: -1 })).rejects.toBe(
+      'Amount out of bounds.',
+    )
   })
 
   test('should reject with invalid fee', async () => {
@@ -52,9 +50,9 @@ describe('buildTransaction', () => {
       .mockReturnValueOnce(true) // amount is valid
       .mockReturnValueOnce(false) // fee is invalid
 
-    await expect(buildTransaction({ ...mockParams, fee: -1 }))
-      .rejects
-      .toBe('Fee out of bounds.')
+    await expect(buildTransaction({ ...mockParams, fee: -1 })).rejects.toBe(
+      'Fee out of bounds.',
+    )
   })
 
   test('should build transaction successfully with valid inputs', async () => {
@@ -67,26 +65,34 @@ describe('buildTransaction', () => {
       {
         txid: 'a6a3d270fa33eb7fca6f6d2f56c0c3c431f9cad51b2a7881208b5e8f4ec12dcf',
         vout: 0,
-        amount: 100000
-      }
+        amount: 100000,
+      },
     ])
 
     Concurrency.map
-      .mockResolvedValueOnce([{ // fullTransactions
+      .mockResolvedValueOnce([
+        {
+          // fullTransactions
+          txid: 'a6a3d270fa33eb7fca6f6d2f56c0c3c431f9cad51b2a7881208b5e8f4ec12dcf',
+          vout: 0,
+          amount: 100000,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          // rawTransactions
+          txid: 'a6a3d270fa33eb7fca6f6d2f56c0c3c431f9cad51b2a7881208b5e8f4ec12dcf',
+          raw: '0200000001...', // mock hex
+        },
+      ])
+
+    Electrum.getTransactionData.mockResolvedValue(
+      JSON.stringify({
         txid: 'a6a3d270fa33eb7fca6f6d2f56c0c3c431f9cad51b2a7881208b5e8f4ec12dcf',
         vout: 0,
-        amount: 100000
-      }])
-      .mockResolvedValueOnce([{ // rawTransactions
-        txid: 'a6a3d270fa33eb7fca6f6d2f56c0c3c431f9cad51b2a7881208b5e8f4ec12dcf',
-        raw: '0200000001...' // mock hex
-      }])
-
-    Electrum.getTransactionData.mockResolvedValue(JSON.stringify({
-      txid: 'a6a3d270fa33eb7fca6f6d2f56c0c3c431f9cad51b2a7881208b5e8f4ec12dcf',
-      vout: 0,
-      amount: 100000
-    }))
+        amount: 100000,
+      }),
+    )
 
     Electrum.getTransactionHex.mockResolvedValue('0200000001...')
 
