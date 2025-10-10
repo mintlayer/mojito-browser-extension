@@ -1,3 +1,5 @@
+.concludeorder-network .network-row { display: flex; justify-content: space-between; align-items: center; }
+.concludeorder-assets h4 { margin-bottom: 6px; }
 .transactionPreview {
   background: #ffffff;
   border-radius: 12px;
@@ -271,5 +273,7 @@
 .order-details .inline-row h4 { margin: 0; flex: 0 0 200px; }
 .order-details .inline-row .inline-value { margin: 0; word-break: break-all; flex: 1 1 0; }
 .order-details { padding: 16px; gap: 12px; }
+
+.break-all { word-break: break-all; }
 
 /* reverted custom IssueToken header/details styles removed */

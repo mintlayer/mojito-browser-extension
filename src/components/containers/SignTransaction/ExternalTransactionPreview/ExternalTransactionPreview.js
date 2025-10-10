@@ -323,27 +323,99 @@ const BurnToken = ({ transactionData }) => {
 
 const ConcludeOrder = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const fee = JSONRepresentation.fee?.decimal ?? 1
+
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input?.order_id,
   )
+  const orderId = inputWithOrderID?.input?.order_id
 
-  if (!inputWithOrderID) {
-    return (
-      <div className="transactionDetails">
-        <EstimatedChanges action="Conclude order" />
-        <div className="signTxSection">
-          <p>Unable to determine order details</p>
-        </div>
-      </div>
-    )
-  }
+  const [returnedGive, setReturnedGive] = useState(null)
+  const [returnedAsk, setReturnedAsk] = useState(null)
+  const [giveCurrencyLabel, setGiveCurrencyLabel] = useState(null)
+  const [askCurrencyLabel, setAskCurrencyLabel] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function fetchOrder() {
+      if (!orderId) return
+      try {
+        const res = await fetch(`https://api-server-lovelace.mintlayer.org/api/v2/order/${orderId}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled) return
+
+        const askC = data?.ask_currency || data?.askCurrency
+        const giveC = data?.give_currency || data?.giveCurrency
+        const askBalance = data?.ask_balance?.decimal
+        const giveBalance = data?.give_balance?.decimal
+
+        const labelFromCurrency = async (c) => {
+          if (!c) return 'Unknown'
+          if (c.type === 'Coin' || c === 'Coin') return 'ML'
+          const tokenId = c.token_id || c.tokenId
+          if (!tokenId) return 'Token'
+          const cached = tokenTickerCache.get(tokenId)
+          if (cached) return cached
+          try {
+            const r = await fetch(`https://api-server-lovelace.mintlayer.org/api/v2/token/${tokenId}`, { cache: 'no-store' })
+            const d = await r.json()
+            const t = d?.token_ticker?.string ?? d?.ticker?.string ?? 'Token'
+            tokenTickerCache.set(tokenId, t)
+            return t
+          } catch {
+            return 'Token'
+          }
+        }
+
+        const gLabel = await labelFromCurrency(giveC)
+        const aLabel = await labelFromCurrency(askC)
+        setGiveCurrencyLabel(gLabel)
+        setAskCurrencyLabel(aLabel)
+
+        if (typeof giveBalance === 'number' || (typeof giveBalance === 'string' && giveBalance)) {
+          setReturnedGive(giveBalance)
+        }
+        if (typeof askBalance === 'number' || (typeof askBalance === 'string' && askBalance)) {
+          setReturnedAsk(askBalance)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    fetchOrder()
+    return () => { cancelled = true }
+  }, [orderId])
 
   return (
     <div className="transactionDetails">
-      <EstimatedChanges action="Conclude order" />
-      <div className="signTxSection">
-        <h4>Order ID:</h4>
-        <p>{inputWithOrderID.input.order_id}</p>
+      <div className="signTxSection concludeorder-assets">
+        <h4>Asset changes:</h4>
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">ML</span>
+          <span className="issuetoken-asset-delta negative">-{fee}</span>
+        </div>
+        {returnedGive && (
+          <div className="issuetoken-asset-row">
+            <span className="issuetoken-asset-name">{giveCurrencyLabel || 'Token'}</span>
+            <span className="issuetoken-asset-delta positive">+{returnedGive}</span>
+          </div>
+        )}
+        {returnedAsk && (
+          <div className="issuetoken-asset-row">
+            <span className="issuetoken-asset-name">{askCurrencyLabel || 'ML'}</span>
+            <span className="issuetoken-asset-delta positive">+{returnedAsk}</span>
+          </div>
+        )}
+        <div className="issuetoken-asset-row">
+          <span className="issuetoken-asset-name">Order</span>
+          <span className="issuetoken-asset-delta neutral">Concluded</span>
+        </div>
+        <p className="order-hint">This order has been finalized. Locked assets are released or settled.</p>
+      </div>
+      <div className="signTxSection concludeorder-network">
+        <div className="network-row"><h4>Network:</h4><span className="network-value"><img src="/logo32.png" alt="" className="ml-logo-img" /> Mintlayer</span></div>
+        <div className="network-row"><h4>Network fee:</h4><span className="network-value">{fee} ML</span></div>
       </div>
     </div>
   )
@@ -1008,11 +1080,11 @@ const SummaryView = ({ data }) => {
   return (
     <div
       className={`preview-section summary ${
-        flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder ? 'issuetoken' : ''
+        flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder || flags.isFillOrder || flags.isConcludeOrder ? 'issuetoken' : ''
       }`}
     >
       <div className="preview-section-header">
-        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder || flags.isFillOrder ? (
+        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder || flags.isFillOrder || flags.isConcludeOrder ? (
           <p className="preview-hint">
             Balance changes are estimates. Amounts and affected assets are not
             guaranteed.
@@ -1161,7 +1233,7 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder || flags.isFillOrder ? (
+        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder || flags.isFillOrder || flags.isConcludeOrder ? (
           <>
             <RequestDetails
               transactionData={transactionData}
@@ -1198,7 +1270,16 @@ const SummaryView = ({ data }) => {
                 <TokenMintWithLockAdvancedDetails transactionData={transactionData} />
               )}
               {flags.isFillOrder && (
-                <div className="inline-row"><h4>Order id:</h4><p className="inline-value">{transactionData.data?.txData?.JSONRepresentation?.inputs?.find(i => i?.input?.order_id)?.input?.order_id || 'Unknown'}</p></div>
+                <>
+                  <h4>Order id:</h4>
+                  <p className="break-all">{transactionData.data?.txData?.JSONRepresentation?.inputs?.find(i => i?.input?.order_id)?.input?.order_id || 'Unknown'}</p>
+                </>
+              )}
+              {flags.isConcludeOrder && (
+                <>
+                  <h4>Order id:</h4>
+                  <p className="break-all">{transactionData.data?.txData?.JSONRepresentation?.inputs?.find(i => i?.input?.order_id)?.input?.order_id || 'Unknown'}</p>
+                </>
               )}
               <div className="inline-row"><h4>Request id:</h4><p className="inline-value">{transactionData.requestId}</p></div>
             </div>
