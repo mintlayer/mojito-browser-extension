@@ -547,8 +547,6 @@ export function getTransactionHEX(
         }
 
         const addressPrivateKey = addressesPrivateKeys[address]
-        console.log(address)
-        console.log(addressPrivateKey)
 
         const additionalInfo = {
           pool_info: {},

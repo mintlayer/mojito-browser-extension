@@ -22,9 +22,7 @@ import SignChallengePage from './SignChallenge/SignChallenge'
 import SignExternalTransactionPage from './SignExternalTransaction/SignExternalTransaction'
 import SignInternalTransaction from './SignInternalTransaction/SignInternalTransaction'
 import OrderSwapPage from './OrderSwap/OrderSwap'
-import GenerateSecretPage from './GenerateSecret/GenerateSecret'
 import SignBitcoinTransactionPage from './SignBitcoinTransaction/SignBitcoinTransaction'
-import GetDataPage from './GetData/GetData'
 
 export {
   CreateAccountPage,
@@ -51,7 +49,5 @@ export {
   SignExternalTransactionPage,
   SignInternalTransaction,
   OrderSwapPage,
-  GenerateSecretPage,
   SignBitcoinTransactionPage,
-  GetDataPage,
 }

@@ -163,12 +163,6 @@ export const SignTransactionPage = () => {
 
         // Update the transaction state to trigger re-render
         setTransactionState(updatedState)
-
-        console.log('Generated secret for HTLC transaction:', {
-          secret: secretObj.secretHex,
-          secretHash: secretObj.secretHashHex,
-          affectedOutputs: updatedHtlcOutputs.length,
-        })
       } catch (error) {
         console.error('Failed to generate secret for HTLC transaction:', error)
       }
@@ -230,8 +224,6 @@ export const SignTransactionPage = () => {
         })
       }
 
-      console.log('HtlcInput', HtlcInput)
-
       const secretPresaved =
         HtlcInput?.utxo?.htlc &&
         !secret &&
@@ -244,12 +236,6 @@ export const SignTransactionPage = () => {
           : null
 
       const secret_ = secretPresaved || secret
-
-      console.log('secret_', secret_)
-
-      console.log(new Uint8Array(Buffer.from(secret_, 'hex')))
-
-      console.log('^^^^')
 
       const { txHash: transactionHex } = SignTxHelpers.getTransactionHEX(
         {
@@ -269,8 +255,6 @@ export const SignTransactionPage = () => {
         },
         network,
       )
-
-      console.log('isHTLCCreateTx', isHTLCCreateTx)
 
       if (isHTLCCreateTx) {
         // save secret to account
@@ -296,7 +280,7 @@ export const SignTransactionPage = () => {
       } else {
         result = transactionHex
       }
-      console.log('result', result)
+
       // eslint-disable-next-line no-undef
       runtime.sendMessage(
         {

@@ -45,8 +45,6 @@ export const ConnectionPage = () => {
 
   const handleConnect = () => {
     const remember = document.querySelector('.connect-page__checkbox')?.checked
-    console.log(addresses)
-    console.log('networkType', networkType)
     const sessionKey = `session_${origin}`
     const sessionData = {
       origin,

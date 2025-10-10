@@ -191,8 +191,6 @@ export const SignBitcoinTransactionPage = () => {
       }, // TODO: take another key from the wallet
     })
 
-    console.log('htlc', htlc)
-
     // address to send funds to
     const address = htlc.p2wshAddress
 
@@ -205,22 +203,6 @@ export const SignBitcoinTransactionPage = () => {
       networkType,
     })
 
-    console.log('tx', txHex)
-
-    console.log('WIF', WIF)
-    console.log('network', network)
-
-    // const walletPrivKeys = ML.getWalletPrivKeysList(
-    //   privKey,
-    //   networkType,
-    //   changeAddressesLength,
-    // )
-
-    // const keysList = {
-    //   ...walletPrivKeys.mlReceivingPrivKeys,
-    //   ...walletPrivKeys.mlChangePrivKeys,
-    // }
-
     const requestId = state?.request?.requestId
     const method = 'signTransaction_approve'
     const result = {
@@ -231,7 +213,6 @@ export const SignBitcoinTransactionPage = () => {
       signedTxHex: txHex,
       redeemScript: htlc.redeemScriptHex,
     }
-    console.log('transactionHex', txHex)
 
     // Save generated secret to account if this is an HTLC create transaction
     if (isHTLCCreateTx && generatedSecret && generatedSecretHash) {
@@ -275,7 +256,6 @@ export const SignBitcoinTransactionPage = () => {
 
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
-    console.log('transactionJSONrepresentation', transactionJSONrepresentation)
 
     const { WIF } = await Account.unlockAccount(accountID, pass)
 
@@ -283,8 +263,6 @@ export const SignBitcoinTransactionPage = () => {
     const secretHashFromRedeemScript = parseSecretHashFromRedeemScript(
       transactionJSONrepresentation.redeemScriptHex,
     )
-
-    console.log('secretHashFromRedeemScript', secretHashFromRedeemScript)
 
     // Try to retrieve previously saved secret for HTLC spend transactions
     let secretPresaved = null
@@ -351,7 +329,6 @@ export const SignBitcoinTransactionPage = () => {
 
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
-    console.log('transactionJSONrepresentation', transactionJSONrepresentation)
 
     const { WIF } = await Account.unlockAccount(accountID, pass)
 
@@ -401,10 +378,6 @@ export const SignBitcoinTransactionPage = () => {
 
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
-      console.log(
-        'transactionJSONrepresentation',
-        transactionJSONrepresentation,
-      )
 
       if (transactionJSONrepresentation.type === 'refundHtlc') {
         await submitRefund()

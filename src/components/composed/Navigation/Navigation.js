@@ -142,26 +142,6 @@ const Navigation = ({ customNavigation }) => {
           },
         ]
       : []),
-    ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
-      ? [
-          {
-            id: 6,
-            label: 'Test Generate Secret',
-            icon: <SettingsImg />,
-            link: '/wallet/Mintlayer/generate-secret',
-          },
-        ]
-      : []),
-    ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
-      ? [
-          {
-            id: 7,
-            label: 'GetData',
-            icon: <SettingsImg />,
-            link: '/wallet/Mintlayer/get-data',
-          },
-        ]
-      : []),
   ]
 
   const navigationList = [
