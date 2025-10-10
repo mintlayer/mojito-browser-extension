@@ -354,24 +354,73 @@ const FillOrder = ({ transactionData }) => {
   const inputWithOrderID = JSONRepresentation.inputs.find(
     (input) => input.input?.order_id,
   )
+  const fee = JSONRepresentation.fee?.decimal ?? 1
 
-  if (!inputWithOrderID) {
-    return (
-      <div className="transactionDetails">
-        <EstimatedChanges action="Fill order" />
-        <div className="signTxSection">
-          <p>Unable to determine order details</p>
-        </div>
-      </div>
-    )
-  }
+  const orderId = inputWithOrderID?.input?.order_id
+  const [payLabel, setPayLabel] = useState(null)
+  const [receiveLabel, setReceiveLabel] = useState(null)
+  const [payHasAmount, setPayHasAmount] = useState(false)
+  const [receiveHasAmount, setReceiveHasAmount] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function fetchOrder() {
+      if (!orderId) return
+      try {
+        const res = await fetch(`https://api-server-lovelace.mintlayer.org/api/v2/order/${orderId}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled) return
+
+        // Resolve labels
+        const askC = data?.ask_currency || data?.askCurrency
+        const giveC = data?.give_currency || data?.giveCurrency
+        const askAmount = data?.ask_balance?.decimal || data?.initially_asked?.decimal || null
+        const giveAmount = data?.give_balance?.decimal || data?.initially_given?.decimal || null
+
+        const labelFromCurrency = async (c) => {
+          if (!c) return 'Unknown'
+          if (c.type === 'Coin' || c === 'Coin') return 'ML'
+          const tokenId = c.token_id || c.tokenId
+          if (!tokenId) return 'Token'
+          const cached = tokenTickerCache.get(tokenId)
+          if (cached) return cached
+          try {
+            const r = await fetch(`https://api-server-lovelace.mintlayer.org/api/v2/token/${tokenId}`, { cache: 'no-store' })
+            const d = await r.json()
+            const t = d?.token_ticker?.string ?? d?.ticker?.string ?? 'Token'
+            tokenTickerCache.set(tokenId, t)
+            return t
+          } catch {
+            return 'Token'
+          }
+        }
+
+        const giveLabel = await labelFromCurrency(giveC)
+        const askLabel = await labelFromCurrency(askC)
+        setPayLabel(giveAmount ? `${giveAmount} ${giveLabel}` : giveLabel)
+        setReceiveLabel(askAmount ? `${askAmount} ${askLabel}` : askLabel)
+        setPayHasAmount(Boolean(giveAmount))
+        setReceiveHasAmount(Boolean(askAmount))
+      } catch {
+        // ignore errors
+      }
+    }
+    fetchOrder()
+    return () => { cancelled = true }
+  }, [orderId])
 
   return (
     <div className="transactionDetails">
-      <EstimatedChanges action="Fill order" />
-      <div className="signTxSection">
-        <h4>Order id:</h4>
-        <p>{inputWithOrderID.input.order_id}</p>
+      <div className="signTxSection issuetoken-network">
+        {payLabel && (
+          <div className="network-row"><h4>You pay:</h4><span className="network-value amount-negative">{payHasAmount ? `-${payLabel}` : payLabel}</span></div>
+        )}
+        {receiveLabel && (
+          <div className="network-row"><h4>You receive:</h4><span className="network-value amount-positive">{receiveHasAmount ? `+${receiveLabel}` : receiveLabel}</span></div>
+        )}
+        <div className="network-row network-row-sep"><h4>Network:</h4><span className="network-value"><img src="/logo32.png" alt="" className="ml-logo-img" /> Mintlayer</span></div>
+        <div className="network-row"><h4>Network fee:</h4><span className="network-value">{fee} ML</span></div>
       </div>
     </div>
   )
@@ -383,7 +432,7 @@ const CreateOrder = ({ transactionData }) => {
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateOrder',
   )
-  const fee = JSONRepresentation.fee?.decimal
+  const fee = JSONRepresentation.fee?.decimal ?? 1
 
   const askCurrency = outputWithCreateOrder?.ask_currency?.type
   const giveBalance = outputWithCreateOrder?.give_balance?.decimal
@@ -418,16 +467,14 @@ const CreateOrder = ({ transactionData }) => {
         <div className="order-subrows">
           <div className="network-row"><h4>Ask currency:</h4><span className="network-value">{askCurrency === 'Coin' ? 'ML' : askCurrency}</span></div>
           <div className="network-row"><h4>Give currency:</h4><span className="network-value">{giveCurrencyLabel}</span></div>
-          <div className="network-row"><h4>Destination:</h4><span className="network-value" style={{ wordBreak: 'break-all' }}>{destination}</span></div>
           <div className="network-row"><h4>Initially asked:</h4><span className="network-value">{initiallyAsked}</span></div>
           <div className="network-row"><h4>Initially given:</h4><span className="network-value">{initiallyGiven}</span></div>
+          <div className="network-row"><h4>Destination:</h4><span className="network-value" style={{ wordBreak: 'break-all' }}>{destination}</span></div>
         </div>
       </div>
       <div className="signTxSection issuetoken-network">
         <div className="network-row"><h4>Network:</h4><span className="network-value"><img src="/logo32.png" alt="" className="ml-logo-img" /> Mintlayer</span></div>
-        {fee !== undefined && (
-          <div className="network-row"><h4>Network fee:</h4><span className="network-value">{fee} ML</span></div>
-        )}
+        <div className="network-row"><h4>Network fee:</h4><span className="network-value">{fee} ML</span></div>
       </div>
     </div>
   )
@@ -928,8 +975,8 @@ const TokenMintWithLockAdvancedDetails = ({ transactionData }) => {
   )
   return (
     <>
-      <h4>Destination:</h4>
-      <p>{outputWithLock.destination}</p>
+        <h4>Destination:</h4>
+        <p>{outputWithLock.destination}</p>
       <div className="inline-row"><h4>Amount:</h4><p className="inline-value">{outputWithLock.value.amount.decimal}</p></div>
         {outputWithLock.value.token_id && (
           <>
@@ -965,7 +1012,7 @@ const SummaryView = ({ data }) => {
       }`}
     >
       <div className="preview-section-header">
-        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder ? (
+        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder || flags.isFillOrder ? (
           <p className="preview-hint">
             Balance changes are estimates. Amounts and affected assets are not
             guaranteed.
@@ -1114,7 +1161,7 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder ? (
+        {flags.isIssueToken || flags.isTokenMint || flags.isTokenUnmint || flags.isTokenMintWithLock || flags.isCreateOrder || flags.isFillOrder ? (
           <>
             <RequestDetails
               transactionData={transactionData}
@@ -1150,13 +1197,16 @@ const SummaryView = ({ data }) => {
               {flags.isTokenMintWithLock && (
                 <TokenMintWithLockAdvancedDetails transactionData={transactionData} />
               )}
+              {flags.isFillOrder && (
+                <div className="inline-row"><h4>Order id:</h4><p className="inline-value">{transactionData.data?.txData?.JSONRepresentation?.inputs?.find(i => i?.input?.order_id)?.input?.order_id || 'Unknown'}</p></div>
+              )}
               <div className="inline-row"><h4>Request id:</h4><p className="inline-value">{transactionData.requestId}</p></div>
             </div>
           </>
         ) : (
           <>
         <NetworkFee transactionData={transactionData} />
-        <RequestDetails transactionData={transactionData} />
+        <RequestDetails transactionData={transactionData} oneLine />
           </>
         )}
       </div>

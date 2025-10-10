@@ -222,6 +222,7 @@
   justify-content: space-between;
   align-items: center;
 }
+.issuetoken-network .network-row.network-row-sep { margin-top: 16px; }
 .issuetoken-network .network-value {
   display: inline-flex;
   align-items: center;
@@ -234,10 +235,19 @@
   border-radius: 4px;
 }
 
+.swap-icon-row { display: flex; justify-content: center; padding: 8px 0; position: relative; z-index: 2; }
+.swap-icon { display: none; }
+.swap-icon-svg { width: 20px; height: 20px; display: block; }
+.swap-icon-img { display: none; }
+
 .issuetoken-trust {
   color: #718096;
   font-size: 12px;
 }
+
+/* Positive/negative amount colors for FillOrder */
+.amount-positive { color: #16a34a; font-weight: 700; }
+.amount-negative { color: #dc2626; font-weight: 700; }
 
 /* Inline label-value rows to align like Asset changes */
 .inline-row {
