@@ -25,7 +25,7 @@ const UTXSOS_MOCK = [
         type: 'Coin',
       },
     },
-  }
+  },
 ]
 
 describe('getUtxoBalance', () => {
@@ -39,9 +39,7 @@ describe('getUtxoTransaction', () => {
   it('should return the transaction id and index', () => {
     const item = getUtxoTransaction(UTXSOS_MOCK[0]) // in fact this function just for single item
 
-    expect(item.transaction).toEqual(
-      UTXSOS_MOCK[0].outpoint.source_id,
-    )
+    expect(item.transaction).toEqual(UTXSOS_MOCK[0].outpoint.source_id)
     expect(item.index).toEqual(UTXSOS_MOCK[0].outpoint.index)
   })
 })

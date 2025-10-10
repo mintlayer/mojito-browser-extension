@@ -10,7 +10,8 @@
 }
 
 html {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       50% 50% at 20% 30%,
       rgba(105, 238, 150, 0.4) 0%,
       rgba(145, 155, 200, 0.4) 59%,

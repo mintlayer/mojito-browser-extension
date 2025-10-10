@@ -44,19 +44,23 @@ describe('UpdateButton', () => {
           fetchDelegations: mockFetchDelegations,
         }}
       >
-       <BitcoinContext.Provider
+        <BitcoinContext.Provider
           value={{
             fetchAllData: mockFetchAllData,
           }}
         >
-        <UpdateButton />
-      </BitcoinContext.Provider>
+          <UpdateButton />
+        </BitcoinContext.Provider>
       </MintlayerContext.Provider>,
     )
 
     fireEvent.click(screen.getByTestId('icon-loading-default'))
     expect(screen.getByTestId('icon-loading-animated')).toBeInTheDocument()
-    await waitFor(() => expect(screen.queryByTestId('icon-loading-animated')).not.toBeInTheDocument())
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId('icon-loading-animated'),
+      ).not.toBeInTheDocument(),
+    )
   })
 
   it('should display the success icon after successful data fetch', async () => {
@@ -70,19 +74,21 @@ describe('UpdateButton', () => {
           fetchDelegations: mockFetchDelegations,
         }}
       >
-         <BitcoinContext.Provider
+        <BitcoinContext.Provider
           value={{
             fetchAllData: mockFetchAllData,
           }}
         >
-        <UpdateButton />
-      </BitcoinContext.Provider>
+          <UpdateButton />
+        </BitcoinContext.Provider>
       </MintlayerContext.Provider>,
     )
 
     fireEvent.click(screen.getByTestId('icon-loading-default'))
     await screen.findByTestId('icon-success')
-    expect(screen.queryByTestId('icon-loading-animated')).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('icon-loading-animated'),
+    ).not.toBeInTheDocument()
   })
 
   it('should hide the success icon after 3 seconds', async () => {
@@ -97,20 +103,22 @@ describe('UpdateButton', () => {
           fetchDelegations: mockFetchDelegations,
         }}
       >
-         <BitcoinContext.Provider
+        <BitcoinContext.Provider
           value={{
             fetchAllData: mockFetchAllData,
           }}
         >
-        <UpdateButton />
-      </BitcoinContext.Provider>
+          <UpdateButton />
+        </BitcoinContext.Provider>
       </MintlayerContext.Provider>,
     )
 
     fireEvent.click(screen.getByTestId('icon-loading-default'))
     await screen.findByTestId('icon-success')
 
-    await waitFor(() => new Promise(resolve => setTimeout(resolve, 5000)), { timeout: 5100 })
+    await waitFor(() => new Promise((resolve) => setTimeout(resolve, 5000)), {
+      timeout: 5100,
+    })
     expect(screen.queryByTestId('icon-success')).not.toBeInTheDocument()
     jest.useRealTimers()
   })
