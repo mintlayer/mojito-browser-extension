@@ -19,7 +19,7 @@ const _data = {
     ticker: 'BTC',
     chain: 'bitcoin',
     tokenId: null,
-  }
+  },
 }
 
 const setup = ({ data = _data } = {}) => {
