@@ -1,8 +1,11 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import './ExternalTransactionPreview.css'
 
 import { AccountContext, SettingsContext } from '@Contexts'
+
+// Simple in-memory cache for token tickers to avoid flicker and refetching
+const tokenTickerCache = new Map()
 
 // Error Boundary Component for TransactionPreview
 class TransactionPreviewErrorBoundary extends React.Component {
@@ -700,6 +703,29 @@ const TokenMint = ({ transactionData, requiredAddresses }) => {
     (input) => input.input.command === 'MintTokens',
   )
   const fee = JSONRepresentation.fee ? JSONRepresentation.fee.decimal : 1
+  const tokenId = inputWithMint.input.token_id
+  const [ticker, setTicker] = useState(() => tokenTickerCache.get(tokenId) || null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function fetchTicker() {
+      try {
+        const res = await fetch(`https://api-server-lovelace.mintlayer.org/api/v2/token/${tokenId}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        const t = data?.token_ticker?.string ?? data?.ticker?.string ?? null
+        if (t) tokenTickerCache.set(tokenId, t)
+        if (!cancelled) setTicker(t)
+      } catch {
+        // ignore
+      }
+    }
+    if (tokenId && !tokenTickerCache.get(tokenId)) fetchTicker()
+    return () => {
+      cancelled = true
+    }
+  }, [tokenId])
+
   return (
     <div className="transactionDetails">
       <div className="signTxSection issuetoken-assets">
@@ -709,8 +735,8 @@ const TokenMint = ({ transactionData, requiredAddresses }) => {
           <span className="issuetoken-asset-delta negative">-{fee}</span>
         </div>
         <div className="issuetoken-asset-row">
-          <span className="issuetoken-asset-name">
-            {inputWithMint.input.token_id}
+          <span className="issuetoken-asset-name token-id">
+            {ticker ? <span className="token-ticker-strong">{ticker}</span> : <span className="token-id-skeleton">Token</span>}
           </span>
           <span className="issuetoken-asset-delta positive">
             +{inputWithMint.input.amount.decimal}
@@ -745,10 +771,9 @@ const TokenMintAdvancedDetails = ({ transactionData }) => {
   )
   return (
     <>
-        <h4>Token id:</h4>
-        <p>{inputWithMint.input.token_id}</p>
-        <h4>Amount:</h4>
-        <p>{inputWithMint.input.amount.decimal}</p>
+      <h4>Token id:</h4>
+      <p>{inputWithMint.input.token_id}</p>
+      <div className="inline-row"><h4>Amount:</h4><p className="inline-value">{inputWithMint.input.amount.decimal}</p></div>
     </>
   )
 }
@@ -760,6 +785,28 @@ const TokenUnmint = ({ transactionData, requiredAddresses }) => {
     (input) => input.input.command === 'UnmintTokens',
   )
   const fee = JSONRepresentation.fee ? JSONRepresentation.fee.decimal : 1
+  const unmintTokenId = inputWithUnmint.input.token_id
+  const [unmintTicker, setUnmintTicker] = useState(() => tokenTickerCache.get(unmintTokenId) || null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function fetchTicker() {
+      try {
+        const res = await fetch(`https://api-server-lovelace.mintlayer.org/api/v2/token/${unmintTokenId}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        const t = data?.token_ticker?.string ?? data?.ticker?.string ?? null
+        if (t) tokenTickerCache.set(unmintTokenId, t)
+        if (!cancelled) setUnmintTicker(t)
+      } catch {
+        // ignore
+      }
+    }
+    if (unmintTokenId && !tokenTickerCache.get(unmintTokenId)) fetchTicker()
+    return () => {
+      cancelled = true
+    }
+  }, [unmintTokenId])
   return (
     <div className="transactionDetails">
       <div className="signTxSection issuetoken-assets">
@@ -769,7 +816,7 @@ const TokenUnmint = ({ transactionData, requiredAddresses }) => {
           <span className="issuetoken-asset-delta negative">-{fee}</span>
         </div>
         <div className="issuetoken-asset-row">
-          <span className="issuetoken-asset-name">{inputWithUnmint.input.token_id}</span>
+          <span className="issuetoken-asset-name">{unmintTicker ? <span className="token-ticker-strong">{unmintTicker}</span> : inputWithUnmint.input.token_id}</span>
           <span className="issuetoken-asset-delta negative">-{inputWithUnmint.input.amount.decimal}</span>
         </div>
       </div>
@@ -794,10 +841,9 @@ const TokenUnmintAdvancedDetails = ({ transactionData }) => {
   )
   return (
     <>
-        <h4>Token id:</h4>
-        <p>{inputWithUnmint.input.token_id}</p>
-        <h4>Amount:</h4>
-        <p>{inputWithUnmint.input.amount.decimal}</p>
+      <h4>Token id:</h4>
+      <p>{inputWithUnmint.input.token_id}</p>
+      <div className="inline-row"><h4>Amount:</h4><p className="inline-value">{inputWithUnmint.input.amount.decimal}</p></div>
     </>
   )
 }
@@ -810,6 +856,25 @@ const TokenMintWithLock = ({ transactionData, requiredAddresses }) => {
   )
   const fee = JSONRepresentation.fee?.decimal
   const tokenId = outputWithLock?.value?.token_id || 'Token'
+  const [lockTicker, setLockTicker] = useState(() => tokenTickerCache.get(tokenId) || null)
+  useEffect(() => {
+    let cancelled = false
+    async function fetchTicker() {
+    try {
+        if (!outputWithLock?.value?.token_id) return
+        const res = await fetch(`https://api-server-lovelace.mintlayer.org/api/v2/token/${outputWithLock.value.token_id}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        const t = data?.token_ticker?.string ?? data?.ticker?.string ?? null
+        if (t) tokenTickerCache.set(tokenId, t)
+        if (!cancelled) setLockTicker(t)
+      } catch (e) {
+        /* ignore network/token info errors */
+      }
+    }
+    if (!tokenTickerCache.get(tokenId)) fetchTicker()
+    return () => { cancelled = true }
+  }, [outputWithLock])
   const lockOutputs = JSONRepresentation.outputs.filter(
     (o) => o.type === 'LockThenTransfer',
   )
@@ -828,7 +893,7 @@ const TokenMintWithLock = ({ transactionData, requiredAddresses }) => {
           </div>
         )}
         <div className="issuetoken-asset-row">
-          <span className="issuetoken-asset-name">{tokenId}</span>
+          <span className="issuetoken-asset-name">{lockTicker ? <span className="token-ticker-strong">{lockTicker}</span> : tokenId}</span>
           <span className="issuetoken-asset-delta neutral">Issued (locked): {totalLocked}</span>
         </div>
       </div>
@@ -863,22 +928,19 @@ const TokenMintWithLockAdvancedDetails = ({ transactionData }) => {
   )
   return (
     <>
-        <h4>Destination:</h4>
-        <p>{outputWithLock.destination}</p>
-        <h4>Amount:</h4>
-        <p>{outputWithLock.value.amount.decimal}</p>
+      <h4>Destination:</h4>
+      <p>{outputWithLock.destination}</p>
+      <div className="inline-row"><h4>Amount:</h4><p className="inline-value">{outputWithLock.value.amount.decimal}</p></div>
         {outputWithLock.value.token_id && (
           <>
             <h4>Token id:</h4>
             <p>{outputWithLock.value.token_id}</p>
           </>
         )}
-        <h4>Lock type:</h4>
-        <p>{outputWithLock.lock.type}</p>
+      <div className="inline-row"><h4>Lock type:</h4><p className="inline-value">{outputWithLock.lock.type}</p></div>
         {outputWithLock.lock.content && (
           <>
-            <h4>Lock details:</h4>
-            <p>{JSON.stringify(outputWithLock.lock.content)}</p>
+          <div className="inline-row"><h4>Lock details:</h4><p className="inline-value">{JSON.stringify(outputWithLock.lock.content)}</p></div>
           </>
         )}
     </>
@@ -962,7 +1024,7 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
-        {flags.isTokenMint && (
+        {flags.isTokenMint && !flags.isTokenMintWithLock && (
           <TokenMint
             transactionData={transactionData}
             requiredAddresses={requiredAddresses}
@@ -1079,7 +1141,7 @@ const SummaryView = ({ data }) => {
               {flags.isIssueToken && (
                 <IssueTokenAdvancedDetails transactionData={transactionData} />
               )}
-              {flags.isTokenMint && (
+              {flags.isTokenMint && !flags.isTokenMintWithLock && (
                 <TokenMintAdvancedDetails transactionData={transactionData} />
               )}
               {flags.isTokenUnmint && (
@@ -1088,18 +1150,7 @@ const SummaryView = ({ data }) => {
               {flags.isTokenMintWithLock && (
                 <TokenMintWithLockAdvancedDetails transactionData={transactionData} />
               )}
-              {flags.isCreateOrder && (
-                <>
-                  <h4>Request id:</h4>
-                  <p>{transactionData.requestId}</p>
-                </>
-              )}
-              {!flags.isCreateOrder && (
-                <>
-                  <h4>Request id:</h4>
-                  <p>{transactionData.requestId}</p>
-                </>
-              )}
+              <div className="inline-row"><h4>Request id:</h4><p className="inline-value">{transactionData.requestId}</p></div>
             </div>
           </>
         ) : (

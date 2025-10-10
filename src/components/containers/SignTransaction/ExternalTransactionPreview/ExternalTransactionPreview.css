@@ -157,6 +157,10 @@
   color: #2d3748;
   font-weight: 600;
 }
+.issuetoken-asset-name.token-id { font-weight: 500; font-size: 0.95rem; }
+.token-ticker-strong { font-weight: 700; }
+.token-id-small { font-size: 0.75rem; color: #4a5568; }
+.token-id-skeleton { color: #718096; font-style: italic; }
 
 .issuetoken-asset-delta {
   font-weight: 700;
