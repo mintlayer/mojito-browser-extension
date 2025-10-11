@@ -125,8 +125,6 @@ export const ConnectionPage = () => {
       timestamp: Date.now(),
     }
 
-    console.log('sessionData', sessionData)
-
     const requestId = state?.request?.requestId
     const response = {
       action: 'popupResponse',

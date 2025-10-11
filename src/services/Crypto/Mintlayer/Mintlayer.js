@@ -209,16 +209,6 @@ export const getOutputs = ({
   const networkIndex = NETWORKS[networkType]
   if (type === 'Transfer') {
     if (tokenId) {
-      console.log(
-        'amountInstace,\n' +
-          '        address,\n' +
-          '        tokenId,\n' +
-          '        networkIndex,',
-        amountInstace,
-        address,
-        tokenId,
-        networkIndex,
-      )
       return encode_output_token_transfer(
         amountInstace,
         address,

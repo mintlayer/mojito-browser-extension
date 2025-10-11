@@ -355,8 +355,6 @@ export function getTransactionBINrepresentation(
   )
   const outputsArray = outputsArrayItems
 
-  console.log('transactionJSONrepresentation', transactionJSONrepresentation)
-
   const inputAddresses = transactionJSONrepresentation.inputs
     .filter(({ input }) => input.input_type === 'UTXO')
     .map(
@@ -365,9 +363,6 @@ export function getTransactionBINrepresentation(
         input?.destination ||
         input?.utxo?.htlc.refund_key,
     )
-
-  console.log('inputsArray', inputsArray)
-  console.log('outputsArray', outputsArray)
 
   const transactionsize = estimate_transaction_size(
     mergeUint8Arrays(inputsArray),
@@ -476,7 +471,6 @@ export function getTransactionHEX(
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
       if (input?.utxo?.htlc) {
-        console.log('htlc')
         const spend_address = input?.utxo?.htlc?.spend_key
         const refund_address = input?.utxo?.htlc?.refund_key
 
@@ -505,8 +499,6 @@ export function getTransactionHEX(
           )
           return witness
         } else if (addressesPrivateKeys[refund_address]) {
-          console.log('Build refund TX')
-
           const address = input?.utxo?.htlc?.refund_key
           const addressPrivateKey = addressesPrivateKeys[address]
 
@@ -532,7 +524,6 @@ export function getTransactionHEX(
           return null
         }
       } else {
-        console.log('not detected htlc')
         let address =
           input?.utxo?.destination ||
           input?.input?.authority ||

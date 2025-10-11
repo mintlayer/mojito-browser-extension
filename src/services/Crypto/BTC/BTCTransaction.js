@@ -69,16 +69,10 @@ const buildTransaction = async ({
     transactionBuilder.addInput(input)
   })
 
-  console.log('to', to)
-  console.log('from', from)
-  console.log('amount', amount)
-  console.log('change', change)
-
   transactionBuilder.addOutput({
     address: to,
     value: amount,
   })
-  console.log('transactionBuilder', transactionBuilder)
   transactionBuilder.addOutput({
     address: from,
     value: change,
@@ -94,7 +88,6 @@ const buildTransaction = async ({
 }
 
 const buildHTLCAndFundingAddress = async (input) => {
-  console.log('input', input)
   const {
     receiverPubKey,
     senderPubKey,
@@ -104,8 +97,6 @@ const buildHTLCAndFundingAddress = async (input) => {
   } = input
 
   const network = bitcoin.networks[networkType]
-
-  console.log('network', network)
 
   const redeemScript = bitcoin.script.compile([
     bitcoin.opcodes.OP_IF,
@@ -122,14 +113,10 @@ const buildHTLCAndFundingAddress = async (input) => {
     bitcoin.opcodes.OP_CHECKSIG,
   ])
 
-  console.log('redeemScript', redeemScript)
-
   const p2wsh = bitcoin.payments.p2wsh({
     redeem: { output: redeemScript },
     network,
   })
-
-  console.log('p2wsh', p2wsh)
 
   return {
     redeemScript,
@@ -143,7 +130,6 @@ const buildHTLCAndFundingAddress = async (input) => {
 }
 
 const buildHtlcClaimTx = async (params) => {
-  console.log('params', params)
   const {
     networkType = 'testnet',
     utxo,
@@ -153,16 +139,10 @@ const buildHtlcClaimTx = async (params) => {
     secretHex,
   } = params
 
-  console.log('networkType', networkType)
-
   const network = bitcoin.networks[networkType]
-
-  console.log('network', network)
 
   const psbt = new bitcoin.Psbt({ network })
   const redeemScript = Buffer.from(redeemScriptHex, 'hex')
-
-  console.log('psbt1', psbt)
 
   psbt.addInput({
     hash: utxo.txid,
@@ -181,8 +161,6 @@ const buildHtlcClaimTx = async (params) => {
     address: toAddress,
     value: utxo.value - 500, // fee
   })
-
-  console.log('psbt2', psbt)
 
   const ECPair = ECPairFactory(ecc)
 

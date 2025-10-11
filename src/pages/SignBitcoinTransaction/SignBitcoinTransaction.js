@@ -168,7 +168,6 @@ export const SignBitcoinTransactionPage = () => {
 
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
-    console.log('transactionJSONrepresentation', transactionJSONrepresentation)
 
     const { WIF } = await Account.unlockAccount(accountID, pass)
 
@@ -226,7 +225,6 @@ export const SignBitcoinTransactionPage = () => {
             txHash: txHex,
           },
         })
-        console.log('Secret saved successfully')
       } catch (error) {
         console.error('Error saving secret:', error)
         // Continue with transaction even if secret saving fails
@@ -281,7 +279,6 @@ export const SignBitcoinTransactionPage = () => {
           password: pass,
           hash: secretHash,
         })
-        console.log('Retrieved saved secret')
       } catch (error) {
         console.log(
           'No saved secret found, will use manual input:',
@@ -345,8 +342,6 @@ export const SignBitcoinTransactionPage = () => {
     const result = {
       signedTxHex: tx,
     }
-
-    console.log('result', result)
 
     // eslint-disable-next-line no-undef
     runtime.sendMessage(
