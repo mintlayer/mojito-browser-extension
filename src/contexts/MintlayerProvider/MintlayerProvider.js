@@ -13,12 +13,7 @@ class InMemoryAccountProvider {
   navigate = null
 
   constructor(addresses, navigate) {
-    this.addresses = {
-      testnet: {
-        receiving: addresses.testnet.receiving || [],
-        change: addresses.testnet.change || [],
-      },
-    }
+    this.addresses = addresses
     this.navigate = navigate
   }
 
@@ -35,10 +30,8 @@ class InMemoryAccountProvider {
   }
 
   async request(method, params) {
-    console.log('methidparams', method, params)
     if (method === 'signTransaction') {
       const { txData } = params
-      console.log('++++++++++++++++++txData', txData)
       if (!txData) {
         throw new Error('Transaction is required for signing')
       }

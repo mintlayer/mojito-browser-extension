@@ -46,11 +46,22 @@ const ActionButtons = ({ data }) => {
           />
         </>
       )}
-      <Wallet.TransactionButton
-        title={'Send'}
-        mode={'up'}
-        onClick={data.setOpenTransactionForm}
-      />
+
+      {data.walletType.chain === 'mintlayer' && (
+        <Wallet.TransactionButton
+          title={'Send'}
+          mode={'up'}
+          onClick={data.setOpenMlTransactionForm}
+        />
+      )}
+
+      {data.walletType.name === 'Bitcoin' && (
+        <Wallet.TransactionButton
+          title={'Send'}
+          mode={'up'}
+          onClick={data.setOpenBtcTransactionForm}
+        />
+      )}
       <Wallet.TransactionButton
         title={'Receive'}
         onClick={() => data.setOpenShowAddress(true)}
@@ -105,8 +116,11 @@ const WalletPage = () => {
     coinType,
   )
 
-  const setOpenTransactionForm = () => {
-    navigate('/wallet/' + walletType.name + '/send-transaction')
+  const setOpenBtcTransactionForm = () => {
+    navigate('/wallet/' + walletType.name + '/send-btc-transaction')
+  }
+  const setOpenMlTransactionForm = () => {
+    navigate('/wallet/' + walletType.name + '/send-ml-transaction')
   }
   const setOpenStaking = () => {
     navigate('/wallet/' + walletType.name + '/staking')
@@ -138,7 +152,8 @@ const WalletPage = () => {
     walletType,
     currentMlAddresses,
     setOpenStaking,
-    setOpenTransactionForm,
+    setOpenBtcTransactionForm,
+    setOpenMlTransactionForm,
     setOpenShowAddress,
     setOpenSignPage,
     setOpenNftPage,

@@ -2,7 +2,6 @@ import React, { useContext } from 'react'
 
 import { MintlayerContext } from '@Contexts'
 import { Input } from '@BasicComponents'
-import { OptionButtons } from '@ComposedComponents'
 
 import './FeeField.css'
 import { ML as MLHelpers } from '@Helpers'
@@ -10,9 +9,6 @@ import { ML as MLHelpers } from '@Helpers'
 const FeeFieldML = ({ value: parentValue, id }) => {
   const { feerate } = useContext(MintlayerContext)
   const timeToFirstConfirmations = '~2 minutes'
-
-  const options = [{ name: 'norm', value: feerate }]
-  const radioButtonValue = 'norm'
   return (
     <div className="fee-field-wrapper">
       <div className="fee-field">
@@ -28,10 +24,6 @@ const FeeFieldML = ({ value: parentValue, id }) => {
           />
           <small>ML</small>
         </div>
-        <OptionButtons
-          value={radioButtonValue}
-          options={options}
-        />
       </div>
       <p>Estimated time for 1st confirmation: {timeToFirstConfirmations}</p>
     </div>

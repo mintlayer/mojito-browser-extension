@@ -1,38 +1,36 @@
-import { useContext, useState } from 'react'
+import { useEffect, useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { SendTransaction } from '@ContainerComponents'
+import { SendMlTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
-import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
-import { Account } from '@Entities'
-import { Format } from '@Helpers'
+import {
+  AccountContext,
+  SettingsContext,
+  MintlayerContext,
+  TransactionContext,
+} from '@Contexts'
 import { AppInfo } from '@Constants'
-import { MLTransaction, ML as MLHelpers } from '@Helpers'
-import { ML } from '@Cryptos'
 
 import './DelegationWithdraw.css'
+import { Error } from '@BasicComponents'
+import { Loading } from '@ComposedComponents'
 
 const DelegationWithdrawPage = () => {
   const { delegationId } = useParams()
-
-  // staking only for Mintlayer
   const walletType = {
     name: 'Mintlayer',
     ticker: 'ML',
     chain: 'mintlayer',
   }
-
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.WITHDRAW
-
   const { addresses, accountID } = useContext(AccountContext)
+  const { client } = useContext(MintlayerContext)
   const { networkType } = useContext(SettingsContext)
-  const { setFeeLoading, setDelegationStep } = useContext(TransactionContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
-  const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
@@ -45,22 +43,53 @@ const DelegationWithdrawPage = () => {
     setDelegationStep(1)
     navigate('/wallet/' + walletType.name + '/staking')
   }
+  const { setDelegationStep } = useContext(TransactionContext)
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
+  const [feeLoading, setFeeLoading] = useState(false)
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
-  const { mlDelegationList, currentHeight } =
-    useMlWalletInfo(currentMlAddresses)
+  const {
+    balance: mlBalance,
+    utxos,
+    unusedAddresses,
+    fetchingBalances,
+    fetchingUtxos,
+  } = useMlWalletInfo(currentMlAddresses)
+  const maxValueToken = mlBalance
 
-  const currentDelegationInfo = mlDelegationList.find(
-    (delegation) => delegation.delegation_id === delegationId,
-  )
+  const transaction_conditions =
+    utxos.length > 0 &&
+    mlBalance > 0 &&
+    unusedAddresses.change &&
+    unusedAddresses.receive
 
-  const delegationBalance = Format.BTCValue(
-    MLHelpers.getAmountInCoins(currentDelegationInfo?.balance.atoms || 0),
-  )
+  const loading = fetchingBalances || fetchingUtxos
 
-  const maxValueToken = delegationBalance - totalFeeCrypto
+  useEffect(() => {
+    const buildTransaction = async () => {
+      if (
+        transaction_conditions &&
+        delegationId &&
+        transactionInformation?.amount > 0
+      ) {
+        setFeeLoading(true)
+        const transaction = await client.buildDelegationWithdraw({
+          amount: transactionInformation.amount,
+          delegation_id: transactionInformation.to,
+        })
+        setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
+        setFeeLoading(false)
+      }
+    }
+    buildTransaction()
+  }, [
+    transaction_conditions,
+    transactionInformation,
+    client,
+    unusedAddresses,
+    delegationId,
+  ])
 
   if (!accountID) {
     console.log('No account id.')
@@ -68,60 +97,15 @@ const DelegationWithdrawPage = () => {
     return
   }
 
-  const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
-
-  const calculateMlTotalFee = async (transactionInfo) => {
-    setFeeLoading(true)
-    const address = transactionInfo.to
-    const amountToSend = MLHelpers.getAmountInAtoms(transactionInfo.amount)
-    const fee = await MLTransaction.calculateSpenDelegFee(
-      address,
-      amountToSend,
-      networkType,
-      currentDelegationInfo,
-      currentHeight,
-    )
-    const feeInCoins = MLHelpers.getAmountInCoins(Number(fee))
-    setTotalFeeFiat(Format.fiatValue(feeInCoins * exchangeRate))
-    setTotalFeeCrypto(feeInCoins)
-    setFeeLoading(false)
-    return feeInCoins
-  }
-
   const createTransaction = async (transactionInfo) => {
-    calculateMlTotalFee(transactionInfo)
     setTransactionInformation(transactionInfo)
   }
 
-  const confirmMlTransaction = async (password) => {
-    const amountToSend = MLHelpers.getAmountInAtoms(
-      transactionInformation.amount,
-    )
-    const { mlPrivKeys } = await Account.unlockAccount(accountID, password)
-    const privKey =
-      networkType === 'mainnet'
-        ? mlPrivKeys.mlMainnetPrivateKey
-        : mlPrivKeys.mlTestnetPrivateKey
-
-    const walletPrivKeys = ML.getWalletPrivKeysList(
-      privKey,
-      networkType,
-      changeAddressesLength,
-    )
-    const keysList = {
-      ...walletPrivKeys.mlReceivingPrivKeys,
-      ...walletPrivKeys.mlChangePrivKeys,
-    }
-
-    const result = await MLTransaction.spendFromDelegation(
-      keysList,
-      transactionInformation.to,
-      amountToSend,
-      networkType,
-      currentDelegationInfo,
-      currentHeight,
-    )
-
+  const confirmMlTransaction = async () => {
+    const result = await client.delegationWithdraw({
+      amount: transactionInformation.amount,
+      delegation_id: transactionInformation.to,
+    })
     return result
   }
 
@@ -129,24 +113,31 @@ const DelegationWithdrawPage = () => {
     <>
       <div className="page">
         <VerticalGroup>
-          <SendTransaction
-            totalFeeFiat={totalFeeFiat}
+          {loading ? (
+            <div className="page-loading">
+              <Loading />
+            </div>
+          ) : (
+            <></>
+          )}
+          <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}
-            setTotalFeeCrypto={setTotalFeeCrypto}
+            feeLoading={feeLoading}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueToken}
             onSendTransaction={createTransaction}
-            calculateTotalFee={calculateMlTotalFee}
             setFormValidity={setFormValid}
-            isFormValid={isFormValid}
+            isFormValid={transaction_conditions && isFormValid}
             confirmTransaction={confirmMlTransaction}
             goBackToWallet={goBackToWallet}
+            preEnterAddress={delegationId}
             transactionMode={transactionMode}
-            currentDelegationInfo={currentDelegationInfo}
             walletType={walletType}
-            preEnterAddress={currentDelegationInfo.spend_destination}
           />
+          {!transaction_conditions && (
+            <Error error="Insufficient funds for the fee. Please wait for the wallet to sync or add coins to the wallet." />
+          )}
         </VerticalGroup>
       </div>
     </>

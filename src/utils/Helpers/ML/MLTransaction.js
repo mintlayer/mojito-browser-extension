@@ -1,4 +1,7 @@
 /* eslint-disable max-params */
+
+// NOTE: These helper functions aren’t called externally; they remain here just as representations.
+
 import { ML } from '@Cryptos'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
@@ -813,14 +816,6 @@ const createNft = async ({
   const optUtxos = getOptUtxos(requireUtxo, network, chainTip)
   const transaction = ML.getTransaction(inputsArray, outputs)
 
-  console.log('sendNft222', {
-    txNftOutput,
-    txChangeOutput,
-    outputs,
-    optUtxos,
-    transaction,
-  })
-
   const encodedWitnesses = getEncodedWitnesses(
     requireUtxo,
     keysList,
@@ -886,3 +881,5 @@ export {
   calculateTransactionSizeInBytes,
   calculateIssueNftTxSizeInBytes,
 }
+
+// NOTE: These helper functions aren’t called externally; they remain here just as representations.
