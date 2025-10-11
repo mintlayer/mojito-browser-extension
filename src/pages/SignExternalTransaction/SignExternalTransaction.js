@@ -5,6 +5,7 @@ import { MOCKS } from './mocks'
 import { Button } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
+import { MintlayerContext } from '@Contexts'
 
 import './SignExternalTransaction.css'
 import { useState, useContext, useEffect } from 'react'
@@ -34,6 +35,10 @@ export const SignTransactionPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [secret, setSecret] = useState('')
+
+  const { currentHeight } = useContext(MintlayerContext)
+
+  const blockHeight = currentHeight ? BigInt(currentHeight) : 0n
 
   // Secret management state for HTLC transactions
   const [generatedSecret, setGeneratedSecret] = useState(null)
@@ -186,6 +191,7 @@ export const SignTransactionPage = () => {
         SignTxHelpers.getTransactionBINrepresentation(
           transactionJSONrepresentation,
           network,
+          blockHeight,
         )
 
       const pass = password
@@ -254,6 +260,7 @@ export const SignTransactionPage = () => {
             : undefined,
         },
         network,
+        blockHeight,
       )
 
       if (isHTLCCreateTx) {

@@ -53,8 +53,10 @@ export const SignTransactionPage = () => {
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { txPreviewInfo, fetchAllData, fetchDelegations } =
+  const { txPreviewInfo, fetchAllData, fetchDelegations, currentHeight } =
     useContext(MintlayerContext)
+
+  const blockHeight = currentHeight ? BigInt(currentHeight) : 0n
 
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -86,6 +88,7 @@ export const SignTransactionPage = () => {
         SignTxHelpers.getTransactionBINrepresentation(
           transactionJSONrepresentation,
           network,
+          blockHeight,
         )
 
       let unlockedAccount
@@ -121,6 +124,7 @@ export const SignTransactionPage = () => {
           addressesPrivateKeys: keysList,
         },
         network,
+        blockHeight,
       )
 
       const result = await Mintlayer.broadcastTransaction(transactionHex)

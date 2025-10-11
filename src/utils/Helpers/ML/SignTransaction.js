@@ -40,8 +40,6 @@ import {
 } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
 import { getOutputs } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
 
-const blockHeight = 0n
-
 export const handleTxError = (error, setTxErrorMessage, setPassword) => {
   const errorMsg =
     error?.message ||
@@ -89,6 +87,7 @@ function mergeUint8Arrays(arrays) {
 export function getTransactionBINrepresentation(
   transactionJSONrepresentation,
   _network,
+  blockHeight,
 ) {
   const network = _network
   const networkType = network === 1 ? 'testnet' : 'mainnet'
@@ -390,6 +389,7 @@ export function getTransactionHEX(
     htlc = {},
   },
   _network,
+  blockHeight,
 ) {
   const network = _network
   const networkType = network === 1 ? 'testnet' : 'mainnet'

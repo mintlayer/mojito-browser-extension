@@ -58,6 +58,14 @@ const DelegationStakePage = () => {
   } = useMlWalletInfo(currentMlAddresses)
   const maxValueToken = mlBalance
 
+  console.log({
+    balance: mlBalance,
+    utxos,
+    unusedAddresses,
+    fetchingBalances,
+    fetchingUtxos,
+  })
+
   const transaction_conditions =
     utxos.length > 0 &&
     mlBalance > 0 &&
