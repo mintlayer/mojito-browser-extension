@@ -214,7 +214,7 @@ const SendMlTransaction = ({
             <Button
               extraStyleClasses={['send-transaction-button']}
               onClickHandle={sendTransaction}
-              disabled={!isFormValid}
+              disabled={!isFormValid || feeLoading}
             >
               {sendTransactionButtonTitle}
             </Button>

@@ -53,7 +53,8 @@ export const SignTransactionPage = () => {
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { txPreviewInfo } = useContext(MintlayerContext)
+  const { txPreviewInfo, fetchAllData, fetchDelegations } =
+    useContext(MintlayerContext)
 
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -69,6 +70,11 @@ export const SignTransactionPage = () => {
 
   const handleApprove = async () => {
     setIsModalOpen(true) // Open the modal
+  }
+
+  const handleUpodateInfo = () => {
+    fetchAllData()
+    fetchDelegations()
   }
 
   const handleModalSubmit = async () => {
@@ -119,6 +125,7 @@ export const SignTransactionPage = () => {
 
       const result = await Mintlayer.broadcastTransaction(transactionHex)
       setTransactionId(JSON.parse(result))
+      handleUpodateInfo()
 
       if (txPreviewInfo) {
         const account = LocalStorageService.getItem('unlockedAccount')
