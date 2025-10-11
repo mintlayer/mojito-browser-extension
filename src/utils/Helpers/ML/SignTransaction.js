@@ -466,8 +466,6 @@ export function getTransactionHEX(
     }
   }
 
-  const htlcRefund = {}
-
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
       if (input?.utxo?.htlc) {
@@ -569,7 +567,7 @@ export function getTransactionHEX(
     '',
   )
 
-  return { txHash, htlcRefund }
+  return txHash
 }
 
 export function getTransactionIntent({
