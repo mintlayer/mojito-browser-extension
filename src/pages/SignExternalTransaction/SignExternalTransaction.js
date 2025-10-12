@@ -15,6 +15,7 @@ import { AppInfo } from '@Constants'
 import { Account } from '@Entities'
 import { ML } from '@Cryptos'
 import { AccountContext, SettingsContext } from '@Contexts'
+import { Mintlayer } from '@APIs'
 
 const storage =
   typeof browser !== 'undefined' && browser.storage
@@ -243,7 +244,59 @@ export const SignTransactionPage = () => {
 
       const secret_ = secretPresaved || secret
 
-      const { txHash: transactionHex } = SignTxHelpers.getTransactionHEX(
+      const order_info = {}
+
+      // if fill order then check for order id and fetch data
+      if (transactionJSONrepresentation.inputs.find(
+        (input) => input.input.command === 'FillOrder',
+      )
+      ) {
+        const order_id = transactionJSONrepresentation.inputs.find(
+          (input) => input.input.command === 'FillOrder',
+        ).input.order_id
+        const orderdata = JSON.parse(await Mintlayer.getOrderById(order_id))
+
+        order_info[order_id] = {
+          initially_asked: {
+            ...(orderdata.ask_currency.type === 'Coin' ? {
+              coins: {
+                atoms: orderdata.initially_asked.atoms,
+              }
+            } : {
+              tokens: {
+                token_id: orderdata.ask_currency.token_id,
+                amount: {
+                  atoms: orderdata.initially_asked.atoms,
+                },
+              }
+            }),
+          },
+          initially_given: {
+            ...(orderdata.give_currency.type === 'Coin' ? {
+              coins: {
+                atoms: orderdata.initially_given.atoms,
+              }
+            } : {
+              tokens: {
+                token_id: orderdata.give_currency.token_id,
+                amount: {
+                  atoms: orderdata.initially_given.atoms,
+                }
+              }
+            }),
+          },
+          ask_balance: {
+            atoms: orderdata.ask_balance.atoms,
+          },
+          give_balance: {
+            atoms: orderdata.give_balance.atoms,
+          }
+        }
+      }
+
+      console.log('order_info', order_info)
+
+      const transactionHex = SignTxHelpers.getTransactionHEX(
         {
           transactionBINrepresentation,
           transactionJSONrepresentation,
@@ -261,7 +314,13 @@ export const SignTransactionPage = () => {
         },
         network,
         blockHeight,
+        {
+          pool_info: {},
+          order_info,
+        },
       )
+
+      console.log('transactionHex', transactionHex)
 
       if (isHTLCCreateTx) {
         // save secret to account
@@ -287,6 +346,8 @@ export const SignTransactionPage = () => {
       } else {
         result = transactionHex
       }
+
+      console.log('result', result)
 
       // eslint-disable-next-line no-undef
       runtime.sendMessage(

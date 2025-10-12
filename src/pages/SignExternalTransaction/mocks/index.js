@@ -3187,4 +3187,94 @@ export const MOCKS = {
       requestId: 'wymzne7u81',
     },
   },
+  fillOrder2: {
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          JSONRepresentation: {
+            fee: {
+              atoms: '40400000000',
+              decimal: '0.404',
+            },
+            id: '285f358833175866ec3a5ddd43b675a00f9fa8d76fc88b7bc3ec4ab8162213b6',
+            inputs: [
+              {
+                input: {
+                  command: 'FillOrder',
+                  destination: 'tmt1q86huq7e03hmk6wj8sf7hezqgnshhtwy6s8gz3ur',
+                  fill_atoms: '100000000000',
+                  input_type: 'AccountCommand',
+                  nonce: '6',
+                  order_id:
+                    'tordr1ass7kw4s6edj73nrr9zn5pfng4qfuy866l49mrqcnypltad84aqq6frlax',
+                },
+                utxo: null,
+              },
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '9c093810c1303c22db0b8afacca9c190f9551d3330cbd3a43eb65fb4c56c83af',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1507781004300000',
+                      decimal: '15077.810043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1q86huq7e03hmk6wj8sf7hezqgnshhtwy6s8gz3ur',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '2000000000000',
+                    decimal: '20',
+                  },
+                  token_id:
+                    'tmltk18wg2xa7qxflwmcjpcd7nepsrsjj0gcrqyc7k5ej4cq5q3lf7ry7qtm2l6z',
+                  type: 'TokenV1',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1507640604300000',
+                    decimal: '15076.406043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
+          },
+          BINRepresentation: {},
+          HEXRepresentation_unsigned:
+            '01000800003fc7f046c469662d76288bdcff644f207d9e995083da1b815e8592ccd91d5f140100000000004e7fc6e7cca5e0fb049ba651fe0817e88dd13551992f4690d193de1bf852e41f010000000c0a023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e80000000000000000000000000000000000000000014feab906d667b56c49e3c86b8bf9e1ea10bdff2d02140147540a3dcb25b89c803930dd23f1b01aaa1af59000000b401c400fd60501d26a1ca86df0108c4fde32ec77ddf5eaedac590600023b90a377c0327eede241c37d3c860384a4f46060263d6a6655c02808fd3e193c070010a5d4e801d26a1ca86df0108c4fde32ec77ddf5eaedac5906',
+          transaction_id:
+            '3931577a59733b6b2b9db2f0ca4291fdb6a7adcde6839e0b14637f8c04c53202',
+          htlc: {
+            multisig_challenge:
+              '02080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+            witness_input:
+              '010131020125020400004d289db78cd77834d8fceeb16500731ed5d4abfe5a2a41c1804694d0257b99c46163c3c4cecb184604ffc7ef03ce69a7dab89a5f42947ecbd6fb14620a20f7b502080003b7aa540098fd02952470bd324fcf1976531a4a6125517e92c369ccc86c65d38d0002aac655156131ce3a06eab9f0a38f43df1b1c1f25f4944bae262ed614fd52d4c6',
+          },
+        },
+      },
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
+  },
 }

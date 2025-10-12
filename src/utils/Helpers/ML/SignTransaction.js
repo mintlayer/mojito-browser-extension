@@ -39,6 +39,7 @@ import {
   Amount,
 } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
 import { getOutputs } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
+import { encode_witness_no_signature } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
 export const handleTxError = (error, setTxErrorMessage, setPassword) => {
   const errorMsg =
@@ -390,6 +391,10 @@ export function getTransactionHEX(
   },
   _network,
   blockHeight,
+  {
+    pool_info = {},
+    order_info = {},
+  }
 ) {
   const network = _network
   const networkType = network === 1 ? 'testnet' : 'mainnet'
@@ -468,6 +473,10 @@ export function getTransactionHEX(
 
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
+      if(input.input.command === 'FillOrder') {
+        return encode_witness_no_signature()
+      }
+
       if (input?.utxo?.htlc) {
         const spend_address = input?.utxo?.htlc?.spend_key
         const refund_address = input?.utxo?.htlc?.refund_key
@@ -538,8 +547,8 @@ export function getTransactionHEX(
         const addressPrivateKey = addressesPrivateKeys[address]
 
         const additionalInfo = {
-          pool_info: {},
-          order_info: {},
+          pool_info,
+          order_info,
         }
 
         const witness = encode_witness(
