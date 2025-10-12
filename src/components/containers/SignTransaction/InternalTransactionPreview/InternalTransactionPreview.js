@@ -408,7 +408,6 @@ const DelegateStaking = ({ transactionData }) => {
   const outputWithStaking = JSONRepresentation.outputs.find(
     (output) => output.type === 'DelegateStaking',
   )
-  console.log('outputWithStaking', outputWithStaking)
 
   useEffect(() => {
     setTxPreviewInfo({
