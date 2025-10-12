@@ -373,18 +373,27 @@ const DataDeposit = ({ transactionData }) => {
 }
 
 const CreateDelegationId = ({ transactionData }) => {
+  const { setTxPreviewInfo } = useContext(MintlayerContext)
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const fee = JSONRepresentation.fee.decimal || 0
 
-  const outputWithDataDeposit = JSONRepresentation.outputs.find(
+  const outputWithCreateDelegation = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateDelegationId',
   )
+
+  useEffect(() => {
+    setTxPreviewInfo({
+      action: 'Create Delegation',
+      destination: outputWithCreateDelegation.pool_id,
+      fee: fee,
+    })
+  }, [outputWithCreateDelegation, setTxPreviewInfo, fee])
   return (
     <div className="transactionDetails">
       <EstimatedChanges action="Create Delegation" />
       <div className="signTxSection">
         <h4>Pool Id:</h4>
-        <p>{outputWithDataDeposit.pool_id}</p>
+        <p>{outputWithCreateDelegation.pool_id}</p>
       </div>
       <NetworkFee fee={fee} />
     </div>
@@ -392,20 +401,31 @@ const CreateDelegationId = ({ transactionData }) => {
 }
 
 const DelegateStaking = ({ transactionData }) => {
+  const { setTxPreviewInfo } = useContext(MintlayerContext)
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const fee = JSONRepresentation.fee.decimal || 0
 
-  const outputWithDataDeposit = JSONRepresentation.outputs.find(
+  const outputWithStaking = JSONRepresentation.outputs.find(
     (output) => output.type === 'DelegateStaking',
   )
+  console.log('outputWithStaking', outputWithStaking)
+
+  useEffect(() => {
+    setTxPreviewInfo({
+      action: 'Delegate Staking',
+      destination: outputWithStaking.delegation_id,
+      amount: outputWithStaking.amount.decimal,
+      fee: fee,
+    })
+  }, [outputWithStaking, setTxPreviewInfo, fee])
   return (
     <div className="transactionDetails">
       <EstimatedChanges action="Stake to delegation" />
       <div className="signTxSection">
         <h4>Delegation Id:</h4>
-        <p>{outputWithDataDeposit.delegation_id}</p>
+        <p>{outputWithStaking.delegation_id}</p>
         <h4>Amount:</h4>
-        <p>{outputWithDataDeposit.amount.decimal}</p>
+        <p>{outputWithStaking.amount.decimal}</p>
       </div>
       <NetworkFee fee={fee} />
     </div>
@@ -413,12 +433,21 @@ const DelegateStaking = ({ transactionData }) => {
 }
 
 const DelegateWithdraw = ({ transactionData }) => {
+  const { setTxPreviewInfo } = useContext(MintlayerContext)
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
   const fee = JSONRepresentation.fee.decimal || 0
 
   const inputWithWithdraw = JSONRepresentation.inputs.find(
     (input) => input.input.account_type === 'DelegationBalance',
   ).input
+  useEffect(() => {
+    setTxPreviewInfo({
+      action: 'Withdraw from delegation',
+      destination: inputWithWithdraw.delegation_id,
+      amount: inputWithWithdraw.amount.decimal,
+      fee: fee,
+    })
+  }, [inputWithWithdraw, setTxPreviewInfo, fee])
   return (
     <div className="transactionDetails">
       <EstimatedChanges action="Withdraw from delegation" />

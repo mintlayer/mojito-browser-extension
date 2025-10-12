@@ -238,7 +238,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     )
 
     const first_unused_change_address =
-      currentMlAddresses.mlChangeAddresses[first_unused_change_address_index]
+      currentMlAddresses.mlChangeAddresses[first_unused_change_address_index] ||
+      currentMlAddresses.mlChangeAddresses[0]
 
     const first_unused_receive_address_index = addresses_data_receive.findIndex(
       (address_data) => {
@@ -250,7 +251,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const first_unused_receive_address =
       currentMlAddresses.mlReceivingAddresses[
         first_unused_receive_address_index
-      ]
+      ] || currentMlAddresses.mlReceivingAddresses[0]
 
     setUnusedAddresses({
       change: first_unused_change_address,
