@@ -127,7 +127,7 @@
   width: 50%;
 }
 
-/* HTLC Secret Section Styles */
+/* HTLC Secret Management Styles */
 .htlc-secret-section {
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -169,12 +169,12 @@
   border: 1px solid #d1d5db;
   border-radius: 4px;
   padding: 8px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  word-break: break-all;
 }
 
 .secret-value span {
-  font-family: 'Courier New', monospace;
-  font-size: 0.75rem;
-  word-break: break-all;
   flex: 1;
   color: #374151;
 }
@@ -185,54 +185,43 @@
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s;
 }
 
 .secret-value button:hover {
   background-color: #f3f4f6;
 }
 
-.secret-actions {
-  margin-top: 8px;
-  padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.secret-actions p {
-  margin: 0;
-  color: #6b7280;
+.secret-warning {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  color: #92400e;
   font-size: 0.875rem;
 }
 
-/* HTLC Secret Input Styles */
 .htlc-secret-input {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   width: 100%;
   text-align: left;
 }
 
 .htlc-secret-input label {
+  display: block;
+  margin-bottom: 8px;
   font-weight: 500;
   color: #374151;
-  font-size: 0.875rem;
 }
 
 .secret-error {
   color: #dc2626;
-  font-size: 0.75rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 4px;
-  padding: 6px 8px;
+  font-size: 0.875rem;
+  margin-top: 4px;
+  padding: 4px 0;
 }
 
 .secret-hint {
+  margin-top: 4px;
   color: #6b7280;
-  font-size: 0.75rem;
-}
-
-.secret-hint small {
-  font-style: italic;
 }

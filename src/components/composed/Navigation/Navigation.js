@@ -125,6 +125,16 @@ const Navigation = ({ customNavigation }) => {
     ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
       ? [
           {
+            id: 5,
+            label: 'Test Sign Bitcoin Transaction',
+            icon: <SettingsImg />,
+            link: '/wallet/Bitcoin/sign-transaction',
+          },
+        ]
+      : []),
+    ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
+      ? [
+          {
             id: 6,
             label: 'Test Sign Challenge',
             icon: <SettingsImg />,

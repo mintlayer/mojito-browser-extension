@@ -89,15 +89,18 @@ export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
       return acc
     }, {})
 
-    return addressPrivKeyPairs
+    return { addressPrivKeyPairs, publicKeys }
   }
 
-  const [mlReceivingPrivKeys, mlChangePrivKeys] = [
-    generatePrivKeys(getReceivingAddress),
-    generatePrivKeys(getChangeAddress),
-  ]
+  const receivingData = generatePrivKeys(getReceivingAddress)
+  const changeData = generatePrivKeys(getChangeAddress)
 
-  return { mlReceivingPrivKeys, mlChangePrivKeys }
+  return {
+    mlReceivingPrivKeys: receivingData.addressPrivKeyPairs,
+    mlChangePrivKeys: changeData.addressPrivKeyPairs,
+    mlReceivingPublicKeys: receivingData.publicKeys,
+    mlChangePublicKeys: changeData.publicKeys,
+  }
 }
 
 // const checkIfAddressUsed = async (address, network) => {
@@ -133,33 +136,50 @@ export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
       addressGenerator(mlPrivateKey, i + offset),
     )
 
-    const publicKeys = privKeys.map((address) =>
-      getPublicKeyFromPrivate(address),
+    const publicKeys = privKeys.map((privKey) =>
+      getPublicKeyFromPrivate(privKey),
     )
 
-    return publicKeys.map((pubKey) => getAddressFromPubKey(pubKey, network))
+    const addresses = publicKeys.map((pubKey) =>
+      getAddressFromPubKey(pubKey, network),
+    )
+
+    return { addresses, publicKeys }
   }
 
   const checkAndGenerateAddresses = async (addressGenerator) => {
-    const addresses = generateAddresses(addressGenerator, batch, 0)
+    const { addresses, publicKeys } = generateAddresses(
+      addressGenerator,
+      batch,
+      0,
+    )
     let allUsed = await checkIfAddressesUsed(addresses, network)
 
     while (allUsed.every((used) => used)) {
-      addresses.push(
-        ...generateAddresses(addressGenerator, batch, addresses.length),
+      const newData = generateAddresses(
+        addressGenerator,
+        batch,
+        addresses.length,
       )
+      addresses.push(...newData.addresses)
+      publicKeys.push(...newData.publicKeys)
       allUsed = await checkIfAddressesUsed(addresses, network)
     }
 
-    return addresses
+    return { addresses, publicKeys }
   }
 
-  const [mlReceivingAddresses, mlChangeAddresses] = await Promise.all([
+  const [receivingData, changeData] = await Promise.all([
     checkAndGenerateAddresses(getReceivingAddress),
     checkAndGenerateAddresses(getChangeAddress),
   ])
 
-  return { mlReceivingAddresses, mlChangeAddresses }
+  return {
+    mlReceivingAddresses: receivingData.addresses,
+    mlChangeAddresses: changeData.addresses,
+    mlReceivingPublicKeys: receivingData.publicKeys,
+    mlChangePublicKeys: changeData.publicKeys,
+  }
 }
 
 export const getEncodedOutpointSourceId = (txId) => {
@@ -189,16 +209,6 @@ export const getOutputs = ({
   const networkIndex = NETWORKS[networkType]
   if (type === 'Transfer') {
     if (tokenId) {
-      console.log(
-        'amountInstace,\n' +
-          '        address,\n' +
-          '        tokenId,\n' +
-          '        networkIndex,',
-        amountInstace,
-        address,
-        tokenId,
-        networkIndex,
-      )
       return encode_output_token_transfer(
         amountInstace,
         address,

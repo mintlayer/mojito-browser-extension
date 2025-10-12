@@ -51,6 +51,8 @@
                   pendingRequest: {
                     origin,
                     requestId: message.requestId,
+                    // networkType: message.params.networkType,
+                    // permission: message.params.permission,
                     action: 'connect',
                   },
                 },

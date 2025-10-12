@@ -53,8 +53,10 @@ export const SignTransactionPage = () => {
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { txPreviewInfo, fetchAllData, fetchDelegations } =
+  const { txPreviewInfo, fetchAllData, fetchDelegations, currentHeight } =
     useContext(MintlayerContext)
+
+  const blockHeight = currentHeight ? BigInt(currentHeight) : 0n
 
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -86,6 +88,7 @@ export const SignTransactionPage = () => {
         SignTxHelpers.getTransactionBINrepresentation(
           transactionJSONrepresentation,
           network,
+          blockHeight,
         )
 
       let unlockedAccount
@@ -114,6 +117,63 @@ export const SignTransactionPage = () => {
         ...walletPrivKeys.mlChangePrivKeys,
       }
 
+      const order_info = {}
+
+      // if fill order then check for order id and fetch data
+      if (
+        transactionJSONrepresentation.inputs.find(
+          (input) => input.input.command === 'FillOrder',
+        )
+      ) {
+        const order_id = transactionJSONrepresentation.inputs.find(
+          (input) => input.input.command === 'FillOrder',
+        ).input.order_id
+        const orderdata = JSON.parse(await Mintlayer.getOrderById(order_id))
+
+        console.log('orderdata', orderdata)
+
+        order_info[order_id] = {
+          initially_asked: {
+            ...(orderdata.ask_currency.type === 'Coin'
+              ? {
+                  coins: {
+                    atoms: orderdata.initially_asked.atoms,
+                  },
+                }
+              : {
+                  tokens: {
+                    token_id: orderdata.ask_currency.token_id,
+                    amount: {
+                      atoms: orderdata.initially_asked.atoms,
+                    },
+                  },
+                }),
+          },
+          initially_given: {
+            ...(orderdata.give_currency.type === 'Coin'
+              ? {
+                  coins: {
+                    atoms: orderdata.initially_given.atoms,
+                  },
+                }
+              : {
+                  tokens: {
+                    token_id: orderdata.give_currency.token_id,
+                    amount: {
+                      atoms: orderdata.initially_given.atoms,
+                    },
+                  },
+                }),
+          },
+          ask_balance: {
+            atoms: orderdata.ask_balance.atoms,
+          },
+          give_balance: {
+            atoms: orderdata.give_balance.atoms,
+          },
+        }
+      }
+
       const transactionHex = SignTxHelpers.getTransactionHEX(
         {
           transactionBINrepresentation,
@@ -121,6 +181,11 @@ export const SignTransactionPage = () => {
           addressesPrivateKeys: keysList,
         },
         network,
+        blockHeight,
+        {
+          pool_info: {},
+          order_info,
+        },
       )
 
       const result = await Mintlayer.broadcastTransaction(transactionHex)

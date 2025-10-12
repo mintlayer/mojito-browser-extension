@@ -413,6 +413,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
     const available = parsedSpendableUtxos
       .filter((item) => item.utxo.value)
+      .filter((item) => item.utxo.type !== 'Htlc') // Do not try to spend non-external
       .filter((item) => {
         if (unconfirmedTransactions) {
           return !unconfirmedTransactions.some(

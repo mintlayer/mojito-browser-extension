@@ -128,6 +128,7 @@ const unlockHtlsSecret = async ({ accountId, password, hash }) => {
     tag: data.htlsTag,
     key,
   })
+
   if (!decrypted || decrypted.error)
     return Promise.reject(
       'Failed to decrypt the secret. Possibly wrong password.',
@@ -210,9 +211,11 @@ const unlockAccount = async (id, password) => {
       addresses.btcMainnetAddress = BTC_ADDRESS_TYPE_MAP[
         account.walletType
       ].getAddressFromPubKey(pubKey, mainnetNetwork)
+      addresses.btcMainnetPublicKey = pubKey
       addresses.btcTestnetAddress = BTC_ADDRESS_TYPE_MAP[
         account.walletType
       ].getAddressFromPubKey(pubKey, testnetNetwork)
+      addresses.btcTestnetPublicKey = pubKey
     }
 
     if (walletsToCreate.includes('ml')) {
