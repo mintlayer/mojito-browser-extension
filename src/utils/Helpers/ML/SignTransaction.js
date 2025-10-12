@@ -37,6 +37,7 @@ import {
   FreezableToken,
   TotalSupply,
   Amount,
+  encode_witness_no_signature,
 } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
 import { getOutputs } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
 import { encode_witness_no_signature } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js'
