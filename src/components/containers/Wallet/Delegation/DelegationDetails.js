@@ -33,9 +33,11 @@ const DelegationDetails = ({ delegation }) => {
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
+  // eslint-disable-next-line no-unused-vars
   const date = delegation.creation_time
     ? format(new Date(delegation.creation_time * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
+
   const balance = Format.BTCValue(ML.getAmountInCoins(delegation.balance.atoms))
   const buttonExtraStyles = ['delegation-details-button']
   const addressTitle = 'Spend address:'
@@ -67,10 +69,11 @@ const DelegationDetails = ({ delegation }) => {
             }
           />
         )}{' '}
-        <DelegationDetailsItem
+        {/* TODO: add back date when Addresses page is merged */}
+        {/* <DelegationDetailsItem
           title={'Date:'}
           content={date}
-        />
+        /> */}
         <DelegationDetailsItem
           title={'Pool id:'}
           content={delegation.pool_id}
