@@ -247,50 +247,55 @@ export const SignTransactionPage = () => {
       const order_info = {}
 
       // if fill order then check for order id and fetch data
-      if (transactionJSONrepresentation.inputs.find(
-        (input) => input.input.command === 'FillOrder',
-      )
+      if (
+        transactionJSONrepresentation.inputs.find((input) =>
+          ['FillOrder', 'ConcludeOrder'].includes(input.input.command),
+        )
       ) {
-        const order_id = transactionJSONrepresentation.inputs.find(
-          (input) => input.input.command === 'FillOrder',
+        const order_id = transactionJSONrepresentation.inputs.find((input) =>
+          ['FillOrder', 'ConcludeOrder'].includes(input.input.command),
         ).input.order_id
         const orderdata = JSON.parse(await Mintlayer.getOrderById(order_id))
 
         order_info[order_id] = {
           initially_asked: {
-            ...(orderdata.ask_currency.type === 'Coin' ? {
-              coins: {
-                atoms: orderdata.initially_asked.atoms,
-              }
-            } : {
-              tokens: {
-                token_id: orderdata.ask_currency.token_id,
-                amount: {
-                  atoms: orderdata.initially_asked.atoms,
-                },
-              }
-            }),
+            ...(orderdata.ask_currency.type === 'Coin'
+              ? {
+                  coins: {
+                    atoms: orderdata.initially_asked.atoms,
+                  },
+                }
+              : {
+                  tokens: {
+                    token_id: orderdata.ask_currency.token_id,
+                    amount: {
+                      atoms: orderdata.initially_asked.atoms,
+                    },
+                  },
+                }),
           },
           initially_given: {
-            ...(orderdata.give_currency.type === 'Coin' ? {
-              coins: {
-                atoms: orderdata.initially_given.atoms,
-              }
-            } : {
-              tokens: {
-                token_id: orderdata.give_currency.token_id,
-                amount: {
-                  atoms: orderdata.initially_given.atoms,
+            ...(orderdata.give_currency.type === 'Coin'
+              ? {
+                  coins: {
+                    atoms: orderdata.initially_given.atoms,
+                  },
                 }
-              }
-            }),
+              : {
+                  tokens: {
+                    token_id: orderdata.give_currency.token_id,
+                    amount: {
+                      atoms: orderdata.initially_given.atoms,
+                    },
+                  },
+                }),
           },
           ask_balance: {
             atoms: orderdata.ask_balance.atoms,
           },
           give_balance: {
             atoms: orderdata.give_balance.atoms,
-          }
+          },
         }
       }
 
