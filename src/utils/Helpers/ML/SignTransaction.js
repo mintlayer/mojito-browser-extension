@@ -391,10 +391,7 @@ export function getTransactionHEX(
   },
   _network,
   blockHeight,
-  {
-    pool_info = {},
-    order_info = {},
-  }
+  { pool_info = {}, order_info = {} },
 ) {
   const network = _network
   const networkType = network === 1 ? 'testnet' : 'mainnet'
@@ -473,7 +470,7 @@ export function getTransactionHEX(
 
   const encodedWitnesses = transactionJSONrepresentation.inputs.map(
     (input, index) => {
-      if(input.input.command === 'FillOrder') {
+      if (input.input.command === 'FillOrder') {
         return encode_witness_no_signature()
       }
 
