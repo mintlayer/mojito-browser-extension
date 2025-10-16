@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react'
 import { InputBTC, InputFloat } from '@BasicComponents'
 // import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
-import { AccountContext, SettingsContext, TransactionContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 
 import './CryptoFiatField.css'
 import { BTC, Format, NumbersHelper } from '@Helpers'
@@ -9,7 +9,6 @@ import { AppInfo } from '@Constants'
 
 const CryptoFiatField = ({
   placeholder,
-  buttonTitle,
   transactionData,
   inputValue,
   validity: parentValidity,
@@ -20,12 +19,16 @@ const CryptoFiatField = ({
   maxValueInToken,
   setAmountValidity,
   totalFeeInCrypto,
+  transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
 }) => {
+  const isDelegationWithdraw =
+    transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
   const { walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const { transactionMode } = useContext(TransactionContext)
   const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
-  const finalMaxValue = parsedValueInToken - totalFeeInCrypto
+  const finalMaxValue = isDelegationWithdraw
+    ? parsedValueInToken
+    : parsedValueInToken - totalFeeInCrypto
   const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
   const [maxFiatValue, setMaxFiatValue] = useState(
     maxCryptoValue * exchangeRate,
@@ -38,7 +41,9 @@ const CryptoFiatField = ({
   )
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
-  const amountErrorMessage = 'Amount set is bigger than this wallet balance.'
+  const amountErrorMessage = isDelegationWithdraw
+    ? 'Amount set is bigger than this delegation balance.'
+    : 'Amount set is bigger than this wallet balance.'
   const amountFormatErrorMessage = 'Amount format is invalid. Use 0.00 instead.'
   const zeroErrorMessage = 'Amount must be greater than 0.'
 
@@ -87,23 +92,8 @@ const CryptoFiatField = ({
       : setBottomValue(calculateFiatValue(value))
   }
 
-  // TODO: Discuss the feasibility of this feature after release
-  // const switchCurrency = (
-  //   currencyName,
-  //   recalculateValueFn,
-  //   calculateBottomFn,
-  // ) => {
-  //   setCurrentValueType(currencyName)
-  //   setBottomValue(calculateBottomFn(value || 0))
-  //   setValue(recalculateValueFn(value || 0))
-  // }
-
   const changeButtonClickHandler = () => {
     return
-    // if (networkType === AppInfo.NETWORK_TYPES.TESTNET) return
-    // isTypeFiat()
-    //   ? switchCurrency(tokenName, calculateCryptoValue, Format.fiatValue)
-    //   : switchCurrency(fiatName, calculateFiatValue, Format.BTCValue)
   }
 
   const changeHandler = ({ target: { value, parsedValue } }) => {
@@ -159,6 +149,10 @@ const CryptoFiatField = ({
   }
 
   const safeSpend = (value) => {
+    if (!value || value <= 0) return '0.00'
+    if (isDelegationWithdraw) {
+      return value
+    }
     const result = value - totalFeeInCrypto - 0.5 // default fee in mainnet is 0.5 TODO: calculate fee
     if (result < 0) {
       return 0
@@ -197,19 +191,6 @@ const CryptoFiatField = ({
           data-testid="crypto-fiat-switch-button"
           onClick={changeButtonClickHandler}
         >
-          {/* {networkType !== AppInfo.NETWORK_TYPES.TESTNET && (
-            <>
-              <ArrowIcon
-                className="crypto-fiat-icon-reverse"
-                data-testid="arrow-icon"
-              />
-              <ArrowIcon
-                className="crypto-fiat-icon"
-                data-testid="arrow-icon"
-              />
-            </>
-          )} */}
-
           <span className="current-value-type">{currentValueType}</span>
         </button>
       </div>

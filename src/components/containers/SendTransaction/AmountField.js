@@ -13,6 +13,7 @@ const AmountField = ({
   maxValueInToken,
   setAmountValidity,
   totalFeeInCrypto,
+  transactionMode,
 }) => {
   const [message, setMessage] = useState(errorMessage)
 
@@ -35,6 +36,7 @@ const AmountField = ({
         maxValueInToken={maxValueInToken}
         setAmountValidity={setAmountValidity}
         totalFeeInCrypto={totalFeeInCrypto}
+        transactionMode={transactionMode}
       />
       <p className="error-message">{message}</p>
     </TransactionField>

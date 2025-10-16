@@ -19,3 +19,14 @@
   justify-content: space-between;
   min-height: max-content;
 }
+
+/* Firefox-specific styles */
+@-moz-document url-prefix() {
+  .balance-transactions-wrapper {
+    min-height: 105px;
+  }
+
+  .transactions-buttons-wrapper {
+    min-height: 84px;
+  }
+}

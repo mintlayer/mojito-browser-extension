@@ -118,6 +118,16 @@ const SendMlTransaction = ({
       setAmountValidity(true)
       return
     }
+    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW) {
+      if (currentDelegationInfo?.balance.decimal < amountInCrypto) {
+        setAmountValidity(false)
+        setPassErrorMessage('Insufficient delegation balance')
+        return
+      } else {
+        setAmountValidity(true)
+        return
+      }
+    }
     if (!validity || amount <= 0) {
       setAmountValidity(false)
       return
@@ -138,6 +148,7 @@ const SendMlTransaction = ({
     originalAmount,
     setAmountValidity,
     transactionMode,
+    currentDelegationInfo,
   ])
 
   useEffect(() => {
@@ -188,7 +199,7 @@ const SendMlTransaction = ({
                 transactionData={transactionData}
                 amountChanged={amountChanged}
                 exchangeRate={exchangeRate}
-                maxValueInToken={maxValueInToken}
+                maxValueInToken={currentDelegationInfo?.balance.decimal || '0'}
                 setAmountValidity={setAmountValidity}
                 errorMessage={passErrorMessage}
                 totalFeeInCrypto={totalFeeCrypto}

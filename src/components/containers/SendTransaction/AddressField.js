@@ -52,7 +52,10 @@ const AddressField = ({
       validity = (val) => ML.isMlPoolIdValid(val, networkType)
     }
 
-    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING) {
+    if (
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING ||
+      transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
+    ) {
       placeholder =
         networkType === AppInfo.NETWORK_TYPES.MAINNET
           ? 'mdelg1...'
