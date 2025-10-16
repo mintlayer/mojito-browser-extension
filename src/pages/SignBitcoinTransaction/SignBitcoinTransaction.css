@@ -26,7 +26,7 @@
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  height: 80%;
+  height: 70%;
 }
 
 .SignTransaction .mock_selector {

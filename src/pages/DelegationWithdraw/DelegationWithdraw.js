@@ -25,13 +25,13 @@ const DelegationWithdrawPage = () => {
   }
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.WITHDRAW
   const { addresses, accountID } = useContext(AccountContext)
-  const { client } = useContext(MintlayerContext)
+  const { client, mlDelegationList } = useContext(MintlayerContext)
+  const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const { networkType } = useContext(SettingsContext)
   const currentMlAddresses =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
       ? addresses.mlMainnetAddresses
       : addresses.mlTestnetAddresses
-  const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
   const fiatName = 'USD'
@@ -47,6 +47,9 @@ const DelegationWithdrawPage = () => {
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
   const [feeLoading, setFeeLoading] = useState(false)
+  const currentDelegationInfo = mlDelegationList.find(
+    (d) => d.delegation_id === delegationId,
+  )
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const {
@@ -56,7 +59,7 @@ const DelegationWithdrawPage = () => {
     fetchingBalances,
     fetchingUtxos,
   } = useMlWalletInfo(currentMlAddresses)
-  const maxValueToken = mlBalance
+  const maxValueToken = currentDelegationInfo?.balance.decimal || 0
 
   const transaction_conditions =
     utxos.length > 0 &&

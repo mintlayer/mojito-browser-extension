@@ -25,7 +25,6 @@ const SendMlTransaction = ({
   isFormValid,
   preEnterAddress,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
-  currentDelegationInfo,
   walletType,
 }) => {
   const { balanceLoading } = useContext(AccountContext)
@@ -118,6 +117,16 @@ const SendMlTransaction = ({
       setAmountValidity(true)
       return
     }
+    if (transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW) {
+      if (maxValueInToken < amountInCrypto) {
+        setAmountValidity(false)
+        setPassErrorMessage('Insufficient delegation balance')
+        return
+      } else {
+        setAmountValidity(true)
+        return
+      }
+    }
     if (!validity || amount <= 0) {
       setAmountValidity(false)
       return
@@ -178,7 +187,6 @@ const SendMlTransaction = ({
             preEnterAddress={preEnterAddress}
             setAddressValidity={setAddressValidity}
             transactionMode={transactionMode}
-            currentDelegationInfo={currentDelegationInfo}
             walletType={walletType}
           />
 
