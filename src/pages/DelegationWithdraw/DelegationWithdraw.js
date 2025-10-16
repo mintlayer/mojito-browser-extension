@@ -59,7 +59,7 @@ const DelegationWithdrawPage = () => {
     fetchingBalances,
     fetchingUtxos,
   } = useMlWalletInfo(currentMlAddresses)
-  const maxValueToken = mlBalance
+  const maxValueToken = currentDelegationInfo?.balance.decimal || 0
 
   const transaction_conditions =
     utxos.length > 0 &&
@@ -137,7 +137,6 @@ const DelegationWithdrawPage = () => {
             preEnterAddress={delegationId}
             transactionMode={transactionMode}
             walletType={walletType}
-            currentDelegationInfo={currentDelegationInfo}
           />
           {!transaction_conditions && (
             <Error error="Insufficient funds for the fee. Please wait for the wallet to sync or add coins to the wallet." />
