@@ -33,8 +33,7 @@ const setup = async (location, mode = 'default') => {
     logout: jest.fn(),
     setSliderMenuOpen: jest.fn(),
     addresses: {
-      mlMainnetAddresses: ['address'],
-      mlTestnetAddresses: ['address'],
+      mlAddresses: ['address'],
     },
   }
 
@@ -44,8 +43,7 @@ const setup = async (location, mode = 'default') => {
     setSliderMenuOpen: jest.fn(),
     sliderMenuOpen: true,
     addresses: {
-      mlMainnetAddresses: ['address'],
-      mlTestnetAddresses: ['address'],
+      mlAddresses: ['address'],
     },
   }
 

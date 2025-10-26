@@ -136,7 +136,7 @@ const buildTransaction = async ({
   const formatedUtxos = await getFormattedUtxos(
     utxos,
     walletType,
-    root.btcAddresses,
+    root.btcAddressData,
     root.btcHDWallet,
   )
   const { inputs, outputs, fee } = coinSelect(formatedUtxos, targets, feeRate)
@@ -193,8 +193,6 @@ const buildTransaction = async ({
     transactionBuilder.extractTransaction().toHex(),
   ]
 }
-
-
 
 const buildHTLCAndFundingAddress = async (input) => {
   const {
@@ -310,16 +308,7 @@ const buildHtlcRefundTx = async (params) => {
     throw new Error('toAddress or wif missing')
   }
 
-  // Ensure amount is in satoshis
   const amountInSatoshis = utxo.value
-  // if (typeof utxo.amount === 'string') {
-  //   amountInSatoshis = Math.round(parseFloat(utxo.amount) * 1e8)
-  // } else if (typeof utxo.amount === 'number') {
-  //   amountInSatoshis =
-  //     utxo.amount < 1000 ? Math.round(utxo.amount * 1e8) : utxo.amount
-  // } else {
-  //   throw new Error('Invalid utxo.amount: must be a number or string in BTC')
-  // }
 
   const network = bitcoin.networks[networkType]
 
@@ -444,10 +433,8 @@ export {
   getMasterFingerprint,
   getFormattedFeeUtxos,
   getFormattedUtxos,
-
   buildHTLCAndFundingAddress,
   buildHtlcClaimTx,
   buildHtlcRefundTx,
-
   parseLockBlockCount,
 }

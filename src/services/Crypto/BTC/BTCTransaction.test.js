@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import * as bitcoin from 'bitcoinjs-lib'
 import {
   getMasterFingerprint,

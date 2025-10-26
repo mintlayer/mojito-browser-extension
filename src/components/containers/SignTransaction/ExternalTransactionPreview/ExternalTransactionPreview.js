@@ -2,7 +2,7 @@ import React, { useContext } from 'react'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import './ExternalTransactionPreview.css'
 
-import { AccountContext, SettingsContext } from '@Contexts'
+import { AccountContext } from '@Contexts'
 
 // Error Boundary Component for TransactionPreview
 class TransactionPreviewErrorBoundary extends React.Component {
@@ -673,12 +673,8 @@ const TokenMintWithLock = ({ transactionData, requiredAddresses }) => {
 const SummaryView = ({ data }) => {
   const { flags, transactionData } = SignTxHelpers.getTransactionDetails(data)
   const { addresses } = useContext(AccountContext)
-  const { networkType } = useContext(SettingsContext)
 
-  const requiredAddresses =
-    networkType === 'mainnet'
-      ? addresses.mlMainnetAddresses.mlChangeAddresses
-      : addresses.mlTestnetAddresses.mlChangeAddresses
+  const requiredAddresses = addresses.mlAddresses.mlChangeAddresses
 
   return (
     <div className="preview-section summary">

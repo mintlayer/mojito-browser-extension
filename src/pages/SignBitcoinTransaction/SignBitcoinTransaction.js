@@ -9,8 +9,6 @@ import './SignBitcoinTransaction.css'
 import { useState, useContext, useEffect } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 import * as bitcoin from 'bitcoinjs-lib'
-
-import { AppInfo } from '@Constants'
 import { Account } from '@Entities'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { BTCTransaction } from '@Cryptos'
@@ -100,11 +98,7 @@ export const SignBitcoinTransactionPage = () => {
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
-  const currentBtcAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.btcMainnetAddress
-      : addresses.btcTestnetAddress
-
+  const currentBtcAddress = addresses.btcAddresses
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
   // Helper functions to detect transaction types

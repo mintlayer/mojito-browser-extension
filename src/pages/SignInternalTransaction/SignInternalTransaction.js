@@ -57,11 +57,7 @@ export const SignTransactionPage = () => {
     useContext(MintlayerContext)
 
   const blockHeight = currentHeight ? BigInt(currentHeight) : 0n
-
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
 
   const network =
     networkType === AppInfo.NETWORK_TYPES.MAINNET

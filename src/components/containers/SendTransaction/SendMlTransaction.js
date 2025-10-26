@@ -61,7 +61,9 @@ const SendMlTransaction = ({
     }
 
     setOriginalAmount(amount.value)
-    const amountDecimal = new Decimal(NumbersHelper.floatStringToNumber(amount.value) || 0)
+    const amountDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(amount.value) || 0,
+    )
     const exchangeRateDecimal = new Decimal(exchangeRate || 1)
     const resultDecimal = amountDecimal.div(exchangeRateDecimal)
     const formattedResult = Format.BTCValue(resultDecimal.toString())
@@ -101,9 +103,15 @@ const SendMlTransaction = ({
 
   useEffect(() => {
     const validity = originalAmount && AppInfo.amountRegex.test(originalAmount)
-    const maxValueDecimal = new Decimal(NumbersHelper.floatStringToNumber(maxValueInToken) || 0)
-    const amountDecimal = new Decimal(NumbersHelper.floatStringToNumber(amountInCrypto) || 0)
-    const totalFeeDecimal = new Decimal(NumbersHelper.floatStringToNumber(totalFeeCrypto) || 0)
+    const maxValueDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(maxValueInToken) || 0,
+    )
+    const amountDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(amountInCrypto) || 0,
+    )
+    const totalFeeDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(totalFeeCrypto) || 0,
+    )
 
     if (transactionMode === AppInfo.ML_TRANSACTION_MODES.NFT_SEND) {
       setAmountValidity(true)
@@ -121,7 +129,7 @@ const SendMlTransaction = ({
       setAmountValidity(false)
       return
     }
-    // TODO with 22-digit numbers, this is not working
+
     const totalAmountDecimal = amountDecimal.plus(totalFeeDecimal)
     const insufficientFunds = totalAmountDecimal.gt(maxValueDecimal)
 
@@ -142,7 +150,9 @@ const SendMlTransaction = ({
   ])
 
   useEffect(() => {
-    const amountDecimal = new Decimal(NumbersHelper.floatStringToNumber(amountInCrypto) || 0)
+    const amountDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(amountInCrypto) || 0,
+    )
 
     onSendTransaction({
       to: addressTo,

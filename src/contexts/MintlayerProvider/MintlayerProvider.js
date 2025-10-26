@@ -51,11 +51,7 @@ class InMemoryAccountProvider {
 const MintlayerProvider = ({ value: propValue, children }) => {
   const { addresses, accountID, accountName } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
   const [txPreviewInfo, setTxPreviewInfo] = useState(null)
   const [currentAccountId, setCurrentAccountId] = useState('')
   const [onlineHeight, setOnlineHeight] = useState(0)
@@ -484,7 +480,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
         return {
           ...delegation,
           decommissioned: emptyPoolsDataMap[delegation.pool_id] ? true : false,
-          balance: delegation.balance.atoms,
+          balance: delegation.balance,
           creation_block_height:
             delegation_details[index].creation_block_height,
           creation_time: blocks_data.find(
@@ -510,7 +506,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
       const totalDelegationBalance = mergedDelegations.reduce(
         (acc, delegation) =>
-          acc + (delegation.balance ? Number(delegation.balance) : 0),
+          acc +
+          (delegation.balance.decimal ? Number(delegation.balance.decimal) : 0),
         0,
       )
       setMlDelegationsBalance(totalDelegationBalance)

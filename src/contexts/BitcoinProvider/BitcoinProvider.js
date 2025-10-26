@@ -64,9 +64,16 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     setCurrentNetworkType(networkType)
     setCurrentAccountId(accountID)
 
-    const allAddresses = addresses.btcAddresses.btcChangeAddresses.concat(
-      addresses.btcAddresses.btcReceivingAddresses,
+    const receivingAddresses =
+      addresses.btcAddresses.btcReceivingAddresses.flatMap((addr) =>
+        Object.keys(addr),
+      )
+    const changeAddresses = addresses.btcAddresses.btcChangeAddresses.flatMap(
+      (addr) => Object.keys(addr),
     )
+
+    const allAddresses = changeAddresses.concat(receivingAddresses)
+
     const getTransactions = async () => {
       try {
         const allTransactions = []
@@ -101,12 +108,10 @@ const BitcoinProvider = ({ value: propValue, children }) => {
 
     const getBalanceFromAddressInfo = async () => {
       try {
-        const changeAddressesInfo = await Electrum.getWalletAddressesInfo(
-          addresses.btcAddresses.btcChangeAddresses,
-        )
-        const receivingAddressesInfo = await Electrum.getWalletAddressesInfo(
-          addresses.btcAddresses.btcReceivingAddresses,
-        )
+        const changeAddressesInfo =
+          await Electrum.getWalletAddressesInfo(changeAddresses)
+        const receivingAddressesInfo =
+          await Electrum.getWalletAddressesInfo(receivingAddresses)
         const allAddressesInfo = changeAddressesInfo.concat(
           receivingAddressesInfo,
         )

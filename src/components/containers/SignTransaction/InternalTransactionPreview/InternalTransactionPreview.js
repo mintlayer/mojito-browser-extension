@@ -2,7 +2,7 @@ import React, { useEffect, useContext } from 'react'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import './InternalTransactionPreview.css'
 
-import { AccountContext, SettingsContext, MintlayerContext } from '@Contexts'
+import { AccountContext, MintlayerContext } from '@Contexts'
 
 const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
   const inputWithToken = inputs.find(
@@ -489,12 +489,8 @@ const BridgeRequest = ({ transactionData }) => {
 const SummaryView = ({ data }) => {
   const { flags, transactionData } = SignTxHelpers.getTransactionDetails(data)
   const { addresses } = useContext(AccountContext)
-  const { networkType } = useContext(SettingsContext)
 
-  const requiredAddresses =
-    networkType === 'mainnet'
-      ? addresses.mlMainnetAddresses.mlChangeAddresses
-      : addresses.mlTestnetAddresses.mlChangeAddresses
+  const requiredAddresses = addresses.mlAddresses.mlChangeAddresses
 
   return (
     <div className="preview-section summary">

@@ -139,11 +139,7 @@ const DashboardPage = () => {
       )
     }
 
-    const currentMlAddresses =
-      networkType === AppInfo.NETWORK_TYPES.MAINNET
-        ? addresses.mlMainnetAddresses
-        : addresses.mlTestnetAddresses
-
+    const currentMlAddresses = addresses.mlAddresses
     const mlAddress =
       currentMlAddresses &&
       currentMlAddresses.mlReceivingAddresses &&
