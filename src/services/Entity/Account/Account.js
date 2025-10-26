@@ -202,7 +202,7 @@ const unlockAccount = async (id, password) => {
     if (seed.error) throw new Error(seed.error)
 
     const btcHDWallet = BTC.getHDWalletFromSeed(Buffer.from(seed))
-    const btcAddresses = await BTC_ADDRESS_TYPE_MAP[
+    const btcAddressData = await BTC_ADDRESS_TYPE_MAP[
       account.walletType
     ].getAddresses(
       btcHDWallet,
@@ -210,18 +210,10 @@ const unlockAccount = async (id, password) => {
       AppInfo.BTC_DEFAULT_ADDRESSES_BATCH,
       btcAddressType,
     )
-    const btcReceivingAddresses =
-      btcAddresses &&
-      btcAddresses.btcReceivingAddresses.map((item) => item.address)
-    const btcChangeAddresses =
-      btcAddresses &&
-      btcAddresses.btcChangeAddresses.map((item) => item.address)
+    const btcAddresses = BtcHelpers.getBtcAddresses(btcAddressData)
 
     if (walletsToCreate.includes('btc')) {
-      addresses.btcAddresses = {
-        btcReceivingAddresses,
-        btcChangeAddresses,
-      }
+      addresses.btcAddresses = btcAddresses
     }
 
     if (walletsToCreate.includes('ml')) {
@@ -231,7 +223,7 @@ const unlockAccount = async (id, password) => {
           AppInfo.NETWORK_TYPES.TESTNET,
           AppInfo.DEFAULT_ML_WALLET_OFFSET,
         )
-        addresses.mlTestnetAddresses = mlTestnetWalletAddresses
+        addresses.mlAddresses = mlTestnetWalletAddresses
       }
 
       if (storedNetworkType === 'mainnet') {
@@ -240,13 +232,13 @@ const unlockAccount = async (id, password) => {
           AppInfo.NETWORK_TYPES.MAINNET,
           AppInfo.DEFAULT_ML_WALLET_OFFSET,
         )
-        addresses.mlMainnetAddresses = mlMainnetWalletAddresses
+        addresses.mlAddresses = mlMainnetWalletAddresses
       }
     }
 
     return {
       addresses,
-      btcPrivateKeys: { btcHDWallet, btcAddresses },
+      btcPrivateKeys: { btcHDWallet, btcAddressData },
       name: account.name,
       mlPrivKeys: { mlMainnetPrivateKey, mlTestnetPrivateKey },
     }
