@@ -12,7 +12,6 @@ import { Electrum, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup, Header, PopUp } from '@ComposedComponents'
 import { DeleteAccount } from '@ContainerComponents'
 import { Client } from '@mintlayer/sdk'
-import { AppInfo } from '@Constants'
 
 import {
   HomePage,
@@ -94,10 +93,7 @@ const App = () => {
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
   const [request, setRequest] = useState(null)
 
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {

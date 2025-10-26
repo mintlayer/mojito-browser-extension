@@ -122,7 +122,7 @@ const CryptoFiatField = ({
       return
     }
 
-    if (parsedValue <= 0) {
+    if (parsedValue <= 0 || !parsedValue) {
       setValidity('invalid')
       setAmountValidity(false)
       setErrorMessage(zeroErrorMessage)

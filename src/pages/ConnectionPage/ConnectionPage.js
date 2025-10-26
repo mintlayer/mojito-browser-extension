@@ -51,45 +51,23 @@ export const ConnectionPage = () => {
       connected: true,
       address: {
         mainnet: {
-          receiving: addresses?.mlMainnetAddresses?.mlReceivingAddresses,
-          change: addresses?.mlMainnetAddresses?.mlChangeAddresses,
+          receiving: addresses?.mlAddresses?.mlReceivingAddresses,
+          change: addresses?.mlAddresses?.mlChangeAddresses,
         },
         testnet: {
-          receiving: addresses?.mlTestnetAddresses?.mlReceivingAddresses,
-          change: addresses?.mlTestnetAddresses?.mlChangeAddresses,
+          receiving: addresses?.mlAddresses?.mlReceivingAddresses,
+          change: addresses?.mlAddresses?.mlChangeAddresses,
         },
       },
       addressesByChain: {
         mintlayer: {
-          ...(networkType === 'mainnet'
-            ? {
-                receiving: addresses?.mlMainnetAddresses?.mlReceivingAddresses,
-                change: addresses?.mlMainnetAddresses?.mlChangeAddresses,
-                publicKeys: {
-                  receiving:
-                    addresses?.mlMainnetAddresses?.mlReceivingPublicKeys.map(
-                      toHexString,
-                    ),
-                  change:
-                    addresses?.mlMainnetAddresses?.mlChangePublicKeys.map(
-                      toHexString,
-                    ),
-                },
-              }
-            : {
-                receiving: addresses?.mlTestnetAddresses?.mlReceivingAddresses,
-                change: addresses?.mlTestnetAddresses?.mlChangeAddresses,
-                publicKeys: {
-                  receiving:
-                    addresses?.mlTestnetAddresses?.mlReceivingPublicKeys.map(
-                      toHexString,
-                    ),
-                  change:
-                    addresses?.mlTestnetAddresses?.mlChangePublicKeys.map(
-                      toHexString,
-                    ),
-                },
-              }),
+          receiving: addresses?.mlAddresses?.mlReceivingAddresses,
+          change: addresses?.mlAddresses?.mlChangeAddresses,
+          publicKeys: {
+            receiving:
+              addresses?.mlAddresses?.mlReceivingPublicKeys.map(toHexString),
+            change: addresses?.mlAddresses?.mlChangePublicKeys.map(toHexString),
+          },
         },
         ...(provideBitcoinData && {
           bitcoin: {

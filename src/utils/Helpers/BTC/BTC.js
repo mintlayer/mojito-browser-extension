@@ -260,6 +260,17 @@ const getBtcTransactionLink = (txId, networkType) => {
   return `${baseUrl}tx/${txId}`
 }
 
+const getBtcAddresses = (addresses) => {
+  if (!addresses || addresses.length === 0) return []
+  const btcReceivingAddresses = addresses.btcReceivingAddresses.map((item) => ({
+    [item.address]: item.pubkey,
+  }))
+  const btcChangeAddresses = addresses.btcChangeAddresses.map((item) => ({
+    [item.address]: item.pubkey,
+  }))
+  return { btcChangeAddresses, btcReceivingAddresses }
+}
+
 export {
   parseFeesEstimates,
   calculateBalanceFromUtxoList,
@@ -274,6 +285,7 @@ export {
   checkFee,
   getBtcAddressLink,
   getBtcTransactionLink,
+  getBtcAddresses,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
   MAX_BTC,

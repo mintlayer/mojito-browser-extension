@@ -5,7 +5,7 @@ import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-swap.sv
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ML } from '@Helpers'
 
-import { MintlayerContext, SettingsContext, AccountContext } from '@Contexts'
+import { MintlayerContext, AccountContext } from '@Contexts'
 
 import './OrderDetails.css'
 import { Loading, TextField } from '@ComposedComponents'
@@ -75,13 +75,9 @@ const OrderDetails = ({ order }) => {
   const buttonExtraStyles = ['order-details-button']
   const inputExtraClasses = ['order-details-input']
   const { client } = useContext(MintlayerContext)
-  const { networkType } = useContext(SettingsContext)
   const { addresses } = useContext(AccountContext)
 
-  const requiredAddresses =
-    networkType === 'mainnet'
-      ? addresses.mlMainnetAddresses.mlChangeAddresses
-      : addresses.mlTestnetAddresses.mlChangeAddresses
+  const requiredAddresses = addresses.mlAddresses
   const [txErrorMessage, setTxErrorMessage] = useState(null)
   const [loading, setLoading] = useState(false)
   const loadingExtraClasses = ['loading-big']

@@ -4,12 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { SendMlTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
-import {
-  AccountContext,
-  SettingsContext,
-  MintlayerContext,
-  TransactionContext,
-} from '@Contexts'
+import { AccountContext, MintlayerContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './DelegationWithdraw.css'
@@ -27,11 +22,7 @@ const DelegationWithdrawPage = () => {
   const { addresses, accountID } = useContext(AccountContext)
   const { client, mlDelegationList } = useContext(MintlayerContext)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
-  const { networkType } = useContext(SettingsContext)
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
   const navigate = useNavigate()
   const tokenName = 'ML'
   const fiatName = 'USD'

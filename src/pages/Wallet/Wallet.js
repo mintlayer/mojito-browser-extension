@@ -11,15 +11,8 @@ import {
   useMlWalletInfo,
   useMediaQuery,
 } from '@Hooks'
-import {
-  AccountContext,
-  SettingsContext,
-  MintlayerContext,
-  BitcoinContext,
-} from '@Contexts'
+import { AccountContext, MintlayerContext, BitcoinContext } from '@Contexts'
 import { BTC } from '@Helpers'
-import { AppInfo } from '@Constants'
-
 import './Wallet.css'
 import { StakingWarning } from '@ComposedComponents'
 
@@ -107,16 +100,8 @@ const WalletPage = () => {
     walletType.chain === 'bitcoin' ? useBtcWalletInfo : useMlWalletInfo
 
   const { addresses } = useContext(AccountContext)
-  const { networkType } = useContext(SettingsContext)
-
-  const btcAddress =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.btcMainnetAddress
-      : addresses.btcTestnetAddress
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const btcAddress = addresses.btcAddresses
+  const currentMlAddresses = addresses.mlAddresses
 
   const checkAddresses =
     walletType.chain === 'bitcoin' ? btcAddress : currentMlAddresses
