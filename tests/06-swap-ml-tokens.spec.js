@@ -195,7 +195,7 @@ test('Swap ML tokens', async () => {
   await expect(page.locator('.swap-token-select').first()).toHaveText(
     'SSwissDogs (tmltk1nz...wsgwyr3m)',
   )
-  await expect(page.locator('.from-token-balance')).toHaveText('Balance: 12')
+  await expect(page.locator('.from-token-balance')).toHaveText('Balance: 13')
 
   await page.locator('.swap-token-select').last().click()
   await expect(page.locator('.token-popup-swap')).toBeVisible()

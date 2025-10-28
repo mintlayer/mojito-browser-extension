@@ -156,7 +156,7 @@ const SendMlTransaction = ({
 
     onSendTransaction({
       to: addressTo,
-      amount: amountDecimal.toNumber(), // Возвращаем число для совместимости
+      amount: amountDecimal.toNumber(),
       fee: 0,
     })
 

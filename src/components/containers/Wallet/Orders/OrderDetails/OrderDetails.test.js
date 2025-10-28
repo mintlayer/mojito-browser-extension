@@ -297,9 +297,7 @@ const mockSettingsContext = {
 
 const mockAccountContext = {
   addresses: {
-    mlAddresses: {
-      mlChangeAddresses: ['testnet_addr1', 'testnet_addr2'],
-    },
+    mlAddresses: ['testnet_addr1', 'testnet_addr2'],
   },
 }
 
