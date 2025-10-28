@@ -330,7 +330,7 @@ describe('BTCTransaction', () => {
       walletType: 'nativeSegwit',
       changeAddress: '1CHANGE...',
       root: {
-        btcAddresses: {
+        btcAddressData: {
           btcReceivingAddresses: [
             {
               address: '1ABC...',

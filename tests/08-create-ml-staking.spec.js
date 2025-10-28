@@ -30,28 +30,25 @@ test('Create ML staking', async () => {
     .inputValue()
   expect(inputValue).not.toBe('')
 
-  await page.fill('input[placeholder="0"]', '0.00000001')
+  await page.fill('input[placeholder="0"]', '1.1')
 
   await page.getByRole('button', { name: 'Send' }).click()
 
-  await expect(page.getByTestId('popup').getByText('Send to:')).toBeVisible()
-  await expect(
-    page.getByTestId('popup').getByText(`${inputValue}`),
-  ).toBeVisible()
+  await expect(page.getByText('Sign Transaction')).toBeVisible()
 
   await expect(
-    page.getByTestId('popup').getByText('1e-8ML(0,00USD)'),
+    page.getByRole('button', { name: 'Switch to json' }),
   ).toBeVisible()
-  await expect(page.getByTestId('popup').getByText('Total fee:')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Decline' })).toBeVisible()
+  await page.getByRole('button', { name: 'Approve and return to page' }).click()
 
-  await page.getByRole('button', { name: 'Confirm' }).click()
-  await expect(
-    page.getByTestId('popup').getByText('Enter your password'),
-  ).toBeVisible()
-  await page.fill('input[placeholder="Password"]', receiverData.WALLET_PASSWORD)
+  await expect(page.getByText('Re-enter your Password')).toBeVisible()
+  await page.fill(
+    'input[placeholder="Enter your password"]',
+    receiverData.WALLET_PASSWORD,
+  )
 
-  await page.getByRole('button', { name: 'Send Transaction' }).click()
-
+  await page.getByRole('button', { name: 'Submit' }).click()
   await page.route(
     'https://api-server-lovelace.mintlayer.org/api/v2/transaction',
     (route) =>
