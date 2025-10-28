@@ -548,7 +548,7 @@ export const SignBitcoinTransactionPage = () => {
               password
               value={password}
               onChangeHandle={passwordChangeHandler}
-              placeholder="Enter your password"
+              placeHolder="Enter your password"
               autoFocus
             />
             {isHTLCSpendTx && !revealed_secret && (
