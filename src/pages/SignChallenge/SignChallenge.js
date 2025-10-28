@@ -207,7 +207,7 @@ export const SignChallengePage = () => {
               password
               value={password}
               onChangeHandle={passwordChangeHandler}
-              placeholder="Enter your password"
+              placeHolder="Enter your password"
               autoFocus
             />
             <div className="modal-buttons">

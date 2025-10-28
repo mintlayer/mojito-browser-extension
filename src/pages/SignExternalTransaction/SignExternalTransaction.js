@@ -534,7 +534,7 @@ export const SignTransactionPage = () => {
               password
               value={password}
               onChangeHandle={passwordChangeHandler}
-              placeholder="Enter your password"
+              placeHolder="Enter your password"
               autoFocus
             />
             {isHTLCClaim && (
