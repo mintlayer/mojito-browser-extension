@@ -263,10 +263,10 @@ const getBtcTransactionLink = (txId, networkType) => {
 const getBtcAddresses = (addresses) => {
   if (!addresses || addresses.length === 0) return []
   const btcReceivingAddresses = addresses.btcReceivingAddresses.map((item) => ({
-    [item.address]: item.pubkey,
+    [item.address]: { pubkey: item.pubkey },
   }))
   const btcChangeAddresses = addresses.btcChangeAddresses.map((item) => ({
-    [item.address]: item.pubkey,
+    [item.address]: { pubkey: item.pubkey },
   }))
   return { btcChangeAddresses, btcReceivingAddresses }
 }
