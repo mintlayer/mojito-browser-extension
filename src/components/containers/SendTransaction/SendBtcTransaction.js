@@ -96,7 +96,7 @@ const SendBtcTransaction = ({
     setAllowClosing(false)
     try {
       const txid = await confirmTransaction(pass)
-      setTransactionTxid(txid)
+      setTransactionTxid(JSON.parse(txid).txid)
       setPassValidity(true)
       setPassErrorMessage('')
       setTxErrorMessage('')
