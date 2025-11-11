@@ -271,6 +271,27 @@ const getBtcAddresses = (addresses) => {
   return { btcChangeAddresses, btcReceivingAddresses }
 }
 
+const getBatchData = async (ids, networkRequest) => {
+  const uniqueIds = [...new Set(ids)]
+
+  if (uniqueIds.length > AppInfo.BATCH_REQUEST_BITCOIN_LIMIT) {
+    const chunks = []
+    for (
+      let i = 0;
+      i < uniqueIds.length;
+      i += AppInfo.BATCH_REQUEST_BITCOIN_LIMIT
+    ) {
+      chunks.push(uniqueIds.slice(i, i + AppInfo.BATCH_REQUEST_BITCOIN_LIMIT))
+    }
+
+    const allPromises = chunks.map((chunk) => networkRequest(chunk))
+    const allResults = await Promise.all(allPromises)
+    return allResults.flat()
+  }
+
+  return await networkRequest(uniqueIds)
+}
+
 export {
   parseFeesEstimates,
   calculateBalanceFromUtxoList,
@@ -286,6 +307,7 @@ export {
   getBtcAddressLink,
   getBtcTransactionLink,
   getBtcAddresses,
+  getBatchData,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
   MAX_BTC,

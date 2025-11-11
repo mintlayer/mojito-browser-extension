@@ -77,18 +77,19 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     const getTransactions = async () => {
       try {
         const allTransactions = []
-        for (const address of allAddresses) {
-          try {
-            const response = await Electrum.getAddressTransactions(address)
-            const transactions = JSON.parse(response)
-            const parsedTransactions = BTC.getParsedTransactions(
-              transactions,
-              allAddresses,
-            )
-            allTransactions.push(...parsedTransactions)
-          } catch (error) {
-            console.error(`Error fetching transactions for ${address}:`, error)
-          }
+        try {
+          const response = await BTC.getBatchData(
+            allAddresses,
+            Electrum.getAddressTransactionsBatch,
+          )
+          const parsedResponse = response.flatMap((item) => item.transactions)
+          const parsedTransactions = BTC.getParsedTransactions(
+            parsedResponse,
+            allAddresses,
+          )
+          allTransactions.push(...parsedTransactions)
+        } catch (error) {
+          console.error('Error fetching transactions:', error)
         }
 
         const uniqueTransactions = allTransactions
@@ -108,25 +109,31 @@ const BitcoinProvider = ({ value: propValue, children }) => {
 
     const getBalanceFromAddressInfo = async () => {
       try {
-        const changeAddressesInfo =
-          await Electrum.getWalletAddressesInfo(changeAddresses)
-        const receivingAddressesInfo =
-          await Electrum.getWalletAddressesInfo(receivingAddresses)
-        const allAddressesInfo = changeAddressesInfo.concat(
-          receivingAddressesInfo,
+        const changeAddressesInfo = await BTC.getBatchData(
+          changeAddresses,
+          Electrum.getAddressBalancesBatch,
         )
+        const receivingAddressesInfo = await BTC.getBatchData(
+          receivingAddresses,
+          Electrum.getAddressBalancesBatch,
+        )
+        const allAddressesInfo = changeAddressesInfo
+          .concat(receivingAddressesInfo)
+          .flatMap((address) => {
+            return address.info
+          })
         const unusedAddress = {
           receivingAddress:
             receivingAddressesInfo.find(
               (address) =>
-                address.chain_stats.tx_count === 0 &&
-                address.mempool_stats.tx_count === 0,
+                address.info.chain_stats.tx_count === 0 &&
+                address.info.mempool_stats.tx_count === 0,
             ) || receivingAddressesInfo[0].address,
           changeAddress:
             changeAddressesInfo.find(
               (address) =>
-                address.chain_stats.tx_count === 0 &&
-                address.mempool_stats.tx_count === 0,
+                address.info.chain_stats.tx_count === 0 &&
+                address.info.mempool_stats.tx_count === 0,
             ) || changeAddressesInfo[0].address,
         }
         setUnusedAddresses(unusedAddress)
@@ -191,18 +198,20 @@ const BitcoinProvider = ({ value: propValue, children }) => {
       try {
         const allUtxos = []
         setFetchingUtxos(true)
-        for (const address of allAddresses) {
-          try {
-            const response = await Electrum.getAddressUtxo(address)
-            const utxos = JSON.parse(response)
-            const utxosWithAddress = utxos.map((utxo) => ({
+        try {
+          const response = await BTC.getBatchData(
+            allAddresses,
+            Electrum.getAddressUtxosBatch,
+          )
+          const utxosWithAddress = response.flatMap((entry) =>
+            (entry.utxo || []).map((utxo) => ({
               ...utxo,
-              address,
-            }))
-            allUtxos.push(...utxosWithAddress)
-          } catch (error) {
-            console.error(`Error fetching UTXOs for ${address}:`, error)
-          }
+              address: entry.address,
+            })),
+          )
+          allUtxos.push(...utxosWithAddress)
+        } catch (error) {
+          console.error('Error fetching UTXOs:', error)
         }
         setBtcUtxos(allUtxos)
         setFetchingUtxos(false)

@@ -13,17 +13,27 @@ const ELECTRUM_ENDPOINTS = {
   GET_LAST_BLOCK_HEIGHT: '/blocks/tip/height',
   GET_FEES_ESTIMATES: '/fee-estimates',
   POST_TRANSACTION: '/tx',
+  BATCH_ADDR_BALANCES: '/addresses/batch/info',
+  BATCH_ADDR_TRANSACTIONS: '/addresses/batch/txs',
+  BATCH_ADDR_UTXOS: '/addresses/batch/utxo',
 }
 
 const abortControllers = new Map()
 
 const requestElectrum = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
+  const header = body ? { 'Content-Type': 'application/json' } : {}
   const controller = new AbortController()
   abortControllers.set(url, controller)
 
+  const options = {
+    method: method,
+    headers: header,
+    body,
+  }
+
   try {
-    const result = await request(url, { method, body })
+    const result = await request(url, options)
     if (!result.ok) throw new Error('Request not successful')
     const content = await result.text()
     return Promise.resolve(content)
@@ -131,6 +141,33 @@ const getWalletAddressesInfo = async (addresses) => {
   })
 }
 
+const getAddressBalancesBatch = async (addresses) => {
+  const response = await tryServers(
+    ELECTRUM_ENDPOINTS.BATCH_ADDR_BALANCES,
+    JSON.stringify({ addresses: addresses }),
+  )
+  const data = JSON.parse(response)
+  return data.results
+}
+
+const getAddressTransactionsBatch = async (addresses) => {
+  const response = await tryServers(
+    ELECTRUM_ENDPOINTS.BATCH_ADDR_TRANSACTIONS,
+    JSON.stringify({ addresses: addresses }),
+  )
+  const data = JSON.parse(response)
+  return data.results
+}
+
+const getAddressUtxosBatch = async (addresses) => {
+  const response = await tryServers(
+    ELECTRUM_ENDPOINTS.BATCH_ADDR_UTXOS,
+    JSON.stringify({ addresses: addresses }),
+  )
+  const data = JSON.parse(response)
+  return data.results
+}
+
 export {
   getLastBlockHash,
   getTransactionData,
@@ -145,5 +182,8 @@ export {
   broadcastTransaction,
   cancelAllRequests,
   getWalletAddressesInfo,
+  getAddressBalancesBatch,
+  getAddressTransactionsBatch,
+  getAddressUtxosBatch,
   ELECTRUM_ENDPOINTS,
 }

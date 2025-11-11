@@ -77,6 +77,20 @@ const SendBtcTransactionPage = () => {
     setTransactionInformation(transactionInfo)
   }
 
+  const getChangeAddress = () => {
+    const candidate =
+      unusedBtcAddresses?.changeAddress ||
+      addresses?.btcAddresses?.btcChangeAddresses?.[0]
+
+    if (typeof candidate === 'string') return candidate
+    if (typeof candidate?.address === 'string') return candidate.address
+    if (typeof candidate === 'object') {
+      const key = Object.keys(candidate)[0]
+      if (typeof key === 'string') return key
+    }
+    throw new Error('Missing BTC change address')
+  }
+
   const confirmBtcTransaction = async (password) => {
     // eslint-disable-next-line no-unused-vars
     const { btcPrivateKeys } = await Account.unlockAccount(accountID, password)
@@ -95,9 +109,7 @@ const SendBtcTransactionPage = () => {
       utxos: btcUtxos || [],
       feeRate: transactionInformation.fee,
       walletType: btcWalletType,
-      changeAddress:
-        unusedBtcAddresses.changeAddress.address ||
-        addresses.btcAddresses.btcChangeAddresses[0],
+      changeAddress: getChangeAddress(),
       root: btcPrivateKeys,
     })
 
