@@ -30,6 +30,10 @@ const BTC_EXPLORER_TESTNET = 'https://blockstream.info/testnet/'
 const BTC_DEFAULT_ADDRESSES_BATCH = 3
 const BTC_MAX_TRANSACTION_FEE = 100_000 // 0.001 BTC
 const BTC_MAX_FEERATE = 200
+const COLOR_LIST = {
+  btc: '#F7931A',
+  ml: '#37DB8C',
+}
 
 const NETWORK_TYPES = {
   MAINNET: 'mainnet',
@@ -155,4 +159,5 @@ export {
   BTC_DEFAULT_ADDRESSES_BATCH,
   BTC_MAX_TRANSACTION_FEE,
   BTC_MAX_FEERATE,
+  COLOR_LIST,
 }

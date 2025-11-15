@@ -390,11 +390,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       '/address/:address/spendable-utxos',
     )
 
-    const parsedUtxos = fetchedUtxos
-
-    const parsedSpendableUtxos = fetchedSpendableUtxos
-
-    const available = parsedSpendableUtxos
+    const available = fetchedSpendableUtxos
       .filter((item) => item.utxo.value)
       .filter((item) => item.utxo.type !== 'Htlc') // Do not try to spend non-external
       .filter((item) => {
@@ -417,11 +413,11 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       }, [])
 
     const availableUtxos = available.map((item) => item)
-    const lockedUtxos = parsedUtxos
-      // .flat()
-      .filter((obj) => obj.utxo.type === 'LockThenTransfer')
+    const lockedUtxos = fetchedUtxos.filter(
+      (obj) => obj.utxo.type === 'LockThenTransfer',
+    )
 
-    const availableNftInitialUtxos = parsedSpendableUtxos.filter(
+    const availableNftInitialUtxos = fetchedSpendableUtxos.filter(
       (item) => item.utxo.type === 'IssueNft',
     )
 
