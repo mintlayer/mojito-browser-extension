@@ -1,6 +1,7 @@
 import * as d3 from 'd3'
 
-const createArcGenerator = () => d3.arc().innerRadius(94).outerRadius(100)
+const createArcGenerator = () =>
+  d3.arc().innerRadius(86).outerRadius(100).cornerRadius(10)
 
 const createPieGenerator = () =>
   d3
@@ -8,6 +9,7 @@ const createPieGenerator = () =>
     .startAngle(-0.5 * Math.PI)
     .endAngle(0.5 * Math.PI)
     .value((item) => item.value)
+    .padAngle(0.02)
 
 const createTooltip = () =>
   d3

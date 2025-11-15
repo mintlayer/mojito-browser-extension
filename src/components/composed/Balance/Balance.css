@@ -2,12 +2,16 @@
   display: flex;
   justify-content: center;
   width: fit-content;
-  min-height: 105px;
+  min-height: 122px;
   padding: 5px 5px 10px 5px;
   font-weight: 600;
 
   width: 100%;
   justify-content: space-between;
+
+  @media screen and (min-width: 801px) {
+    min-height: 140px;
+  }
 }
 
 .wallet-logo-wrapper {
@@ -49,6 +53,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: center;
 }
 
 .balance-btc {
@@ -90,4 +95,9 @@
 
 .balance-locked:hover {
   opacity: 1;
+}
+
+.wallet-price {
+  font-size: 1 rem;
+  font-weight: 400;
 }

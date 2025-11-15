@@ -461,6 +461,28 @@ const getBatchData = async (ids, type) => {
   })
 }
 
+const getMlAddressLink = (address, network) => {
+  if (!address) {
+    return ''
+  }
+  const baseUrl =
+    network === AppInfo.NETWORK_TYPES.MAINNET
+      ? AppInfo.ML_EXPLORER_MAINNET
+      : AppInfo.ML_EXPLORER_TESTNET
+  return `${baseUrl}/address/${address}`
+}
+
+const getMlTransactionLink = (txId, network) => {
+  if (!txId) {
+    return ''
+  }
+  const baseUrl =
+    network === AppInfo.NETWORK_TYPES.MAINNET
+      ? AppInfo.ML_EXPLORER_MAINNET
+      : AppInfo.ML_EXPLORER_TESTNET
+  return `${baseUrl}/tx/${txId}`
+}
+
 export {
   getParsedTransactions,
   getAmountInAtoms,
@@ -474,4 +496,6 @@ export {
   calculateExchangeRate,
   getSwapDetails,
   getBatchData,
+  getMlAddressLink,
+  getMlTransactionLink,
 }

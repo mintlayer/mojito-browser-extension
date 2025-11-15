@@ -11,7 +11,7 @@
   min-width: 58px;
   min-height: 58px;
   margin-bottom: 10px;
-  border-radius: 19px;
+  border-radius: 21px;
   padding: 0;
 
   @media screen and (min-width: 801px) {
@@ -21,6 +21,7 @@
     min-height: 64px;
     margin-bottom: 10px;
     padding: 0;
+    border-radius: 25px;
   }
 }
 

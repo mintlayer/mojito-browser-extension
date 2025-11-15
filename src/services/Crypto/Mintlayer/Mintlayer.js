@@ -103,19 +103,6 @@ export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
   }
 }
 
-// const checkIfAddressUsed = async (address, network) => {
-//   try {
-//     const addressData = await Mintlayer.getAddressData(address, network)
-//     const data = JSON.parse(addressData)
-//     if (data.transaction_history.length > 0) {
-//       return true
-//     }
-//     return false
-//   } catch (e) {
-//     return false
-//   }
-// }
-
 const checkIfAddressesUsed = async (addresses, network) => {
   const data = await batchRequestMintlayer({
     ids: addresses,

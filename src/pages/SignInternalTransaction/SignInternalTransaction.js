@@ -57,11 +57,7 @@ export const SignTransactionPage = () => {
     useContext(MintlayerContext)
 
   const blockHeight = currentHeight ? BigInt(currentHeight) : 0n
-
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
 
   const network =
     networkType === AppInfo.NETWORK_TYPES.MAINNET
@@ -327,7 +323,7 @@ export const SignTransactionPage = () => {
                 password
                 value={password}
                 onChangeHandle={passwordChangeHandler}
-                placeholder="Enter your password"
+                placeHolder="Enter your password"
                 autoFocus
               />
               {txErrorMessage ? (

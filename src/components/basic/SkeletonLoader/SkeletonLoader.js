@@ -55,4 +55,5 @@ const SkeletonLoader = () => {
   )
 }
 
+export { SkeletonText }
 export default SkeletonLoader

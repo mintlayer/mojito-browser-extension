@@ -22,10 +22,7 @@ const memoryRouterFeature = {
 describe('Delegation', () => {
   const mockDelegation = {
     creation_time: 1645113600,
-    balance: {
-      decimals: '0.001',
-      atoms: '100000000',
-    },
+    balance: { decimal: '10', atoms: '1000000000000' },
     pool_id: 'test_id',
   }
 
@@ -53,7 +50,7 @@ describe('Delegation', () => {
     )
     expect(screen.getByTestId('delegation-date')).toHaveTextContent(date)
     expect(screen.getByTestId('delegation-amount')).toHaveTextContent(
-      'Amount: 0.001',
+      `Amount: ${mockDelegation.balance.decimal}`,
     )
   })
 
