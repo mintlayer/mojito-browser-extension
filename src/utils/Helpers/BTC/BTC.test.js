@@ -11,6 +11,13 @@ import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
 import { LocalStorageService } from '@Storage'
 
 import { fees, rawTransactions, utxos } from '@TestData'
+import { Electrum } from '@APIs'
+
+jest.mock('@APIs', () => ({
+  Electrum: {
+    getLastBlockHeight: jest.fn(),
+  },
+}))
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 const mockId = 'networkType'
@@ -122,10 +129,12 @@ test('Check confirmations amount - error', async () => {
 })
 
 test('Check confirmations amount - success', async () => {
+  Electrum.getLastBlockHeight.mockResolvedValue(1_010_001)
+
   const transaction = {
     blockHeight: 10_000,
   }
 
   const confirmations = await getConfirmationsAmount(transaction)
-  expect(confirmations).toBeGreaterThan(1_000_000)
+  expect(confirmations).toBe(1_000_002)
 })

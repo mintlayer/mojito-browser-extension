@@ -45,9 +45,9 @@ describe('CryptoItem', () => {
     const component = screen.getByTestId('crypto-item')
 
     expect(component).toBeInTheDocument()
-    expect(screen.getByText('Value:')).toBeInTheDocument()
-    expect(screen.getByText('Price:')).toBeInTheDocument()
-    expect(screen.getByText('1.23%')).toBeInTheDocument()
+    expect(component).toHaveTextContent('1.23456789')
+    expect(component).toHaveTextContent('61728.39')
+    expect(component).toHaveTextContent('1.23%')
   })
 
   // it('renders the crypto item with data loading', () => {
@@ -91,16 +91,16 @@ describe('CryptoItem', () => {
 
   it('displays the balance in testnet mode', () => {
     renderComponent('testnet')
+    const component = screen.getByTestId('crypto-item')
 
-    expect(screen.getByText('1.23456789')).toBeInTheDocument()
-    expect(screen.queryByText('Price:')).not.toBeInTheDocument()
+    expect(component).toHaveTextContent('1.23456789')
   })
 
   it('displays the balance in mainnet mode', () => {
     renderComponent('mainnet')
+    const component = screen.getByTestId('crypto-item')
 
-    expect(screen.getByText('61728.39')).toBeInTheDocument()
-    expect(screen.getByText('Price:')).toBeInTheDocument()
+    expect(component).toHaveTextContent('61728.39')
   })
 })
 

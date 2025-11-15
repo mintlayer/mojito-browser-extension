@@ -51,11 +51,6 @@ const DashboardPage = () => {
     ml: mlYesterdayExchangeRate,
   }
 
-  const colorList = {
-    btc: '#F7931A',
-    ml: '#37DB8C',
-  }
-
   const cryptos = [
     {
       name: 'Bitcoin',
@@ -67,21 +62,6 @@ const DashboardPage = () => {
       name: 'Mintlayer',
       symbol: 'ML',
       balance: NumbersHelper.floatStringToNumber(mlBalance),
-      exchangeRate: mlExchangeRate,
-    },
-  ]
-
-  const cryptosTestnet = [
-    {
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      balance: 0,
-      exchangeRate: btcExchangeRate,
-    },
-    {
-      name: 'Mintlayer',
-      symbol: 'ML',
-      balance: 0,
       exchangeRate: mlExchangeRate,
     },
   ]
@@ -221,14 +201,9 @@ const DashboardPage = () => {
     <>
       <div className="stats">
         <Dashboard.CryptoSharesChart
-          cryptos={
-            networkType === AppInfo.NETWORK_TYPES.TESTNET
-              ? cryptosTestnet
-              : cryptos
-          }
+          cryptos={cryptos}
           totalBalance={currentBalances.total}
           accountName={accountName}
-          colorList={colorList}
         />
         <Dashboard.Statistics
           stats={stats}
@@ -237,7 +212,6 @@ const DashboardPage = () => {
       </div>
       <Dashboard.CryptoList
         cryptoList={getCryptoList(addresses, networkType, tokenBalances)}
-        colorList={colorList}
         onWalletItemClick={goToWallet}
         onConnectItemClick={onConnectItemClick}
       />

@@ -1,5 +1,6 @@
 import React, { useContext } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import Decimal from 'decimal.js'
 
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 import { LogoRound } from '@BasicComponents'
@@ -54,13 +55,15 @@ const WalletName = ({ walletType }) => {
 const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
   const { networkType } = useContext(SettingsContext)
   const { tokenBalances } = useContext(MintlayerContext)
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const { coinType } = useParams()
   const navigate = useNavigate()
 
-  const balanceInUSD =
-    networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? '0,00'
-      : NumbersHelper.floatStringToNumber(balance) * exchangeRate
+  const balanceInUSD = isTestnet
+    ? '0,00'
+    : new Decimal(NumbersHelper.floatStringToNumber(balance) || 0)
+        .times(new Decimal(exchangeRate || 0))
+        .toNumber()
 
   const symbol = () => {
     if (walletType.name === 'Mintlayer') {
@@ -97,12 +100,19 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
         >
           <span>{Format.BTCValue(balance)}</span> {symbol()}
         </p>
-        <p
-          className="balance-usd"
-          data-testid="balance-paragraph"
-        >
-          <span>{Format.fiatValue(balanceInUSD)}</span> USD
-        </p>
+        {!isTestnet && (
+          <p
+            className="balance-usd"
+            data-testid="balance-paragraph"
+          >
+            <span>{Format.fiatValue(balanceInUSD)}</span> USD
+          </p>
+        )}
+        {!isTestnet && (
+          <span className="wallet-price">
+            Price: {exchangeRate.toFixed(2)} $
+          </span>
+        )}
         {parseFloat(balanceLocked) > 0 ? (
           <button
             className="balance-locked"

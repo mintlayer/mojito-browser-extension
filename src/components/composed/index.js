@@ -28,6 +28,7 @@ import SwapInterface from './SwapInterface/SwapInterface'
 import CopyButton from './CopyButton/CopyButton'
 import StakingWarning from './StakingWarning/StakingWarning'
 import AddressList from './AddressList/AddressList'
+import PriceChart from './PriceChart/PriceChart'
 
 export {
   Balance,
@@ -60,4 +61,5 @@ export {
   CopyButton,
   StakingWarning,
   AddressList,
+  PriceChart,
 }

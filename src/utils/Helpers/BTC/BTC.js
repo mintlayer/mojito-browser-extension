@@ -111,12 +111,18 @@ const getYesterdayFiatBalances = (cryptos, yesterdayExchangeRateList) => {
   const mlCrypto = cryptos.find((crypto) => crypto.symbol === 'ML')
 
   const btcYesterdayBalance = btcCrypto
-    ? btcCrypto.balance * yesterdayExchangeRateList.btc
+    ? new Decimal(btcCrypto.balance || 0)
+        .times(new Decimal(yesterdayExchangeRateList.btc || 0))
+        .toNumber()
     : 0
   const mlYesterdayBalance = mlCrypto
-    ? mlCrypto.balance * yesterdayExchangeRateList.ml
+    ? new Decimal(mlCrypto.balance || 0)
+        .times(new Decimal(yesterdayExchangeRateList.ml || 0))
+        .toNumber()
     : 0
-  const totalYesterdayBalance = btcYesterdayBalance + mlYesterdayBalance
+  const totalYesterdayBalance = new Decimal(btcYesterdayBalance)
+    .plus(new Decimal(mlYesterdayBalance))
+    .toNumber()
 
   return { btcYesterdayBalance, mlYesterdayBalance, totalYesterdayBalance }
 }
@@ -126,16 +132,26 @@ const getCurrentFiatBalances = (cryptos) => {
   const mlCrypto = cryptos.find((crypto) => crypto.symbol === 'ML')
 
   const btcCurrentBalance = btcCrypto
-    ? btcCrypto.balance * btcCrypto.exchangeRate
+    ? new Decimal(btcCrypto.balance || 0)
+        .times(new Decimal(btcCrypto.exchangeRate || 0))
+        .toNumber()
     : 0
   const mlCurrentBalance = mlCrypto
-    ? mlCrypto.balance * mlCrypto.exchangeRate
+    ? new Decimal(mlCrypto.balance || 0)
+        .times(new Decimal(mlCrypto.exchangeRate || 0))
+        .toNumber()
     : 0
-  const totalCurrentBalance =
-    cryptos.reduce(
-      (acc, crypto) => acc + crypto.balance * crypto.exchangeRate,
-      0,
-    ) || 0
+  const totalCurrentBalance = cryptos
+    .reduce(
+      (acc, crypto) =>
+        acc.plus(
+          new Decimal(crypto.balance || 0).times(
+            new Decimal(crypto.exchangeRate || 0),
+          ),
+        ),
+      new Decimal(0),
+    )
+    .toNumber()
 
   return { btcCurrentBalance, mlCurrentBalance, totalCurrentBalance }
 }
@@ -160,15 +176,27 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
   }
 
   const proportionDiffs = {
-    btc: currentBalances.btc / yesterdayBalances.btc,
-    ml: currentBalances.ml / yesterdayBalances.ml,
-    total: currentBalances.total / yesterdayBalances.total,
+    btc: new Decimal(currentBalances.btc || 0)
+      .div(new Decimal(yesterdayBalances.btc || 1))
+      .toNumber(),
+    ml: new Decimal(currentBalances.ml || 0)
+      .div(new Decimal(yesterdayBalances.ml || 1))
+      .toNumber(),
+    total: new Decimal(currentBalances.total || 0)
+      .div(new Decimal(yesterdayBalances.total || 1))
+      .toNumber(),
   }
 
   const balanceDiffs = {
-    btc: currentBalances.btc - btcYesterdayBalance,
-    ml: currentBalances.ml - mlYesterdayBalance,
-    total: currentBalances.total - yesterdayBalances.total,
+    btc: new Decimal(currentBalances.btc || 0)
+      .minus(new Decimal(btcYesterdayBalance || 0))
+      .toNumber(),
+    ml: new Decimal(currentBalances.ml || 0)
+      .minus(new Decimal(mlYesterdayBalance || 0))
+      .toNumber(),
+    total: new Decimal(currentBalances.total || 0)
+      .minus(new Decimal(yesterdayBalances.total || 0))
+      .toNumber(),
   }
 
   return { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs }
@@ -178,8 +206,10 @@ const getStats = (proportionDiffs, balanceDiffs, networkType) => {
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const percentValue = isTestnet
     ? 0
-    : Number((proportionDiffs.total - 1) * 100).toFixed(2)
-  const fiatValue = isTestnet ? 0 : balanceDiffs.total.toFixed(2)
+    : new Decimal(proportionDiffs.total || 0).minus(1).times(100).toFixed(2)
+  const fiatValue = isTestnet
+    ? 0
+    : new Decimal(balanceDiffs.total || 0).toFixed(2)
   return [
     {
       name: '24h percent',
