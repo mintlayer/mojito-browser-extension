@@ -91,31 +91,6 @@ const CreateDelegationPage = () => {
     })
 
     if (result) {
-      // map txid to referral code
-      try {
-        const REFERRAL_TRACK_ENDPOINT = {
-          mainnet: 'https://api-server.mintlayer.org/track',
-          testnet: 'https://api-server-lovelace.mintlayer.org/track',
-        }
-        const referralCode = state?.referral_code || ''
-        if (referralCode) {
-          const txid = result
-          // send request to api server to track txid and referral_code
-          await fetch(REFERRAL_TRACK_ENDPOINT[networkType], {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              txid,
-              referral_code: referralCode,
-            }),
-          })
-        }
-      } catch (error) {
-        console.error('Error:', error)
-      }
-
       await fetchDelegations()
     }
 

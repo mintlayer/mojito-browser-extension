@@ -12,7 +12,7 @@
     "192": "logo192.png",
     "512": "logo512.png"
   },
-  "permissions": ["activeTab", "nativeMessaging", "tabs"],
+  "permissions": ["activeTab", "tabs"],
   "host_permissions": [
     "*://localhost/*",
     "*://explorer.mintlayer.org/*",
