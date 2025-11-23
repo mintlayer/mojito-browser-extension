@@ -39,17 +39,18 @@ const sortAddresses = (addresses) => {
 }
 
 const AddressList = ({ search }) => {
-  const { fetchingBalances, addressData: mlAddressData } = useContext(MintlayerContext)
+  const { fetchingBalances, addressData: mlAddressData } =
+    useContext(MintlayerContext)
   const { formatedAddresses: btcFormatedAddresses } = useContext(BitcoinContext)
   const { coinType } = useParams()
 
   const requiredAddresses =
-    coinType === 'Mintlayer' ? mlAddressData : btcFormatedAddresses
+    coinType === 'Bitcoin' ? btcFormatedAddresses : mlAddressData
 
   const addressList =
-    coinType === 'Mintlayer'
-      ? sortAddresses(getFormatedMlAddresses(requiredAddresses))
-      : sortAddresses(btcFormatedAddresses)
+    coinType === 'Bitcoin'
+      ? sortAddresses(btcFormatedAddresses)
+      : sortAddresses(getFormatedMlAddresses(requiredAddresses))
 
   const filteredAddresses = addressList.filter((address) => {
     const addressString = address.id || ''
