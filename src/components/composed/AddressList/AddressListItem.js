@@ -14,19 +14,18 @@ const AddressListItem = ({ address, index }) => {
   const [tokensExpanded, setTokensExpanded] = useState(false)
   const [openShowAddress, setOpenShowAddress] = useState(false)
   const { coinType } = useParams()
-  const isMintlayer = coinType === 'Mintlayer'
+  const isBitcoin = coinType === 'Bitcoin'
 
-  const explorerLink = isMintlayer
-    ? ML.getMlAddressLink(address.id, networkType)
-    : BTC.getBtcAddressLink(address.id, networkType)
-
+  const explorerLink = isBitcoin
+    ? BTC.getBtcAddressLink(address.id, networkType)
+    : ML.getMlAddressLink(address.id, networkType)
   const hasTokens = address.tokens && address.tokens.length > 0
 
   const toggleTokens = () => {
     setTokensExpanded(!tokensExpanded)
   }
 
-  const ticker = isMintlayer ? 'ML' : 'BTC'
+  const ticker = isBitcoin ? 'BTC' : 'ML'
 
   return (
     <tr
