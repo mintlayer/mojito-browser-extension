@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react'
 import { InputBTC, InputFloat } from '@BasicComponents'
 import { SettingsContext } from '@Contexts'
-import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router'
 
 import './CryptoFiatField.css'
 import { BTC, Format, NumbersHelper } from '@Helpers'

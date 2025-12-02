@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { MintlayerContext, BitcoinContext } from '@Contexts'
-import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router'
 
 import { Loading } from '@ComposedComponents'
 import AddressListItem from './AddressListItem'
