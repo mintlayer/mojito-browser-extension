@@ -12,7 +12,6 @@ import { Electrum, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup, Header, PopUp } from '@ComposedComponents'
 import { DeleteAccount } from '@ContainerComponents'
 import { Client } from '@mintlayer/sdk'
-import { AppInfo } from '@Constants'
 
 import {
   HomePage,
@@ -39,6 +38,7 @@ import {
   SignExternalTransactionPage,
   OrderSwapPage,
   SignBitcoinTransactionPage,
+  AddressPage,
 } from '@Pages'
 
 import {
@@ -93,10 +93,7 @@ const App = () => {
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
   const [request, setRequest] = useState(null)
 
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
@@ -393,6 +390,10 @@ const App = () => {
           exact
           path="/"
           element={<HomePage />}
+        />
+        <Route
+          path="/wallet/:coinType/address"
+          element={<AddressPage />}
         />
       </Routes>
     </main>

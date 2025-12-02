@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useContext } from 'react'
+import Decimal from 'decimal.js'
 
 import { Button } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 import { CenteredLayout } from '@LayoutComponents'
-import { BTC, Format, NumbersHelper } from '@Helpers'
+import { Format, NumbersHelper } from '@Helpers'
 import { AccountContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import FeesField from './FeesField'
@@ -29,7 +30,6 @@ const SendMlTransaction = ({
 }) => {
   const { balanceLoading } = useContext(AccountContext)
   const [amountInCrypto, setAmountInCrypto] = useState('0.00')
-  const [amountInFiat, setAmountInFiat] = useState('0.00')
   const [originalAmount, setOriginalAmount] = useState('0,00')
   const [addressTo, setAddressTo] = useState('')
   const [addressValidity, setAddressValidity] = useState(false)
@@ -57,21 +57,18 @@ const SendMlTransaction = ({
     if (amount.currency === transactionData.tokenName) {
       setOriginalAmount(amount.value)
       setAmountInCrypto(amount.value ? Format.BTCValue(amount.value) : '0,00')
-      setAmountInFiat(
-        Format.fiatValue(
-          NumbersHelper.floatStringToNumber(amount.value) *
-            exchangeRate.toFixed(2),
-        ),
-      )
       return
     }
+
     setOriginalAmount(amount.value)
-    setAmountInFiat(Format.fiatValue(amount.value))
-    setAmountInCrypto(
-      Format.BTCValue(
-        NumbersHelper.floatStringToNumber(amount.value) / exchangeRate,
-      ),
+    const amountDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(amount.value) || 0,
     )
+    const exchangeRateDecimal = new Decimal(exchangeRate || 1)
+    const resultDecimal = amountDecimal.div(exchangeRateDecimal)
+    const formattedResult = Format.BTCValue(resultDecimal.toString())
+
+    setAmountInCrypto(formattedResult)
   }
 
   const addressChanged = (e) => {
@@ -106,36 +103,40 @@ const SendMlTransaction = ({
 
   useEffect(() => {
     const validity = originalAmount && AppInfo.amountRegex.test(originalAmount)
-    const maxValue = BTC.convertBtcToSatoshi(
-      NumbersHelper.floatStringToNumber(maxValueInToken),
+    const maxValueDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(maxValueInToken) || 0,
     )
-    const amount = BTC.convertBtcToSatoshi(
-      NumbersHelper.floatStringToNumber(amountInCrypto),
+    const amountDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(amountInCrypto) || 0,
     )
-    const totalFee = BTC.convertBtcToSatoshi(totalFeeCrypto)
+    const totalFeeDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(totalFeeCrypto) || 0,
+    )
+
     if (transactionMode === AppInfo.ML_TRANSACTION_MODES.NFT_SEND) {
       setAmountValidity(true)
       return
     }
     if (transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW) {
-      if (maxValueInToken < amountInCrypto) {
+      const maxValueLtAmount = maxValueDecimal.lt(amountDecimal)
+      if (maxValueLtAmount) {
         setAmountValidity(false)
         setPassErrorMessage('Insufficient delegation balance')
         return
-      } else {
-        setAmountValidity(true)
-        return
       }
     }
-    if (!validity || amount <= 0) {
+    if (!validity || amountDecimal.lte(0)) {
       setAmountValidity(false)
       return
     }
-    // TODO with 22-digit numbers, this is not working
-    if (amount + totalFee > maxValue || !validity) {
+
+    const totalAmountDecimal = amountDecimal.plus(totalFeeDecimal)
+    const insufficientFunds = totalAmountDecimal.gt(maxValueDecimal)
+
+    if (insufficientFunds || !validity) {
       setAmountValidity(false)
       setPassErrorMessage('Insufficient funds')
-    } else if (amount + totalFee <= maxValue && validity) {
+    } else if (totalAmountDecimal.lte(maxValueDecimal) && validity) {
       setAmountValidity(true)
       setPassErrorMessage('')
     }
@@ -143,16 +144,19 @@ const SendMlTransaction = ({
     totalFeeCrypto,
     amountInCrypto,
     maxValueInToken,
-    amountInFiat,
     originalAmount,
     setAmountValidity,
     transactionMode,
   ])
 
   useEffect(() => {
+    const amountDecimal = new Decimal(
+      NumbersHelper.floatStringToNumber(amountInCrypto) || 0,
+    )
+
     onSendTransaction({
       to: addressTo,
-      amount: NumbersHelper.floatStringToNumber(amountInCrypto),
+      amount: amountDecimal.toNumber(),
       fee: 0,
     })
 

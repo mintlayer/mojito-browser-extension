@@ -1,9 +1,9 @@
 .transaction {
   display: flex;
   align-items: center;
-  padding: 12px 30px;
+  padding: 12px 30px 12px 18px;
   margin-bottom: 10px;
-  border-radius: 22px;
+  border-radius: 45px;
   background: rgb(var(--color-gray));
   border: 1px solid rgba(var(--color-light-green), 0.2);
   word-break: break-all;
@@ -141,5 +141,6 @@
 
 .delegation-staking-icon.decommissioned,
 .transaction-logo-type.decommissioned {
-  background: rgb(var(--color-red));
+  background-color: rgb(var(--color-red)) !important;
+  color: rgb(var(--color-white)) !important;
 }

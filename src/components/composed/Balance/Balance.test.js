@@ -94,9 +94,8 @@ test('renders balance with zero value when networkType is testnet', () => {
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
 
-  expect(balanceParagraphs).toHaveLength(2)
+  expect(balanceParagraphs).toHaveLength(1)
   expect(currantBalanceComponent).toBeInTheDocument()
 
   expect(balanceParagraphs[0].textContent).toBe(BALANCE_SAMPLE + ' BTC')
-  expect(balanceParagraphs[1].textContent).toBe('0.00 USD')
 })

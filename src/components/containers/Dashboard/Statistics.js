@@ -10,16 +10,17 @@ const Statistics = ({ stats = [], highestBalance, totalBalance }) => {
           <ul>
             {stats &&
               stats.map((stat) => (
-                <li key={stat.name}>
-                  <dt
-                    className={
-                      totalBalance
-                        ? parseFloat(stat.value) >= 0
-                          ? 'positive'
-                          : 'negative'
-                        : 'positive'
-                    }
-                  >
+                <li
+                  key={stat.name}
+                  className={`stat-item ${
+                    totalBalance
+                      ? parseFloat(stat.value) >= 0
+                        ? 'stats-positive'
+                        : 'stats-negative'
+                      : 'stats-positive'
+                  }`}
+                >
+                  <dt>
                     {totalBalance > 0 && (
                       <>
                         {parseFloat(stat.value) >= 0 ? '+' : '-'}

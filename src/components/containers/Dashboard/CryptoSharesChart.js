@@ -11,7 +11,6 @@ const CryptoSharesChart = ({
   totalBalance,
   fiatSymbol = 'USD',
   accountName = 'Account Name',
-  colorList,
 }) => {
   const { networkType } = useContext(SettingsContext)
   const { balanceLoading } = useContext(MintlayerContext)
@@ -22,7 +21,7 @@ const CryptoSharesChart = ({
   const data = cryptos.map((crypto) => ({
     value: (crypto.balance * crypto.exchangeRate).toFixed(2),
     asset: crypto.name,
-    color: colorList[crypto.symbol.toLowerCase()],
+    color: AppInfo.COLOR_LIST[crypto.symbol.toLowerCase()],
     valueSymbol: fiatSymbol,
   }))
 

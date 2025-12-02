@@ -1,6 +1,12 @@
 .stats {
   display: flex;
-  margin: 1.5rem 0 2.75rem;
+  margin: 1.5rem 0 1.5rem;
+  min-height: max-content;
+  justify-content: space-between;
+
+  @media screen and (min-width: 801px) {
+    margin: 1.5rem 0 2.75rem;
+  }
 }
 
 .stats > *:nth-child(2) {

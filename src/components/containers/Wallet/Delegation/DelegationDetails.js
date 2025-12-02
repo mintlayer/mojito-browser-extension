@@ -1,11 +1,7 @@
 import { useContext } from 'react'
-// import { format } from 'date-fns'
-
-import { Format } from '@Helpers'
 import { Button } from '@BasicComponents'
 import { SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
-import { ML } from '@Helpers'
 import { format } from 'date-fns'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 
@@ -37,8 +33,7 @@ const DelegationDetails = ({ delegation }) => {
   const date = delegation.creation_time
     ? format(new Date(delegation.creation_time * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
-
-  const balance = Format.BTCValue(ML.getAmountInCoins(delegation.balance.atoms))
+  const balance = delegation.balance.decimal
   const buttonExtraStyles = ['delegation-details-button']
   const addressTitle = 'Spend address:'
   const delegationAddress = delegation ? delegation.spend_destination : ''
@@ -69,11 +64,10 @@ const DelegationDetails = ({ delegation }) => {
             }
           />
         )}{' '}
-        {/* TODO: add back date when Addresses page is merged */}
-        {/* <DelegationDetailsItem
+        <DelegationDetailsItem
           title={'Date:'}
           content={date}
-        /> */}
+        />
         <DelegationDetailsItem
           title={'Pool id:'}
           content={delegation.pool_id}

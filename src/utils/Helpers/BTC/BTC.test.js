@@ -11,6 +11,13 @@ import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
 import { LocalStorageService } from '@Storage'
 
 import { fees, rawTransactions, utxos } from '@TestData'
+import { Electrum } from '@APIs'
+
+jest.mock('@APIs', () => ({
+  Electrum: {
+    getLastBlockHeight: jest.fn(),
+  },
+}))
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 const mockId = 'networkType'
@@ -113,7 +120,8 @@ test('Transactions parse', async () => {
   expect(typeof parsedTransactions[randomIndex].txid).toBe('string')
   expect(typeof parsedTransactions[randomIndex].direction).toBe('string')
   expect(typeof parsedTransactions[randomIndex].value).toBe('number')
-  expect(parsedTransactions[randomIndex].otherPart.length).toBeGreaterThan(0)
+  expect(parsedTransactions[randomIndex].from.length).toBeGreaterThan(0)
+  expect(parsedTransactions[randomIndex].to.length).toBeGreaterThan(0)
 })
 
 test('Check confirmations amount - error', async () => {
@@ -121,10 +129,12 @@ test('Check confirmations amount - error', async () => {
 })
 
 test('Check confirmations amount - success', async () => {
+  Electrum.getLastBlockHeight.mockResolvedValue(1_010_001)
+
   const transaction = {
     blockHeight: 10_000,
   }
 
   const confirmations = await getConfirmationsAmount(transaction)
-  expect(confirmations).toBeGreaterThan(1_000_000)
+  expect(confirmations).toBe(1_000_002)
 })

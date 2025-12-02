@@ -1,19 +1,18 @@
 import React, { useContext } from 'react'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 import { LogoRound, SkeletonLoader } from '@BasicComponents'
-import { LineChart } from '@ComposedComponents'
+import { PriceChart } from '@ComposedComponents'
 import { AppInfo } from '@Constants'
 import { SettingsContext, MintlayerContext } from '@Contexts'
 
 import './CryptoList.css'
 import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
 
-export const CryptoItem = ({ colorList, onClickItem, item }) => {
+export const CryptoItem = ({ onClickItem, item }) => {
   const { networkType } = useContext(SettingsContext)
   const fetchingBalances = item.fetchingBalances
   const { tokenBalances } = useContext(MintlayerContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
-  const color = colorList[item.symbol.toLowerCase()]
   const balance = item.balance
   const fiatBalance = Number(item.balance * item.exchangeRate)?.toFixed(2)
   const bigValues = balance.length > 13
@@ -68,42 +67,26 @@ export const CryptoItem = ({ colorList, onClickItem, item }) => {
               </h5>
               <div className={`values ${bigValues ? 'big-values' : ''}`}>
                 <dl>
-                  <dt>Value:</dt>
-                  <dd>{isTestnet ? balance : fiatBalance}</dd>
-                  {!isTestnet && (
+                  {!isTestnet ? (
                     <>
-                      <dt>Price:</dt>
-                      <dd>{item.exchangeRate?.toFixed(2)}</dd>
+                      <dd>
+                        {balance} {symbol}
+                      </dd>
+                      <dt>|</dt>
+                      <dd>{fiatBalance} $</dd>
                     </>
+                  ) : (
+                    <dd>{balance}</dd>
                   )}
                 </dl>
               </div>
             </div>
           </div>
 
-          <div className="crypto-stats">
-            <div className="crypto-stats-numbers">
-              {Number(balance) > 0 && (
-                <>
-                  <strong
-                    className={item.change24h < 0 ? 'negative' : 'positive'}
-                  >
-                    {isTestnet ? 0 : item.change24h}%
-                  </strong>
-                  <span>24h</span>
-                </>
-              )}
-            </div>
-            {(!isTestnet || !data || !data.length) && (
-              <LineChart
-                points={data}
-                height="40px"
-                width="100%"
-                lineColor={color}
-                lineWidth="4px"
-              />
-            )}
-          </div>
+          <PriceChart
+            data={data}
+            item={item}
+          />
         </li>
       )}
     </>
@@ -139,12 +122,7 @@ export const ConnectItem = ({ walletType, onClick }) => {
   )
 }
 
-const CryptoList = ({
-  cryptoList,
-  colorList,
-  onWalletItemClick,
-  onConnectItemClick,
-}) => {
+const CryptoList = ({ cryptoList, onWalletItemClick, onConnectItemClick }) => {
   const missingWalletTypes = AppInfo.walletTypes.filter(
     (walletType) =>
       !cryptoList.find((crypto) => crypto.name === walletType.name),
@@ -159,7 +137,6 @@ const CryptoList = ({
           ? cryptoList.map((crypto) => (
               <CryptoItem
                 key={crypto.symbol}
-                colorList={colorList}
                 item={crypto}
                 onClickItem={onWalletItemClick}
               />

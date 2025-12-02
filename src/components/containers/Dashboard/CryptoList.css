@@ -13,13 +13,13 @@
 .crypto-item {
   display: flex;
   justify-content: space-between;
-  padding: 0.75rem 1.875rem;
+  padding: 12px 30px 12px 18px;
   margin-bottom: 0.75rem;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
   background-color: rgb(var(--color-gray));
   border: 1px solid rgba(var(--color-light-green), 0.2);
-  border-radius: 20px;
+  border-radius: 45px;
 }
 
 .logo-wrapper {
@@ -33,47 +33,6 @@
 .crypto-item .name-values {
   width: 393px;
   margin: 0.3rem 0 0.3rem 1.875rem;
-}
-
-.crypto-item .crypto-stats {
-  display: flex;
-  flex-direction: column;
-  width: 153px;
-}
-
-.crypto-item .crypto-stats .crypto-stats-numbers {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  gap: 10px;
-  height: 30px;
-}
-
-.crypto-item .crypto-stats .crypto-stats-numbers > * {
-  display: block;
-}
-
-.crypto-item .crypto-stats .crypto-stats-numbers > .negative {
-  color: rgb(var(--color-red));
-}
-
-.crypto-item .crypto-stats .crypto-stats-numbers > .positive {
-  color: rgb(var(--color-green));
-}
-
-.crypto-item .crypto-stats .crypto-stats-numbers > strong {
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.crypto-item .crypto-stats .crypto-stats-numbers > span {
-  font-size: 1.125rem;
-  font-weight: light;
-}
-
-.crypto-item .crypto-stats svg {
-  width: 100%;
-  height: 40px;
 }
 
 .crypto-item .name-values h5 {
@@ -124,14 +83,13 @@
 
 .crypto-item .name-values .values dt {
   font-weight: thin;
-  margin-right: 0.25rem;
+  margin: 0 1rem;
 }
 
 .crypto-item .name-values .values dd {
   font-weight: 600;
   line-height: 2.3rem;
   margin-bottom: auto;
-  margin-right: 1.25rem;
 }
 
 .crypto-item svg {

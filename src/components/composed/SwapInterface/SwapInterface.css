@@ -201,7 +201,7 @@
   border-radius: 10px;
   background: rgb(var(--color-gray));
   border: 1px solid rgba(var(--color-light-green), 0.2);
-  min-height: max-content;
+  min-height: 54px;
   word-break: break-all;
   cursor: pointer;
   transition: all 0.3s ease-in-out;

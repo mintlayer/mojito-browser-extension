@@ -74,6 +74,7 @@
 }
 
 .bottom-note {
+  display: flex;
   position: absolute;
   bottom: 7px;
   right: 0;

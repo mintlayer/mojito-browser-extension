@@ -4,8 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { SendMlTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
-import { AccountContext, SettingsContext, MintlayerContext } from '@Contexts'
-import { AppInfo } from '@Constants'
+import { AccountContext, MintlayerContext } from '@Contexts'
 
 import './SendMlTransaction.css'
 
@@ -24,13 +23,8 @@ const SendMlTransactionPage = () => {
   )
 
   const datahook = useMlWalletInfo
-
-  const { networkType } = useContext(SettingsContext)
   const { client } = useContext(MintlayerContext)
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [feeLoading, setFeeLoading] = useState(false)
   const navigate = useNavigate()

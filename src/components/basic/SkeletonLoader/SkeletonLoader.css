@@ -1,10 +1,10 @@
 .card {
   display: flex;
-  padding: 0.75rem 1.875rem;
+  padding: 12px 30px 12px 18px;
   margin-bottom: 0.75rem;
   background-color: rgb(var(--color-gray));
   border: 1px solid rgba(var(--color-light-green), 0.2);
-  border-radius: 20px;
+  border-radius: 45px;
   color: rgb(var(--color-white));
 }
 
