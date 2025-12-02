@@ -1,6 +1,4 @@
-import React, { useEffect } from 'react'
-
-import { useStyleClasses } from '@Hooks'
+import React from 'react'
 
 import './Button.css'
 
@@ -16,31 +14,27 @@ const Button = ({
   onMouseEnter,
   onMouseLeave,
 }) => {
-  const classesList = ['btn', ...extraStyleClasses]
-  alternate && classesList.push('alternate')
-  const { styleClasses, addStyleClass, removeStyleClass } =
-    useStyleClasses(classesList)
-
-  useEffect(() => {
-    dark ? addStyleClass('dark') : removeStyleClass('dark')
-    if (dark) return
-    alternate ? addStyleClass('alternate') : removeStyleClass('alternate')
-  }, [alternate, dark, addStyleClass, removeStyleClass])
+  // Вычисляем классы сразу, без useEffect
+  const classList = ['btn', ...extraStyleClasses]
+  if (dark) {
+    classList.push('dark')
+  } else if (alternate) {
+    classList.push('alternate')
+  }
+  const styleClasses = classList.join(' ')
 
   return (
-    <>
-      <button
-        className={styleClasses}
-        onClick={onClickHandle}
-        data-testid={dataTestId}
-        disabled={disabled}
-        type={buttonType}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        {children}
-      </button>
-    </>
+    <button
+      className={styleClasses}
+      onClick={onClickHandle}
+      data-testid={dataTestId}
+      disabled={disabled}
+      type={buttonType}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {children}
+    </button>
   )
 }
 

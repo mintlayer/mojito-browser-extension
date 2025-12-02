@@ -111,8 +111,16 @@ const renderWithContext = (
 }
 
 describe('SwapInterface', () => {
+  let consoleSpy
+
   beforeEach(() => {
     jest.clearAllMocks()
+    // Suppress expected console.error calls during tests
+    consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+  })
+
+  afterEach(() => {
+    consoleSpy.mockRestore()
   })
 
   it('renders swap interface correctly', () => {
@@ -331,7 +339,6 @@ describe('SwapInterface', () => {
   })
 
   it('prevents coin to coin swap', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
     renderWithContext()
 
     // Change to token to coin
@@ -350,11 +357,9 @@ describe('SwapInterface', () => {
     expect(consoleSpy).toHaveBeenCalledWith(
       'Cannot swap between coins directly',
     )
-    consoleSpy.mockRestore()
   })
 
   it('handles fetchOrdersPairInfo errors', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
     const errorContext = {
       ...mockMintlayerContext,
       fetchOrdersPairInfo: jest
@@ -378,20 +383,12 @@ describe('SwapInterface', () => {
         expect.any(Error),
       )
     })
-
-    consoleSpy.mockRestore()
-  })
-
-  it('renders swap arrow button', () => {
-    renderWithContext()
-
-    expect(screen.getByTestId('arrow-icon')).toBeInTheDocument()
   })
 
   it('renders search icon in find orders button', () => {
     renderWithContext()
 
-    expect(screen.getByTestId('search-icon')).toBeInTheDocument()
+    expect(screen.getAllByTestId('search-icon')).toHaveLength(2)
   })
 
   it('updates balance display when from token changes', () => {

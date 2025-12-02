@@ -1,9 +1,10 @@
 import {
   render,
   screen,
+  waitFor,
   waitForElementToBeRemoved,
 } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router'
 
 import TransactionDetails from './TransactionDetails'
 import { TransactionDetailsItem } from './TransactionDetails'
@@ -88,7 +89,7 @@ test('Render transaction detail item component', () => {
   expect(transactionDetailsItemContent).toHaveTextContent(CONTENTSAMPLE)
 })
 
-test('Render transaction component', () => {
+test('Render transaction component', async () => {
   const mockConfirmations = jest.fn().mockResolvedValue(1_234_567)
 
   renderTransactionDetails({
@@ -114,6 +115,10 @@ test('Render transaction component', () => {
   expect(transactionDetailsButton).toHaveTextContent('Open In Block Explorer')
 
   transactionDetailsButton.click()
+
+  await waitFor(() => {
+    expect(mockConfirmations).toHaveBeenCalled()
+  })
 })
 
 test('Render transaction out component', async () => {

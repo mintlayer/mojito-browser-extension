@@ -3,7 +3,7 @@ import { TransactionContext, AccountContext, SettingsContext } from '@Contexts'
 import DelegationList from './DelegationList'
 import { LocalStorageService } from '@Storage'
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
@@ -33,9 +33,9 @@ describe('DelegationList', () => {
       <AccountContext.Provider value={{ accountName: 'test' }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
           <TransactionContext.Provider value={{ delegationsLoading: true }}>
-            <Router future={memoryRouterFeature}>
+            <BrowserRouter future={memoryRouterFeature}>
               <DelegationList delegationsList={mockDelegationsList} />
-            </Router>
+            </BrowserRouter>
           </TransactionContext.Provider>
           ,
         </SettingsContext.Provider>
@@ -53,9 +53,9 @@ describe('DelegationList', () => {
       <AccountContext.Provider value={{ accountName: 'test' }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
           <TransactionContext.Provider value={{ delegationsLoading: false }}>
-            <Router future={memoryRouterFeature}>
+            <BrowserRouter future={memoryRouterFeature}>
               <DelegationList delegationsList={[]} />
-            </Router>
+            </BrowserRouter>
           </TransactionContext.Provider>
           ,
         </SettingsContext.Provider>
@@ -74,9 +74,9 @@ describe('DelegationList', () => {
       <AccountContext.Provider value={{ accountName: 'test' }}>
         <SettingsContext.Provider value={{ networkType: 'testnet' }}>
           <TransactionContext.Provider value={{ delegationsLoading: false }}>
-            <Router future={memoryRouterFeature}>
+            <BrowserRouter future={memoryRouterFeature}>
               <DelegationList delegationsList={mockDelegationsList} />
-            </Router>
+            </BrowserRouter>
           </TransactionContext.Provider>
           ,
         </SettingsContext.Provider>

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import Balance from './Balance'
 import { SettingsProvider, MintlayerContext } from '@Contexts'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 
 const BALANCE_SAMPLE = 1
 const EXCHANGE_RATE_SAMPLE = 25000
@@ -14,7 +14,7 @@ const memoryRouterFeature = {
 
 test('Render account balance with ML', () => {
   render(
-    <Router future={memoryRouterFeature}>
+    <BrowserRouter future={memoryRouterFeature}>
       <SettingsProvider>
         <MintlayerContext.Provider
           value={{ balanceLoading: false, tokenBalances: [] }}
@@ -28,7 +28,7 @@ test('Render account balance with ML', () => {
         ,
       </SettingsProvider>
       ,
-    </Router>,
+    </BrowserRouter>,
   )
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
@@ -44,7 +44,7 @@ test('Render account balance with ML', () => {
 
 test('Render account balance with BTC', () => {
   render(
-    <Router future={memoryRouterFeature}>
+    <BrowserRouter future={memoryRouterFeature}>
       <SettingsProvider>
         <MintlayerContext.Provider
           value={{ balanceLoading: false, tokenBalances: [] }}
@@ -58,7 +58,7 @@ test('Render account balance with BTC', () => {
         ,
       </SettingsProvider>
       ,
-    </Router>,
+    </BrowserRouter>,
   )
   const currantBalanceComponent = screen.getByTestId('current-balance')
   const balanceParagraphs = screen.getAllByTestId('balance-paragraph')
@@ -74,7 +74,7 @@ test('Render account balance with BTC', () => {
 
 test('renders balance with zero value when networkType is testnet', () => {
   render(
-    <Router future={memoryRouterFeature}>
+    <BrowserRouter future={memoryRouterFeature}>
       <SettingsProvider value={{ networkType: 'testnet' }}>
         <MintlayerContext.Provider
           value={{ balanceLoading: false, tokenBalances: [] }}
@@ -88,7 +88,7 @@ test('renders balance with zero value when networkType is testnet', () => {
         ,
       </SettingsProvider>
       ,
-    </Router>,
+    </BrowserRouter>,
   )
 
   const currantBalanceComponent = screen.getByTestId('current-balance')

@@ -7,7 +7,7 @@ import {
   Route,
   useLocation,
   useNavigate,
-} from 'react-router-dom'
+} from 'react-router'
 import { Electrum, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup, Header, PopUp } from '@ComposedComponents'
 import { DeleteAccount } from '@ContainerComponents'
@@ -54,7 +54,6 @@ import {
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
-import reportWebVitals from './utils/reportWebVitals'
 
 import '@Assets/styles/constants.css'
 import '@Assets/styles/index.css'
@@ -152,11 +151,11 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    const accountUnlocked = isAccountUnlocked()
+    const accountUnlocked = isAccountUnlocked(true)
     setUnlocked(accountUnlocked)
     accountUnlocked && isConnectionAvailable(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, navigate])
+  }, [location.pathname])
 
   useEffect(() => {
     if (storage) {
@@ -420,8 +419,3 @@ root.render(
     </AccountProvider>
   </React.StrictMode>,
 )
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals()

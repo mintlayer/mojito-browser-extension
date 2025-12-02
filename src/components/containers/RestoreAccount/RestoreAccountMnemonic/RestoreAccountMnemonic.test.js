@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 
 import RestoreAccountMnemonic from './RestoreAccountMnemonic'

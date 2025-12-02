@@ -10,11 +10,21 @@ module.exports = function overrideConf(config) {
   Object.assign(fallback, {
     stream: require.resolve('stream-browserify'),
     vm: require.resolve('vm-browserify'),
+    process: require.resolve('process/browser.js'),
   })
   config.resolve.fallback = fallback
+
+  // Fix for ESM modules requiring fully specified extensions
+  config.module.rules.push({
+    test: /\.m?js/,
+    resolve: {
+      fullySpecified: false,
+    },
+  })
+
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
-      process: 'process/browser',
+      process: 'process/browser.js',
       Buffer: ['buffer', 'Buffer'],
     }),
     new Dotenv({

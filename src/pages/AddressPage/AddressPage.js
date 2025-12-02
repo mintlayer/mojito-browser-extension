@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router'
 import { AddressList } from '@ComposedComponents'
 import { Button } from '@BasicComponents'
 import { PopUp } from '@ComposedComponents'
@@ -17,7 +17,9 @@ const AddressPage = () => {
   const { coinType } = useParams()
 
   const requiredAddress =
-    coinType === 'Mintlayer' ? mintlayerUnusedAddresses.receive : bitcoinUnusedAddresses.receivingAddress.address
+    coinType === 'Mintlayer'
+      ? mintlayerUnusedAddresses.receive
+      : bitcoinUnusedAddresses.receivingAddress.address
   return (
     <div className="address-page">
       <div className="address-page-header">

@@ -1,12 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { act } from 'react'
-import {
-  Link,
-  MemoryRouter,
-  Route,
-  Routes,
-  useLocation,
-} from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes, useLocation } from 'react-router'
 
 import {
   AccountProvider,
@@ -15,7 +9,6 @@ import {
   BitcoinProvider,
 } from '@Contexts'
 import Header from './Header'
-import { expect } from '@playwright/test'
 
 global.AbortSignal = global.AbortSignal || {}
 

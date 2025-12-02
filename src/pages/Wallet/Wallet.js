@@ -1,4 +1,4 @@
-import React, { useNavigate, useParams } from 'react-router-dom'
+import React, { useNavigate, useParams } from 'react-router'
 import { useContext, useState } from 'react'
 
 import { Balance, PopUp } from '@ComposedComponents'

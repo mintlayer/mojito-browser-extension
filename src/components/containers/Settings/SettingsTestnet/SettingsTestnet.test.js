@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 
 import SettingsTestnet from './SettingsTestnet'
 import { SettingsContext, MintlayerContext, AccountContext } from '@Contexts'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 
 const toggleNetworkType = jest.fn()
 const logout = jest.fn()
@@ -14,9 +14,9 @@ test('Render Inputs list item', async () => {
         value={{ networkType: 'mainnet', toggleNetworkType }}
       >
         <MintlayerContext.Provider value={{ setAllDataFetching: jest.fn() }}>
-          <Router>
+          <BrowserRouter>
             <SettingsTestnet />
-          </Router>
+          </BrowserRouter>
         </MintlayerContext.Provider>
       </SettingsContext.Provider>
       ,
@@ -37,9 +37,9 @@ test('toggles the network type', () => {
         value={{ networkType: 'mainnet', toggleNetworkType }}
       >
         <MintlayerContext.Provider value={{ setAllDataFetching: jest.fn() }}>
-          <Router>
+          <BrowserRouter>
             <SettingsTestnet />
-          </Router>
+          </BrowserRouter>
           ,
         </MintlayerContext.Provider>
       </SettingsContext.Provider>

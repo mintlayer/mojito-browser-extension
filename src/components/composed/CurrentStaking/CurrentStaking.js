@@ -9,7 +9,7 @@ import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-r
 import { MintlayerContext, SettingsContext } from '@Contexts'
 
 import './CurrentStaking.css'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 
 import { ReactComponent as IconWarning } from '@Assets/images/icon-warning.svg'
 

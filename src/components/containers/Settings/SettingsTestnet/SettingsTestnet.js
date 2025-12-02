@@ -5,7 +5,7 @@ import { VerticalGroup } from '@LayoutComponents'
 import { AppInfo } from '@Constants'
 
 import './SettingsTestnet.css'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 const SettingsTestnet = () => {
   const { networkType, toggleNetworkType } = useContext(SettingsContext)

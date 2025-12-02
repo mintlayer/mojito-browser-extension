@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router'
 import { MOCKS } from './mocks'
 import { Button } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'

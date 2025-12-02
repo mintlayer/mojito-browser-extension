@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import './ConnectionPage.css'
-import { useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router'
 import { useContext, useState } from 'react'
 import { AccountContext } from '@Contexts'
 import { Button, Toggle } from '@BasicComponents'

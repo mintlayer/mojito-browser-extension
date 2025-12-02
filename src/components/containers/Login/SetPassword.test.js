@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 import { AccountProvider, SettingsProvider } from '@Contexts'
@@ -9,10 +9,20 @@ jest.spyOn(console, 'error').getMockImplementation(() => {
   console.error.restoreMock()
 })
 
+const mockCheckPassword = jest.fn().mockResolvedValue({
+  addresses: {
+    btcMainnetAddress: 'btcMainnetAddress',
+    btcTestnetAddress: 'btcTestnetAddress',
+    mlMainnetAddress: 'mlMainnetAddress',
+    mlTestnetAddress: 'mlTestnetAddress',
+  },
+})
+
 const _data = {
   account: { id: '1', name: 'Account Name' },
   onChangePassword: jest.fn(),
   onSubmit: jest.fn(),
+  checkPassword: mockCheckPassword,
 }
 
 const memoryRouterFeatures = {

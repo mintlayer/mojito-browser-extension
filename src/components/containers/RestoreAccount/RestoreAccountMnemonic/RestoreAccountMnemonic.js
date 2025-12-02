@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 import { Expressions } from '@Constants'
 import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'

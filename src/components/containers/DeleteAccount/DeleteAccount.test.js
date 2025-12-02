@@ -1,6 +1,6 @@
 import { render, fireEvent, screen } from '@testing-library/react'
 import { AccountContext, MintlayerContext } from '@Contexts'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 import DeleteAccount from './DeleteAccount'
 
 const mockContext = {
@@ -23,14 +23,14 @@ const memoryRouterFeature = {
 describe('DeleteAccount', () => {
   it('renders initial step correctly', () => {
     render(
-      <Router future={memoryRouterFeature}>
+      <BrowserRouter future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
           <MintlayerContext.Provider value={mockMintlayerContext}>
             <DeleteAccount />
           </MintlayerContext.Provider>
         </AccountContext.Provider>
         ,
-      </Router>,
+      </BrowserRouter>,
     )
     expect(
       screen.getByText(
@@ -41,14 +41,14 @@ describe('DeleteAccount', () => {
 
   it('changes step on Continue click', () => {
     render(
-      <Router future={memoryRouterFeature}>
+      <BrowserRouter future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
           <MintlayerContext.Provider value={mockMintlayerContext}>
             <DeleteAccount />
           </MintlayerContext.Provider>
         </AccountContext.Provider>
         ,
-      </Router>,
+      </BrowserRouter>,
     )
     fireEvent.click(screen.getByText('Continue'))
     expect(screen.getByText('Delete Wallet')).toBeInTheDocument()
@@ -56,14 +56,14 @@ describe('DeleteAccount', () => {
 
   it('calls setRemoveAccountPopupOpen on Cancel click', () => {
     render(
-      <Router future={memoryRouterFeature}>
+      <BrowserRouter future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
           <MintlayerContext.Provider value={mockMintlayerContext}>
             <DeleteAccount />
           </MintlayerContext.Provider>
         </AccountContext.Provider>
         ,
-      </Router>,
+      </BrowserRouter>,
     )
     fireEvent.click(screen.getByText('Cancel'))
     expect(mockContext.setRemoveAccountPopupOpen).toHaveBeenCalledWith(false)
@@ -71,14 +71,14 @@ describe('DeleteAccount', () => {
 
   it('calls deleteAccountHandler on form submit', async () => {
     render(
-      <Router future={memoryRouterFeature}>
+      <BrowserRouter future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
           <MintlayerContext.Provider value={mockMintlayerContext}>
             <DeleteAccount />
           </MintlayerContext.Provider>
         </AccountContext.Provider>
         ,
-      </Router>,
+      </BrowserRouter>,
     )
     fireEvent.click(screen.getByText('Continue'))
     fireEvent.submit(screen.getByText('Delete Wallet'))

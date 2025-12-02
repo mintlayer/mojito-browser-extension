@@ -1,9 +1,8 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router'
 import RestoreAccountJson from './RestoreAccountJson'
 import { AccountProvider, SettingsProvider } from '@Contexts'
-import { expect } from '@playwright/test'
 
 jest.mock('@Entities', () => ({
   Account: {
