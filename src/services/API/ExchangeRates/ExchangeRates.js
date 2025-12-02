@@ -1,4 +1,4 @@
-const EXCHANGE_RATES_SERVER_URL = 'http://51.158.172.176:3000'
+const EXCHANGE_RATES_SERVER_URL = 'https://rates-api.mintlayer.org'
 
 const EXCHANGE_RATES_SERVER_ENDPOINTS = {
   GET_RATE: '/getCurrentRate/:crypto/:fiat',
