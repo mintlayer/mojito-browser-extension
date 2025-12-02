@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router'
 
 import { AccountContext } from '@Contexts'
 import { Loading } from '@ComposedComponents'
@@ -9,6 +9,7 @@ import './Home.css'
 
 const HomePage = () => {
   const effectCalled = useRef(false)
+  const navigatedRef = useRef(false)
   const [unlocked, setUnlocked] = useState(false)
   const location = useLocation()
 
@@ -17,9 +18,13 @@ const HomePage = () => {
     useContext(AccountContext)
 
   useEffect(() => {
-    const currentUnlocked = isAccountUnlocked()
+    if (navigatedRef.current) return
+    const currentUnlocked = isAccountUnlocked(true)
     setUnlocked(currentUnlocked)
-    currentUnlocked && navigate('/dashboard')
+    if (currentUnlocked) {
+      navigatedRef.current = true
+      navigate('/dashboard')
+    }
   }, [isAccountUnlocked, navigate])
 
   useEffect(() => {
