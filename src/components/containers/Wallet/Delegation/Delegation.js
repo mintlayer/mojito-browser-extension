@@ -8,7 +8,7 @@ import DelegationDetails from './DelegationDetails'
 
 import './Delegation.css'
 import { format } from 'date-fns'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 const Delegation = ({ delegation }) => {
   const navigate = useNavigate()

@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 import { SettingsProvider } from '@Contexts'
 import NftItem from './Nft'
 
@@ -23,11 +23,11 @@ const memoryRouterFeature = {
 describe('NftItem', () => {
   test('renders the NftItem component', () => {
     render(
-      <Router future={memoryRouterFeature}>
+      <BrowserRouter future={memoryRouterFeature}>
         <SettingsProvider>
           <NftItem nft={mockNft} />
         </SettingsProvider>
-      </Router>,
+      </BrowserRouter>,
     )
 
     expect(screen.getByTestId('transaction')).toBeInTheDocument()
@@ -45,11 +45,11 @@ describe('NftItem', () => {
 
   test('opens detail popup on click', () => {
     render(
-      <Router future={memoryRouterFeature}>
+      <BrowserRouter future={memoryRouterFeature}>
         <SettingsProvider>
           <NftItem nft={mockNft} />
         </SettingsProvider>
-      </Router>,
+      </BrowserRouter>,
     )
 
     fireEvent.click(screen.getByTestId('transaction'))

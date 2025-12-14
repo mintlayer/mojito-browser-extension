@@ -5,7 +5,7 @@ import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 import { BTC, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 import { AccountContext } from '@Contexts'
 import { Account, AccountHelpers } from '@Entities'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { wordlists } from 'bip39'
 
 const AddWallet = ({

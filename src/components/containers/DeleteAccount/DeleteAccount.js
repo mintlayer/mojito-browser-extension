@@ -6,7 +6,7 @@ import { Login } from '@ContainerComponents'
 
 import { Account } from '@Entities'
 import { AccountContext, MintlayerContext } from '@Contexts'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 import './DeleteAccount.css'
 

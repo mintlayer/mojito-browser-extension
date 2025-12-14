@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import Decimal from 'decimal.js'
 
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'

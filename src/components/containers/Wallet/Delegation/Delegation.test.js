@@ -8,7 +8,7 @@ import {
 import { LocalStorageService } from '@Storage'
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
 import { format } from 'date-fns'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
@@ -35,9 +35,9 @@ describe('Delegation', () => {
       <AccountProvider>
         <SettingsProvider>
           <TransactionProvider>
-            <Router future={memoryRouterFeature}>
+            <BrowserRouter future={memoryRouterFeature}>
               <Delegation delegation={mockDelegation} />
-            </Router>
+            </BrowserRouter>
           </TransactionProvider>
         </SettingsProvider>
       </AccountProvider>,
@@ -59,9 +59,9 @@ describe('Delegation', () => {
       <AccountProvider>
         <SettingsProvider>
           <TransactionProvider>
-            <Router future={memoryRouterFeature}>
+            <BrowserRouter future={memoryRouterFeature}>
               <Delegation delegation={mockDelegation} />
-            </Router>
+            </BrowserRouter>
           </TransactionProvider>
         </SettingsProvider>
       </AccountProvider>,

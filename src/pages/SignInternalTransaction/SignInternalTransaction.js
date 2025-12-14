@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button, Error } from '@BasicComponents'

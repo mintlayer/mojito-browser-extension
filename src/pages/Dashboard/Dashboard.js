@@ -15,7 +15,7 @@ import { NumbersHelper, ObjectHelpers } from '@Helpers'
 
 import './Dashboard.css'
 import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 

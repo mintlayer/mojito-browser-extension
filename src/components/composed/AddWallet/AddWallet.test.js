@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { AccountContext } from '@Contexts'
 import AddWallet from './AddWallet'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 
 describe('AddWallet', () => {
   const mockContext = {
@@ -36,9 +36,9 @@ describe('AddWallet', () => {
   test('renders without crashing', () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router future={memoryRouterFeature}>
+        <BrowserRouter future={memoryRouterFeature}>
           <AddWallet {...mockPropsEmpty} />
-        </Router>
+        </BrowserRouter>
       </AccountContext.Provider>,
     )
   })
@@ -46,9 +46,9 @@ describe('AddWallet', () => {
   test('renders description paragraphs when step is 1', () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router future={memoryRouterFeature}>
+        <BrowserRouter future={memoryRouterFeature}>
           <AddWallet {...mockPropsEmpty} />
-        </Router>
+        </BrowserRouter>
       </AccountContext.Provider>,
     )
 
@@ -63,9 +63,9 @@ describe('AddWallet', () => {
   test('renders InputList when step is 2', () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router future={memoryRouterFeature}>
+        <BrowserRouter future={memoryRouterFeature}>
           <AddWallet {...mockPropsEmpty} />
-        </Router>
+        </BrowserRouter>
       </AccountContext.Provider>,
     )
     const submitButton = screen.getByText('Next')
@@ -92,9 +92,9 @@ describe('AddWallet', () => {
   test('renders password field and submit button when step is 3', async () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router future={memoryRouterFeature}>
+        <BrowserRouter future={memoryRouterFeature}>
           <AddWallet {...mockProps} />
-        </Router>
+        </BrowserRouter>
       </AccountContext.Provider>,
     )
 
@@ -114,9 +114,9 @@ describe('AddWallet', () => {
   test('changes step on submit button click', () => {
     render(
       <AccountContext.Provider value={mockContext}>
-        <Router future={memoryRouterFeature}>
+        <BrowserRouter future={memoryRouterFeature}>
           <AddWallet {...mockPropsEmpty} />
-        </Router>
+        </BrowserRouter>
       </AccountContext.Provider>,
     )
 
