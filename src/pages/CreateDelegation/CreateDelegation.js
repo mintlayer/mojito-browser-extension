@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router'
 import { SendMlTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
-import { AccountContext, SettingsContext, MintlayerContext } from '@Contexts'
+import { AccountContext, MintlayerContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './CreateDelegation.css'
@@ -21,7 +21,6 @@ const CreateDelegationPage = () => {
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.DELEGATION
   const { addresses, accountID } = useContext(AccountContext)
   const { client, fetchDelegations } = useContext(MintlayerContext)
-  const { networkType } = useContext(SettingsContext)
   const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()

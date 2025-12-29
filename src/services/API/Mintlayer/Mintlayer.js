@@ -436,7 +436,7 @@ const getAllTokensData = async (networkType) => {
   try {
     const network = networkType === 'mainnet' ? 0 : 1
     const response = await fetch(
-      `https://api.mintini.app/dex_tokens?network=${network}`,
+      `https://mojito-api.mintlayer.org/batch/dex_tokens?network=${network}`,
     )
     if (!response.ok) {
       throw new Error('Failed to fetch all tokens data')
