@@ -12,7 +12,7 @@ import { useState, useContext, useEffect } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 import { Account } from '@Entities'
 import { ML } from '@Cryptos'
-import { AccountContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 import { Mintlayer } from '@APIs'
 
 const storage =
@@ -36,6 +36,7 @@ export const SignTransactionPage = () => {
   const [secret, setSecret] = useState('')
 
   const { currentHeight } = useContext(MintlayerContext)
+  const { networkType } = useContext(SettingsContext)
 
   const blockHeight = currentHeight ? BigInt(currentHeight) : 0n
 
