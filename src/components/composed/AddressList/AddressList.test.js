@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, within } from '@testing-library/react'
-import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { createMemoryRouter, RouterProvider } from 'react-router'
 
 import AddressList from './AddressList'
 import { MintlayerContext, BitcoinContext, SettingsContext } from '@Contexts'

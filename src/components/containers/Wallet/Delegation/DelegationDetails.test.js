@@ -3,7 +3,7 @@ import { TransactionContext, SettingsContext, AccountContext } from '@Contexts'
 import DelegationDetails, { DelegationDetailsItem } from './DelegationDetails'
 import { LocalStorageService } from '@Storage'
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
@@ -64,9 +64,9 @@ describe('DelegationDetails', () => {
       <AccountContext.Provider value={mockAccountContext}>
         <TransactionContext.Provider value={mockTransactionContext}>
           <SettingsContext.Provider value={mockSettingsContext}>
-            <Router future={memoryRouterFeature}>
+            <BrowserRouter future={memoryRouterFeature}>
               <DelegationDetails delegation={mockDelegation} />
-            </Router>
+            </BrowserRouter>
           </SettingsContext.Provider>
         </TransactionContext.Provider>
         ,
@@ -83,9 +83,9 @@ describe('DelegationDetails', () => {
       <AccountContext.Provider value={mockAccountContext}>
         <TransactionContext.Provider value={mockTransactionContext}>
           <SettingsContext.Provider value={mockSettingsContext}>
-            <Router future={memoryRouterFeature}>
+            <BrowserRouter future={memoryRouterFeature}>
               <DelegationDetails delegation={mockDelegation} />
-            </Router>
+            </BrowserRouter>
           </SettingsContext.Provider>
         </TransactionContext.Provider>
         ,

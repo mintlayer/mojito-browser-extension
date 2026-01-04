@@ -9,7 +9,7 @@ import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-r
 import TransactionAmount from './TransactionAmount'
 
 import './TransactionDetails.css'
-import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router'
 import { CenteredLayout } from '@LayoutComponents'
 
 const getAddress = (tx) =>

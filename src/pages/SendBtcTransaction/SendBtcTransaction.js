@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 
 import { SendBtcTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'

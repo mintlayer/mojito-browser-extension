@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import React, { useContext, useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router'
 
 import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
 import { ReactComponent as ExpandImg } from '@Assets/images/icon-expand.svg'
@@ -125,7 +125,7 @@ const Navigation = ({ customNavigation }) => {
     ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
       ? [
           {
-            id: 5,
+            id: 6,
             label: 'Test Sign Bitcoin Transaction',
             icon: <SettingsImg />,
             link: '/wallet/Bitcoin/sign-transaction',
@@ -135,7 +135,7 @@ const Navigation = ({ customNavigation }) => {
     ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
       ? [
           {
-            id: 6,
+            id: 7,
             label: 'Test Sign Challenge',
             icon: <SettingsImg />,
             link: '/wallet/Mintlayer/sign-challenge',

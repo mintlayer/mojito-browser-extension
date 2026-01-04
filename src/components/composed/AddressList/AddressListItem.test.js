@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { createMemoryRouter, RouterProvider } from 'react-router'
 import AddressListItem from './AddressListItem'
 import { SettingsContext } from '@Contexts'
 import { ML, BTC } from '@Helpers'

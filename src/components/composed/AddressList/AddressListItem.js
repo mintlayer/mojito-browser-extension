@@ -5,7 +5,7 @@ import { Button } from '@BasicComponents'
 import { PopUp } from '@ComposedComponents'
 import { Wallet } from '@ContainerComponents'
 import { ReactComponent as IconQr } from '@Assets/images/icons-qr.svg'
-import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router'
 
 import './AddressListItem.css'
 

@@ -10,7 +10,7 @@ import { ReactComponent as SwapIcon } from '@Assets/images/icon-swap.svg'
 import { ML } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
 import TransactionAmount from './TransactionAmount'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 import TransactionDetails from './TransactionDetails'
 

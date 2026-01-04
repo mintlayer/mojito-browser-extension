@@ -35,17 +35,21 @@ const AccountProvider = ({ value: propValue, children }) => {
     setId(id)
   }
 
-  const checkAccountLockState = () => {
+  const checkAccountLockState = (updateState = false) => {
     const registry = LocalStorageService.getItem(accountRegistryName)
     if (!registry) return false
 
     const account = registry
-    setAddresses(account.addresses)
-    setId(account.id)
-    setName(account.name)
-
     const { logoutDate } = account
-    if (!logoutDate) return true
+
+    if (!logoutDate) {
+      if (updateState) {
+        setAddresses(account.addresses)
+        setId(account.id)
+        setName(account.name)
+      }
+      return true
+    }
 
     const timeSinceClosed = differenceInMinutes(
       new Date(),
@@ -54,11 +58,13 @@ const AccountProvider = ({ value: propValue, children }) => {
     )
     const isUnlocked = timeSinceClosed < loginTimeoutInMinutes
 
-    !isUnlocked
-      ? LocalStorageService.removeItem(accountRegistryName)
-      : setAddresses(account.addresses) &&
-        setId(account.id) &&
-        setName(account.name)
+    if (!isUnlocked) {
+      LocalStorageService.removeItem(accountRegistryName)
+    } else if (updateState) {
+      setAddresses(account.addresses)
+      setId(account.id)
+      setName(account.name)
+    }
 
     return isUnlocked
   }
