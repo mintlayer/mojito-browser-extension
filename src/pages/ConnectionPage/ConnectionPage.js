@@ -36,7 +36,6 @@ export const ConnectionPage = () => {
 
   const state = external_state
   const origin = state?.request?.origin || website
-  const networkType = state?.request?.networkType || 'testnet'
   const permissions = state?.request?.permissions || []
 
   const requireBTC = permissions.includes('bitcoin')
@@ -71,32 +70,21 @@ export const ConnectionPage = () => {
         },
         ...(provideBitcoinData && {
           bitcoin: {
-            publicKeys: [addresses?.btcTestnetPublicKey.data].map(toHexString),
-            ...(networkType === 'mainnet'
-              ? {
-                  receiving: [addresses?.btcMainnetAddress],
-                  change: [addresses?.btcMainnetAddress],
-                  publicKeys: {
-                    receiving: [addresses?.btcMainnetPublicKey.data].map(
-                      toHexString,
-                    ),
-                    change: [addresses?.btcMainnetPublicKey.data].map(
-                      toHexString,
-                    ),
-                  },
-                }
-              : {
-                  receiving: [addresses?.btcTestnetAddress],
-                  change: [addresses?.btcTestnetAddress],
-                  publicKeys: {
-                    receiving: [addresses?.btcTestnetPublicKey.data].map(
-                      toHexString,
-                    ),
-                    change: [addresses?.btcTestnetPublicKey.data].map(
-                      toHexString,
-                    ),
-                  },
-                }),
+            receiving: addresses?.btcAddresses?.btcReceivingAddresses.map(
+              (addr) => Object.keys(addr)[0],
+            ),
+            change: addresses?.btcAddresses?.btcChangeAddresses.map(
+              (addr) => Object.keys(addr)[0],
+            ),
+            publicKeys: {
+              receiving: addresses?.btcAddresses?.btcReceivingAddresses.map(
+                (addr) =>
+                  Buffer.from(Object.values(addr)[0].pubkey).toString('hex'),
+              ),
+              change: addresses?.btcAddresses?.btcChangeAddresses.map((addr) =>
+                Buffer.from(Object.values(addr)[0].pubkey).toString('hex'),
+              ),
+            },
           },
         }),
       },
