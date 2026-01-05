@@ -32,13 +32,14 @@ const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
             handleTokenChange(coin)
           }}
           className="swap-token-item"
+          key={coin.coin}
         >
           <SwapTokenLogo />
           ML Coins
         </li>
-        {filteredTokens.map((token) => (
+        {filteredTokens.map((token, index) => (
           <li
-            key={token.token_id}
+            key={token.token_id || `token-${index}`}
             onClick={() => {
               handleTokenChange(token)
             }}

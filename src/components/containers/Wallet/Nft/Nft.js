@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { PopUp } from '@ComposedComponents'
 import NftDetails from './NftDetails'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import styles from './Nft.module.css'
 
 const NftItem = ({ nft }) => {

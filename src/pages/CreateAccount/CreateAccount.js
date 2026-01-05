@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 import { Loading } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'

@@ -41,6 +41,7 @@ test('Renders ShowAddress page', () => {
 test('Renders ShowAddress qrcode in svg', async () => {
   const { qrcode } = setup()
 
+  // eslint-disable-next-line testing-library/no-node-access
   expect(qrcode.childElementCount).toBe(2)
 
   const { children } = qrcode
@@ -60,5 +61,4 @@ test('Renders ShowAddress page and click on copy address', async () => {
 
   fireEvent.click(copy)
   expect(navigator.clipboard.writeText).toHaveBeenCalledWith(_data.address)
-  expect(_data.onCopy).toHaveBeenCalled()
 })

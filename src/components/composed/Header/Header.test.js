@@ -1,12 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { act } from 'react'
-import {
-  Link,
-  MemoryRouter,
-  Route,
-  Routes,
-  useLocation,
-} from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes, useLocation } from 'react-router'
 
 import {
   AccountProvider,
@@ -15,7 +9,6 @@ import {
   BitcoinProvider,
 } from '@Contexts'
 import Header from './Header'
-import { expect } from '@playwright/test'
 
 global.AbortSignal = global.AbortSignal || {}
 
@@ -33,8 +26,7 @@ const setup = async (location, mode = 'default') => {
     logout: jest.fn(),
     setSliderMenuOpen: jest.fn(),
     addresses: {
-      mlMainnetAddresses: ['address'],
-      mlTestnetAddresses: ['address'],
+      mlAddresses: ['address'],
     },
   }
 
@@ -44,8 +36,7 @@ const setup = async (location, mode = 'default') => {
     setSliderMenuOpen: jest.fn(),
     sliderMenuOpen: true,
     addresses: {
-      mlMainnetAddresses: ['address'],
-      mlTestnetAddresses: ['address'],
+      mlAddresses: ['address'],
     },
   }
 
@@ -87,7 +78,7 @@ const setup = async (location, mode = 'default') => {
     v7_partialHydration: true,
   }
 
-  await render(
+  render(
     <AccountProvider value={value}>
       <SettingsProvider value={{ networkType: 'testnet', toggleNetworkType }}>
         <MintlayerProvider value={mintlayerProviderValue}>

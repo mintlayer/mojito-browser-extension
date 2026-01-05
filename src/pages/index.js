@@ -23,6 +23,7 @@ import SignExternalTransactionPage from './SignExternalTransaction/SignExternalT
 import SignInternalTransaction from './SignInternalTransaction/SignInternalTransaction'
 import OrderSwapPage from './OrderSwap/OrderSwap'
 import SignBitcoinTransactionPage from './SignBitcoinTransaction/SignBitcoinTransaction'
+import AddressPage from './AddressPage/AddressPage'
 
 export {
   CreateAccountPage,
@@ -50,4 +51,5 @@ export {
   SignInternalTransaction,
   OrderSwapPage,
   SignBitcoinTransactionPage,
+  AddressPage,
 }

@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import React, { useContext, useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router'
 
 import { ReactComponent as BackImg } from '@Assets/images/icon-arrow-left.svg'
 import { ReactComponent as MenuImg } from '@Assets/images/icon-hamburger.svg'
@@ -47,7 +47,7 @@ const Header = ({ customBackAction }) => {
       return
     }
     if (isSettingsPage) {
-      navigate('/')
+      navigate(unlocked ? '/dashboard' : '/')
       return
     }
     if (isStakingPage) {

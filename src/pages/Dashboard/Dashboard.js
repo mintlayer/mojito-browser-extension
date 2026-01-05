@@ -15,7 +15,7 @@ import { NumbersHelper, ObjectHelpers } from '@Helpers'
 
 import './Dashboard.css'
 import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 
@@ -51,11 +51,6 @@ const DashboardPage = () => {
     ml: mlYesterdayExchangeRate,
   }
 
-  const colorList = {
-    btc: '#F7931A',
-    ml: '#37DB8C',
-  }
-
   const cryptos = [
     {
       name: 'Bitcoin',
@@ -67,21 +62,6 @@ const DashboardPage = () => {
       name: 'Mintlayer',
       symbol: 'ML',
       balance: NumbersHelper.floatStringToNumber(mlBalance),
-      exchangeRate: mlExchangeRate,
-    },
-  ]
-
-  const cryptosTestnet = [
-    {
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      balance: 0,
-      exchangeRate: btcExchangeRate,
-    },
-    {
-      name: 'Mintlayer',
-      symbol: 'ML',
-      balance: 0,
       exchangeRate: mlExchangeRate,
     },
   ]
@@ -118,8 +98,8 @@ const DashboardPage = () => {
       })
     }
 
-    const btcAddress = addresses.btcMainnetAddress
-      ? addresses.btcTestnetAddress
+    const btcAddress = addresses.btcAddresses
+      ? addresses.btcAddresses.btcReceivingAddresses[0]
       : false
     if (btcAddress) {
       const change24h =
@@ -139,11 +119,7 @@ const DashboardPage = () => {
       )
     }
 
-    const currentMlAddresses =
-      networkType === AppInfo.NETWORK_TYPES.MAINNET
-        ? addresses.mlMainnetAddresses
-        : addresses.mlTestnetAddresses
-
+    const currentMlAddresses = addresses.mlAddresses
     const mlAddress =
       currentMlAddresses &&
       currentMlAddresses.mlReceivingAddresses &&
@@ -225,14 +201,9 @@ const DashboardPage = () => {
     <>
       <div className="stats">
         <Dashboard.CryptoSharesChart
-          cryptos={
-            networkType === AppInfo.NETWORK_TYPES.TESTNET
-              ? cryptosTestnet
-              : cryptos
-          }
+          cryptos={cryptos}
           totalBalance={currentBalances.total}
           accountName={accountName}
-          colorList={colorList}
         />
         <Dashboard.Statistics
           stats={stats}
@@ -241,7 +212,6 @@ const DashboardPage = () => {
       </div>
       <Dashboard.CryptoList
         cryptoList={getCryptoList(addresses, networkType, tokenBalances)}
-        colorList={colorList}
         onWalletItemClick={goToWallet}
         onConnectItemClick={onConnectItemClick}
       />

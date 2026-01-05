@@ -1,20 +1,13 @@
 import { useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 import { CurrentStaking } from '@ComposedComponents'
-import { AccountContext, SettingsContext } from '@Contexts'
-import { AppInfo } from '@Constants'
+import { AccountContext } from '@Contexts'
 
 import './Staking.css'
 
 const StakingPage = () => {
-  const { addresses, accountID } = useContext(AccountContext)
-  const { networkType } = useContext(SettingsContext)
-
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const { accountID } = useContext(AccountContext)
   const navigate = useNavigate()
 
   if (!accountID) {
@@ -25,7 +18,7 @@ const StakingPage = () => {
 
   return (
     <div className="staking-page">
-      <CurrentStaking addressList={currentMlAddresses} />
+      <CurrentStaking />
     </div>
   )
 }

@@ -1,10 +1,10 @@
 import { useEffect, useContext, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
-import { AccountContext, SettingsContext, MintlayerContext } from '@Contexts'
+import { AccountContext, MintlayerContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './CreateDelegation.css'
@@ -20,12 +20,8 @@ const CreateDelegationPage = () => {
   }
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.DELEGATION
   const { addresses, accountID } = useContext(AccountContext)
-  const { client } = useContext(MintlayerContext)
-  const { networkType } = useContext(SettingsContext)
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const { client, fetchDelegations } = useContext(MintlayerContext)
+  const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
@@ -45,12 +41,10 @@ const CreateDelegationPage = () => {
   const {
     balance: mlBalance,
     utxos,
-    fetchDelegations,
     unusedAddresses,
     fetchingBalances,
     fetchingUtxos,
   } = useMlWalletInfo(currentMlAddresses)
-  const maxValueToken = mlBalance
 
   const preEnterAddress = state?.pool_id || ''
   const transaction_conditions =
@@ -118,7 +112,7 @@ const CreateDelegationPage = () => {
             feeLoading={feeLoading}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
-            maxValueInToken={maxValueToken}
+            maxValueInToken={mlBalance}
             onSendTransaction={createTransaction}
             setFormValidity={setFormValid}
             isFormValid={transaction_conditions && isFormValid}

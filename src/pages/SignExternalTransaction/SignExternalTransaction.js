@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers, Secret } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button } from '@BasicComponents'
@@ -10,8 +10,6 @@ import { MintlayerContext } from '@Contexts'
 import './SignExternalTransaction.css'
 import { useState, useContext, useEffect } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
-
-import { AppInfo } from '@Constants'
 import { Account } from '@Entities'
 import { ML } from '@Cryptos'
 import { AccountContext, SettingsContext } from '@Contexts'
@@ -38,6 +36,7 @@ export const SignTransactionPage = () => {
   const [secret, setSecret] = useState('')
 
   const { currentHeight } = useContext(MintlayerContext)
+  const { networkType } = useContext(SettingsContext)
 
   const blockHeight = currentHeight ? BigInt(currentHeight) : 0n
 
@@ -57,12 +56,7 @@ export const SignTransactionPage = () => {
   const state = transactionState || external_state || MOCKS[selectedMock]
 
   const { addresses, accountID } = useContext(AccountContext)
-  const { networkType } = useContext(SettingsContext)
-
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
 
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
@@ -541,7 +535,7 @@ export const SignTransactionPage = () => {
               password
               value={password}
               onChangeHandle={passwordChangeHandler}
-              placeholder="Enter your password"
+              placeHolder="Enter your password"
               autoFocus
             />
             {isHTLCClaim && (

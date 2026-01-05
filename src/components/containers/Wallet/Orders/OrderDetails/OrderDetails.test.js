@@ -289,6 +289,9 @@ const mockMintlayerContext = {
   client: {
     fillOrder: jest.fn(),
   },
+  unusedAddresses: {
+    receive: 'testnet_addr1',
+  },
 }
 
 const mockSettingsContext = {
@@ -297,12 +300,7 @@ const mockSettingsContext = {
 
 const mockAccountContext = {
   addresses: {
-    mlTestnetAddresses: {
-      mlChangeAddresses: ['testnet_addr1', 'testnet_addr2'],
-    },
-    mlMainnetAddresses: {
-      mlChangeAddresses: ['mainnet_addr1', 'mainnet_addr2'],
-    },
+    mlAddresses: ['testnet_addr1', 'testnet_addr2'],
   },
 }
 
@@ -353,11 +351,9 @@ describe('OrderDetails', () => {
 
     const input = screen.getByRole('textbox')
 
-    // Valid amount
     fireEvent.change(input, { target: { value: '50' } })
     expect(input).toHaveValue('50')
 
-    // Invalid amount (too high)
     fireEvent.change(input, { target: { value: '150' } })
     expect(input).toHaveValue('150')
   })
@@ -369,12 +365,19 @@ describe('OrderDetails', () => {
     const swapButton = screen.getByRole('button', { name: /swap/i })
 
     fireEvent.change(input, { target: { value: '50' } })
+
+    await waitFor(() => {
+      expect(input).toHaveValue('50')
+    })
+
     fireEvent.click(swapButton)
 
-    expect(mockMintlayerContext.client.fillOrder).toHaveBeenCalledWith({
-      order_id: 'order123456789',
-      amount: '50',
-      destination: 'testnet_addr1',
+    await waitFor(() => {
+      expect(mockMintlayerContext.client.fillOrder).toHaveBeenCalledWith({
+        order_id: 'order123456789',
+        amount: '50',
+        destination: 'testnet_addr1',
+      })
     })
   })
 
@@ -382,7 +385,7 @@ describe('OrderDetails', () => {
     renderWithContext(mockTokenOrder)
 
     const swapButton = screen.getByRole('button', { name: /swap/i })
-    fireEvent.click(swapButton) // Click without entering amount
+    fireEvent.click(swapButton)
 
     await waitFor(() => {
       expect(screen.getByText('Amount is invalid')).toBeInTheDocument()

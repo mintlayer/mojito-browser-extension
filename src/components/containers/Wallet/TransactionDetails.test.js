@@ -1,15 +1,14 @@
 import {
   render,
   screen,
+  waitFor,
   waitForElementToBeRemoved,
 } from '@testing-library/react'
-import { act } from 'react'
-
-import { BTC } from '@Helpers'
+import { MemoryRouter, Route, Routes } from 'react-router'
 
 import TransactionDetails from './TransactionDetails'
 import { TransactionDetailsItem } from './TransactionDetails'
-import { SettingsProvider, AccountProvider, MintlayerProvider } from '@Contexts'
+import { SettingsContext, MintlayerContext } from '@Contexts'
 import { LocalStorageService } from '@Storage'
 
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
@@ -41,18 +40,40 @@ const TRANSCTIONSAMPLEOUT = {
 const CONTENTSAMPLE = 'content'
 const TITLESAMPLE = 'title'
 
+const renderTransactionDetails = ({
+  transaction,
+  getConfirmations = jest.fn().mockResolvedValue(1_500_000),
+  coinType = 'Bitcoin',
+} = {}) => {
+  return render(
+    <MemoryRouter initialEntries={[`/${coinType}`]}>
+      <Routes>
+        <Route
+          path="/:coinType"
+          element={
+            <SettingsContext.Provider value={{ networkType: 'testnet' }}>
+              <MintlayerContext.Provider value={{ tokenMap: {} }}>
+                <TransactionDetails
+                  transaction={transaction}
+                  getConfirmations={getConfirmations}
+                />
+              </MintlayerContext.Provider>
+            </SettingsContext.Provider>
+          }
+        />
+      </Routes>
+    </MemoryRouter>,
+  )
+}
+
 test('Render transaction detail item component', () => {
   render(
-    <AccountProvider>
-      <SettingsProvider>
-        <TransactionDetailsItem
-          title={TITLESAMPLE}
-          content={CONTENTSAMPLE}
-        />
-        ,
-      </SettingsProvider>
-      ,
-    </AccountProvider>,
+    <SettingsContext.Provider value={{ networkType: 'testnet' }}>
+      <TransactionDetailsItem
+        title={TITLESAMPLE}
+        content={CONTENTSAMPLE}
+      />
+    </SettingsContext.Provider>,
   )
   const transactionDetailsItem = screen.getByTestId('transaction-details-item')
   const transactionDetailsItemTitle = screen.getByTestId(
@@ -68,20 +89,13 @@ test('Render transaction detail item component', () => {
   expect(transactionDetailsItemContent).toHaveTextContent(CONTENTSAMPLE)
 })
 
-test('Render transaction component', () => {
-  render(
-    <AccountProvider>
-      <SettingsProvider>
-        <MintlayerProvider>
-          <TransactionDetails
-            transaction={TRANSCTIONSAMPLE}
-            getConfirmations={BTC.getConfirmationsAmount}
-          />
-        </MintlayerProvider>
-      </SettingsProvider>
-      ,
-    </AccountProvider>,
-  )
+test('Render transaction component', async () => {
+  const mockConfirmations = jest.fn().mockResolvedValue(1_234_567)
+
+  renderTransactionDetails({
+    transaction: TRANSCTIONSAMPLE,
+    getConfirmations: mockConfirmations,
+  })
   const transactionDetails = screen.getByTestId('transaction-details')
   const transactionDetailsItems = screen.getAllByTestId(
     'transaction-details-item',
@@ -101,22 +115,19 @@ test('Render transaction component', () => {
   expect(transactionDetailsButton).toHaveTextContent('Open In Block Explorer')
 
   transactionDetailsButton.click()
+
+  await waitFor(() => {
+    expect(mockConfirmations).toHaveBeenCalled()
+  })
 })
 
 test('Render transaction out component', async () => {
-  render(
-    <AccountProvider>
-      <SettingsProvider>
-        <MintlayerProvider>
-          <TransactionDetails
-            transaction={TRANSCTIONSAMPLEOUT}
-            getConfirmations={BTC.getConfirmationsAmount}
-          />
-        </MintlayerProvider>
-      </SettingsProvider>
-      ,
-    </AccountProvider>,
-  )
+  const mockConfirmations = jest.fn().mockResolvedValue(1_500_000)
+
+  renderTransactionDetails({
+    transaction: TRANSCTIONSAMPLEOUT,
+    getConfirmations: mockConfirmations,
+  })
 
   const transactionDetails = screen.getByTestId('transaction-details')
   const transactionDetailsItems = screen.getAllByTestId(
@@ -128,15 +139,14 @@ test('Render transaction out component', async () => {
   const transactionDetailsContent = screen.getAllByTestId(
     'transaction-details-item-content',
   )
-  const confirmationsLoading = screen.getByTestId('loading')
 
-  await act(async () => expect(transactionDetails).toBeInTheDocument())
+  expect(transactionDetails).toBeInTheDocument()
   expect(transactionDetailsItems).toHaveLength(5)
 
   expect(transactionDetailsTitles).toHaveLength(5)
   expect(transactionDetailsTitles[0]).toHaveTextContent('To:')
 
-  await waitForElementToBeRemoved(confirmationsLoading)
+  await waitForElementToBeRemoved(() => screen.queryByTestId('loading'))
   expect(Number(transactionDetailsContent[4].textContent)).toBeGreaterThan(
     1_000_000,
   )

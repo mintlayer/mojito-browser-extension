@@ -51,11 +51,7 @@ class InMemoryAccountProvider {
 const MintlayerProvider = ({ value: propValue, children }) => {
   const { addresses, accountID, accountName } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
   const [txPreviewInfo, setTxPreviewInfo] = useState(null)
   const [currentAccountId, setCurrentAccountId] = useState('')
   const [onlineHeight, setOnlineHeight] = useState(0)
@@ -73,6 +69,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   const [transactions, setTransactions] = useState([])
   const [feerate, setFeerate] = useState(0)
   const [client, setClient] = useState(null)
+  const [addressData, setAddressData] = useState([])
 
   const [mlDelegationList, setMlDelegationList] = useState([])
   const [mlDelegationsBalance, setMlDelegationsBalance] = useState(0)
@@ -140,7 +137,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   }
 
   const fetchAllData = async (force) => {
-    // check if height is the same as online height or fetching is in progress to avoid multiple requests
     if (
       allDataFetching &&
       !force &&
@@ -229,6 +225,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     })
 
     const addresses_data = [...addresses_data_receive, ...addresses_data_change]
+    setAddressData(addresses_data)
 
     const first_unused_change_address_index = addresses_data_change.findIndex(
       (address_data) => {
@@ -383,21 +380,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-    const delegations = await ML.getBatchData(
-      addressList,
-      '/address/:address/delegations',
-    )
-
-    const totalDelegationBalance = delegations.reduce(
-      (acc, delegation) =>
-        acc + (delegation.balance ? Number(delegation.balance.atoms) : 0),
-      0,
-    )
-
-    setMlDelegationsBalance(totalDelegationBalance)
-    setMlDelegationList(delegations || [])
-    setFetchingDelegations(false)
-
     const fetchedUtxos = await ML.getBatchData(
       non_zero_addresses,
       '/address/:address/all-utxos',
@@ -408,11 +390,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       '/address/:address/spendable-utxos',
     )
 
-    const parsedUtxos = fetchedUtxos
-
-    const parsedSpendableUtxos = fetchedSpendableUtxos
-
-    const available = parsedSpendableUtxos
+    const available = fetchedSpendableUtxos
       .filter((item) => item.utxo.value)
       .filter((item) => item.utxo.type !== 'Htlc') // Do not try to spend non-external
       .filter((item) => {
@@ -435,11 +413,11 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       }, [])
 
     const availableUtxos = available.map((item) => item)
-    const lockedUtxos = parsedUtxos
-      // .flat()
-      .filter((obj) => obj.utxo.type === 'LockThenTransfer')
+    const lockedUtxos = fetchedUtxos.filter(
+      (obj) => obj.utxo.type === 'LockThenTransfer',
+    )
 
-    const availableNftInitialUtxos = parsedSpendableUtxos.filter(
+    const availableNftInitialUtxos = fetchedSpendableUtxos.filter(
       (item) => item.utxo.type === 'IssueNft',
     )
 
@@ -455,26 +433,37 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     currentAccountId !== accountID || networkType !== currentNetworkType
 
   // Fetch delegations
-  const fetchDelegations = async (uniqueAddressesWithDelegation) => {
+  const fetchDelegations = async () => {
     try {
       if (!addresses) return
-      setFetchingDelegations(true)
-      const addressList = uniqueAddressesWithDelegation
-      const delegations = await Mintlayer.getWalletDelegations(addressList)
-      const delegation_details = await Mintlayer.getDelegationDetails(
-        delegations.map((delegation) => delegation.delegation_id),
+      const addressList = currentMlAddresses
+        ? [
+            ...currentMlAddresses.mlReceivingAddresses,
+            ...currentMlAddresses.mlChangeAddresses,
+          ]
+        : []
+      const delegations = await ML.getBatchData(
+        addressList,
+        '/address/:address/delegations',
       )
-      const blocks_data = await Mintlayer.getBlocksData(
-        delegation_details.map(
-          (delegation) => delegation.creation_block_height,
-        ),
+      const delegationList = delegations.map(
+        (delegation) => delegation.delegation_id,
       )
+      const delegation_details = await ML.getBatchData(
+        delegationList,
+        '/delegation/:address',
+      )
+      const blocksList = delegation_details.map(
+        (delegation) => delegation.creation_block_height,
+      )
+      const block_hashes = await ML.getBatchData(blocksList, '/chain/:address')
+      const blocks_data = await ML.getBatchData(block_hashes, '/block/:address')
 
       const pools = delegation_details.map((delegation) => delegation.pool_id)
 
       const uniquePools = [...new Set(pools)]
 
-      const pools_data = await Mintlayer.getPoolsData(uniquePools)
+      const pools_data = await ML.getBatchData(uniquePools, '/pool/:address')
 
       const emptyPoolsDataMap = uniquePools.reduce((acc, pool, index) => {
         if (pools_data[index].staker_balance.atoms === '0') {
@@ -487,7 +476,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
         return {
           ...delegation,
           decommissioned: emptyPoolsDataMap[delegation.pool_id] ? true : false,
-          balance: delegation.balance.atoms,
+          balance: delegation.balance,
           creation_block_height:
             delegation_details[index].creation_block_height,
           creation_time: blocks_data.find(
@@ -513,7 +502,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
       const totalDelegationBalance = mergedDelegations.reduce(
         (acc, delegation) =>
-          acc + (delegation.balance ? Number(delegation.balance) : 0),
+          acc +
+          (delegation.balance.decimal ? Number(delegation.balance.decimal) : 0),
         0,
       )
       setMlDelegationsBalance(totalDelegationBalance)
@@ -529,14 +519,17 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   useEffect(() => {
     if (networkType !== currentNetworkType) {
       fetchAllData(true)
+      fetchDelegations(addresses)
     }
-  })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [networkType, currentNetworkType, addresses])
 
   useEffect(() => {
     Mintlayer.cancelAllRequests()
     setCurrentHeight(onlineHeight)
     const getData = async () => {
       await fetchAllData()
+      await fetchDelegations(addresses)
     }
     getData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -572,6 +565,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     onlineHeight,
     mlDelegationsBalance,
     mlDelegationList,
+    addressData,
 
     fetchAllData,
     fetchDelegations,

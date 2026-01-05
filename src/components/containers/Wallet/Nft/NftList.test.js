@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import NftList from './NftList'
 import { MintlayerContext } from '@Contexts'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 
 const memoryRouterFeature = {
   v7_startTransition: true,
@@ -12,11 +12,11 @@ const memoryRouterFeature = {
 
 const renderWithContext = (ui, { providerProps, ...renderOptions }) => {
   return render(
-    <Router future={memoryRouterFeature}>
+    <BrowserRouter future={memoryRouterFeature}>
       <MintlayerContext.Provider {...providerProps}>
         {ui}
       </MintlayerContext.Provider>
-    </Router>,
+    </BrowserRouter>,
     renderOptions,
   )
 }

@@ -3,32 +3,29 @@ import { Button } from '@BasicComponents'
 import { HelpTooltip } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
-import { useMlWalletInfo } from '@Hooks'
-import { ML } from '@Helpers'
 import { Tooltip } from '@BasicComponents'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 
-import { SettingsContext } from '@Contexts'
+import { MintlayerContext, SettingsContext } from '@Contexts'
 
 import './CurrentStaking.css'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 
 import { ReactComponent as IconWarning } from '@Assets/images/icon-warning.svg'
 
-const CurrentStaking = ({ addressList }) => {
+const CurrentStaking = () => {
   const navigate = useNavigate()
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const { coinType } = useParams()
   const { networkType } = useContext(SettingsContext)
+  const { mlDelegationsBalance, fetchingDelegations, mlDelegationList } =
+    useContext(MintlayerContext)
 
   const walletType = {
     name: coinType,
     ticker: coinType === 'Mintlayer' ? 'ML' : 'BTC',
     network: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
   }
-
-  const { mlDelegationList, mlDelegationsBalance, fetchingDelegations } =
-    useMlWalletInfo(addressList)
 
   const delegationsLoading =
     fetchingDelegations && mlDelegationList.length === 0
@@ -80,7 +77,7 @@ const CurrentStaking = ({ addressList }) => {
           </div>
 
           <p className="total-staked">
-            Total staked: {ML.getAmountInCoins(mlDelegationsBalance)} ML
+            Total staked: {mlDelegationsBalance} ML
           </p>
         </div>
         {decommissionedPools.length > 0 && (

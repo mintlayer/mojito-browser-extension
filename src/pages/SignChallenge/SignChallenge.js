@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button } from '@BasicComponents'
@@ -8,10 +8,9 @@ import { PopUp, TextField } from '@ComposedComponents'
 import './SignChallenge.css'
 import { useState, useContext } from 'react'
 
-import { AppInfo } from '@Constants'
 import { Account } from '@Entities'
 import { ML } from '@Cryptos'
-import { AccountContext, SettingsContext } from '@Contexts'
+import { AccountContext } from '@Contexts'
 
 const storage =
   typeof browser !== 'undefined' && browser.storage
@@ -38,12 +37,7 @@ export const SignChallengePage = () => {
   const state = external_state || MOCKS[selectedMock]
 
   const { addresses, accountID } = useContext(AccountContext)
-  const { networkType } = useContext(SettingsContext)
-
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
 
   const handleApprove = async () => {
     setIsModalOpen(true) // Open the modal
@@ -213,7 +207,7 @@ export const SignChallengePage = () => {
               password
               value={password}
               onChangeHandle={passwordChangeHandler}
-              placeholder="Enter your password"
+              placeHolder="Enter your password"
               autoFocus
             />
             <div className="modal-buttons">

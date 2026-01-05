@@ -8,7 +8,7 @@ import {
 import { LocalStorageService } from '@Storage'
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
 import { format } from 'date-fns'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 LocalStorageService.setItem('unlockedAccount', { name: 'test' })
@@ -22,10 +22,7 @@ const memoryRouterFeature = {
 describe('Delegation', () => {
   const mockDelegation = {
     creation_time: 1645113600,
-    balance: {
-      decimals: '0.001',
-      atoms: '100000000',
-    },
+    balance: { decimal: '10', atoms: '1000000000000' },
     pool_id: 'test_id',
   }
 
@@ -38,9 +35,9 @@ describe('Delegation', () => {
       <AccountProvider>
         <SettingsProvider>
           <TransactionProvider>
-            <Router future={memoryRouterFeature}>
+            <BrowserRouter future={memoryRouterFeature}>
               <Delegation delegation={mockDelegation} />
-            </Router>
+            </BrowserRouter>
           </TransactionProvider>
         </SettingsProvider>
       </AccountProvider>,
@@ -53,7 +50,7 @@ describe('Delegation', () => {
     )
     expect(screen.getByTestId('delegation-date')).toHaveTextContent(date)
     expect(screen.getByTestId('delegation-amount')).toHaveTextContent(
-      'Amount: 0.001',
+      `Amount: ${mockDelegation.balance.decimal}`,
     )
   })
 
@@ -62,9 +59,9 @@ describe('Delegation', () => {
       <AccountProvider>
         <SettingsProvider>
           <TransactionProvider>
-            <Router future={memoryRouterFeature}>
+            <BrowserRouter future={memoryRouterFeature}>
               <Delegation delegation={mockDelegation} />
-            </Router>
+            </BrowserRouter>
           </TransactionProvider>
         </SettingsProvider>
       </AccountProvider>,

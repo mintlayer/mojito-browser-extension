@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react'
 import { InputBTC, InputFloat } from '@BasicComponents'
-// import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow.svg'
-import { AccountContext, SettingsContext } from '@Contexts'
+import { SettingsContext } from '@Contexts'
+import { useParams } from 'react-router'
 
 import './CryptoFiatField.css'
 import { BTC, Format, NumbersHelper } from '@Helpers'
@@ -23,7 +23,6 @@ const CryptoFiatField = ({
 }) => {
   const isDelegationWithdraw =
     transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
-  const { walletType } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
   const finalMaxValue = isDelegationWithdraw
@@ -33,6 +32,7 @@ const CryptoFiatField = ({
   const [maxFiatValue, setMaxFiatValue] = useState(
     maxCryptoValue * exchangeRate,
   )
+  const { coinType } = useParams()
 
   const [bottomValue, setBottomValue] = useState('')
   // eslint-disable-next-line no-unused-vars
@@ -105,7 +105,7 @@ const CryptoFiatField = ({
 
     if (
       transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
-      walletType.name === 'Mintlayer'
+      coinType === 'Mintlayer'
     ) {
       setAmountValidity(true)
       setValidity('valid')
@@ -122,7 +122,7 @@ const CryptoFiatField = ({
       return
     }
 
-    if (parsedValue <= 0) {
+    if (parsedValue <= 0 || !parsedValue) {
       setValidity('invalid')
       setAmountValidity(false)
       setErrorMessage(zeroErrorMessage)

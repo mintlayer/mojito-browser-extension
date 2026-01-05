@@ -7,12 +7,11 @@ import {
   Route,
   useLocation,
   useNavigate,
-} from 'react-router-dom'
+} from 'react-router'
 import { Electrum, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup, Header, PopUp } from '@ComposedComponents'
 import { DeleteAccount } from '@ContainerComponents'
 import { Client } from '@mintlayer/sdk'
-import { AppInfo } from '@Constants'
 
 import {
   HomePage,
@@ -39,6 +38,7 @@ import {
   SignExternalTransactionPage,
   OrderSwapPage,
   SignBitcoinTransactionPage,
+  AddressPage,
 } from '@Pages'
 
 import {
@@ -93,10 +93,7 @@ const App = () => {
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
   const [request, setRequest] = useState(null)
 
-  const currentMlAddresses =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? addresses.mlMainnetAddresses
-      : addresses.mlTestnetAddresses
+  const currentMlAddresses = addresses.mlAddresses
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
@@ -154,11 +151,11 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    const accountUnlocked = isAccountUnlocked()
+    const accountUnlocked = isAccountUnlocked(true)
     setUnlocked(accountUnlocked)
     accountUnlocked && isConnectionAvailable(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, navigate])
+  }, [location.pathname])
 
   useEffect(() => {
     if (storage) {
@@ -394,6 +391,10 @@ const App = () => {
           path="/"
           element={<HomePage />}
         />
+        <Route
+          path="/wallet/:coinType/address"
+          element={<AddressPage />}
+        />
       </Routes>
     </main>
   )
@@ -418,8 +419,3 @@ root.render(
     </AccountProvider>
   </React.StrictMode>,
 )
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-// reportWebVitals()

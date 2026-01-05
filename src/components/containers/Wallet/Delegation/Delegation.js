@@ -1,18 +1,14 @@
 import React, { useState } from 'react'
-// import { format } from 'date-fns'
-
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
-import { Format } from '@Helpers'
 import { Loading, PopUp } from '@ComposedComponents'
 import { ML } from '@Helpers'
-import { AppInfo } from '@Constants'
 import { Button } from '@BasicComponents'
 
 import DelegationDetails from './DelegationDetails'
 
 import './Delegation.css'
 import { format } from 'date-fns'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 const Delegation = ({ delegation }) => {
   const navigate = useNavigate()
@@ -38,9 +34,7 @@ const Delegation = ({ delegation }) => {
     }
   }
 
-  const value = delegationOject.balance
-    ? ML.getAmountInCoins(delegation.balance.atoms, AppInfo.ML_ATOMS_PER_COIN)
-    : 0
+  const value = delegationOject.balance ? delegationOject.balance.decimal : 0
 
   const buttonExtraStyles = ['delegation-action-button']
 
@@ -170,7 +164,7 @@ const Delegation = ({ delegation }) => {
               className="transaction-amount"
               data-testid="delegation-amount"
             >
-              Amount: <span>{delegation && Format.BTCValue(value)}</span>
+              Amount: <span>{delegation && value}</span>
             </p>
           </div>
           {delegation.type !== 'Unconfirmed' && (
