@@ -29,8 +29,9 @@ const BitcoinProvider = ({ value: propValue, children }) => {
   const [fetchingTransactions, setFetchingTransactions] = useState(false)
   const [fetchingUtxos, setFetchingUtxos] = useState(false)
 
-  const fetchAllData = async () => {
+  const fetchAllData = async (force) => {
     if (
+      !force &&
       currentBlockHeight === onlineHeight &&
       currentAccountId === accountID &&
       networkType === currentNetworkType
@@ -78,11 +79,18 @@ const BitcoinProvider = ({ value: propValue, children }) => {
       try {
         const allTransactions = []
         try {
-          const response = await BTC.getBatchData(
+          const confirmedResponse = await BTC.getBatchData(
             allAddresses,
             Electrum.getAddressTransactionsBatch,
           )
-          const parsedResponse = response.flatMap((item) => item.transactions)
+          const mempoolResponse = await BTC.getBatchData(
+            allAddresses,
+            Electrum.getAddressMempoolTransactionsBatch,
+          )
+          const mergedData = confirmedResponse
+            .concat(mempoolResponse)
+            .filter((item) => item.transactions && item.transactions.length > 0)
+          const parsedResponse = mergedData.flatMap((item) => item.transactions)
           const parsedTransactions = BTC.getParsedTransactions(
             parsedResponse,
             allAddresses,
@@ -97,7 +105,13 @@ const BitcoinProvider = ({ value: propValue, children }) => {
             (tx, index, self) =>
               index === self.findIndex((t) => t.txid === tx.txid),
           )
-          .sort((a, b) => b.date - a.date)
+          .sort((a, b) => {
+            // Transactions without date (pending) first
+            if (!a.date && b.date) return -1
+            if (a.date && !b.date) return 1
+            // Then sort by date (newest first)
+            return (b.date || 0) - (a.date || 0)
+          })
 
         setBtcTransactions(uniqueTransactions)
         setFetchingTransactions(false)

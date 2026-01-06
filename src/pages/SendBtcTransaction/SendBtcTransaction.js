@@ -15,6 +15,7 @@ import './SendBtcTransaction.css'
 
 const SendBtcTransactionPage = () => {
   const { addresses, accountID } = useContext(AccountContext)
+  const { fetchAllData } = useContext(BitcoinContext)
 
   const { coinType } = useParams()
   const walletType = {
@@ -117,8 +118,9 @@ const SendBtcTransactionPage = () => {
     return result
   }
 
-  const goBackToWallet = () => {
+  const goBackToWallet = async () => {
     navigate('/wallet/Bitcoin')
+    await fetchAllData(true)
   }
 
   return (

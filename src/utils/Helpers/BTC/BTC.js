@@ -85,11 +85,11 @@ const getParsedTransactions = (rawTransactions, myAddresses) => {
     let amountSats = 0
     let changeSats = 0
     if (direction === 'in') {
-      amountSats = toMeSats // received
+      amountSats = toMeSats
       changeSats = 0
     } else {
-      amountSats = toOthersSats // sent to others (excludes change)
-      changeSats = toMeSats // change back to me
+      amountSats = toOthersSats
+      changeSats = toMeSats
     }
 
     return {

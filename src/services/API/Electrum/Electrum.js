@@ -8,6 +8,7 @@ const ELECTRUM_ENDPOINTS = {
   GET_TRANSACTION_HEX: '/tx/:txid/hex',
   GET_TRANSACTION_STATUS: '/tx/:txid/status',
   GET_ADDRESS_TRANSACTIONS: '/address/:address/txs',
+  GET_ADDRESS_MEMPOOL_TRANSACTIONS: '/address/:address/txs/mempool',
   GET_ADDRESS: '/address/:address',
   GET_ADDRESS_UTXO: '/address/:address/utxo',
   GET_LAST_BLOCK_HEIGHT: '/blocks/tip/height',
@@ -16,6 +17,7 @@ const ELECTRUM_ENDPOINTS = {
   BATCH_ADDR_BALANCES: '/addresses/batch/info',
   BATCH_ADDR_TRANSACTIONS: '/addresses/batch/txs',
   BATCH_ADDR_UTXOS: '/addresses/batch/utxo',
+  BATCH_ADDR_MEMPOOL_TRANSACTIONS: '/addresses/batch/txs/mempool',
 }
 
 const abortControllers = new Map()
@@ -102,6 +104,14 @@ const getAddressTransactions = (address) =>
     ELECTRUM_ENDPOINTS.GET_ADDRESS_TRANSACTIONS.replace(':address', address),
   )
 
+const getAddressMempoolTransactions = (address) =>
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_ADDRESS_MEMPOOL_TRANSACTIONS.replace(
+      ':address',
+      address,
+    ),
+  )
+
 const getAddress = (address) =>
   tryServers(ELECTRUM_ENDPOINTS.GET_ADDRESS.replace(':address', address))
 
@@ -159,6 +169,15 @@ const getAddressTransactionsBatch = async (addresses) => {
   return data.results
 }
 
+const getAddressMempoolTransactionsBatch = async (addresses) => {
+  const response = await tryServers(
+    ELECTRUM_ENDPOINTS.BATCH_ADDR_MEMPOOL_TRANSACTIONS,
+    JSON.stringify({ addresses: addresses }),
+  )
+  const data = JSON.parse(response)
+  return data.results
+}
+
 const getAddressUtxosBatch = async (addresses) => {
   const response = await tryServers(
     ELECTRUM_ENDPOINTS.BATCH_ADDR_UTXOS,
@@ -174,6 +193,7 @@ export {
   getTransactionStatus,
   getTransactionHex,
   getAddressTransactions,
+  getAddressMempoolTransactions,
   getAddress,
   getAddressUtxo,
   requestElectrum,
@@ -184,6 +204,7 @@ export {
   getWalletAddressesInfo,
   getAddressBalancesBatch,
   getAddressTransactionsBatch,
+  getAddressMempoolTransactionsBatch,
   getAddressUtxosBatch,
   ELECTRUM_ENDPOINTS,
 }
