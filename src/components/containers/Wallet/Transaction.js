@@ -56,7 +56,8 @@ const Transaction = ({ transaction, getConfirmations }) => {
       data-testid="transaction"
       onClick={() => setDetailPopupOpen(true)}
     >
-      {transaction.type === 'Transfer' || !transaction.type ? (
+      {(transaction.type === 'Transfer' || !transaction.type) &&
+      transaction.date ? (
         <div
           className={`transaction-logo-type ${
             transaction.direction === 'out' && 'transaction-logo-out'
@@ -103,7 +104,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
       ) : (
         <></>
       )}
-      {transaction.type === 'Unconfirmed' ? (
+      {transaction.type === 'Unconfirmed' || !transaction.date ? (
         <div
           className="transaction-logo-type transaction-logo-type-unconfirmed"
           data-testid="transaction-icon"

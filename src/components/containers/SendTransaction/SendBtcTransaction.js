@@ -369,9 +369,7 @@ const SendBtcTransaction = ({
               <h2>Your transaction was sent.</h2>
               <h3 className="result-title">Txid: {transactionTxid}</h3>
               <CenteredLayout>
-                <Button onClickHandle={goBackToWallet}>
-                  Back to Dashboard
-                </Button>
+                <Button onClickHandle={goBackToWallet}>Back to Wallet</Button>
               </CenteredLayout>
             </VerticalGroup>
           )}
