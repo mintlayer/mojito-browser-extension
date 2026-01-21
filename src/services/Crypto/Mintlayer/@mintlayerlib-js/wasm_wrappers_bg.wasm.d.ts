@@ -288,6 +288,107 @@ export const effective_pool_balance: (
   b: number,
   c: number,
 ) => [number, number, number]
+export const encode_input_for_utxo: (
+  a: number,
+  b: number,
+  c: number,
+) => [number, number, number, number]
+export const encode_input_for_withdraw_from_delegation: (
+  a: number,
+  b: number,
+  c: number,
+  d: bigint,
+  e: number,
+) => [number, number, number, number]
+export const encode_input_for_mint_tokens: (
+  a: number,
+  b: number,
+  c: number,
+  d: bigint,
+  e: number,
+) => [number, number, number, number]
+export const encode_input_for_unmint_tokens: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: number,
+) => [number, number, number, number]
+export const encode_input_for_lock_token_supply: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: number,
+) => [number, number, number, number]
+export const encode_input_for_freeze_token: (
+  a: number,
+  b: number,
+  c: number,
+  d: bigint,
+  e: number,
+) => [number, number, number, number]
+export const encode_input_for_unfreeze_token: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: number,
+) => [number, number, number, number]
+export const encode_input_for_change_token_authority: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: bigint,
+  f: number,
+) => [number, number, number, number]
+export const encode_input_for_change_token_metadata_uri: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: bigint,
+  f: number,
+) => [number, number, number, number]
+export const encode_input_for_fill_order: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: bigint,
+  g: bigint,
+  h: number,
+) => [number, number, number, number]
+export const encode_input_for_freeze_order: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: number,
+) => [number, number, number, number]
+export const encode_input_for_conclude_order: (
+  a: number,
+  b: number,
+  c: bigint,
+  d: bigint,
+  e: number,
+) => [number, number, number, number]
+export const internal_verify_witness: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number,
+  j: number,
+  k: any,
+  l: bigint,
+  m: number,
+) => [number, number]
+export const __wbg_amount_free: (a: number, b: number) => void
+export const amount_from_atoms: (a: number, b: number) => number
+export const amount_atoms: (a: number) => [number, number]
 export const encode_output_transfer: (
   a: number,
   b: number,
@@ -423,107 +524,6 @@ export const encode_create_order_output: (
   h: number,
   i: number,
 ) => [number, number, number, number]
-export const __wbg_amount_free: (a: number, b: number) => void
-export const amount_from_atoms: (a: number, b: number) => number
-export const amount_atoms: (a: number) => [number, number]
-export const encode_input_for_utxo: (
-  a: number,
-  b: number,
-  c: number,
-) => [number, number, number, number]
-export const encode_input_for_withdraw_from_delegation: (
-  a: number,
-  b: number,
-  c: number,
-  d: bigint,
-  e: number,
-) => [number, number, number, number]
-export const encode_input_for_mint_tokens: (
-  a: number,
-  b: number,
-  c: number,
-  d: bigint,
-  e: number,
-) => [number, number, number, number]
-export const encode_input_for_unmint_tokens: (
-  a: number,
-  b: number,
-  c: bigint,
-  d: number,
-) => [number, number, number, number]
-export const encode_input_for_lock_token_supply: (
-  a: number,
-  b: number,
-  c: bigint,
-  d: number,
-) => [number, number, number, number]
-export const encode_input_for_freeze_token: (
-  a: number,
-  b: number,
-  c: number,
-  d: bigint,
-  e: number,
-) => [number, number, number, number]
-export const encode_input_for_unfreeze_token: (
-  a: number,
-  b: number,
-  c: bigint,
-  d: number,
-) => [number, number, number, number]
-export const encode_input_for_change_token_authority: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: bigint,
-  f: number,
-) => [number, number, number, number]
-export const encode_input_for_change_token_metadata_uri: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: bigint,
-  f: number,
-) => [number, number, number, number]
-export const encode_input_for_fill_order: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: bigint,
-  g: bigint,
-  h: number,
-) => [number, number, number, number]
-export const encode_input_for_freeze_order: (
-  a: number,
-  b: number,
-  c: bigint,
-  d: number,
-) => [number, number, number, number]
-export const encode_input_for_conclude_order: (
-  a: number,
-  b: number,
-  c: bigint,
-  d: bigint,
-  e: number,
-) => [number, number, number, number]
-export const internal_verify_witness: (
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  e: number,
-  f: number,
-  g: number,
-  h: number,
-  i: number,
-  j: number,
-  k: any,
-  l: bigint,
-  m: number,
-) => [number, number]
 export const rustsecp256k1_v0_10_0_context_create: (a: number) => number
 export const rustsecp256k1_v0_10_0_context_destroy: (a: number) => void
 export const rustsecp256k1_v0_10_0_default_illegal_callback_fn: (

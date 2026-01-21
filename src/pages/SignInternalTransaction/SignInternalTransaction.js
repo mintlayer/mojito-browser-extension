@@ -126,8 +126,6 @@ export const SignTransactionPage = () => {
         ).input.order_id
         const orderdata = JSON.parse(await Mintlayer.getOrderById(order_id))
 
-        console.log('orderdata', orderdata)
-
         order_info[order_id] = {
           initially_asked: {
             ...(orderdata.ask_currency.type === 'Coin'

@@ -22,19 +22,6 @@ function handleError(f, args) {
   }
 }
 
-const cachedTextDecoder =
-  typeof TextDecoder !== 'undefined'
-    ? new TextDecoder('utf-8', { ignoreBOM: true, fatal: true })
-    : {
-        decode: () => {
-          throw Error('TextDecoder not available')
-        },
-      }
-
-if (typeof TextDecoder !== 'undefined') {
-  cachedTextDecoder.decode()
-}
-
 let cachedUint8ArrayMemory0 = null
 
 function getUint8ArrayMemory0() {
@@ -47,11 +34,38 @@ function getUint8ArrayMemory0() {
   return cachedUint8ArrayMemory0
 }
 
-function getStringFromWasm0(ptr, len) {
-  ptr = ptr >>> 0
+let cachedTextDecoder = new TextDecoder('utf-8', {
+  ignoreBOM: true,
+  fatal: true,
+})
+
+cachedTextDecoder.decode()
+
+const MAX_SAFARI_DECODE_BYTES = 2146435072
+let numBytesDecoded = 0
+function decodeText(ptr, len) {
+  numBytesDecoded += len
+  if (numBytesDecoded >= MAX_SAFARI_DECODE_BYTES) {
+    cachedTextDecoder = new TextDecoder('utf-8', {
+      ignoreBOM: true,
+      fatal: true,
+    })
+    cachedTextDecoder.decode()
+    numBytesDecoded = len
+  }
   return cachedTextDecoder.decode(
     getUint8ArrayMemory0().subarray(ptr, ptr + len),
   )
+}
+
+function getStringFromWasm0(ptr, len) {
+  ptr = ptr >>> 0
+  return decodeText(ptr, len)
+}
+
+function getArrayU8FromWasm0(ptr, len) {
+  ptr = ptr >>> 0
+  return getUint8ArrayMemory0().subarray(ptr / 1, ptr / 1 + len)
 }
 
 function isLikeNone(x) {
@@ -125,28 +139,18 @@ function debugString(val) {
 
 let WASM_VECTOR_LEN = 0
 
-const cachedTextEncoder =
-  typeof TextEncoder !== 'undefined'
-    ? new TextEncoder('utf-8')
-    : {
-        encode: () => {
-          throw Error('TextEncoder not available')
-        },
-      }
+const cachedTextEncoder = new TextEncoder()
 
-const encodeString =
-  typeof cachedTextEncoder.encodeInto === 'function'
-    ? function (arg, view) {
-        return cachedTextEncoder.encodeInto(arg, view)
-      }
-    : function (arg, view) {
-        const buf = cachedTextEncoder.encode(arg)
-        view.set(buf)
-        return {
-          read: arg.length,
-          written: buf.length,
-        }
-      }
+if (!('encodeInto' in cachedTextEncoder)) {
+  cachedTextEncoder.encodeInto = function (arg, view) {
+    const buf = cachedTextEncoder.encode(arg)
+    view.set(buf)
+    return {
+      read: arg.length,
+      written: buf.length,
+    }
+  }
+}
 
 function passStringToWasm0(arg, malloc, realloc) {
   if (realloc === undefined) {
@@ -178,7 +182,7 @@ function passStringToWasm0(arg, malloc, realloc) {
     }
     ptr = realloc(ptr, len, (len = offset + arg.length * 3), 1) >>> 0
     const view = getUint8ArrayMemory0().subarray(ptr + offset, ptr + len)
-    const ret = encodeString(arg, view)
+    const ret = cachedTextEncoder.encodeInto(arg, view)
 
     offset += ret.written
     ptr = realloc(ptr, len, offset, 1) >>> 0
@@ -207,11 +211,6 @@ function passArray8ToWasm0(arg, malloc) {
   getUint8ArrayMemory0().set(arg, ptr / 1)
   WASM_VECTOR_LEN = arg.length
   return ptr
-}
-
-function getArrayU8FromWasm0(ptr, len) {
-  ptr = ptr >>> 0
-  return getUint8ArrayMemory0().subarray(ptr / 1, ptr / 1 + len)
 }
 /**
  * A utxo can either come from a transaction or a block reward.
@@ -1641,6 +1640,481 @@ export function effective_pool_balance(network, pledge_amount, pool_balance) {
 }
 
 /**
+ * Given an output source id as bytes, and an output index, together representing a utxo,
+ * this function returns the input that puts them together, as bytes.
+ * @param {Uint8Array} outpoint_source_id
+ * @param {number} output_index
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_utxo(outpoint_source_id, output_index) {
+  const ptr0 = passArray8ToWasm0(outpoint_source_id, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_utxo(ptr0, len0, output_index)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a delegation id, an amount and a network type (mainnet, testnet, etc), this function
+ * creates an input that withdraws from a delegation.
+ * A nonce is needed because this spends from an account. The nonce must be in sequence for everything in that account.
+ * @param {string} delegation_id
+ * @param {Amount} amount
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_withdraw_from_delegation(
+  delegation_id,
+  amount,
+  nonce,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    delegation_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  _assertClass(amount, Amount)
+  var ptr1 = amount.__destroy_into_raw()
+  const ret = wasm.encode_input_for_withdraw_from_delegation(
+    ptr0,
+    len0,
+    ptr1,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Given a token_id, an amount of tokens to mint and nonce return an encoded mint tokens input
+ * @param {string} token_id
+ * @param {Amount} amount
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_mint_tokens(token_id, amount, nonce, network) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  _assertClass(amount, Amount)
+  var ptr1 = amount.__destroy_into_raw()
+  const ret = wasm.encode_input_for_mint_tokens(
+    ptr0,
+    len0,
+    ptr1,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Given a token_id and nonce return an encoded unmint tokens input
+ * @param {string} token_id
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_unmint_tokens(token_id, nonce, network) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_unmint_tokens(ptr0, len0, nonce, network)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a token_id and nonce return an encoded lock_token_supply input
+ * @param {string} token_id
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_lock_token_supply(token_id, nonce, network) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_lock_token_supply(
+    ptr0,
+    len0,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a token_id, is token unfreezable and nonce return an encoded freeze token input
+ * @param {string} token_id
+ * @param {TokenUnfreezable} is_token_unfreezable
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_freeze_token(
+  token_id,
+  is_token_unfreezable,
+  nonce,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_freeze_token(
+    ptr0,
+    len0,
+    is_token_unfreezable,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a token_id and nonce return an encoded unfreeze token input
+ * @param {string} token_id
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_unfreeze_token(token_id, nonce, network) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_unfreeze_token(ptr0, len0, nonce, network)
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given a token_id, new authority destination and nonce return an encoded change token authority input
+ * @param {string} token_id
+ * @param {string} new_authority
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_change_token_authority(
+  token_id,
+  new_authority,
+  nonce,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    new_authority,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_change_token_authority(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Given a token_id, new metadata uri and nonce return an encoded change token metadata uri input
+ * @param {string} token_id
+ * @param {string} new_metadata_uri
+ * @param {bigint} nonce
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_change_token_metadata_uri(
+  token_id,
+  new_metadata_uri,
+  nonce,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    token_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ptr1 = passStringToWasm0(
+    new_metadata_uri,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len1 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_change_token_metadata_uri(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    nonce,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v3
+}
+
+/**
+ * Given an order id and an amount in the order's ask currency, create an input that fills the order.
+ *
+ * Note:
+ * 1) The nonce is only needed before the orders V1 fork activation. After the fork the nonce is
+ *    ignored and any value can be passed for the parameter.
+ * 2) FillOrder inputs should not be signed, i.e. use `encode_witness_no_signature` for the inputs
+ *    instead of `encode_witness`).
+ *    Note that in orders v0 FillOrder inputs can technically have a signature, it's just not checked.
+ *    But in orders V1 we actually require that those inputs don't have signatures.
+ *    Also, in orders V1 the provided destination is always ignored.
+ * @param {string} order_id
+ * @param {Amount} fill_amount
+ * @param {string} destination
+ * @param {bigint} nonce
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_fill_order(
+  order_id,
+  fill_amount,
+  destination,
+  nonce,
+  current_block_height,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    order_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  _assertClass(fill_amount, Amount)
+  var ptr1 = fill_amount.__destroy_into_raw()
+  const ptr2 = passStringToWasm0(
+    destination,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len2 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_fill_order(
+    ptr0,
+    len0,
+    ptr1,
+    ptr2,
+    len2,
+    nonce,
+    current_block_height,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v4 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v4
+}
+
+/**
+ * Given an order id create an input that freezes the order.
+ *
+ * Note: order freezing is available only after the orders V1 fork activation.
+ * @param {string} order_id
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_freeze_order(
+  order_id,
+  current_block_height,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    order_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_freeze_order(
+    ptr0,
+    len0,
+    current_block_height,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Given an order id create an input that concludes the order.
+ *
+ * Note: the nonce is only needed before the orders V1 fork activation. After the fork the nonce is
+ * ignored and any value can be passed for the parameter.
+ * @param {string} order_id
+ * @param {bigint} nonce
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ * @returns {Uint8Array}
+ */
+export function encode_input_for_conclude_order(
+  order_id,
+  nonce,
+  current_block_height,
+  network,
+) {
+  const ptr0 = passStringToWasm0(
+    order_id,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  )
+  const len0 = WASM_VECTOR_LEN
+  const ret = wasm.encode_input_for_conclude_order(
+    ptr0,
+    len0,
+    nonce,
+    current_block_height,
+    network,
+  )
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2])
+  }
+  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
+  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
+  return v2
+}
+
+/**
+ * Verify a witness produced by one of the `encode_witness` functions.
+ *
+ * `input_owner_destination` must be specified if `witness` actually contains a signature
+ * (i.e. it's not InputWitness::NoSignature) and the input is not an HTLC one. Otherwise it must
+ * be null.
+ * @param {SignatureHashType} sighashtype
+ * @param {string | null | undefined} input_owner_destination
+ * @param {Uint8Array} witness
+ * @param {Uint8Array} transaction
+ * @param {Uint8Array} input_utxos
+ * @param {number} input_index
+ * @param {TxAdditionalInfo} additional_info
+ * @param {bigint} current_block_height
+ * @param {Network} network
+ */
+export function internal_verify_witness(
+  sighashtype,
+  input_owner_destination,
+  witness,
+  transaction,
+  input_utxos,
+  input_index,
+  additional_info,
+  current_block_height,
+  network,
+) {
+  var ptr0 = isLikeNone(input_owner_destination)
+    ? 0
+    : passStringToWasm0(
+        input_owner_destination,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      )
+  var len0 = WASM_VECTOR_LEN
+  const ptr1 = passArray8ToWasm0(witness, wasm.__wbindgen_malloc)
+  const len1 = WASM_VECTOR_LEN
+  const ptr2 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
+  const len2 = WASM_VECTOR_LEN
+  const ptr3 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
+  const len3 = WASM_VECTOR_LEN
+  const ret = wasm.internal_verify_witness(
+    sighashtype,
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    input_index,
+    additional_info,
+    current_block_height,
+    network,
+  )
+  if (ret[1]) {
+    throw takeFromExternrefTable0(ret[0])
+  }
+}
+
+/**
  * Given a destination address, an amount and a network type (mainnet, testnet, etc), this function
  * creates an output of type Transfer, and returns it as bytes.
  * @param {Amount} amount
@@ -2345,481 +2819,6 @@ export function encode_create_order_output(
 }
 
 /**
- * Given an output source id as bytes, and an output index, together representing a utxo,
- * this function returns the input that puts them together, as bytes.
- * @param {Uint8Array} outpoint_source_id
- * @param {number} output_index
- * @returns {Uint8Array}
- */
-export function encode_input_for_utxo(outpoint_source_id, output_index) {
-  const ptr0 = passArray8ToWasm0(outpoint_source_id, wasm.__wbindgen_malloc)
-  const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_utxo(ptr0, len0, output_index)
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v2
-}
-
-/**
- * Given a delegation id, an amount and a network type (mainnet, testnet, etc), this function
- * creates an input that withdraws from a delegation.
- * A nonce is needed because this spends from an account. The nonce must be in sequence for everything in that account.
- * @param {string} delegation_id
- * @param {Amount} amount
- * @param {bigint} nonce
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_withdraw_from_delegation(
-  delegation_id,
-  amount,
-  nonce,
-  network,
-) {
-  const ptr0 = passStringToWasm0(
-    delegation_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  _assertClass(amount, Amount)
-  var ptr1 = amount.__destroy_into_raw()
-  const ret = wasm.encode_input_for_withdraw_from_delegation(
-    ptr0,
-    len0,
-    ptr1,
-    nonce,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v3
-}
-
-/**
- * Given a token_id, an amount of tokens to mint and nonce return an encoded mint tokens input
- * @param {string} token_id
- * @param {Amount} amount
- * @param {bigint} nonce
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_mint_tokens(token_id, amount, nonce, network) {
-  const ptr0 = passStringToWasm0(
-    token_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  _assertClass(amount, Amount)
-  var ptr1 = amount.__destroy_into_raw()
-  const ret = wasm.encode_input_for_mint_tokens(
-    ptr0,
-    len0,
-    ptr1,
-    nonce,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v3
-}
-
-/**
- * Given a token_id and nonce return an encoded unmint tokens input
- * @param {string} token_id
- * @param {bigint} nonce
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_unmint_tokens(token_id, nonce, network) {
-  const ptr0 = passStringToWasm0(
-    token_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_unmint_tokens(ptr0, len0, nonce, network)
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v2
-}
-
-/**
- * Given a token_id and nonce return an encoded lock_token_supply input
- * @param {string} token_id
- * @param {bigint} nonce
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_lock_token_supply(token_id, nonce, network) {
-  const ptr0 = passStringToWasm0(
-    token_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_lock_token_supply(
-    ptr0,
-    len0,
-    nonce,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v2
-}
-
-/**
- * Given a token_id, is token unfreezable and nonce return an encoded freeze token input
- * @param {string} token_id
- * @param {TokenUnfreezable} is_token_unfreezable
- * @param {bigint} nonce
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_freeze_token(
-  token_id,
-  is_token_unfreezable,
-  nonce,
-  network,
-) {
-  const ptr0 = passStringToWasm0(
-    token_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_freeze_token(
-    ptr0,
-    len0,
-    is_token_unfreezable,
-    nonce,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v2
-}
-
-/**
- * Given a token_id and nonce return an encoded unfreeze token input
- * @param {string} token_id
- * @param {bigint} nonce
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_unfreeze_token(token_id, nonce, network) {
-  const ptr0 = passStringToWasm0(
-    token_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_unfreeze_token(ptr0, len0, nonce, network)
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v2
-}
-
-/**
- * Given a token_id, new authority destination and nonce return an encoded change token authority input
- * @param {string} token_id
- * @param {string} new_authority
- * @param {bigint} nonce
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_change_token_authority(
-  token_id,
-  new_authority,
-  nonce,
-  network,
-) {
-  const ptr0 = passStringToWasm0(
-    token_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  const ptr1 = passStringToWasm0(
-    new_authority,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len1 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_change_token_authority(
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    nonce,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v3
-}
-
-/**
- * Given a token_id, new metadata uri and nonce return an encoded change token metadata uri input
- * @param {string} token_id
- * @param {string} new_metadata_uri
- * @param {bigint} nonce
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_change_token_metadata_uri(
-  token_id,
-  new_metadata_uri,
-  nonce,
-  network,
-) {
-  const ptr0 = passStringToWasm0(
-    token_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  const ptr1 = passStringToWasm0(
-    new_metadata_uri,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len1 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_change_token_metadata_uri(
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    nonce,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v3
-}
-
-/**
- * Given an order id and an amount in the order's ask currency, create an input that fills the order.
- *
- * Note:
- * 1) The nonce is only needed before the orders V1 fork activation. After the fork the nonce is
- *    ignored and any value can be passed for the parameter.
- * 2) FillOrder inputs should not be signed, i.e. use `encode_witness_no_signature` for the inputs
- *    instead of `encode_witness`).
- *    Note that in orders v0 FillOrder inputs can technically have a signature, it's just not checked.
- *    But in orders V1 we actually require that those inputs don't have signatures.
- *    Also, in orders V1 the provided destination is always ignored.
- * @param {string} order_id
- * @param {Amount} fill_amount
- * @param {string} destination
- * @param {bigint} nonce
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_fill_order(
-  order_id,
-  fill_amount,
-  destination,
-  nonce,
-  current_block_height,
-  network,
-) {
-  const ptr0 = passStringToWasm0(
-    order_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  _assertClass(fill_amount, Amount)
-  var ptr1 = fill_amount.__destroy_into_raw()
-  const ptr2 = passStringToWasm0(
-    destination,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len2 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_fill_order(
-    ptr0,
-    len0,
-    ptr1,
-    ptr2,
-    len2,
-    nonce,
-    current_block_height,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v4 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v4
-}
-
-/**
- * Given an order id create an input that freezes the order.
- *
- * Note: order freezing is available only after the orders V1 fork activation.
- * @param {string} order_id
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_freeze_order(
-  order_id,
-  current_block_height,
-  network,
-) {
-  const ptr0 = passStringToWasm0(
-    order_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_freeze_order(
-    ptr0,
-    len0,
-    current_block_height,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v2
-}
-
-/**
- * Given an order id create an input that concludes the order.
- *
- * Note: the nonce is only needed before the orders V1 fork activation. After the fork the nonce is
- * ignored and any value can be passed for the parameter.
- * @param {string} order_id
- * @param {bigint} nonce
- * @param {bigint} current_block_height
- * @param {Network} network
- * @returns {Uint8Array}
- */
-export function encode_input_for_conclude_order(
-  order_id,
-  nonce,
-  current_block_height,
-  network,
-) {
-  const ptr0 = passStringToWasm0(
-    order_id,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  )
-  const len0 = WASM_VECTOR_LEN
-  const ret = wasm.encode_input_for_conclude_order(
-    ptr0,
-    len0,
-    nonce,
-    current_block_height,
-    network,
-  )
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2])
-  }
-  var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice()
-  wasm.__wbindgen_free(ret[0], ret[1] * 1, 1)
-  return v2
-}
-
-/**
- * Verify a witness produced by one of the `encode_witness` functions.
- *
- * `input_owner_destination` must be specified if `witness` actually contains a signature
- * (i.e. it's not InputWitness::NoSignature) and the input is not an HTLC one. Otherwise it must
- * be null.
- * @param {SignatureHashType} sighashtype
- * @param {string | null | undefined} input_owner_destination
- * @param {Uint8Array} witness
- * @param {Uint8Array} transaction
- * @param {Uint8Array} input_utxos
- * @param {number} input_index
- * @param {TxAdditionalInfo} additional_info
- * @param {bigint} current_block_height
- * @param {Network} network
- */
-export function internal_verify_witness(
-  sighashtype,
-  input_owner_destination,
-  witness,
-  transaction,
-  input_utxos,
-  input_index,
-  additional_info,
-  current_block_height,
-  network,
-) {
-  var ptr0 = isLikeNone(input_owner_destination)
-    ? 0
-    : passStringToWasm0(
-        input_owner_destination,
-        wasm.__wbindgen_malloc,
-        wasm.__wbindgen_realloc,
-      )
-  var len0 = WASM_VECTOR_LEN
-  const ptr1 = passArray8ToWasm0(witness, wasm.__wbindgen_malloc)
-  const len1 = WASM_VECTOR_LEN
-  const ptr2 = passArray8ToWasm0(transaction, wasm.__wbindgen_malloc)
-  const len2 = WASM_VECTOR_LEN
-  const ptr3 = passArray8ToWasm0(input_utxos, wasm.__wbindgen_malloc)
-  const len3 = WASM_VECTOR_LEN
-  const ret = wasm.internal_verify_witness(
-    sighashtype,
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    ptr3,
-    len3,
-    input_index,
-    additional_info,
-    current_block_height,
-    network,
-  )
-  if (ret[1]) {
-    throw takeFromExternrefTable0(ret[0])
-  }
-}
-
-/**
  * Indicates whether a token can be frozen
  * @enum {0 | 1}
  */
@@ -2960,6 +2959,9 @@ export class Amount {
     }
   }
 }
+if (Symbol.dispose) Amount.prototype[Symbol.dispose] = Amount.prototype.free
+
+const EXPECTED_RESPONSE_TYPES = new Set(['basic', 'cors', 'default'])
 
 async function __wbg_load(module, imports) {
   if (typeof Response === 'function' && module instanceof Response) {
@@ -2967,7 +2969,13 @@ async function __wbg_load(module, imports) {
       try {
         return await WebAssembly.instantiateStreaming(module, imports)
       } catch (e) {
-        if (module.headers.get('Content-Type') != 'application/wasm') {
+        const validResponse =
+          module.ok && EXPECTED_RESPONSE_TYPES.has(module.type)
+
+        if (
+          validResponse &&
+          module.headers.get('Content-Type') !== 'application/wasm'
+        ) {
           console.warn(
             '`WebAssembly.instantiateStreaming` failed because your server does not serve Wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n',
             e,
@@ -2994,17 +3002,13 @@ async function __wbg_load(module, imports) {
 function __wbg_get_imports() {
   const imports = {}
   imports.wbg = {}
-  imports.wbg.__wbg_buffer_609cc3eee51ed158 = function (arg0) {
-    const ret = arg0.buffer
-    return ret
-  }
-  imports.wbg.__wbg_call_672a4d21634d4a24 = function () {
+  imports.wbg.__wbg_call_13410aac570ffff7 = function () {
     return handleError(function (arg0, arg1) {
       const ret = arg0.call(arg1)
       return ret
     }, arguments)
   }
-  imports.wbg.__wbg_call_7cccdd69e0791ae2 = function () {
+  imports.wbg.__wbg_call_a5400b25a865cfd8 = function () {
     return handleError(function (arg0, arg1, arg2) {
       const ret = arg0.call(arg1, arg2)
       return ret
@@ -3019,7 +3023,7 @@ function __wbg_get_imports() {
       arg0.getRandomValues(arg1)
     }, arguments)
   }
-  imports.wbg.__wbg_length_a446193dc22c12f8 = function (arg0) {
+  imports.wbg.__wbg_length_6bb7e81f9d7713e4 = function (arg0) {
     const ret = arg0.length
     return ret
   }
@@ -3027,23 +3031,11 @@ function __wbg_get_imports() {
     const ret = arg0.msCrypto
     return ret
   }
-  imports.wbg.__wbg_new_a12002a7f91c75be = function (arg0) {
-    const ret = new Uint8Array(arg0)
-    return ret
-  }
-  imports.wbg.__wbg_newnoargs_105ed471475aaf50 = function (arg0, arg1) {
+  imports.wbg.__wbg_newnoargs_254190557c45b4ec = function (arg0, arg1) {
     const ret = new Function(getStringFromWasm0(arg0, arg1))
     return ret
   }
-  imports.wbg.__wbg_newwithbyteoffsetandlength_d97e637ebe145a9a = function (
-    arg0,
-    arg1,
-    arg2,
-  ) {
-    const ret = new Uint8Array(arg0, arg1 >>> 0, arg2 >>> 0)
-    return ret
-  }
-  imports.wbg.__wbg_newwithlength_a381634e90c276d4 = function (arg0) {
+  imports.wbg.__wbg_newwithlength_a167dcc7aaa3ba77 = function (arg0) {
     const ret = new Uint8Array(arg0 >>> 0)
     return ret
   }
@@ -3051,7 +3043,7 @@ function __wbg_get_imports() {
     const ret = arg0.node
     return ret
   }
-  imports.wbg.__wbg_parse_def2e24ef1252aff = function () {
+  imports.wbg.__wbg_parse_442f5ba02e5eaf8b = function () {
     return handleError(function (arg0, arg1) {
       const ret = JSON.parse(getStringFromWasm0(arg0, arg1))
       return ret
@@ -3060,6 +3052,13 @@ function __wbg_get_imports() {
   imports.wbg.__wbg_process_dc0fbacc7c1c06f7 = function (arg0) {
     const ret = arg0.process
     return ret
+  }
+  imports.wbg.__wbg_prototypesetcall_3d4a26c1ed734349 = function (
+    arg0,
+    arg1,
+    arg2,
+  ) {
+    Uint8Array.prototype.set.call(getArrayU8FromWasm0(arg0, arg1), arg2)
   }
   imports.wbg.__wbg_randomFillSync_ac0988aba3254290 = function () {
     return handleError(function (arg0, arg1) {
@@ -3072,32 +3071,29 @@ function __wbg_get_imports() {
       return ret
     }, arguments)
   }
-  imports.wbg.__wbg_set_65595bdd868b3009 = function (arg0, arg1, arg2) {
-    arg0.set(arg1, arg2 >>> 0)
-  }
-  imports.wbg.__wbg_static_accessor_GLOBAL_88a902d13a557d07 = function () {
+  imports.wbg.__wbg_static_accessor_GLOBAL_8921f820c2ce3f12 = function () {
     const ret = typeof global === 'undefined' ? null : global
     return isLikeNone(ret) ? 0 : addToExternrefTable0(ret)
   }
-  imports.wbg.__wbg_static_accessor_GLOBAL_THIS_56578be7e9f832b0 = function () {
+  imports.wbg.__wbg_static_accessor_GLOBAL_THIS_f0a4409105898184 = function () {
     const ret = typeof globalThis === 'undefined' ? null : globalThis
     return isLikeNone(ret) ? 0 : addToExternrefTable0(ret)
   }
-  imports.wbg.__wbg_static_accessor_SELF_37c5d418e4bf5819 = function () {
+  imports.wbg.__wbg_static_accessor_SELF_995b214ae681ff99 = function () {
     const ret = typeof self === 'undefined' ? null : self
     return isLikeNone(ret) ? 0 : addToExternrefTable0(ret)
   }
-  imports.wbg.__wbg_static_accessor_WINDOW_5de37043a91a9c40 = function () {
+  imports.wbg.__wbg_static_accessor_WINDOW_cde3890479c675ea = function () {
     const ret = typeof window === 'undefined' ? null : window
     return isLikeNone(ret) ? 0 : addToExternrefTable0(ret)
   }
-  imports.wbg.__wbg_stringify_f7ed6987935b4a24 = function () {
+  imports.wbg.__wbg_stringify_b98c93d0a190446a = function () {
     return handleError(function (arg0) {
       const ret = JSON.stringify(arg0)
       return ret
     }, arguments)
   }
-  imports.wbg.__wbg_subarray_aa9065fa9dc5df96 = function (arg0, arg1, arg2) {
+  imports.wbg.__wbg_subarray_70fd07feefe14294 = function (arg0, arg1, arg2) {
     const ret = arg0.subarray(arg1 >>> 0, arg2 >>> 0)
     return ret
   }
@@ -3105,7 +3101,10 @@ function __wbg_get_imports() {
     const ret = arg0.versions
     return ret
   }
-  imports.wbg.__wbindgen_debug_string = function (arg0, arg1) {
+  imports.wbg.__wbg_wbindgendebugstring_99ef257a3ddda34d = function (
+    arg0,
+    arg1,
+  ) {
     const ret = debugString(arg1)
     const ptr1 = passStringToWasm0(
       ret,
@@ -3116,37 +3115,24 @@ function __wbg_get_imports() {
     getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true)
     getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true)
   }
-  imports.wbg.__wbindgen_init_externref_table = function () {
-    const table = wasm.__wbindgen_export_2
-    const offset = table.grow(4)
-    table.set(0, undefined)
-    table.set(offset + 0, undefined)
-    table.set(offset + 1, null)
-    table.set(offset + 2, true)
-    table.set(offset + 3, false)
-  }
-  imports.wbg.__wbindgen_is_function = function (arg0) {
+  imports.wbg.__wbg_wbindgenisfunction_8cee7dce3725ae74 = function (arg0) {
     const ret = typeof arg0 === 'function'
     return ret
   }
-  imports.wbg.__wbindgen_is_object = function (arg0) {
+  imports.wbg.__wbg_wbindgenisobject_307a53c6bd97fbf8 = function (arg0) {
     const val = arg0
     const ret = typeof val === 'object' && val !== null
     return ret
   }
-  imports.wbg.__wbindgen_is_string = function (arg0) {
+  imports.wbg.__wbg_wbindgenisstring_d4fa939789f003b0 = function (arg0) {
     const ret = typeof arg0 === 'string'
     return ret
   }
-  imports.wbg.__wbindgen_is_undefined = function (arg0) {
+  imports.wbg.__wbg_wbindgenisundefined_c4b71d073b92f3c5 = function (arg0) {
     const ret = arg0 === undefined
     return ret
   }
-  imports.wbg.__wbindgen_memory = function () {
-    const ret = wasm.memory
-    return ret
-  }
-  imports.wbg.__wbindgen_string_get = function (arg0, arg1) {
+  imports.wbg.__wbg_wbindgenstringget_0f16a6ddddef376f = function (arg0, arg1) {
     const obj = arg1
     const ret = typeof obj === 'string' ? obj : undefined
     var ptr1 = isLikeNone(ret)
@@ -3156,12 +3142,27 @@ function __wbg_get_imports() {
     getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true)
     getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true)
   }
-  imports.wbg.__wbindgen_string_new = function (arg0, arg1) {
+  imports.wbg.__wbg_wbindgenthrow_451ec1a8469d7eb6 = function (arg0, arg1) {
+    throw new Error(getStringFromWasm0(arg0, arg1))
+  }
+  imports.wbg.__wbindgen_cast_2241b6af4c4b2941 = function (arg0, arg1) {
+    // Cast intrinsic for `Ref(String) -> Externref`.
     const ret = getStringFromWasm0(arg0, arg1)
     return ret
   }
-  imports.wbg.__wbindgen_throw = function (arg0, arg1) {
-    throw new Error(getStringFromWasm0(arg0, arg1))
+  imports.wbg.__wbindgen_cast_cb9088102bce6b30 = function (arg0, arg1) {
+    // Cast intrinsic for `Ref(Slice(U8)) -> NamedExternref("Uint8Array")`.
+    const ret = getArrayU8FromWasm0(arg0, arg1)
+    return ret
+  }
+  imports.wbg.__wbindgen_init_externref_table = function () {
+    const table = wasm.__wbindgen_export_2
+    const offset = table.grow(4)
+    table.set(0, undefined)
+    table.set(offset + 0, undefined)
+    table.set(offset + 1, null)
+    table.set(offset + 2, true)
+    table.set(offset + 3, false)
   }
 
   return imports

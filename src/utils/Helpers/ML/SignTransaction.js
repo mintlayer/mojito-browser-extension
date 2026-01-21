@@ -264,7 +264,7 @@ export function getTransactionBINrepresentation(
           total_supply,
         } = output
 
-        const chainTip = '200000'
+        const chainTip = '517710'
 
         const is_token_freezable =
           is_freezable === true ? FreezableToken.Yes : FreezableToken.No
