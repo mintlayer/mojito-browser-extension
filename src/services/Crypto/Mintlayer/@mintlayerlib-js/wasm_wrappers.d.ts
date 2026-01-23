@@ -514,6 +514,145 @@ export function effective_pool_balance(
   pool_balance: Amount,
 ): Amount
 /**
+ * Given an output source id as bytes, and an output index, together representing a utxo,
+ * this function returns the input that puts them together, as bytes.
+ */
+export function encode_input_for_utxo(
+  outpoint_source_id: Uint8Array,
+  output_index: number,
+): Uint8Array
+/**
+ * Given a delegation id, an amount and a network type (mainnet, testnet, etc), this function
+ * creates an input that withdraws from a delegation.
+ * A nonce is needed because this spends from an account. The nonce must be in sequence for everything in that account.
+ */
+export function encode_input_for_withdraw_from_delegation(
+  delegation_id: string,
+  amount: Amount,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id, an amount of tokens to mint and nonce return an encoded mint tokens input
+ */
+export function encode_input_for_mint_tokens(
+  token_id: string,
+  amount: Amount,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id and nonce return an encoded unmint tokens input
+ */
+export function encode_input_for_unmint_tokens(
+  token_id: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id and nonce return an encoded lock_token_supply input
+ */
+export function encode_input_for_lock_token_supply(
+  token_id: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id, is token unfreezable and nonce return an encoded freeze token input
+ */
+export function encode_input_for_freeze_token(
+  token_id: string,
+  is_token_unfreezable: TokenUnfreezable,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id and nonce return an encoded unfreeze token input
+ */
+export function encode_input_for_unfreeze_token(
+  token_id: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id, new authority destination and nonce return an encoded change token authority input
+ */
+export function encode_input_for_change_token_authority(
+  token_id: string,
+  new_authority: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given a token_id, new metadata uri and nonce return an encoded change token metadata uri input
+ */
+export function encode_input_for_change_token_metadata_uri(
+  token_id: string,
+  new_metadata_uri: string,
+  nonce: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given an order id and an amount in the order's ask currency, create an input that fills the order.
+ *
+ * Note:
+ * 1) The nonce is only needed before the orders V1 fork activation. After the fork the nonce is
+ *    ignored and any value can be passed for the parameter.
+ * 2) FillOrder inputs should not be signed, i.e. use `encode_witness_no_signature` for the inputs
+ *    instead of `encode_witness`).
+ *    Note that in orders v0 FillOrder inputs can technically have a signature, it's just not checked.
+ *    But in orders V1 we actually require that those inputs don't have signatures.
+ *    Also, in orders V1 the provided destination is always ignored.
+ */
+export function encode_input_for_fill_order(
+  order_id: string,
+  fill_amount: Amount,
+  destination: string,
+  nonce: bigint,
+  current_block_height: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given an order id create an input that freezes the order.
+ *
+ * Note: order freezing is available only after the orders V1 fork activation.
+ */
+export function encode_input_for_freeze_order(
+  order_id: string,
+  current_block_height: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Given an order id create an input that concludes the order.
+ *
+ * Note: the nonce is only needed before the orders V1 fork activation. After the fork the nonce is
+ * ignored and any value can be passed for the parameter.
+ */
+export function encode_input_for_conclude_order(
+  order_id: string,
+  nonce: bigint,
+  current_block_height: bigint,
+  network: Network,
+): Uint8Array
+/**
+ * Verify a witness produced by one of the `encode_witness` functions.
+ *
+ * `input_owner_destination` must be specified if `witness` actually contains a signature
+ * (i.e. it's not InputWitness::NoSignature) and the input is not an HTLC one. Otherwise it must
+ * be null.
+ */
+export function internal_verify_witness(
+  sighashtype: SignatureHashType,
+  input_owner_destination: string | null | undefined,
+  witness: Uint8Array,
+  transaction: Uint8Array,
+  input_utxos: Uint8Array,
+  input_index: number,
+  additional_info: TxAdditionalInfo,
+  current_block_height: bigint,
+  network: Network,
+): void
+/**
  * Given a destination address, an amount and a network type (mainnet, testnet, etc), this function
  * creates an output of type Transfer, and returns it as bytes.
  */
@@ -678,145 +817,6 @@ export function encode_create_order_output(
   network: Network,
 ): Uint8Array
 /**
- * Given an output source id as bytes, and an output index, together representing a utxo,
- * this function returns the input that puts them together, as bytes.
- */
-export function encode_input_for_utxo(
-  outpoint_source_id: Uint8Array,
-  output_index: number,
-): Uint8Array
-/**
- * Given a delegation id, an amount and a network type (mainnet, testnet, etc), this function
- * creates an input that withdraws from a delegation.
- * A nonce is needed because this spends from an account. The nonce must be in sequence for everything in that account.
- */
-export function encode_input_for_withdraw_from_delegation(
-  delegation_id: string,
-  amount: Amount,
-  nonce: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given a token_id, an amount of tokens to mint and nonce return an encoded mint tokens input
- */
-export function encode_input_for_mint_tokens(
-  token_id: string,
-  amount: Amount,
-  nonce: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given a token_id and nonce return an encoded unmint tokens input
- */
-export function encode_input_for_unmint_tokens(
-  token_id: string,
-  nonce: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given a token_id and nonce return an encoded lock_token_supply input
- */
-export function encode_input_for_lock_token_supply(
-  token_id: string,
-  nonce: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given a token_id, is token unfreezable and nonce return an encoded freeze token input
- */
-export function encode_input_for_freeze_token(
-  token_id: string,
-  is_token_unfreezable: TokenUnfreezable,
-  nonce: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given a token_id and nonce return an encoded unfreeze token input
- */
-export function encode_input_for_unfreeze_token(
-  token_id: string,
-  nonce: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given a token_id, new authority destination and nonce return an encoded change token authority input
- */
-export function encode_input_for_change_token_authority(
-  token_id: string,
-  new_authority: string,
-  nonce: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given a token_id, new metadata uri and nonce return an encoded change token metadata uri input
- */
-export function encode_input_for_change_token_metadata_uri(
-  token_id: string,
-  new_metadata_uri: string,
-  nonce: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given an order id and an amount in the order's ask currency, create an input that fills the order.
- *
- * Note:
- * 1) The nonce is only needed before the orders V1 fork activation. After the fork the nonce is
- *    ignored and any value can be passed for the parameter.
- * 2) FillOrder inputs should not be signed, i.e. use `encode_witness_no_signature` for the inputs
- *    instead of `encode_witness`).
- *    Note that in orders v0 FillOrder inputs can technically have a signature, it's just not checked.
- *    But in orders V1 we actually require that those inputs don't have signatures.
- *    Also, in orders V1 the provided destination is always ignored.
- */
-export function encode_input_for_fill_order(
-  order_id: string,
-  fill_amount: Amount,
-  destination: string,
-  nonce: bigint,
-  current_block_height: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given an order id create an input that freezes the order.
- *
- * Note: order freezing is available only after the orders V1 fork activation.
- */
-export function encode_input_for_freeze_order(
-  order_id: string,
-  current_block_height: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Given an order id create an input that concludes the order.
- *
- * Note: the nonce is only needed before the orders V1 fork activation. After the fork the nonce is
- * ignored and any value can be passed for the parameter.
- */
-export function encode_input_for_conclude_order(
-  order_id: string,
-  nonce: bigint,
-  current_block_height: bigint,
-  network: Network,
-): Uint8Array
-/**
- * Verify a witness produced by one of the `encode_witness` functions.
- *
- * `input_owner_destination` must be specified if `witness` actually contains a signature
- * (i.e. it's not InputWitness::NoSignature) and the input is not an HTLC one. Otherwise it must
- * be null.
- */
-export function internal_verify_witness(
-  sighashtype: SignatureHashType,
-  input_owner_destination: string | null | undefined,
-  witness: Uint8Array,
-  transaction: Uint8Array,
-  input_utxos: Uint8Array,
-  input_index: number,
-  additional_info: TxAdditionalInfo,
-  current_block_height: bigint,
-  network: Network,
-): void
-/**
  * Indicates whether a token can be frozen
  */
 export enum FreezableToken {
@@ -928,6 +928,7 @@ export interface TxAdditionalInfo {
 export class Amount {
   private constructor()
   free(): void
+  [Symbol.dispose](): void
   static from_atoms(atoms: string): Amount
   atoms(): string
 }
@@ -1228,6 +1229,107 @@ export interface InitOutput {
     b: number,
     c: number,
   ) => [number, number, number]
+  readonly encode_input_for_utxo: (
+    a: number,
+    b: number,
+    c: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_withdraw_from_delegation: (
+    a: number,
+    b: number,
+    c: number,
+    d: bigint,
+    e: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_mint_tokens: (
+    a: number,
+    b: number,
+    c: number,
+    d: bigint,
+    e: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_unmint_tokens: (
+    a: number,
+    b: number,
+    c: bigint,
+    d: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_lock_token_supply: (
+    a: number,
+    b: number,
+    c: bigint,
+    d: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_freeze_token: (
+    a: number,
+    b: number,
+    c: number,
+    d: bigint,
+    e: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_unfreeze_token: (
+    a: number,
+    b: number,
+    c: bigint,
+    d: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_change_token_authority: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: bigint,
+    f: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_change_token_metadata_uri: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: bigint,
+    f: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_fill_order: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: bigint,
+    g: bigint,
+    h: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_freeze_order: (
+    a: number,
+    b: number,
+    c: bigint,
+    d: number,
+  ) => [number, number, number, number]
+  readonly encode_input_for_conclude_order: (
+    a: number,
+    b: number,
+    c: bigint,
+    d: bigint,
+    e: number,
+  ) => [number, number, number, number]
+  readonly internal_verify_witness: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+    h: number,
+    i: number,
+    j: number,
+    k: any,
+    l: bigint,
+    m: number,
+  ) => [number, number]
+  readonly __wbg_amount_free: (a: number, b: number) => void
+  readonly amount_from_atoms: (a: number, b: number) => number
+  readonly amount_atoms: (a: number) => [number, number]
   readonly encode_output_transfer: (
     a: number,
     b: number,
@@ -1363,107 +1465,6 @@ export interface InitOutput {
     h: number,
     i: number,
   ) => [number, number, number, number]
-  readonly __wbg_amount_free: (a: number, b: number) => void
-  readonly amount_from_atoms: (a: number, b: number) => number
-  readonly amount_atoms: (a: number) => [number, number]
-  readonly encode_input_for_utxo: (
-    a: number,
-    b: number,
-    c: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_withdraw_from_delegation: (
-    a: number,
-    b: number,
-    c: number,
-    d: bigint,
-    e: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_mint_tokens: (
-    a: number,
-    b: number,
-    c: number,
-    d: bigint,
-    e: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_unmint_tokens: (
-    a: number,
-    b: number,
-    c: bigint,
-    d: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_lock_token_supply: (
-    a: number,
-    b: number,
-    c: bigint,
-    d: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_freeze_token: (
-    a: number,
-    b: number,
-    c: number,
-    d: bigint,
-    e: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_unfreeze_token: (
-    a: number,
-    b: number,
-    c: bigint,
-    d: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_change_token_authority: (
-    a: number,
-    b: number,
-    c: number,
-    d: number,
-    e: bigint,
-    f: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_change_token_metadata_uri: (
-    a: number,
-    b: number,
-    c: number,
-    d: number,
-    e: bigint,
-    f: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_fill_order: (
-    a: number,
-    b: number,
-    c: number,
-    d: number,
-    e: number,
-    f: bigint,
-    g: bigint,
-    h: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_freeze_order: (
-    a: number,
-    b: number,
-    c: bigint,
-    d: number,
-  ) => [number, number, number, number]
-  readonly encode_input_for_conclude_order: (
-    a: number,
-    b: number,
-    c: bigint,
-    d: bigint,
-    e: number,
-  ) => [number, number, number, number]
-  readonly internal_verify_witness: (
-    a: number,
-    b: number,
-    c: number,
-    d: number,
-    e: number,
-    f: number,
-    g: number,
-    h: number,
-    i: number,
-    j: number,
-    k: any,
-    l: bigint,
-    m: number,
-  ) => [number, number]
   readonly rustsecp256k1_v0_10_0_context_create: (a: number) => number
   readonly rustsecp256k1_v0_10_0_context_destroy: (a: number) => void
   readonly rustsecp256k1_v0_10_0_default_illegal_callback_fn: (
