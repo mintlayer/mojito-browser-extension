@@ -8,13 +8,13 @@ import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
 import { ReactComponent as LoginImg } from '@Assets/images/icon-login.svg'
 import { ReactComponent as AddWalletImg } from '@Assets/images/icon-add-wallet.svg'
 import { ReactComponent as HomeImg } from '@Assets/images/icon-home.svg'
-import { ReactComponent as WalletIcon } from '@Assets/images/icon-wallet.svg'
+// import { ReactComponent as WalletIcon } from '@Assets/images/icon-wallet.svg'
 import { ReactComponent as TriangleIcon } from '@Assets/images/icon-triangle.svg'
 
 import { APP_VERSION } from '@Version'
 
 import { AccountContext, MintlayerContext } from '@Contexts'
-import { AppInfo } from '@Constants'
+// import { AppInfo } from '@Constants'
 
 import NestedNavigation from './NestedNavigation'
 
@@ -89,13 +89,13 @@ const Navigation = ({ customNavigation }) => {
       icon: <HomeImg />,
       link: '/dashboard',
     },
-    {
-      id: 2,
-      label: 'Wallets',
-      icon: <WalletIcon />,
-      type: 'menu',
-      content: AppInfo.WALLETS_NAVIGATION,
-    },
+    // {
+    //   id: 2,
+    //   label: 'Wallets',
+    //   icon: <WalletIcon />,
+    //   type: 'menu',
+    //   content: AppInfo.WALLETS_NAVIGATION,
+    // },
     {
       id: 3,
       label: 'Settings',

@@ -189,7 +189,7 @@
     "pretty-quick": "^4.2.2",
     "react-app-rewire-alias": "^1.1.7",
     "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
+    "typescript": "^5.9.3",
     "vm-browserify": "^1.1.2",
     "wallet-address-validator": "^0.2.4",
     "webextension-polyfill": "^0.12.0"
