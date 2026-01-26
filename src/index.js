@@ -8,7 +8,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router'
-import { Mintlayer } from '@APIs'
+import { Mintlayer, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup, Header, PopUp } from '@ComposedComponents'
 import { DeleteAccount } from '@ContainerComponents'
 import { Client } from '@mintlayer/sdk'
