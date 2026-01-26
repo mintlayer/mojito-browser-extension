@@ -28,8 +28,11 @@ const DashboardPage = () => {
   const [account, setAccount] = useState(null)
 
   const [connectedWalletType, setConnectedWalletType] = useState('')
-  const { balance: btcBalance, fetchingBalances: btcFetchingBalances } =
-    useBtcWalletInfo()
+  const {
+    balance: btcBalance,
+    fetchingBalances: btcFetchingBalances,
+    btcApiAvailable,
+  } = useBtcWalletInfo()
   const {
     balance: mlBalance,
     tokenBalances,
@@ -84,6 +87,7 @@ const DashboardPage = () => {
       network,
       id,
       fetchingBalances,
+      disabled = false,
     ) => {
       cryptos.push({
         id,
@@ -95,6 +99,7 @@ const DashboardPage = () => {
         historyRates,
         network,
         fetchingBalances,
+        disabled,
       })
     }
 
@@ -116,6 +121,7 @@ const DashboardPage = () => {
         'bitcoin',
         'Bitcoin',
         btcFetchingBalances,
+        !btcApiAvailable,
       )
     }
 

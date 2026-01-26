@@ -28,8 +28,15 @@ const BitcoinProvider = ({ value: propValue, children }) => {
   const [fetchingBalances, setFetchingBalances] = useState(false)
   const [fetchingTransactions, setFetchingTransactions] = useState(false)
   const [fetchingUtxos, setFetchingUtxos] = useState(false)
+  const [btcApiAvailable, setBtcApiAvailable] = useState(true)
 
   const fetchAllData = async (force) => {
+    if (!btcApiAvailable) {
+      console.log(
+        'Bitcoin API is not available, skipping Bitcoin wallet loading',
+      )
+      return
+    }
     if (
       !force &&
       currentBlockHeight === onlineHeight &&
@@ -267,8 +274,14 @@ const BitcoinProvider = ({ value: propValue, children }) => {
 
   useEffect(() => {
     const getData = async () => {
-      const result = await Electrum.getLastBlockHeight()
-      setOnlineHeight(result)
+      try {
+        const result = await Electrum.getLastBlockHeight()
+        setOnlineHeight(result)
+        setBtcApiAvailable(true)
+      } catch (error) {
+        console.error('Bitcoin API is not available:', error)
+        setBtcApiAvailable(false)
+      }
     }
     getData()
     const data = setInterval(getData, AppInfo.REFRESH_INTERVAL)
@@ -296,6 +309,7 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     setFetchingBalances,
     setFetchingTransactions,
     setFetchingUtxos,
+    btcApiAvailable,
 
     fetchAllData,
   }
