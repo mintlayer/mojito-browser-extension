@@ -124,6 +124,15 @@ const getAddressUtxo = (address) => {
 const getLastBlockHeight = () =>
   tryServers(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HEIGHT)
 
+const checkApiAvailability = async () => {
+  try {
+    await getLastBlockHeight()
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
 const getFeesEstimates = async () => {
   const isTestnet =
     LocalStorageService.getItem('networkType') === AppInfo.NETWORK_TYPES.TESTNET
@@ -206,5 +215,6 @@ export {
   getAddressTransactionsBatch,
   getAddressMempoolTransactionsBatch,
   getAddressUtxosBatch,
+  checkApiAvailability,
   ELECTRUM_ENDPOINTS,
 }

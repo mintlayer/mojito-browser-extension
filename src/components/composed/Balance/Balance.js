@@ -59,6 +59,9 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
   const { coinType } = useParams()
   const navigate = useNavigate()
 
+  const isToken =
+    walletType.name !== 'Mintlayer' && walletType.name !== 'Bitcoin'
+
   const balanceInUSD = isTestnet
     ? '0,00'
     : new Decimal(NumbersHelper.floatStringToNumber(balance) || 0)
@@ -100,7 +103,7 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
         >
           <span>{Format.BTCValue(balance)}</span> {symbol()}
         </p>
-        {!isTestnet && (
+        {!isTestnet && !isToken && (
           <p
             className="balance-usd"
             data-testid="balance-paragraph"
@@ -108,7 +111,7 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
             <span>{Format.fiatValue(balanceInUSD)}</span> USD
           </p>
         )}
-        {!isTestnet && (
+        {!isTestnet && !isToken && (
           <span className="wallet-price">
             Price: {exchangeRate.toFixed(2)} $
           </span>

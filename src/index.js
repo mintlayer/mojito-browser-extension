@@ -8,7 +8,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router'
-import { Electrum, ExchangeRates } from '@APIs'
+import { Mintlayer, ExchangeRates } from '@APIs'
 import { ConnectionErrorPopup, Header, PopUp } from '@ComposedComponents'
 import { DeleteAccount } from '@ContainerComponents'
 import { Client } from '@mintlayer/sdk'
@@ -97,9 +97,9 @@ const App = () => {
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
-      const electrumResponse = await Electrum.getLastBlockHash()
-      const exchangeResponse = await ExchangeRates.getRate('btc', 'usd')
-      return !!electrumResponse && !!exchangeResponse
+      const mintlayerResponse = await Mintlayer.getChainTip()
+      const exchangeResponse = await ExchangeRates.getRate('ml', 'usd')
+      return !!mintlayerResponse && !!exchangeResponse
     } catch (error) {
       if (accountUnlocked) {
         console.log(error)

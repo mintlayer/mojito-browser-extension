@@ -11,6 +11,7 @@ import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
 export const CryptoItem = ({ onClickItem, item }) => {
   const { networkType } = useContext(SettingsContext)
   const fetchingBalances = item.fetchingBalances
+  const isBtcUnavailable = item.disabled
   const { tokenBalances } = useContext(MintlayerContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const balance = item.balance
@@ -23,9 +24,12 @@ export const CryptoItem = ({ onClickItem, item }) => {
       Number(value),
     ])
   const symbol = !isTestnet ? item.symbol : 'Testnet'
+  const isToken = item.name !== 'Mintlayer' && item.name !== 'Bitcoin'
 
   const onClick = () => {
-    onClickItem(item)
+    if (!isBtcUnavailable) {
+      onClickItem(item)
+    }
   }
 
   const logoText =
@@ -55,10 +59,15 @@ export const CryptoItem = ({ onClickItem, item }) => {
       ) : (
         <li
           key={item.symbol}
-          className="crypto-item"
+          className={`crypto-item ${isBtcUnavailable ? 'disabled' : ''}`}
           onClick={onClick}
           data-testid="crypto-item"
         >
+          {isBtcUnavailable && (
+            <div className="crypto-network-mask-full">
+              <span className="crypto-network-mask-text">Offline</span>
+            </div>
+          )}
           <div className="logo-wrapper">
             {logo()}
             <div className="name-values">
@@ -67,7 +76,7 @@ export const CryptoItem = ({ onClickItem, item }) => {
               </h5>
               <div className={`values ${bigValues ? 'big-values' : ''}`}>
                 <dl>
-                  {!isTestnet ? (
+                  {!isTestnet && !isToken ? (
                     <>
                       <dd>
                         {balance} {symbol}
@@ -121,7 +130,6 @@ export const ConnectItem = ({ walletType, onClick }) => {
     </li>
   )
 }
-
 const CryptoList = ({ cryptoList, onWalletItemClick, onConnectItemClick }) => {
   const missingWalletTypes = AppInfo.walletTypes.filter(
     (walletType) =>
