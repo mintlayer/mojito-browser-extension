@@ -166,7 +166,7 @@ test('IndexedDB basic functions - save error', async () => {
 
   await expect(async () => {
     await save(store, {})
-  }).rejects.toThrowError()
+  }).rejects.toThrow()
 })
 
 test('IndexedDB basic functions - get', async () => {
@@ -201,7 +201,7 @@ test('IndexedDB basic functions - get error', async () => {
 
   await expect(async () => {
     await get(store, {})
-  }).rejects.toThrowError()
+  }).rejects.toThrow()
 })
 
 test('IndexedDB basic functions - save and get real', async () => {
@@ -244,5 +244,5 @@ test('IndexedDB basic functions - getAll error', async () => {
 
   await expect(async () => {
     await getAll(store)
-  }).rejects.toThrowError()
+  }).rejects.toThrow()
 })

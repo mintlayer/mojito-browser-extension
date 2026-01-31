@@ -37,7 +37,7 @@ test('calls handler when click is outside element', async () => {
   fireEvent.mouseDown(wrapper)
 
   await waitFor(() => {
-    expect(handler).toBeCalledTimes(1)
+    expect(handler).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -69,7 +69,7 @@ test('doesnt calls handler when click is within element', async () => {
   fireEvent.mouseDown(element)
 
   await waitFor(() => {
-    expect(handler).not.toBeCalled()
+    expect(handler).not.toHaveBeenCalled()
   })
 })
 

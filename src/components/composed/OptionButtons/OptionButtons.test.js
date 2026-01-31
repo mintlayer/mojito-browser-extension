@@ -34,6 +34,12 @@ const _dataMultiple = {
   multiple: true,
 }
 
+beforeEach(() => {
+  _data.onSelect.mockClear()
+  _dataColumn.onSelect.mockClear()
+  _dataMultiple.onSelect.mockClear()
+})
+
 const setup = ({ data = _data } = {}) => {
   const utils = render(<OptionButtons {...data} />)
   const low = screen.getByRole('button', { name: /low/i })

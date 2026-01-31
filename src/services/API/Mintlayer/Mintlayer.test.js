@@ -64,7 +64,7 @@ test('Mintlayer API request - not ok', async () => {
 
   await expect(async () => {
     await requestMintlayer(fetchAddr, null, mockFetch)
-  }).rejects.toThrowError()
+  }).rejects.toThrow()
 })
 // const TESTNET_WALLET = 'tmt1q996a4kpq2ds4snvvgszud6xfhlkcxj7xysjtamj'
 // const TX_ID = '7cbfabe0dec48e36e431ba07567e6b54cf74d7cdb7d23e0d673d958ec2b57894'

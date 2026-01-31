@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 
 import RestoreAccountMnemonic from './RestoreAccountMnemonic'
 import { Expressions } from '@Constants'
@@ -18,7 +18,7 @@ const memoryRouterFeature = {
   v7_partialHydration: true,
 }
 
-test('Renders restore account page with step 1', () => {
+test('Renders restore account page with step 1', async () => {
   render(
     <AccountProvider>
       <SettingsProvider>
@@ -52,7 +52,10 @@ test('Renders restore account page with step 1', () => {
   })
 
   fireEvent.change(inputComponent, { target: { value: 'more then 4' } })
-  expect(inputComponent).toHaveClass('valid')
+  fireEvent.blur(inputComponent)
+  await waitFor(() => {
+    expect(inputComponent).toHaveClass('valid')
+  })
 
   act(() => {
     restoreAccountForm.submit()

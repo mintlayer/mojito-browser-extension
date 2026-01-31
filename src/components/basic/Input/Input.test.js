@@ -64,18 +64,18 @@ test('Input component with blur, focus, and change function', () => {
   inputComponent.blur()
 
   expect(inputComponent).toBeInTheDocument()
-  expect(mockHandleBlurFn).toBeCalledTimes(1)
-  expect(mockHandleFocusFn).toBeCalledTimes(1)
-  expect(mockHandleChangeFn).toBeCalledTimes(1)
+  expect(mockHandleBlurFn).toHaveBeenCalledTimes(1)
+  expect(mockHandleFocusFn).toHaveBeenCalledTimes(1)
+  expect(mockHandleChangeFn).toHaveBeenCalledTimes(1)
   expect(val).toBe('test')
 
   inputComponent.focus()
   fireEvent.change(inputComponent, { target: { value: 'test2' } })
   inputComponent.blur()
 
-  expect(mockHandleBlurFn).toBeCalledTimes(2)
-  expect(mockHandleFocusFn).toBeCalledTimes(2)
-  expect(mockHandleChangeFn).toBeCalledTimes(2)
+  expect(mockHandleBlurFn).toHaveBeenCalledTimes(2)
+  expect(mockHandleFocusFn).toHaveBeenCalledTimes(2)
+  expect(mockHandleChangeFn).toHaveBeenCalledTimes(2)
   expect(val).toBe('test2')
 })
 

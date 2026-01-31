@@ -1,8 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import InputInteger from './InputInteger'
 
-jest.spyOn(console, 'warn').mockImplementation(() => {
-  console.warn.restoreMock()
+const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+afterAll(() => {
+  warnSpy.mockRestore()
 })
 
 test('InputInteger component', () => {

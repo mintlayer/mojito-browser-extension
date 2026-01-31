@@ -54,7 +54,7 @@ test('Account creation and restoring - error', async () => {
 
   // await expect(async () => {
   //   await unlockAccount(id, wrongPass)
-  // }).rejects.toThrowError()
+  // }).rejects.toThrow()
 })
 
 // test('Accouts wallets to create - default', async () => {

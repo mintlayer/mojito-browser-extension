@@ -21,17 +21,17 @@ test('CreateArcGenerator function', () => {
   const generator = createArcGenerator()
 
   expect(generator).toBeInstanceOf(Function)
-  expect(generator.outerRadius()).not.toThrowError()
-  expect(generator.innerRadius()).not.toThrowError()
+  expect(generator.outerRadius()).not.toThrow()
+  expect(generator.innerRadius()).not.toThrow()
 })
 
 test('CreatePieGenerator function', () => {
   const generator = createPieGenerator()
 
   expect(generator).toBeInstanceOf(Function)
-  expect(generator.startAngle()).not.toThrowError()
+  expect(generator.startAngle()).not.toThrow()
   expect(generator.startAngle()()).toBe(-0.5 * Math.PI)
-  expect(generator.endAngle()).not.toThrowError()
+  expect(generator.endAngle()).not.toThrow()
   expect(generator.endAngle()()).toBe(0.5 * Math.PI)
 })
 
