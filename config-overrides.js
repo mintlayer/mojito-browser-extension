@@ -41,5 +41,10 @@ module.exports = function overrideConf(config) {
     ...configPaths('./jsconfig.json'),
   })(config)
 
+  // Disable ESLint plugin from react-scripts (use standalone eslint.config.mjs instead)
+  config.plugins = config.plugins.filter(
+    (plugin) => plugin.constructor.name !== 'ESLintWebpackPlugin',
+  )
+
   return config
 }
