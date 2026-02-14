@@ -35,9 +35,13 @@ const getFormattedFeeUtxos = async (walletUtxo, walletType) => {
       const rawTxHex = await Electrum.getTransactionHex(utxo.txid)
       formatted.nonWitnessUtxo = Buffer.from(rawTxHex, 'hex')
     } else if (walletType === 'nativeSegwit') {
+      const scriptBuf = bitcoin.address.toOutputScript(
+        utxo.address,
+        BTC.getNetwork(),
+      )
       formatted.witnessUtxo = {
-        script: bitcoin.address.toOutputScript(utxo.address, BTC.getNetwork()),
-        value: utxo.value,
+        script: new Uint8Array(scriptBuf),
+        value: BigInt(utxo.value),
       }
     } else {
       throw new Error(`Unknown wallet type: ${walletType}`)
@@ -85,9 +89,13 @@ const getFormattedUtxos = async (
       const rawTxHex = await Electrum.getTransactionHex(utxo.txid)
       formatted.nonWitnessUtxo = Buffer.from(rawTxHex, 'hex')
     } else if (walletType === 'nativeSegwit') {
+      const scriptBuf = bitcoin.address.toOutputScript(
+        utxo.address,
+        BTC.getNetwork(),
+      )
       formatted.witnessUtxo = {
-        script: bitcoin.address.toOutputScript(utxo.address, BTC.getNetwork()),
-        value: utxo.value,
+        script: new Uint8Array(scriptBuf),
+        value: BigInt(utxo.value),
       }
     } else {
       throw new Error(`Unknown wallet type: ${walletType}`)
@@ -169,7 +177,7 @@ const buildTransaction = async ({
 
     transactionBuilder.addOutput({
       address: output.address,
-      value: output.value,
+      value: BigInt(output.value),
     })
   })
 
