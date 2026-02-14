@@ -107,6 +107,11 @@ button {
   background: rgb(var(--color-purple));
 }
 
+.button-account svg {
+  width: 74px;
+  height: 83px;
+}
+
 .current {
   border-width: 1px;
 }
