@@ -9,6 +9,14 @@ export default [
     ignores: ['src/commons/utils/main.js', 'tests/**', 'src/**/*.test.js'],
   },
   {
+    files: ['*.js', '*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
     files: ['src/version/*.js'],
     languageOptions: {
       globals: {
@@ -30,6 +38,8 @@ export default [
         ...globals.browser,
         ...globals.es2020,
         ...globals.jest,
+        Buffer: 'readonly',
+        process: 'readonly',
       },
       parserOptions: {
         ecmaFeatures: {
@@ -43,8 +53,11 @@ export default [
       },
     },
     rules: {
+      ...reactPlugin.configs.recommended.rules,
       semi: ['error', 'never'],
       'react/jsx-no-target-blank': 'off',
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
       quotes: ['error', 'single'],
       'no-const-assign': 'error',
       'no-unused-vars': 'error',
