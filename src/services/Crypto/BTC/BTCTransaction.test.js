@@ -98,9 +98,11 @@ describe('BTCTransaction', () => {
     })
 
     test('should generate fingerprint from public key', () => {
-      const publicKey = Buffer.from(
-        '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
-        'hex',
+      const publicKey = new Uint8Array(
+        Buffer.from(
+          '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
+          'hex',
+        ),
       )
       const node = { publicKey }
 
@@ -114,9 +116,11 @@ describe('BTCTransaction', () => {
 
     test('should derive fingerprint when only publicKey present (normal path)', () => {
       const node = {
-        publicKey: Buffer.from(
-          '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
-          'hex',
+        publicKey: new Uint8Array(
+          Buffer.from(
+            '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
+            'hex',
+          ),
         ),
       }
       const fp = getMasterFingerprint(node)
@@ -163,7 +167,7 @@ describe('BTCTransaction', () => {
       // We only assert that witnessUtxo exists with correct value and no raw tx fetch.
       expect(result[0].txId).toBe(mockUtxo.txid)
       expect(result[0].witnessUtxo).toBeDefined()
-      expect(result[0].witnessUtxo.value).toBe(mockUtxo.value)
+      expect(result[0].witnessUtxo.value).toBe(BigInt(mockUtxo.value))
       expect(Electrum.getTransactionHex).not.toHaveBeenCalled()
     })
 
@@ -470,9 +474,192 @@ describe('BTCTransaction', () => {
 
       expect(mockPsbt.addOutput).toHaveBeenCalledWith({
         address: mockParams.changeAddress,
-        value: 4000,
+        value: BigInt(4000),
       })
       psbtSpy.mockRestore()
     })
+  })
+
+  describe('witnessUtxo format (bitcoinjs-lib v7)', () => {
+    test('getFormattedFeeUtxos: witnessUtxo.script should be Uint8Array', async () => {
+      const utxo = {
+        txid: 'abc123',
+        vout: 0,
+        value: 5000,
+        address: 'bc1qtest',
+      }
+
+      const result = await getFormattedFeeUtxos([utxo], 'nativeSegwit')
+
+      expect(result[0].witnessUtxo.script).toBeInstanceOf(Uint8Array)
+    })
+
+    test('getFormattedFeeUtxos: witnessUtxo.value should be BigInt', async () => {
+      const utxo = {
+        txid: 'abc123',
+        vout: 0,
+        value: 5000,
+        address: 'bc1qtest',
+      }
+
+      const result = await getFormattedFeeUtxos([utxo], 'nativeSegwit')
+
+      expect(typeof result[0].witnessUtxo.value).toBe('bigint')
+      expect(result[0].witnessUtxo.value).toBe(BigInt(5000))
+    })
+
+    test('getFormattedUtxos: witnessUtxo.script should be Uint8Array', async () => {
+      const utxo = {
+        txid: 'abc123',
+        vout: 0,
+        value: 10000,
+        address: 'bc1qtest',
+      }
+      const addressesData = {
+        btcReceivingAddresses: [
+          {
+            address: 'bc1qtest',
+            pubkey:
+              '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
+            derivationPath: "m/84'/0'/0'/0/0",
+          },
+        ],
+        btcChangeAddresses: [],
+      }
+      const hdWallet = { fingerprint: Buffer.from('12345678', 'hex') }
+
+      const result = await getFormattedUtxos(
+        [utxo],
+        'nativeSegwit',
+        addressesData,
+        hdWallet,
+      )
+
+      expect(result[0].witnessUtxo.script).toBeInstanceOf(Uint8Array)
+    })
+
+    test('getFormattedUtxos: witnessUtxo.value should be BigInt', async () => {
+      const utxo = {
+        txid: 'abc123',
+        vout: 0,
+        value: 10000,
+        address: 'bc1qtest',
+      }
+      const addressesData = {
+        btcReceivingAddresses: [
+          {
+            address: 'bc1qtest',
+            pubkey:
+              '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
+            derivationPath: "m/84'/0'/0'/0/0",
+          },
+        ],
+        btcChangeAddresses: [],
+      }
+      const hdWallet = { fingerprint: Buffer.from('12345678', 'hex') }
+
+      const result = await getFormattedUtxos(
+        [utxo],
+        'nativeSegwit',
+        addressesData,
+        hdWallet,
+      )
+
+      expect(typeof result[0].witnessUtxo.value).toBe('bigint')
+      expect(result[0].witnessUtxo.value).toBe(BigInt(10000))
+    })
+
+    test.each([
+      ['small dust', 546],
+      ['typical', 50000],
+      ['1 BTC', 100000000],
+      ['large whale', 2100000000000000],
+      ['zero', 0],
+      ['1 satoshi', 1],
+    ])('witnessUtxo.value correct for %s (%d sats)', async (_, sats) => {
+      const utxo = {
+        txid: 'abc123',
+        vout: 0,
+        value: sats,
+        address: 'bc1qtest',
+      }
+
+      const result = await getFormattedFeeUtxos([utxo], 'nativeSegwit')
+
+      expect(typeof result[0].witnessUtxo.value).toBe('bigint')
+      expect(result[0].witnessUtxo.value).toBe(BigInt(sats))
+    })
+  })
+
+  describe('buildTransaction output values (bitcoinjs-lib v7)', () => {
+    const baseParams = {
+      to: '1ABC...',
+      amount: 5000,
+      utxos: [{ txid: 'a1b2c3d4', vout: 0, value: 10000, address: '1ABC...' }],
+      feeRate: 10,
+      walletType: 'nativeSegwit',
+      changeAddress: '1CHANGE...',
+      root: {
+        btcAddressData: {
+          btcReceivingAddresses: [
+            {
+              address: '1ABC...',
+              pubkey:
+                '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
+              derivationPath: "m/44'/0'/0'/0/0",
+            },
+          ],
+          btcChangeAddresses: [],
+        },
+        btcHDWallet: { fingerprint: Buffer.from('12345678', 'hex') },
+      },
+    }
+
+    test.each([
+      ['dust amount', 546, 9000],
+      ['typical send', 50000, 40000],
+      ['full spend no change', 10000, 0],
+      ['1 satoshi', 1, 8999],
+    ])(
+      'addOutput receives BigInt for %s',
+      async (_, sendValue, changeValue) => {
+        const outputs = [{ address: baseParams.to, value: sendValue }]
+        if (changeValue > 0) {
+          outputs.push({ value: changeValue })
+        }
+
+        coinSelect.mockReturnValue({
+          inputs: [
+            {
+              txId: 'a1b2c3d4',
+              vout: 0,
+              witnessUtxo: { script: new Uint8Array(22), value: BigInt(10000) },
+            },
+          ],
+          outputs,
+          fee: 1000,
+        })
+
+        const mockPsbt = {
+          addInput: jest.fn(),
+          addOutput: jest.fn(),
+          signAllInputsHD: jest.fn(),
+          finalizeAllInputs: jest.fn(),
+          extractTransaction: jest.fn(() => ({ toHex: jest.fn(() => 'hex') })),
+        }
+        const psbtSpy = jest
+          .spyOn(bitcoin, 'Psbt')
+          .mockImplementation(() => mockPsbt)
+        BTC.checkFee = jest.fn(() => true)
+
+        await buildTransaction(baseParams)
+
+        mockPsbt.addOutput.mock.calls.forEach((call) => {
+          expect(typeof call[0].value).toBe('bigint')
+        })
+
+        psbtSpy.mockRestore()
+      },
+    )
   })
 })

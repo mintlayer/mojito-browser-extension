@@ -157,7 +157,7 @@ test('Header component, navigate to Header and open menu', async () => {
   })
 
   await waitFor(async () => {
-    expect(value.setSliderMenuOpen).toBeCalled()
+    expect(value.setSliderMenuOpen).toHaveBeenCalled()
   })
 
   const backdrop = screen.getByTestId('backdrop')
@@ -176,6 +176,6 @@ test('Header component, navigate to Header and open menu', async () => {
   })
 
   await waitFor(async () => {
-    expect(value.logout).toBeCalled()
+    expect(value.logout).toHaveBeenCalled()
   })
 })

@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router'
 

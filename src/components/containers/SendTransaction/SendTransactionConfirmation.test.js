@@ -22,6 +22,11 @@ const _data = {
   },
 }
 
+beforeEach(() => {
+  _data.onConfirm.mockClear()
+  _data.onCancel.mockClear()
+})
+
 const setup = ({ data = _data } = {}) => {
   render(
     <AccountProvider>
@@ -77,14 +82,14 @@ test('Renders SendFundConfirmation and confirm', async () => {
   const { confirmButton } = setup()
 
   fireEvent.click(confirmButton)
-  expect(_data.onConfirm).toBeCalled()
-  expect(_data.onCancel).not.toBeCalled()
+  expect(_data.onConfirm).toHaveBeenCalled()
+  expect(_data.onCancel).not.toHaveBeenCalled()
 })
 
 test('Renders SendFundConfirmation and cancel', async () => {
   const { cancelButton } = setup()
 
   fireEvent.click(cancelButton)
-  expect(_data.onConfirm).not.toBeCalled()
-  expect(_data.onCancel).toBeCalled()
+  expect(_data.onConfirm).not.toHaveBeenCalled()
+  expect(_data.onCancel).toHaveBeenCalled()
 })

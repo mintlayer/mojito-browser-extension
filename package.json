@@ -4,45 +4,43 @@
   "private": true,
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.2.0",
-    "@mintlayer/entropy-generator": "^1.0.4",
+    "@mintlayer/entropy-generator": "^1.0.6",
     "@mintlayer/sdk": "1.0.30",
-    "@noble/secp256k1": "^2.3.0",
-    "bip32": "^4.0.0",
+    "@noble/secp256k1": "^3.0.0",
+    "bip32": "^5.0.0",
     "bip39": "^3.1.0",
-    "bitcoinjs-lib": "^6.1.7",
+    "bitcoinjs-lib": "^7.0.1",
     "bluebird": "^3.7.2",
     "buffer": "^6.0.3",
-    "canvas": "^3.2.0",
+    "canvas": "^3.2.1",
     "coinselect": "^3.1.13",
     "crypto-browserify": "^3.12.1",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
     "decimal.js": "^10.6.0",
-    "ecpair": "2.1.0",
+    "ecpair": "3.0.0",
     "jest-webgl-canvas-mock": "^2.5.3",
-    "konva": "^10.0.12",
+    "konva": "^10.2.0",
     "node-forge": "^1.3.3",
     "pbkdf2": "^3.1.5",
     "process": "^0.11.10",
-    "react": "^19.2.3",
-    "react-app-rewired": "^2.2.1",
-    "react-dom": "^19.2.3",
-    "react-konva": "^19.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-konva": "^19.2.2",
     "react-qr-code": "^2.0.18",
-    "react-router-dom": "^7.11.0",
+    "react-router-dom": "^7.13.0",
     "stream-browserify": "^3.0.0"
   },
   "scripts": {
-    "start": "react-app-rewired start",
-    "build:staging": "env-cmd -f ./.env.staging react-app-rewired build",
-    "build": "env-cmd -f ./.env.production react-app-rewired build && sh packing.sh",
-    "test": "NODE_ENV=test react-scripts --openssl-legacy-provider test a --testPathIgnorePatterns='src/pages'",
+    "start": "webpack serve --mode development",
+    "build:staging": "env-cmd -f ./.env.staging webpack --mode production",
+    "build": "env-cmd -f ./.env.production webpack --mode production && sh packing.sh",
+    "test": "NODE_ENV=test jest",
     "coverage": "npm test -- --coverage ",
     "serve": "npm run build && http-server -p 8000 build/ ",
     "e2e": "npx playwright test",
     "e2e:debug": "npx playwright test --headed",
     "e2e:ui": "npx playwright test --ui",
-    "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js",
     "prettier": "pretty-quick --staged",
     "pretty-quick": "pretty-quick",
@@ -50,110 +48,6 @@
     "pretty-quick-check-branch": "pretty-quick --check --branch main",
     "prepare": "husky install",
     "version": "node src/version/version-manifest.js && node src/version/version-mojito.js"
-  },
-  "eslintConfig": {
-    "ignorePatterns": [
-      "src/commons/utils/main.js",
-      "tests"
-    ],
-    "extends": [
-      "eslint:recommended",
-      "react-app",
-      "react-app/jest"
-    ],
-    "rules": {
-      "semi": [
-        "error",
-        "never"
-      ],
-      "react/jsx-no-target-blank": "off",
-      "quotes": [
-        "error",
-        "single"
-      ],
-      "no-const-assign": "error",
-      "no-unused-vars": "error",
-      "prefer-const": "error",
-      "no-new-object": "error",
-      "quote-props": [
-        "error",
-        "as-needed"
-      ],
-      "no-array-constructor": "error",
-      "no-eval": "error",
-      "no-trailing-spaces": "error",
-      "max-params": [
-        "error",
-        4
-      ],
-      "max-depth": [
-        "error",
-        3
-      ],
-      "eol-last": [
-        "error",
-        "always"
-      ],
-      "testing-library/no-unnecessary-act": "off"
-    },
-    "overrides": [],
-    "env": {
-      "es2020": true
-    }
-  },
-  "jest": {
-    "transformIgnorePatterns": [
-      "node_modules/(?!(react-router|react-router-dom|@remix-run|date-fns|konva|react-konva|@mintlayer)/)"
-    ],
-    "moduleNameMapper": {
-      "^.+\\.svg$": "<rootDir>/src/tests/mock/svgMock.js",
-      "^react-router$": "<rootDir>/node_modules/react-router/dist/development/index.js",
-      "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js",
-      "^react-router-dom$": "<rootDir>/node_modules/react-router-dom/dist/index.js",
-      "@Assets/(.*)": "<rootDir>/src/assets/$1",
-      "@BasicComponents": "<rootDir>/src/components/basic/index.js",
-      "@ComposedComponents": "<rootDir>/src/components/composed/index.js",
-      "@ContainerComponents": "<rootDir>/src/components/containers/index.js",
-      "@LayoutComponents": "<rootDir>/src/components/layouts/index.js",
-      "@Constants": "<rootDir>/src/utils/Constants/index.js",
-      "@Helpers": "<rootDir>/src/utils/Helpers/index.js",
-      "@TestData": "<rootDir>/src/utils/TestData/index.js",
-      "@Hooks": "<rootDir>/src/hooks/index.js",
-      "@Contexts": "<rootDir>/src/contexts/index.js",
-      "@Databases": "<rootDir>/src/services/Database/index.js",
-      "@Cryptos": "<rootDir>/src/services/Crypto/index.js",
-      "@Entities": "<rootDir>/src/services/Entity/index.js",
-      "@APIs": "<rootDir>/src/services/API/index.js",
-      "d3": "<rootDir>/node_modules/d3/dist/d3.min.js",
-      "@Storage": "<rootDir>/src/services/Storage/index.js",
-      ".*wasm_wrappers.js": "<rootDir>/src/tests/mock/wasmCrypro/wasmCrypto.js",
-      "@Version": "<rootDir>/src/version/version.js"
-    },
-    "collectCoverageFrom": [
-      "!src/pages"
-    ],
-    "coveragePathIgnorePatterns": [
-      "index.js",
-      "./src/index.js",
-      "./src/pages",
-      "./src/contexts/AccountProvider/AccountProvider.js",
-      "./src/utils/Constants/EnvironmentVars.js",
-      "./src/utils/reportWebVitals.js",
-      "./src/services/Crypto/BTC/BTC.worker.js",
-      "./src/services/Crypto/Cipher/Cipher.worker.js",
-      "./src/services/Entity/Account/Account.worker.js",
-      "./src/utils/TestData/testTransactions.json",
-      "./src/utils/TestData/*",
-      "./src/assets/images/*"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 100,
-        "functions": 100,
-        "lines": 100,
-        "statements": 100
-      }
-    }
   },
   "browserslist": {
     "production": [
@@ -168,28 +62,45 @@
     ]
   },
   "devDependencies": {
-    "@mdx-js/loader": "^3.1.1",
-    "@mdx-js/react": "^3.1.1",
-    "@playwright/test": "^1.57.0",
+    "@babel/preset-env": "^7.29.0",
+    "@babel/preset-react": "^7.28.5",
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "@playwright/test": "^1.58.2",
     "@svgr/webpack": "^8.1.0",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.1",
+    "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.2.3",
     "@types/tiny-secp256k1": "^2.0.1",
+    "babel-jest": "^30.2.0",
+    "dotenv": "^17.2.4",
     "dotenv-webpack": "^8.1.1",
     "env-cmd": "^11.0.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "fake-indexeddb": "^6.2.5",
-    "gh-pages": "^6.3.0",
+    "globals": "^17.3.0",
     "http-server": "^14.1.1",
     "husky": "^9.1.7",
-    "indexeddb-export-import": "^2.1.5",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^30.2.0",
     "jest-canvas-mock": "^2.5.2",
-    "prettier": "^3.7.4",
+    "jest-environment-jsdom": "^30.2.0",
+    "prettier": "^3.8.1",
     "pretty-quick": "^4.2.2",
-    "react-app-rewire-alias": "^1.1.7",
-    "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
+    "style-loader": "^4.0.0",
+    "css-loader": "^7.1.3",
+    "url-loader": "^4.1.1",
+    "babel-loader": "^10.0.0",
+    "html-webpack-plugin": "^5.6.6",
+    "mini-css-extract-plugin": "^2.10.0",
+    "copy-webpack-plugin": "^13.0.1",
+    "webpack": "^5.105.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.3",
+    "typescript": "^5.9.3",
     "vm-browserify": "^1.1.2",
     "wallet-address-validator": "^0.2.4",
     "webextension-polyfill": "^0.12.0"

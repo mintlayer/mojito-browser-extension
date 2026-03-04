@@ -31,7 +31,7 @@ test('Cipher - generateSalt random', async () => {
   const salt1 = await generateSalt(1, random)
 
   expect(hexToBytes(salt1).length).toBe(1)
-  expect(random.getBytes).toBeCalled()
+  expect(random.getBytes).toHaveBeenCalled()
 })
 
 test('Cipher - generateSalt utils', async () => {
@@ -41,7 +41,7 @@ test('Cipher - generateSalt utils', async () => {
   const salt = await generateSalt(1, undefined, util)
 
   expect(salt).toBe(61)
-  expect(util.bytesToHex).toBeCalled()
+  expect(util.bytesToHex).toHaveBeenCalled()
 })
 
 test('Cipher - generatePBKDF2Key', async () => {
@@ -86,7 +86,7 @@ test('Cipher - generateIV utils', async () => {
 
   const iv = await generateIV(random)
   expect(iv.length).toBe(bytes.length)
-  expect(random.getBytes).toBeCalled()
+  expect(random.getBytes).toHaveBeenCalled()
 })
 
 test('Cipher - encryptAES', async () => {
@@ -153,5 +153,5 @@ test('Cipher - decryptAES error', async () => {
       tag,
       key: wrongkey,
     }),
-  ).toThrowError()
+  ).toThrow()
 })

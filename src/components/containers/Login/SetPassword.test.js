@@ -5,17 +5,26 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { AccountProvider, SettingsProvider } from '@Contexts'
 import SetPassword from './SetPassword'
 
-jest.spyOn(console, 'error').getMockImplementation(() => {
-  console.error.restoreMock()
+const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+afterAll(() => {
+  errorSpy.mockRestore()
 })
 
-const mockCheckPassword = jest.fn().mockResolvedValue({
+const mockCheckPasswordResponse = {
   addresses: {
     btcMainnetAddress: 'btcMainnetAddress',
     btcTestnetAddress: 'btcTestnetAddress',
     mlMainnetAddress: 'mlMainnetAddress',
     mlTestnetAddress: 'mlTestnetAddress',
   },
+}
+
+const mockCheckPassword = jest.fn()
+
+beforeEach(() => {
+  jest.clearAllMocks()
+  mockCheckPassword.mockResolvedValue(mockCheckPasswordResponse)
 })
 
 const _data = {

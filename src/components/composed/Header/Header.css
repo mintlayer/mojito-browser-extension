@@ -21,8 +21,8 @@ header {
 }
 
 .backButton {
-  height: 34px;
-  width: 34px;
+  height: 32px;
+  width: 32px;
   padding: 0.2rem;
   position: absolute;
   top: 0.7rem;
@@ -58,6 +58,11 @@ header {
   right: 45px;
   outline: none;
   background-color: transparent !important;
+}
+
+.header-menu-button svg {
+  width: 24px;
+  height: 24px;
 }
 
 .settings {

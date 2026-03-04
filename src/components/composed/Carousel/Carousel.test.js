@@ -21,6 +21,12 @@ const mockContext = {
   setRemoveAccountPopupOpen: jest.fn(),
 }
 
+beforeEach(() => {
+  data.onClick.mockClear()
+  data.onPrevious.mockClear()
+  data.onNext.mockClear()
+})
+
 test('Render Empty Carousel', () => {
   render(
     <AccountContext.Provider value={mockContext}>
