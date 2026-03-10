@@ -1,0 +1,17 @@
+.seed-field-wrapper {
+  position: relative;
+}
+
+.seed-word-counter {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  font-size: 0.75rem;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.seed-word-counter.counter-valid {
+  color: var(--success-color, #43a047);
+  opacity: 1;
+}
