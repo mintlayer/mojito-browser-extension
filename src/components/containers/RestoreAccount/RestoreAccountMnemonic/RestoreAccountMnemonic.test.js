@@ -178,10 +178,7 @@ test('Renders restore account page with step 4', () => {
   })
 
   const onStepsFinishedFn = jest.fn()
-  const validateMnemonicMock = jest
-    .fn()
-    .mockReturnValueOnce(false)
-    .mockReturnValue(true)
+  const validateMnemonicMock = jest.fn().mockReturnValue(true)
 
   render(
     <AccountProvider>
