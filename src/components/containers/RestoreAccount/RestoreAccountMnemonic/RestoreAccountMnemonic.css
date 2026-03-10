@@ -39,6 +39,7 @@
 .restore-submit-icon {
   margin-left: 10px;
   transition: transform 0.3s ease;
+  width: 17px;
 }
 
 .restore-mnemonic-submit-button:hover .restore-submit-icon {
