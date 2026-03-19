@@ -6,5 +6,5 @@
 .errorMessage * {
   color: rgb(var(--color-red));
   text-align: center;
-  font-weight: bold;
+  font-weight: 600;
 }

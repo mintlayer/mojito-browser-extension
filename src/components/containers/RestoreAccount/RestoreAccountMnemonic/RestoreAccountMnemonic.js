@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Expressions } from '@Constants'
 import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
-import { Button } from '@BasicComponents'
+import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import {
   ProgressTracker,
@@ -27,7 +27,6 @@ const RestoreAccountMnemonic = ({
   const inputExtraclasses = ['account-input']
   const passwordPattern = Expressions.PASSWORD
   const [wordsFields, setWordsFields] = useState([])
-  const [accountWordsValid, setAccountWordsValid] = useState(false)
 
   const [accountNameValue, setAccountNameValue] = useState('')
   const [accountPasswordValue, setAccountPasswordValue] = useState('')
@@ -35,13 +34,10 @@ const RestoreAccountMnemonic = ({
   const [accountNameValid, setAccountNameValid] = useState(false)
   const [accountPasswordValid, setAccountPasswordValid] = useState(false)
 
-  const [accountNameErrorMessage, setAccountNameErrorMessage] = useState(null)
-  const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
-    useState(null)
-
   const [accountNamePristinity, setAccountNamePristinity] = useState(true)
   const [accountPasswordPristinity, setAccountPasswordPristinity] =
     useState(true)
+  const [seedPristinity, setSeedPristinity] = useState(true)
 
   const selectedWallets = ['btc', 'ml']
 
@@ -58,28 +54,24 @@ const RestoreAccountMnemonic = ({
       : false
   }
 
-  useEffect(() => {
-    const isValid = isSeedValid(wordsFields, defaultBTCWordList)
-    setAccountWordsValid(isValid)
-  }, [wordsFields, defaultBTCWordList])
+  const accountWordsValid = useMemo(() => {
+    const isWordListValid = isSeedValid(wordsFields, defaultBTCWordList)
+    return isWordListValid && validateMnemonicFn(wordsFields.join(' '))
+  }, [wordsFields, defaultBTCWordList, validateMnemonicFn])
 
-  useEffect(() => {
-    const message = !accountNameValid
+  const accountNameErrorMessage = useMemo(() => {
+    return !accountNameValid
       ? 'The wallet name should have at least 4 characteres.'
       : null
-
-    setAccountNameErrorMessage(message)
   }, [accountNameValid])
 
-  useEffect(() => {
-    const message = !accountPasswordValid
+  const accountPasswordErrorMessage = useMemo(() => {
+    return !accountPasswordValid
       ? [
           'Your password should have at least 8 characteres.',
           'Also it should have a lowercase letter, an uppercase letter, a digit, and a special char like: /\\*()&^%$#@-_=+\'"?!:;<>~`',
         ]
       : null
-
-    setAccountPasswordErrorMessage(message)
   }, [accountPasswordValid])
 
   const getMnemonics = () => wordsFields.join(' ').trim()
@@ -146,10 +138,6 @@ const RestoreAccountMnemonic = ({
 
   const handleError = (step) => {
     if (step === 6) alert('Please select a wallet type')
-    if (step === 4)
-      alert(
-        'These words do not form a valid mnemonic. Check if you had any typos or if you inserted them in a different order',
-      )
     if (step === 5) alert('You must select at least one wallet')
     if (step < 5) return
   }
@@ -164,6 +152,7 @@ const RestoreAccountMnemonic = ({
 
     if (step === 1) setAccountNamePristinity(false)
     if (step === 2) setAccountPasswordPristinity(false)
+    if (step === 4) setSeedPristinity(false)
 
     let validForm = stepsValidations[step]
     if (step === 4) validForm = validForm && isMnemonicValid()
@@ -228,12 +217,15 @@ const RestoreAccountMnemonic = ({
             </CenteredLayout>
           )}
           {step === 4 && (
-            <RestoreSeedField
-              setFields={setWordsFields}
-              BIP39DefaultWordList={defaultBTCWordList}
-              accountWordsValid={accountWordsValid}
-              setAccountWordsValid={setAccountWordsValid}
-            />
+            <>
+              <RestoreSeedField
+                setFields={setWordsFields}
+                accountWordsValid={accountWordsValid}
+              />
+              {!seedPristinity && !accountWordsValid && (
+                <Error error="These words do not form a valid mnemonic. Check for typos or incorrect word order." />
+              )}
+            </>
           )}
 
           <CenteredLayout>

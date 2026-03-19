@@ -74,7 +74,7 @@ const CreateRestorePage = () => {
             className="center-text footnote-name"
             data-testid="footnote-name"
           >
-            ©Mintlayer, 2024
+            ©Mintlayer, 2026
           </small>
           <a
             className="center-text footnote-link"
