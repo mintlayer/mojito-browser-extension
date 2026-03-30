@@ -89,7 +89,9 @@ export const SignTransactionPage = () => {
 
       let unlockedAccount
       try {
-        unlockedAccount = await Account.unlockAccount(accountID, password)
+        unlockedAccount = await Account.unlockAccount(accountID, password, {
+          wallets: ['ml'],
+        })
       } catch (unlockError) {
         setTxErrorMessage('Incorrect password')
         setPassword('')

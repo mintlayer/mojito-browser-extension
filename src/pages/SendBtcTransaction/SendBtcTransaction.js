@@ -93,8 +93,11 @@ const SendBtcTransactionPage = () => {
   }
 
   const confirmBtcTransaction = async (password) => {
-    // eslint-disable-next-line no-unused-vars
-    const { btcPrivateKeys } = await Account.unlockAccount(accountID, password)
+    const { btcPrivateKeys } = await Account.unlockAccount(
+      accountID,
+      password,
+      { wallets: ['btc'] },
+    )
     const transactionAmountInSatoshi = BTCHelper.convertBtcToSatoshi(
       transactionInformation.amount,
     )

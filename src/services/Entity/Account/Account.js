@@ -156,7 +156,7 @@ const saveProvidedHtlsSecret = async ({ accountId, password, data }) => {
   await updateAccount(accountId, { htlsSecrets: updatedHtlsSecrets })
 }
 
-const unlockAccount = async (id, password) => {
+const unlockAccount = async (id, password, { wallets } = {}) => {
   const storedNetworkType = LocalStorageService.getItem('networkType')
 
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
@@ -201,22 +201,25 @@ const unlockAccount = async (id, password) => {
       account.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
     if (seed.error) throw new Error(seed.error)
 
-    const btcHDWallet = BTC.getHDWalletFromSeed(Buffer.from(seed))
-    const btcAddressData = await BTC_ADDRESS_TYPE_MAP[
-      account.walletType
-    ].getAddresses(
-      btcHDWallet,
-      BtcHelpers.getNetwork(),
-      AppInfo.BTC_DEFAULT_ADDRESSES_BATCH,
-      btcAddressType,
-    )
-    const btcAddresses = BtcHelpers.getBtcAddresses(btcAddressData)
+    const walletsToUnlock = wallets || walletsToCreate
 
-    if (walletsToCreate.includes('btc')) {
+    let btcHDWallet = null
+    let btcAddressData = null
+    if (walletsToUnlock.includes('btc')) {
+      btcHDWallet = BTC.getHDWalletFromSeed(Buffer.from(seed))
+      btcAddressData = await BTC_ADDRESS_TYPE_MAP[
+        account.walletType
+      ].getAddresses(
+        btcHDWallet,
+        BtcHelpers.getNetwork(),
+        AppInfo.BTC_DEFAULT_ADDRESSES_BATCH,
+        btcAddressType,
+      )
+      const btcAddresses = BtcHelpers.getBtcAddresses(btcAddressData)
       addresses.btcAddresses = btcAddresses
     }
 
-    if (walletsToCreate.includes('ml')) {
+    if (walletsToUnlock.includes('ml')) {
       if (storedNetworkType === 'testnet') {
         const mlTestnetWalletAddresses = await ML.getWalletAddresses(
           mlTestnetPrivateKey,

@@ -191,7 +191,9 @@ export const SignTransactionPage = () => {
 
       const pass = password
 
-      const unlockedAccount = await Account.unlockAccount(accountID, pass)
+      const unlockedAccount = await Account.unlockAccount(accountID, password, {
+        wallets: ['ml'],
+      })
 
       const mlPrivKeys = unlockedAccount.mlPrivKeys
 
@@ -501,7 +503,7 @@ export const SignTransactionPage = () => {
                 {/* TODO: Add "Save Secret" button functionality here */}
                 <p>
                   <em>
-                    💡 Save this secret - you'll need it to claim the HTLC
+                    💡 Save this secret - you&apos;ll need it to claim the HTLC
                     later!
                   </em>
                 </p>
