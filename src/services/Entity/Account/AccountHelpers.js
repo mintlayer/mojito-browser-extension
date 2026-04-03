@@ -53,9 +53,9 @@ const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
   }
 }
 
-const getEncryptedHtlsSecret = async (password, salt, secret) => {
+const getEncryptedHtlsSecret = async (password, salt, secret, iterations) => {
   const { generateEncryptionKey, encryptSeed } = await loadAccountSubRoutines()
-  const { key } = await generateEncryptionKey({ password, salt })
+  const { key } = await generateEncryptionKey({ password, salt, iterations })
 
   const {
     encryptedData: encryptedHtlsSecret,

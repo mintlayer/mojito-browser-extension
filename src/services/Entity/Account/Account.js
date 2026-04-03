@@ -8,6 +8,7 @@ import {
 import { BTC as BtcHelpers } from '@Helpers'
 import loadAccountSubRoutines from './loadWorkers'
 import { LocalStorageService } from '@Storage'
+import { DEFAULT_ITERATIONS, LEGACY_ITERATIONS } from '../../Crypto/Cipher/Cipher'
 
 const saveAccount = async (data) => {
   const { generateEncryptionKey } = await loadAccountSubRoutines()
@@ -28,6 +29,7 @@ const saveAccount = async (data) => {
   const account = {
     name,
     salt,
+    kdfIterations: DEFAULT_ITERATIONS,
     iv: { btcIv, mlTestnetPrivKeyIv, mlMainnetPrivKeyIv },
     tag: { btcTag, mlTestnetPrivKeyTag, mlMainnetPrivKeyTag },
     seed: {
@@ -88,6 +90,7 @@ const checkPasswordValidity = async (id, password) => {
     const { key } = await generateEncryptionKey({
       password,
       salt: account.salt,
+      iterations: account.kdfIterations || LEGACY_ITERATIONS,
     })
 
     const decrypted = await decryptSeed({
@@ -117,6 +120,7 @@ const unlockHtlsSecret = async ({ accountId, password, hash }) => {
   const { key } = await generateEncryptionKey({
     password,
     salt: account.salt,
+    iterations: account.kdfIterations || LEGACY_ITERATIONS,
   })
 
   const data = account.htlsSecrets[hash]
@@ -146,6 +150,7 @@ const saveProvidedHtlsSecret = async ({ accountId, password, data }) => {
     password,
     account.salt,
     data.secret,
+    account.kdfIterations || LEGACY_ITERATIONS,
   )
 
   const updatedHtlsSecrets = {
@@ -154,6 +159,77 @@ const saveProvidedHtlsSecret = async ({ accountId, password, data }) => {
   }
 
   await updateAccount(accountId, { htlsSecrets: updatedHtlsSecrets })
+}
+
+const reEncryptAccount = async (id, password, account, decryptedSeeds) => {
+  const { generateEncryptionKey, encryptSeed } = await loadAccountSubRoutines()
+
+  const { key: newKey, salt: newSalt } = await generateEncryptionKey({
+    password,
+    iterations: DEFAULT_ITERATIONS,
+  })
+
+  const reEncrypt = async (data) => {
+    const { encryptedData, iv, tag } = await encryptSeed({ data, key: newKey })
+    return { encryptedData, iv, tag }
+  }
+
+  const {
+    encryptedData: btcEncryptedSeed,
+    iv: btcIv,
+    tag: btcTag,
+  } = await reEncrypt(decryptedSeeds.seed)
+
+  const {
+    encryptedData: encryptedMlTestnetPrivateKey,
+    iv: mlTestnetPrivKeyIv,
+    tag: mlTestnetPrivKeyTag,
+  } = await reEncrypt(decryptedSeeds.mlTestnetPrivateKey)
+
+  const {
+    encryptedData: encryptedMlMainnetPrivateKey,
+    iv: mlMainnetPrivKeyIv,
+    tag: mlMainnetPrivKeyTag,
+  } = await reEncrypt(decryptedSeeds.mlMainnetPrivateKey)
+
+  // Re-encrypt HTLS secrets if any
+  const updatedHtlsSecrets = {}
+  if (account.htlsSecrets) {
+    const { decryptSeed } = await loadAccountSubRoutines()
+    const { key: oldKey } = await generateEncryptionKey({
+      password,
+      salt: account.salt,
+      iterations: account.kdfIterations || LEGACY_ITERATIONS,
+    })
+
+    for (const [hash, data] of Object.entries(account.htlsSecrets)) {
+      const decryptedSecret = await decryptSeed({
+        data: data.encryptedHtlsSecret,
+        iv: data.htlsIv,
+        tag: data.htlsTag,
+        key: oldKey,
+      })
+      const {
+        encryptedData: encryptedHtlsSecret,
+        iv: htlsIv,
+        tag: htlsTag,
+      } = await reEncrypt(decryptedSecret)
+      updatedHtlsSecrets[hash] = { encryptedHtlsSecret, htlsIv, htlsTag, txHash: data.txHash }
+    }
+  }
+
+  await updateAccount(id, {
+    salt: newSalt,
+    kdfIterations: DEFAULT_ITERATIONS,
+    iv: { btcIv, mlTestnetPrivKeyIv, mlMainnetPrivKeyIv },
+    tag: { btcTag, mlTestnetPrivKeyTag, mlMainnetPrivKeyTag },
+    seed: {
+      btcEncryptedSeed,
+      encryptedMlTestnetPrivateKey,
+      encryptedMlMainnetPrivateKey,
+    },
+    htlsSecrets: updatedHtlsSecrets,
+  })
 }
 
 const unlockAccount = async (id, password, { wallets } = {}) => {
@@ -170,9 +246,12 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
     if (!account.walletsToCreate)
       updateAccount(id, { walletsToCreate: AppInfo.DEFAULT_WALLETS_TO_CREATE })
 
+    const accountIterations = account.kdfIterations || LEGACY_ITERATIONS
+
     const { key } = await generateEncryptionKey({
       password,
       salt: account.salt,
+      iterations: accountIterations,
     })
 
     const seed = await decryptSeed({
@@ -237,6 +316,15 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
         )
         addresses.mlAddresses = mlMainnetWalletAddresses
       }
+    }
+
+    // Migrate old accounts to stronger KDF in the background
+    if (accountIterations < DEFAULT_ITERATIONS) {
+      reEncryptAccount(id, password, account, {
+        seed,
+        mlTestnetPrivateKey,
+        mlMainnetPrivateKey,
+      }).catch((e) => console.error('KDF migration failed:', e))
     }
 
     return {
