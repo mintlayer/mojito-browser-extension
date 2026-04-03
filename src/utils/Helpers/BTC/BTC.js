@@ -16,18 +16,25 @@ const blockLevels = {
 }
 
 const parseFeesEstimates = (allEstimates) => {
-  const blockValues = Object.keys(blockLevels)
+  const availableKeys = Object.keys(allEstimates)
+    .map(Number)
+    .sort((a, b) => a - b)
 
-  return Object.keys(allEstimates)
-    .filter((blocksAmount) => blockValues.includes(blocksAmount))
-    .map((blocksAmount) => ({
-      [blockLevels[blocksAmount]]: allEstimates[blocksAmount],
-    }))
-    .reduce((acc, item) => {
-      const levelName = Object.keys(item)[0]
-      acc[levelName] = item[levelName]
-      return acc
-    }, {})
+  const sortedLevels = Object.entries(blockLevels).sort(
+    ([a], [b]) => Number(a) - Number(b),
+  )
+
+  return sortedLevels.reduce((acc, [blockTarget, levelName], index) => {
+    if (allEstimates[blockTarget] !== undefined) {
+      acc[levelName] = allEstimates[blockTarget]
+    } else {
+      const spreadIndex = Math.round(
+        (index / (sortedLevels.length - 1)) * (availableKeys.length - 1),
+      )
+      acc[levelName] = allEstimates[availableKeys[spreadIndex]]
+    }
+    return acc
+  }, {})
 }
 
 const convertSatoshiToBtc = (satoshiAmount) =>

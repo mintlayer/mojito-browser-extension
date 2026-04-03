@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 import { Loading, PopUp, TextField } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
-import { AccountContext, MintlayerContext, TransactionContext } from '@Contexts'
+import { AccountContext, BitcoinContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
@@ -55,7 +55,7 @@ const SendBtcTransaction = ({
   const [allowClosing, setAllowClosing] = useState(true)
   const [askPassword, setAskPassword] = useState(false)
   const [pass, setPass] = useState(null)
-  const NC = useContext(MintlayerContext)
+  const NC = useContext(BitcoinContext)
   const loadingExtraClasses = ['loading-big']
 
   const [openSendFundConfirmation, setOpenSendFundConfirmation] =

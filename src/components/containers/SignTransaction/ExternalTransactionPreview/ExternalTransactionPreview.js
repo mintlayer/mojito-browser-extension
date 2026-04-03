@@ -503,7 +503,7 @@ const DelegateWithdraw = ({ transactionData }) => {
   )
 }
 
-const CreateHtlc = ({ transactionData, requiredAddresses }) => {
+const CreateHtlc = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
 
   const outputWithHtlc = JSONRepresentation.outputs.find(
@@ -531,7 +531,7 @@ const CreateHtlc = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const SpendHtlc = ({ transactionData, requiredAddresses }) => {
+const SpendHtlc = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
 
   const inputWithHtlc = JSONRepresentation.inputs.find(
@@ -582,7 +582,7 @@ const BridgeRequest = ({ transactionData }) => {
   )
 }
 
-const BurnCoin = ({ transactionData, requiredAddresses }) => {
+const BurnCoin = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
 
   const outputWithBurnCoin = JSONRepresentation.outputs.find(
@@ -599,7 +599,7 @@ const BurnCoin = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const TokenMint = ({ transactionData, requiredAddresses }) => {
+const TokenMint = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
 
   const inputWithMint = JSONRepresentation.inputs.find(
@@ -618,7 +618,7 @@ const TokenMint = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const TokenUnmint = ({ transactionData, requiredAddresses }) => {
+const TokenUnmint = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
 
   const inputWithUnmint = JSONRepresentation.inputs.find(
@@ -637,7 +637,7 @@ const TokenUnmint = ({ transactionData, requiredAddresses }) => {
   )
 }
 
-const TokenMintWithLock = ({ transactionData, requiredAddresses }) => {
+const TokenMintWithLock = ({ transactionData }) => {
   const JSONRepresentation = transactionData.data.txData.JSONRepresentation
 
   const outputWithLock = JSONRepresentation.outputs.find(
