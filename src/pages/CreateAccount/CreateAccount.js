@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Loading } from '@ComposedComponents'
@@ -8,7 +8,6 @@ import { CreateAccount } from '@ContainerComponents'
 import { Account, loadAccountSubRoutines } from '@Entities'
 import { AccountContext } from '@Contexts'
 import { BTC, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
-import { ArrayHelper } from '@Helpers'
 
 import './CreateAccount.css'
 
@@ -16,31 +15,14 @@ const CreateAccountPage = () => {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [words, setWords] = useState([])
-  const { setWalletInfo, entropy, setLines, setEntropy } =
-    useContext(AccountContext)
+  const { setWalletInfo } = useContext(AccountContext)
   const [creatingWallet, setCreatingWallet] = useState(false)
 
-  const generateMnemonic = async (entropy) => {
+  const generateMnemonic = async () => {
     const { generateNewAccountMnemonic } = await loadAccountSubRoutines()
-    const mnemonic = await generateNewAccountMnemonic(entropy)
+    const mnemonic = await generateNewAccountMnemonic()
     setWords(mnemonic.split(' '))
   }
-
-  useEffect(() => {
-    if (!entropy.length) return
-    if (step < 3) {
-      setLines([])
-      setEntropy([])
-      setWords([])
-    }
-    if (step === 4) {
-      const shuffledEntropy = ArrayHelper.getNRandomElementsFromArray(
-        entropy,
-        16,
-      )
-      generateMnemonic(shuffledEntropy)
-    }
-  }, [entropy, step, setLines, setEntropy])
 
   const createAccount = (accountName, accountPassword, selectedWallets) => {
     setCreatingWallet(true)
@@ -63,8 +45,6 @@ const CreateAccountPage = () => {
         setWalletInfo(addresses, accountID, name)
         navigate('/dashboard')
       })
-    setLines([])
-    setEntropy([])
   }
 
   const loadingExtraClasses = ['loading-big']
@@ -87,6 +67,7 @@ const CreateAccountPage = () => {
       setStep={setStep}
       words={words}
       onStepsFinished={createAccount}
+      onGenerateMnemonic={generateMnemonic}
       validateMnemonicFn={BTC.validateMnemonic}
       defaultBTCWordList={BTC.getWordList()}
     />

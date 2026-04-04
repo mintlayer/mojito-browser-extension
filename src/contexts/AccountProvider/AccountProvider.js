@@ -10,8 +10,6 @@ const AccountProvider = ({ value: propValue, children }) => {
   const [accountID, setAccountID] = useState('')
   const [accountName, setAccountName] = useState('')
   const [accounts, setAccounts] = useState(null)
-  const [lines, setLines] = useState([])
-  const [entropy, setEntropy] = useState([])
   const [balanceLoading, setBalanceLoading] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(undefined)
   const [removeAccountPopupOpen, setRemoveAccountPopupOpen] = useState(false)
@@ -91,10 +89,6 @@ const AccountProvider = ({ value: propValue, children }) => {
     accountRegistryName,
     addresses,
     accountName,
-    lines,
-    setLines,
-    entropy,
-    setEntropy,
     setWalletInfo: unlockAccountAndSaveParams,
     isAccountUnlocked: checkAccountLockState,
     setLoginTimeoutLimit,

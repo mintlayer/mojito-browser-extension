@@ -24,7 +24,7 @@ describe('BTC Crypto Functions', () => {
   })
 
   test('generateMnemonic should create valid 12-word mnemonic', () => {
-    const mnemonic = generateMnemonic(ENTROPY_DATA)
+    const mnemonic = generateMnemonic()
     const words = mnemonic.split(' ')
 
     expect(words).toHaveLength(12)
@@ -66,7 +66,7 @@ describe('BTC Crypto Functions', () => {
   })
 
   test('generated mnemonic should be valid', () => {
-    const mnemonic = generateMnemonic(ENTROPY_DATA)
+    const mnemonic = generateMnemonic()
     expect(validateMnemonic(mnemonic)).toBe(true)
   })
 })
