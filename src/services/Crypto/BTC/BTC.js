@@ -12,10 +12,7 @@ const getHDWalletFromSeed = (seed) => {
   return root
 }
 
-const generateMnemonic = () => {
-  const entropy = crypto.getRandomValues(new Uint8Array(16))
-  return Bip39.entropyToMnemonic(Buffer.from(entropy))
-}
+const generateMnemonic = () => Bip39.generateMnemonic()
 
 const validateMnemonic = (mnemonic) => Bip39.validateMnemonic(mnemonic)
 const getWordList = () => Bip39.wordlists[Bip39.getDefaultWordlist()]
