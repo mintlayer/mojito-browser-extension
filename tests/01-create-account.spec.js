@@ -32,57 +32,6 @@ test('Create account', async ({ page }) => {
 
   await expect(
     page.locator(
-      ':text("In the blank screen aside please draw anything you want.")',
-    ),
-  ).toBeVisible()
-
-  await expect(
-    page.locator(
-      ':text("We are going to use this drawing to generate a random seed for your wallet.")',
-    ),
-  ).toBeVisible()
-
-  await expect(
-    page.locator(
-      ':text("The more random the drawing is, the more secure your wallet will be.")',
-    ),
-  ).toBeVisible()
-
-  await expect(page.locator(':text("Express your art.")')).toBeVisible()
-
-  // Helper functions
-  const getRandomIntBetween = (min, max) => {
-    return Math.floor(Math.random() * (max - min + 1)) + min
-  }
-
-  const drawRandomEntropy = async (page, element) => {
-    const el = await page.$(element)
-    const coords = await el.boundingBox()
-    const gap = 50
-    const limits = {
-      minX: coords.x + gap,
-      maxX: coords.x + coords.width - gap,
-      minY: coords.y + gap,
-      maxY: coords.y + coords.height - gap,
-    }
-    for (let i = 0; i < 55; i++) {
-      const x = getRandomIntBetween(limits.minX, limits.maxX)
-      const y = getRandomIntBetween(limits.minY, limits.maxY)
-      await page.mouse.move(x, y)
-      await page.mouse.down()
-      await page.mouse.move(x + 10, y + 10) // move a little bit while the mouse button is down
-      await page.mouse.up()
-    }
-  }
-
-  const drawingBoardStage = 'div.drawingBoard'
-
-  await drawRandomEntropy(page, drawingBoardStage)
-
-  await page.getByRole('button', { name: 'Continue' }).click()
-
-  await expect(
-    page.locator(
       ':text("Write down each of the words (seed phrases) that are shown on the next screen.")',
     ),
   ).toBeVisible()

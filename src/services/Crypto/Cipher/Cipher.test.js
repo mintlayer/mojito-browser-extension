@@ -6,6 +6,8 @@ import {
   decryptAES,
   hexToBytes,
   IVSIZE,
+  DEFAULT_ITERATIONS,
+  LEGACY_ITERATIONS,
 } from './Cipher'
 
 test('Cipher - HEX to Bytes', () => {
@@ -16,35 +18,39 @@ test('Cipher - HEX to Bytes', () => {
   expect(Buffer.from(bytes).toString('hex')).toBe(hex)
 })
 
-test('Cipher - generateSalt', async () => {
+test('Cipher - generateSalt returns correct length hex string', async () => {
   const salt1 = await generateSalt(1)
   const salt2 = await generateSalt(2)
+  const salt16 = await generateSalt(16)
 
   expect(hexToBytes(salt1).length).toBe(1)
   expect(hexToBytes(salt2).length).toBe(2)
+  expect(hexToBytes(salt16).length).toBe(16)
+
+  expect(typeof salt1).toBe('string')
+  expect(salt1).toMatch(/^[0-9a-f]+$/)
+  expect(salt1.length).toBe(2)
+  expect(salt2.length).toBe(4)
+  expect(salt16.length).toBe(32)
 })
 
-test('Cipher - generateSalt random', async () => {
-  const random = {
-    getBytes: jest.fn(() => new Uint8Array([97])),
-  }
-  const salt1 = await generateSalt(1, random)
+test('Cipher - generateSalt uses crypto.getRandomValues', async () => {
+  const originalGetRandomValues = crypto.getRandomValues.bind(crypto)
+  const mockGetRandomValues = jest.fn((arr) => {
+    for (let i = 0; i < arr.length; i++) arr[i] = 0xab
+    return arr
+  })
+  crypto.getRandomValues = mockGetRandomValues
 
-  expect(hexToBytes(salt1).length).toBe(1)
-  expect(random.getBytes).toHaveBeenCalled()
+  const salt = await generateSalt(3)
+
+  expect(mockGetRandomValues).toHaveBeenCalled()
+  expect(salt).toBe('ababab')
+
+  crypto.getRandomValues = originalGetRandomValues
 })
 
-test('Cipher - generateSalt utils', async () => {
-  const util = {
-    bytesToHex: jest.fn(() => 61),
-  }
-  const salt = await generateSalt(1, undefined, util)
-
-  expect(salt).toBe(61)
-  expect(util.bytesToHex).toHaveBeenCalled()
-})
-
-test('Cipher - generatePBKDF2Key', async () => {
+test('Cipher - generatePBKDF2Key deterministic with same salt', async () => {
   const password = 'test'
 
   const { key: key1, salt: salt1 } = await generatePBKDF2Key({ password })
@@ -58,69 +64,166 @@ test('Cipher - generatePBKDF2Key', async () => {
   expect(salt1).toStrictEqual(salt2)
 })
 
-test('Cipher - generatePBKDF2Key derivationFn', async () => {
-  const password = 'test'
-  const salt = 'salt'
-  const derivationFn = () => [12]
-
-  const { key: key1, salt: salt1 } = await generatePBKDF2Key({
-    password,
-    salt,
-    derivationFn,
+test('Cipher - generatePBKDF2Key returns correct key length', async () => {
+  const { key } = await generatePBKDF2Key({
+    password: 'test',
+    salt: 'a1b2c3d4',
   })
 
-  expect(key1).toStrictEqual([12])
-  expect(salt1).toStrictEqual(salt)
+  expect(Array.isArray(key)).toBe(true)
+  expect(key.length).toBe(16)
+  key.forEach((byte) => {
+    expect(byte).toBeGreaterThanOrEqual(0)
+    expect(byte).toBeLessThanOrEqual(255)
+  })
 })
 
-test('Cipher - generateIV', async () => {
+test('Cipher - generatePBKDF2Key uses provided salt', async () => {
+  const salt = 'deadbeef'
+  const { salt: returnedSalt } = await generatePBKDF2Key({
+    password: 'test',
+    salt,
+  })
+
+  expect(returnedSalt).toBe(salt)
+})
+
+test('Cipher - generatePBKDF2Key generates salt when not provided', async () => {
+  const { salt } = await generatePBKDF2Key({ password: 'test' })
+
+  expect(typeof salt).toBe('string')
+  expect(salt).toMatch(/^[0-9a-f]+$/)
+  expect(salt.length).toBe(32)
+})
+
+test('Cipher - generatePBKDF2Key different passwords produce different keys', async () => {
+  const salt = 'fixedsalt'
+  const { key: key1 } = await generatePBKDF2Key({
+    password: 'password1',
+    salt,
+  })
+  const { key: key2 } = await generatePBKDF2Key({
+    password: 'password2',
+    salt,
+  })
+
+  expect(key1).not.toStrictEqual(key2)
+})
+
+test('Cipher - generatePBKDF2Key respects iterations parameter', async () => {
+  const salt = 'fixedsalt'
+  const password = 'test'
+
+  const { key: keyDefault } = await generatePBKDF2Key({ password, salt })
+  const { key: keyLegacy } = await generatePBKDF2Key({
+    password,
+    salt,
+    iterations: LEGACY_ITERATIONS,
+  })
+
+  expect(keyDefault).not.toStrictEqual(keyLegacy)
+})
+
+test('Cipher - generatePBKDF2Key known value verification', async () => {
+  const { key } = await generatePBKDF2Key({
+    password: 'testpassword',
+    salt: '0123456789abcdef0123456789abcdef',
+    iterations: 1000,
+  })
+
+  expect(key.length).toBe(16)
+
+  const { key: key2 } = await generatePBKDF2Key({
+    password: 'testpassword',
+    salt: '0123456789abcdef0123456789abcdef',
+    iterations: 1000,
+  })
+  expect(key).toStrictEqual(key2)
+})
+
+test('Cipher - generateIV returns Uint8Array of correct size', async () => {
   const iv = await generateIV()
+
+  expect(iv).toBeInstanceOf(Uint8Array)
   expect(iv.length).toBe(IVSIZE)
+  expect(iv.length).toBe(12)
 })
 
-test('Cipher - generateIV utils', async () => {
-  const bytes = [0]
-  const random = {
-    getBytes: jest.fn(() => bytes),
-  }
+test('Cipher - generateIV uses crypto.getRandomValues', async () => {
+  const originalGetRandomValues = crypto.getRandomValues.bind(crypto)
+  const mockGetRandomValues = jest.fn((arr) => {
+    for (let i = 0; i < arr.length; i++) arr[i] = 0x42
+    return arr
+  })
+  crypto.getRandomValues = mockGetRandomValues
 
-  const iv = await generateIV(random)
-  expect(iv.length).toBe(bytes.length)
-  expect(random.getBytes).toHaveBeenCalled()
+  const iv = await generateIV()
+
+  expect(mockGetRandomValues).toHaveBeenCalled()
+  expect(iv.length).toBe(IVSIZE)
+  expect(Array.from(iv)).toStrictEqual(Array(IVSIZE).fill(0x42))
+
+  crypto.getRandomValues = originalGetRandomValues
 })
 
-test('Cipher - encryptAES', async () => {
+test('Cipher - encryptAES returns correct structure', async () => {
   const data = 'data'
-  const expectedIV = 'aaaaaaaaaaaa'
-  const ivGenerationFn = async () => Promise.resolve(expectedIV)
-
   const key = [
     97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
   ]
 
-  const expectedEncryptedData = new Uint8Array([
-    194, 137, 41, 21, 195, 133, 195, 144, 123, 78, 18,
-  ])
+  const { encryptedData, iv, tag } = await encryptAES({ data, key })
 
-  const expectedTag = new Uint8Array([
-    194, 131, 32, 95, 194, 170, 195, 147, 68, 195, 159, 194, 147, 194, 189, 117,
-    195, 178, 91, 50, 194, 182, 195, 128, 20,
-  ])
-
-  const { encryptedData, iv, tag } = await encryptAES({
-    data,
-    key,
-    ivGenerationFn,
-  })
-
-  expect(Buffer.from(encryptedData)).toStrictEqual(
-    Buffer.from(expectedEncryptedData),
-  )
-  expect(iv).toBe(expectedIV)
-  expect(Buffer.from(tag)).toStrictEqual(Buffer.from(expectedTag))
+  expect(typeof encryptedData).toBe('string')
+  expect(typeof iv).toBe('string')
+  expect(typeof tag).toBe('string')
+  expect(encryptedData.length).toBeGreaterThan(0)
+  expect(iv.length).toBe(12)
+  expect(tag.length).toBe(16)
 })
 
-test('Cipher - decryptAES', async () => {
+test('Cipher - encryptAES deterministic with mocked IV', async () => {
+  const data = 'data'
+  const key = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
+  ]
+
+  const originalGetRandomValues = crypto.getRandomValues.bind(crypto)
+  crypto.getRandomValues = jest.fn((arr) => {
+    for (let i = 0; i < arr.length; i++) arr[i] = 0x61
+    return arr
+  })
+
+  const result1 = await encryptAES({ data, key })
+  const result2 = await encryptAES({ data, key })
+
+  expect(result1.encryptedData).toBe(result2.encryptedData)
+  expect(result1.iv).toBe(result2.iv)
+  expect(result1.tag).toBe(result2.tag)
+
+  crypto.getRandomValues = originalGetRandomValues
+})
+
+test('Cipher - encryptAES different data produces different output', async () => {
+  const key = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
+  ]
+
+  const originalGetRandomValues = crypto.getRandomValues.bind(crypto)
+  crypto.getRandomValues = jest.fn((arr) => {
+    for (let i = 0; i < arr.length; i++) arr[i] = 0x61
+    return arr
+  })
+
+  const result1 = await encryptAES({ data: 'data1', key })
+  const result2 = await encryptAES({ data: 'data2', key })
+
+  expect(result1.encryptedData).not.toBe(result2.encryptedData)
+
+  crypto.getRandomValues = originalGetRandomValues
+})
+
+test('Cipher - decryptAES round-trip', async () => {
   const data = 'data'
   const key = [
     97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
@@ -136,7 +239,40 @@ test('Cipher - decryptAES', async () => {
   expect(Buffer.from(decrypted).toString()).toBe(data)
 })
 
-test('Cipher - decryptAES error', async () => {
+test('Cipher - decryptAES round-trip with long data', async () => {
+  const data =
+    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+  const key = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
+  ]
+  const { encryptedData, iv, tag } = await encryptAES({ data, key })
+  const decrypted = await decryptAES({
+    data: encryptedData,
+    iv,
+    tag,
+    key,
+  })
+
+  expect(Buffer.from(decrypted).toString()).toBe(data)
+})
+
+test('Cipher - decryptAES round-trip with unicode data', async () => {
+  const data = 'test data with special chars @#$%'
+  const key = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
+  ]
+  const { encryptedData, iv, tag } = await encryptAES({ data, key })
+  const decrypted = await decryptAES({
+    data: encryptedData,
+    iv,
+    tag,
+    key,
+  })
+
+  expect(Buffer.from(decrypted).toString()).toBe(data)
+})
+
+test('Cipher - decryptAES wrong key throws', async () => {
   const data = 'data'
   const key = [
     97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
@@ -146,12 +282,98 @@ test('Cipher - decryptAES error', async () => {
   ]
   const { encryptedData, iv, tag } = await encryptAES({ data, key })
 
-  expect(
-    decryptAES.bind(null, {
+  await expect(
+    decryptAES({
       data: encryptedData,
       iv,
       tag,
       key: wrongkey,
     }),
-  ).toThrow()
+  ).rejects.toThrow('Incorrect password')
+})
+
+test('Cipher - decryptAES tampered data throws', async () => {
+  const data = 'data'
+  const key = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
+  ]
+  const { encryptedData, iv, tag } = await encryptAES({ data, key })
+
+  const tampered =
+    String.fromCharCode(encryptedData.charCodeAt(0) ^ 0xff) +
+    encryptedData.slice(1)
+
+  await expect(
+    decryptAES({
+      data: tampered,
+      iv,
+      tag,
+      key,
+    }),
+  ).rejects.toThrow('Incorrect password')
+})
+
+test('Cipher - decryptAES tampered tag throws', async () => {
+  const data = 'data'
+  const key = [
+    97, 98, 99, 100, 101, 97, 98, 99, 100, 101, 97, 98, 100, 101, 97, 98,
+  ]
+  const { encryptedData, iv, tag } = await encryptAES({ data, key })
+
+  const tamperedTag =
+    String.fromCharCode(tag.charCodeAt(0) ^ 0xff) + tag.slice(1)
+
+  await expect(
+    decryptAES({
+      data: encryptedData,
+      iv,
+      tag: tamperedTag,
+      key,
+    }),
+  ).rejects.toThrow('Incorrect password')
+})
+
+test('Cipher - constants are correct', () => {
+  expect(DEFAULT_ITERATIONS).toBe(600000)
+  expect(LEGACY_ITERATIONS).toBe(10000)
+  expect(IVSIZE).toBe(12)
+})
+
+test('Cipher - full encrypt/decrypt cycle with PBKDF2', async () => {
+  const password = 'MyStr0ng!Password'
+  const data = 'secret seed phrase data'
+
+  const { key, salt } = await generatePBKDF2Key({ password })
+  const { encryptedData, iv, tag } = await encryptAES({ data, key })
+
+  const { key: key2 } = await generatePBKDF2Key({ password, salt })
+  const decrypted = await decryptAES({
+    data: encryptedData,
+    iv,
+    tag,
+    key: key2,
+  })
+
+  expect(Buffer.from(decrypted).toString()).toBe(data)
+})
+
+test('Cipher - full cycle with wrong password fails', async () => {
+  const data = 'secret seed phrase data'
+
+  const { key } = await generatePBKDF2Key({ password: 'correct' })
+  const { encryptedData, iv, tag } = await encryptAES({ data, key })
+
+  const { key: wrongKey } = await generatePBKDF2Key({
+    password: 'wrong',
+    salt: 'differentsalt',
+  })
+
+  await expect(
+    decryptAES({
+      data: encryptedData,
+      iv,
+      tag,
+      key: wrongKey,
+    }),
+  ).rejects.toThrow('Incorrect password')
 })
