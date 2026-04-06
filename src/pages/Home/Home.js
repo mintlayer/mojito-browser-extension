@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
 import { AccountContext } from '@Contexts'
@@ -9,23 +9,23 @@ import './Home.css'
 
 const HomePage = () => {
   const effectCalled = useRef(false)
-  const navigatedRef = useRef(false)
-  const [unlocked, setUnlocked] = useState(false)
+  const unlockChecked = useRef(false)
   const location = useLocation()
 
   const navigate = useNavigate()
   const { isAccountUnlocked, accounts, verifyAccountsExistence } =
     useContext(AccountContext)
 
+  const unlocked = isAccountUnlocked(false)
+
   useEffect(() => {
-    if (navigatedRef.current) return
-    const currentUnlocked = isAccountUnlocked(true)
-    setUnlocked(currentUnlocked)
-    if (currentUnlocked) {
-      navigatedRef.current = true
+    if (unlockChecked.current) return
+    if (unlocked) {
+      unlockChecked.current = true
+      isAccountUnlocked(true)
       navigate('/dashboard')
     }
-  }, [isAccountUnlocked, navigate])
+  }, [unlocked, isAccountUnlocked, navigate])
 
   useEffect(() => {
     if (effectCalled.current) return
@@ -33,22 +33,14 @@ const HomePage = () => {
     verifyAccountsExistence()
   }, [accounts, verifyAccountsExistence])
 
-  const Home = () => {
-    if (accounts === null) return <Loading />
+  if (unlocked) return null
 
-    return !accounts.length || location.state?.fromLogin ? (
-      <CreateRestorePage />
-    ) : (
-      <LoginPage accounts={accounts} />
-    )
-  }
-
-  return (
-    !unlocked && (
-      <>
-        <Home />
-      </>
-    )
+  return accounts === null ? (
+    <Loading />
+  ) : !accounts.length || location.state?.fromLogin ? (
+    <CreateRestorePage />
+  ) : (
+    <LoginPage accounts={accounts} />
   )
 }
 

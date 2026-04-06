@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.2.0",
-    "@mintlayer/entropy-generator": "^1.0.6",
     "@mintlayer/sdk": "1.0.30",
     "@noble/secp256k1": "^3.0.0",
     "bip32": "^5.0.0",

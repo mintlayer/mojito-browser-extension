@@ -19,7 +19,6 @@ const TextField = ({
   extraStyleClasses,
   errorMessages,
   pristinity = true,
-  reference,
   focus = true,
   bigGap = true,
 }) => {
@@ -52,7 +51,7 @@ const TextField = ({
     setIsPristine(pristinity)
   }, [pristinity])
 
-  const setPristineState = (e) => setIsPristine(false)
+  const setPristineState = () => setIsPristine(false)
 
   return (
     <VerticalGroup bigGap={bigGap}>

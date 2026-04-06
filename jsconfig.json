@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@BasicComponents": ["./src/components/basic/index.js"],
       "@ComposedComponents": ["./src/components/composed/index.js"],

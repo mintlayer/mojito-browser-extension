@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // jest-dom adds custom jest matchers for asserting on DOM nodes.
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
@@ -15,9 +16,11 @@ global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder
 
 // Crypto polyfill for Node.js environment
+const { webcrypto } = require('crypto')
 if (typeof global.crypto === 'undefined') {
-  const { webcrypto } = require('crypto')
   global.crypto = webcrypto
+} else if (typeof global.crypto.subtle === 'undefined') {
+  global.crypto.subtle = webcrypto.subtle
 }
 
 // Buffer polyfill
