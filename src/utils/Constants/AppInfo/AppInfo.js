@@ -11,7 +11,6 @@ const appAccounts = async () => {
 const decimalSeparator = '.'
 const thousandsSeparator = ' '
 const amountRegex = /^\d+(.\d+)?$/
-const minEntropyLength = 192
 const DEFAULT_WALLETS_TO_CREATE = ['btc', 'ml']
 const ML_ATOMS_PER_COIN = 100000000000
 const DEFAULT_ML_WALLET_OFFSET = 21
@@ -26,9 +25,9 @@ const BATCH_REQUEST_BITCOIN_LIMIT = 10
 const ML_EXPLORER_MAINNET = 'https://explorer.mintlayer.org/'
 const ML_EXPLORER_TESTNET = 'https://lovelace.explorer.mintlayer.org/'
 const BTC_EXPLORER_MAINNET = 'https://blockstream.info/'
-const BTC_EXPLORER_TESTNET = 'https://blockstream.info/testnet/'
+const BTC_EXPLORER_TESTNET = 'https://explorer.gomaestro.org/bitcoin/testnet/'
 const BTC_DEFAULT_ADDRESSES_BATCH = 3
-const BTC_MAX_TRANSACTION_FEE = 100_000 // 0.001 BTC
+const BTC_MAX_TRANSACTION_FEE = 100000 // 0.001 BTC
 const BTC_MAX_FEERATE = 200
 const COLOR_LIST = {
   btc: '#F7931A',
@@ -125,6 +124,12 @@ const WALLETS_NAVIGATION = [
   },
 ]
 
+const WALLET_NAME_ERROR = 'The wallet name should have at least 4 characters.'
+const WALLET_PASSWORD_ERROR = [
+  'Your password should have at least 8 characters.',
+  'Also it should have a lowercase letter, an uppercase letter, a digit, and a special char like: /\\*()&^%$#@-_=+\'"?!:;<>~`',
+]
+
 const MAX_ML_FEE = 500000000000 // 5 ML in atoms
 const REFRESH_INTERVAL = 1000 * 60 * 2 // one per two minutes
 
@@ -133,7 +138,6 @@ export {
   decimalSeparator,
   thousandsSeparator,
   amountRegex,
-  minEntropyLength,
   walletTypes,
   DEFAULT_WALLETS_TO_CREATE,
   NETWORK_TYPES,
@@ -160,4 +164,6 @@ export {
   BTC_MAX_TRANSACTION_FEE,
   BTC_MAX_FEERATE,
   COLOR_LIST,
+  WALLET_NAME_ERROR,
+  WALLET_PASSWORD_ERROR,
 }
