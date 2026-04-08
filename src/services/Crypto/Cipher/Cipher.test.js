@@ -6,8 +6,9 @@ import {
   decryptAES,
   hexToBytes,
   IVSIZE,
-  DEFAULT_ITERATIONS,
-  LEGACY_ITERATIONS,
+  CURRENT_ENCRYPTION_VERSION,
+  ENCRYPTION_VERSIONS,
+  getVersionConfig,
 } from './Cipher'
 
 test('Cipher - HEX to Bytes', () => {
@@ -118,7 +119,7 @@ test('Cipher - generatePBKDF2Key respects iterations parameter', async () => {
   const { key: keyLegacy } = await generatePBKDF2Key({
     password,
     salt,
-    iterations: LEGACY_ITERATIONS,
+    version: 1,
   })
 
   expect(keyDefault).not.toStrictEqual(keyLegacy)
@@ -128,7 +129,7 @@ test('Cipher - generatePBKDF2Key known value verification', async () => {
   const { key } = await generatePBKDF2Key({
     password: 'testpassword',
     salt: '0123456789abcdef0123456789abcdef',
-    iterations: 1000,
+    version: 1,
   })
 
   expect(key.length).toBe(16)
@@ -136,7 +137,7 @@ test('Cipher - generatePBKDF2Key known value verification', async () => {
   const { key: key2 } = await generatePBKDF2Key({
     password: 'testpassword',
     salt: '0123456789abcdef0123456789abcdef',
-    iterations: 1000,
+    version: 1,
   })
   expect(key).toStrictEqual(key2)
 })
@@ -334,9 +335,14 @@ test('Cipher - decryptAES tampered tag throws', async () => {
 })
 
 test('Cipher - constants are correct', () => {
-  expect(DEFAULT_ITERATIONS).toBe(600000)
-  expect(LEGACY_ITERATIONS).toBe(10000)
+  expect(CURRENT_ENCRYPTION_VERSION).toBe(2)
+  expect(getVersionConfig(1).iterations).toBe(10000)
+  expect(getVersionConfig(2).iterations).toBe(600000)
   expect(IVSIZE).toBe(12)
+})
+
+test('Cipher - getVersionConfig throws on unknown version', () => {
+  expect(() => getVersionConfig(999)).toThrow('Unknown encryption version: 999')
 })
 
 test('Cipher - full encrypt/decrypt cycle with PBKDF2', async () => {

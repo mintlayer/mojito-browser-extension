@@ -1,11 +1,26 @@
-const DEFAULT_ITERATIONS = 600000
-const LEGACY_ITERATIONS = 10000
+const V1 = { iterations: 10000 }
+const V2 = { ...V1, iterations: 600000 }
+
+const CURRENT_ENCRYPTION_VERSION = 2
+const ENCRYPTION_VERSIONS = { 1: V1, 2: V2 }
+
+const getVersionConfig = (version) => {
+  const config = ENCRYPTION_VERSIONS[version]
+  if (!config) throw new Error(`Unknown encryption version: ${version}`)
+  return config
+}
+
 const KEYSIZE = 16
 const IVSIZE = 12
 const SALTSIZE = 16
 
 const hexToBytes = (hexString) =>
   Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)))
+
+const binaryStringToBytes = (str) =>
+  new Uint8Array([...str].map((c) => c.charCodeAt(0)))
+
+const bytesToBinaryString = (bytes) => String.fromCharCode(...bytes)
 
 const generateSalt = async (bytesAmount) => {
   const bytes = new Uint8Array(bytesAmount)
@@ -18,8 +33,9 @@ const generateSalt = async (bytesAmount) => {
 const generatePBKDF2Key = async ({
   password,
   salt,
-  iterations = DEFAULT_ITERATIONS,
+  version = CURRENT_ENCRYPTION_VERSION,
 }) => {
+  const { iterations } = getVersionConfig(version)
   const currentSalt = salt || (await generateSalt(SALTSIZE))
   const encoder = new TextEncoder()
   const baseKey = await crypto.subtle.importKey(
@@ -48,11 +64,6 @@ const generatePBKDF2Key = async ({
 }
 
 const generateIV = async () => crypto.getRandomValues(new Uint8Array(IVSIZE))
-
-const binaryStringToBytes = (str) =>
-  new Uint8Array([...str].map((c) => c.charCodeAt(0)))
-
-const bytesToBinaryString = (bytes) => String.fromCharCode(...bytes)
 
 const encryptAES = async ({ data, key }) => {
   const iv = await generateIV()
@@ -109,8 +120,9 @@ const decryptAES = async ({ data, key, iv, tag }) => {
 
 export {
   IVSIZE,
-  DEFAULT_ITERATIONS,
-  LEGACY_ITERATIONS,
+  CURRENT_ENCRYPTION_VERSION,
+  ENCRYPTION_VERSIONS,
+  getVersionConfig,
   generateSalt,
   generatePBKDF2Key,
   generateIV,
