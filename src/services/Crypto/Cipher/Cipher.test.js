@@ -363,6 +363,260 @@ test('Cipher - full encrypt/decrypt cycle with PBKDF2', async () => {
   expect(Buffer.from(decrypted).toString()).toBe(data)
 })
 
+test('Cipher - encrypt v1, decrypt v1, re-encrypt v2, decrypt v2', async () => {
+  const password = 'MyStr0ng!Password'
+  const originalData =
+    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+
+  // Step 1: encrypt with v1 (10000 iterations)
+  const { key: keyV1, salt: saltV1 } = await generatePBKDF2Key({
+    password,
+    version: 1,
+  })
+  const {
+    encryptedData: encV1,
+    iv: ivV1,
+    tag: tagV1,
+  } = await encryptAES({
+    data: originalData,
+    key: keyV1,
+  })
+
+  // Step 2: decrypt with v1
+  const { key: keyV1Again } = await generatePBKDF2Key({
+    password,
+    salt: saltV1,
+    version: 1,
+  })
+  const decryptedV1 = await decryptAES({
+    data: encV1,
+    iv: ivV1,
+    tag: tagV1,
+    key: keyV1Again,
+  })
+  expect(Buffer.from(decryptedV1).toString()).toBe(originalData)
+
+  // Step 3: re-encrypt with v2 (600000 iterations)
+  const { key: keyV2, salt: saltV2 } = await generatePBKDF2Key({
+    password,
+    version: 2,
+  })
+  const {
+    encryptedData: encV2,
+    iv: ivV2,
+    tag: tagV2,
+  } = await encryptAES({
+    data: decryptedV1,
+    key: keyV2,
+  })
+
+  // Step 4: decrypt with v2
+  const { key: keyV2Again } = await generatePBKDF2Key({
+    password,
+    salt: saltV2,
+    version: 2,
+  })
+  const decryptedV2 = await decryptAES({
+    data: encV2,
+    iv: ivV2,
+    tag: tagV2,
+    key: keyV2Again,
+  })
+  expect(Buffer.from(decryptedV2).toString()).toBe(originalData)
+})
+
+test('Cipher - encrypt v2, decrypt v2, re-encrypt v1, decrypt v1', async () => {
+  const password = 'An0ther$ecure'
+  const originalData = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
+
+  // Step 1: encrypt with v2 (600000 iterations)
+  const { key: keyV2, salt: saltV2 } = await generatePBKDF2Key({
+    password,
+    version: 2,
+  })
+  const {
+    encryptedData: encV2,
+    iv: ivV2,
+    tag: tagV2,
+  } = await encryptAES({
+    data: originalData,
+    key: keyV2,
+  })
+
+  // Step 2: decrypt with v2
+  const { key: keyV2Again } = await generatePBKDF2Key({
+    password,
+    salt: saltV2,
+    version: 2,
+  })
+  const decryptedV2 = await decryptAES({
+    data: encV2,
+    iv: ivV2,
+    tag: tagV2,
+    key: keyV2Again,
+  })
+  expect(Buffer.from(decryptedV2).toString()).toBe(originalData)
+
+  // Step 3: re-encrypt with v1 (10000 iterations)
+  const { key: keyV1, salt: saltV1 } = await generatePBKDF2Key({
+    password,
+    version: 1,
+  })
+  const {
+    encryptedData: encV1,
+    iv: ivV1,
+    tag: tagV1,
+  } = await encryptAES({
+    data: decryptedV2,
+    key: keyV1,
+  })
+
+  // Step 4: decrypt with v1
+  const { key: keyV1Again } = await generatePBKDF2Key({
+    password,
+    salt: saltV1,
+    version: 1,
+  })
+  const decryptedV1 = await decryptAES({
+    data: encV1,
+    iv: ivV1,
+    tag: tagV1,
+    key: keyV1Again,
+  })
+  expect(Buffer.from(decryptedV1).toString()).toBe(originalData)
+})
+
+test('Cipher - multiple re-encryption cycles preserve data', async () => {
+  const password = 'Cycl3!Test'
+  const originalData = 'secret mnemonic phrase for multi-cycle test'
+  const versions = [1, 2, 1, 2, 1]
+
+  let currentData = originalData
+
+  for (const version of versions) {
+    const { key, salt } = await generatePBKDF2Key({ password, version })
+    const { encryptedData, iv, tag } = await encryptAES({
+      data: currentData,
+      key,
+    })
+
+    const { key: decryptKey } = await generatePBKDF2Key({
+      password,
+      salt,
+      version,
+    })
+    const decrypted = await decryptAES({
+      data: encryptedData,
+      iv,
+      tag,
+      key: decryptKey,
+    })
+
+    currentData = decrypted
+    expect(Buffer.from(decrypted).toString()).toBe(originalData)
+  }
+})
+
+test('Cipher - re-encryption with different passwords per version', async () => {
+  const originalData = 'important seed data'
+
+  // Encrypt with password1 + v1
+  const password1 = 'P@ssword1'
+  const { key: keyEnc, salt: salt1 } = await generatePBKDF2Key({
+    password: password1,
+    version: 1,
+  })
+  const {
+    encryptedData: enc1,
+    iv: iv1,
+    tag: tag1,
+  } = await encryptAES({
+    data: originalData,
+    key: keyEnc,
+  })
+
+  // Decrypt with password1 + v1
+  const { key: keyDec1 } = await generatePBKDF2Key({
+    password: password1,
+    salt: salt1,
+    version: 1,
+  })
+  const decrypted1 = await decryptAES({
+    data: enc1,
+    iv: iv1,
+    tag: tag1,
+    key: keyDec1,
+  })
+  expect(Buffer.from(decrypted1).toString()).toBe(originalData)
+
+  // Re-encrypt with password2 + v2
+  const password2 = 'N3wP@ss!'
+  const { key: keyEnc2, salt: salt2 } = await generatePBKDF2Key({
+    password: password2,
+    version: 2,
+  })
+  const {
+    encryptedData: enc2,
+    iv: iv2,
+    tag: tag2,
+  } = await encryptAES({
+    data: decrypted1,
+    key: keyEnc2,
+  })
+
+  // Decrypt with password2 + v2
+  const { key: keyDec2 } = await generatePBKDF2Key({
+    password: password2,
+    salt: salt2,
+    version: 2,
+  })
+  const decrypted2 = await decryptAES({
+    data: enc2,
+    iv: iv2,
+    tag: tag2,
+    key: keyDec2,
+  })
+  expect(Buffer.from(decrypted2).toString()).toBe(originalData)
+
+  // Old password + v2 salt should NOT decrypt
+  const { key: wrongKey } = await generatePBKDF2Key({
+    password: password1,
+    salt: salt2,
+    version: 2,
+  })
+  await expect(
+    decryptAES({ data: enc2, iv: iv2, tag: tag2, key: wrongKey }),
+  ).rejects.toThrow('Incorrect password')
+})
+
+test('Cipher - v1 key cannot decrypt v2-encrypted data with same password', async () => {
+  const password = 'SameP@ss1'
+  const originalData = 'cross version test'
+  const salt = await generateSalt(16)
+
+  const { key: keyV2 } = await generatePBKDF2Key({
+    password,
+    salt,
+    version: 2,
+  })
+  const { encryptedData, iv, tag } = await encryptAES({
+    data: originalData,
+    key: keyV2,
+  })
+
+  const { key: keyV1 } = await generatePBKDF2Key({
+    password,
+    salt,
+    version: 1,
+  })
+
+  // v1 key differs from v2 key (different iterations), so decryption must fail
+  expect(keyV1).not.toStrictEqual(keyV2)
+  await expect(
+    decryptAES({ data: encryptedData, iv, tag, key: keyV1 }),
+  ).rejects.toThrow('Incorrect password')
+})
+
 test('Cipher - full cycle with wrong password fails', async () => {
   const data = 'secret seed phrase data'
 
