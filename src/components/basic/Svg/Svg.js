@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 
 const Svg = ({
   children,
@@ -8,13 +8,8 @@ const Svg = ({
   width = '100px',
   height = '100px',
 }) => {
-  const [viewboxWidth, setViewBoxWidth] = useState(size)
-  const [viewboxHeight, setViewBoxHeight] = useState(size)
-
-  useEffect(() => {
-    sizeH ? setViewBoxHeight(sizeH) : setViewBoxHeight(size)
-    sizeW ? setViewBoxWidth(sizeW) : setViewBoxWidth(size)
-  }, [sizeH, sizeW, size])
+  const viewboxWidth = sizeW || size
+  const viewboxHeight = sizeH || size
 
   return (
     <svg

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { CryptoFiatField } from '@ComposedComponents'
 import TransactionField from './TransactionField'
 
@@ -15,11 +15,7 @@ const AmountField = ({
   totalFeeInCrypto,
   transactionMode,
 }) => {
-  const [message, setMessage] = useState(errorMessage)
-
-  useEffect(() => {
-    setMessage(errorMessage)
-  }, [errorMessage, setMessage])
+  const [localMessage, setLocalMessage] = useState(undefined)
 
   return (
     <TransactionField>
@@ -31,14 +27,14 @@ const AmountField = ({
         transactionData={transactionData}
         validity={validity}
         changeValueHandle={amountChanged}
-        setErrorMessage={setMessage}
+        setErrorMessage={setLocalMessage}
         exchangeRate={exchangeRate}
         maxValueInToken={maxValueInToken}
         setAmountValidity={setAmountValidity}
         totalFeeInCrypto={totalFeeInCrypto}
         transactionMode={transactionMode}
       />
-      <p className="error-message">{message}</p>
+      <p className="error-message">{localMessage ?? errorMessage}</p>
     </TransactionField>
   )
 }

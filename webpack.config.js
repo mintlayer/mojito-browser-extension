@@ -66,6 +66,9 @@ module.exports = {
     },
     hot: true,
     port: process.env.PORT || 3000,
+    client: {
+      webSocketURL: 'auto://0.0.0.0:0/ws',
+    },
     open: true,
     historyApiFallback: {
       disableDotRule: true,

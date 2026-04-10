@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { FeeField, FeeFieldML } from '@ComposedComponents'
 import TransactionField from './TransactionField'
@@ -12,11 +12,7 @@ const FeesField = ({
   setFeeValidity,
   walletType,
 }) => {
-  const [message, setMessage] = useState(errorMessage)
-
-  useEffect(() => {
-    setMessage(errorMessage)
-  }, [errorMessage, setMessage])
+  const [localMessage, setLocalMessage] = useState(undefined)
 
   return (
     <TransactionField>
@@ -27,7 +23,7 @@ const FeesField = ({
           id="fee"
           changeValueHandle={feeChanged}
           value={value}
-          setErrorMessage={setMessage}
+          setErrorMessage={setLocalMessage}
           setFeeValidity={setFeeValidity}
         />
       ) : (
@@ -35,12 +31,12 @@ const FeesField = ({
           id="fee"
           changeValueHandle={feeChanged}
           value={value}
-          setErrorMessage={setMessage}
+          setErrorMessage={setLocalMessage}
           setFeeValidity={setFeeValidity}
         />
       )}
 
-      <p className="error-message">{message}</p>
+      <p className="error-message">{localMessage ?? errorMessage}</p>
     </TransactionField>
   )
 }

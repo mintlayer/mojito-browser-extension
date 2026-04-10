@@ -1,11 +1,15 @@
-import { pbkdf2Sync } from 'pbkdf2'
-import {
-  random as forgeRandom,
-  util as forgeUtil,
-  cipher as forgeCipher,
-} from 'node-forge'
+const V1 = { iterations: 10000 }
+const V2 = { ...V1, iterations: 600000 }
 
-const ITERATIONAMOUNT = 10_000
+const CURRENT_ENCRYPTION_VERSION = 2
+const ENCRYPTION_VERSIONS = { 1: V1, 2: V2 }
+
+const getVersionConfig = (version) => {
+  const config = ENCRYPTION_VERSIONS[version]
+  if (!config) throw new Error(`Unknown encryption version: ${version}`)
+  return config
+}
+
 const KEYSIZE = 16
 const IVSIZE = 12
 const SALTSIZE = 16
@@ -13,25 +17,45 @@ const SALTSIZE = 16
 const hexToBytes = (hexString) =>
   Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)))
 
-const generateSalt = async (
-  bytesAmount,
-  random = forgeRandom,
-  util = forgeUtil,
-) => {
-  const bytes = await random.getBytes(bytesAmount)
-  return util.bytesToHex(bytes)
+const binaryStringToBytes = (str) =>
+  new Uint8Array([...str].map((c) => c.charCodeAt(0)))
+
+const bytesToBinaryString = (bytes) => String.fromCharCode(...bytes)
+
+const generateSalt = async (bytesAmount) => {
+  const bytes = new Uint8Array(bytesAmount)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
 }
 
-// * KEYS are kept in memory until we manage to migrate this part to WASM
 const generatePBKDF2Key = async ({
   password,
   salt,
-  derivationFn = pbkdf2Sync,
+  version = CURRENT_ENCRYPTION_VERSION,
 }) => {
+  const { iterations } = getVersionConfig(version)
   const currentSalt = salt || (await generateSalt(SALTSIZE))
-  const key = [
-    ...derivationFn(password, currentSalt, ITERATIONAMOUNT, KEYSIZE, 'sha512'),
-  ]
+  const encoder = new TextEncoder()
+  const baseKey = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  )
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: encoder.encode(currentSalt),
+      iterations,
+      hash: 'SHA-512',
+    },
+    baseKey,
+    KEYSIZE * 8,
+  )
+  const key = [...new Uint8Array(derivedBits)]
 
   return {
     key,
@@ -39,52 +63,66 @@ const generatePBKDF2Key = async ({
   }
 }
 
-const generateIV = async (random = forgeRandom) => await random.getBytes(IVSIZE)
+const generateIV = async () => crypto.getRandomValues(new Uint8Array(IVSIZE))
 
-// * KEYS are kept in memory until we manage to migrate this part to WASM
-const encryptAES = async ({
-  data,
-  key,
-  cipherFn = forgeCipher,
-  util = forgeUtil,
-  ivGenerationFn = generateIV,
-}) => {
-  const IV = await ivGenerationFn()
-  const cipher = cipherFn.createCipher('AES-GCM', key)
+const encryptAES = async ({ data, key }) => {
+  const iv = await generateIV()
   const hex = Buffer.from(data).toString('hex')
 
-  cipher.start({ iv: IV })
-  cipher.update(util.createBuffer(hex))
-  cipher.finish()
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    new Uint8Array(key),
+    'AES-GCM',
+    false,
+    ['encrypt'],
+  )
 
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    cryptoKey,
+    new TextEncoder().encode(hex),
+  )
+
+  const result = new Uint8Array(encrypted)
   return {
-    encryptedData: cipher.output.getBytes(),
-    iv: IV,
-    tag: cipher.mode.tag.getBytes(),
+    encryptedData: bytesToBinaryString(result.slice(0, -16)),
+    iv: bytesToBinaryString(iv),
+    tag: bytesToBinaryString(result.slice(-16)),
   }
 }
 
-// * KEYS are kept in memory until we manage to migrate this part to WASM
-const decryptAES = ({
-  data,
-  key,
-  iv,
-  tag,
-  cipherFn = forgeCipher,
-  util = forgeUtil,
-}) => {
-  const decipher = cipherFn.createDecipher('AES-GCM', key)
+const decryptAES = async ({ data, key, iv, tag }) => {
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    new Uint8Array(key),
+    'AES-GCM',
+    false,
+    ['decrypt'],
+  )
 
-  decipher.start({ iv, tag })
-  decipher.update(util.createBuffer(data))
-  const result = decipher.finish()
+  const dataBytes = binaryStringToBytes(data)
+  const tagBytes = binaryStringToBytes(tag)
+  const combined = new Uint8Array(dataBytes.length + tagBytes.length)
+  combined.set(dataBytes)
+  combined.set(tagBytes, dataBytes.length)
 
-  if (!result) throw new Error('Incorrect password')
-  return hexToBytes(decipher.output.data)
+  try {
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: binaryStringToBytes(iv) },
+      cryptoKey,
+      combined,
+    )
+    return hexToBytes(new TextDecoder().decode(decrypted))
+  } catch {
+    throw new Error('Incorrect password')
+  }
 }
 
 export {
   IVSIZE,
+  CURRENT_ENCRYPTION_VERSION,
+  ENCRYPTION_VERSIONS,
+  getVersionConfig,
   generateSalt,
   generatePBKDF2Key,
   generateIV,

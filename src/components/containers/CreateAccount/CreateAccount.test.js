@@ -3,10 +3,10 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 
 import SetAccount from './CreateAccount'
-import { Expressions } from '@Constants'
 import { AccountProvider, SettingsProvider } from '@Contexts'
 
 const SETSTEPSAMPLE = jest.fn()
+const GENERATEMNEMONIC = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
 const memoryRouterFeature = {
   v7_startTransition: true,
@@ -44,7 +44,7 @@ test('Renders set account page with step 1', async () => {
   expect(inputComponent).not.toHaveClass('valid')
 
   act(() => {
-    setAccountForm.submit()
+    fireEvent.submit(setAccountForm)
   })
 
   fireEvent.change(inputComponent, { target: { value: 'more then 4' } })
@@ -55,7 +55,6 @@ test('Renders set account page with step 1', async () => {
 })
 
 test('Renders set account page with step 2', async () => {
-  const passwordPattern = Expressions.PASSWORD
   render(
     <AccountProvider>
       <SettingsProvider>
@@ -63,6 +62,7 @@ test('Renders set account page with step 2', async () => {
           <SetAccount
             step={2}
             setStep={SETSTEPSAMPLE}
+            onGenerateMnemonic={GENERATEMNEMONIC}
           />
         </MemoryRouter>
       </SettingsProvider>
@@ -80,7 +80,6 @@ test('Renders set account page with step 2', async () => {
   expect(setAccountForm).toHaveAttribute('method', 'POST')
   expect(inputComponent).toHaveAttribute('type', 'password')
   expect(inputComponent).toHaveAttribute('placeholder', 'Password')
-  expect(inputComponent).toHaveAttribute('pattern', passwordPattern.toString())
   fireEvent.change(inputComponent, { target: { value: '1' } })
   fireEvent.blur(inputComponent)
 
@@ -134,17 +133,17 @@ test('Renders set account page with step 2', async () => {
   expect(inputComponent).toHaveClass('valid')
 
   act(() => {
-    setAccountForm.submit()
+    fireEvent.submit(setAccountForm)
   })
 })
 
-test('Renders set account page with step 4', () => {
+test('Renders set account page with step 3 (description)', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
         <MemoryRouter future={memoryRouterFeature}>
           <SetAccount
-            step={4}
+            step={3}
             setStep={SETSTEPSAMPLE}
           />
         </MemoryRouter>
@@ -159,17 +158,17 @@ test('Renders set account page with step 4', () => {
   expect(descriptionParagraphs).toHaveLength(2)
 
   act(() => {
-    setAccountForm.submit()
+    fireEvent.submit(setAccountForm)
   })
 })
 
-test('Renders set account page with step 5', () => {
+test('Renders set account page with step 4 (show words)', () => {
   render(
     <AccountProvider>
       <SettingsProvider>
         <MemoryRouter future={memoryRouterFeature}>
           <SetAccount
-            step={5}
+            step={4}
             setStep={SETSTEPSAMPLE}
             words={WORDSSAMPLE}
           />
@@ -190,7 +189,7 @@ test('Renders set account page with step 5', () => {
   expect(input).toBeDisabled()
 })
 
-test('Renders set account page with step 6', () => {
+test('Renders set account page with step 5 (verify words)', () => {
   jest.spyOn(window, 'alert').mockImplementation((message) => {
     window.alert.mockRestore()
   })
@@ -206,7 +205,7 @@ test('Renders set account page with step 6', () => {
       <SettingsProvider>
         <MemoryRouter future={memoryRouterFeature}>
           <SetAccount
-            step={6}
+            step={5}
             setStep={SETSTEPSAMPLE}
             words={WORDSSAMPLE}
             onStepsFinished={onStepsFinishedFn}
@@ -232,11 +231,11 @@ test('Renders set account page with step 6', () => {
   })
 
   act(() => {
-    setAccountForm.submit()
+    fireEvent.submit(setAccountForm)
   })
 
   act(() => {
-    setAccountForm.submit()
+    fireEvent.submit(setAccountForm)
   })
 })
 

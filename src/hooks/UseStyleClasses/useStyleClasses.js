@@ -22,7 +22,7 @@ const removeItemsFromList = (oldList = '', newList = []) => {
 
 const useStyleClasses = (classesList = []) => {
   const effectCalled = useRef(false)
-  const [styleClasses, _setStyleClasses] = useState([])
+  const [styleClasses, _setStyleClasses] = useState(formatClasses(classesList))
 
   const setStyleClasses = useCallback((classes = []) => {
     _setStyleClasses(formatClasses(ensureClassesAreArray(classes)))

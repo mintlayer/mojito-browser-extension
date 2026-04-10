@@ -13,8 +13,8 @@ const Button = ({
   dataTestId = 'button',
   onMouseEnter,
   onMouseLeave,
+  autoFocus = false,
 }) => {
-  // Вычисляем классы сразу, без useEffect
   const classList = ['btn', ...extraStyleClasses]
   if (dark) {
     classList.push('dark')
@@ -32,6 +32,7 @@ const Button = ({
       type={buttonType}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      autoFocus={autoFocus}
     >
       {children}
     </button>

@@ -466,7 +466,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       const pools_data = await ML.getBatchData(uniquePools, '/pool/:address')
 
       const emptyPoolsDataMap = uniquePools.reduce((acc, pool, index) => {
-        if (pools_data[index].staker_balance.atoms === '0') {
+        if (pools_data[index]?.staker_balance?.atoms === '0') {
           acc[pool] = pools_data[index]
         }
         return acc

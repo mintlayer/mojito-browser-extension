@@ -13,7 +13,6 @@ import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 import FeeField from './FeeField/FeeField'
 import FeeFieldML from './FeeField/FeeFieldML'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
-import Entropy from './Entropy/Entropy'
 import WalletList from './WalletList/WalletList'
 import AddWallet from './AddWallet/AddWallet'
 import CurrentStaking from './CurrentStaking/CurrentStaking'
@@ -46,7 +45,6 @@ export {
   FeeField,
   FeeFieldML,
   ConnectionErrorPopup,
-  Entropy,
   WalletList,
   AddWallet,
   CurrentStaking,

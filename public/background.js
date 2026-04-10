@@ -174,6 +174,8 @@
       }
     }
 
+    if (!message.method && message.action !== 'popupResponse') return
+
     // Handle popup responses
     if (message.action === 'popupResponse') {
       const { requestId, origin, result, error } = message
@@ -209,7 +211,7 @@
         storedSendResponse({ result, error })
         pendingResponses.delete(requestId)
       } else {
-        api.runtime.sendMessage({ requestId, result, error }, (response) => {
+        api.runtime.sendMessage({ requestId, result, error }, () => {
           if (api.runtime.lastError) {
             console.error(
               '[Mintlayer] Send response error:',

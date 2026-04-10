@@ -8,6 +8,9 @@ import {
 import { BTC as BtcHelpers } from '@Helpers'
 import loadAccountSubRoutines from './loadWorkers'
 import { LocalStorageService } from '@Storage'
+import { CURRENT_ENCRYPTION_VERSION } from '../../Crypto/Cipher/Cipher'
+
+const getAccountVersion = (account) => account.encryptionVersion || 1
 
 const saveAccount = async (data) => {
   const { generateEncryptionKey } = await loadAccountSubRoutines()
@@ -28,6 +31,7 @@ const saveAccount = async (data) => {
   const account = {
     name,
     salt,
+    encryptionVersion: CURRENT_ENCRYPTION_VERSION,
     iv: { btcIv, mlTestnetPrivKeyIv, mlMainnetPrivKeyIv },
     tag: { btcTag, mlTestnetPrivKeyTag, mlMainnetPrivKeyTag },
     seed: {
@@ -88,6 +92,7 @@ const checkPasswordValidity = async (id, password) => {
     const { key } = await generateEncryptionKey({
       password,
       salt: account.salt,
+      version: getAccountVersion(account),
     })
 
     const decrypted = await decryptSeed({
@@ -117,6 +122,7 @@ const unlockHtlsSecret = async ({ accountId, password, hash }) => {
   const { key } = await generateEncryptionKey({
     password,
     salt: account.salt,
+    version: getAccountVersion(account),
   })
 
   const data = account.htlsSecrets[hash]
@@ -146,6 +152,7 @@ const saveProvidedHtlsSecret = async ({ accountId, password, data }) => {
     password,
     account.salt,
     data.secret,
+    getAccountVersion(account),
   )
 
   const updatedHtlsSecrets = {
@@ -154,6 +161,82 @@ const saveProvidedHtlsSecret = async ({ accountId, password, data }) => {
   }
 
   await updateAccount(accountId, { htlsSecrets: updatedHtlsSecrets })
+}
+
+const reEncryptAccount = async (id, password, account, decryptedSeeds) => {
+  const { generateEncryptionKey, encryptSeed } = await loadAccountSubRoutines()
+
+  const { key: newKey, salt: newSalt } = await generateEncryptionKey({
+    password,
+    version: CURRENT_ENCRYPTION_VERSION,
+  })
+
+  const reEncrypt = async (data) => {
+    const { encryptedData, iv, tag } = await encryptSeed({ data, key: newKey })
+    return { encryptedData, iv, tag }
+  }
+
+  const {
+    encryptedData: btcEncryptedSeed,
+    iv: btcIv,
+    tag: btcTag,
+  } = await reEncrypt(decryptedSeeds.seed)
+
+  const {
+    encryptedData: encryptedMlTestnetPrivateKey,
+    iv: mlTestnetPrivKeyIv,
+    tag: mlTestnetPrivKeyTag,
+  } = await reEncrypt(decryptedSeeds.mlTestnetPrivateKey)
+
+  const {
+    encryptedData: encryptedMlMainnetPrivateKey,
+    iv: mlMainnetPrivKeyIv,
+    tag: mlMainnetPrivKeyTag,
+  } = await reEncrypt(decryptedSeeds.mlMainnetPrivateKey)
+
+  // Re-encrypt HTLS secrets if any
+  const updatedHtlsSecrets = {}
+  if (account.htlsSecrets) {
+    const { decryptSeed } = await loadAccountSubRoutines()
+    const { key: oldKey } = await generateEncryptionKey({
+      password,
+      salt: account.salt,
+      version: getAccountVersion(account),
+    })
+
+    for (const [hash, data] of Object.entries(account.htlsSecrets)) {
+      const decryptedSecret = await decryptSeed({
+        data: data.encryptedHtlsSecret,
+        iv: data.htlsIv,
+        tag: data.htlsTag,
+        key: oldKey,
+      })
+      const {
+        encryptedData: encryptedHtlsSecret,
+        iv: htlsIv,
+        tag: htlsTag,
+      } = await reEncrypt(decryptedSecret)
+      updatedHtlsSecrets[hash] = {
+        encryptedHtlsSecret,
+        htlsIv,
+        htlsTag,
+        txHash: data.txHash,
+      }
+    }
+  }
+
+  await updateAccount(id, {
+    salt: newSalt,
+    encryptionVersion: CURRENT_ENCRYPTION_VERSION,
+    iv: { btcIv, mlTestnetPrivKeyIv, mlMainnetPrivKeyIv },
+    tag: { btcTag, mlTestnetPrivKeyTag, mlMainnetPrivKeyTag },
+    seed: {
+      btcEncryptedSeed,
+      encryptedMlTestnetPrivateKey,
+      encryptedMlMainnetPrivateKey,
+    },
+    htlsSecrets: updatedHtlsSecrets,
+  })
 }
 
 const unlockAccount = async (id, password, { wallets } = {}) => {
@@ -170,9 +253,12 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
     if (!account.walletsToCreate)
       updateAccount(id, { walletsToCreate: AppInfo.DEFAULT_WALLETS_TO_CREATE })
 
+    const accountVersion = getAccountVersion(account)
+
     const { key } = await generateEncryptionKey({
       password,
       salt: account.salt,
+      version: getAccountVersion(account),
     })
 
     const seed = await decryptSeed({
@@ -237,6 +323,15 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
         )
         addresses.mlAddresses = mlMainnetWalletAddresses
       }
+    }
+
+    // Migrate old accounts to current encryption version in the background
+    if (accountVersion !== CURRENT_ENCRYPTION_VERSION) {
+      reEncryptAccount(id, password, account, {
+        seed,
+        mlTestnetPrivateKey,
+        mlMainnetPrivateKey,
+      }).catch((e) => console.error('Encryption migration failed:', e))
     }
 
     return {

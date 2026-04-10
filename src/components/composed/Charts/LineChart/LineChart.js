@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useMemo } from 'react'
 
 import { Svg, Line } from '@BasicComponents'
 
@@ -37,19 +37,18 @@ const LineChart = ({
   height,
   width = '100px',
 }) => {
-  const [size, setSize] = useState({ w: 0, h: 0 })
-  const [proportionalHeight, setProportionalHeight] = useState()
-
-  useEffect(() => {
-    setSize({
+  const size = useMemo(
+    () => ({
       w: maxWidthPoint(points) + EXTRABOUNDARIES,
       h: parseInt(height) + EXTRABOUNDARIES,
-    })
-  }, [points, height])
+    }),
+    [points, height],
+  )
 
-  useEffect(() => {
-    setProportionalHeight(height || getProportionalHeight(size, width))
-  }, [width, height, size])
+  const proportionalHeight = useMemo(
+    () => height || getProportionalHeight(size, width),
+    [width, height, size],
+  )
 
   return (
     <Svg
