@@ -1,77 +1,118 @@
-import { useState } from 'react'
+import { useState, FormEvent, ReactNode } from 'react'
 import { useLocation } from 'react-router'
 
 import { Button } from '@BasicComponents'
 import { Loading, TextField } from '@ComposedComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
+import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
 
-import './SetPassword.css'
+import styles from './SetPassword.module.css'
+
+interface Account {
+  id: string | number
+  name: string
+}
+
+interface CheckPasswordResult {
+  addresses?: unknown
+  [key: string]: unknown
+}
+
+interface SetPasswordProps {
+  onChangePassword?: (value: string) => void
+  onSubmit?: (addresses: unknown, id: string | number, name: string) => void
+  checkPassword: (
+    id: string | number,
+    password: string,
+  ) => Promise<CheckPasswordResult>
+  selectedAccount?: Account
+  buttonTitle?: string
+  customLabel?: string | ReactNode
+}
 
 const SetPassword = ({
   onChangePassword,
   onSubmit,
   checkPassword,
   selectedAccount,
-  buttonTitle = 'Log In',
-}) => {
+  buttonTitle = 'Unlock wallet',
+  customLabel,
+}: SetPasswordProps) => {
   const location = useLocation()
-  const account = selectedAccount ? selectedAccount : location.state.account
-  const loadingExtraClasses = ['loading-big']
+  const account: Account = selectedAccount
+    ? selectedAccount
+    : location.state.account
 
   const [accountPasswordValue, setAccountPasswordValue] = useState('')
-  const [accountPasswordValid, setAccountPasswordValid] = useState(null)
-  const [accountPasswordPritinity, setAccountPasswordPritinity] = useState(true)
+  const [accountPasswordValid, setAccountPasswordValid] = useState<
+    boolean | null
+  >(null)
+  const [accountPasswordPristinity, setAccountPasswordPristinity] =
+    useState(true)
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
-    useState(null)
+    useState<string | null>(null)
   const [unlockingAccount, setUnlockingAccount] = useState(false)
 
   const passwordFieldValidity = async () => {
     try {
       const accountData = await checkPassword(account.id, accountPasswordValue)
       return accountData
-    } catch (e) {
+    } catch {
       return false
     }
   }
 
-  const accountPasswordChangeHandler = (value) => {
+  const accountPasswordChangeHandler = (value: string) => {
     setAccountPasswordValue(value)
     onChangePassword && onChangePassword(value)
   }
 
-  const label = () => (
-    <>
-      Password for <strong>{account.name}</strong>
-    </>
-  )
+  const label = (): ReactNode =>
+    customLabel ? (
+      customLabel
+    ) : (
+      <div className={styles.labelRow}>
+        <div>
+          <h1>{account.name}</h1>
+          <h2>Welcome back</h2>
+        </div>
 
-  const submitHandler = (e) => {
+        <p>Enter your password to unlock</p>
+      </div>
+    )
+
+  const submitHandler = (e: FormEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setAccountPasswordPritinity(false)
+    setAccountPasswordPristinity(false)
     setUnlockingAccount(true)
 
     passwordFieldValidity().then((validated) => {
-      const addresses = validated.addresses
-      if (!addresses) {
+      if (!validated || !validated.addresses) {
         setAccountPasswordValid(false)
         setUnlockingAccount(false)
         setAccountPasswordErrorMessage('Incorrect password')
         return
       }
-      onSubmit(addresses, account.id, account.name)
+      onSubmit && onSubmit(validated.addresses, account.id, account.name)
     })
   }
 
   return (
     <div>
-      <div className="content">
+      <div className={styles.content}>
         <CenteredLayout>
-          <form onSubmit={submitHandler}>
-            <VerticalGroup bigGap>
+          <form
+            className={styles.form}
+            onSubmit={submitHandler}
+          >
+            <VerticalGroup>
               {!unlockingAccount ? (
                 <>
+                  <div className={styles.shieldBadge}>
+                    <IconShield />
+                  </div>
                   <TextField
                     value={accountPasswordValue}
                     onChangeHandle={accountPasswordChangeHandler}
@@ -79,30 +120,31 @@ const SetPassword = ({
                     password
                     label={label()}
                     placeHolder={'Password'}
-                    pristinity={accountPasswordPritinity}
+                    pristinity={accountPasswordPristinity}
                     errorMessages={accountPasswordErrorMessage}
                     alternate
                     focus
+                    bigGap={false}
                   />
                   <CenteredLayout>
                     <Button
                       onClickHandle={submitHandler}
-                      extraStyleClasses={['login-password-submit']}
+                      extraStyleClasses={[styles.loginPasswordSubmit]}
                       dataTestId="login-password-submit"
                     >
                       {buttonTitle}
-                      <IconArrowRight className="login-button-icon" />
+                      <IconArrowRight className={styles.loginButtonIcon} />
                     </Button>
                   </CenteredLayout>
                 </>
               ) : (
-                <>
-                  <h1 className="loadingText">
+                <div className={styles.loadingWrapper}>
+                  <h1 className={styles.loadingText}>
                     {' '}
                     Just a sec, we are validating your password...{' '}
                   </h1>
-                  <Loading extraStyleClasses={loadingExtraClasses} />
-                </>
+                  <Loading extraStyleClasses={[styles.loadingBig]} />
+                </div>
               )}
             </VerticalGroup>
           </form>

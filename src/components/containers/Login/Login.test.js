@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import ListAccounts from './Login'
+import ListAccounts from './Login.tsx'
 import { AccountContext } from '@Contexts'
 
 const data = {
@@ -14,6 +14,7 @@ const mockContext = {
   verifyAccountsExistence: jest.fn(),
   deletingAccount: { id: '1', addresses: ['address1'] },
   setRemoveAccountPopupOpen: jest.fn(),
+  setDeletingAccount: jest.fn(),
 }
 
 test('Renders List Accounts page', () => {
@@ -46,6 +47,6 @@ test('Render button onCreate', () => {
     </AccountContext.Provider>,
   )
 
-  fireEvent.click(screen.getByText('Add Wallet'))
+  fireEvent.click(screen.getByTestId('add-wallet-button'))
   expect(data.onCreate).toHaveBeenCalled()
 })

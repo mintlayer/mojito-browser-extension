@@ -1,0 +1,90 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(var(--color-black), 0.1);
+  background: rgb(var(--color-white));
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+
+  @media screen and (min-width: 801px) {
+    padding: 18px 22px;
+    border-radius: 18px;
+  }
+}
+
+.card:hover {
+  border-color: rgba(var(--mojito-green), 1);
+  box-shadow: 0 2px 12px rgba(var(--color-black), 0.06);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  @media screen and (min-width: 801px) {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+.cardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardName {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgb(var(--color-black));
+  margin: 0;
+
+  @media screen and (min-width: 801px) {
+    font-size: 17px;
+  }
+}
+
+.deleteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.card:hover .deleteButton {
+  opacity: 1;
+}
+
+.deleteIcon {
+  width: 13px;
+  height: 13px;
+  fill: rgba(var(--color-black), 0.3);
+  transition: fill 0.2s;
+}
+
+.deleteButton:hover .deleteIcon {
+  fill: rgb(var(--color-red));
+}
+
+.chevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: rgba(var(--color-black), 0.25);
+  transform: rotate(-90deg);
+}
