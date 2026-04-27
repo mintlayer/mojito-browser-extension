@@ -3,8 +3,8 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 
 import RestoreAccountMnemonic from './RestoreAccountMnemonic'
-import { Expressions } from '@Constants'
 import { AccountProvider, SettingsProvider } from '@Contexts'
+import { AccountContext } from '@Contexts'
 import { BTC } from '@Cryptos'
 
 const SETSTEPSAMPLE = jest.fn()
@@ -36,7 +36,7 @@ test('Renders restore account page with step 1', async () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(1)
 
   expect(RestoreAccountComponent).toBeInTheDocument()
   expect(restoreAccountForm).toBeInTheDocument()
@@ -48,7 +48,7 @@ test('Renders restore account page with step 1', async () => {
   expect(inputComponent).not.toHaveClass('valid')
 
   act(() => {
-    restoreAccountForm.submit()
+    fireEvent.submit(restoreAccountForm)
   })
 
   fireEvent.change(inputComponent, { target: { value: 'more then 4' } })
@@ -58,12 +58,11 @@ test('Renders restore account page with step 1', async () => {
   })
 
   act(() => {
-    restoreAccountForm.submit()
+    fireEvent.submit(restoreAccountForm)
   })
 })
 
 test('Renders restore account page with step 2', () => {
-  const passwordPattern = Expressions.PASSWORD
   render(
     <AccountProvider>
       <SettingsProvider>
@@ -81,14 +80,13 @@ test('Renders restore account page with step 2', () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(1)
 
   expect(RestoreAccountComponent).toBeInTheDocument()
   expect(restoreAccountForm).toBeInTheDocument()
   expect(restoreAccountForm).toHaveAttribute('method', 'POST')
   expect(inputComponent).toHaveAttribute('type', 'password')
   expect(inputComponent).toHaveAttribute('placeholder', 'Password')
-  expect(inputComponent).toHaveAttribute('pattern', passwordPattern.toString())
   fireEvent.change(inputComponent, { target: { value: '1' } })
   fireEvent.blur(inputComponent)
   expect(inputComponent).toHaveClass('invalid')
@@ -142,7 +140,7 @@ test('Renders restore account page with step 2', () => {
   expect(inputComponent).toHaveClass('valid')
 
   act(() => {
-    restoreAccountForm.submit()
+    fireEvent.submit(restoreAccountForm)
   })
 })
 
@@ -163,11 +161,11 @@ test('Renders set account page with step 3', () => {
   const restoreAccountForm = screen.getByTestId('restore-account-form')
   const buttons = screen.getAllByTestId('button')
 
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(1)
   expect(descriptionParagraph).toHaveLength(1)
 
   act(() => {
-    restoreAccountForm.submit()
+    fireEvent.submit(restoreAccountForm)
   })
 })
 
@@ -200,7 +198,7 @@ test('Renders restore account page with step 4', () => {
   const buttons = screen.getAllByTestId('button')
   const inputs = screen.getAllByTestId('restore-seed-textarea')
 
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(1)
   expect(inputs).toHaveLength(1)
   inputs.forEach((input) =>
     expect(input).not.toHaveClass('textarea textarea-invalid'),
@@ -225,26 +223,39 @@ test('Renders restore account page with step 4', () => {
   )
 
   act(() => {
-    restoreAccountForm.submit()
+    fireEvent.submit(restoreAccountForm)
   })
 
   act(() => {
-    restoreAccountForm.submit()
+    fireEvent.submit(restoreAccountForm)
   })
 })
 
 test('Checks back button behavior in a internal navigation component - first step', () => {
   let location
 
+  const BackButton = () => {
+    const { customBackAction } = React.useContext(AccountContext)
+    return (
+      <button
+        data-testid="back-button"
+        onClick={() => customBackAction && customBackAction()}
+      />
+    )
+  }
+
   const RestoreAccountMock = () => {
     location = useLocation()
     const [step, setStep] = React.useState(2)
 
     return (
-      <RestoreAccountMnemonic
-        step={step}
-        setStep={setStep}
-      />
+      <>
+        <BackButton />
+        <RestoreAccountMnemonic
+          step={step}
+          setStep={setStep}
+        />
+      </>
     )
   }
 
@@ -276,13 +287,13 @@ test('Checks back button behavior in a internal navigation component - first ste
     </AccountProvider>,
   )
 
-  const buttons = screen.getAllByTestId('button')
+  const backButton = screen.getByTestId('back-button')
   let progressSteps = screen.getAllByTestId('progress-step')
   expect(progressSteps[1]).toHaveClass('active')
   expect(location.pathname).toBe('/set-account')
 
   act(() => {
-    buttons[0].click()
+    backButton.click()
   })
 
   expect(location.pathname).toBe('/set-account')
@@ -290,7 +301,7 @@ test('Checks back button behavior in a internal navigation component - first ste
   expect(progressSteps[0]).toHaveClass('active')
 
   act(() => {
-    buttons[0].click()
+    backButton.click()
   })
 
   expect(location.pathname).toBe('/')

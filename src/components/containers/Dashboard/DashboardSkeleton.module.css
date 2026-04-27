@@ -1,0 +1,48 @@
+.statItemSkeleton {
+  pointer-events: none;
+  width: 210px;
+  height: 112px;
+}
+
+.statItemSkeleton dt,
+.statItemSkeleton dd {
+  width: 100%;
+}
+
+.skeletonLine {
+  display: block;
+  border-radius: 4px;
+  animation: skeleton-dash-loading 1s linear infinite alternate;
+}
+
+.skeletonLineWide {
+  width: 70%;
+  height: 1.4rem;
+  margin-top: 4px;
+}
+
+.skeletonLineNarrow {
+  width: 40%;
+  height: 0.55rem;
+}
+
+.balanceSkeleton {
+  display: block;
+  margin-top: 4px;
+}
+
+.skeletonLineBalance {
+  width: 140px;
+  height: 2.2rem;
+  border-radius: 6px;
+  margin: 0 auto;
+}
+
+@keyframes skeleton-dash-loading {
+  0% {
+    background: rgba(var(--color-dark-gray), 0.08);
+  }
+  100% {
+    background: rgba(var(--color-dark-gray), 0.16);
+  }
+}

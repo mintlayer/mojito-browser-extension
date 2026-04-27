@@ -8,13 +8,14 @@
   border: 1px solid rgba(var(--color-light-green), 0.2);
   word-break: break-all;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
   position: relative;
   max-height: 72px;
   min-height: 72px;
   box-sizing: border-box;
 }
 
-.transaction-logo-type {
+.logoType {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -27,122 +28,122 @@
   z-index: 5;
 }
 
-.transaction-logo-type-info {
+.logoTypeInfo {
   font-size: 1.4rem;
   font-weight: 600;
   color: #fff;
   background: rgb(var(--color-dark-gray));
 }
 
-.transaction-logo-type.transaction-logo-type-widthdrawal {
+.logoTypeWithdrawal {
   font-size: 1.4rem;
   font-weight: 600;
   color: #fff;
   background: rgb(var(--color-dark-gray));
 }
 
-.transaction-logo-type.transaction-logo-type-same {
+.logoTypeSame {
   position: absolute;
   z-index: 10;
   left: 22px;
   background: rgb(var(--color-dark-gray));
 }
 
-.transaction-logo-type.transaction-logo-type-same .loop-icon {
+.logoTypeSame .loopIcon {
   transform: rotate(90deg);
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
-.transaction-logo-type.transaction-logo-type-same .loop-icon path {
+.logoTypeSame .loopIcon path {
   stroke: rgb(var(--color-white)) !important;
 }
 
-.transaction-detail {
+.detail {
   margin-left: 16px;
   flex-grow: 1;
 }
 
-.transaction-logo-type.transaction-logo-out {
+.logoOut {
   background: rgb(var(--color-dim-corail));
 }
 
-.transaction-logo-type.transaction-logo-type-stake {
+.logoTypeStake {
   background: rgb(var(--color-dim-blue));
 }
 
-.transaction-logo-type.transaction-logo-type-delegate {
+.logoTypeDelegate {
   background: rgb(var(--color-dim-purple));
 }
 
-.transaction-logo-type.transaction-logo-type-unconfirmed {
+.logoTypeUnconfirmed {
   background: rgb(var(--color-dim-yellow));
 }
 
-.arrow-icon {
-  width: 18px;
-  height: 22px;
+.arrowIcon {
+  width: 22px;
+  height: 26px;
 }
 
-.arrow-icon-stake {
-  width: 18px;
-  height: 22px;
+.arrowIconStake {
+  width: 22px;
+  height: 26px;
   margin-left: -3px;
 }
 
-.stake-icon {
-  width: 20px;
-  height: 20px;
+.stakeIcon {
+  width: 26px;
+  height: 26px;
 }
 
-.unconfirmed-icon {
-  width: 20px;
-  height: 24px;
+.unconfirmedIcon {
+  width: 26px;
+  height: 28px;
   color: #fff;
 }
 
-.delegation-icon {
-  width: 22px;
-  height: 22px;
+.delegationIcon {
+  width: 28px;
+  height: 28px;
   margin-left: 2px;
   margin-top: -2px;
   color: rgb(var(--color-black));
 }
 
-.delegation-icon svg {
+.delegationIcon svg {
   color: rgb(var(--color-black));
 }
 
-.arrow-icon-out {
+.arrowIconOut {
   transform: rotate(180deg);
 }
 
-.transaction-date-amount {
+.dateAmount {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.transaction-id-info {
+.idInfo {
   font-size: 0.95rem;
   font-weight: 600;
   margin-bottom: 2px;
   word-break: break-word;
 }
 
-.transaction-id {
+.id {
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 2px;
   word-break: break-all;
 }
 
-.transaction-date {
+.date {
   font-size: 0.85rem;
   font-weight: 400;
 }
 
-.transaction-date span {
+.date span {
   font-weight: 600;
 }
 

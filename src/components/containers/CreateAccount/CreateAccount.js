@@ -1,16 +1,12 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router'
 
 import { AppInfo, Expressions } from '@Constants'
+import { AccountContext } from '@Contexts'
 
 import { Button } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
-import {
-  Header,
-  InputList,
-  ProgressTracker,
-  TextField,
-} from '@ComposedComponents'
+import { InputList, ProgressTracker, TextField } from '@ComposedComponents'
 
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
 
@@ -51,6 +47,7 @@ const CreateAccount = ({
   const selectedWallets = ['btc', 'ml']
 
   const navigate = useNavigate()
+  const { setCustomBackAction } = useContext(AccountContext)
 
   const goToNextStep = () => {
     setDirection('forward')
@@ -64,6 +61,11 @@ const CreateAccount = ({
     setDirection('backward')
     return step < 2 ? navigate(-1) : setStep(step - 1)
   }
+
+  useEffect(() => {
+    setCustomBackAction(() => goToPrevStep)
+    return () => setCustomBackAction(null)
+  }, [step])
 
   const steps = [
     { value: 1, name: 'Wallet Name', active: step === 1 },
@@ -144,7 +146,6 @@ const CreateAccount = ({
 
   return (
     <div data-testid="set-account">
-      <Header customBackAction={goToPrevStep} />
       <ProgressTracker
         steps={steps}
         direction={direction}

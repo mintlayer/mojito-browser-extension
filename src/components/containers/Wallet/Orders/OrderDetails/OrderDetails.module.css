@@ -1,0 +1,276 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  gap: 16px;
+  padding: 8px 4px 4px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+  margin: 0;
+  padding-left: 5px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: max-content;
+}
+
+.itemTitle {
+  margin: 0;
+  padding-left: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: rgba(var(--color-black), 0.45);
+  text-transform: uppercase;
+}
+
+.itemContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 18px;
+  border-radius: 14px;
+  background: rgba(var(--color-black), 0.04);
+  min-height: 52px;
+}
+
+.itemValue {
+  flex: 1;
+  font-family: monospace;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgb(var(--color-black));
+  word-break: break-all;
+}
+
+.copyWrapper {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.copyWrapper button,
+.copyWrapper button:hover,
+.copyWrapper button:focus {
+  background-color: rgba(var(--color-main-green), 1);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  padding: 0;
+  transition: opacity 0.2s ease;
+}
+
+.copyWrapper button:hover,
+.copyWrapper button:focus {
+  opacity: 0.85;
+}
+
+.copyWrapper button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.copyWrapper button svg path,
+.copyWrapper button:hover svg path,
+.copyWrapper button:focus svg path {
+  fill: none;
+  stroke: rgb(var(--color-white));
+}
+
+.swapCardWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: max-content;
+  gap: 23px;
+  background: rgba(var(--color-black), 0.03);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.swapCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: rgb(var(--color-white));
+  border: 1px solid rgba(var(--color-black), 0.06);
+  border-radius: 16px;
+}
+
+.swapCardText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.swapAmount {
+  margin: 0;
+  font-size: 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.amountValue {
+  color: rgb(var(--color-black));
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.amountTicker {
+  color: rgba(var(--color-black), 0.3);
+  font-weight: 600;
+}
+
+.swapTokenId {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(var(--color-black), 0.45);
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  flex-shrink: 0;
+}
+
+.badgeFrom {
+  background: rgba(var(--color-black), 0.05);
+  color: rgba(var(--color-black), 0.4);
+}
+
+.badgeTo {
+  background: rgba(var(--color-main-green), 0.15);
+  color: rgba(var(--color-main-green), 1);
+}
+
+.arrowSeparator {
+  align-self: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(var(--color-main-green), 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -6px 0;
+  box-shadow: 0 0 0 4px rgba(var(--color-black), 0.03);
+}
+
+.arrowIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.arrowIcon path {
+  fill: rgb(var(--color-white));
+}
+
+.exchangeRate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+  font-size: 13px;
+  color: rgba(var(--color-black), 0.55);
+}
+
+.exchangeRate span {
+  font-size: 13px;
+}
+
+.exchangeRate span:last-child {
+  font-weight: 700;
+  color: rgb(var(--color-black));
+}
+
+.actions {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  min-height: max-content;
+  padding-bottom: 25px;
+}
+
+.actions > :first-child {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.amountInput {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid rgba(var(--color-black), 0.08);
+  border-radius: 14px;
+  background: rgba(var(--color-black), 0.04);
+  font-size: 20px;
+}
+.amountInput::placeholder {
+  font-size: 20px;
+}
+
+.walletBalance {
+  font-size: 12px;
+  color: rgba(var(--color-black), 0.5);
+  margin: 0;
+  padding: 0 4px;
+}
+
+.swapButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 28px;
+  min-height: 48px;
+  border-radius: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  width: auto;
+}
+
+.swapButtonIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.swapButton:hover .swapButtonIcon {
+  animation: moveArrowRight 0.3s ease-in-out;
+}
+
+.loadingWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 400px;
+}
+
+.errorMessage {
+  position: absolute;
+  margin: 0;
+  font-size: 13px;
+  color: rgb(var(--color-red, 220, 53, 69));
+  font-weight: 600;
+  left: 0;
+  bottom: 0;
+}

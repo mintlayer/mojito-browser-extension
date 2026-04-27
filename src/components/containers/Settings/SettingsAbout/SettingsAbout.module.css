@@ -1,0 +1,38 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: default;
+}
+
+.row + .row {
+  border-top: 1px solid rgba(var(--color-light-gray), 0.3);
+}
+
+.rowClickable {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rowClickable:hover {
+  background: rgba(var(--color-black), 0.02);
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(var(--color-black));
+}
+
+.value {
+  font-size: 13px;
+  color: rgb(var(--color-dark-gray));
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  color: rgba(var(--color-black), 0.25);
+  transform: rotate(-90deg);
+}

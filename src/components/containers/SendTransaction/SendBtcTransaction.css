@@ -18,14 +18,12 @@
 
 .form-field label {
   font-size: 1.5rem;
+  min-width: max-content;
+  width: 9.5rem;
 }
 
 .form-field > * {
   align-self: center;
-}
-
-.form-field > *:first-child {
-  width: 9rem;
 }
 
 .form-field:nth-child(2) > *:first-child,

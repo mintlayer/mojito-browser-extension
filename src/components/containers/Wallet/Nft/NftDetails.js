@@ -61,10 +61,6 @@ const NftDetails = ({ nft, handleSend }) => {
             alt="NFT"
           />
         </div>
-        {/* <DelegationDetailsItem
-          title={'Date:'}
-          content={date}
-        /> */}
         <NftDetailsItem
           title={'Token id:'}
           content={nft.token_id}

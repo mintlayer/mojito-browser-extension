@@ -1,26 +1,39 @@
 .settings-backup {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
 }
 
 .backup-description {
-  max-width: 90%;
-  margin: 0 auto;
+  flex: 1;
+}
+
+.backup-description h2 {
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  color: rgb(var(--color-dark-gray));
+  margin-bottom: 6px;
+}
+
+.backup-description p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgb(var(--color-black));
 }
 
 .settings-backup-button {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 80px;
-  min-width: 80px;
-  padding: 1rem 0;
-  border-radius: var(--round-size);
+  padding: 1rem;
+  width: 56px;
+  min-width: 56px;
+  height: 56px;
+  border-radius: 16px;
 }
 
 .icon-json {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   fill: rgb(var(--color-white));
 }

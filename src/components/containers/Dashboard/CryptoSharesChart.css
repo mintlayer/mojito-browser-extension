@@ -1,32 +1,58 @@
 .chart {
   position: relative;
+  overflow: visible;
 }
 
 .portifolio-chart {
   position: relative;
-  width: 356px;
-  height: 178px;
+  width: 325px;
+  height: 168px;
+  overflow: visible;
 }
 
 .portifolio-chart h2 {
   display: block;
   position: absolute;
-  top: 63%;
+  top: 67%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 355px;
   text-align: center;
   font-weight: bold;
   font-size: 1.875rem;
 }
 
-.portifolio-chart h2 span {
-  font-size: 1.5rem;
+.portifolio-chart h2 em {
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 500;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgb(var(--color-dark-gray));
+  margin-bottom: 12px;
 }
 
-.portifolio-chart h2 em {
-  font-size: 1.5rem;
-  font-style: normal;
-  font-weight: 600;
+.balance-display {
   display: block;
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.balance-symbol {
+  font-size: 1rem;
+  font-weight: 600;
+  vertical-align: super;
+  color: rgb(var(--color-light-gray));
+}
+
+.balance-integer {
+  font-size: 4.2rem;
+  font-weight: 800;
+}
+
+.balance-decimal {
+  font-size: 4.2rem;
+  font-weight: 800;
+  opacity: 0.25;
 }

@@ -1,12 +1,13 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
-import { ProgressTracker, Header } from '@ComposedComponents'
+import { ProgressTracker } from '@ComposedComponents'
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
 import { Account } from '@Entities'
 import { AppInfo } from '@Constants'
+import { AccountContext } from '@Contexts'
 
 import './RestoreAccountJson.css'
 
@@ -22,6 +23,7 @@ const RestoreWalletDetailsItem = ({ label, value }) => {
 
 const RestoreAccountJson = () => {
   const navigate = useNavigate()
+  const { setCustomBackAction } = useContext(AccountContext)
   const [step, setStep] = useState(1)
   const fileInputRef = useRef(null)
   const [errorMessage, setErrorMessage] = useState('')
@@ -68,6 +70,11 @@ const RestoreAccountJson = () => {
   const customBackAction = () => {
     navigate('/')
   }
+
+  useEffect(() => {
+    setCustomBackAction(() => customBackAction)
+    return () => setCustomBackAction(null)
+  }, [])
 
   const handleFileChange = (event) => {
     const file = event.target.files[0]
@@ -154,7 +161,6 @@ const RestoreAccountJson = () => {
 
   return (
     <div data-testid="restore-account">
-      <Header customBackAction={customBackAction} />
       <ProgressTracker steps={steps} />
       <form
         className={'account-form-json'}

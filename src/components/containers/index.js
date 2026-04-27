@@ -2,8 +2,8 @@ import CreateAccount from './CreateAccount/CreateAccount'
 import RestoreAccountMnemonic from './RestoreAccount/RestoreAccountMnemonic/RestoreAccountMnemonic'
 import RestoreAccountJson from './RestoreAccount/RestoreAccountJson/RestoreAccountJson'
 
-import LoginContainer from './Login/Login'
-import SetPassword from './Login/SetPassword'
+import LoginContainer from './Login/Login.tsx'
+import SetPassword from './Login/SetPassword.tsx'
 
 import ShowAddress from './Wallet/ShowAddress'
 import Transaction from './Wallet/Transaction'
@@ -29,9 +29,11 @@ import CryptoList from './Dashboard/CryptoList'
 
 import DeleteAccount from './DeleteAccount/DeleteAccount'
 import SettingsDelete from './Settings/SettingsDelete/SettingsDelete'
-import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet'
+import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet.tsx'
 import SettingsAPI from './Settings/SettingsAPI/SettingsAPI'
+import SettingsAbout from './Settings/SettingsAbout/SettingsAbout.tsx'
 import SettingsBackup from './Settings/SettingsBackup/SettingsBackup'
+import SettingsSection from './Settings/SettingsSection/SettingsSection.tsx'
 
 import SignMessage from './Message/SignMessage/SignMessage'
 import VerifyMessage from './Message/VerifyMessage/VerifyMessage'
@@ -69,10 +71,12 @@ const Dashboard = {
 }
 
 const Settings = {
+  SettingsAbout,
   SettingsTestnet,
   SettingsDelete,
   SettingsAPI,
   SettingsBackup,
+  SettingsSection,
 }
 
 const RestoreAccount = {

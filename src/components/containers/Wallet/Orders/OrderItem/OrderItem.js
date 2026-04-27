@@ -1,12 +1,14 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import Decimal from 'decimal.js'
 
 import { PopUp } from '@ComposedComponents'
 import { ML } from '@Helpers'
-import { ReactComponent as SwapIcon } from '@Assets/images/icon-swap.svg'
 
 import OrderDetails from '../OrderDetails/OrderDetails'
 
-import './OrderItem.css'
+import styles from './OrderItem.module.css'
+
+const formatRate = (rate) => new Decimal(rate).toDecimalPlaces(10).toString()
 
 const OrderItem = ({ order }) => {
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
@@ -15,50 +17,49 @@ const OrderItem = ({ order }) => {
     setDetailPopupOpen(true)
   }
 
+  const askTicker = order.ask_currency.ticker
+  const giveTicker = order.give_currency.ticker
+  const rateText =
+    order.quote_rate != null
+      ? `1 ${askTicker} = ${formatRate(order.quote_rate)} ${giveTicker}`
+      : null
+
   return (
-    <li
-      className={'transaction'}
-      data-testid="order"
-      onClick={orderClickHandle}
-    >
-      <div
-        className={'transaction-logo-type transaction-logo-out delegation-icon'}
+    <>
+      <tr
+        className={styles.row}
+        data-testid="order"
+        onClick={orderClickHandle}
       >
-        <SwapIcon
-          className={'order-swap-icon'}
-          data-testid="swap-icon"
-        />
-      </div>
-      <div className="transaction-detail">
-        <div>
-          <p
-            className="transaction-id-info"
+        <td className={styles.orderIdCell}>
+          <span
+            className={styles.orderId}
             data-testid="order-id"
           >
             {ML.formatAddress(order.order_id)}
-          </p>
-          <div className="transaction-date-amount">
-            <div>
-              <span>{order.ask_balance.decimal} </span>
-              <span>{order.ask_currency.ticker}</span>
-            </div>
-            <SwapIcon
-              className={'balance-swap-icon'}
-              data-testid="swap-icon"
-            />
-            <div>
-              <span>{order.give_balance.decimal} </span>
-              <span>{order.give_currency.ticker}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+          </span>
+          {rateText && <span className={styles.exchangeRate}>{rateText}</span>}
+        </td>
+        <td className={styles.amountCell}>
+          <span className={styles.amount}>{order.ask_balance.decimal}</span>
+          <span className={styles.ticker}>{askTicker}</span>
+        </td>
+        <td className={styles.amountCell}>
+          <span className={`${styles.amount} ${styles.amountGreen}`}>
+            {order.give_balance.decimal}
+          </span>
+          <span className={styles.ticker}>{giveTicker}</span>
+        </td>
+        <td className={styles.chevronCell}>
+          <span className={styles.chevron}>&rsaquo;</span>
+        </td>
+      </tr>
       {detailPopupOpen && (
         <PopUp setOpen={setDetailPopupOpen}>
           <OrderDetails order={order} />
         </PopUp>
       )}
-    </li>
+    </>
   )
 }
 

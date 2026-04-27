@@ -2,7 +2,12 @@ import React from 'react'
 import { OrderDetailsItem, SwapInfoContent } from './OrderDetails'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import OrderDetails from './OrderDetails'
-import { MintlayerContext, SettingsContext, AccountContext } from '@Contexts'
+import {
+  MintlayerContext,
+  SettingsContext,
+  AccountContext,
+  TransactionProvider,
+} from '@Contexts'
 import { ML } from '@Helpers'
 
 describe('OrderDetailsItem', () => {
@@ -231,16 +236,21 @@ describe('SwapInfoContent', () => {
       },
     }
 
-    render(
+    const { unmount } = render(
       <SwapInfoContent
         order={orderWithVariousDecimals}
         from
       />,
     )
-    expect(screen.getByText('0.000001 TKN3')).toBeInTheDocument()
+    expect(screen.getByTestId('token-amount')).toHaveTextContent(
+      '0.000001 TKN3',
+    )
+    unmount()
 
     render(<SwapInfoContent order={orderWithVariousDecimals} />)
-    expect(screen.getByText('999999.999999 ML')).toBeInTheDocument()
+    expect(screen.getByTestId('token-amount')).toHaveTextContent(
+      '999999.999999 ML',
+    )
   })
 })
 
@@ -292,6 +302,11 @@ const mockMintlayerContext = {
   unusedAddresses: {
     receive: 'testnet_addr1',
   },
+  balance: 1000,
+  tokenBalances: {
+    token123: { balance: '500' },
+    token456: { balance: '300' },
+  },
 }
 
 const mockSettingsContext = {
@@ -309,7 +324,9 @@ const renderWithContext = (mockOrder) => {
     <MintlayerContext.Provider value={mockMintlayerContext}>
       <SettingsContext.Provider value={mockSettingsContext}>
         <AccountContext.Provider value={mockAccountContext}>
-          <OrderDetails order={mockOrder} />
+          <TransactionProvider>
+            <OrderDetails order={mockOrder} />
+          </TransactionProvider>
         </AccountContext.Provider>
       </SettingsContext.Provider>
     </MintlayerContext.Provider>,
@@ -329,14 +346,13 @@ describe('OrderDetails', () => {
     expect(
       screen.getByText(ML.formatAddress(mockTokenOrder.order_id, 36)),
     ).toBeInTheDocument()
-    expect(screen.getByText('Exchage rate:')).toBeInTheDocument()
-    expect(screen.getByText('1 TKN ≈ 2.0000000000 ML')).toBeInTheDocument()
+    expect(screen.getByText(/Exchage rate:.*1 TKN ≈ 2 ML/)).toBeInTheDocument()
   })
 
   it('renders coin order correctly', () => {
     renderWithContext(mockCoinOrder)
 
-    expect(screen.getByText('1 ML ≈ 0.5000000000 TKN2')).toBeInTheDocument()
+    expect(screen.getByText(/1 ML ≈ 0.5 TKN2/)).toBeInTheDocument()
     expect(screen.getByPlaceholderText('ML amount')).toBeInTheDocument()
   })
 

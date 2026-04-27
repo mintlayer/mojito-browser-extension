@@ -1,27 +1,40 @@
 .settings-delete {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
 }
 
 .delete-description {
-  max-width: 90%;
-  margin: 0 auto;
+  flex: 1;
+}
+
+.delete-description h2 {
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  color: rgb(var(--color-red));
+  margin-bottom: 6px;
+}
+
+.delete-description p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgb(var(--color-black));
 }
 
 .settings-delete-button {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 80px;
-  min-width: 80px;
-  padding: 1rem 0;
+  padding: 1rem;
+  width: 56px;
+  min-width: 56px;
+  height: 56px;
   background: rgb(var(--color-red));
-  border-radius: var(--round-size);
+  border-radius: 16px;
 }
 
 .icon-bin {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   fill: rgb(var(--color-white));
 }

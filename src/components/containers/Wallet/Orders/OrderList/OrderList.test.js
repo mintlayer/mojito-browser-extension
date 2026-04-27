@@ -279,7 +279,7 @@ describe('OrderList', () => {
     )
 
     const orderList = screen.getByTestId('order-list')
-    expect(orderList).toHaveClass('order-list')
+    expect(orderList).toHaveClass('card')
   })
 
   it('updates visible orders when orderList prop changes', () => {
@@ -328,21 +328,33 @@ describe('OrderList', () => {
     )
 
     const emptyItem = screen.getByTestId('order-empty')
-    expect(emptyItem).toHaveClass('empty-list')
+    expect(emptyItem).toHaveClass('emptyRow')
   })
-})
 
-it('displays correct order data', () => {
-  render(
-    <OrderList
-      orderList={[mockOrders[1]]}
-      ordersLoading={false}
-    />,
-  )
+  it('renders table headers', () => {
+    render(
+      <OrderList
+        orderList={mockOrders.slice(0, 3)}
+        ordersLoading={false}
+      />,
+    )
 
-  // Check that order data is displayed (these would be rendered by OrderItem)
-  expect(screen.getByText('50.75')).toBeInTheDocument()
-  expect(screen.getByText('TKN2')).toBeInTheDocument()
-  expect(screen.getByText('25.125')).toBeInTheDocument()
-  expect(screen.getByText('ML')).toBeInTheDocument()
+    expect(screen.getByText('ORDER ID')).toBeInTheDocument()
+    expect(screen.getByText('YOU SEND')).toBeInTheDocument()
+    expect(screen.getByText('YOU GET')).toBeInTheDocument()
+  })
+
+  it('displays correct order data', () => {
+    render(
+      <OrderList
+        orderList={[mockOrders[1]]}
+        ordersLoading={false}
+      />,
+    )
+
+    expect(screen.getByText('50.75')).toBeInTheDocument()
+    expect(screen.getByText('TKN2')).toBeInTheDocument()
+    expect(screen.getByText('25.125')).toBeInTheDocument()
+    expect(screen.getByText('ML')).toBeInTheDocument()
+  })
 })

@@ -1,14 +1,14 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router'
 
-import { Expressions } from '@Constants'
+import { AppInfo, Expressions } from '@Constants'
 import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
+import { AccountContext } from '@Contexts'
 
 import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import {
   ProgressTracker,
-  Header,
   TextField,
   RestoreSeedField,
 } from '@ComposedComponents'
@@ -44,6 +44,7 @@ const RestoreAccountMnemonic = ({
   const btcAddressType = BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
 
   const navigate = useNavigate()
+  const { setCustomBackAction } = useContext(AccountContext)
 
   const isSeedValid = (words, DefaultWordList = []) => {
     if (words.length !== 12 && words.length !== 24) {
@@ -59,20 +60,13 @@ const RestoreAccountMnemonic = ({
     return isWordListValid && validateMnemonicFn(wordsFields.join(' '))
   }, [wordsFields, defaultBTCWordList, validateMnemonicFn])
 
-  const accountNameErrorMessage = useMemo(() => {
-    return !accountNameValid
-      ? 'The wallet name should have at least 4 characteres.'
-      : null
-  }, [accountNameValid])
+  const accountNameErrorMessage = !accountNameValid
+    ? AppInfo.WALLET_NAME_ERROR
+    : null
 
-  const accountPasswordErrorMessage = useMemo(() => {
-    return !accountPasswordValid
-      ? [
-          'Your password should have at least 8 characteres.',
-          'Also it should have a lowercase letter, an uppercase letter, a digit, and a special char like: /\\*()&^%$#@-_=+\'"?!:;<>~`',
-        ]
-      : null
-  }, [accountPasswordValid])
+  const accountPasswordErrorMessage = !accountPasswordValid
+    ? AppInfo.WALLET_PASSWORD_ERROR
+    : null
 
   const getMnemonics = () => wordsFields.join(' ').trim()
 
@@ -93,6 +87,11 @@ const RestoreAccountMnemonic = ({
     }
   }
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
+
+  useEffect(() => {
+    setCustomBackAction(() => goToPrevStep)
+    return () => setCustomBackAction(null)
+  }, [step])
 
   const steps = [
     { name: 'Wallet Name', active: step === 1 },
@@ -162,7 +161,6 @@ const RestoreAccountMnemonic = ({
 
   return (
     <div data-testid="restore-account">
-      <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
         className={`account-form ${
@@ -195,7 +193,6 @@ const RestoreAccountMnemonic = ({
               value={accountPasswordValue}
               onChangeHandle={accountPasswordChangeHandler}
               validity={accountPasswordValid}
-              pattern={passwordPattern}
               password
               label={'Create a password for your wallet'}
               placeHolder={'Password'}
@@ -230,7 +227,9 @@ const RestoreAccountMnemonic = ({
 
           <CenteredLayout>
             <Button
-              onClickHandle={handleSubmit}
+              key={step}
+              buttonType="submit"
+              autoFocus
               extraStyleClasses={['restore-mnemonic-submit-button']}
             >
               {genButtonTitle(step)}{' '}

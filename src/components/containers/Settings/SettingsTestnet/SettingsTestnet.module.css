@@ -1,0 +1,42 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--color-black));
+}
+
+.switcher {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: rgb(var(--color-gray));
+  border-radius: var(--round-size-big);
+}
+
+.option {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1.5px solid transparent;
+  border-radius: var(--round-size-big);
+  background: rgb(var(--color-black), 0.05);
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(var(--color-dark-gray));
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.option:not(.optionActive):hover {
+  background: rgb(var(--color-black), 0.1);
+}
+
+.optionActive {
+  background: rgb(var(--mojito-green-soft));
+  border-color: rgb(var(--mojito-green));
+  color: rgb(var(--mojito-green));
+}

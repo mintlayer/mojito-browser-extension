@@ -31,7 +31,7 @@ const SettingsDelete = () => {
     >
       <div className="delete-description">
         <VerticalGroup>
-          <h2 data-testid="title">DELETE WALLET</h2>
+          <h2 data-testid="title">Delete wallet</h2>
           <p>
             If you delete a wallet, you may lose access to all the funds
             associated with it. Please make sure that you have securely saved

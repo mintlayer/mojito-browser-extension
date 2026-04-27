@@ -1,28 +1,133 @@
 .transaction-item span {
-  font-size: 13px;
+  font-weight: 600;
   color: rgb(var(--color-lightest-blue));
 }
 
-.button-transaction,
-.button-transaction-up,
-.button-transaction-staking {
+/* Base button reset */
+.button-transaction {
+  padding: 0;
+  border-radius: 16px;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Small square buttons (Swap, Staking, NFT, Sign, Addr.) */
+.button-transaction-small {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   width: 58px;
   height: 58px;
   min-width: 58px;
   min-height: 58px;
-  margin-bottom: 10px;
-  border-radius: 21px;
-  padding: 0;
+  background-color: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.2);
 
   @media screen and (min-width: 801px) {
     width: 64px;
     height: 64px;
     min-width: 64px;
     min-height: 64px;
-    margin-bottom: 10px;
-    padding: 0;
-    border-radius: 25px;
   }
+}
+
+.button-transaction-small svg {
+  width: 24px;
+  height: 24px;
+}
+
+.button-transaction-small .button-transaction-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgb(var(--color-lightest-blue));
+}
+
+.button-transaction-small:hover,
+.button-transaction-small:focus {
+  background-color: rgba(var(--color-light-green), 0.15);
+}
+
+.button-transaction-small svg path {
+  stroke: rgb(var(--color-lightest-blue));
+}
+
+.button-transaction-small:hover svg path,
+.button-transaction-small:focus svg path {
+  stroke: rgb(var(--color-black));
+}
+
+/* Wide buttons (Send, Receive) */
+.button-transaction-wide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+
+  @media screen and (min-width: 801px) {
+    height: 64px;
+    min-height: 64px;
+  }
+}
+
+/* Send button (green) */
+.button-transaction-up {
+  background-color: rgb(var(--color-green));
+  color: rgb(var(--color-dark-teal));
+}
+
+.button-transaction-up:hover,
+.button-transaction-up:focus {
+  background-color: rgb(var(--color-darker-green));
+}
+
+.button-transaction-up svg {
+  transform: rotate(180deg);
+}
+
+.button-transaction-up svg path {
+  stroke: rgb(var(--color-dark-teal));
+  transition: stroke 0.3s ease-in-out;
+}
+
+.button-transaction-up:hover svg path,
+.button-transaction-up:focus svg path {
+  stroke: rgb(var(--color-green));
+}
+
+/* Receive button (outlined/light) */
+.button-transaction-receive {
+  color: rgb(var(--color-black));
+  background-color: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.2);
+}
+
+.button-transaction-receive:hover,
+.button-transaction-receive:focus {
+  background-color: rgba(var(--color-light-green), 0.15);
+  color: rgb(var(--color-black));
+}
+
+.button-transaction-receive svg path {
+  stroke: rgb(var(--color-lightest-blue));
+}
+
+.button-transaction-receive:hover svg path,
+.button-transaction-receive:focus svg path {
+  stroke: rgb(var(--color-black));
+}
+
+/* Label inside wide buttons */
+.button-transaction-wide .button-transaction-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: inherit;
 }
 
 .transaction-buttons-wrapper {
@@ -36,38 +141,12 @@
   align-items: center;
 }
 
-.transaction-item:hover .transaction-button-title {
-  color: rgb(var(--color-white));
-}
-
-.transaction-item:not(:last-child) {
-  margin-right: 5px;
-
-  @media screen and (min-width: 801px) {
-    margin-right: 15px;
-  }
-}
-
-.button-transaction-up svg {
-  transform: rotate(180deg);
+.transaction-item-wide {
+  flex: 1;
+  max-width: 150px;
 }
 
 .icon-arrow {
-  width: 37px;
-  height: 37px;
-}
-
-.staking-icon {
-  width: 36px;
-  height: 36px;
-}
-
-.sign-icon {
-  width: 36px;
-  height: 36px;
-}
-
-.swap-icon {
-  width: 36px;
-  height: 36px;
+  width: 18px;
+  height: 18px;
 }

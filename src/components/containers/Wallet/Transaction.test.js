@@ -3,6 +3,7 @@ import { act } from 'react'
 import { format } from 'date-fns'
 
 import Transaction from './Transaction'
+import styles from './Transaction.module.css'
 import { BTC } from '@Helpers'
 import { SettingsProvider, AccountProvider, MintlayerProvider } from '@Contexts'
 
@@ -63,7 +64,7 @@ test('Render transaction component', async () => {
     'Amount: ' + TRANSCTIONSAMPLE.value,
   )
 
-  expect(transactionIcon).not.toHaveClass('transaction-logo-out')
+  expect(transactionIcon).not.toHaveClass(styles.logoOut)
 
   await act(async () => fireEvent.click(transaction))
 })
@@ -96,5 +97,5 @@ test('Render transaction out component', async () => {
     'Amount: ' + TRANSCTIONSAMPLE.value,
   )
 
-  expect(transactionIcon).toHaveClass('transaction-logo-out')
+  expect(transactionIcon).toHaveClass(styles.logoOut)
 })

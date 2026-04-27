@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@BasicComponents'
 import OrderItem from '../OrderItem/OrderItem'
-import { SkeletonLoader } from '@BasicComponents'
-import './OrderList.css'
+import OrderItemSkeleton from '../OrderItem/OrderItemSkeleton'
+import styles from './OrderList.module.css'
 
 const PAGE_SIZE = 10
+const SKELETON_ROWS = 6
 
 const OrderList = ({ orderList, ordersLoading }) => {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
@@ -14,18 +15,25 @@ const OrderList = ({ orderList, ordersLoading }) => {
     orderList && setShowedOrders(orderList.slice(0, visibleCount))
   }, [visibleCount, orderList])
 
-  const renderSkeletonLoaders = () =>
-    Array.from({ length: 6 }, (_, i) => <SkeletonLoader key={i} />)
+  const renderSkeletonRows = () =>
+    Array.from({ length: SKELETON_ROWS }, (_, i) => (
+      <OrderItemSkeleton key={i} />
+    ))
 
   const renderOrders = () => {
     if (!orderList || !orderList.length) {
       return (
-        <li
-          className="empty-list"
+        <tr
+          className={styles.emptyRow}
           data-testid="order-empty"
         >
-          No orders found
-        </li>
+          <td
+            colSpan="4"
+            className={styles.noOrders}
+          >
+            No orders found
+          </td>
+        </tr>
       )
     }
 
@@ -42,22 +50,36 @@ const OrderList = ({ orderList, ordersLoading }) => {
   }
 
   return (
-    <>
-      <ul
-        className="order-list"
-        data-testid={'order-list'}
-      >
-        {ordersLoading ? renderSkeletonLoaders() : renderOrders()}
-        {orderList && showedOrders.length < orderList.length && (
+    <div
+      className={styles.card}
+      data-testid="order-list"
+    >
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th className={`${styles.colHeader} ${styles.colOrderId}`}>
+              ORDER ID
+            </th>
+            <th className={`${styles.colHeader} ${styles.colSend}`}>
+              YOU SEND
+            </th>
+            <th className={`${styles.colHeader} ${styles.colGet}`}>YOU GET</th>
+            <th className={`${styles.colHeader} ${styles.colAction}`}></th>
+          </tr>
+        </thead>
+        <tbody>{ordersLoading ? renderSkeletonRows() : renderOrders()}</tbody>
+      </table>
+      {!ordersLoading &&
+        orderList &&
+        showedOrders.length < orderList.length && (
           <div
-            className="load-more-button-wrapper"
+            className={styles.loadMoreWrapper}
             data-testid="load-more-button"
           >
             <Button onClickHandle={handleLoadMore}>Load more</Button>
           </div>
         )}
-      </ul>
-    </>
+    </div>
   )
 }
 

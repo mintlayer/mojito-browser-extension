@@ -1,0 +1,64 @@
+.row {
+  border-bottom: 1px solid rgba(var(--color-black), 0.05);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.orderIdCell {
+  padding: 16px 20px;
+  vertical-align: middle;
+  width: 45%;
+  border-left: 3px solid rgba(var(--color-main-green), 1);
+}
+
+.amountCell {
+  padding: 16px 20px;
+  vertical-align: middle;
+  width: 22%;
+}
+
+.chevronCell {
+  padding: 16px 20px;
+  vertical-align: middle;
+  width: 11%;
+  text-align: right;
+}
+
+.bar {
+  display: block;
+  border-radius: 4px;
+  animation: order-skeleton-pulse 1s linear infinite alternate;
+}
+
+.orderIdBar {
+  width: 70%;
+  height: 12px;
+  margin-bottom: 8px;
+}
+
+.rateBar {
+  width: 45%;
+  height: 9px;
+}
+
+.amountBar {
+  width: 60%;
+  height: 12px;
+}
+
+.chevronBar {
+  width: 10px;
+  height: 14px;
+  margin-left: auto;
+}
+
+@keyframes order-skeleton-pulse {
+  0% {
+    background: rgba(var(--color-main-green), 0.1);
+  }
+  100% {
+    background: rgba(var(--color-main-green), 0.2);
+  }
+}
