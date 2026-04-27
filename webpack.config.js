@@ -93,7 +93,7 @@ module.exports = {
   },
 
   resolve: {
-    extensions: ['.js', '.jsx', '.json', '.mjs', '.wasm'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.mjs', '.wasm'],
     alias: aliases,
     fallback: {
       stream: require.resolve('stream-browserify'),
@@ -108,7 +108,7 @@ module.exports = {
     rules: [
       // JavaScript/JSX
       {
-        test: /\.(js|jsx|mjs)$/,
+        test: /\.(js|jsx|mjs|ts|tsx)$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
@@ -119,6 +119,7 @@ module.exports = {
                 { targets: { browsers: ['last 2 versions'] } },
               ],
               ['@babel/preset-react', { runtime: 'automatic' }],
+              '@babel/preset-typescript',
             ],
             cacheDirectory: true,
           },
@@ -143,6 +144,9 @@ module.exports = {
               modules: {
                 namedExport: false,
                 exportLocalsConvention: 'asIs',
+                localIdentName: isDevelopment
+                  ? '[name]__[local]--[hash:base64:5]'
+                  : '[hash:base64:8]',
               },
             },
           },
