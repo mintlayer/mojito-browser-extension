@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import Navigation from './Navigation'
+import Navigation from './Navigation.tsx'
 import { AccountContext, MintlayerContext } from '@Contexts'
 
 // Mock the chrome object

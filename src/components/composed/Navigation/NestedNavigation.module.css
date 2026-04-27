@@ -1,9 +1,9 @@
-.nested-menu {
+.nestedMenu {
   margin-top: 10px;
   transition: all 0.2s ease;
 }
 
-.nested-menu-item {
+.nestedMenuItem {
   position: relative;
   margin-bottom: 1px;
   border-radius: 4px;
@@ -13,11 +13,11 @@
   transition: all 0.2s ease;
 }
 
-.nested-menu-item-open {
+.nestedMenuItemOpen {
   padding: 5px;
 }
 
-.nested-label-wrapper {
+.nestedLabelWrapper {
   display: flex;
   align-items: center;
   padding: 10px 15px;
@@ -25,23 +25,23 @@
   border-radius: 4px;
 }
 
-.nested-label-wrapper:hover {
+.nestedLabelWrapper:hover {
   color: rgb(var(--color-white));
   background: rgba(var(--color-purple), 0.7);
   transition: all 0.2s ease;
 }
 
-.nested-menu-item-open .nested-label-wrapper {
+.nestedMenuItemOpen .nestedLabelWrapper {
   color: rgb(var(--color-white));
   background: rgba(var(--color-purple), 0.7);
   transition: all 0.2s ease;
 }
 
-.nested-item-menu {
+.nestedItemMenu {
   margin-top: 5px;
 }
 
-.nested-item-menu-item {
+.nestedItemMenuItem {
   display: flex;
   padding: 10px 15px;
   margin-bottom: 1px;
@@ -52,12 +52,12 @@
   transition: all 0.2s ease;
 }
 
-.nested-item-menu-item:hover {
+.nestedItemMenuItem:hover {
   color: rgb(var(--color-white));
   background-color: rgba(153, 196, 153, 0.8);
 }
 
-.nested-item-menu .navigation-triangle {
+.navigationTriangle {
   position: absolute;
   top: 16px;
   right: 10px;
@@ -68,7 +68,7 @@
   transition: all 0.2s ease;
 }
 
-.nested-item-menu .navigation-triangle-open {
+.navigationTriangleOpen {
   transform: none;
   top: 21px;
 }

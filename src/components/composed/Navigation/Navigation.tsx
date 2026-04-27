@@ -1,29 +1,42 @@
 /* eslint-disable no-undef */
-import React, { useContext, useEffect, useState } from 'react'
+import { ReactNode, useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router'
 
-import { ReactComponent as LogoutImg } from '@Assets/images/logout.svg'
+import { ReactComponent as LogoutImg } from '@Assets/images/icon-logout.svg'
 import { ReactComponent as ExpandImg } from '@Assets/images/icon-expand.svg'
-import { ReactComponent as SettingsImg } from '@Assets/images/settings.svg'
+import { ReactComponent as SettingsImg } from '@Assets/images/icon-settings.svg'
 import { ReactComponent as LoginImg } from '@Assets/images/icon-login.svg'
 import { ReactComponent as AddWalletImg } from '@Assets/images/icon-add-wallet.svg'
 import { ReactComponent as HomeImg } from '@Assets/images/icon-home.svg'
-// import { ReactComponent as WalletIcon } from '@Assets/images/icon-wallet.svg'
-import { ReactComponent as TriangleIcon } from '@Assets/images/icon-triangle.svg'
+import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
+import { ReactComponent as MlLogo } from '@Assets/images/logo.svg'
 
 import { APP_VERSION } from '@Version'
 
 import { AccountContext, MintlayerContext } from '@Contexts'
-// import { AppInfo } from '@Constants'
 
-import NestedNavigation from './NestedNavigation'
+import styles from './Navigation.module.css'
 
-import './Navigation.css'
+interface NavigationItem {
+  id: number
+  label: string
+  icon?: ReactNode
+  link?: string
+  type?: string
+  content?: NavigationItem[]
+}
 
-const Navigation = ({ customNavigation }) => {
+interface NavigationProps {
+  customNavigation?: NavigationItem[]
+  toggleMenu?: boolean
+}
+
+const Navigation = ({
+  customNavigation,
+  toggleMenu = true,
+}: NavigationProps) => {
   const [unlocked, setUnlocked] = useState(false)
-  const [navigationItemID, setNavigationItemID] = useState(null)
-  const [nestedItemID, setNestedItemID] = useState(null)
+  const [navigationItemID, setNavigationItemID] = useState<number | null>(null)
   const navigate = useNavigate()
   const location = useLocation()
   const {
@@ -42,34 +55,23 @@ const Navigation = ({ customNavigation }) => {
   }, [location.pathname])
 
   const toggleSliderMenu = () => {
+    if (!toggleMenu) return
     setSliderMenuOpen(!sliderMenuOpen)
   }
 
-  const onNavigationItemClick = (item) => {
+  const onNavigationItemClick = (item: NavigationItem) => {
     if (item.type !== 'menu') {
-      navigate(item.link)
+      navigate(item.link!)
       toggleSliderMenu()
     } else {
       setNavigationItemID(navigationItemID === item.id ? null : item.id)
     }
-    return
-  }
-
-  const onNestedItemClick = (item) => {
-    if (item.type !== 'menu') {
-      navigate(item.link)
-      toggleSliderMenu()
-    } else {
-      setNestedItemID(nestedItemID === item.id ? null : item.id)
-    }
-    return
   }
 
   const expandHandler = () => {
     window.open(
       typeof browser !== 'undefined'
-        ? // eslint-disable-next-line no-undef
-          browser.runtime.getURL('popup.html')
+        ? browser.runtime.getURL('popup.html')
         : chrome.runtime.getURL('popup.html'),
       '_blank',
     )
@@ -82,22 +84,29 @@ const Navigation = ({ customNavigation }) => {
     toggleSliderMenu()
   }
 
-  const loggedNavigationList = [
+  const loggedNavigationList: NavigationItem[] = [
     {
       id: 1,
       label: 'Dashboard',
       icon: <HomeImg />,
       link: '/dashboard',
     },
-    // {
-    //   id: 2,
-    //   label: 'Wallets',
-    //   icon: <WalletIcon />,
-    //   type: 'menu',
-    //   content: AppInfo.WALLETS_NAVIGATION,
-    // },
+
+    {
+      id: 2,
+      label: 'Bitcoin Wallet',
+      icon: <BtcLogo />,
+      link: '/wallet/Bitcoin',
+    },
     {
       id: 3,
+      label: 'Mintlayer Wallet',
+      icon: <MlLogo />,
+      link: '/wallet/Mintlayer',
+    },
+
+    {
+      id: 4,
       label: 'Settings',
       icon: <SettingsImg />,
       link: '/settings',
@@ -105,7 +114,7 @@ const Navigation = ({ customNavigation }) => {
     ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
       ? [
           {
-            id: 4,
+            id: 5,
             label: 'Connection Page',
             icon: <SettingsImg />,
             link: '/connect',
@@ -115,7 +124,7 @@ const Navigation = ({ customNavigation }) => {
     ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
       ? [
           {
-            id: 5,
+            id: 6,
             label: 'Test Sign Transaction',
             icon: <SettingsImg />,
             link: '/wallet/Mintlayer/sign-external-transaction',
@@ -125,7 +134,7 @@ const Navigation = ({ customNavigation }) => {
     ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
       ? [
           {
-            id: 6,
+            id: 7,
             label: 'Test Sign Bitcoin Transaction',
             icon: <SettingsImg />,
             link: '/wallet/Bitcoin/sign-transaction',
@@ -135,7 +144,7 @@ const Navigation = ({ customNavigation }) => {
     ...(process.env.REACT_APP_CONFIG_NAME !== 'production'
       ? [
           {
-            id: 7,
+            id: 8,
             label: 'Test Sign Challenge',
             icon: <SettingsImg />,
             link: '/wallet/Mintlayer/sign-challenge',
@@ -144,7 +153,7 @@ const Navigation = ({ customNavigation }) => {
       : []),
   ]
 
-  const navigationList = [
+  const navigationList: NavigationItem[] = [
     {
       id: 1,
       label: 'Login',
@@ -168,6 +177,11 @@ const Navigation = ({ customNavigation }) => {
     },
   ]
 
+  const isActive = (item: NavigationItem) => {
+    if (!item.link) return false
+    return location.pathname.startsWith(item.link)
+  }
+
   const navList = customNavigation
     ? customNavigation
     : unlocked
@@ -176,58 +190,47 @@ const Navigation = ({ customNavigation }) => {
 
   return (
     <>
-      <ul>
+      <ul className={styles.navigationList}>
         {navList.map((item) => (
           <li
             key={item.id}
-            className={`navigation-item ${navigationItemID === item.id && 'navigation-item-open'}`}
+            className={`${styles.navigationItem} ${navigationItemID === item.id && styles.navigationItemOpen} ${isActive(item) && styles.navigationItemActive}`}
+            onClick={() => {
+              onNavigationItemClick(item)
+            }}
           >
-            <div
-              className="label-wrapper"
-              onClick={() => {
-                onNavigationItemClick(item)
-              }}
-            >
+            <div className={styles.labelWrapper}>
               {item.icon && item.icon}
               {item.label}
             </div>
-
-            {item.type === 'menu' && navigationItemID === item.id && (
-              <NestedNavigation
-                item={item}
-                onNestedItemClick={onNestedItemClick}
-                nestedItemID={nestedItemID}
-              />
-            )}
-            {item.type === 'menu' && (
-              <TriangleIcon
-                className={`navigation-triangle ${navigationItemID === item.id && 'navigation-triangle-open'}`}
-              />
-            )}
           </li>
         ))}
       </ul>
-      <ul className="slider-bottom-nav">
+      <ul className={styles.sliderBottomNav}>
         {!isExtended && (
           <li
-            className="bottom-menu-item"
+            className={styles.bottomMenuItem}
             onClick={expandHandler}
             data-testid="navigation-expand-view"
           >
-            <ExpandImg /> Expand view
+            <div className={styles.labelWrapper}>
+              <ExpandImg /> Expand view
+            </div>
           </li>
         )}
         {unlocked && (
           <li
-            className="bottom-menu-item"
+            className={styles.bottomMenuItem}
             onClick={logoutHandler}
             data-testid="navigation-logout"
           >
-            <LogoutImg />
-            Logout
+            <div className={styles.labelWrapper}>
+              <LogoutImg />
+              Logout
+            </div>
           </li>
         )}
-        <span className="slider-version">v{APP_VERSION}</span>
+        <span className={styles.sliderVersion}>v{APP_VERSION}</span>
       </ul>
     </>
   )
