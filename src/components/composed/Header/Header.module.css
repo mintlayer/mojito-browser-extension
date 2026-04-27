@@ -1,0 +1,108 @@
+.header {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  min-height: 70px;
+  background: rgb(var(--color-white));
+  padding: 20px 31px;
+  border-bottom: 1px solid rgba(var(--color-black), 0.1);
+}
+
+.logoWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.backButton {
+  height: 35px;
+  width: 35px;
+  padding: 0.2rem;
+  position: absolute;
+  top: 18px;
+  left: 27px;
+  border-radius: 10px;
+  background-color: transparent !important;
+}
+
+.backButton:hover {
+  background-color: rgba(var(--color-black), 0.05) !important;
+}
+
+.backButton svg {
+  width: 23px;
+  height: 23px;
+}
+
+.backButton svg path,
+.backButton svg path {
+  stroke: rgb(var(--color-black));
+}
+
+.backButton:hover svg path,
+.backButton:focus svg path {
+  opacity: 0.6;
+}
+
+.menuButton {
+  height: 40px;
+  width: 40px;
+  padding: 0.2rem;
+  top: 0.5rem;
+  right: 45px;
+  outline: none;
+  background-color: transparent !important;
+}
+
+.menuButton svg {
+  width: 24px;
+  height: 24px;
+}
+
+.menuButton svg path {
+  stroke: rgb(var(--color-black));
+}
+
+.expandWrapped {
+  position: absolute;
+  display: flex;
+  top: 16px;
+  right: 22px;
+  overflow: visible;
+
+  @media screen and (min-width: 801px) {
+    display: none;
+  }
+}
+
+.settingsExpand {
+  display: none;
+  position: absolute;
+  top: 16px;
+  right: 22px;
+
+  @media screen and (min-width: 801px) {
+    display: flex;
+  }
+}
+
+.settingsButton {
+  height: 35px;
+  width: 35px;
+  padding: 0.2rem;
+  border-radius: 10px;
+  background-color: transparent !important;
+}
+
+.settingsButton:hover {
+  background-color: rgba(var(--color-black), 0.05) !important;
+}
+
+.settingsButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.settingsButton svg path {
+  stroke: rgb(var(--color-black));
+}

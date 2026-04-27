@@ -8,7 +8,7 @@ import {
   MintlayerProvider,
   BitcoinProvider,
 } from '@Contexts'
-import Header from './Header'
+import Header from './Header.tsx'
 
 global.AbortSignal = global.AbortSignal || {}
 

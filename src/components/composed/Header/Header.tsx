@@ -1,21 +1,26 @@
-import React, { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router'
 
 import { ReactComponent as BackImg } from '@Assets/images/icon-arrow-left.svg'
 import { ReactComponent as MenuImg } from '@Assets/images/icon-hamburger.svg'
+import { ReactComponent as SettingsImg } from '@Assets/images/icon-settings.svg'
 
 import { Button, Logo } from '@BasicComponents'
 import { UpdateButton, SliderMenu, Navigation } from '@ComposedComponents'
 import { AccountContext } from '@Contexts'
 
-import './Header.css'
+import styles from './Header.module.css'
 
-const Header = ({ customBackAction }) => {
+const Header = () => {
   const [unlocked, setUnlocked] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
-  const { isAccountUnlocked, sliderMenuOpen, setSliderMenuOpen } =
-    useContext(AccountContext)
+  const {
+    isAccountUnlocked,
+    sliderMenuOpen,
+    setSliderMenuOpen,
+    customBackAction,
+  } = useContext(AccountContext)
 
   const coinType = location.pathname.includes('/wallet/')
     ? location.pathname.split('/wallet/')[1].split('/')[0]
@@ -27,18 +32,13 @@ const Header = ({ customBackAction }) => {
 
   const noBackButtonPages = ['/dashboard', '/']
   const noBackButton = noBackButtonPages.includes(location.pathname)
-
-  const hideWithoutCustomBack = ['/set-account', '/restore-account']
+  const isCreateRestorePage = location.pathname === '/create-restore'
 
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
     setUnlocked(accountUnlocked)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname])
-
-  if (hideWithoutCustomBack.includes(location.pathname) && !customBackAction) {
-    return null
-  }
 
   const goBack = () => {
     if (isWalletPage) {
@@ -61,29 +61,44 @@ const Header = ({ customBackAction }) => {
   }
 
   return (
-    <header data-testid="header-container">
+    <header
+      className={styles.header}
+      data-testid="header-container"
+    >
       <div style={{ visibility: !noBackButton ? 'visible' : 'hidden' }}>
         <Button
-          extraStyleClasses={['backButton']}
+          extraStyleClasses={[styles.backButton]}
           onClickHandle={goBack}
-          hoverEffect={false}
         >
           <BackImg />
         </Button>
       </div>
 
-      <div className="expand-wrapped">
+      <div className={styles.expandWrapped}>
         <Button
-          extraStyleClasses={['header-menu-button']}
+          extraStyleClasses={[styles.menuButton]}
           onClickHandle={toggleSliderMenu}
         >
           <MenuImg />
         </Button>
       </div>
-      <div className="logo-wrapper">
-        <Logo />
-        {unlocked && <UpdateButton />}
-      </div>
+      {!isCreateRestorePage && (
+        <div className={styles.logoWrapper}>
+          <Logo />
+          {unlocked && <UpdateButton />}
+        </div>
+      )}
+
+      {!unlocked && (
+        <div className={styles.settingsExpand}>
+          <Button
+            extraStyleClasses={[styles.settingsButton]}
+            onClickHandle={() => navigate('/settings')}
+          >
+            <SettingsImg />
+          </Button>
+        </div>
+      )}
 
       <SliderMenu
         isOpen={sliderMenuOpen}
