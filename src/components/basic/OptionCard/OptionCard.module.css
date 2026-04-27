@@ -1,0 +1,67 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  border-radius: 20px;
+  background: rgb(var(--color-white));
+  border: 1px solid rgba(var(--color-light-gray), 0.4);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.card:hover {
+  border-color: rgba(var(--mojito-green), 0.5);
+  box-shadow: 0 2px 12px rgba(var(--mojito-green), 0.08);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(var(--mojito-green), 0.1);
+  margin-bottom: 4px;
+}
+
+.icon svg {
+  width: 24px;
+  height: 24px;
+  color: rgb(var(--mojito-green));
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+}
+
+.description {
+  font-size: 13px;
+  color: rgb(var(--color-dark-gray));
+  line-height: 1.4;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(var(--mojito-green));
+  margin-top: 4px;
+}
+
+.link svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.card:hover .link svg {
+  transform: translateX(3px);
+}
