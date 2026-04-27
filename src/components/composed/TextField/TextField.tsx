@@ -1,10 +1,26 @@
-import React, { useId, useEffect, useState } from 'react'
+import { ReactNode, useId, useEffect, useState, ChangeEvent } from 'react'
 
 import { Input, Error } from '@BasicComponents'
 import { VerticalGroup } from '@LayoutComponents'
-import { useStyleClasses } from '@Hooks'
 
-import './TextField.css'
+import styles from './TextField.module.css'
+
+interface TextFieldProps {
+  label?: ReactNode
+  labelPosition?: 'center' | 'left' | 'right'
+  placeHolder?: string
+  alternate?: boolean
+  password?: boolean
+  value?: string
+  onChangeHandle?: (value: string) => void
+  validity?: boolean | null
+  pattern?: string
+  extraStyleClasses?: string[]
+  errorMessages?: string | null
+  pristinity?: boolean
+  focus?: boolean
+  bigGap?: boolean
+}
 
 const TextField = ({
   label,
@@ -20,32 +36,16 @@ const TextField = ({
   errorMessages,
   pristinity = true,
   focus = true,
-  bigGap = true,
-}) => {
+  bigGap = false,
+}: TextFieldProps) => {
   const inputId = useId()
-
-  const { styleClasses, addStyleClass, removeStyleClass } =
-    useStyleClasses('inputLabel')
   const [isPristine, setIsPristine] = useState(true)
-  const [fieldValidity, setFieldValidity] = useState(null)
+  const [fieldValidity, setFieldValidity] = useState<string | null>(null)
 
   useEffect(() => {
-    alternate ? addStyleClass('alternate') : removeStyleClass('alternate')
-  }, [alternate, addStyleClass, removeStyleClass])
-
-  useEffect(() => {
-    if (isPristine || validity === null) return
+    if (isPristine || validity === null || validity === undefined) return
     validity ? setFieldValidity('valid') : setFieldValidity('invalid')
   }, [validity, isPristine])
-
-  useEffect(() => {
-    labelPosition === 'left'
-      ? addStyleClass('inputLabelLeft')
-      : removeStyleClass('inputLabelLeft')
-    labelPosition === 'right'
-      ? addStyleClass('inputLabelRight')
-      : removeStyleClass('inputLabelRight')
-  }, [labelPosition, addStyleClass, removeStyleClass])
 
   useEffect(() => {
     setIsPristine(pristinity)
@@ -53,12 +53,21 @@ const TextField = ({
 
   const setPristineState = () => setIsPristine(false)
 
+  const labelClasses = [
+    styles.inputLabel,
+    alternate && styles.alternate,
+    labelPosition === 'left' && styles.inputLabelLeft,
+    labelPosition === 'right' && styles.inputLabelRight,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <VerticalGroup bigGap={bigGap}>
       {label && (
         <label
           htmlFor={inputId}
-          className={styleClasses}
+          className={labelClasses}
           data-testid="label"
         >
           {label}
@@ -69,7 +78,9 @@ const TextField = ({
         placeholder={placeHolder}
         password={password}
         value={value}
-        onChangeHandle={(e) => onChangeHandle && onChangeHandle(e.target.value)}
+        onChangeHandle={(e: ChangeEvent<HTMLInputElement>) =>
+          onChangeHandle && onChangeHandle(e.target.value)
+        }
         validity={fieldValidity}
         pattern={pattern}
         extraStyleClasses={extraStyleClasses}

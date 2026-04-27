@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 
-import TextField from './TextField'
+import TextField from './TextField.tsx'
 
 const ONCHANGEHANDLESAMPLE = () => {}
 
