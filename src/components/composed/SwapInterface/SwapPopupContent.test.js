@@ -297,12 +297,10 @@ describe('SwapPopupContent', () => {
       />,
     )
 
-    expect(screen.getByTestId('swap-popup-content')).toHaveClass(
-      'token-popup-swap',
-    )
+    expect(screen.getByTestId('swap-popup-content')).toHaveClass('popup')
     expect(
       screen.getByPlaceholderText('Search by symbol or token id'),
-    ).toHaveClass('swap-token-search-input')
+    ).toHaveClass('searchInput')
   })
 
   it('search input has correct attributes', () => {
@@ -319,7 +317,7 @@ describe('SwapPopupContent', () => {
       'Search by symbol or token id',
     )
     expect(searchInput).toHaveAttribute('type', 'text')
-    expect(searchInput).toHaveClass('swap-token-search-input')
+    expect(searchInput).toHaveClass('searchInput')
   })
 
   it('renders list structure correctly', () => {

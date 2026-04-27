@@ -1,0 +1,139 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: rgb(var(--color-white));
+  border-radius: 16px;
+  gap: 4px;
+  min-height: max-content;
+  padding: 20px 24px;
+  color: rgb(var(--color-black));
+  box-shadow: none;
+}
+
+@media screen and (min-width: 801px) {
+  .form {
+    gap: 12px;
+    padding: 28px 36px;
+  }
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: rgba(var(--color-light-green), 1);
+  text-transform: uppercase;
+  padding-left: 5px;
+}
+
+.inputsWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.amountInput {
+  width: 34%;
+  height: 100%;
+  padding: 12px 16px;
+  font-size: 20px;
+  font-weight: 700;
+  border-radius: 36px;
+  border: 1px solid rgba(var(--color-black), 0.08);
+  background: rgb(var(--color-white));
+  color: rgb(var(--color-black));
+}
+
+.amountInput:focus {
+  outline: none;
+  border: 1px solid rgba(var(--color-light-green), 0.5);
+}
+
+.amountInput:hover {
+  outline: none;
+  border: 1px solid rgba(var(--color-light-green), 0.5);
+}
+
+.amountInput::-webkit-outer-spin-button,
+.amountInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.amountInput[type='number'] {
+  appearance: textfield;
+}
+
+.balance {
+  color: rgba(var(--color-black), 0.35);
+  padding-left: 18px;
+  font-size: 14px;
+}
+
+.arrowRow {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+
+.arrowIcon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Arrow button */
+.arrowButton {
+  cursor: default;
+  padding: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(var(--color-main-green), 1);
+}
+
+.arrowButton:hover {
+  background: rgba(var(--color-main-green), 0.85);
+}
+
+.arrowButton svg path {
+  stroke: rgb(var(--color-white));
+}
+
+.arrowButton:hover svg path {
+  stroke: rgb(var(--color-white));
+}
+
+/* Find orders button */
+.findButton {
+  width: 34%;
+  height: 100%;
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 36px;
+}
+
+.findButton:hover svg path {
+  stroke: unset;
+}
+
+.findOrderIcon {
+  width: 18px;
+  height: 18px;
+  max-width: 18px;
+  max-height: 18px;
+}
+
+.findButton:hover .findOrderIcon {
+  animation: moveArrowRight 0.3s ease-in-out;
+}

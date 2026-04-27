@@ -70,11 +70,9 @@ describe('SelectTokenSwap', () => {
         onClick={mockOnClick}
       />,
     )
-    expect(screen.getByTestId('select-token-swap')).toHaveClass(
-      'swap-select-wrapper',
-    )
+    expect(screen.getByTestId('select-token-swap')).toHaveClass('selectWrapper')
     expect(screen.getByTestId('select-token-swap-content')).toHaveClass(
-      'swap-token-select',
+      'tokenSelect',
     )
   })
 

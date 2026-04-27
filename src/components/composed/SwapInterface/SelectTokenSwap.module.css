@@ -1,0 +1,44 @@
+.selectWrapper {
+  position: relative;
+  width: 66%;
+}
+
+.tokenSelect {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  position: relative;
+  width: 100%;
+  font-weight: 700;
+  font-size: 18px;
+  border-radius: 21px;
+  padding: 8px 30px 8px 13px;
+  border: 1px solid rgba(var(--color-black), 0.06);
+  background: rgb(var(--color-white));
+  color: rgb(var(--color-black));
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.tokenSelect::-ms-expand {
+  display: none;
+}
+
+.tokenSelect:hover {
+  outline: none;
+  border-color: rgba(var(--color-light-green), 0.5);
+}
+
+.chevronIcon {
+  pointer-events: none;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1em;
+  height: 1em;
+  color: rgba(var(--color-black), 0.4);
+}
