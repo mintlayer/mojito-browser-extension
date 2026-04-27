@@ -5,6 +5,10 @@
   --color-dark-green: 46, 222, 182;
   --color-darker-green: 6, 29, 24;
   --color-main-green: 55, 219, 140;
+  --color-stats-green: 22, 196, 122;
+  --mojito-green: 30, 187, 129;
+  --mojito-green-dark: 26, 162, 112;
+  --mojito-green-soft: 230, 248, 240;
 
   --color-logo-green: 55, 219, 140;
 
@@ -14,7 +18,7 @@
   --color-light-gray: 201, 204, 203;
   --color-gray: 248, 248, 248;
   --color-dark-gray: 84, 103, 100;
-  --color-red: 196, 75, 79;
+  --color-red: 235, 87, 87;
   --color-orange: 255, 153, 0;
 
   --color-darkest-blue: 5, 7, 42;
@@ -32,11 +36,21 @@
   --color-dim-green: 178, 227, 178;
   --color-dim-purple: 216, 180, 226;
   --color-dim-blue: 162, 213, 230;
+  --color-bg: 240, 242, 245;
+
+  --surface: 255, 255, 255;
+  --mojito-green-50: 241, 252, 247;
+  --gradient-surface-green: linear-gradient(
+    180deg,
+    rgb(var(--surface)) 0%,
+    rgb(var(--mojito-green-50)) 100%
+  );
 
   --nearly-opaque-alpha: 0.8;
   --medium-alpha: 0.5;
   --nearly-transparent-alpha: 0.2;
   --round-size: 20px;
+  --border-radius-input: 16px;
   --round-size-big: 99px;
   --default-font-size: 16px;
 }
