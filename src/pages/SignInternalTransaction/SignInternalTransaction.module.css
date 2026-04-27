@@ -1,5 +1,4 @@
-/* SignTransaction.css */
-.SignTransaction {
+.signTransaction {
   background-color: #ffffff;
   margin: 0 auto;
   font-family: 'Arial', sans-serif;
@@ -7,9 +6,11 @@
   width: 100%;
   height: 100%;
   position: relative;
+  padding: 20px;
+  border-radius: 10px;
 }
 
-.SignTransaction .header {
+.signTransaction .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -22,7 +23,7 @@
   font-weight: bold;
 }
 
-.SignTransaction .SignTxContent {
+.signTransaction .signTxContent {
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
@@ -33,7 +34,7 @@
   }
 }
 
-.SignTransaction .mock_selector {
+.signTransaction .mockSelector {
   display: flex;
   flex-direction: row;
   justify-content: space-around;
@@ -46,11 +47,11 @@
   right: 1px;
 }
 
-.SignTransaction .mock_selector:hover {
+.signTransaction .mockSelector:hover {
   opacity: 1;
 }
 
-.SignTransaction .mock_selector div {
+.signTransaction .mockSelector div {
   background-color: #f3f4f6;
   padding: 8px 16px;
   border-radius: 6px;
@@ -60,17 +61,17 @@
   transition: background-color 0.2s ease;
 }
 
-.SignTransaction .mock_selector div:hover {
+.signTransaction .mockSelector div:hover {
   background-color: #e5e7eb;
 }
 
-.SignTransaction .transaction-preview-wrapper {
+.signTransaction .transactionPreviewWrapper {
   height: 100%;
   overflow: scroll;
   width: 100%;
 }
 
-.SignTransaction .transaction-raw-wrapper {
+.signTransaction .transactionRawWrapper {
   background-color: #f9fafb;
   padding: 12px;
   border: 1px solid #e5e7eb;
@@ -86,8 +87,7 @@
   width: 100%;
 }
 
-.SignTransaction .footer {
-  position: absolute;
+.signTransaction .footer {
   width: 100%;
   display: flex;
   justify-content: center;
@@ -107,19 +107,22 @@
   align-items: center;
 }
 
-.modal-content {
-  width: 90%;
+.modalTitle {
+  width: 100%;
+}
+
+.modalContent {
+  width: 340px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 40px;
   background-color: #ffffff;
-  padding: 20px;
   border-radius: 8px;
   text-align: center;
 }
 
-.modal-buttons {
+.modalButtons {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -128,5 +131,5 @@
 }
 
 .buttonSignTransaction {
-  width: 50%;
+  width: 100%;
 }

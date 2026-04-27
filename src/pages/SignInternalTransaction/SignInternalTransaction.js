@@ -1,14 +1,13 @@
-/* eslint-disable no-undef */
 import { useLocation, useNavigate } from 'react-router'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
-import { Button, Error } from '@BasicComponents'
+import { Button, Error, PageWrapper } from '@BasicComponents'
 import { PopUp, TextField, Loading } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
 
-import './SignInternalTransaction.css'
+import styles from './SignInternalTransaction.module.css'
 import { useState, useContext } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
@@ -47,7 +46,7 @@ export const SignTransactionPage = () => {
   const [mode, setMode] = useState('preview')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
-  const extraButtonStyles = ['buttonSignTransaction']
+  const extraButtonStyles = [styles.buttonSignTransaction]
 
   const state = external_state || MOCKS[selectedMock]
 
@@ -92,7 +91,7 @@ export const SignTransactionPage = () => {
         unlockedAccount = await Account.unlockAccount(accountID, password, {
           wallets: ['ml'],
         })
-      } catch (unlockError) {
+      } catch {
         setTxErrorMessage('Incorrect password')
         setPassword('')
         return
@@ -245,114 +244,112 @@ export const SignTransactionPage = () => {
   }
 
   return (
-    <div className="SignTransaction">
-      <div className="header">
-        <h1 className="signTxTitle">Sign Transaction</h1>
-        <Button onClickHandle={switchHandle}>
-          {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
-        </Button>
-      </div>
+    <PageWrapper>
+      <div className={styles.signTransaction}>
+        <div className={styles.header}>
+          <h1 className={styles.signTxTitle}>Sign Transaction</h1>
+          <Button onClickHandle={switchHandle}>
+            {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
+          </Button>
+        </div>
 
-      <div className="SignTxContent">
-        {!external_state && (
-          <div className="mock_selector">
-            {Object.keys(MOCKS).map((key) => {
-              return (
-                <div
-                  key={key}
-                  onClick={() => selectMock(key)}
-                  title={key}
-                  className={selectedMock === key ? 'active' : ''}
-                >
-                  {key}
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {state?.request?.data?.txData?.JSONRepresentation && (
-          <>
-            {mode === 'preview' && (
-              <div className="transaction-preview-wrapper">
-                <SignTransaction.InternalTransactionPreview data={state} />
-              </div>
-            )}
-            {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
-          </>
-        )}
-      </div>
-
-      <div className="footer">
-        <Button
-          onClickHandle={handleReject}
-          extraStyleClasses={extraButtonStyles}
-          alternate
-        >
-          Decline
-        </Button>
-        <Button
-          onClickHandle={handleApprove}
-          extraStyleClasses={extraButtonStyles}
-        >
-          Approve and return to page
-        </Button>
-      </div>
-
-      {isModalOpen && (
-        <PopUp setOpen={setIsModalOpen}>
-          {sendingTransaction && (
-            <VerticalGroup bigGap>
-              <h2 className="loading-text">
-                Your transaction broadcasting to network.
-              </h2>
-              <CenteredLayout>
-                <Loading extraStyleClasses={loadingExtraClasses} />
-              </CenteredLayout>
-            </VerticalGroup>
-          )}
-
-          {!sendingTransaction && transactionId && (
-            <TxResult transactionTxid={transactionId} />
-          )}
-
-          {!sendingTransaction && !transactionId && (
-            <div className="modal-content">
-              <TextField
-                label="Re-enter your Password"
-                password
-                value={password}
-                onChangeHandle={passwordChangeHandler}
-                placeHolder="Enter your password"
-                autoFocus
-              />
-              {txErrorMessage ? (
-                <>
-                  <Error error={txErrorMessage} />
-                </>
-              ) : (
-                <></>
-              )}
-              <div className="modal-buttons">
-                <Button
-                  onClickHandle={handleDecline}
-                  extraStyleClasses={extraButtonStyles}
-                  alternate
-                >
-                  Decline
-                </Button>
-                <Button
-                  onClickHandle={handleModalSubmit}
-                  extraStyleClasses={extraButtonStyles}
-                >
-                  Submit
-                </Button>
-              </div>
+        <div className={styles.signTxContent}>
+          {!external_state && (
+            <div className={styles.mockSelector}>
+              {Object.keys(MOCKS).map((key) => {
+                return (
+                  <div
+                    key={key}
+                    onClick={() => selectMock(key)}
+                    title={key}
+                    className={selectedMock === key ? 'active' : ''}
+                  >
+                    {key}
+                  </div>
+                )
+              })}
             </div>
           )}
-        </PopUp>
-      )}
-    </div>
+
+          {state?.request?.data?.txData?.JSONRepresentation && (
+            <>
+              {mode === 'preview' && (
+                <div className={styles.transactionPreviewWrapper}>
+                  <SignTransaction.InternalTransactionPreview data={state} />
+                </div>
+              )}
+              {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
+            </>
+          )}
+        </div>
+
+        <div className={styles.footer}>
+          <Button
+            onClickHandle={handleReject}
+            extraStyleClasses={extraButtonStyles}
+            alternate
+          >
+            Decline
+          </Button>
+          <Button
+            onClickHandle={handleApprove}
+            extraStyleClasses={extraButtonStyles}
+          >
+            Approve and return to page
+          </Button>
+        </div>
+
+        {isModalOpen && (
+          <PopUp setOpen={setIsModalOpen}>
+            {sendingTransaction && (
+              <VerticalGroup bigGap>
+                <h2 className="loading-text">
+                  Your transaction broadcasting to network.
+                </h2>
+                <CenteredLayout>
+                  <Loading extraStyleClasses={loadingExtraClasses} />
+                </CenteredLayout>
+              </VerticalGroup>
+            )}
+
+            {!sendingTransaction && transactionId && (
+              <TxResult transactionTxid={transactionId} />
+            )}
+
+            {!sendingTransaction && !transactionId && (
+              <div className={styles.modalContent}>
+                <div className={styles.modalTitle}>
+                  <TextField
+                    label="Re-enter your Password"
+                    password
+                    value={password}
+                    onChangeHandle={passwordChangeHandler}
+                    placeHolder="Enter your password"
+                    autoFocus
+                  />
+                  {txErrorMessage ? <Error error={txErrorMessage} /> : <></>}
+                </div>
+                <div className={styles.modalButtons}>
+                  <Button
+                    onClickHandle={handleDecline}
+                    extraStyleClasses={extraButtonStyles}
+                    alternate
+                  >
+                    Decline
+                  </Button>
+                  <Button
+                    onClickHandle={handleModalSubmit}
+                    extraStyleClasses={extraButtonStyles}
+                  >
+                    Submit
+                  </Button>
+                </div>
+              </div>
+            )}
+          </PopUp>
+        )}
+      </div>
+    </PageWrapper>
   )
 }
 

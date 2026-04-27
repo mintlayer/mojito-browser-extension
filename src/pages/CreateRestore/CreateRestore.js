@@ -1,13 +1,14 @@
 import { useContext } from 'react'
 import { useNavigate } from 'react-router'
 
-import { Button } from '@BasicComponents'
+import { Button, PageWrapper } from '@BasicComponents'
+import { ReactComponent as LogoIcon } from '@Assets/images/logo.svg'
+import { ReactComponent as ShieldIcon } from '@Assets/images/icon-shield.svg'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 import { AccountContext } from '@Contexts'
-
-import './CreateRestore.css'
 import { LocalStorageService } from '@Storage'
-import { APP_VERSION } from '@Version'
+
+import styles from './CreateRestore.module.css'
 
 const CreateRestorePage = () => {
   const { isExtended } = useContext(AccountContext)
@@ -35,6 +36,7 @@ const CreateRestorePage = () => {
     }
     isExtended ? navigate('/set-account') : expandHandler('/set-account')
   }
+
   const goToRestoreAccountPage = () => {
     if (isDevMode) {
       return navigate('/restore-account')
@@ -45,54 +47,48 @@ const CreateRestorePage = () => {
   }
 
   return (
-    <div
-      data-testid="create-restore"
-      className="create-restore"
-    >
-      <h2 className="center-text title-create">
-        Your Mintlayer, right in your browser.
-      </h2>
-      <div className="create-content-wrapper">
-        <div className="create-button-wrapper">
+    <PageWrapper className={styles.pageWrapper}>
+      <div
+        data-testid="create-restore"
+        className={styles.page}
+      >
+        <LogoIcon className={styles.logoIcon} />
+        <h1 className={styles.title}>Mojito</h1>
+        <h2 className={styles.heading}>A fresh way to hold Mintlayer assets</h2>
+        <p className={styles.subtitle}>
+          Self-custody wallet for Bitcoin and Mintlayer tokens.
+          <br />
+          Live prices, fast swaps, no custodians.
+        </p>
+        <div className={styles.buttons}>
           <Button
             onClickHandle={goToSetAccountPage}
-            extraStyleClasses={['create-wallet-button']}
+            extraStyleClasses={[styles.createButton]}
           >
-            Create a wallet <IconArrowTopRight className="create-button-icon" />
+            Create a new wallet{' '}
+            <IconArrowTopRight className={styles.buttonIcon} />
           </Button>
           <Button
             alternate
             onClickHandle={goToRestoreAccountPage}
-            extraStyleClasses={['restore-wallet-button']}
+            extraStyleClasses={[styles.restoreButton]}
           >
-            Restore a wallet{' '}
-            <IconArrowTopRight className="create-button-icon" />
+            Import existing wallet{' '}
+            <IconArrowTopRight className={styles.buttonIcon} />
           </Button>
         </div>
-        <div className="footnote-wrapper">
-          <small
-            className="center-text footnote-name"
-            data-testid="footnote-name"
-          >
-            ©Mintlayer, 2026
-          </small>
-          <a
-            className="center-text footnote-link"
-            href="https://mintlayer.org"
-            target="_blank"
-            data-testid="footnote-link"
-          >
-            mintlayer.org
-          </a>
-          <small
-            className="footnote-version"
-            data-testid="footnote-name"
-          >
-            v{APP_VERSION}
-          </small>
+        <div className={styles.badges}>
+          <span className={styles.badgeWithIcon}>
+            <ShieldIcon className={styles.badgeIcon} />
+            Non-custodial
+          </span>
+          <span className={styles.badgeDot}>&middot;</span>
+          <span>Audited</span>
+          <span className={styles.badgeDot}>&middot;</span>
+          <span>Open source</span>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   )
 }
 
