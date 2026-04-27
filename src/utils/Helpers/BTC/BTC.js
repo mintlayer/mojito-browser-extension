@@ -211,9 +211,11 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
 
 const getStats = (proportionDiffs, balanceDiffs, networkType) => {
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
-  const percentValue = isTestnet
-    ? 0
-    : new Decimal(proportionDiffs.total || 0).minus(1).times(100).toFixed(2)
+  const hasBalance = proportionDiffs.total !== 0
+  const percentValue =
+    isTestnet || !hasBalance
+      ? 0
+      : new Decimal(proportionDiffs.total || 0).minus(1).times(100).toFixed(2)
   const fiatValue = isTestnet
     ? 0
     : new Decimal(balanceDiffs.total || 0).toFixed(2)
