@@ -1,0 +1,39 @@
+.errorMessage {
+  margin: 2px 0 0 8px;
+  animation: slideIn 0.25s ease-out;
+  text-align: left;
+}
+
+.errorMessage,
+.errorMessage p {
+  color: rgb(var(--color-red));
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.errorMessageHiding {
+  animation: slideOut 0.2s ease-in forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
