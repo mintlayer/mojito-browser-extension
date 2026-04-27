@@ -1,5 +1,5 @@
 import React from 'react'
-import { line, scaleLinear, curveNatural } from 'd3'
+import { line, scaleLinear, curveMonotoneX } from 'd3'
 
 const Line = ({
   points,
@@ -11,13 +11,14 @@ const Line = ({
   const min = Math.min(...points.map((item) => Number(item[1])))
   const max = Math.max(...points.map((item) => Number(item[1])))
 
+  const padding = parseInt(strokeWidth) / 2
   const scale = scaleLinear()
     .domain([min, max])
-    .range([0, parseInt(height)])
+    .range([parseInt(height) - padding, padding])
 
   const lineGenerator = line()
     .y((d) => scale(d[1]).toFixed(2))
-    .curve(curveNatural)
+    .curve(curveMonotoneX)
 
   const pathData = lineGenerator(points)
 

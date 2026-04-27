@@ -15,10 +15,12 @@ const SkeletonText = () => {
   )
 }
 
-const SkeletonLoader = () => {
+const SkeletonLoader = ({ variant = 'default' }) => {
+  const isCompact = variant === 'compact'
+
   return (
     <div
-      className="card"
+      className={`card ${isCompact ? 'card-compact' : ''}`}
       id="cardLink"
       data-testid="card"
     >
@@ -27,7 +29,7 @@ const SkeletonLoader = () => {
         data-testid="cardHeader headerImg skeleton"
       >
         <div
-          className="cardHeader headerImg skeleton"
+          className={`cardHeader headerImg skeleton ${isCompact ? 'cardHeader-compact' : ''}`}
           id="logoCard"
         />
       </div>
@@ -37,7 +39,7 @@ const SkeletonLoader = () => {
           className="cardBody cardBodyLeft"
           data-testid="body-item"
         >
-          {Array.from({ length: 3 }).map((item, index) => (
+          {Array.from({ length: isCompact ? 2 : 3 }).map((item, index) => (
             <SkeletonText key={index} />
           ))}
         </div>
@@ -46,7 +48,7 @@ const SkeletonLoader = () => {
           className="cardBody cardBodyRight"
           data-testid="body-item"
         >
-          {Array.from({ length: 3 }).map((item, index) => (
+          {Array.from({ length: isCompact ? 2 : 3 }).map((item, index) => (
             <SkeletonText key={index + 5} />
           ))}
         </div>
