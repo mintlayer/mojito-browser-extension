@@ -3,7 +3,7 @@ import './ConnectionPage.css'
 import { useLocation } from 'react-router'
 import { useContext, useState } from 'react'
 import { AccountContext } from '@Contexts'
-import { Button, Toggle } from '@BasicComponents'
+import { Button, Toggle, PageWrapper } from '@BasicComponents'
 import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
 
 const toHexString = (obj) => {
@@ -160,59 +160,60 @@ export const ConnectionPage = () => {
   }
 
   return (
-    <form
-      className="connect-page__form"
-      onSubmit={submitHandler}
-      method="POST"
-    >
-      <div className="connect-page__title">
-        <h2 className="connect-page__title">
-          Connect Website to Your Mojito Wallet
-        </h2>
-        <p className="connect-page__description">
-          The website <span className="connect-page__host">{origin}</span> is
-          requesting access to your wallet.
-        </p>
-      </div>
-
-      <div className="connect-page__content">
-        <div>
-          <ul className="connect-page__permissions">
-            <IconShield className="connect-page__icon" />
-            <li>View your public addresses</li>
-            <li>Request transaction signing</li>
-            <li>Track connection status</li>
-          </ul>
-
-          {requireBTC && (
-            <>
-              <div className="connect-page__bitcoin-section">
-                <div className="connect-page__bitcoin-toggle">
-                  <div>Provide Bitcoin data (addresses AND public keys)</div>
-                  <Toggle
-                    label="Provide Bitcoin data (addresses AND public keys)"
-                    name="provideBitcoinData"
-                    toggled={provideBitcoinData}
-                    onClick={setProvideBitcoinData}
-                  />
-                </div>
-
-                <div className="connect-page__info-block">
-                  <div className="connect-page__info-icon">i</div>
-                  <p className="connect-page__info-text">
-                    <strong>Note:</strong> This option is mandatory when
-                    connecting to HTLC Atomic Swaps dApps. It provides both
-                    Bitcoin addresses and public keys required for cross-chain
-                    transactions.
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
+    <PageWrapper>
+      <form
+        className="connect-page__form"
+        onSubmit={submitHandler}
+        method="POST"
+      >
+        <div className="connect-page__title">
+          <h2 className="connect-page__title">
+            Connect Website to Your Mojito Wallet
+          </h2>
+          <p className="connect-page__description">
+            The website <span className="connect-page__host">{origin}</span> is
+            requesting access to your wallet.
+          </p>
         </div>
 
-        {/* // TODO: Make this work */}
-        {/* <label className="connect-page__remember">
+        <div className="connect-page__content">
+          <div>
+            <ul className="connect-page__permissions">
+              <IconShield className="connect-page__icon" />
+              <li>View your public addresses</li>
+              <li>Request transaction signing</li>
+              <li>Track connection status</li>
+            </ul>
+
+            {requireBTC && (
+              <>
+                <div className="connect-page__bitcoin-section">
+                  <div className="connect-page__bitcoin-toggle">
+                    <div>Provide Bitcoin data (addresses AND public keys)</div>
+                    <Toggle
+                      label="Provide Bitcoin data (addresses AND public keys)"
+                      name="provideBitcoinData"
+                      toggled={provideBitcoinData}
+                      onClick={setProvideBitcoinData}
+                    />
+                  </div>
+
+                  <div className="connect-page__info-block">
+                    <div className="connect-page__info-icon">i</div>
+                    <p className="connect-page__info-text">
+                      <strong>Note:</strong> This option is mandatory when
+                      connecting to HTLC Atomic Swaps dApps. It provides both
+                      Bitcoin addresses and public keys required for cross-chain
+                      transactions.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* // TODO: Make this work */}
+          {/* <label className="connect-page__remember">
             <input
               type="checkbox"
               className="connect-page__checkbox"
@@ -220,23 +221,24 @@ export const ConnectionPage = () => {
             <span>Always allow this app</span>
           </label> */}
 
-        <div className="connect-page__actions">
-          <Button
-            onClickHandle={handleReject}
-            extraStyleClasses={connectButtonExtraStyles}
-            alternate
-          >
-            Reject
-          </Button>
-          <Button
-            onClickHandle={handleConnect}
-            extraStyleClasses={connectButtonExtraStyles}
-          >
-            Connect
-          </Button>
+          <div className="connect-page__actions">
+            <Button
+              onClickHandle={handleReject}
+              extraStyleClasses={connectButtonExtraStyles}
+              alternate
+            >
+              Reject
+            </Button>
+            <Button
+              onClickHandle={handleConnect}
+              extraStyleClasses={connectButtonExtraStyles}
+            >
+              Connect
+            </Button>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </PageWrapper>
   )
 }
 

@@ -8,7 +8,7 @@ import { AccountContext, MintlayerContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './DelegationWithdraw.css'
-import { Error } from '@BasicComponents'
+import { Error, PageWrapper } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 
 const DelegationWithdrawPage = () => {
@@ -104,7 +104,7 @@ const DelegationWithdrawPage = () => {
   }
 
   return (
-    <>
+    <PageWrapper>
       <div className="page">
         <VerticalGroup>
           {loading ? (
@@ -134,7 +134,7 @@ const DelegationWithdrawPage = () => {
           )}
         </VerticalGroup>
       </div>
-    </>
+    </PageWrapper>
   )
 }
 

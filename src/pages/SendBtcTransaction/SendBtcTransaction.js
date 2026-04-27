@@ -11,6 +11,7 @@ import { BTC as BTCHelper, Format } from '@Helpers'
 import { Electrum } from '@APIs'
 import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
+import { PageWrapper } from '@BasicComponents'
 import './SendBtcTransaction.css'
 
 const SendBtcTransactionPage = () => {
@@ -127,7 +128,7 @@ const SendBtcTransactionPage = () => {
   }
 
   return (
-    <>
+    <PageWrapper>
       <div className="page">
         <VerticalGroup smallGap>
           <SendBtcTransaction
@@ -147,7 +148,7 @@ const SendBtcTransactionPage = () => {
           />
         </VerticalGroup>
       </div>
-    </>
+    </PageWrapper>
   )
 }
 

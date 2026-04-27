@@ -2,7 +2,7 @@
 import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
-import { Button } from '@BasicComponents'
+import { Button, PageWrapper } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 
 import './SignChallenge.css'
@@ -89,7 +89,6 @@ export const SignChallengePage = () => {
         signature: signatureHex,
       }
 
-      // eslint-disable-next-line no-undef
       runtime.sendMessage(
         {
           action: 'popupResponse',
@@ -99,7 +98,6 @@ export const SignChallengePage = () => {
           result,
         },
         () => {
-          // eslint-disable-next-line no-undef
           storage.local.remove('pendingRequest', () => {
             window.close()
           })
@@ -115,7 +113,6 @@ export const SignChallengePage = () => {
     const requestId = state?.request?.requestId
     const method = 'signChallenge_reject'
     const result = 'null'
-    // eslint-disable-next-line no-undef
     runtime.sendMessage(
       {
         action: 'popupResponse',
@@ -125,7 +122,6 @@ export const SignChallengePage = () => {
         result,
       },
       () => {
-        // eslint-disable-next-line no-undef
         storage.local.remove('pendingRequest', () => {
           window.close()
         })
@@ -142,93 +138,95 @@ export const SignChallengePage = () => {
   }
 
   return (
-    <div className="SignChallenge">
-      <div className="header">
-        <h1 className="signChallengeTitle">Sign Challenge</h1>
-      </div>
+    <PageWrapper>
+      <div className="SignChallenge">
+        <div className="header">
+          <h1 className="signChallengeTitle">Sign Challenge</h1>
+        </div>
 
-      <div className="SignChallengeContent">
-        {!external_state && (
-          <div className="mock_selector">
-            {Object.keys(MOCKS).map((key) => {
-              return (
-                <div
-                  key={key}
-                  onClick={() => selectMock(key)}
-                  title={key}
-                  className={selectedMock === key ? 'active' : ''}
-                >
-                  {key}
+        <div className="SignChallengeContent">
+          {!external_state && (
+            <div className="mock_selector">
+              {Object.keys(MOCKS).map((key) => {
+                return (
+                  <div
+                    key={key}
+                    onClick={() => selectMock(key)}
+                    title={key}
+                    className={selectedMock === key ? 'active' : ''}
+                  >
+                    {key}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {state?.request?.data && (
+            <div className="challenge_details">
+              <div className="challenge_message">
+                <div className="label">Message to sign:</div>
+                <div className="value">
+                  {state?.request?.data?.message || 'No message provided'}
                 </div>
-              )
-            })}
-          </div>
-        )}
-
-        {state?.request?.data && (
-          <div className="challenge_details">
-            <div className="challenge_message">
-              <div className="label">Message to sign:</div>
-              <div className="value">
-                {state?.request?.data?.message || 'No message provided'}
+              </div>
+              <div className="challenge_address">
+                <div className="label">Address to sign with:</div>
+                <div className="">
+                  {state?.request?.data?.address || 'No address provided'}
+                </div>
               </div>
             </div>
-            <div className="challenge_address">
-              <div className="label">Address to sign with:</div>
-              <div className="">
-                {state?.request?.data?.address || 'No address provided'}
+          )}
+        </div>
+
+        <div className="footer">
+          <Button
+            onClickHandle={handleReject}
+            extraStyleClasses={extraButtonStyles}
+            alternate
+          >
+            Decline
+          </Button>
+          <Button
+            onClickHandle={handleApprove}
+            extraStyleClasses={extraButtonStyles}
+          >
+            Sign and return to page
+          </Button>
+        </div>
+
+        {isModalOpen && (
+          <PopUp setOpen={setIsModalOpen}>
+            <div className="modal-content">
+              <TextField
+                label="Re-enter your Password"
+                password
+                value={password}
+                onChangeHandle={passwordChangeHandler}
+                placeHolder="Enter your password"
+                autoFocus
+              />
+              <div className="modal-buttons">
+                <Button
+                  onClickHandle={() => setIsModalOpen(false)}
+                  extraStyleClasses={extraButtonStyles}
+                  alternate
+                >
+                  Decline
+                </Button>
+                <Button
+                  onClickHandle={handleModalSubmit}
+                  extraStyleClasses={extraButtonStyles}
+                >
+                  Approve
+                </Button>
               </div>
             </div>
-          </div>
+          </PopUp>
         )}
       </div>
-
-      <div className="footer">
-        <Button
-          onClickHandle={handleReject}
-          extraStyleClasses={extraButtonStyles}
-          alternate
-        >
-          Decline
-        </Button>
-        <Button
-          onClickHandle={handleApprove}
-          extraStyleClasses={extraButtonStyles}
-        >
-          Sign and return to page
-        </Button>
-      </div>
-
-      {isModalOpen && (
-        <PopUp setOpen={setIsModalOpen}>
-          <div className="modal-content">
-            <TextField
-              label="Re-enter your Password"
-              password
-              value={password}
-              onChangeHandle={passwordChangeHandler}
-              placeHolder="Enter your password"
-              autoFocus
-            />
-            <div className="modal-buttons">
-              <Button
-                onClickHandle={() => setIsModalOpen(false)}
-                extraStyleClasses={extraButtonStyles}
-                alternate
-              >
-                Decline
-              </Button>
-              <Button
-                onClickHandle={handleModalSubmit}
-                extraStyleClasses={extraButtonStyles}
-              >
-                Approve
-              </Button>
-            </div>
-          </div>
-        </PopUp>
-      )}
-    </div>
+    </PageWrapper>
   )
 }
 

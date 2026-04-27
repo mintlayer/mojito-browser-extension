@@ -6,6 +6,7 @@ import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
 import { AccountContext, MintlayerContext } from '@Contexts'
 
+import { PageWrapper } from '@BasicComponents'
 import './SendMlTransaction.css'
 
 const SendMlTransactionPage = () => {
@@ -56,23 +57,40 @@ const SendMlTransactionPage = () => {
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
 
   useEffect(() => {
-    const buildTransaction = async () => {
-      if (
-        isFormValid &&
-        transactionInformation?.to.length > 0 &&
-        transactionInformation?.amount > 0
-      ) {
-        setFeeLoading(true)
+    if (
+      !isFormValid ||
+      !(transactionInformation?.to.length > 0) ||
+      !(transactionInformation?.amount > 0)
+    ) {
+      setFeeLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setFeeLoading(true)
+
+    const timer = setTimeout(async () => {
+      try {
         const transaction = await client.buildTransfer({
           to: transactionInformation.to,
           amount: transactionInformation.amount,
           token_id: walletType?.tokenId,
         })
+        if (cancelled) return
         setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
-        setFeeLoading(false)
+      } catch (error) {
+        if (cancelled) return
+        console.error('Fee calculation failed:', error)
+        setTotalFeeCrypto(0)
+      } finally {
+        if (!cancelled) setFeeLoading(false)
       }
+    }, 400)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
     }
-    buildTransaction()
   }, [transactionInformation, client, walletType, isFormValid])
 
   if (!accountID) {
@@ -103,7 +121,7 @@ const SendMlTransactionPage = () => {
   }
 
   return (
-    <>
+    <PageWrapper>
       <div className="page">
         <VerticalGroup smallGap>
           <SendMlTransaction
@@ -121,7 +139,7 @@ const SendMlTransactionPage = () => {
           />
         </VerticalGroup>
       </div>
-    </>
+    </PageWrapper>
   )
 }
 

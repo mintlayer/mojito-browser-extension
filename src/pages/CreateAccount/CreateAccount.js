@@ -9,6 +9,7 @@ import { Account, loadAccountSubRoutines } from '@Entities'
 import { AccountContext } from '@Contexts'
 import { BTC, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
+import { PageWrapper } from '@BasicComponents'
 import './CreateAccount.css'
 
 const CreateAccountPage = () => {
@@ -49,28 +50,32 @@ const CreateAccountPage = () => {
 
   const loadingExtraClasses = ['loading-big']
 
-  return creatingWallet ? (
-    <div className="creating-loading-warapper">
-      <CenteredLayout>
-        <VerticalGroup bigGap>
-          <h1 className="loadingText">
-            {' '}
-            Just a sec, we are creating your wallet...{' '}
-          </h1>
-          <Loading extraStyleClasses={loadingExtraClasses} />
-        </VerticalGroup>
-      </CenteredLayout>
-    </div>
-  ) : (
-    <CreateAccount
-      step={step}
-      setStep={setStep}
-      words={words}
-      onStepsFinished={createAccount}
-      onGenerateMnemonic={generateMnemonic}
-      validateMnemonicFn={BTC.validateMnemonic}
-      defaultBTCWordList={BTC.getWordList()}
-    />
+  return (
+    <PageWrapper>
+      {creatingWallet ? (
+        <div className="creating-loading-warapper">
+          <CenteredLayout>
+            <VerticalGroup bigGap>
+              <h1 className="loadingText">
+                {' '}
+                Just a sec, we are creating your wallet...{' '}
+              </h1>
+              <Loading extraStyleClasses={loadingExtraClasses} />
+            </VerticalGroup>
+          </CenteredLayout>
+        </div>
+      ) : (
+        <CreateAccount
+          step={step}
+          setStep={setStep}
+          words={words}
+          onStepsFinished={createAccount}
+          onGenerateMnemonic={generateMnemonic}
+          validateMnemonicFn={BTC.validateMnemonic}
+          defaultBTCWordList={BTC.getWordList()}
+        />
+      )}
+    </PageWrapper>
   )
 }
 export default CreateAccountPage

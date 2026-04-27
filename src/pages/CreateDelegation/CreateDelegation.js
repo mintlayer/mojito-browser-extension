@@ -8,7 +8,7 @@ import { AccountContext, MintlayerContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './CreateDelegation.css'
-import { Error } from '@BasicComponents'
+import { Error, PageWrapper } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 
 const CreateDelegationPage = () => {
@@ -97,7 +97,7 @@ const CreateDelegationPage = () => {
   }
 
   return (
-    <>
+    <PageWrapper>
       <div className="page">
         <VerticalGroup>
           {loading ? (
@@ -127,7 +127,7 @@ const CreateDelegationPage = () => {
           )}
         </VerticalGroup>
       </div>
-    </>
+    </PageWrapper>
   )
 }
 
