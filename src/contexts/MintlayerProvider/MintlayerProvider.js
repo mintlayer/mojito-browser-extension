@@ -418,7 +418,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     )
 
     const availableNftInitialUtxos = fetchedSpendableUtxos.filter(
-      (item) => item.utxo.type === 'IssueNft',
+      (item) => item.utxo?.type === 'IssueNft',
     )
 
     setNftInitialUtxos(availableNftInitialUtxos)
@@ -518,11 +518,17 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
   useEffect(() => {
     if (networkType !== currentNetworkType) {
+      setOrdersPairInfo([])
       fetchAllData(true)
       fetchDelegations(addresses)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [networkType, currentNetworkType, addresses])
+
+  useEffect(() => {
+    setOrdersPairInfo([])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountID])
 
   useEffect(() => {
     Mintlayer.cancelAllRequests()
