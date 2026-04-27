@@ -1,0 +1,159 @@
+.sidebar {
+  display: none;
+
+  @media screen and (min-width: 801px) {
+    display: flex;
+    flex-direction: column;
+    width: 260px;
+    height: 100%;
+    flex-shrink: 0;
+    padding: 24px 16px;
+    background: rgb(var(--color-white));
+    border-right: 1px solid rgba(var(--color-black), 0.08);
+  }
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  margin-bottom: 20px;
+}
+
+.logoIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.logoText {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+}
+
+.accountCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: rgba(var(--mojito-green), 0.08);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.accountInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.accountName {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--color-black));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.accountAddress {
+  font-size: 11px;
+  color: rgba(var(--color-black), 0.5);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.copyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.copyBtn:hover {
+  background: rgba(var(--color-black), 0.06);
+}
+
+.copyIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+}
+
+.navList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: rgb(var(--color-black));
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.navItem:hover {
+  background: rgba(var(--color-black), 0.04);
+}
+
+.navItemActive {
+  background: rgba(var(--mojito-green), 0.1);
+  color: rgb(var(--mojito-green));
+}
+
+.navItemActive:hover {
+  background: rgba(var(--mojito-green), 0.14);
+}
+
+.navIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.navItemActive .navIcon path,
+.navItemActive .navIcon line,
+.navItemActive .navIcon polyline,
+.navItemActive .navIcon circle {
+  stroke: rgb(var(--mojito-green));
+}
+
+.navLabel {
+  white-space: nowrap;
+}
