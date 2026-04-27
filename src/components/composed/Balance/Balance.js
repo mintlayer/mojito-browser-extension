@@ -2,59 +2,21 @@ import React, { useContext } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import Decimal from 'decimal.js'
 
-import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
-import { LogoRound } from '@BasicComponents'
-import { Format, NumbersHelper, ML } from '@Helpers'
-import { MintlayerContext, SettingsContext } from '@Contexts'
+import { LineChart } from '@ComposedComponents'
+import { Format, NumbersHelper } from '@Helpers'
+import {
+  MintlayerContext,
+  SettingsContext,
+  ExchangeRatesContext,
+} from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './Balance.css'
-import TokenLogoRound from '../../basic/TokenLogoRound/TokenLogoRound'
-import CopyButton from '../CopyButton/CopyButton'
-
-const WalletName = ({ walletType }) => {
-  const { tokenBalances } = useContext(MintlayerContext)
-  const name =
-    walletType.name.length > 18
-      ? ML.formatAddress(walletType.name, 18)
-      : walletType.name
-
-  const logo = () => {
-    if (walletType.name === 'Mintlayer') {
-      return <LogoRound />
-    }
-    if (walletType.name === 'Bitcoin') {
-      return <BtcLogo className="btcLogo" />
-    }
-    if (
-      !tokenBalances ||
-      !tokenBalances[walletType.name] ||
-      !tokenBalances[walletType.name].token_info
-    ) {
-      return <TokenLogoRound text={'TKN'} />
-    }
-    return (
-      <TokenLogoRound
-        text={tokenBalances[
-          walletType.name
-        ].token_info.token_ticker.string.substring(0, 3)}
-      />
-    )
-  }
-  return (
-    <div className="wallet-logo-wrapper">
-      {logo()}
-      <h3>{name}</h3>
-      {tokenBalances[walletType.name]?.token_info && (
-        <CopyButton content={walletType.name} />
-      )}
-    </div>
-  )
-}
 
 const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
   const { networkType } = useContext(SettingsContext)
   const { tokenBalances } = useContext(MintlayerContext)
+  const { thirtyDaysHistoryRates } = useContext(ExchangeRatesContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const { coinType } = useParams()
   const navigate = useNavigate()
@@ -63,27 +25,44 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
     walletType.name !== 'Mintlayer' && walletType.name !== 'Bitcoin'
 
   const balanceInUSD = isTestnet
-    ? '0,00'
+    ? 0
     : new Decimal(NumbersHelper.floatStringToNumber(balance) || 0)
         .times(new Decimal(exchangeRate || 0))
         .toNumber()
 
-  const symbol = () => {
-    if (walletType.name === 'Mintlayer') {
-      return 'ML'
-    }
-    if (walletType.name === 'Bitcoin') {
-      return 'BTC'
-    }
+  const getSymbol = () => {
     if (
-      !tokenBalances ||
-      !tokenBalances[walletType.name] ||
-      !tokenBalances[walletType.name].token_info
-    ) {
-      return 'TKN'
-    }
+      walletType.name === 'Mintlayer' &&
+      networkType === AppInfo.NETWORK_TYPES.TESTNET
+    )
+      return 'TML'
+    if (walletType.name === 'Mintlayer') return 'ML'
+    if (
+      walletType.name === 'Bitcoin' &&
+      networkType === AppInfo.NETWORK_TYPES.TESTNET
+    )
+      return 'TBTC'
+    if (walletType.name === 'Bitcoin') return 'BTC'
+    if (!tokenBalances?.[walletType.name]?.token_info) return 'TKN'
     return tokenBalances[walletType.name].token_info.token_ticker.string
   }
+
+  const ticker = walletType.ticker.toLowerCase()
+  const ratesKey = `${ticker}-usd`
+
+  const thirtyDaysChartRates = thirtyDaysHistoryRates?.[ratesKey]
+  const thirtyDaysChartData = isToken
+    ? [
+        [0, 80],
+        [100, 80],
+      ]
+    : thirtyDaysChartRates &&
+      Object.values(thirtyDaysChartRates).map((value, idx) => [
+        idx * 10,
+        Number(value),
+      ])
+
+  const chartColor = AppInfo.COLOR_LIST[ticker]
 
   const onLockedClick = () => {
     navigate('/wallet/' + coinType + '/locked-balance')
@@ -91,42 +70,42 @@ const Balance = ({ balance, balanceLocked, exchangeRate, walletType }) => {
 
   return (
     <div
-      className="balance-wrapper"
+      className="balance-card"
       data-testid="current-balance"
     >
-      <WalletName walletType={walletType} />
-
-      <div className="balance">
-        <p
-          className="balance-btc"
-          data-testid="balance-paragraph"
-        >
-          <span>{Format.BTCValue(balance)}</span> {symbol()}
+      <div>
+        <span className="balance-label">Balance</span>
+        <p className="balance-amount">
+          <span className="balance-value">{Format.BTCValue(balance)}</span>{' '}
+          <span className="balance-ticker">{getSymbol()}</span>
         </p>
-        {!isTestnet && !isToken && (
-          <p
-            className="balance-usd"
-            data-testid="balance-paragraph"
-          >
-            <span>{Format.fiatValue(balanceInUSD)}</span> USD
-          </p>
-        )}
-        {!isTestnet && !isToken && (
-          <span className="wallet-price">
-            Price: {exchangeRate.toFixed(2)} $
+        {!isToken && (
+          <span className="balance-fiat">
+            ≈ ${Format.fiatValue(balanceInUSD)}
           </span>
         )}
-        {parseFloat(balanceLocked) > 0 ? (
+        {parseFloat(balanceLocked) > 0 && (
           <button
             className="balance-locked"
             onClick={onLockedClick}
           >
-            Locked: {balanceLocked} {symbol()}
+            Locked: {balanceLocked} {getSymbol()}
           </button>
-        ) : (
-          <></>
         )}
       </div>
+
+      {thirtyDaysChartData && thirtyDaysChartData.length > 0 && (
+        <div className="balance-chart balance-chart-30d">
+          <span className="balance-chart-label">30 days</span>
+          <LineChart
+            points={thirtyDaysChartData}
+            height="60px"
+            width="100%"
+            lineColor={chartColor}
+            lineWidth="2px"
+          />
+        </div>
+      )}
     </div>
   )
 }

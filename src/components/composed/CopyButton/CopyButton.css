@@ -5,6 +5,7 @@
   width: 32px;
   height: 32px;
   padding: 8px;
+  border-radius: 10px;
 }
 
 .copy-icon {

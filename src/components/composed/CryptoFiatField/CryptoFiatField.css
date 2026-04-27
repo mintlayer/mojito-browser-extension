@@ -5,6 +5,10 @@
   width: 100%;
 }
 
+.crypto-fiat-field-slim {
+  padding-bottom: 0;
+}
+
 .crypto-fiat-field-label {
   display: flex;
   width: 7.5rem;

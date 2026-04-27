@@ -22,9 +22,7 @@ const SliderMenu = ({ children, isOpen, onClose }) => {
   const sliderRef = useRef(null)
   useOnClickOutside(sliderRef, onClose)
 
-  const mainElement = document.querySelector('main')
-    ? document.querySelector('main')
-    : document.body
+  const portalTarget = document.getElementById('root') || document.body
 
   return ReactDOM.createPortal(
     isVisible && (
@@ -47,7 +45,7 @@ const SliderMenu = ({ children, isOpen, onClose }) => {
         </div>
       </div>
     ),
-    mainElement,
+    portalTarget,
   )
 }
 

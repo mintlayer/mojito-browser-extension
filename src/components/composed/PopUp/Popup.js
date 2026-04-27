@@ -5,10 +5,9 @@ import { Button } from '@BasicComponents'
 import { useOnClickOutside } from '@Hooks'
 import { ReactComponent as IconClose } from '@Assets/images/icon-close.svg'
 
-import './Popup.css'
+import styles from './Popup.module.css'
 
 const Popup = ({ children, setOpen, allowClosing = true }) => {
-  const closeButtonExtraStyles = ['popupCloseButton']
   const [popupClosing, setPopupClosing] = useState(false)
 
   const closeButtonClickHandler = () => {
@@ -16,29 +15,27 @@ const Popup = ({ children, setOpen, allowClosing = true }) => {
     setPopupClosing(true)
     setTimeout(() => {
       setOpen(false)
-    }, 700)
+    }, 300)
   }
 
   const popupRef = useRef(null)
   useOnClickOutside(popupRef, closeButtonClickHandler)
 
-  const mainElement = document.querySelector('main')
-    ? document.querySelector('main')
-    : document.body
+  const portalTarget = document.getElementById('root') || document.body
 
   return ReactDOM.createPortal(
     <div
-      className={`backdrop ${popupClosing && 'backdropClosing'}`}
+      className={`${styles.backdrop} ${popupClosing ? styles.backdropClosing : ''}`}
       data-testid={'backdrop'}
     >
       <div
-        className={`popup ${popupClosing && 'popupClosing'}`}
+        className={`${styles.popup} ${popupClosing ? styles.popupClosing : ''}`}
         data-testid={'popup'}
         ref={popupRef}
       >
         {allowClosing && (
           <Button
-            extraStyleClasses={closeButtonExtraStyles}
+            extraStyleClasses={[styles.popupCloseButton]}
             onClickHandle={closeButtonClickHandler}
           >
             <IconClose />
@@ -47,7 +44,7 @@ const Popup = ({ children, setOpen, allowClosing = true }) => {
         {children}
       </div>
     </div>,
-    mainElement,
+    portalTarget,
   )
 }
 

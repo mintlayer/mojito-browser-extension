@@ -1,5 +1,4 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-// import { getDecimalNumber } from 'src/utils/Helpers/Number/Number'
 
 import CryptoFiatField from './CryptoFiatField'
 import {
@@ -37,36 +36,25 @@ test('Render TextField component', () => {
             setAmountValidity={() => {}}
             totalFeeInCrypto={totalFeeCrypto}
           />
-          ,
         </TransactionProvider>
       </SettingsProvider>
-      ,
     </AccountProvider>,
   )
 
   const component = screen.getByTestId('crypto-fiat-field')
   const input = screen.getByTestId('input')
-
-  // TODO: revert this after max button is implemented
-  // const actionButton = screen.getByTestId('button')
   const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
 
   expect(component).toBeInTheDocument()
-
   expect(input).toBeInTheDocument()
+  expect(bottomNote).toBeInTheDocument()
+  expect(bottomNote).toHaveTextContent('Available to spend')
 
   fireEvent.change(input, {
     target: { value: maxValueInToken },
   })
 
   expect(input).toHaveValue(maxValueInToken.toString())
-  expect(bottomNote).toHaveTextContent('≈ 10054453.50 USD')
-
-  // TODO: revert this after max button is implemented
-  // expect(actionButton).toBeInTheDocument()
-  // expect(actionButton).toHaveTextContent(PROPSSAMPLE.buttonTitle)
-
-  expect(bottomNote).toBeInTheDocument()
 })
 
 test('Render TextField component fdf', async () => {
@@ -86,22 +74,12 @@ test('Render TextField component fdf', async () => {
             setAmountValidity={() => {}}
             totalFeeInCrypto={totalFeeCrypto}
           />
-          ,
         </TransactionProvider>
       </SettingsProvider>
     </AccountProvider>,
   )
 
-  // TODO: revert this after max button is implemented
-  // const actionButton = screen.getByTestId('button')
-
   const cryptoInput = screen.getByTestId('input')
-
-  // TODO: revert this after max button is implemented
-  // const maxValueInCrypto = maxValueInToken - totalFeeCrypto
-  // fireEvent.click(actionButton)
-  // expect(cryptoInput).toHaveValue(maxValueInCrypto.toString())
-
   fireEvent.change(cryptoInput, { target: { value: '' } })
 })
 
@@ -120,35 +98,25 @@ test('Render TextField when networkType is testnet', () => {
             setAmountValidity={() => {}}
             totalFeeInCrypto={totalFeeCrypto}
           />
-          ,
         </TransactionProvider>
       </SettingsProvider>
-      ,
     </AccountProvider>,
   )
 
   const component = screen.getByTestId('crypto-fiat-field')
   const input = screen.getByTestId('input')
-  // TODO: revert this after max button is implemented
-  // const actionButton = screen.getByTestId('button')
   const bottomNote = screen.getByTestId('crypto-fiat-bottom-text')
 
   expect(component).toBeInTheDocument()
-
   expect(input).toBeInTheDocument()
+  expect(bottomNote).toBeInTheDocument()
+  expect(bottomNote).toHaveTextContent('Available to spend')
 
   fireEvent.change(input, {
     target: { value: maxValueInToken },
   })
 
   expect(input).toHaveValue(maxValueInToken.toString())
-  expect(bottomNote).toHaveTextContent('≈ 0.00 USD')
-
-  // TODO: revert this after max button is implemented
-  // expect(actionButton).toBeInTheDocument()
-  // expect(actionButton).toHaveTextContent(PROPSSAMPLE.buttonTitle)
-
-  expect(bottomNote).toBeInTheDocument()
 })
 
 test('Render TextField component without transactionData', () => {
@@ -156,7 +124,7 @@ test('Render TextField component without transactionData', () => {
     <AccountProvider>
       <SettingsProvider>
         <TransactionProvider>
-          <CryptoFiatField setAmountValidity={() => {}} />,
+          <CryptoFiatField setAmountValidity={() => {}} />
         </TransactionProvider>
       </SettingsProvider>
     </AccountProvider>,

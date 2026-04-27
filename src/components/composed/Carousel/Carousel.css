@@ -13,9 +13,9 @@ button {
 .back {
   background: linear-gradient(
     90deg,
-    rgba(var(--color-white), 1) 0%,
-    rgba(var(--color-white), 1) 87%,
-    rgba(var(--color-white), 0) 100%
+    rgba(var(--color-bg), 1) 0%,
+    rgba(var(--color-bg), 1) 87%,
+    rgba(var(--color-bg), 0) 100%
   );
   cursor: pointer;
   margin-right: -0.5rem;
@@ -129,9 +129,9 @@ button {
 .next {
   background: linear-gradient(
     90deg,
-    rgba(var(--color-white), 0) 0%,
-    rgba(var(--color-white), 1) 13%,
-    rgba(var(--color-white), 1) 100%
+    rgba(var(--color-bg), 0) 0%,
+    rgba(var(--color-bg), 1) 13%,
+    rgba(var(--color-bg), 1) 100%
   );
   cursor: pointer;
   margin-left: -0.5rem;

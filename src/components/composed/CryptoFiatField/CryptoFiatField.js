@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useContext } from 'react'
-import { InputBTC, InputFloat } from '@BasicComponents'
-import { SettingsContext } from '@Contexts'
+import React, { useEffect, useState } from 'react'
+import { InputBTC } from '@BasicComponents'
 import { useParams } from 'react-router'
 
 import './CryptoFiatField.css'
@@ -15,30 +14,22 @@ const CryptoFiatField = ({
   id,
   changeValueHandle,
   setErrorMessage,
-  exchangeRate,
   maxValueInToken,
   setAmountValidity,
   totalFeeInCrypto,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
+  validate,
+  extraStyleClasses = [],
 }) => {
   const isDelegationWithdraw =
     transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
-  const { networkType } = useContext(SettingsContext)
   const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
   const finalMaxValue = isDelegationWithdraw
     ? parsedValueInToken
     : parsedValueInToken - totalFeeInCrypto
   const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
-  const [maxFiatValue, setMaxFiatValue] = useState(
-    maxCryptoValue * exchangeRate,
-  )
   const { coinType } = useParams()
 
-  const [bottomValue, setBottomValue] = useState('')
-  // eslint-disable-next-line no-unused-vars
-  const [currentValueType, setCurrentValueType] = useState(
-    transactionData ? transactionData.tokenName : 'Token',
-  )
   const [value, setValue] = useState(inputValue)
   const [validity, setValidity] = useState(parentValidity)
   const amountErrorMessage = isDelegationWithdraw
@@ -48,58 +39,19 @@ const CryptoFiatField = ({
   const zeroErrorMessage = 'Amount must be greater than 0.'
 
   useEffect(() => {
-    setMaxFiatValue(maxCryptoValue * exchangeRate)
-  }, [exchangeRate, setMaxFiatValue, maxCryptoValue])
-
-  useEffect(() => {
     const maxValue = finalMaxValue < 0 ? parsedValueInToken : finalMaxValue
     setMaxCryptoValue(maxValue)
   }, [finalMaxValue, parsedValueInToken])
 
   if (!transactionData) return null
 
-  const { tokenName, fiatName } = transactionData
-  const inputExtraClasses = ['crypto-fiat-input']
-
-  const isTypeFiat = () => currentValueType === fiatName
-
-  const formattedBottomValue = `≈ ${
-    bottomValue ? bottomValue : Format.fiatValue(0)
-  } ${isTypeFiat() ? tokenName : fiatName}`
-
-  // Consider the correct format for 0,00 that might also be 0.00
-  const displayedBottomValue =
-    networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? `≈ 0.00 ${fiatName}`
-      : formattedBottomValue
-
-  const calculateFiatValue = (value) => {
-    if (!value) {
-      return Format.fiatValue(0)
-    }
-    const parsedValue = NumbersHelper.floatStringToNumber(value)
-    return Format.fiatValue(parsedValue * exchangeRate)
-  }
-
-  const calculateCryptoValue = (value) => {
-    const parsedValue = NumbersHelper.floatStringToNumber(value)
-    return Format.BTCValue(parsedValue / exchangeRate)
-  }
-
-  const updateValue = (value) => {
-    isTypeFiat()
-      ? setBottomValue(calculateCryptoValue(value))
-      : setBottomValue(calculateFiatValue(value))
-  }
-
-  const changeButtonClickHandler = () => {
-    return
-  }
+  const { tokenName } = transactionData
+  const inputExtraClasses = ['crypto-fiat-input', ...extraStyleClasses]
 
   const changeHandler = ({ target: { value, parsedValue } }) => {
     changeValueHandle &&
       changeValueHandle({
-        currency: currentValueType,
+        currency: tokenName,
         value,
       })
 
@@ -111,7 +63,6 @@ const CryptoFiatField = ({
       setValidity('valid')
     }
     setValue(value || '')
-    updateValue(value || '')
 
     const validity = AppInfo.amountRegex.test(value)
 
@@ -129,23 +80,28 @@ const CryptoFiatField = ({
       return
     }
 
-    let isValid = isTypeFiat()
-      ? NumbersHelper.floatStringToNumber(calculateCryptoValue(parsedValue)) <
-        BTC.MAX_BTC
-      : parsedValue < BTC.MAX_BTC
+    let isValid = parsedValue < BTC.MAX_BTC
     setValidity(isValid ? 'valid' : 'invalid')
     setAmountValidity && setAmountValidity(isValid)
     setErrorMessage && setErrorMessage(isValid ? undefined : amountErrorMessage)
     if (!isValid) return
 
-    isValid = isTypeFiat()
-      ? parsedValue <= maxFiatValue
-      : parsedValue <= maxCryptoValue
-
-    setValidity(isValid ? 'valid' : 'invalid')
-    setAmountValidity(isValid)
-    setErrorMessage && setErrorMessage(isValid ? undefined : amountErrorMessage)
-    if (!isValid) return
+    if (validate) {
+      const error = validate(parsedValue)
+      if (error) {
+        setValidity('invalid')
+        setAmountValidity(false)
+        setErrorMessage && setErrorMessage(error)
+        return
+      }
+    } else {
+      isValid = parsedValue <= maxCryptoValue
+      setValidity(isValid ? 'valid' : 'invalid')
+      setAmountValidity(isValid)
+      setErrorMessage &&
+        setErrorMessage(isValid ? undefined : amountErrorMessage)
+      if (!isValid) return
+    }
   }
 
   const safeSpend = (value) => {
@@ -162,49 +118,27 @@ const CryptoFiatField = ({
 
   return (
     <div
-      className="crypto-fiat-field"
+      className={`crypto-fiat-field ${!maxValueInToken ? 'crypto-fiat-field-slim' : ''}`}
       data-testid="crypto-fiat-field"
     >
       <div className="fiat-field-input">
-        {isTypeFiat() ? (
-          <InputFloat
-            id={id}
-            extraStyleClasses={inputExtraClasses}
-            placeholder={placeholder || Format.fiatValue(0)}
-            value={value}
-            onChangeHandle={changeHandler}
-            validity={validity}
-          />
-        ) : (
-          <InputBTC
-            id={id}
-            extraStyleClasses={inputExtraClasses}
-            placeholder={placeholder || Format.BTCValue(0)}
-            value={value}
-            onChangeHandle={changeHandler}
-            validity={validity}
-          />
-        )}
-
-        <button
-          className="crypto-fiat-switch-button"
-          data-testid="crypto-fiat-switch-button"
-          onClick={changeButtonClickHandler}
+        <InputBTC
+          id={id}
+          extraStyleClasses={inputExtraClasses}
+          placeholder={placeholder || Format.BTCValue(0)}
+          value={value}
+          onChangeHandle={changeHandler}
+          validity={validity}
+        />
+      </div>
+      {maxValueInToken && (
+        <div
+          className="bottom-note"
+          data-testid="crypto-fiat-bottom-text"
         >
-          <span className="current-value-type">{currentValueType}</span>
-        </button>
-      </div>
-
-      <div className="bottom-note">
-        Available to spend ≈ {safeSpend(maxValueInToken)} {currentValueType}
-      </div>
-
-      <p
-        className="crypto-fiat-bottom-text"
-        data-testid="crypto-fiat-bottom-text"
-      >
-        {displayedBottomValue}
-      </p>
+          Available to spend ≈ {safeSpend(maxValueInToken)} {tokenName}
+        </div>
+      )}
     </div>
   )
 }

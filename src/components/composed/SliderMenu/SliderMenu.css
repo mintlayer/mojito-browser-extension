@@ -28,10 +28,12 @@
 
 .slider-menu.open {
   transform: translateX(0);
+  transition: transform 0.3s ease-out;
 }
 
 .slider-menu.close {
   transform: translateX(100%);
+  transition: transform 0.3s ease-in;
 }
 
 .slider-menu-content {

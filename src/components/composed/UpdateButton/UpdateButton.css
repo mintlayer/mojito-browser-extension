@@ -1,10 +1,10 @@
 .update-button {
   display: flex;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   margin-left: 10px;
-  padding: 0;
-  background-color: transparent !important;
+  padding: 5px;
+  background: #f0f2f5;
 }
 
 .update-button svg {
