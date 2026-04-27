@@ -1,6 +1,20 @@
-import React from 'react'
+import { ReactNode, MouseEvent } from 'react'
 
-import './Button.css'
+import styles from './Button.module.css'
+
+interface ButtonProps {
+  children?: ReactNode
+  alternate?: boolean
+  dark?: boolean
+  onClickHandle?: (e: MouseEvent<HTMLButtonElement>) => void
+  extraStyleClasses?: string[]
+  disabled?: boolean
+  buttonType?: 'button' | 'submit' | 'reset'
+  dataTestId?: string
+  onMouseEnter?: (e: MouseEvent<HTMLButtonElement>) => void
+  onMouseLeave?: (e: MouseEvent<HTMLButtonElement>) => void
+  autoFocus?: boolean
+}
 
 const Button = ({
   children = 'Label',
@@ -14,12 +28,12 @@ const Button = ({
   onMouseEnter,
   onMouseLeave,
   autoFocus = false,
-}) => {
-  const classList = ['btn', ...extraStyleClasses]
+}: ButtonProps) => {
+  const classList = [styles.btn, ...extraStyleClasses]
   if (dark) {
-    classList.push('dark')
+    classList.push(styles.dark)
   } else if (alternate) {
-    classList.push('alternate')
+    classList.push(styles.alternate)
   }
   const styleClasses = classList.join(' ')
 
