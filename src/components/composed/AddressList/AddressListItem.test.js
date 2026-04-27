@@ -81,7 +81,8 @@ describe('AddressListItem', () => {
     const link = screen.getByRole('link')
     expect(link).toHaveAttribute('href', expectedHref)
     expect(link).toHaveTextContent(expectedText)
-    expect(screen.getByText(/1\.23 ML/)).toBeInTheDocument()
+    const balanceEl = screen.getByText('1.23').closest('.balanceAmount')
+    expect(balanceEl).toHaveTextContent('1.23 ML')
   })
 
   it('renders BTC link and formatted text', () => {
@@ -103,7 +104,8 @@ describe('AddressListItem', () => {
     const link = screen.getByRole('link')
     expect(link).toHaveAttribute('href', expectedHref)
     expect(link).toHaveTextContent(expectedText)
-    expect(screen.getByText(/1\.23 BTC/)).toBeInTheDocument()
+    const balanceEl = screen.getByText('1.23').closest('.balanceAmount')
+    expect(balanceEl).toHaveTextContent('1.23 BTC')
   })
 
   it('expands and shows tokens when toggled', () => {

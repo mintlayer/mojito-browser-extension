@@ -1,4 +1,5 @@
 import { useContext, useState } from 'react'
+import Decimal from 'decimal.js'
 import { SettingsContext } from '@Contexts'
 import { ML, BTC } from '@Helpers'
 import { Button } from '@BasicComponents'
@@ -7,7 +8,12 @@ import { Wallet } from '@ContainerComponents'
 import { ReactComponent as IconQr } from '@Assets/images/icons-qr.svg'
 import { useParams } from 'react-router'
 
-import './AddressListItem.css'
+import styles from './AddressListItem.module.css'
+
+const formatTokenAmount = (value) => {
+  const d = new Decimal(value || 0)
+  return d.isInteger() ? d.toFixed(0) : d.toFixed(4)
+}
 
 const AddressListItem = ({ address, index }) => {
   const { networkType } = useContext(SettingsContext)
@@ -21,86 +27,85 @@ const AddressListItem = ({ address, index }) => {
     : ML.getMlAddressLink(address.id, networkType)
   const hasTokens = address.tokens && address.tokens.length > 0
 
-  const toggleTokens = () => {
-    setTokensExpanded(!tokensExpanded)
-  }
-
   const ticker = isBitcoin ? 'BTC' : 'ML'
+  const hasBalance =
+    address.coin_balance.available && Number(address.coin_balance.available) > 0
 
   return (
-    <tr
-      className="address-row"
-      data-testid={`address-row-${index}`}
-    >
-      <td className="address-cell">
-        <div className="address-content">
-          <span
-            className="address-value"
+    <>
+      <tr
+        className={`${styles.row} ${address.used ? styles.rowUsed : ''}`}
+        data-testid={`address-row-${index}`}
+      >
+        <td className={`${styles.cell} ${styles.colAddress}`}>
+          <a
+            className={styles.addressValue}
+            href={explorerLink}
+            target="_blank"
+            rel="noopener noreferrer"
             title={address.id}
           >
-            <a
-              href={explorerLink}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {ML.formatAddress(address.id, 18)}
-            </a>
-          </span>
-          <Button
-            extraStyleClasses={['qr-button']}
-            onClickHandle={() => setOpenShowAddress(true)}
+            {ML.formatAddress(address.id, 18)}
+          </a>
+        </td>
+        <td className={`${styles.cell} ${styles.colStatus}`}>
+          <span
+            className={`${styles.statusBadge} ${address.used ? styles.statusUsed : styles.statusUnused}`}
           >
-            <IconQr className="icon-qr" />
-          </Button>
-        </div>
-      </td>
-      <td className="used-cell">
-        <span className={`used-status ${address.used ? 'used' : 'unused'}`}>
-          {address.used ? 'Used' : 'Unused'}
-        </span>
-      </td>
-      <td className="balance-cell">
-        <div className="balance-content">
-          <span className="balance-value">
-            {address.coin_balance.available || '0.00'} {ticker}
+            {address.used ? 'Used' : 'Unused'}
           </span>
+        </td>
+        <td className={`${styles.cell} ${styles.colBalance}`}>
+          {hasBalance ? (
+            <span className={styles.balanceAmount}>
+              <strong>{address.coin_balance.available}</strong>{' '}
+              <span className={styles.balanceTicker}>{ticker}</span>
+            </span>
+          ) : address.used && Number(address.coin_balance.available) === 0 ? (
+            <span className={styles.balanceAmount}>
+              0 <span className={styles.balanceTicker}>{ticker}</span>
+            </span>
+          ) : (
+            <span className={styles.balanceDash}>&mdash;</span>
+          )}
 
           {address.coin_balance.locked > 0 && (
-            <span className="locked-balance">
+            <span className={styles.lockedBalance}>
               (Locked: {address.coin_balance.locked} {ticker})
             </span>
           )}
 
           {hasTokens && (
-            <div className="tokens-section">
+            <div className={styles.tokensSection}>
               <button
-                className={`tokens-toggle ${tokensExpanded ? 'expanded' : 'collapsed'}`}
-                onClick={toggleTokens}
+                className={
+                  tokensExpanded
+                    ? styles.tokensToggleExpanded
+                    : styles.tokensToggle
+                }
+                onClick={() => setTokensExpanded(!tokensExpanded)}
                 type="button"
               >
-                <span className="tokens-count">
+                <span className={styles.tokensCount}>
                   {address.tokens.length} token
                   {address.tokens.length !== 1 ? 's' : ''}
                 </span>
-                <span className="toggle-icon">
-                  {tokensExpanded ? '▼' : '▶'}
+                <span className={styles.toggleIcon}>
+                  {tokensExpanded ? '\u25BC' : '\u25B6'}
                 </span>
               </button>
 
-              {/* Tokens list - shown when expanded */}
               {tokensExpanded && (
-                <div
-                  className={`tokens-list ${tokensExpanded ? 'tokens-list-expanded' : 'tokens-list-collapsed'}`}
-                >
+                <div className={styles.tokensList}>
                   {address.tokens.map((token, tokenIndex) => (
                     <div
                       key={tokenIndex}
-                      className="token-item"
+                      className={styles.tokenItem}
                     >
-                      <span className="token-amount">
-                        {token.amount.decimal || '0.00'}
+                      <span className={styles.tokenAmount}>
+                        {formatTokenAmount(token.amount.decimal)}
                       </span>
-                      <span className="token-id">
+                      <span className={styles.tokenId}>
                         ({ML.formatAddress(token.token_id, 12)})
                       </span>
                     </div>
@@ -109,14 +114,22 @@ const AddressListItem = ({ address, index }) => {
               )}
             </div>
           )}
-        </div>
-      </td>
+        </td>
+        <td className={`${styles.cell} ${styles.colAction}`}>
+          <Button
+            extraStyleClasses={[styles.qrButton]}
+            onClickHandle={() => setOpenShowAddress(true)}
+          >
+            <IconQr />
+          </Button>
+        </td>
+      </tr>
       {openShowAddress && (
         <PopUp setOpen={setOpenShowAddress}>
           <Wallet.ShowAddress address={address.id}></Wallet.ShowAddress>
         </PopUp>
       )}
-    </tr>
+    </>
   )
 }
 
