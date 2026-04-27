@@ -1,10 +1,10 @@
-.lds-dual-ring {
+.ldsDualRing {
   display: inline-block;
   width: 80px;
   height: 80px;
 }
 
-.lds-dual-ring:after {
+.ldsDualRing:after {
   content: ' ';
   display: block;
   width: 64px;
@@ -13,10 +13,10 @@
   border: 6px solid #fff;
   border-color: rgb(var(--color-main-green)) transparent rgb(var(--color-black))
     transparent;
-  animation: lds-dual-ring 1.2s linear infinite;
+  animation: ldsDualRing 1.2s linear infinite;
 }
 
-@keyframes lds-dual-ring {
+@keyframes ldsDualRing {
   0% {
     transform: rotate(0deg);
   }
