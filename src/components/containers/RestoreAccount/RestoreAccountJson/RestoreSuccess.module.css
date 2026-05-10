@@ -1,0 +1,30 @@
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  color: rgb(var(--color-black));
+}
+
+.description {
+  font-size: 1rem;
+  text-align: center;
+  color: rgb(var(--color-dark-gray));
+  line-height: 1.5;
+}
+
+.iconCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgb(var(--mojito-green-50));
+  margin: 0 auto;
+}
+
+.checkIcon {
+  width: 40px;
+  height: 40px;
+  color: rgb(var(--mojito-green));
+}

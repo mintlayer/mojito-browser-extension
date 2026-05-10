@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useContext } from 'react'
+import { useState, useMemo, useEffect, useContext, FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 
 import { AppInfo, Expressions } from '@Constants'
@@ -7,12 +7,27 @@ import { AccountContext } from '@Contexts'
 import { Button } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { InputList, ProgressTracker, TextField } from '@ComposedComponents'
+import type { InputField } from '../../composed/InputList/InputsList'
 
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
 
 import WordsDescription from './WordsListDescription'
 
-import './CreateAccount.css'
+import styles from './CreateAccount.module.css'
+
+interface CreateAccountProps {
+  step: number
+  setStep: (step: number) => void
+  words?: string[]
+  onStepsFinished?: (name: string, password: string, wallets: string[]) => void
+  onGenerateMnemonic?: () => void
+  validateMnemonicFn?: (mnemonic: string) => boolean
+  defaultBTCWordList?: string[]
+}
+
+const Title = ({ title }: { title: string }) => (
+  <h1 className={styles.title}>{title}</h1>
+)
 
 const CreateAccount = ({
   step,
@@ -22,10 +37,10 @@ const CreateAccount = ({
   onGenerateMnemonic,
   validateMnemonicFn,
   defaultBTCWordList,
-}) => {
-  const inputExtraclasses = ['set-account-input']
+}: CreateAccountProps) => {
+  const inputExtraclasses = [styles.setAccountInput]
   const passwordPattern = Expressions.PASSWORD
-  const [wordsFields, setWordsFields] = useState([])
+  const [wordsFields, setWordsFields] = useState<InputField[]>([])
   const [direction, setDirection] = useState('forward')
 
   const [accountNameValue, setAccountNameValue] = useState('')
@@ -51,10 +66,15 @@ const CreateAccount = ({
 
   const goToNextStep = () => {
     setDirection('forward')
-    if (step === 2) onGenerateMnemonic()
+    if (step === 2 && onGenerateMnemonic) onGenerateMnemonic()
     return step < 5
       ? setStep(step + 1)
-      : onStepsFinished(accountNameValue, accountPasswordValue, selectedWallets)
+      : onStepsFinished &&
+          onStepsFinished(
+            accountNameValue,
+            accountPasswordValue,
+            selectedWallets,
+          )
   }
 
   const goToPrevStep = () => {
@@ -82,7 +102,7 @@ const CreateAccount = ({
     [wordsFields],
   )
 
-  const stepsValidations = {
+  const stepsValidations: Record<number, boolean> = {
     1: accountNameValid,
     2: accountPasswordValid,
     3: true,
@@ -90,33 +110,34 @@ const CreateAccount = ({
     5: accountWordsValid,
   }
 
-  const titles = {
+  const titles: Record<number, string> = {
     3: 'I understand',
     4: 'Backup done!',
     5: 'Create Wallet',
   }
 
-  const nameFieldValidity = (value) => {
+  const nameFieldValidity = (value: string) => {
     setAccountNameValid(value.length > 3)
   }
 
-  const passwordFieldValidity = (value) => {
+  const passwordFieldValidity = (value: string) => {
     setAccountPasswordValid(!!value.match(passwordPattern))
   }
 
-  const accountNameChangeHandler = (value) => {
+  const accountNameChangeHandler = (value: string) => {
     nameFieldValidity(value)
     setAccountNameValue(value)
   }
 
-  const accountPasswordChangeHandler = (value) => {
+  const accountPasswordChangeHandler = (value: string) => {
     passwordFieldValidity(value)
     setAccountPasswordValue(value)
   }
 
-  const genButtonTitle = (currentStep) => titles[currentStep] || 'Continue'
+  const genButtonTitle = (currentStep: number) =>
+    titles[currentStep] || 'Continue'
 
-  const handleError = (step) => {
+  const handleError = (step: number) => {
     if (step < 5) return
     if (step === 5) {
       alert(
@@ -129,29 +150,35 @@ const CreateAccount = ({
     const inputMnemonic = wordsFields
       .reduce((acc, word) => `${acc} ${word.value}`, '')
       .trim()
-    return validateMnemonicFn(inputMnemonic)
+    return validateMnemonicFn && validateMnemonicFn(inputMnemonic)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
 
     if (step === 1) setAccountNamePristinity(false)
     if (step === 2) setAccountPasswordPristinity(false)
 
     let validForm = stepsValidations[step]
-    if (step === 5) validForm = validForm && isMnemonicValid()
+    if (step === 5) validForm = validForm && !!isMnemonicValid()
 
     validForm ? goToNextStep() : handleError(step)
   }
 
+  const formClasses = [styles.setAccountForm]
+  if (step > 3) formClasses.push(styles.setAccountFormWords)
+
   return (
-    <div data-testid="set-account">
+    <div
+      data-testid="set-account"
+      className={styles.setAccountContainer}
+    >
       <ProgressTracker
         steps={steps}
         direction={direction}
       />
       <form
-        className={`set-account-form ${step > 3 && 'set-account-form-words'}`}
+        className={formClasses.join(' ')}
         method="POST"
         data-testid="set-account-form"
         onSubmit={handleSubmit}
@@ -159,36 +186,45 @@ const CreateAccount = ({
         <VerticalGroup
           data-step={step}
           bigGap={step !== 5}
-          fullWidth
+          center
         >
           {step === 1 && (
-            <TextField
-              value={accountNameValue}
-              onChangeHandle={accountNameChangeHandler}
-              validity={accountNameValid}
-              placeHolder={'Wallet Name'}
-              label={'Create a name for your wallet'}
-              extraStyleClasses={inputExtraclasses}
-              errorMessages={accountNameErrorMessage}
-              pristinity={accountNamePristinity}
-              alternate
-            />
+            <div className={styles.itemWrapper}>
+              <TextField
+                value={accountNameValue}
+                onChangeHandle={accountNameChangeHandler}
+                validity={accountNameValid}
+                placeHolder={'Wallet Name'}
+                label={<Title title="Create a name for your wallet" />}
+                extraStyleClasses={inputExtraclasses}
+                errorMessages={accountNameErrorMessage}
+                pristinity={accountNamePristinity}
+                alternate
+              />
+            </div>
           )}
           {step === 2 && (
-            <TextField
-              value={accountPasswordValue}
-              onChangeHandle={accountPasswordChangeHandler}
-              validity={accountPasswordValid}
-              password
-              label={'Create a password for your wallet'}
-              placeHolder={'Password'}
-              extraStyleClasses={inputExtraclasses}
-              errorMessages={accountPasswordErrorMessage}
-              pristinity={accountPasswordPristinity}
-              alternate
-            />
+            <div className={styles.itemWrapper}>
+              <TextField
+                value={accountPasswordValue}
+                onChangeHandle={accountPasswordChangeHandler}
+                validity={accountPasswordValid}
+                password
+                label={<Title title="Create a password for your wallet" />}
+                placeHolder={'Password'}
+                extraStyleClasses={inputExtraclasses}
+                errorMessages={accountPasswordErrorMessage}
+                pristinity={accountPasswordPristinity}
+                alternate
+              />
+            </div>
           )}
-          {step === 3 && <WordsDescription />}
+          {step === 3 && (
+            <div className={styles.itemWrapper}>
+              <WordsDescription />
+            </div>
+          )}
+
           {step === 4 && (
             <InputList
               wordsList={words}
@@ -212,10 +248,10 @@ const CreateAccount = ({
               key={step}
               buttonType="submit"
               autoFocus
-              extraStyleClasses={['create-submit-button']}
+              extraStyleClasses={[styles.createSubmitButton]}
             >
               {genButtonTitle(step)}{' '}
-              <IconArrowRight className="create-submit-icon" />
+              <IconArrowRight className={styles.createSubmitIcon} />
             </Button>
           </CenteredLayout>
         </VerticalGroup>

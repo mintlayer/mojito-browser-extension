@@ -14,6 +14,7 @@ import {
 } from '@ComposedComponents'
 
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
+import { ReactComponent as IconDocumentFilled } from '@Assets/images/icon-document-filled.svg'
 
 import './RestoreAccountMnemonic.css'
 
@@ -174,36 +175,52 @@ const RestoreAccountMnemonic = ({
           data-step={step}
           bigGap={step !== 4 && step !== 5 && step !== 6}
           fullWidth={true}
+          center
         >
           {step === 1 && (
-            <TextField
-              value={accountNameValue}
-              onChangeHandle={accountNameChangeHandler}
-              validity={accountNameValid}
-              placeHolder={'Wallet Name'}
-              label={'Create a name for your wallet'}
-              extraStyleClasses={inputExtraclasses}
-              errorMessages={accountNameErrorMessage}
-              pristinity={accountNamePristinity}
-              alternate
-            />
+            <div className="itemWrapper">
+              <TextField
+                value={accountNameValue}
+                onChangeHandle={accountNameChangeHandler}
+                validity={accountNameValid}
+                placeHolder={'Wallet Name'}
+                label={
+                  <h1 className="restore-mnemonic-title">
+                    Create a name for your wallet
+                  </h1>
+                }
+                extraStyleClasses={inputExtraclasses}
+                errorMessages={accountNameErrorMessage}
+                pristinity={accountNamePristinity}
+                alternate
+              />
+            </div>
           )}
           {step === 2 && (
-            <TextField
-              value={accountPasswordValue}
-              onChangeHandle={accountPasswordChangeHandler}
-              validity={accountPasswordValid}
-              password
-              label={'Create a password for your wallet'}
-              placeHolder={'Password'}
-              extraStyleClasses={inputExtraclasses}
-              errorMessages={accountPasswordErrorMessage}
-              pristinity={accountPasswordPristinity}
-              alternate
-            />
+            <div className="itemWrapper">
+              <TextField
+                value={accountPasswordValue}
+                onChangeHandle={accountPasswordChangeHandler}
+                validity={accountPasswordValid}
+                password
+                label={
+                  <h1 className="restore-mnemonic-title">
+                    Create a password for your wallet
+                  </h1>
+                }
+                placeHolder={'Password'}
+                extraStyleClasses={inputExtraclasses}
+                errorMessages={accountPasswordErrorMessage}
+                pristinity={accountPasswordPristinity}
+                alternate
+              />
+            </div>
           )}
           {step === 3 && (
-            <CenteredLayout>
+            <div className="words-description-wrapper">
+              <div className="words-description-icon">
+                <IconDocumentFilled />
+              </div>
               <p
                 className="words-description"
                 data-testid="description-paragraph"
@@ -211,7 +228,7 @@ const RestoreAccountMnemonic = ({
                 In order to restore the wallet, please enter your 12 or 24 Seed
                 Phrase.
               </p>
-            </CenteredLayout>
+            </div>
           )}
           {step === 4 && (
             <>

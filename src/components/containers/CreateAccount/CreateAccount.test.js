@@ -225,7 +225,8 @@ test('Renders set account page with step 5 (verify words)', () => {
 
   inputs.forEach((input, index) => {
     expect(input).toHaveAttribute('type', 'text')
-    expect(input).toHaveClass('invalid')
+    expect(input).not.toHaveClass('invalid')
+    expect(input).not.toHaveClass('valid')
     fireEvent.change(input, { target: { value: WORDSSAMPLE[index] } })
     fireEvent.blur(input)
     expect(input).toHaveClass('valid')

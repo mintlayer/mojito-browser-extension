@@ -59,13 +59,13 @@ describe('RestoreAccountJson', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('Select your backup file')).toBeInTheDocument()
+    expect(screen.getByText('Select backup file')).toBeInTheDocument()
     expect(
-      screen.getByText(
-        'Please select the backup file you want to restore your wallet from.',
-      ),
+      screen.getByText('Choose the JSON file exported from Mojito Wallet'),
     ).toBeInTheDocument()
-    expect(screen.getByText('Upload JSON file')).toBeInTheDocument()
+    expect(
+      screen.getByText('Drag & drop or click to upload'),
+    ).toBeInTheDocument()
     expect(screen.getByText('Next')).toBeInTheDocument()
   })
 
@@ -118,19 +118,17 @@ describe('RestoreAccountJson', () => {
 
     expect(screen.getByText('Next')).toBeInTheDocument()
 
-    await expect(
-      screen.findByText('Uploaded: valid.json'),
-    ).resolves.toBeInTheDocument()
+    await expect(screen.findByText('valid.json')).resolves.toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Next'))
 
-    expect(screen.getAllByText('Wallet details')).toHaveLength(2)
-    expect(screen.getByText('Name:')).toBeInTheDocument()
-    expect(screen.getByText('ID:')).toBeInTheDocument()
-    expect(screen.getByText('Wallets:')).toBeInTheDocument()
+    expect(screen.getByText('Confirm wallet details')).toBeInTheDocument()
+    expect(screen.getByText('Wallet Name')).toBeInTheDocument()
+    expect(screen.getByText('Wallet ID')).toBeInTheDocument()
+    expect(screen.getByText('Assets')).toBeInTheDocument()
 
     expect(screen.getByText('Test Wallet')).toBeInTheDocument()
-    expect(screen.getByText('1')).toBeInTheDocument()
+    expect(screen.getByText('#1')).toBeInTheDocument()
     expect(screen.getByText('WALLET1, WALLET2')).toBeInTheDocument()
   })
 
@@ -156,24 +154,17 @@ describe('RestoreAccountJson', () => {
 
     expect(screen.getByText('Next')).toBeInTheDocument()
 
-    await expect(
-      screen.findByText('Uploaded: valid.json'),
-    ).resolves.toBeInTheDocument()
+    await expect(screen.findByText('valid.json')).resolves.toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Next'))
-    fireEvent.click(screen.getByText('Next'))
+    fireEvent.click(screen.getByText('Restore wallet'))
 
-    expect(screen.getByText('Congraduation!')).toBeInTheDocument()
+    expect(screen.getByText('Wallet restored!')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'You have successfully restored your wallet. Please go to the login page to access your account.',
+        'Your wallet has been successfully restored from the backup file.',
       ),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'Remember to keep your recovery details safe and secure.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getAllByText('Finish')).toHaveLength(2)
+    expect(screen.getByText('Go to login')).toBeInTheDocument()
   })
 })

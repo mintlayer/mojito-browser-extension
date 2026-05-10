@@ -1,3 +1,7 @@
+.restoreAccountPage {
+  background-color: rgb(var(--color-white));
+}
+
 .page {
   display: flex;
   flex-direction: column;

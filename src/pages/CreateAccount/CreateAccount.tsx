@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import { useContext, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Loading } from '@ComposedComponents'
@@ -10,12 +10,12 @@ import { AccountContext } from '@Contexts'
 import { BTC, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
 import { PageWrapper } from '@BasicComponents'
-import './CreateAccount.css'
+import styles from './CreateAccount.module.css'
 
 const CreateAccountPage = () => {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
-  const [words, setWords] = useState([])
+  const [words, setWords] = useState<string[]>([])
   const { setWalletInfo } = useContext(AccountContext)
   const [creatingWallet, setCreatingWallet] = useState(false)
 
@@ -25,9 +25,13 @@ const CreateAccountPage = () => {
     setWords(mnemonic.split(' '))
   }
 
-  const createAccount = (accountName, accountPassword, selectedWallets) => {
+  const createAccount = (
+    accountName: string,
+    accountPassword: string,
+    selectedWallets: string[],
+  ) => {
     setCreatingWallet(true)
-    let accountID = null
+    let accountID: string | null = null
     const mnemonic = words.join(' ')
     const btcAddressType = BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
     const data = {
@@ -38,7 +42,7 @@ const CreateAccountPage = () => {
       walletsToCreate: selectedWallets,
     }
     Account.saveAccount(data)
-      .then((id) => {
+      .then((id: string) => {
         accountID = id
         return Account.unlockAccount(id, accountPassword)
       })
@@ -48,19 +52,17 @@ const CreateAccountPage = () => {
       })
   }
 
-  const loadingExtraClasses = ['loading-big']
-
   return (
-    <PageWrapper>
+    <PageWrapper className={styles.createAccountPage}>
       {creatingWallet ? (
-        <div className="creating-loading-warapper">
+        <div className={styles.creatingLoadingWrapper}>
           <CenteredLayout>
             <VerticalGroup bigGap>
-              <h1 className="loadingText">
+              <h1 className={styles.loadingText}>
                 {' '}
                 Just a sec, we are creating your wallet...{' '}
               </h1>
-              <Loading extraStyleClasses={loadingExtraClasses} />
+              <Loading extraStyleClasses={[styles.loadingBig]} />
             </VerticalGroup>
           </CenteredLayout>
         </div>

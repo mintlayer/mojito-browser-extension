@@ -40,7 +40,7 @@ const LoginPage = ({
   }
 
   const goCreate = () => {
-    navigate('/', { state: { fromLogin: true } })
+    navigate('/create-restore', { state: { fromLogin: true } })
     onCreate && onCreate()
   }
 

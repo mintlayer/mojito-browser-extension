@@ -1,5 +1,10 @@
+.createAccountPage {
+  background: rgb(var(--color-white));
+}
+
 .loadingText {
   margin-bottom: 60px;
+  font-size: 24px;
   font-weight: 400;
   text-align: center;
 }
@@ -8,28 +13,22 @@
   margin: 0 auto;
 }
 
-.creating-loading-warapper {
+.creatingLoadingWrapper {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 50vh;
 }
 
-.loading-big {
+.loadingBig {
   width: 190px;
   height: 190px;
 }
 
-.loading-big::after {
+.loadingBig::after {
   width: 160px;
   height: 160px;
   border: 15px solid #fff;
   border-color: rgb(var(--color-main-green)) transparent rgb(var(--color-black))
     transparent;
-}
-
-.loadingText {
-  margin-bottom: 60px;
-  font-size: 24px;
-  font-weight: 400;
 }

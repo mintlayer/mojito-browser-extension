@@ -44,7 +44,7 @@ const RestoreAccountPage = () => {
         accountID = id
         return Account.unlockAccount(id, accountPassword)
       })
-      .then(({ addresses }: { addresses: string[] }) => {
+      .then(({ addresses }) => {
         setWalletInfo(addresses, accountID, accountName)
         navigate('/dashboard')
       })
@@ -61,7 +61,7 @@ const RestoreAccountPage = () => {
   }, [])
 
   return (
-    <PageWrapper>
+    <PageWrapper className={styles.restoreAccountPage}>
       {creatingWallet ? (
         <div className={styles.loadingWrapper}>
           <CenteredLayout>
@@ -106,15 +106,7 @@ const RestoreAccountPage = () => {
               defaultBTCWordList={BTC.getWordList()}
             />
           )}
-          {restoreMethod === 'json' && (
-            <RestoreAccount.RestoreAccountJson
-              step={step}
-              setStep={setStep}
-              onStepsFinished={createAccount}
-              validateMnemonicFn={BTC.validateMnemonic}
-              defaultBTCWordList={BTC.getWordList()}
-            />
-          )}
+          {restoreMethod === 'json' && <RestoreAccount.RestoreAccountJson />}
         </>
       )}
     </PageWrapper>
