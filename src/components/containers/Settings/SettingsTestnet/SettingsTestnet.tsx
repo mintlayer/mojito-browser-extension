@@ -41,7 +41,7 @@ const SettingsTestnet = () => {
           onClick={() => switchNetwork(AppInfo.NETWORK_TYPES.MAINNET)}
           data-testid="toggle"
         >
-          Mintlayer Mainnet
+          Mainnet
         </button>
         <button
           className={[styles.option, !isMainnet && styles.optionActive]
@@ -50,7 +50,7 @@ const SettingsTestnet = () => {
           onClick={() => switchNetwork(AppInfo.NETWORK_TYPES.TESTNET)}
           data-testid="toggle"
         >
-          Mintlayer Testnet
+          Testnet
         </button>
       </div>
     </div>

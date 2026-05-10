@@ -43,7 +43,7 @@ test('toggles the network type', () => {
       </SettingsContext.Provider>
     </AccountContext.Provider>,
   )
-  const testnetButton = screen.getByText('Mintlayer Testnet')
+  const testnetButton = screen.getByText('Testnet')
 
   fireEvent.click(testnetButton)
   expect(toggleNetworkType).toHaveBeenCalled()

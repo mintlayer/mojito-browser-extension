@@ -7,11 +7,13 @@
   border-radius: var(--round-size-big);
   color: rgb(var(--color-white));
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   opacity: 1;
   padding: 14px 22px 14px 22px;
   width: fit-content;
+  min-height: max-content;
+  gap: 10px;
 }
 
 .btn svg {

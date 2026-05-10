@@ -82,24 +82,30 @@
 }
 
 /* QR button */
-.qrButton {
+.qrButton.qrButton {
   width: 36px;
   height: 36px;
   padding: 0;
   background: rgba(var(--color-black), 0.04);
+  background-color: rgba(var(--color-black), 0.04);
   border-radius: 8px;
+  color: rgb(var(--color-black));
   transition: background 0.15s ease;
 }
 
-.qrButton:hover,
-.qrButton:focus {
+.qrButton.qrButton:hover,
+.qrButton.qrButton:focus {
   background: rgba(var(--color-black), 0.08);
-  color: inherit;
+  background-color: rgba(var(--color-black), 0.08);
 }
 
-.qrButton:hover svg path,
-.qrButton:focus svg path {
-  stroke: unset;
+.qrButton.qrButton svg path {
+  stroke: rgb(var(--color-black));
+}
+
+.qrButton.qrButton:hover svg path,
+.qrButton.qrButton:focus svg path {
+  stroke: rgb(var(--color-black));
 }
 
 .qrButton svg {

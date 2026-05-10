@@ -1,5 +1,6 @@
 import { ReactComponent as ChevronIcon } from '@Assets/images/icon-chevron-down.svg'
 import { APP_VERSION } from '@Version'
+import { AppInfo } from '@Constants'
 
 import styles from './SettingsAbout.module.css'
 
@@ -12,7 +13,7 @@ const SettingsAbout = () => {
       </div>
       <a
         className={`${styles.row} ${styles.rowClickable}`}
-        href="https://www.mintlayer.org/terms-and-conditions"
+        href={AppInfo.PRIVACY_POLICY_URL}
         target="_blank"
         rel="noreferrer"
       >
@@ -21,7 +22,7 @@ const SettingsAbout = () => {
       </a>
       <a
         className={`${styles.row} ${styles.rowClickable}`}
-        href="https://www.mintlayer.org/contact-us"
+        href={AppInfo.CONTACT_US_URL}
         target="_blank"
         rel="noreferrer"
       >

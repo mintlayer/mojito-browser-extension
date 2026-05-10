@@ -1,6 +1,7 @@
 .section {
   display: flex;
   flex-direction: column;
+  min-height: max-content;
 }
 
 .label {
