@@ -1,0 +1,68 @@
+.listItem {
+  position: relative;
+  margin-bottom: 9px;
+}
+
+.number {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 23px;
+  height: 23px;
+  background: rgb(var(--color-extra-light-gray));
+  color: rgb(var(--color-balck));
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 50%;
+}
+
+.numberActive {
+  background: rgb(var(--color-main-green));
+  color: rgb(var(--color-white));
+}
+
+.numberFinished {
+  background: rgb(var(--color-black));
+  color: rgb(var(--color-white));
+}
+
+.numberInvalid {
+  background: rgb(var(--color-red));
+  color: rgb(var(--color-white));
+}
+
+.wordsListInput {
+  max-width: 230px;
+  padding: 0.85rem;
+  text-align: center;
+  background: rgb(var(--color-extra-light-gray));
+  font-size: 20px;
+}
+
+.wordsListInputRestore {
+  padding: 1rem 1rem 1rem 3.4rem;
+  background: transparent;
+}
+
+.inputRestoreFinished {
+  background: rgb(var(--color-extra-light-gray));
+  border: 2px solid rgb(var(--color-extra-light-gray));
+}
+
+.wordsListInput:focus ~ .number,
+.wordsListInput.readonly ~ .number {
+  color: rgb(var(--color-white));
+  background: rgb(var(--color-main-green));
+}
+
+.wordsListInput::placeholder {
+  color: rgba(var(--color-white), 0.9);
+}
+
+.readonly {
+  border: 1px solid rgb(var(--color-medium-blue));
+}

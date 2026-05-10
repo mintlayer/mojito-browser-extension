@@ -1,0 +1,44 @@
+.walletCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--mojito-green-soft);
+  background: rgb(var(--mojito-green-soft));
+  border-radius: 14px;
+  border: 1.5px solid rgba(var(--mojito-green), 0.5);
+}
+
+.walletCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.walletCardLogo {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.walletCardLogo svg {
+  width: 100%;
+  height: 100%;
+}
+
+.walletCardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.walletCardName {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+}
+
+.walletCardBalance {
+  font-size: 13px;
+  color: rgba(var(--color-black), 0.5);
+}

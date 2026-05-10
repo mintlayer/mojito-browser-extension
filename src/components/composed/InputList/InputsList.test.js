@@ -25,7 +25,7 @@ test('Render Inputs list item', () => {
   const inputListItem = screen.getByTestId('inputs-list-item')
 
   expect(inputListComponent).toBeInTheDocument()
-  expect(inputListComponent).toHaveClass('inputs-list')
+  expect(inputListComponent).toHaveClass('inputsList')
   expect(inputListComponent).toContainElement(inputListItem)
 })
 
@@ -77,13 +77,13 @@ test('genNumberClasslist function valid', () => {
 })
 
 test('genNumberClasslist function invalid', () => {
-  const input = { value: 'tree' }
+  const input = { value: 'tree', order: 0 }
   const validator = isInputValid(input, WORDS)
   expect(validator).toBe(false)
 })
 
 test('genNumberClasslist function without words array', () => {
-  const input = { value: 'tree' }
+  const input = { value: 'tree', order: 0 }
   const validator = isInputValid(input, [], BTC.getWordList())
   expect(validator).toBe(true)
 })

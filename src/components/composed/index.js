@@ -4,10 +4,10 @@ import ArcChart from './Charts/ArcChart/ArcChart'
 import LineChart from './Charts/LineChart/LineChart'
 import OptionButtons from './OptionButtons/OptionButtons'
 import Header from './Header/Header.tsx'
-import InputList from './InputList/InputsList'
+import InputList from './InputList/InputsList.tsx'
 import Loading from './Loading/Loading.tsx'
 import PopUp from './PopUp/Popup'
-import ProgressTracker from './ProgressTracker/ProgressTracker'
+import ProgressTracker from './ProgressTracker/ProgressTracker.tsx'
 import TextField from './TextField/TextField.tsx'
 import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 import FeeField from './FeeField/FeeField'
@@ -30,6 +30,8 @@ import AddressList from './AddressList/AddressList'
 import PriceChart from './PriceChart/PriceChart'
 import WalletHeader from './WalletHeader/WalletHeader'
 import Sidebar from './Sidebar/Sidebar.tsx'
+import SendPageHeader from './SendPageHeader/SendPageHeader'
+import WalletCard from './WalletCard/WalletCard'
 
 export {
   Balance,
@@ -64,4 +66,6 @@ export {
   PriceChart,
   WalletHeader,
   Sidebar,
+  SendPageHeader,
+  WalletCard,
 }

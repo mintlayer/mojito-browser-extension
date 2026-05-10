@@ -2,7 +2,13 @@ import { render, screen } from '@testing-library/react'
 import ProgressTracker from './ProgressTracker'
 
 test('Render ProgressTracker component', () => {
-  render(<ProgressTracker />)
+  const steps = [
+    { name: 'Step 1' },
+    { name: 'Step 2', active: true },
+    { name: 'Step 3' },
+  ]
+
+  render(<ProgressTracker steps={steps} />)
   const progressTrackerComponent = screen.getByTestId(
     'progress-tracker-container',
   )
