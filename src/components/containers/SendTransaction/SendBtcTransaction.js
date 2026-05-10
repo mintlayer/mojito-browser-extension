@@ -1,10 +1,16 @@
 import React, { useEffect, useState, useContext } from 'react'
+import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 
 import { Button } from '@BasicComponents'
-import { Loading, PopUp, TextField } from '@ComposedComponents'
+import { Loading, PopUp, TextField, WalletCard } from '@ComposedComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
-import { AccountContext, BitcoinContext, TransactionContext } from '@Contexts'
+import {
+  AccountContext,
+  BitcoinContext,
+  SettingsContext,
+  TransactionContext,
+} from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import SendTransactionConfirmation from './SendTransactionConfirmation'
@@ -12,7 +18,7 @@ import AddressField from './AddressField'
 import AmountField from './AmountField'
 import FeesField from './FeesField'
 
-import './SendBtcTransaction.css'
+import styles from './SendBtcTransaction.module.css'
 import { Error } from '@BasicComponents'
 
 const SendBtcTransaction = ({
@@ -36,6 +42,8 @@ const SendBtcTransaction = ({
 }) => {
   const { balanceLoading } = useContext(AccountContext)
   const { feeLoading } = useContext(TransactionContext)
+  const { networkType } = useContext(SettingsContext)
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const cryptoName = transactionData.tokenName
   const fiatName = transactionData.fiatName
   const [amountInCrypto, setAmountInCrypto] = useState('0.00')
@@ -256,13 +264,19 @@ const SendBtcTransaction = ({
   const sendTransactionButtonTitle = 'Send'
 
   return (
-    <div className="transaction-form">
+    <div className={styles.transactionForm}>
       {balanceLoading ? (
-        <div className="loading-center">
+        <div className={styles.loadingCenter}>
           <Loading />
         </div>
       ) : (
         <>
+          <WalletCard
+            logo={BtcLogo}
+            networkName={`Bitcoin${isTestnet ? ' (Testnet)' : ''}`}
+            balance={`Balance: ${Format.BTCValue(maxValueInToken)} BTC`}
+          />
+
           <AddressField
             addressChanged={addressChanged}
             preEnterAddress={preEnterAddress}
@@ -319,7 +333,7 @@ const SendBtcTransaction = ({
           {!transactionTxid ? (
             sendingTransaction ? (
               <VerticalGroup bigGap>
-                <h2 className="loading-text">
+                <h2 className={styles.loadingText}>
                   Your transaction broadcasting to network.
                 </h2>
                 <CenteredLayout>
@@ -367,7 +381,7 @@ const SendBtcTransaction = ({
           ) : (
             <VerticalGroup bigGap>
               <h2>Your transaction was sent.</h2>
-              <h3 className="result-title">Txid: {transactionTxid}</h3>
+              <h3 className={styles.resultTitle}>Txid: {transactionTxid}</h3>
               <CenteredLayout>
                 <Button onClickHandle={goBackToWallet}>Back to Wallet</Button>
               </CenteredLayout>

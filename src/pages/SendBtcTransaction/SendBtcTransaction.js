@@ -2,21 +2,25 @@ import { useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendBtcTransaction } from '@ContainerComponents'
+import { SendPageHeader } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useBtcWalletInfo } from '@Hooks'
-import { AccountContext, BitcoinContext } from '@Contexts'
+import { AccountContext, BitcoinContext, SettingsContext } from '@Contexts'
 import { BTCTransaction } from '@Cryptos'
 import { Account } from '@Entities'
 import { BTC as BTCHelper, Format } from '@Helpers'
 import { Electrum } from '@APIs'
 import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
+import { AppInfo } from '@Constants'
 
 import { PageWrapper } from '@BasicComponents'
-import './SendBtcTransaction.css'
+import styles from './SendBtcTransaction.module.css'
 
 const SendBtcTransactionPage = () => {
   const { addresses, accountID } = useContext(AccountContext)
   const { fetchAllData } = useContext(BitcoinContext)
+  const { networkType } = useContext(SettingsContext)
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
   const { coinType } = useParams()
   const walletType = {
@@ -129,7 +133,12 @@ const SendBtcTransactionPage = () => {
 
   return (
     <PageWrapper>
-      <div className="page">
+      <div className={styles.page}>
+        <SendPageHeader
+          ticker="BTC"
+          networkName="Bitcoin"
+          isTestnet={isTestnet}
+        />
         <VerticalGroup smallGap>
           <SendBtcTransaction
             totalFeeFiat={totalFeeFiat}

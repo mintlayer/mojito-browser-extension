@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { CryptoFiatField } from '@ComposedComponents'
-import TransactionField from './TransactionField'
 
-import './errorMessages.css'
+import styles from './AmountField.module.css'
 
 const AmountField = ({
   amountChanged,
@@ -16,14 +15,21 @@ const AmountField = ({
   inputValue,
   placeholder,
   validate,
-  label = 'Amount:',
+  label = 'Amount',
   children,
 }) => {
   const [localMessage, setLocalMessage] = useState(undefined)
 
   return (
-    <TransactionField>
-      {label && <label htmlFor="amount">{label}</label>}
+    <div className={styles.field}>
+      {label && (
+        <label
+          className={styles.label}
+          htmlFor="amount"
+        >
+          {label}
+        </label>
+      )}
       <CryptoFiatField
         id="amount"
         buttonTitle="Max"
@@ -40,8 +46,10 @@ const AmountField = ({
         validate={validate}
       />
       {children}
-      <p className="error-message">{localMessage ?? errorMessage}</p>
-    </TransactionField>
+      {(localMessage || errorMessage) && (
+        <p className={styles.errorMessage}>{localMessage ?? errorMessage}</p>
+      )}
+    </div>
   )
 }
 

@@ -19,25 +19,31 @@
   gap: 14px;
 }
 
-.qrButton {
+.qrButton.qrButton {
   width: 48px;
   height: 48px;
   padding: 0;
-  background: rgba(var(--color-green), 0.15);
+  background: rgba(var(--color-black), 0.04);
+  background-color: rgba(var(--color-black), 0.04);
   border-radius: 12px;
+  color: rgb(var(--color-black));
   flex-shrink: 0;
-  transition: background 0.2s ease;
+  transition: background 0.15s ease;
 }
 
-.qrButton:hover,
-.qrButton:focus {
-  background: rgba(var(--color-green), 0.25);
-  color: inherit;
+.qrButton.qrButton:hover,
+.qrButton.qrButton:focus {
+  background: rgba(var(--color-black), 0.08);
+  background-color: rgba(var(--color-black), 0.08);
 }
 
-.qrButton:hover svg path,
-.qrButton:focus svg path {
-  stroke: unset;
+.qrButton.qrButton svg path {
+  stroke: rgb(var(--color-black));
+}
+
+.qrButton.qrButton:hover svg path,
+.qrButton.qrButton:focus svg path {
+  stroke: rgb(var(--color-black));
 }
 
 .qrButton svg {

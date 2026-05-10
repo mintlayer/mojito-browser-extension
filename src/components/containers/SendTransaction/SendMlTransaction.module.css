@@ -1,0 +1,45 @@
+.transactionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.transactionForm input.invalid,
+.transactionForm input.valid {
+  padding: 1.8rem 1.685rem;
+}
+
+.resultTitle {
+  word-wrap: break-word;
+}
+
+.loadingText {
+  font-size: 24px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.nftTransactionInfo {
+  display: flex;
+  align-items: center;
+  gap: 3.4rem;
+  margin: 15px 0;
+}
+
+.nftTransactionInfo h2 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  min-width: max-content;
+}
+
+.nftTransactionInfo p {
+  font-size: 1.4rem;
+  word-break: break-all;
+}
+
+.loadingCenter {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

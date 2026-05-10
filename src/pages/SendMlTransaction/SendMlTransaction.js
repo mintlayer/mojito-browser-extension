@@ -2,15 +2,19 @@ import { useContext, useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
+import { SendPageHeader } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
-import { AccountContext, MintlayerContext } from '@Contexts'
+import { AccountContext, MintlayerContext, SettingsContext } from '@Contexts'
+import { AppInfo } from '@Constants'
 
 import { PageWrapper } from '@BasicComponents'
-import './SendMlTransaction.css'
+import styles from './SendMlTransaction.module.css'
 
 const SendMlTransactionPage = () => {
   const { addresses, accountID } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
   const { coinType } = useParams()
   const walletType = useMemo(
@@ -122,7 +126,12 @@ const SendMlTransactionPage = () => {
 
   return (
     <PageWrapper>
-      <div className="page">
+      <div className={styles.page}>
+        <SendPageHeader
+          ticker={tokenName}
+          networkName="Mintlayer"
+          isTestnet={isTestnet}
+        />
         <VerticalGroup smallGap>
           <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}

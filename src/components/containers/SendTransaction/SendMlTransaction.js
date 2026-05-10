@@ -1,17 +1,18 @@
 import React, { useEffect, useState, useContext } from 'react'
 import Decimal from 'decimal.js'
+import { ReactComponent as MlLogo } from '@Assets/images/logo.svg'
 
 import { Button } from '@BasicComponents'
-import { Loading } from '@ComposedComponents'
+import { Loading, WalletCard } from '@ComposedComponents'
 import { CenteredLayout } from '@LayoutComponents'
 import { Format, NumbersHelper } from '@Helpers'
-import { AccountContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import FeesField from './FeesField'
 import AddressField from './AddressField'
 import AmountField from './AmountField'
 
-import './SendMlTransaction.css'
+import styles from './SendMlTransaction.module.css'
 import { Error } from '@BasicComponents'
 
 const SendMlTransaction = ({
@@ -29,6 +30,8 @@ const SendMlTransaction = ({
   walletType,
 }) => {
   const { balanceLoading } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   const [amountInCrypto, setAmountInCrypto] = useState('0.00')
   const [originalAmount, setOriginalAmount] = useState('0,00')
   const [addressTo, setAddressTo] = useState('')
@@ -169,15 +172,21 @@ const SendMlTransaction = ({
       : 'Send'
 
   return (
-    <div className="transaction-form">
+    <div className={styles.transactionForm}>
       {balanceLoading || sendingTransaction ? (
-        <div className="loading-center">
+        <div className={styles.loadingCenter}>
           <Loading extraStyleClasses={loadingExtraClasses} />
         </div>
       ) : (
         <>
+          <WalletCard
+            logo={MlLogo}
+            networkName={`Mintlayer${isTestnet ? ' (Testnet)' : ''}`}
+            balance={`Balance: ${Format.BTCValue(maxValueInToken)} ${transactionData.tokenName}`}
+          />
+
           {transactionMode === AppInfo.ML_TRANSACTION_MODES.NFT_SEND && (
-            <div className="nft-transaction-info">
+            <div className={styles.nftTransactionInfo}>
               <h2>Nft Id: </h2>
               <p>
                 {transactionData.tokenId

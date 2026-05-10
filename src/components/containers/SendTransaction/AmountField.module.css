@@ -1,0 +1,18 @@
+.field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  color: rgba(var(--color-black), 0.5);
+}
+
+.errorMessage {
+  color: rgb(var(--color-red));
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0;
+}
