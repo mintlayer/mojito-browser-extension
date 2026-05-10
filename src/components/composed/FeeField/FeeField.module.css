@@ -1,0 +1,63 @@
+.tiers {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.tierCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--color-black), 0.1);
+  background: rgba(var(--color-black), 0.02);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.tierCard:hover {
+  border-color: rgba(var(--color-main-green), 0.4);
+}
+
+.tierCardSelected {
+  border-color: rgb(var(--color-main-green));
+  background: rgb(var(--color-white));
+}
+
+.tierLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+}
+
+.tierLabelSelected {
+  color: rgb(var(--color-main-green));
+}
+
+.tierTime {
+  font-size: 12px;
+  color: rgba(var(--color-black), 0.45);
+}
+
+.tierFee {
+  font-size: 12px;
+  color: rgba(var(--color-black), 0.5);
+  font-weight: 500;
+}
+
+.feeDisplay {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--color-black), 0.1);
+  background: rgba(var(--color-black), 0.02);
+}
+
+.feeDisplayValue {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(var(--color-black));
+}

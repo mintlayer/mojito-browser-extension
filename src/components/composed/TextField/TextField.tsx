@@ -16,7 +16,7 @@ interface TextFieldProps {
   validity?: boolean | null
   pattern?: string
   extraStyleClasses?: string[]
-  errorMessages?: string | null
+  errorMessages?: string | string[] | null
   pristinity?: boolean
   focus?: boolean
   bigGap?: boolean

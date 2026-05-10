@@ -1,0 +1,68 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 30px 0 0;
+  overflow: visible;
+}
+
+.mainInfo {
+  overflow: visible;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  overflow: visible;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+  margin: 0;
+}
+
+.totalStaked {
+  font-size: 0.95rem;
+  color: rgb(var(--color-dark-gray));
+  margin: 0;
+}
+
+.totalStakedValue {
+  font-weight: 700;
+  color: rgb(var(--color-black));
+}
+
+.warningBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(var(--color-orange), 0.2);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.warningBadge:hover {
+  background: rgba(var(--color-orange), 0.4);
+}
+
+.poolButton {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+}
+
+.poolIcon {
+  width: 13px;
+  height: 13px;
+  margin-left: 8px;
+}
+
+.poolButton:hover .poolIcon {
+  animation: moveArrowUpRight 0.3s ease-in-out;
+}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { InputBTC } from '@BasicComponents'
 import { useParams } from 'react-router'
 
-import './CryptoFiatField.css'
+import styles from './CryptoFiatField.module.css'
 import { BTC, Format, NumbersHelper } from '@Helpers'
 import { AppInfo } from '@Constants'
 
@@ -46,7 +46,7 @@ const CryptoFiatField = ({
   if (!transactionData) return null
 
   const { tokenName } = transactionData
-  const inputExtraClasses = ['crypto-fiat-input', ...extraStyleClasses]
+  const inputExtraClasses = [styles.cryptoFiatInput, ...extraStyleClasses]
 
   const changeHandler = ({ target: { value, parsedValue } }) => {
     changeValueHandle &&
@@ -109,7 +109,7 @@ const CryptoFiatField = ({
     if (isDelegationWithdraw) {
       return value
     }
-    const result = value - totalFeeInCrypto - 0.5 // default fee in mainnet is 0.5 TODO: calculate fee
+    const result = value - totalFeeInCrypto - 0.5
     if (result < 0) {
       return 0
     }
@@ -118,10 +118,10 @@ const CryptoFiatField = ({
 
   return (
     <div
-      className={`crypto-fiat-field ${!maxValueInToken ? 'crypto-fiat-field-slim' : ''}`}
+      className={`${styles.cryptoFiatField} ${!maxValueInToken ? styles.cryptoFiatFieldSlim : ''}`}
       data-testid="crypto-fiat-field"
     >
-      <div className="fiat-field-input">
+      <div className={styles.inputWrapper}>
         <InputBTC
           id={id}
           extraStyleClasses={inputExtraClasses}
@@ -130,13 +130,14 @@ const CryptoFiatField = ({
           onChangeHandle={changeHandler}
           validity={validity}
         />
+        <span className={styles.ticker}>{tokenName}</span>
       </div>
       {maxValueInToken && (
         <div
-          className="bottom-note"
+          className={styles.bottomNote}
           data-testid="crypto-fiat-bottom-text"
         >
-          Available to spend ≈ {safeSpend(maxValueInToken)} {tokenName}
+          Available to spend &asymp; {safeSpend(maxValueInToken)} {tokenName}
         </div>
       )}
     </div>

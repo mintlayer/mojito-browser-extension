@@ -8,7 +8,7 @@ import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-r
 
 import { MintlayerContext, SettingsContext } from '@Contexts'
 
-import './CurrentStaking.css'
+import styles from './CurrentStaking.module.css'
 import { useNavigate, useParams } from 'react-router'
 
 import { ReactComponent as IconWarning } from '@Assets/images/icon-warning.svg'
@@ -66,33 +66,34 @@ const CurrentStaking = () => {
 
   return (
     <VerticalGroup grow>
-      <div className="staking-title-wrapper">
-        <div className="main-info">
-          <div className="guide-wraper">
-            <h1 className="staking-title">Your current staking</h1>
+      <div className={styles.header}>
+        <div className={styles.mainInfo}>
+          <div className={styles.titleRow}>
+            <h1 className={styles.title}>Your current staking</h1>
             <HelpTooltip
               message="Staking guide"
               link={stakingGuideLink}
             />
           </div>
 
-          <p className="total-staked">
-            Total staked: {mlDelegationsBalance} ML
+          <p className={styles.totalStaked}>
+            Total staked:{' '}
+            <span className={styles.totalStakedValue}>
+              {mlDelegationsBalance}
+            </span>{' '}
+            ML
           </p>
         </div>
         {decommissionedPools.length > 0 && (
           <div
-            className="tooltipWrapper"
             onMouseEnter={toggleTooltip}
             onMouseLeave={toggleTooltip}
           >
-            <div className="delegation-inactive">
-              <div
-                onClick={handleScrollToPool}
-                className="warning-inactive"
-              >
-                <IconWarning />
-              </div>
+            <div
+              className={styles.warningBadge}
+              onClick={handleScrollToPool}
+            >
+              <IconWarning />
             </div>
             <Tooltip
               message={tooltipMesage}
@@ -107,10 +108,10 @@ const CurrentStaking = () => {
         >
           <Button
             alternate
-            extraStyleClasses={['pool-button']}
+            extraStyleClasses={[styles.poolButton]}
           >
             Pool list
-            <IconArrowTopRight className="pool-list-icon" />
+            <IconArrowTopRight className={styles.poolIcon} />
           </Button>
         </a>
       </div>
@@ -122,7 +123,7 @@ const CurrentStaking = () => {
       <CenteredLayout>
         <Button
           onClickHandle={onDelegationCreateButtonClick}
-          extraStyleClasses={['delegation-button']}
+          extraStyleClasses={[styles.createButton]}
         >
           Create new delegation
         </Button>

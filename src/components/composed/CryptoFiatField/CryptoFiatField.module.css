@@ -1,0 +1,45 @@
+.cryptoFiatField {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.cryptoFiatFieldSlim {
+  gap: 0;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cryptoFiatInput {
+  width: 100%;
+  padding-right: 60px;
+}
+
+.ticker {
+  position: absolute;
+  right: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(var(--color-black), 0.4);
+  pointer-events: none;
+}
+
+.bottomNote {
+  font-size: 13px;
+  color: rgba(var(--color-black), 0.5);
+}
+
+.bottomNote strong {
+  font-weight: 700;
+  color: rgba(var(--color-black), 0.7);
+}
+
+.separator {
+  color: rgba(var(--color-black), 0.25);
+}

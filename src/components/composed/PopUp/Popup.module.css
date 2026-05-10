@@ -29,13 +29,12 @@
   left: 14px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  padding: 14px 16px;
+  padding: 68px 16px 14px;
   background: rgb(var(--color-white));
   border-radius: 20px;
   box-shadow: 0 20px 60px -10px rgba(var(--color-black), 0.25);
-  overflow-y: auto;
+  overflow: hidden;
   animation-name: popupAppear;
   animation-duration: 0.3s;
   animation-timing-function: ease;
@@ -46,7 +45,7 @@
     right: 40px;
     bottom: 40px;
     left: 40px;
-    padding: 28px 32px;
+    padding: 73px 32px 20px;
   }
 }
 
