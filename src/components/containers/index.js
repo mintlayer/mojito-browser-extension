@@ -1,4 +1,4 @@
-import CreateAccount from './CreateAccount/CreateAccount'
+import CreateAccount from './CreateAccount/CreateAccount.tsx'
 import RestoreAccountMnemonic from './RestoreAccount/RestoreAccountMnemonic/RestoreAccountMnemonic'
 import RestoreAccountJson from './RestoreAccount/RestoreAccountJson/RestoreAccountJson'
 

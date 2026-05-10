@@ -1,4 +1,4 @@
-import CreateAccountPage from './CreateAccount/CreateAccount'
+import CreateAccountPage from './CreateAccount/CreateAccount.tsx'
 import CreateRestorePage from './CreateRestore/CreateRestore'
 import HomePage from './Home/Home'
 import LoginPage from './Login/Login.tsx'

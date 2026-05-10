@@ -25,7 +25,7 @@ const DelegationDetailsItem = ({ title, content }) => {
   )
 }
 
-const DelegationDetails = ({ delegation }) => {
+const DelegationDetails = ({ delegation, onAddFunds, onWithdraw }) => {
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
@@ -43,11 +43,11 @@ const DelegationDetails = ({ delegation }) => {
   }explorer.mintlayer.org/delegation/${delegation?.delegation_id}`
 
   const addFundsClickHandle = () => {
-    delegation.addFundsClickHandle()
+    onAddFunds()
   }
 
   const withdrawClickHandle = () => {
-    delegation.withdrawClickHandle()
+    onWithdraw()
   }
 
   return (
