@@ -1,0 +1,88 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 35px;
+  background: rgb(var(--color-white));
+  border: 1px solid rgb(var(--color-medium-gray));
+  list-style: none;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--color-medium-gray)) 25%,
+    rgba(var(--color-medium-gray), 0.4) 50%,
+    rgb(var(--color-medium-gray)) 75%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 6px;
+}
+
+.icon {
+  width: 56px;
+  min-width: 56px;
+  height: 56px;
+  border-radius: 50%;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.poolId {
+  height: 14px;
+  width: 65%;
+}
+
+.date {
+  height: 10px;
+  width: 40%;
+}
+
+.amount {
+  text-align: right;
+  flex-shrink: 0;
+  min-width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+.amountValue {
+  height: 16px;
+  width: 50px;
+}
+
+.amountCurrency {
+  height: 10px;
+  width: 20px;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.button {
+  height: 32px;
+  width: 72px;
+  border-radius: 20px;
+}

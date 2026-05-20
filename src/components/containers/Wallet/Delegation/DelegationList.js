@@ -1,10 +1,10 @@
 import Delegation from './Delegation'
-import { SkeletonLoader } from '@BasicComponents'
+import DelegationSkeleton from './DelegationSkeleton'
 import styles from './DelegationList.module.css'
 
 const DelegationList = ({ delegationsList, delegationsLoading }) => {
   const renderSkeletonLoaders = () =>
-    Array.from({ length: 6 }, (_, i) => <SkeletonLoader key={i} />)
+    Array.from({ length: 4 }, (_, i) => <DelegationSkeleton key={i} />)
 
   const renderDelegations = () => {
     if (!delegationsList || !delegationsList.length) {
