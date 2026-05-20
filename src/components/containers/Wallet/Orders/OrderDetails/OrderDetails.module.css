@@ -5,6 +5,7 @@
   max-width: 560px;
   gap: 16px;
   padding: 8px 4px 4px;
+  flex-shrink: 0;
 }
 
 .title {

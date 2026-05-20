@@ -47,8 +47,8 @@
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 25px;
-  height: 25px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   background-color: transparent !important;
 }
@@ -56,6 +56,10 @@
 .slider-menu-close-button svg {
   width: 68%;
   height: 68%;
+}
+
+.slider-menu-close-button svg path {
+  stroke: rgb(var(--color-black));
 }
 
 .slider-menu-close-button:hover {

@@ -47,6 +47,6 @@
 }
 
 .tokenItem:hover {
-  transform: scale(1.02);
+  transform: scale(1.01);
   border: 1px solid rgba(var(--color-light-green), 0.5);
 }

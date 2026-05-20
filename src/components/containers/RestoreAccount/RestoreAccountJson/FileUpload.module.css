@@ -103,6 +103,7 @@
   height: 48px;
   border-radius: 12px;
   background: rgb(var(--color-extra-light-gray));
+  border: 1px solid rgba(var(--mojito-green), 0.3);
 }
 
 .uploadedIcon {

@@ -1,7 +1,6 @@
 import { useContext, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router'
 
-import { Navigation } from '@ComposedComponents'
+import { Navigation, UpdateButton } from '@ComposedComponents'
 
 import { ReactComponent as LogoIcon } from '@Assets/images/logo.svg'
 import { ReactComponent as CopyIcon } from '@Assets/images/icon-copy.svg'
@@ -24,8 +23,6 @@ const Sidebar = () => {
   const { accountName, addresses, isAccountUnlocked, accountID } =
     useContext(AccountContext)
   const [copied, setCopied] = useState(false)
-  const navigate = useNavigate()
-  const location = useLocation()
 
   const unlocked = isAccountUnlocked()
 
@@ -62,6 +59,7 @@ const Sidebar = () => {
         <div className={styles.logoRow}>
           <LogoIcon className={styles.logoIcon} />
           <span className={styles.logoText}>Mojito</span>
+          <UpdateButton />
         </div>
 
         {mlAddress && (
