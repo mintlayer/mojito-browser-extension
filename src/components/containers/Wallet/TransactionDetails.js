@@ -2,14 +2,13 @@ import { useEffect, useState, useContext } from 'react'
 import { format } from 'date-fns'
 
 import { Button } from '@BasicComponents'
-import { Loading } from '@ComposedComponents'
+import { Loading, CopyButton } from '@ComposedComponents'
 import { SettingsContext, MintlayerContext } from '@Contexts'
 import { ML, BTC, Format } from '@Helpers'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ReactComponent as SwapIcon } from '@Assets/images/icon-swap.svg'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 import { ReactComponent as IconSuccess } from '@Assets/images/icon-success.svg'
-import { ReactComponent as CopyIcon } from '@Assets/images/icon-copy.svg'
 
 import styles from './TransactionDetails.module.css'
 import { useParams } from 'react-router'
@@ -30,26 +29,6 @@ const getAddress = (tx) =>
   tx.direction === 'out'
     ? tx.destAddress || tx.to?.[0] || 'N/A'
     : tx.destAddress || tx.from?.[0] || 'N/A'
-
-const CopyButton = ({ text }) => {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }
-
-  return (
-    <button
-      className={styles.copyButton}
-      onClick={handleCopy}
-      type="button"
-    >
-      {copied ? <IconSuccess /> : <CopyIcon />}
-    </button>
-  )
-}
 
 const TransactionDetailsItem = ({ title, content }) => {
   return (
@@ -241,7 +220,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
             <span className={styles.detailLabel}>{addressTitle}</span>
             <div className={styles.detailValue}>
               {ML.formatAddress(transactionAddress, 16)}
-              <CopyButton text={transactionAddress} />
+              <CopyButton content={transactionAddress} />
             </div>
           </div>
         )}
@@ -258,7 +237,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
         <span className={styles.hashLabel}>Transaction hash</span>
         <div className={styles.hashBox}>
           <span className={styles.hashValue}>{transaction.txid}</span>
-          <CopyButton text={transaction.txid} />
+          <CopyButton content={transaction.txid} />
         </div>
       </div>
 

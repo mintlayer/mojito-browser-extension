@@ -215,28 +215,6 @@
   flex: 1;
 }
 
-.copyButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: rgba(var(--color-black), 0.3);
-  transition: color 0.2s;
-}
-
-.copyButton:hover {
-  color: rgb(var(--mojito-green));
-}
-
-.copyButton svg {
-  width: 18px;
-  height: 18px;
-}
-
 .detailsButton {
   width: 100%;
   padding: 10px 20px;
