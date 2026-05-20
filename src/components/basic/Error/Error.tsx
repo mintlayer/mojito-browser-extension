@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 
 import styles from './Error.module.css'
 
@@ -7,30 +7,29 @@ interface ErrorProps {
 }
 
 const Error = ({ error }: ErrorProps) => {
-  const [visible, setVisible] = useState(!!error)
   const [hiding, setHiding] = useState(false)
-  const lastError = useRef(error)
+  const [lastError, setLastError] = useState(error)
+  const [prevError, setPrevError] = useState(error)
 
-  useEffect(() => {
+  if (error !== prevError) {
+    setPrevError(error)
     if (error) {
-      lastError.current = error
+      setLastError(error)
       setHiding(false)
-      setVisible(true)
-    } else if (visible) {
+    } else {
       setHiding(true)
     }
-  }, [error])
+  }
 
   const handleAnimationEnd = () => {
     if (hiding) {
-      setVisible(false)
       setHiding(false)
     }
   }
 
-  if (!visible) return null
+  if (!error && !hiding) return null
 
-  const displayError = error || lastError.current
+  const displayError = error || lastError
 
   const className = [styles.errorMessage, hiding && styles.errorMessageHiding]
     .filter(Boolean)

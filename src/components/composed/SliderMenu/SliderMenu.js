@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import React, { useState, useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { Button } from '@BasicComponents'
@@ -8,12 +7,18 @@ import './SliderMenu.css'
 
 const SliderMenu = ({ children, isOpen, onClose }) => {
   const [isVisible, setIsVisible] = useState(false)
+  const [prevIsOpen, setPrevIsOpen] = useState(false)
   const closeButtonExtraStyles = ['slider-menu-close-button']
 
-  useEffect(() => {
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen)
     if (isOpen) {
       setIsVisible(true)
-    } else {
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen) {
       const timer = setTimeout(() => setIsVisible(false), 300)
       return () => clearTimeout(timer)
     }
