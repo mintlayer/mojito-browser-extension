@@ -30,7 +30,6 @@ import CryptoList from './Dashboard/CryptoList'
 import DeleteAccount from './DeleteAccount/DeleteAccount'
 import SettingsDelete from './Settings/SettingsDelete/SettingsDelete'
 import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet.tsx'
-import SettingsAPI from './Settings/SettingsAPI/SettingsAPI'
 import SettingsAbout from './Settings/SettingsAbout/SettingsAbout.tsx'
 import SettingsBackup from './Settings/SettingsBackup/SettingsBackup'
 import SettingsSection from './Settings/SettingsSection/SettingsSection.tsx'
@@ -74,7 +73,6 @@ const Settings = {
   SettingsAbout,
   SettingsTestnet,
   SettingsDelete,
-  SettingsAPI,
   SettingsBackup,
   SettingsSection,
 }
