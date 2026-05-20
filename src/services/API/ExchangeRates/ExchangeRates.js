@@ -1,4 +1,6 @@
-const EXCHANGE_RATES_SERVER_URL = 'http://localhost:3003'
+import { EnvVars } from '@Constants'
+
+const EXCHANGE_RATES_SERVER_URL = EnvVars.EXCHANGE_RATES_SERVER
 
 const EXCHANGE_RATES_SERVER_ENDPOINTS = {
   GET_RATE: '/getCurrentRate/:crypto/:fiat',
