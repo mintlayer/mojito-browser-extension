@@ -9,9 +9,6 @@ import { LocalStorageService } from '@Storage'
 const MintlayerContext = createContext()
 
 class InMemoryAccountProvider {
-  addresses = {}
-  navigate = null
-
   constructor(addresses, navigate) {
     this.addresses = addresses
     this.navigate = navigate
@@ -519,6 +516,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
   useEffect(() => {
     if (networkType !== currentNetworkType) {
       setOrdersPairInfo([])
+      setMlDelegationList([])
+      setMlDelegationsBalance(0)
       fetchAllData(true)
       fetchDelegations(addresses)
     }
@@ -527,7 +526,8 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
   useEffect(() => {
     setOrdersPairInfo([])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setMlDelegationList([])
+    setMlDelegationsBalance(0)
   }, [accountID])
 
   useEffect(() => {
