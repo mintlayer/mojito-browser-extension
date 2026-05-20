@@ -103,7 +103,7 @@ export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
   }
 }
 
-const checkIfAddressesUsed = async (addresses, network) => {
+const checkIfAddressesUsed = async (addresses) => {
   const data = await batchRequestMintlayer({
     ids: addresses,
     type: '/address/:address',
@@ -272,7 +272,6 @@ export const getEncodedWitness = (
   inputs,
   index,
   networkType,
-  // eslint-disable-next-line max-params
 ) => {
   const networkIndex = NETWORKS[networkType]
   return encode_witness(

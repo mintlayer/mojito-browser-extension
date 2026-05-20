@@ -77,7 +77,6 @@ const LockedBalanceList = () => {
                 updatedUtxosList.map((utxo, index) => (
                   <LockedBalanceListItem
                     key={index}
-                    index={index}
                     utxo={utxo}
                     transactions={transactions}
                   />

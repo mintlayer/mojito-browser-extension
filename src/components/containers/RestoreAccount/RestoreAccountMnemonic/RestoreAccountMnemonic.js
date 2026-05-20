@@ -89,10 +89,12 @@ const RestoreAccountMnemonic = ({
   }
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     setCustomBackAction(() => goToPrevStep)
     return () => setCustomBackAction(null)
   }, [step])
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const steps = [
     { name: 'Wallet Name', active: step === 1 },

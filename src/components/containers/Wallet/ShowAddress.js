@@ -8,7 +8,7 @@ import './ShowAddress.css'
 
 const ShowAddress = ({ address }) => {
   const [toCopyLabel, afterCopyLabel] = ['Copy Address', 'Copied!']
-  const copiedTimeoutInMs = 2 * 1_000
+  const copiedTimeoutInMs = 2000
   const [label, setLabel] = useState(toCopyLabel)
   const [disabled, setDisabled] = useState(false)
 

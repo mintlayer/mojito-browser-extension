@@ -5,8 +5,8 @@ import { LocalStorageService } from '@Storage'
 import Decimal from 'decimal.js'
 
 const AVERAGE_MIN_PER_BLOCK = 15
-const SATOSHI_BTC_CONVERSION_FACTOR = 100_000_000
-const MAX_BTC = 21_000_000
+const SATOSHI_BTC_CONVERSION_FACTOR = 100000000
+const MAX_BTC = 21000000
 const MAX_BTC_IN_SATOSHIS = MAX_BTC * SATOSHI_BTC_CONVERSION_FACTOR
 
 const blockLevels = {

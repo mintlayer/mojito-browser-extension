@@ -2,7 +2,7 @@ import {
   accountsMigration_01_add_mlwallet_private_keys,
   accountsMigration_02_add_htls_secrets_field,
 } from '../migrations/migrations'
-// eslint-disable-next-line no-restricted-globals
+
 const glob = typeof window !== 'undefined' ? window : self
 /* istanbul ignore next */
 const IDB =
@@ -43,7 +43,7 @@ const openDatabase = (DB = IDB) => {
 }
 
 const createTransaction = async (openedDb, onError) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const transaction = openedDb.transaction([ACCOUNTSSTORENAME], 'readwrite')
 
     transaction.onerror = (event) =>
@@ -87,7 +87,7 @@ const clearDatabase = async (onError, DB = IDB) => {
     const store = transaction.objectStore(ACCOUNTSSTORENAME)
 
     const request = store.clear()
-    request.onsuccess = function (event) {
+    request.onsuccess = function () {
       console.log('All records have been removed from the store.')
     }
     request.onerror = function (event) {
@@ -140,7 +140,7 @@ const deleteAccount = async (accountId, onError, DB = IDB) => {
     const store = transaction.objectStore(ACCOUNTSSTORENAME)
 
     const request = store.delete(accountId)
-    request.onsuccess = function (event) {
+    request.onsuccess = function () {
       console.log('Account has been removed from the store.')
     }
     request.onerror = function (event) {

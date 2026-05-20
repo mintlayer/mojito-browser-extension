@@ -387,7 +387,7 @@ export function getTransactionHEX(
     transactionJSONrepresentation,
     addressesPrivateKeys,
     secret = null,
-    htlc = {},
+    // htlc = {},
   },
   _network,
   blockHeight,

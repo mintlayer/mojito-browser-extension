@@ -5,12 +5,7 @@ import { Balance, PopUp, WalletHeader } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 
-import {
-  useExchangeRates,
-  useBtcWalletInfo,
-  useMlWalletInfo,
-  useMediaQuery,
-} from '@Hooks'
+import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
 import { AccountContext, MintlayerContext, BitcoinContext } from '@Contexts'
 import { BTC } from '@Helpers'
 import { PageWrapper } from '@BasicComponents'
@@ -95,8 +90,6 @@ const WalletPage = () => {
     ticker: coinType === 'Bitcoin' ? 'BTC' : 'ML',
     chain: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
   }
-
-  const isExtendedView = useMediaQuery('(min-width: 801px)')
 
   const datahook =
     walletType.chain === 'bitcoin' ? useBtcWalletInfo : useMlWalletInfo

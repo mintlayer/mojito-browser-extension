@@ -128,7 +128,7 @@ const checkApiAvailability = async () => {
   try {
     await getLastBlockHeight()
     return true
-  } catch (error) {
+  } catch {
     return false
   }
 }

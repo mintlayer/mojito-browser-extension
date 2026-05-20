@@ -155,7 +155,6 @@ const getEncodedWitnesses = (
   transaction,
   opt_utxos,
   network,
-  // eslint-disable-next-line max-params
 ) => {
   const data = utxos.flat()
   const encodedWitnesses = data.map((utxo, index) => {
@@ -741,10 +740,8 @@ const createNft = async ({
   changeAddress,
   network,
   transactionMode,
-  adjustedFee,
   chainTip,
 }) => {
-  // const fee = adjustedFee
   const fee = 600400000000
   const amountCoinFee = BigInt(fee)
   const amountToUseFinaleCoin = amountCoinFee

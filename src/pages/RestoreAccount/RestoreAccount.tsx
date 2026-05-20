@@ -55,10 +55,12 @@ const RestoreAccountPage = () => {
     navigate('/')
   }
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     setCustomBackAction(() => goToPrevStep)
     return () => setCustomBackAction(null)
   }, [])
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   return (
     <PageWrapper className={styles.restoreAccountPage}>

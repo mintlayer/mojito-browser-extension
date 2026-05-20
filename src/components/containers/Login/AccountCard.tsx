@@ -1,3 +1,4 @@
+import React from 'react'
 import { ReactComponent as ChevronIcon } from '@Assets/images/icon-chevron-down.svg'
 import { ReactComponent as IconBin } from '@Assets/images/icon-bin.svg'
 

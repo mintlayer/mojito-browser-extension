@@ -17,7 +17,7 @@ const displayDate = (utxo) => {
   }
 }
 
-const LockedBalanceListItem = ({ index, utxo }) => {
+const LockedBalanceListItem = ({ utxo }) => {
   return (
     <tr className="locked-balance-list-item">
       <td className="locked-balance-cell">{displayDate(utxo)}</td>

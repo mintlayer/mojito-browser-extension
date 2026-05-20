@@ -350,7 +350,6 @@ export const SignTransactionPage = () => {
 
       console.log('result', result)
 
-      // eslint-disable-next-line no-undef
       runtime.sendMessage(
         {
           action: 'popupResponse',
@@ -360,7 +359,6 @@ export const SignTransactionPage = () => {
           result,
         },
         () => {
-          // eslint-disable-next-line no-undef
           storage.local.remove('pendingRequest', () => {
             window.close()
           })
@@ -376,7 +374,7 @@ export const SignTransactionPage = () => {
     const requestId = state?.request?.requestId
     const method = 'signTransaction_reject'
     const result = 'null'
-    // eslint-disable-next-line no-undef
+
     runtime.sendMessage(
       {
         action: 'popupResponse',
@@ -386,7 +384,6 @@ export const SignTransactionPage = () => {
         result,
       },
       () => {
-        // eslint-disable-next-line no-undef
         storage.local.remove('pendingRequest', () => {
           window.close()
         })

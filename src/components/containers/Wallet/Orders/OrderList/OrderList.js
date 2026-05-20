@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@BasicComponents'
 import OrderItem from '../OrderItem/OrderItem'
 import OrderItemSkeleton from '../OrderItem/OrderItemSkeleton'
@@ -9,11 +9,7 @@ const SKELETON_ROWS = 6
 
 const OrderList = ({ orderList, ordersLoading }) => {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  const [showedOrders, setShowedOrders] = useState([])
-
-  useEffect(() => {
-    orderList && setShowedOrders(orderList.slice(0, visibleCount))
-  }, [visibleCount, orderList])
+  const showedOrders = orderList ? orderList.slice(0, visibleCount) : []
 
   const renderSkeletonRows = () =>
     Array.from({ length: SKELETON_ROWS }, (_, i) => (
