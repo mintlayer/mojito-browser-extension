@@ -19,7 +19,7 @@ const ActionButtons = ({ data }) => {
   const requredAddress =
     data.walletType.name === 'Mintlayer'
       ? mintlayerUnusedAddresses.receive
-      : bitcoinUnusedAddresses?.receivingAddress?.address || ''
+      : bitcoinUnusedAddresses?.receivingAddress || ''
   return (
     <div className="transactions-buttons-wrapper">
       {data.walletType.name === 'Mintlayer' && (

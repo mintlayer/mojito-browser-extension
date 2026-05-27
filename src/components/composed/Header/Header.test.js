@@ -149,15 +149,15 @@ test('Header component, navigate to Header and open menu', async () => {
   })
 
   const nextPageComponent = screen.getByTestId('next-page')
-  const buttons = screen.getAllByTestId('button')
   expect(nextPageComponent).toBeInTheDocument()
 
+  const menuButton = screen.getByTestId('header-menu-button')
   act(() => {
-    buttons[1].click()
+    menuButton.click()
   })
 
   await waitFor(async () => {
-    expect(value.setSliderMenuOpen).toHaveBeenCalled()
+    expect(value.setSliderMenuOpen).toHaveBeenCalledWith(true)
   })
 
   const backdrop = screen.getByTestId('backdrop')

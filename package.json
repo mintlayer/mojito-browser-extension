@@ -1,6 +1,6 @@
 {
   "name": "browser-extension",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "private": true,
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.2.0",

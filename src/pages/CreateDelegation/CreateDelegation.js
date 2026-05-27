@@ -59,13 +59,18 @@ const CreateDelegationPage = () => {
     const buildTransaction = async () => {
       if (transaction_conditions && transactionInformation?.to.length > 0) {
         setFeeLoading(true)
-        const unusedReceivingAddress = unusedAddresses.receive
-        const transaction = await client.buildDelegationCreate({
-          pool_id: transactionInformation.to,
-          destination: unusedReceivingAddress,
-        })
-        setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
-        setFeeLoading(false)
+        try {
+          const unusedReceivingAddress = unusedAddresses.receive
+          const transaction = await client.buildDelegationCreate({
+            pool_id: transactionInformation.to,
+            destination: unusedReceivingAddress,
+          })
+          setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
+        } catch (e) {
+          console.error('Failed to calculate delegation fee:', e)
+        } finally {
+          setFeeLoading(false)
+        }
       }
     }
     buildTransaction()

@@ -5,8 +5,6 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const Dotenv = require('dotenv-webpack')
 
-const isDevelopment = process.env.NODE_ENV !== 'production'
-
 // Path aliases from jsconfig.json
 const aliases = {
   '@BasicComponents': path.resolve(__dirname, 'src/components/basic/index.js'),
@@ -38,273 +36,277 @@ const aliases = {
   src: path.resolve(__dirname, 'src'),
 }
 
-module.exports = {
-  mode: isDevelopment ? 'development' : 'production',
+module.exports = (env, argv) => {
+  const isDevelopment = argv.mode !== 'production'
 
-  entry: {
-    main: './src/index.js',
-  },
+  return {
+    mode: isDevelopment ? 'development' : 'production',
 
-  output: {
-    path: path.resolve(__dirname, 'build'),
-    filename: isDevelopment
-      ? 'static/js/[name].js'
-      : 'static/js/[name].[contenthash:8].js',
-    chunkFilename: isDevelopment
-      ? 'static/js/[name].chunk.js'
-      : 'static/js/[name].[contenthash:8].chunk.js',
-    assetModuleFilename: 'static/media/[name].[hash:8][ext]',
-    publicPath: isDevelopment ? '/' : '',
-    clean: true,
-  },
-
-  devtool: isDevelopment ? 'cheap-module-source-map' : 'source-map',
-
-  devServer: {
-    static: {
-      directory: path.join(__dirname, 'public'),
+    entry: {
+      main: './src/index.js',
     },
-    hot: true,
-    port: process.env.PORT || 3000,
-    client: {
-      webSocketURL: 'auto://0.0.0.0:0/ws',
-    },
-    open: true,
-    historyApiFallback: {
-      disableDotRule: true,
-      rewrites: [
-        {
-          from: /\.wasm$/,
-          to: (context) => context.parsedUrl.pathname,
-        },
-      ],
-    },
-    setupMiddlewares: (middlewares, devServer) => {
-      if (devServer && devServer.app) {
-        devServer.app.use((req, res, next) => {
-          if (req.url && req.url.endsWith('.wasm')) {
-            res.setHeader('Content-Type', 'application/wasm')
-          }
-          next()
-        })
-      }
-      return middlewares
-    },
-  },
 
-  resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.mjs', '.wasm'],
-    alias: aliases,
-    fallback: {
-      stream: require.resolve('stream-browserify'),
-      vm: require.resolve('vm-browserify'),
-      process: require.resolve('process/browser.js'),
-      buffer: require.resolve('buffer'),
-      crypto: require.resolve('crypto-browserify'),
+    output: {
+      path: path.resolve(__dirname, 'build'),
+      filename: isDevelopment
+        ? 'static/js/[name].js'
+        : 'static/js/[name].[contenthash:8].js',
+      chunkFilename: isDevelopment
+        ? 'static/js/[name].chunk.js'
+        : 'static/js/[name].[contenthash:8].chunk.js',
+      assetModuleFilename: 'static/media/[name].[hash:8][ext]',
+      publicPath: '/',
+      clean: true,
     },
-  },
 
-  module: {
-    rules: [
-      // JavaScript/JSX
-      {
-        test: /\.(js|jsx|mjs|ts|tsx)$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              [
-                '@babel/preset-env',
-                { targets: { browsers: ['last 2 versions'] } },
-              ],
-              ['@babel/preset-react', { runtime: 'automatic' }],
-              '@babel/preset-typescript',
-            ],
-            cacheDirectory: true,
-          },
-        },
+    devtool: isDevelopment ? 'cheap-module-source-map' : 'source-map',
+
+    devServer: {
+      static: {
+        directory: path.join(__dirname, 'public'),
       },
-      // Fix for ESM modules requiring fully specified extensions
-      {
-        test: /\.m?js/,
-        resolve: {
-          fullySpecified: false,
-        },
+      hot: true,
+      port: process.env.PORT || 3000,
+      client: {
+        webSocketURL: 'auto://0.0.0.0:0/ws',
       },
-      // CSS
-      {
-        test: /\.module\.css$/,
-        use: [
-          isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+      open: true,
+      historyApiFallback: {
+        disableDotRule: true,
+        rewrites: [
           {
-            loader: 'css-loader',
+            from: /\.wasm$/,
+            to: (context) => context.parsedUrl.pathname,
+          },
+        ],
+      },
+      setupMiddlewares: (middlewares, devServer) => {
+        if (devServer && devServer.app) {
+          devServer.app.use((req, res, next) => {
+            if (req.url && req.url.endsWith('.wasm')) {
+              res.setHeader('Content-Type', 'application/wasm')
+            }
+            next()
+          })
+        }
+        return middlewares
+      },
+    },
+
+    resolve: {
+      extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.mjs', '.wasm'],
+      alias: aliases,
+      fallback: {
+        stream: require.resolve('stream-browserify'),
+        vm: require.resolve('vm-browserify'),
+        process: require.resolve('process/browser.js'),
+        buffer: require.resolve('buffer'),
+        crypto: require.resolve('crypto-browserify'),
+      },
+    },
+
+    module: {
+      rules: [
+        // JavaScript/JSX
+        {
+          test: /\.(js|jsx|mjs|ts|tsx)$/,
+          exclude: /node_modules/,
+          use: {
+            loader: 'babel-loader',
             options: {
-              esModule: true,
-              modules: {
-                namedExport: false,
-                exportLocalsConvention: 'asIs',
-                localIdentName: isDevelopment
-                  ? '[name]__[local]--[hash:base64:5]'
-                  : '[hash:base64:8]',
-              },
+              presets: [
+                [
+                  '@babel/preset-env',
+                  { targets: { browsers: ['last 2 versions'] } },
+                ],
+                ['@babel/preset-react', { runtime: 'automatic' }],
+                '@babel/preset-typescript',
+              ],
+              cacheDirectory: true,
             },
           },
-        ],
-      },
-      {
-        test: /\.css$/,
-        exclude: /\.module\.css$/,
-        use: [
-          isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
-          'css-loader',
-        ],
-      },
-      // SVG as React component
-      {
-        test: /\.svg$/,
-        use: [
-          {
-            loader: '@svgr/webpack',
-            options: {
-              svgo: true,
-              svgoConfig: {
-                plugins: [
-                  {
-                    name: 'preset-default',
-                    params: {
-                      overrides: {
-                        removeViewBox: false,
+        },
+        // Fix for ESM modules requiring fully specified extensions
+        {
+          test: /\.m?js/,
+          resolve: {
+            fullySpecified: false,
+          },
+        },
+        // CSS
+        {
+          test: /\.module\.css$/,
+          use: [
+            isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+            {
+              loader: 'css-loader',
+              options: {
+                esModule: true,
+                modules: {
+                  namedExport: false,
+                  exportLocalsConvention: 'asIs',
+                  localIdentName: isDevelopment
+                    ? '[name]__[local]--[hash:base64:5]'
+                    : '[hash:base64:8]',
+                },
+              },
+            },
+          ],
+        },
+        {
+          test: /\.css$/,
+          exclude: /\.module\.css$/,
+          use: [
+            isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+            'css-loader',
+          ],
+        },
+        // SVG as React component
+        {
+          test: /\.svg$/,
+          use: [
+            {
+              loader: '@svgr/webpack',
+              options: {
+                svgo: true,
+                svgoConfig: {
+                  plugins: [
+                    {
+                      name: 'preset-default',
+                      params: {
+                        overrides: {
+                          removeViewBox: false,
+                        },
                       },
                     },
-                  },
-                  {
-                    name: 'removeDimensions',
-                    active: true,
-                  },
-                ],
+                    {
+                      name: 'removeDimensions',
+                      active: true,
+                    },
+                  ],
+                },
               },
             },
-          },
-          'url-loader',
-        ],
-      },
-      // Images
-      {
-        test: /\.(png|jpg|jpeg|gif|ico|webp|bmp)$/,
-        type: 'asset/resource',
-      },
-      // Fonts
-      {
-        test: /\.(woff|woff2|eot|ttf|otf)$/,
-        type: 'asset/resource',
-        generator: {
-          filename: 'static/media/[name].[hash:8][ext]',
+            'url-loader',
+          ],
         },
-      },
-      // WebAssembly
-      {
-        test: /\.wasm$/,
-        type: 'asset/resource',
-        generator: {
-          filename: '[name].[contenthash:8][ext]',
-        },
-      },
-    ],
-  },
-
-  plugins: [
-    // HTML template
-    new HtmlWebpackPlugin({
-      template: './public/index.html',
-      filename: 'index.html',
-      inject: true,
-      minify: isDevelopment
-        ? false
-        : {
-            removeComments: true,
-            collapseWhitespace: true,
-            removeRedundantAttributes: true,
-            useShortDoctype: true,
-            removeEmptyAttributes: true,
-            removeStyleLinkTypeAttributes: true,
-            keepClosingSlash: true,
-            minifyJS: true,
-            minifyCSS: true,
-            minifyURLs: true,
-          },
-    }),
-
-    // CSS extraction for production
-    new MiniCssExtractPlugin({
-      filename: 'static/css/[name].[contenthash:8].css',
-      chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
-    }),
-
-    // Copy static files
-    new CopyWebpackPlugin({
-      patterns: [
+        // Images
         {
-          from: 'public',
-          to: '',
-          globOptions: {
-            ignore: ['**/index.html'],
+          test: /\.(png|jpg|jpeg|gif|ico|webp|bmp)$/,
+          type: 'asset/resource',
+        },
+        // Fonts
+        {
+          test: /\.(woff|woff2|eot|ttf|otf)$/,
+          type: 'asset/resource',
+          generator: {
+            filename: 'static/media/[name].[hash:8][ext]',
+          },
+        },
+        // WebAssembly
+        {
+          test: /\.wasm$/,
+          type: 'asset/resource',
+          generator: {
+            filename: '[name].[contenthash:8][ext]',
           },
         },
       ],
-    }),
+    },
 
-    // Environment variables
-    new Dotenv({
-      path: `./.env${isDevelopment ? '' : '.production'}`,
-      systemvars: true,
-      silent: true,
-      ignoreStub: true,
-    }),
+    plugins: [
+      // HTML template
+      new HtmlWebpackPlugin({
+        template: './public/index.html',
+        filename: 'index.html',
+        inject: true,
+        minify: isDevelopment
+          ? false
+          : {
+              removeComments: true,
+              collapseWhitespace: true,
+              removeRedundantAttributes: true,
+              useShortDoctype: true,
+              removeEmptyAttributes: true,
+              removeStyleLinkTypeAttributes: true,
+              keepClosingSlash: true,
+              minifyJS: true,
+              minifyCSS: true,
+              minifyURLs: true,
+            },
+      }),
 
-    // Map node: scheme imports (e.g. node:crypto) to browser polyfills
-    new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
-      resource.request = resource.request.replace(/^node:/, '')
-    }),
+      // CSS extraction for production
+      new MiniCssExtractPlugin({
+        filename: 'static/css/[name].[contenthash:8].css',
+        chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
+      }),
 
-    // Provide polyfills
-    new webpack.ProvidePlugin({
-      process: 'process/browser.js',
-      Buffer: ['buffer', 'Buffer'],
-    }),
-  ],
+      // Copy static files
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: 'public',
+            to: '',
+            globOptions: {
+              ignore: ['**/index.html'],
+            },
+          },
+        ],
+      }),
 
-  // WebAssembly experiments
-  experiments: {
-    asyncWebAssembly: true,
-    syncWebAssembly: true,
-  },
+      // Environment variables
+      new Dotenv({
+        path: `./.env${isDevelopment ? '' : '.production'}`,
+        systemvars: true,
+        silent: true,
+        ignoreStub: true,
+      }),
 
-  optimization: {
-    splitChunks: {
-      chunks: 'all',
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all',
+      // Map node: scheme imports (e.g. node:crypto) to browser polyfills
+      new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+        resource.request = resource.request.replace(/^node:/, '')
+      }),
+
+      // Provide polyfills
+      new webpack.ProvidePlugin({
+        process: 'process/browser.js',
+        Buffer: ['buffer', 'Buffer'],
+      }),
+    ],
+
+    // WebAssembly experiments
+    experiments: {
+      asyncWebAssembly: true,
+      syncWebAssembly: true,
+    },
+
+    optimization: {
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
         },
       },
     },
-  },
 
-  // Suppress performance hints in development
-  performance: {
-    hints: isDevelopment ? false : 'warning',
-    maxAssetSize: 512000,
-    maxEntrypointSize: 512000,
-  },
+    // Suppress performance hints in development
+    performance: {
+      hints: isDevelopment ? false : 'warning',
+      maxAssetSize: 512000,
+      maxEntrypointSize: 512000,
+    },
 
-  stats: {
-    colors: true,
-    modules: false,
-    children: false,
-    chunks: false,
-    chunkModules: false,
-  },
+    stats: {
+      colors: true,
+      modules: false,
+      children: false,
+      chunks: false,
+      chunkModules: false,
+    },
+  }
 }

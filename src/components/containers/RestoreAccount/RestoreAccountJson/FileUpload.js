@@ -159,7 +159,7 @@ const FileUpload = ({
         <input
           type="file"
           ref={fileInputRef}
-          style={{ display: 'none' }}
+          className={styles.hidden}
           accept=".json"
           onChange={handleFileChange}
           data-testid="file-input"

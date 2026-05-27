@@ -56,8 +56,12 @@ const Header = () => {
     return customBackAction ? customBackAction() : navigate(-1)
   }
 
-  const toggleSliderMenu = () => {
-    setSliderMenuOpen(!sliderMenuOpen)
+  const openSliderMenu = () => {
+    setSliderMenuOpen(true)
+  }
+
+  const closeSliderMenu = () => {
+    setSliderMenuOpen(false)
   }
 
   return (
@@ -65,7 +69,7 @@ const Header = () => {
       className={styles.header}
       data-testid="header-container"
     >
-      <div style={{ visibility: !noBackButton ? 'visible' : 'hidden' }}>
+      <div className={noBackButton ? styles.invisible : ''}>
         <Button
           extraStyleClasses={[styles.backButton]}
           onClickHandle={goBack}
@@ -77,7 +81,8 @@ const Header = () => {
       <div className={styles.expandWrapped}>
         <Button
           extraStyleClasses={[styles.menuButton]}
-          onClickHandle={toggleSliderMenu}
+          onClickHandle={openSliderMenu}
+          dataTestId="header-menu-button"
         >
           <MenuImg />
         </Button>
@@ -102,7 +107,7 @@ const Header = () => {
 
       <SliderMenu
         isOpen={sliderMenuOpen}
-        onClose={toggleSliderMenu}
+        onClose={closeSliderMenu}
       >
         <Navigation />
       </SliderMenu>

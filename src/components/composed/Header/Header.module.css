@@ -111,3 +111,7 @@
 .settingsButton svg path {
   stroke: rgb(var(--color-black));
 }
+
+.invisible {
+  visibility: hidden;
+}

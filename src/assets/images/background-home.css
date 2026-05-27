@@ -1,0 +1,75 @@
+@keyframes drift1 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(12px, -8px);
+  }
+}
+@keyframes drift2 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-10px, 6px);
+  }
+}
+@keyframes drift3 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(6px, 10px);
+  }
+}
+@keyframes orbit1 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@keyframes orbit2 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+.c1 {
+  animation: drift1 25s ease-in-out infinite;
+}
+.c1-o1 {
+  transform-origin: 460px -60px;
+  animation: orbit1 40s linear infinite;
+}
+.c1-o2 {
+  transform-origin: 460px -60px;
+  animation: orbit2 50s linear infinite;
+}
+
+.c3 {
+  animation: drift2 28s ease-in-out infinite 4s;
+}
+.c3-o1 {
+  transform-origin: -60px 320px;
+  animation: orbit2 35s linear infinite;
+}
+.c3-o2 {
+  transform-origin: -60px 320px;
+  animation: orbit1 45s linear infinite;
+}
+
+.c5 {
+  animation: drift3 22s ease-in-out infinite 3s;
+}
+.c5-o1 {
+  transform-origin: 380px 580px;
+  animation: orbit1 30s linear infinite;
+}

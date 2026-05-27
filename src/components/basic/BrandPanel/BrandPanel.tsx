@@ -1,5 +1,6 @@
 import { ReactComponent as LogoIcon } from '@Assets/images/logo.svg'
 import { ReactComponent as BackgroundHome } from '@Assets/images/background-home.svg'
+import '@Assets/images/background-home.css'
 
 import styles from './BrandPanel.module.css'
 

@@ -65,12 +65,17 @@ const DelegationStakePage = () => {
         transactionInformation?.amount > 0
       ) {
         setFeeLoading(true)
-        const transaction = await client.buildDelegationStake({
-          amount: transactionInformation.amount,
-          delegation_id: transactionInformation.to,
-        })
-        setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
-        setFeeLoading(false)
+        try {
+          const transaction = await client.buildDelegationStake({
+            amount: transactionInformation.amount,
+            delegation_id: transactionInformation.to,
+          })
+          setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
+        } catch (e) {
+          console.error('Failed to calculate staking fee:', e)
+        } finally {
+          setFeeLoading(false)
+        }
       }
     }
     buildTransaction()

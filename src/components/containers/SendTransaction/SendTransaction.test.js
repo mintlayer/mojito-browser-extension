@@ -1,4 +1,5 @@
 import { render, screen, act, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 
 import SendBtcTransaction from './SendBtcTransaction'
 
@@ -19,21 +20,22 @@ const TRANSACTIONDATASAMPLE = {
 test('Send Transaction', async () => {
   await act(async () => {
     render(
-      <AccountProvider>
-        <SettingsProvider>
-          <TransactionProvider>
-            <MintlayerContext.Provider value={{}}>
-              <SendBtcTransaction
-                transactionData={TRANSACTIONDATASAMPLE}
-                setFormValidity={() => {}}
-                calculateTotalFee={() => {}}
-                walletType={{ name: 'Mintlayer' }}
-              />
-            </MintlayerContext.Provider>
-            ,
-          </TransactionProvider>
-        </SettingsProvider>
-      </AccountProvider>,
+      <MemoryRouter>
+        <AccountProvider>
+          <SettingsProvider>
+            <TransactionProvider>
+              <MintlayerContext.Provider value={{}}>
+                <SendBtcTransaction
+                  transactionData={TRANSACTIONDATASAMPLE}
+                  setFormValidity={() => {}}
+                  calculateTotalFee={() => {}}
+                  walletType={{ name: 'Mintlayer' }}
+                />
+              </MintlayerContext.Provider>
+            </TransactionProvider>
+          </SettingsProvider>
+        </AccountProvider>
+      </MemoryRouter>,
     )
   })
 

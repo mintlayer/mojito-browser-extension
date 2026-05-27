@@ -1,19 +1,14 @@
 import React, { useEffect, useState, useContext } from 'react'
+import { useNavigate } from 'react-router'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 
 import { Button } from '@BasicComponents'
-import { Loading, PopUp, TextField, WalletCard } from '@ComposedComponents'
-import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
+import { Loading, WalletCard } from '@ComposedComponents'
+import { CenteredLayout } from '@LayoutComponents'
 import { BTC, Format, NumbersHelper } from '@Helpers'
-import {
-  AccountContext,
-  BitcoinContext,
-  SettingsContext,
-  TransactionContext,
-} from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
-import SendTransactionConfirmation from './SendTransactionConfirmation'
 import AddressField from './AddressField'
 import AmountField from './AmountField'
 import FeesField from './FeesField'
@@ -24,7 +19,6 @@ import { Error } from '@BasicComponents'
 const SendBtcTransaction = ({
   totalFeeFiat,
   totalFeeCrypto,
-  setTotalFeeCrypto,
   transactionData,
   exchangeRate = 0,
   maxValueInToken,
@@ -32,20 +26,14 @@ const SendBtcTransaction = ({
   calculateTotalFee,
   setFormValidity,
   isFormValid,
-  confirmTransaction,
-  goBackToWallet,
   preEnterAddress,
-  setAdjustedFee,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
   currentDelegationInfo,
   walletType,
 }) => {
   const { balanceLoading } = useContext(AccountContext)
-  const { feeLoading } = useContext(TransactionContext)
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
-  const cryptoName = transactionData.tokenName
-  const fiatName = transactionData.fiatName
   const [amountInCrypto, setAmountInCrypto] = useState('0.00')
   const [amountInFiat, setAmountInFiat] = useState('0.00')
   const [originalAmount, setOriginalAmount] = useState('0,00')
@@ -54,117 +42,30 @@ const SendBtcTransaction = ({
   const [addressValidity, setAddressValidity] = useState(false)
   const [amountValidity, setAmountValidity] = useState(false)
   const [feeValidity, setFeeValidity] = useState(false)
-  const [passValidity, setPassValidity] = useState(false)
-  const [passPristinity, setPassPristinity] = useState(true)
   const [passErrorMessage, setPassErrorMessage] = useState('')
   const [txErrorMessage, setTxErrorMessage] = useState('')
-  const [sendingTransaction, setSendingTransaction] = useState(false)
-  const [transactionTxid, setTransactionTxid] = useState(false)
-  const [allowClosing, setAllowClosing] = useState(true)
-  const [askPassword, setAskPassword] = useState(false)
-  const [pass, setPass] = useState(null)
-  const NC = useContext(BitcoinContext)
-  const loadingExtraClasses = ['loading-big']
-
-  const [openSendFundConfirmation, setOpenSendFundConfirmation] =
-    useState(false)
-
-  const setPopupState = (state) => {
-    if (transactionTxid) return
-    if (sendingTransaction) return
-    if (!state) setAskPassword(false)
-    setPassPristinity(true)
-    setPassValidity(false)
-    setPass('')
-    setPassErrorMessage('')
-    setOpenSendFundConfirmation(state)
-  }
+  const navigate = useNavigate()
 
   const openConfirmation = async () => {
     if (!isFormValid) return
-    setPopupState(true)
     setTxErrorMessage('')
+
+    const amount = NumbersHelper.floatStringToNumber(amountInCrypto)
     onSendTransaction &&
-      onSendTransaction({
-        to: addressTo,
-        amount: NumbersHelper.floatStringToNumber(amountInCrypto),
+      (await onSendTransaction({ to: addressTo, amount, fee }))
+
+    navigate('confirm', {
+      state: {
+        address: addressTo,
+        amountInCrypto,
+        amountInFiat,
         fee,
-      })
-  }
-
-  const sendTransaction = async (ev) => {
-    ev.preventDefault()
-    if (!pass) {
-      setPassPristinity(false)
-      setPassValidity(false)
-      setPassErrorMessage('Password must be set.')
-      return
-    }
-    setSendingTransaction(true)
-    setAllowClosing(false)
-    try {
-      const txid = await confirmTransaction(pass)
-      setTransactionTxid(JSON.parse(txid).txid)
-      setPassValidity(true)
-      setPassErrorMessage('')
-      setTxErrorMessage('')
-      setAskPassword(false)
-      if (NC && NC.fetchAllData) {
-        await NC.fetchAllData(true)
-      }
-    } catch (e) {
-      if (e.address === '') {
-        // password is not correct
-        setPassErrorMessage('Incorrect password')
-        setPassPristinity(false)
-        setPassValidity(false)
-        setPass('')
-        setAllowClosing(true)
-      } else if (typeof e === 'string' && e.includes('Invalid amount')) {
-        // need to adjust fee
-        setAskPassword(false)
-        setPassPristinity(false)
-        setPassValidity(false)
-        setPass('')
-        setTxErrorMessage('Balance is not enough to cover the transaction')
-        console.error(e)
-        setAllowClosing(true)
-        setPopupState(false)
-      } else if (e.message.includes('minimum fee')) {
-        // need to adjust fee
-        setAskPassword(false)
-        setPassPristinity(false)
-        setPassValidity(false)
-        setPass('')
-        setFee(e.message.split('minimum fee ')[1]) // Override fee with minimum fee
-        setTotalFeeCrypto(e.message.split('minimum fee ')[1])
-        setAdjustedFee(e.message.split('minimum fee ')[1])
-        setTxErrorMessage('Transaction fee adjusted')
-        console.error(e)
-        setAllowClosing(true)
-        setPopupState(true)
-      } else {
-        // handle other errors
-        setAskPassword(false)
-        setPassPristinity(false)
-        setPassValidity(false)
-        setPass('')
-        setTxErrorMessage(e.message)
-        console.error(e)
-        setAllowClosing(true)
-        setPopupState(false)
-      }
-    } finally {
-      setSendingTransaction(false)
-    }
-  }
-
-  const handleConfirm = async () => {
-    setAskPassword(true)
-  }
-
-  const handleCancel = () => {
-    setPopupState(false)
+        totalFeeFiat,
+        totalFeeCrypto,
+        walletType,
+        transactionAmount: amount,
+      },
+    })
   }
 
   const feeChanged = (value) => setFee(value)
@@ -198,10 +99,6 @@ const SendBtcTransaction = ({
 
   const addressChanged = (e) => {
     setAddressTo(e.target.value)
-  }
-
-  const changePassHandle = (value) => {
-    setPass(value)
   }
 
   useEffect(() => {
@@ -323,71 +220,6 @@ const SendBtcTransaction = ({
             </Button>
           </CenteredLayout>
         </>
-      )}
-      {/* TODO: remove popup */}
-      {openSendFundConfirmation && (
-        <PopUp
-          setOpen={setPopupState}
-          allowClosing={allowClosing}
-        >
-          {!transactionTxid ? (
-            sendingTransaction ? (
-              <VerticalGroup bigGap>
-                <h2 className={styles.loadingText}>
-                  Your transaction broadcasting to network.
-                </h2>
-                <CenteredLayout>
-                  <Loading extraStyleClasses={loadingExtraClasses} />
-                </CenteredLayout>
-              </VerticalGroup>
-            ) : !askPassword && !feeLoading ? (
-              <SendTransactionConfirmation
-                address={addressTo}
-                amountInFiat={amountInFiat}
-                amountInCrypto={amountInCrypto}
-                cryptoName={cryptoName}
-                fiatName={fiatName}
-                totalFeeFiat={totalFeeFiat}
-                totalFeeCrypto={totalFeeCrypto}
-                txErrorMessage={txErrorMessage} // TODO move update on confirmation stage
-                fee={fee}
-                onConfirm={handleConfirm}
-                onCancel={handleCancel}
-                walletType={walletType}
-              ></SendTransactionConfirmation>
-            ) : feeLoading ? (
-              <div className="loading-center">
-                <Loading />
-              </div>
-            ) : (
-              <form onSubmit={sendTransaction}>
-                <VerticalGroup bigGap>
-                  <TextField
-                    label="Enter your password"
-                    placeHolder="Password"
-                    password
-                    validity={passValidity}
-                    pristinity={passPristinity}
-                    errorMessages={passErrorMessage}
-                    onChangeHandle={changePassHandle}
-                    alternate
-                  />
-                  <CenteredLayout>
-                    <Button buttonType="submit">Send Transaction</Button>
-                  </CenteredLayout>
-                </VerticalGroup>
-              </form>
-            )
-          ) : (
-            <VerticalGroup bigGap>
-              <h2>Your transaction was sent.</h2>
-              <h3 className={styles.resultTitle}>Txid: {transactionTxid}</h3>
-              <CenteredLayout>
-                <Button onClickHandle={goBackToWallet}>Back to Wallet</Button>
-              </CenteredLayout>
-            </VerticalGroup>
-          )}
-        </PopUp>
       )}
     </div>
   )

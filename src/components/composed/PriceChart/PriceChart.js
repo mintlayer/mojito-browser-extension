@@ -8,6 +8,7 @@ import './PriceChart.css'
 const PriceChart = ({ data, item }) => {
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
+  const isToken = item.name !== 'Mintlayer' && item.name !== 'Bitcoin'
   const color = AppInfo.COLOR_LIST[item.symbol.toLowerCase()]
 
   return (
@@ -22,15 +23,19 @@ const PriceChart = ({ data, item }) => {
           </>
         )}
       </div>
-      {(!isTestnet || !data || !data.length) && (
-        <LineChart
-          points={data}
-          height="40px"
-          width="100%"
-          lineColor={color}
-          lineWidth="4px"
-        />
-      )}
+      {!isTestnet &&
+        !isToken &&
+        (data && data.length ? (
+          <LineChart
+            points={data}
+            height="40px"
+            width="100%"
+            lineColor={color}
+            lineWidth="4px"
+          />
+        ) : (
+          <div className="chart-placeholder" />
+        ))}
     </div>
   )
 }

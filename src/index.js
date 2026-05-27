@@ -44,6 +44,7 @@ import {
   SignExternalTransactionPage,
   OrderSwapPage,
   SignBitcoinTransactionPage,
+  ConfirmBtcTransactionPage,
   AddressPage,
 } from '@Pages'
 
@@ -357,6 +358,10 @@ const App = () => {
             <Route
               path="/wallet/:coinType/send-btc-transaction"
               element={<SendBtcTransactionPage />}
+            />
+            <Route
+              path="/wallet/:coinType/send-btc-transaction/confirm"
+              element={<ConfirmBtcTransactionPage />}
             />
             <Route
               path="/wallet/:coinType/send-ml-transaction"

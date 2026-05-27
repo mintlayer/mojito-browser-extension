@@ -28,10 +28,7 @@ const AddressPage = () => {
     ? btcFormatedAddresses?.length || 0
     : mlAddressData?.length || 0
 
-  const bitcoinAddress =
-    bitcoinUnusedAddresses?.receivingAddress?.address ||
-    bitcoinUnusedAddresses?.receivingAddress ||
-    ''
+  const bitcoinAddress = bitcoinUnusedAddresses?.receivingAddress || ''
 
   const requiredAddress =
     coinType === 'Mintlayer'

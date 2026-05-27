@@ -1,4 +1,4 @@
-.backdrop-slider-menu {
+.backdrop {
   position: absolute;
   top: 0;
   left: 0;
@@ -12,13 +12,13 @@
   cursor: default;
 }
 
-.slider-menu {
+.sliderMenu {
   position: absolute;
   top: 0;
   right: 0;
   height: 100%;
   width: 300px;
-  padding: 50px 30px 40px;
+  padding: 65px 30px 40px;
   background: rgb(var(--color-white));
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   transform: translateX(100%);
@@ -26,46 +26,46 @@
   z-index: 99999;
 }
 
-.slider-menu.open {
+.open {
   transform: translateX(0);
   transition: transform 0.3s ease-out;
 }
 
-.slider-menu.close {
+.close {
   transform: translateX(100%);
   transition: transform 0.3s ease-in;
 }
 
-.slider-menu-content {
+.content {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
 }
 
-.slider-menu-close-button {
+.closeButton {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 25px;
+  right: 30px;
   width: 22px;
   height: 22px;
   padding: 0;
   background-color: transparent !important;
 }
 
-.slider-menu-close-button svg {
+.closeButton svg {
   width: 68%;
   height: 68%;
 }
 
-.slider-menu-close-button svg path {
+.closeButton svg path {
   stroke: rgb(var(--color-black));
 }
 
-.slider-menu-close-button:hover {
+.closeButton:hover {
   background-color: transparent;
 }
 
-.slider-menu-close-button:hover svg path {
+.closeButton:hover svg path {
   stroke: rgb(var(--color-black));
 }

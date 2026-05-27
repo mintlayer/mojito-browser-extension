@@ -1,40 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" style="position: absolute; inset: 0px; width: 100%; height: 100%;">
-  <style>
-    @keyframes drift1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(12px, -8px); } }
-    @keyframes drift2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-10px, 6px); } }
-    @keyframes drift3 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(6px, 10px); } }
-    @keyframes orbit1 { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @keyframes orbit2 { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
-  </style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
 
   <!-- Top-right ring group -->
-  <g class="c1" style="animation: drift1 25s ease-in-out infinite;">
+  <g class="c1">
     <circle cx="460" cy="-60" r="260" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
     <circle cx="460" cy="-60" r="200" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
-    <g style="transform-origin: 460px -60px; animation: orbit1 40s linear infinite;">
+    <g class="c1-o1">
       <circle cx="720" cy="-60" r="6" fill="rgba(255,255,255,0.45)"/>
     </g>
-    <g style="transform-origin: 460px -60px; animation: orbit2 50s linear infinite;">
+    <g class="c1-o2">
       <circle cx="460" cy="140" r="4" fill="rgba(255,255,255,0.35)"/>
     </g>
   </g>
 
   <!-- Bottom-left blob group -->
-  <g class="c3" style="animation: drift2 28s ease-in-out infinite 4s;">
+  <g class="c3">
     <circle cx="-60" cy="320" r="200" fill="rgba(255,255,255,0.12)"/>
     <circle cx="-60" cy="320" r="140" fill="rgba(255,255,255,0.10)"/>
-    <g style="transform-origin: -60px 320px; animation: orbit2 35s linear infinite;">
+    <g class="c3-o1">
       <circle cx="140" cy="320" r="8" fill="rgba(255,255,255,0.30)"/>
     </g>
-    <g style="transform-origin: -60px 320px; animation: orbit1 45s linear infinite;">
+    <g class="c3-o2">
       <circle cx="-60" cy="180" r="5" fill="rgba(255,255,255,0.40)"/>
     </g>
   </g>
 
   <!-- Bottom-right ring group -->
-  <g class="c5" style="animation: drift3 22s ease-in-out infinite 3s;">
+  <g class="c5">
     <circle cx="380" cy="580" r="180" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="2"/>
-    <g style="transform-origin: 380px 580px; animation: orbit1 30s linear infinite;">
+    <g class="c5-o1">
       <circle cx="380" cy="400" r="4" fill="rgba(255,255,255,0.35)"/>
     </g>
   </g>

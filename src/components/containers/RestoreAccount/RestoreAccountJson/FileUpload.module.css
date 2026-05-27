@@ -111,3 +111,7 @@
   height: 24px;
   color: rgb(var(--mojito-green));
 }
+
+.hidden {
+  display: none;
+}
