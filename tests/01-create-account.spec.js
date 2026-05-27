@@ -6,12 +6,14 @@ test('Create account', async ({ page }) => {
   test.setTimeout(190000)
   await page.goto('http://127.0.0.1:8000')
 
-  await expect(page.locator('h1')).toHaveText('Mojito')
-  await expect(page.locator('h2')).toHaveText(
-    'Your Mintlayer, right in your browser.',
+  const createRestore = page.getByTestId('create-restore')
+  await expect(createRestore).toBeVisible()
+  await expect(createRestore.locator('h1')).toHaveText('Mojito')
+  await expect(createRestore.locator('h2')).toHaveText(
+    'A fresh way to hold Mintlayer assets',
   )
 
-  await page.getByRole('button', { name: 'Create' }).click()
+  await page.getByRole('button', { name: 'Create a new wallet' }).click()
 
   await expect(page.locator('label')).toHaveText(
     'Create a name for your wallet',
@@ -64,10 +66,8 @@ test('Create account', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Create Wallet' }).click()
 
-  await page.waitForSelector(`:text("${WALLET_NAME}")`)
-  await expect(page.locator(`:text("${WALLET_NAME}")`)).toBeVisible()
+  await expect(page.getByText(WALLET_NAME).first()).toBeVisible()
 
-  await page.waitForSelector(':text("Mintlayer (ML)")')
-  await expect(page.locator(':text("Bitcoin (BTC)")')).toBeVisible()
-  await expect(page.locator(':text("Mintlayer (ML)")')).toBeVisible()
+  await expect(page.getByText('Bitcoin (BTC)')).toBeVisible({ timeout: 30000 })
+  await expect(page.getByText('Mintlayer (ML)')).toBeVisible()
 })

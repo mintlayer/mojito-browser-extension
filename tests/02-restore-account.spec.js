@@ -8,12 +8,12 @@ const restoreAccountTest = async ({ page }) => {
 
   await expect(page.locator('h1')).toHaveText('Mojito')
   await expect(page.locator('h2')).toHaveText(
-    'Your Mintlayer, right in your browser.',
+    'A fresh way to hold Mintlayer assets',
   )
 
-  await page.getByRole('button', { name: 'Restore' }).click()
+  await page.getByText('Import existing wallet').click()
 
-  await page.getByRole('button', { name: 'Seed Phrase' }).click()
+  await page.getByText('Seed Phrase').click()
 
   await expect(page.locator('label')).toHaveText(
     'Create a name for your wallet',
@@ -50,12 +50,10 @@ const restoreAccountTest = async ({ page }) => {
 
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  await page.waitForSelector(`:text("${WALLET_NAME}")`)
-  await expect(page.locator(`:text("${WALLET_NAME}")`)).toBeVisible()
+  await expect(page.getByText(WALLET_NAME).first()).toBeVisible()
 
-  await page.waitForSelector(':text("Mintlayer (ML)")')
-  await expect(page.locator(':text("Bitcoin (BTC)")')).toBeVisible()
-  await expect(page.locator(':text("Mintlayer (ML)")')).toBeVisible()
+  await expect(page.getByText('Bitcoin (BTC)')).toBeVisible({ timeout: 30000 })
+  await expect(page.getByText('Mintlayer (ML)')).toBeVisible()
 }
 
 test('Restore account', restoreAccountTest)
