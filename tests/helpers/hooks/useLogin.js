@@ -1,17 +1,17 @@
-import { expect, test } from '@playwright/test'
+import { expect } from '@playwright/test'
 import { senderData } from '../../data/index.js'
 
 export const useLogin = async (page) => {
-  await expect(page.locator(':text("Available wallet")')).toBeVisible()
+  await expect(page.getByText('Choose an account')).toBeVisible()
 
-  const account = page.getByText('SenderWallet', { selector: 'div' })
-  await account.click()
+  await page.getByText(senderData.WALLET_NAME).click()
 
-  await expect(page.locator(`:text("Password for")`)).toBeVisible()
-  await expect(page.locator(`:text("${senderData.WALLET_NAME}")`)).toBeVisible()
+  await expect(page.getByText('Welcome back')).toBeVisible()
 
   await page.fill('input[placeholder="Password"]', senderData.WALLET_PASSWORD)
-  await page.getByRole('button', { name: 'Log In' }).click()
+  await page.getByTestId('login-password-submit').click()
 
-  await page.waitForSelector(':text("Mintlayer")')
+  await expect(page.getByText(/Mintlayer/).first()).toBeVisible({
+    timeout: 30000,
+  })
 }
