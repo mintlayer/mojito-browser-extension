@@ -16,57 +16,6 @@ beforeEach(async ({ page: newPage }) => {
 const formatedPoolId = formatAddress(senderData.POOL_ID)
 
 test('Create ML delegation', async () => {
-  const senderAddress = await page.evaluate(() => {
-    const account = JSON.parse(localStorage.getItem('unlockedAccount'))
-    return (
-      account?.mlReceivingAddresses?.[0] ||
-      'tmt1q9zalupfrs8h8p8uy3cu2splf3mggzm28g5tvzrf'
-    )
-  })
-
-  // Mock SDK's UTXO fetch (api.mintini.app responds but SDK crashes with 1 UTXO
-  // when amount=0n — selectUTXOs returns empty, line 1493 accesses inputs[0].input)
-  await page.route('https://api.mintini.app/**', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        utxos: [
-          {
-            outpoint: {
-              source_id:
-                'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
-              index: 0,
-            },
-            utxo: {
-              type: 'Transfer',
-              destination: senderAddress,
-              value: {
-                type: 'Coin',
-                amount: { atoms: '10000000000000' },
-              },
-            },
-          },
-          {
-            outpoint: {
-              source_id:
-                'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b200',
-              index: 0,
-            },
-            utxo: {
-              type: 'Transfer',
-              destination: senderAddress,
-              value: {
-                type: 'Coin',
-                amount: { atoms: '5000000000000' },
-              },
-            },
-          },
-        ],
-      }),
-    })
-  })
-
   // Mock transaction broadcast
   await page.route('**/transaction', async (route) => {
     if (route.request().method() === 'POST') {
