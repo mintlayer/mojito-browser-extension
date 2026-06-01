@@ -57,7 +57,7 @@
   margin: 8px 0px 10px;
 
   @media screen and (min-width: 801px) {
-    font-size: 32px;
+    font-size: 30px;
     margin: 0 0 12px 0;
   }
 }
