@@ -10,6 +10,7 @@ const FeesField = ({
   errorMessage,
   setFeeValidity,
   walletType,
+  loading,
 }) => {
   const [localMessage, setLocalMessage] = useState(undefined)
 
@@ -32,6 +33,7 @@ const FeesField = ({
           value={value}
           setErrorMessage={setLocalMessage}
           setFeeValidity={setFeeValidity}
+          loading={loading}
         />
       )}
 

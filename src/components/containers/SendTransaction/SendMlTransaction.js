@@ -18,6 +18,7 @@ import { Error } from '@BasicComponents'
 const SendMlTransaction = ({
   totalFeeCrypto,
   feeLoading,
+  feeError,
   transactionData,
   exchangeRate = 0,
   maxValueInToken,
@@ -211,7 +212,7 @@ const SendMlTransaction = ({
                 exchangeRate={exchangeRate}
                 maxValueInToken={maxValueInToken}
                 setAmountValidity={setAmountValidity}
-                errorMessage={passErrorMessage}
+                errorMessage={feeError || passErrorMessage}
                 totalFeeInCrypto={totalFeeCrypto}
                 transactionMode={transactionMode}
               />
@@ -221,6 +222,7 @@ const SendMlTransaction = ({
             value={feeLoading ? 'calculating fee...' : totalFeeCrypto}
             walletType={walletType}
             setFeeValidity={true}
+            loading={feeLoading}
           />
 
           {txErrorMessage ? (

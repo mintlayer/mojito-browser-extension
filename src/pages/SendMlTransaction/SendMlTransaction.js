@@ -32,6 +32,7 @@ const SendMlTransactionPage = () => {
   const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [feeLoading, setFeeLoading] = useState(false)
+  const [feeError, setFeeError] = useState('')
   const navigate = useNavigate()
 
   const { balance, tokenBalances } = datahook(currentMlAddresses, coinType)
@@ -72,6 +73,7 @@ const SendMlTransactionPage = () => {
 
     let cancelled = false
     setFeeLoading(true)
+    setFeeError('')
 
     const timer = setTimeout(async () => {
       try {
@@ -86,6 +88,10 @@ const SendMlTransactionPage = () => {
         if (cancelled) return
         console.error('Fee calculation failed:', error)
         setTotalFeeCrypto(0)
+        const message = error.message?.includes('Not enough coin UTXOs')
+          ? 'Insufficient balance'
+          : error.message || 'Fee calculation failed'
+        setFeeError(message)
       } finally {
         if (!cancelled) setFeeLoading(false)
       }
@@ -136,6 +142,7 @@ const SendMlTransactionPage = () => {
           <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}
             feeLoading={feeLoading}
+            feeError={feeError}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={balance}

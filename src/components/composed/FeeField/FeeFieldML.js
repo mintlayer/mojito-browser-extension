@@ -5,7 +5,7 @@ import { ML as MLHelpers } from '@Helpers'
 
 import styles from './FeeField.module.css'
 
-const FeeFieldML = ({ value: parentValue, id }) => {
+const FeeFieldML = ({ value: parentValue, id, loading }) => {
   const { feerate } = useContext(MintlayerContext)
   const timeToFirstConfirmations = '~2 minutes'
   const feeValue = parentValue
@@ -19,7 +19,7 @@ const FeeFieldML = ({ value: parentValue, id }) => {
     >
       <button
         type="button"
-        className={`${styles.tierCard} ${styles.tierCardSelected}`}
+        className={`${styles.tierCard} ${styles.tierCardSelected} ${loading ? styles.tierCardLoading : ''}`}
         disabled
       >
         <span className={`${styles.tierLabel} ${styles.tierLabelSelected}`}>
