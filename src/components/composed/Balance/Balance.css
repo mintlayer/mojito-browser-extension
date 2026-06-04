@@ -64,10 +64,10 @@
 }
 
 .balance-locked {
-  font-size: 1.1rem;
+  font-size: 14px;
   font-weight: 500;
   color: rgba(var(--color-black), 0.4);
-  margin-top: 6px;
+  margin: 6px 0 0 10px;
   cursor: pointer;
   background: none;
   border: none;
@@ -80,9 +80,11 @@
 }
 
 .balance-chart {
+  display: flex;
+  flex-direction: column;
   margin-top: 12px;
   width: 50%;
-
+  gap: 10px;
   @media screen and (min-width: 801px) {
     width: 100%;
   }
