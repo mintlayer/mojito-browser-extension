@@ -1,0 +1,93 @@
+.card {
+  background: rgb(var(--color-white));
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  min-height: max-content;
+}
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: max-content;
+}
+
+.cardIcon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: rgba(var(--mojito-orange), 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cardInfo {
+  flex: 1;
+}
+
+.cardDate {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(var(--color-black));
+  margin: 0;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.blockBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgb(var(--color-dark-gray));
+  background: rgb(var(--color-extra-light-gray));
+  border-radius: 6px;
+  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.blocksLeft {
+  font-size: 12px;
+  color: rgb(var(--color-dark-gray));
+}
+
+.cardAmount {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+  margin: 12px 0 0 48px;
+}
+
+.cardAmount span {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(var(--color-dark-gray));
+  margin-left: 3px;
+}
+
+.progressBar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(var(--color-medium-gray));
+  margin: 8px 0 0 48px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  background: rgb(var(--mojito-green));
+}
