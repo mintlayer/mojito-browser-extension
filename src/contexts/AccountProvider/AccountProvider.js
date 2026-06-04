@@ -113,7 +113,7 @@ const AccountProvider = ({ value: propValue, children }) => {
   }
 
   useEffect(() => {
-    window.addEventListener('unload', setLoginTimeoutLimit)
+    window.addEventListener('pagehide', setLoginTimeoutLimit)
   }, [])
 
   return (
