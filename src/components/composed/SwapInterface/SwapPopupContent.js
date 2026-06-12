@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { SwapTokenLogo } from '@BasicComponents'
 import { ML } from '@Helpers'
 
+import styles from './SwapPopupContent.module.css'
+
 const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
   const [search, setSearch] = useState('')
 
@@ -15,7 +17,7 @@ const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
 
   return (
     <div
-      className="token-popup-swap"
+      className={styles.popup}
       data-testid="swap-popup-content"
     >
       <h2 data-testid="swap-popup-title">{title}</h2>
@@ -24,14 +26,17 @@ const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
         placeholder="Search by symbol or token id"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="swap-token-search-input"
+        className={styles.searchInput}
       />
-      <ul data-testid="swap-token-list">
+      <ul
+        className={styles.tokenList}
+        data-testid="swap-token-list"
+      >
         <li
           onClick={() => {
             handleTokenChange(coin)
           }}
-          className="swap-token-item"
+          className={styles.tokenItem}
           key={coin.coin}
         >
           <SwapTokenLogo />
@@ -43,7 +48,7 @@ const SwapPopupContent = ({ tokens, coin, handleTokenChange, mode }) => {
             onClick={() => {
               handleTokenChange(token)
             }}
-            className="swap-token-item"
+            className={styles.tokenItem}
           >
             <SwapTokenLogo
               tokenId={token.token_id}

@@ -1,10 +1,9 @@
-import React, { useState } from 'react'
-import { Button } from '@BasicComponents'
+import { useState } from 'react'
 
 import { ReactComponent as CopyIcon } from '@Assets/images/icon-copy.svg'
 import { ReactComponent as SuccessIcon } from '@Assets/images/icon-success.svg'
 
-import './CopyButton.css'
+import styles from './CopyButton.module.css'
 
 const CopyButton = ({ content }) => {
   const [copied, setCopied] = useState(false)
@@ -18,25 +17,18 @@ const CopyButton = ({ content }) => {
   }
 
   return (
-    <Button
+    <button
+      className={styles.copyButton}
+      onClick={handleCopy}
       type="button"
-      extraStyleClasses={['copy-btn']}
-      onClickHandle={handleCopy}
-      title="Copy"
-      dataTestId="copy-btn"
+      data-testid="copy-btn"
     >
       {copied ? (
-        <SuccessIcon
-          className="copy-icon"
-          data-testid="success-icon"
-        />
+        <SuccessIcon data-testid="success-icon" />
       ) : (
-        <CopyIcon
-          className="copy-icon"
-          data-testid="copy-icon"
-        />
+        <CopyIcon data-testid="copy-icon" />
       )}
-    </Button>
+    </button>
   )
 }
 

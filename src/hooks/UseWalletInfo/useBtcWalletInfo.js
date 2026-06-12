@@ -1,7 +1,7 @@
 import { useContext } from 'react'
 import { BitcoinContext } from '@Contexts'
 
-const useBtcWalletInfo = (address) => {
+const useBtcWalletInfo = () => {
   const {
     btcBalance,
     btcTransactions,

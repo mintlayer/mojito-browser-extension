@@ -1,9 +1,8 @@
 import { useState } from 'react'
 
 import { FeeField, FeeFieldML } from '@ComposedComponents'
-import TransactionField from './TransactionField'
 
-import './errorMessages.css'
+import styles from './FeesField.module.css'
 
 const FeesField = ({
   feeChanged,
@@ -11,12 +10,13 @@ const FeesField = ({
   errorMessage,
   setFeeValidity,
   walletType,
+  loading,
 }) => {
   const [localMessage, setLocalMessage] = useState(undefined)
 
   return (
-    <TransactionField>
-      <label htmlFor="fee">Fee:</label>
+    <div className={styles.field}>
+      <label className={styles.label}>Network fee</label>
 
       {walletType && walletType.name === 'Bitcoin' ? (
         <FeeField
@@ -33,11 +33,14 @@ const FeesField = ({
           value={value}
           setErrorMessage={setLocalMessage}
           setFeeValidity={setFeeValidity}
+          loading={loading}
         />
       )}
 
-      <p className="error-message">{localMessage ?? errorMessage}</p>
-    </TransactionField>
+      {(localMessage || errorMessage) && (
+        <p className={styles.errorMessage}>{localMessage ?? errorMessage}</p>
+      )}
+    </div>
   )
 }
 

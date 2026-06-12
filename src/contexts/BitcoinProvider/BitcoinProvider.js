@@ -149,13 +149,13 @@ const BitcoinProvider = ({ value: propValue, children }) => {
               (address) =>
                 address.info.chain_stats.tx_count === 0 &&
                 address.info.mempool_stats.tx_count === 0,
-            ) || receivingAddressesInfo[0].address,
+            )?.address || receivingAddressesInfo[0].address,
           changeAddress:
             changeAddressesInfo.find(
               (address) =>
                 address.info.chain_stats.tx_count === 0 &&
                 address.info.mempool_stats.tx_count === 0,
-            ) || changeAddressesInfo[0].address,
+            )?.address || changeAddressesInfo[0].address,
         }
         setUnusedAddresses(unusedAddress)
 

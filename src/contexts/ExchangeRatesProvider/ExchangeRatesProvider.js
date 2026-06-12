@@ -12,6 +12,7 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
   const [exchangeRate, setExchangeRate] = useState({})
   const [yesterdayExchangeRate, setYesterdayExchangeRate] = useState({})
   const [historyRates, setHistoryRates] = useState({})
+  const [thirtyDaysHistoryRates, setThirtyDaysHistoryRates] = useState({})
   const { accountID } = useContext(AccountContext)
 
   useEffect(() => {
@@ -21,6 +22,7 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
       const rates = {}
       const yesterdayRates = {}
       const historyRates = {}
+      const thirtyDaysRates = {}
       for (let i = 0; i < default_crypto.length; i++) {
         const response_rates = await ExchangeRates.getRate(
           default_crypto[i],
@@ -42,11 +44,19 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
         )
         historyRates[`${default_crypto[i]}-${fiat}`] =
           JSON.parse(response_history)[`${default_crypto[i]}-${fiat}`]
+
+        const response_thirty_days = await ExchangeRates.getThirtyDaysHist(
+          default_crypto[i],
+          fiat,
+        )
+        thirtyDaysRates[`${default_crypto[i]}-${fiat}`] =
+          JSON.parse(response_thirty_days)[`${default_crypto[i]}-${fiat}`]
       }
 
       setExchangeRate(rates)
       setYesterdayExchangeRate(yesterdayRates)
       setHistoryRates(historyRates)
+      setThirtyDaysHistoryRates(thirtyDaysRates)
     }
     getData()
 
@@ -58,6 +68,7 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
     exchangeRate,
     yesterdayExchangeRate,
     historyRates,
+    thirtyDaysHistoryRates,
   }
 
   return (

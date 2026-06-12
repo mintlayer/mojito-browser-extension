@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import { generateMnemonic, getSeedFromMnemonic } from './BTC'
 
 const WalletWorkerEnum = {

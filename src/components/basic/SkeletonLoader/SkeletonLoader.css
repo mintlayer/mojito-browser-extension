@@ -8,6 +8,14 @@
   color: rgb(var(--color-white));
 }
 
+.card-compact {
+  padding: 8px 20px 8px 12px;
+  margin-bottom: 0;
+  border-radius: 35px;
+  max-height: 72px;
+  min-height: 72px;
+}
+
 .skeleton {
   animation: skeleton-loading 1s linear infinite alternate;
 }
@@ -28,6 +36,13 @@
   width: 72px;
   min-width: 72px;
   min-height: 72px;
+}
+
+.cardHeader-compact {
+  height: 50px;
+  width: 50px;
+  min-width: 50px;
+  min-height: 50px;
 }
 
 .cardBodyWrapper {

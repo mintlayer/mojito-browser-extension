@@ -55,7 +55,7 @@ export const CryptoItem = ({ onClickItem, item }) => {
   return (
     <>
       {fetchingBalances ? (
-        <SkeletonLoader />
+        <SkeletonLoader variant="compact" />
       ) : (
         <li
           key={item.symbol}

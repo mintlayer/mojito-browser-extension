@@ -77,14 +77,18 @@ describe('DelegationDetails', () => {
   })
 
   it('calls correct functions on button click', () => {
-    mockDelegation.addFundsClickHandle = jest.fn()
-    mockDelegation.withdrawClickHandle = jest.fn()
+    const mockAddFunds = jest.fn()
+    const mockWithdraw = jest.fn()
     render(
       <AccountContext.Provider value={mockAccountContext}>
         <TransactionContext.Provider value={mockTransactionContext}>
           <SettingsContext.Provider value={mockSettingsContext}>
             <BrowserRouter future={memoryRouterFeature}>
-              <DelegationDetails delegation={mockDelegation} />
+              <DelegationDetails
+                delegation={mockDelegation}
+                onAddFunds={mockAddFunds}
+                onWithdraw={mockWithdraw}
+              />
             </BrowserRouter>
           </SettingsContext.Provider>
         </TransactionContext.Provider>
@@ -93,9 +97,9 @@ describe('DelegationDetails', () => {
     )
 
     fireEvent.click(screen.getByText('Add funds'))
-    expect(mockDelegation.addFundsClickHandle).toHaveBeenCalled()
+    expect(mockAddFunds).toHaveBeenCalled()
 
     fireEvent.click(screen.getByText('Withdraw'))
-    expect(mockDelegation.withdrawClickHandle).toHaveBeenCalled()
+    expect(mockWithdraw).toHaveBeenCalled()
   })
 })

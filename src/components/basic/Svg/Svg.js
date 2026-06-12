@@ -16,6 +16,7 @@ const Svg = ({
       width={width}
       height={height}
       viewBox={`0 0 ${viewboxWidth} ${viewboxHeight}`}
+      preserveAspectRatio="none"
       data-testid="svg-container"
     >
       {children}

@@ -1,0 +1,223 @@
+.row {
+  border-bottom: 1px solid rgba(var(--color-black), 0.05);
+  transition: background 0.15s ease;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: rgba(var(--color-black), 0.02);
+}
+
+.cell {
+  padding: 16px 20px;
+  vertical-align: middle;
+  color: rgb(var(--color-black));
+  font-size: 14px;
+}
+
+.rowUsed .addressValue {
+  font-weight: 700;
+}
+
+.addressValue {
+  font-family: monospace;
+  font-size: 14px;
+  color: rgb(var(--color-black));
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.addressValue:hover {
+  color: rgba(var(--color-main-green), 1);
+}
+
+/* Status badges */
+.statusBadge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.statusUsed {
+  background: rgba(var(--color-black), 0.07);
+  color: rgba(var(--color-black), 0.7);
+}
+
+.statusUnused {
+  background: rgba(var(--color-green), 0.2);
+  color: rgba(var(--color-stats-green), 1);
+}
+
+/* Balance */
+.balanceAmount {
+  font-size: var(--default-font-size);
+  color: rgb(var(--color-black));
+}
+
+.balanceAmount strong {
+  font-weight: 700;
+}
+
+.balanceTicker {
+  font-weight: 400;
+  color: rgba(var(--color-black), 0.5);
+}
+
+.balanceDash {
+  color: rgba(var(--color-black), 0.25);
+  font-size: 16px;
+}
+
+.lockedBalance {
+  display: block;
+  font-size: 12px;
+  color: rgba(var(--color-black), 0.5);
+  margin-top: 2px;
+}
+
+/* QR button */
+.qrButton.qrButton {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: rgba(var(--color-black), 0.04);
+  background-color: rgba(var(--color-black), 0.04);
+  border-radius: 8px;
+  color: rgb(var(--color-black));
+  transition: background 0.15s ease;
+}
+
+.qrButton.qrButton:hover,
+.qrButton.qrButton:focus {
+  background: rgba(var(--color-black), 0.08);
+  background-color: rgba(var(--color-black), 0.08);
+}
+
+.qrButton.qrButton svg path {
+  stroke: rgb(var(--color-black));
+}
+
+.qrButton.qrButton:hover svg path,
+.qrButton.qrButton:focus svg path {
+  stroke: rgb(var(--color-black));
+}
+
+.qrButton svg {
+  width: 18px;
+  height: 18px;
+  opacity: 0.4;
+}
+
+.qrButton:hover svg {
+  opacity: 0.6;
+}
+
+/* Tokens */
+.tokensSection {
+  margin-top: 8px;
+}
+
+.tokensToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: none;
+  border: 1px solid rgba(var(--color-black), 0.1);
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.tokensToggle:hover {
+  background: rgba(var(--color-green), 0.08);
+  border-color: rgba(var(--color-green), 0.3);
+}
+
+.tokensToggleExpanded {
+  composes: tokensToggle;
+  background: rgba(var(--color-green), 0.08);
+  border-radius: 10px 10px 0 0;
+}
+
+.tokensCount {
+  font-weight: 500;
+  color: rgb(var(--color-black));
+}
+
+.toggleIcon {
+  font-size: 8px;
+  transition: transform 0.2s ease;
+  color: rgba(var(--color-black), 0.4);
+}
+
+.tokensList {
+  padding: 8px;
+  background: rgba(var(--color-green), 0.03);
+  border: 1px solid rgba(var(--color-black), 0.1);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  animation: tokensSlideDown 0.2s ease-out;
+}
+
+.tokenItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(var(--color-black), 0.05);
+  font-size: 12px;
+  gap: 3px;
+}
+
+.tokenItem:last-child {
+  border-bottom: none;
+}
+
+.tokenAmount {
+  font-weight: 500;
+  color: rgb(var(--color-black));
+}
+
+.tokenId {
+  font-family: monospace;
+  color: rgba(var(--color-black), 0.5);
+  font-size: 11px;
+}
+
+/* Column widths */
+.colAddress {
+  width: 45%;
+}
+
+.colStatus {
+  width: 15%;
+}
+
+.colBalance {
+  width: 30%;
+}
+
+.colAction {
+  width: 10%;
+}
+
+@keyframes tokensSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

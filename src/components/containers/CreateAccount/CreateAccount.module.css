@@ -1,0 +1,36 @@
+.setAccountContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.setAccountForm {
+  margin-top: 4em;
+  width: 100%;
+}
+
+.setAccountFormWords {
+  margin-top: 2rem;
+}
+
+.itemWrapper {
+  width: 400px;
+}
+
+.setAccountInput {
+  padding: 1.2rem 1.7rem;
+}
+
+.createSubmitIcon {
+  margin-left: 10px;
+  width: 15px;
+}
+
+.createSubmitButton:hover .createSubmitIcon {
+  animation: moveArrowRight 0.3s ease-in-out;
+}
+
+.title {
+  font-size: 20px;
+  margin-bottom: 20px;
+}

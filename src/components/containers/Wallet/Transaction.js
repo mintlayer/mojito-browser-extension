@@ -14,25 +14,25 @@ import { useNavigate } from 'react-router'
 
 import TransactionDetails from './TransactionDetails'
 
-import './Transaction.css'
+import styles from './Transaction.module.css'
 
 const Info = ({ transaction }) => {
   const navigate = useNavigate()
   return (
     <li
-      className="transaction"
+      className={styles.transaction}
       data-testid="transaction"
       onClick={() => navigate('/settings')}
     >
       <div
-        className="transaction-logo-type transaction-logo-type-info"
+        className={`${styles.logoType} ${styles.logoTypeInfo}`}
         data-testid="transaction-icon"
       >
         !
       </div>
-      <div className="transaction-detail">
+      <div className={styles.detail}>
         <p
-          className="transaction-id-info"
+          className={styles.idInfo}
           data-testid="transaction-otherPart"
         >
           {transaction.otherPart && transaction.otherPart}
@@ -52,21 +52,21 @@ const Transaction = ({ transaction, getConfirmations }) => {
     <Info transaction={transaction} />
   ) : (
     <li
-      className="transaction"
+      className={styles.transaction}
       data-testid="transaction"
       onClick={() => setDetailPopupOpen(true)}
     >
       {(transaction.type === 'Transfer' || !transaction.type) &&
       transaction.date ? (
         <div
-          className={`transaction-logo-type ${
-            transaction.direction === 'out' && 'transaction-logo-out'
+          className={`${styles.logoType} ${
+            transaction.direction === 'out' ? styles.logoOut : ''
           }`}
           data-testid="transaction-icon"
         >
           <ArrowIcon
-            className={`arrow-icon ${
-              transaction.direction === 'out' && 'arrow-icon-out'
+            className={`${styles.arrowIcon} ${
+              transaction.direction === 'out' ? styles.arrowIconOut : ''
             }`}
           />
         </div>
@@ -75,20 +75,20 @@ const Transaction = ({ transaction, getConfirmations }) => {
       )}
       {transaction.type === 'CreateOrder' ? (
         <div
-          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          className={`${styles.logoType} ${styles.logoTypeStake}`}
           data-testid="transaction-icon"
         >
-          <SwapIcon className="stake-icon" />
+          <SwapIcon className={styles.stakeIcon} />
         </div>
       ) : (
         <></>
       )}
       {transaction.type === 'FillOrder' ? (
         <div
-          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          className={`${styles.logoType} ${styles.logoTypeStake}`}
           data-testid="transaction-icon"
         >
-          <SwapIcon className="stake-icon" />
+          <SwapIcon className={styles.stakeIcon} />
         </div>
       ) : (
         <></>
@@ -96,33 +96,33 @@ const Transaction = ({ transaction, getConfirmations }) => {
       {transaction.sameWalletTransaction &&
       !transaction.type === 'FillOrder' ? (
         <div
-          className="transaction-logo-type transaction-logo-type-same"
+          className={`${styles.logoType} ${styles.logoTypeSame}`}
           data-testid="transaction-icon"
         >
-          <LoopIcon className="loop-icon" />
+          <LoopIcon className={styles.loopIcon} />
         </div>
       ) : (
         <></>
       )}
       {transaction.type === 'Unconfirmed' || !transaction.date ? (
         <div
-          className="transaction-logo-type transaction-logo-type-unconfirmed"
+          className={`${styles.logoType} ${styles.logoTypeUnconfirmed}`}
           data-testid="transaction-icon"
         >
-          <UnconfirmedIcon className="unconfirmed-icon" />
+          <UnconfirmedIcon className={styles.unconfirmedIcon} />
         </div>
       ) : (
         <></>
       )}
       {transaction.type === 'Delegate Withdrawal' ? (
         <div
-          className="transaction-logo-type transaction-logo-type-withdrawal"
+          className={`${styles.logoType} ${styles.logoTypeWithdrawal}`}
           data-testid="transaction-icon"
         >
-          <StakeIcon className="stake-icon" />
+          <StakeIcon className={styles.stakeIcon} />
           <ArrowIcon
-            className={`arrow-icon-stake ${
-              transaction.direction === 'out' && 'arrow-icon-out'
+            className={`${styles.arrowIconStake} ${
+              transaction.direction === 'out' ? styles.arrowIconOut : ''
             }`}
           />
         </div>
@@ -131,37 +131,37 @@ const Transaction = ({ transaction, getConfirmations }) => {
       )}
       {transaction.type === 'CreateStakePool' ? (
         <div
-          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          className={`${styles.logoType} ${styles.logoTypeStake}`}
           data-testid="transaction-icon"
         >
-          <StakeIcon className="stake-icon" />
+          <StakeIcon className={styles.stakeIcon} />
         </div>
       ) : (
         <></>
       )}
       {transaction.type === 'CreateDelegationId' ? (
         <div
-          className="transaction-logo-type transaction-logo-type-stake transaction-logo-type-stake"
+          className={`${styles.logoType} ${styles.logoTypeStake}`}
           data-testid="transaction-icon"
         >
-          <StakeIcon className="stake-icon" />
+          <StakeIcon className={styles.stakeIcon} />
         </div>
       ) : (
         <></>
       )}
       {transaction.type === 'DelegateStaking' ? (
         <div
-          className="transaction-logo-type transaction-logo-type-delegate transaction-logo-type-stake"
+          className={`${styles.logoType} ${styles.logoTypeDelegate} ${styles.logoTypeStake}`}
           data-testid="transaction-icon"
         >
-          <DelegationIcon className="delegation-icon" />
+          <DelegationIcon className={styles.delegationIcon} />
         </div>
       ) : (
         <></>
       )}
-      <div className="transaction-detail">
+      <div className={styles.detail}>
         <p
-          className="transaction-id"
+          className={styles.id}
           data-testid="transaction-otherPart"
         >
           {transaction.direction === 'in' &&
@@ -175,9 +175,9 @@ const Transaction = ({ transaction, getConfirmations }) => {
             ` (+${transaction.otherPart.length - 1})`}
           {transaction.destAddress && ML.formatAddress(transaction.destAddress)}
         </p>
-        <div className="transaction-date-amount">
+        <div className={styles.dateAmount}>
           <p
-            className="transaction-date"
+            className={styles.date}
             data-testid="transaction-date"
           >
             Date: <span>{date}</span>

@@ -12,21 +12,17 @@ beforeEach(async ({ page: newPage }) => {
 
 test('Log in and Log out', async () => {
   test.setTimeout(190000)
-  await page.click('button.header-menu-button')
-  const logoutElement = page.getByText('Logout', { selector: 'li' })
-  await logoutElement.click()
-  await expect(page.locator(':text("Available wallet")')).toBeVisible()
+  await page.getByTestId('navigation-logout').click()
+  await expect(page.getByText('Choose an account')).toBeVisible()
 
-  const account = page.getByText('SenderWallet', { selector: 'div' })
-  await account.click()
+  await page.getByText(senderData.WALLET_NAME).click()
 
-  await expect(page.locator(`:text("Password for")`)).toBeVisible()
-  await expect(page.locator(`:text("${senderData.WALLET_NAME}")`)).toBeVisible()
+  await expect(page.getByText('Welcome back')).toBeVisible()
+  await expect(page.getByText(senderData.WALLET_NAME).first()).toBeVisible()
 
   await page.fill('input[placeholder="Password"]', senderData.WALLET_PASSWORD)
-  await page.getByRole('button', { name: 'Log In' }).click()
+  await page.getByTestId('login-password-submit').click()
 
-  await page.waitForSelector(':text("Mintlayer (ML)")')
-  await expect(page.locator(':text("Bitcoin (BTC)")')).toBeVisible()
-  await expect(page.locator(':text("Mintlayer (ML)")')).toBeVisible()
+  await expect(page.getByText('Bitcoin (BTC)')).toBeVisible({ timeout: 30000 })
+  await expect(page.getByText('Mintlayer (ML)')).toBeVisible()
 })

@@ -1,18 +1,14 @@
 import React, { useNavigate, useParams } from 'react-router'
 import { useContext, useState } from 'react'
 
-import { Balance, PopUp } from '@ComposedComponents'
+import { Balance, PopUp, WalletHeader } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { Wallet } from '@ContainerComponents'
 
-import {
-  useExchangeRates,
-  useBtcWalletInfo,
-  useMlWalletInfo,
-  useMediaQuery,
-} from '@Hooks'
+import { useExchangeRates, useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
 import { AccountContext, MintlayerContext, BitcoinContext } from '@Contexts'
 import { BTC } from '@Helpers'
+import { PageWrapper } from '@BasicComponents'
 import './Wallet.css'
 import { StakingWarning } from '@ComposedComponents'
 
@@ -23,39 +19,12 @@ const ActionButtons = ({ data }) => {
   const requredAddress =
     data.walletType.name === 'Mintlayer'
       ? mintlayerUnusedAddresses.receive
-      : bitcoinUnusedAddresses?.receivingAddress?.address || ''
+      : bitcoinUnusedAddresses?.receivingAddress || ''
   return (
     <div className="transactions-buttons-wrapper">
       {data.walletType.name === 'Mintlayer' && (
-        <>
-          <StakingWarning addressList={data.currentMlAddresses} />
-          <Wallet.TransactionButton
-            title={'Staking'}
-            mode={'staking'}
-            onClick={data.setOpenStaking}
-          />
-          <Wallet.TransactionButton
-            title={'Sign'}
-            mode={'sign'}
-            onClick={data.setOpenSignPage}
-          />
-          <Wallet.TransactionButton
-            title={'Nft'}
-            mode={'nft'}
-            onClick={data.setOpenNftPage}
-          />
-          <Wallet.TransactionButton
-            title={'Swap'}
-            mode={'swap'}
-            onClick={data.setOpenSwapPage}
-          />
-        </>
+        <StakingWarning addressList={data.currentMlAddresses} />
       )}
-      <Wallet.TransactionButton
-        title={'Addresses'}
-        onClick={data.setOpenAddressPage}
-        mode={'addresses'}
-      />
       {data.walletType.chain === 'mintlayer' && (
         <Wallet.TransactionButton
           title={'Send'}
@@ -63,7 +32,6 @@ const ActionButtons = ({ data }) => {
           onClick={data.setOpenMlTransactionForm}
         />
       )}
-
       {data.walletType.name === 'Bitcoin' && (
         <Wallet.TransactionButton
           title={'Send'}
@@ -74,6 +42,35 @@ const ActionButtons = ({ data }) => {
       <Wallet.TransactionButton
         title={'Receive'}
         onClick={() => data.setOpenShowAddress(true)}
+      />
+      {data.walletType.name === 'Mintlayer' && (
+        <>
+          <Wallet.TransactionButton
+            title={'Swap'}
+            mode={'swap'}
+            onClick={data.setOpenSwapPage}
+          />
+          <Wallet.TransactionButton
+            title={'Staking'}
+            mode={'staking'}
+            onClick={data.setOpenStaking}
+          />
+          <Wallet.TransactionButton
+            title={'NFT'}
+            mode={'nft'}
+            onClick={data.setOpenNftPage}
+          />
+          <Wallet.TransactionButton
+            title={'Sign'}
+            mode={'sign'}
+            onClick={data.setOpenSignPage}
+          />
+        </>
+      )}
+      <Wallet.TransactionButton
+        title={'Addr.'}
+        onClick={data.setOpenAddressPage}
+        mode={'addresses'}
       />
       {data.openShowAddress && (
         <PopUp setOpen={data.setOpenShowAddress}>
@@ -93,8 +90,6 @@ const WalletPage = () => {
     ticker: coinType === 'Bitcoin' ? 'BTC' : 'ML',
     chain: coinType === 'Bitcoin' ? 'bitcoin' : 'mintlayer',
   }
-
-  const isExtendedView = useMediaQuery('(min-width: 801px)')
 
   const datahook =
     walletType.chain === 'bitcoin' ? useBtcWalletInfo : useMlWalletInfo
@@ -166,29 +161,27 @@ const WalletPage = () => {
   }
 
   return (
-    <div
-      className="wallet-page"
-      data-testid="wallet-page"
-    >
-      <VerticalGroup
-        bigGap={isExtendedView}
-        grow
+    <PageWrapper>
+      <div
+        className="wallet-page"
+        data-testid="wallet-page"
       >
-        <div className="balance-transactions-wrapper">
+        <VerticalGroup grow>
+          <WalletHeader walletType={walletType} />
           <Balance
             balance={walletBalance}
             balanceLocked={walletBalanceLocked}
             exchangeRate={exchangeRate}
             walletType={walletType}
           />
-        </div>
-        <ActionButtons data={actionButtonData} />
-        <Wallet.TransactionsList
-          transactionsList={walletTransactionList}
-          getConfirmations={BTC.getConfirmationsAmount}
-        />
-      </VerticalGroup>
-    </div>
+          <ActionButtons data={actionButtonData} />
+          <Wallet.TransactionsList
+            transactionsList={walletTransactionList}
+            getConfirmations={BTC.getConfirmationsAmount}
+          />
+        </VerticalGroup>
+      </div>
+    </PageWrapper>
   )
 }
 

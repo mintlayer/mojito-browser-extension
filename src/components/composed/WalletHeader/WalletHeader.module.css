@@ -1,0 +1,49 @@
+.walletHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: max-content;
+  padding: 5px;
+}
+
+.logo {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  color: rgb(var(--color-black));
+
+  @media screen and (min-width: 801px) {
+    font-size: 1.4rem;
+  }
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(var(--color-black), 0.5);
+}
+
+.changePositive {
+  color: rgb(var(--color-green));
+  font-weight: 600;
+}
+
+.changeNegative {
+  color: rgb(var(--color-red));
+  font-weight: 600;
+}
+
+@media screen and (min-width: 801px) {
+}

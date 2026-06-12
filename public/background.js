@@ -33,125 +33,129 @@
         sendResponse({
           result: { isConnected: !!connectedSites[origin] },
         })
+        // External dApp API disabled — uncomment blocks below to re-enable
       } else if (message.method === 'connect') {
-        if (connectWindowId === false) {
-          pendingResponses.set(message.requestId, sendResponse)
-          api.windows.create(
-            {
-              url: api.runtime.getURL('popup.html'),
-              type: 'popup',
-              width: 800,
-              height: 600,
-              focused: true,
-            },
-            (win) => {
-              connectWindowId = win.id
-              api.storage.local.set(
-                {
-                  pendingRequest: {
-                    origin,
-                    requestId: message.requestId,
-                    // networkType: message.params.networkType,
-                    // permission: message.params.permission,
-                    action: 'connect',
-                  },
-                },
-                () => {
-                  if (api.runtime.lastError) {
-                    console.error(
-                      '[Mintlayer] Storage set error:',
-                      api.runtime.lastError,
-                    )
-                  }
-                },
-              )
-            },
-          )
-          return true // Keep channel open
-        } else if (typeof connectWindowId === 'number') {
-          api.windows.update(connectWindowId, { focused: true })
-          sendResponse({ error: 'Connection window already open' })
-        }
+        sendResponse({ error: 'External connections are disabled' })
+        // if (connectWindowId === false) {
+        //   pendingResponses.set(message.requestId, sendResponse)
+        //   api.windows.create(
+        //     {
+        //       url: api.runtime.getURL('popup.html'),
+        //       type: 'popup',
+        //       width: 800,
+        //       height: 600,
+        //       focused: true,
+        //     },
+        //     (win) => {
+        //       connectWindowId = win.id
+        //       api.storage.local.set(
+        //         {
+        //           pendingRequest: {
+        //             origin,
+        //             requestId: message.requestId,
+        //             // networkType: message.params.networkType,
+        //             // permission: message.params.permission,
+        //             action: 'connect',
+        //           },
+        //         },
+        //         () => {
+        //           if (api.runtime.lastError) {
+        //             console.error(
+        //               '[Mintlayer] Storage set error:',
+        //               api.runtime.lastError,
+        //             )
+        //           }
+        //         },
+        //       )
+        //     },
+        //   )
+        //   return true // Keep channel open
+        // } else if (typeof connectWindowId === 'number') {
+        //   api.windows.update(connectWindowId, { focused: true })
+        //   sendResponse({ error: 'Connection window already open' })
+        // }
       } else if (message.method === 'signTransaction') {
-        if (!connectedSites[origin]) {
-          sendResponse({ error: 'Not connected. Call connect first.' })
-        } else if (popupWindowId === false) {
-          pendingResponses.set(message.requestId, sendResponse)
-          api.windows.create(
-            {
-              url: api.runtime.getURL('popup.html'),
-              type: 'popup',
-              width: 800,
-              height: 600,
-              focused: true,
-            },
-            (win) => {
-              popupWindowId = win.id
-              api.storage.local.set(
-                {
-                  pendingRequest: {
-                    origin,
-                    requestId: message.requestId,
-                    action: 'signTransaction',
-                    data: message.params || {},
-                  },
-                },
-                () => {
-                  if (api.runtime.lastError) {
-                    console.error(
-                      '[Mintlayer] Storage set error:',
-                      api.runtime.lastError,
-                    )
-                  }
-                },
-              )
-            },
-          )
-          return true
-        } else if (typeof popupWindowId === 'number') {
-          api.windows.update(popupWindowId, { focused: true })
-          sendResponse({ error: 'Transaction signing window already open' })
-        }
+        sendResponse({ error: 'External signing is disabled' })
+        // if (!connectedSites[origin]) {
+        //   sendResponse({ error: 'Not connected. Call connect first.' })
+        // } else if (popupWindowId === false) {
+        //   pendingResponses.set(message.requestId, sendResponse)
+        //   api.windows.create(
+        //     {
+        //       url: api.runtime.getURL('popup.html'),
+        //       type: 'popup',
+        //       width: 800,
+        //       height: 600,
+        //       focused: true,
+        //     },
+        //     (win) => {
+        //       popupWindowId = win.id
+        //       api.storage.local.set(
+        //         {
+        //           pendingRequest: {
+        //             origin,
+        //             requestId: message.requestId,
+        //             action: 'signTransaction',
+        //             data: message.params || {},
+        //           },
+        //         },
+        //         () => {
+        //           if (api.runtime.lastError) {
+        //             console.error(
+        //               '[Mintlayer] Storage set error:',
+        //               api.runtime.lastError,
+        //             )
+        //           }
+        //         },
+        //       )
+        //     },
+        //   )
+        //   return true
+        // } else if (typeof popupWindowId === 'number') {
+        //   api.windows.update(popupWindowId, { focused: true })
+        //   sendResponse({ error: 'Transaction signing window already open' })
+        // }
       } else if (message.method === 'signChallenge') {
-        if (!connectedSites[origin]) {
-          sendResponse({ error: 'Not connected. Call connect first.' })
-        } else if (popupWindowId === false) {
-          pendingResponses.set(message.requestId, sendResponse)
-          api.windows.create(
-            {
-              url: api.runtime.getURL('popup.html'),
-              type: 'popup',
-              width: 800,
-              height: 600,
-              focused: true,
-            },
-            (win) => {
-              popupWindowId = win.id
-              api.storage.local.set(
-                {
-                  pendingRequest: {
-                    origin,
-                    requestId: message.requestId,
-                    action: 'signChallenge',
-                    data: message.params || {},
-                  },
-                },
-                () => {
-                  if (api.runtime.lastError) {
-                    console.error(
-                      '[Mintlayer] Storage set error:',
-                      api.runtime.lastError,
-                    )
-                  }
-                },
-              )
-            },
-          )
-          return true
-        } else if (typeof popupWindowId === 'number') {
-          api.windows.update(popupWindowId, { focused: true })
-          sendResponse({ error: 'Transaction signing window already open' })
-        }
+        sendResponse({ error: 'External signing is disabled' })
+        // if (!connectedSites[origin]) {
+        //   sendResponse({ error: 'Not connected. Call connect first.' })
+        // } else if (popupWindowId === false) {
+        //   pendingResponses.set(message.requestId, sendResponse)
+        //   api.windows.create(
+        //     {
+        //       url: api.runtime.getURL('popup.html'),
+        //       type: 'popup',
+        //       width: 800,
+        //       height: 600,
+        //       focused: true,
+        //     },
+        //     (win) => {
+        //       popupWindowId = win.id
+        //       api.storage.local.set(
+        //         {
+        //           pendingRequest: {
+        //             origin,
+        //             requestId: message.requestId,
+        //             action: 'signChallenge',
+        //             data: message.params || {},
+        //           },
+        //         },
+        //         () => {
+        //           if (api.runtime.lastError) {
+        //             console.error(
+        //               '[Mintlayer] Storage set error:',
+        //               api.runtime.lastError,
+        //             )
+        //           }
+        //         },
+        //       )
+        //     },
+        //   )
+        //   return true
+        // } else if (typeof popupWindowId === 'number') {
+        //   api.windows.update(popupWindowId, { focused: true })
+        //   sendResponse({ error: 'Transaction signing window already open' })
+        // }
       } else if (message.method === 'version') {
         sendResponse({ result: api.runtime.getManifest().version })
       } else if (message.method === 'getSession') {

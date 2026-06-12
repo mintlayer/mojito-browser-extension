@@ -26,6 +26,9 @@ const ML_EXPLORER_MAINNET = 'https://explorer.mintlayer.org/'
 const ML_EXPLORER_TESTNET = 'https://lovelace.explorer.mintlayer.org/'
 const BTC_EXPLORER_MAINNET = 'https://blockstream.info/'
 const BTC_EXPLORER_TESTNET = 'https://explorer.gomaestro.org/bitcoin/testnet/'
+const PRIVACY_POLICY_URL =
+  'https://www.mintlayer.org/tc/mojito-browser-extension-privacy-policy/'
+const CONTACT_US_URL = 'mailto:support@mintlayer.org'
 const BTC_DEFAULT_ADDRESSES_BATCH = 3
 const BTC_MAX_TRANSACTION_FEE = 100000 // 0.001 BTC
 const BTC_MAX_FEERATE = 200
@@ -127,7 +130,7 @@ const WALLETS_NAVIGATION = [
 const WALLET_NAME_ERROR = 'The wallet name should have at least 4 characters.'
 const WALLET_PASSWORD_ERROR = [
   'Your password should have at least 8 characters.',
-  'Also it should have a lowercase letter, an uppercase letter, a digit, and a special char like: /\\*()&^%$#@-_=+\'"?!:;<>~`',
+  'Also it should have a lowercase letter, an uppercase letter, a digit, and a special character.',
 ]
 
 const MAX_ML_FEE = 500000000000 // 5 ML in atoms
@@ -166,4 +169,6 @@ export {
   COLOR_LIST,
   WALLET_NAME_ERROR,
   WALLET_PASSWORD_ERROR,
+  PRIVACY_POLICY_URL,
+  CONTACT_US_URL,
 }

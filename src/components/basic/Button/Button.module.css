@@ -1,0 +1,74 @@
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(var(--mojito-green));
+  border: none;
+  border-radius: var(--round-size-big);
+  color: rgb(var(--color-white));
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 1;
+  padding: 14px 22px 14px 22px;
+  width: fit-content;
+  min-height: max-content;
+  gap: 10px;
+}
+
+.btn svg {
+  max-height: 40px;
+}
+
+.btn:disabled,
+.btn:disabled:hover,
+.btn:disabled:focus {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn:hover,
+.btn:focus {
+  background-color: rgb(var(--mojito-green-dark));
+  color: rgb(var(--color-white));
+  transition: 0.4s ease-in-out;
+}
+
+.btn svg path,
+.btn svg path {
+  stroke: rgb(var(--color-white));
+}
+
+.btn.alternate {
+  background-color: transparent;
+  border: 1.5px solid rgb(var(--mojito-green));
+  color: rgb(var(--mojito-green));
+  transition:
+    opacity 0.3s ease-in-out,
+    border 0.3s ease-in-out;
+}
+
+.btn.alternate:hover,
+.btn.alternate:focus {
+  background: rgb(var(--mojito-green-soft));
+  transition: 0.3s ease-in-out;
+}
+
+.btn.alternate svg path,
+.btn.alternate svg path {
+  stroke: rgb(var(--mojito-green));
+}
+
+.btn.dark {
+  background-color: rgb(var(--color-black));
+  border: 2px solid transparent;
+  color: rgb(var(--color-white));
+  transition:
+    opacity 0.3s ease-in-out,
+    border 0.3s ease-in-out;
+}
+
+.btn.dark:hover,
+.btn.dark:focus {
+  opacity: 0.8 !important;
+}

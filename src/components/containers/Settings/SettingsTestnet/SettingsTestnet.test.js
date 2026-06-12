@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
-import SettingsTestnet from './SettingsTestnet'
+import SettingsTestnet from './SettingsTestnet.tsx'
 import { SettingsContext, MintlayerContext, AccountContext } from '@Contexts'
 import { BrowserRouter } from 'react-router'
 
@@ -19,7 +19,6 @@ test('Render Inputs list item', async () => {
           </BrowserRouter>
         </MintlayerContext.Provider>
       </SettingsContext.Provider>
-      ,
     </AccountContext.Provider>,
   )
   const component = screen.getByTestId('settings-testnet')
@@ -40,14 +39,12 @@ test('toggles the network type', () => {
           <BrowserRouter>
             <SettingsTestnet />
           </BrowserRouter>
-          ,
         </MintlayerContext.Provider>
       </SettingsContext.Provider>
-      ,
     </AccountContext.Provider>,
   )
-  const toggleButton = screen.getAllByTestId('toggle')[0]
+  const testnetButton = screen.getByText('Testnet')
 
-  fireEvent.click(toggleButton)
+  fireEvent.click(testnetButton)
   expect(toggleNetworkType).toHaveBeenCalled()
 })

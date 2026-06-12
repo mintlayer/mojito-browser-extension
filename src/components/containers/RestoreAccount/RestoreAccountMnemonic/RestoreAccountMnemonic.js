@@ -1,19 +1,20 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router'
 
-import { Expressions } from '@Constants'
+import { AppInfo, Expressions } from '@Constants'
 import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
+import { AccountContext } from '@Contexts'
 
 import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import {
   ProgressTracker,
-  Header,
   TextField,
   RestoreSeedField,
 } from '@ComposedComponents'
 
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
+import { ReactComponent as IconDocumentFilled } from '@Assets/images/icon-document-filled.svg'
 
 import './RestoreAccountMnemonic.css'
 
@@ -44,6 +45,7 @@ const RestoreAccountMnemonic = ({
   const btcAddressType = BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
 
   const navigate = useNavigate()
+  const { setCustomBackAction } = useContext(AccountContext)
 
   const isSeedValid = (words, DefaultWordList = []) => {
     if (words.length !== 12 && words.length !== 24) {
@@ -59,20 +61,13 @@ const RestoreAccountMnemonic = ({
     return isWordListValid && validateMnemonicFn(wordsFields.join(' '))
   }, [wordsFields, defaultBTCWordList, validateMnemonicFn])
 
-  const accountNameErrorMessage = useMemo(() => {
-    return !accountNameValid
-      ? 'The wallet name should have at least 4 characteres.'
-      : null
-  }, [accountNameValid])
+  const accountNameErrorMessage = !accountNameValid
+    ? AppInfo.WALLET_NAME_ERROR
+    : null
 
-  const accountPasswordErrorMessage = useMemo(() => {
-    return !accountPasswordValid
-      ? [
-          'Your password should have at least 8 characteres.',
-          'Also it should have a lowercase letter, an uppercase letter, a digit, and a special char like: /\\*()&^%$#@-_=+\'"?!:;<>~`',
-        ]
-      : null
-  }, [accountPasswordValid])
+  const accountPasswordErrorMessage = !accountPasswordValid
+    ? AppInfo.WALLET_PASSWORD_ERROR
+    : null
 
   const getMnemonics = () => wordsFields.join(' ').trim()
 
@@ -93,6 +88,13 @@ const RestoreAccountMnemonic = ({
     }
   }
   const goToPrevStep = () => (step < 2 ? navigate(-1) : setStep(step - 1))
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    setCustomBackAction(() => goToPrevStep)
+    return () => setCustomBackAction(null)
+  }, [step])
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const steps = [
     { name: 'Wallet Name', active: step === 1 },
@@ -162,7 +164,6 @@ const RestoreAccountMnemonic = ({
 
   return (
     <div data-testid="restore-account">
-      <Header customBackAction={goToPrevStep} />
       <ProgressTracker steps={steps} />
       <form
         className={`account-form ${
@@ -176,37 +177,52 @@ const RestoreAccountMnemonic = ({
           data-step={step}
           bigGap={step !== 4 && step !== 5 && step !== 6}
           fullWidth={true}
+          center
         >
           {step === 1 && (
-            <TextField
-              value={accountNameValue}
-              onChangeHandle={accountNameChangeHandler}
-              validity={accountNameValid}
-              placeHolder={'Wallet Name'}
-              label={'Create a name for your wallet'}
-              extraStyleClasses={inputExtraclasses}
-              errorMessages={accountNameErrorMessage}
-              pristinity={accountNamePristinity}
-              alternate
-            />
+            <div className="itemWrapper">
+              <TextField
+                value={accountNameValue}
+                onChangeHandle={accountNameChangeHandler}
+                validity={accountNameValid}
+                placeHolder={'Wallet Name'}
+                label={
+                  <h1 className="restore-mnemonic-title">
+                    Create a name for your wallet
+                  </h1>
+                }
+                extraStyleClasses={inputExtraclasses}
+                errorMessages={accountNameErrorMessage}
+                pristinity={accountNamePristinity}
+                alternate
+              />
+            </div>
           )}
           {step === 2 && (
-            <TextField
-              value={accountPasswordValue}
-              onChangeHandle={accountPasswordChangeHandler}
-              validity={accountPasswordValid}
-              pattern={passwordPattern}
-              password
-              label={'Create a password for your wallet'}
-              placeHolder={'Password'}
-              extraStyleClasses={inputExtraclasses}
-              errorMessages={accountPasswordErrorMessage}
-              pristinity={accountPasswordPristinity}
-              alternate
-            />
+            <div className="itemWrapper">
+              <TextField
+                value={accountPasswordValue}
+                onChangeHandle={accountPasswordChangeHandler}
+                validity={accountPasswordValid}
+                password
+                label={
+                  <h1 className="restore-mnemonic-title">
+                    Create a password for your wallet
+                  </h1>
+                }
+                placeHolder={'Password'}
+                extraStyleClasses={inputExtraclasses}
+                errorMessages={accountPasswordErrorMessage}
+                pristinity={accountPasswordPristinity}
+                alternate
+              />
+            </div>
           )}
           {step === 3 && (
-            <CenteredLayout>
+            <div className="words-description-wrapper">
+              <div className="words-description-icon">
+                <IconDocumentFilled />
+              </div>
               <p
                 className="words-description"
                 data-testid="description-paragraph"
@@ -214,7 +230,7 @@ const RestoreAccountMnemonic = ({
                 In order to restore the wallet, please enter your 12 or 24 Seed
                 Phrase.
               </p>
-            </CenteredLayout>
+            </div>
           )}
           {step === 4 && (
             <>
@@ -230,7 +246,9 @@ const RestoreAccountMnemonic = ({
 
           <CenteredLayout>
             <Button
-              onClickHandle={handleSubmit}
+              key={step}
+              buttonType="submit"
+              autoFocus
               extraStyleClasses={['restore-mnemonic-submit-button']}
             >
               {genButtonTitle(step)}{' '}

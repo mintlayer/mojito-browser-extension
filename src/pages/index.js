@@ -1,14 +1,14 @@
-import CreateAccountPage from './CreateAccount/CreateAccount'
+import CreateAccountPage from './CreateAccount/CreateAccount.tsx'
 import CreateRestorePage from './CreateRestore/CreateRestore'
 import HomePage from './Home/Home'
-import LoginPage from './Login/Login'
-import SetAccountPasswordPage from './Login/SetAccountPassword'
-import RestoreAccountPage from './RestoreAccount/RestoreAccount'
+import LoginPage from './Login/Login.tsx'
+import SetAccountPasswordPage from './Login/SetAccountPassword.tsx'
+import RestoreAccountPage from './RestoreAccount/RestoreAccount.tsx'
 import WalletPage from './Wallet/Wallet'
 import SendBtcTransactionPage from './SendBtcTransaction/SendBtcTransaction'
 import SendMlTransactionPage from './SendMlTransaction/SendMlTransaction'
 import DashboardPage from './Dashboard/Dashboard'
-import SettingsPage from './Settings/Settings'
+import SettingsPage from './Settings/Settings.tsx'
 import StakingPage from './Staking/Staking'
 import ConnectionPage from './ConnectionPage/ConnectionPage'
 import CreateDelegationPage from './CreateDelegation/CreateDelegation'
@@ -23,6 +23,7 @@ import SignExternalTransactionPage from './SignExternalTransaction/SignExternalT
 import SignInternalTransaction from './SignInternalTransaction/SignInternalTransaction'
 import OrderSwapPage from './OrderSwap/OrderSwap'
 import SignBitcoinTransactionPage from './SignBitcoinTransaction/SignBitcoinTransaction'
+import ConfirmBtcTransactionPage from './ConfirmBtcTransaction/ConfirmBtcTransaction'
 import AddressPage from './AddressPage/AddressPage'
 
 export {
@@ -51,5 +52,6 @@ export {
   SignInternalTransaction,
   OrderSwapPage,
   SignBitcoinTransactionPage,
+  ConfirmBtcTransactionPage,
   AddressPage,
 }

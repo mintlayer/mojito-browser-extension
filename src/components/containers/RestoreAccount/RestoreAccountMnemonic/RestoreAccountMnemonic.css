@@ -7,19 +7,51 @@
 }
 
 .account-form-description {
-  margin-top: 204px;
+  margin-top: 100px;
 }
 
 .account-form-address-type {
   margin-top: 2.5em;
 }
 
+.restore-mnemonic-title {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.itemWrapper {
+  width: 400px;
+}
+
 .account-input {
   padding: 1.2rem 1.7rem;
 }
 
+.words-description-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.words-description-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: rgba(var(--mojito-green), 0.1);
+}
+
+.words-description-icon svg {
+  width: 40px;
+  height: 40px;
+  color: rgb(var(--mojito-green));
+}
+
 .words-description {
-  font-size: 24px;
+  font-size: 22px;
   text-align: center;
 }
 

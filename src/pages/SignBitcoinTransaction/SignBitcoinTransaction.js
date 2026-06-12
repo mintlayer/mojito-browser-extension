@@ -1,12 +1,12 @@
 /* eslint-disable no-undef */
 import { useLocation } from 'react-router'
 import { MOCKS } from './mocks'
-import { Button } from '@BasicComponents'
+import { Button, PageWrapper } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 
 import './SignBitcoinTransaction.css'
-import { useState, useContext, useEffect } from 'react'
+import { useState, useContext, useMemo } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 import * as bitcoin from 'bitcoinjs-lib'
 import { Account } from '@Entities'
@@ -78,8 +78,6 @@ export const SignBitcoinTransactionPage = () => {
   const [secret, setSecret] = useState('')
 
   // Secret management state for HTLC transactions
-  const [generatedSecret, setGeneratedSecret] = useState(null)
-  const [generatedSecretHash, setGeneratedSecretHash] = useState(null)
   const [secretError, setSecretError] = useState('')
 
   const [mode, setMode] = useState('preview')
@@ -87,10 +85,52 @@ export const SignBitcoinTransactionPage = () => {
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = ['buttonSignTransaction']
 
-  // State to hold the potentially modified transaction data
-  const [transactionState, setTransactionState] = useState(null)
+  const initialState = external_state || MOCKS[selectedMock]
 
-  const state = transactionState || external_state || MOCKS[selectedMock]
+  // Generate secret and prepare transaction state once for HTLC create transactions
+  const { generatedSecret, generatedSecretHash, htlcTransactionState } =
+    useMemo(() => {
+      const currentState = initialState
+      const transactionJSON =
+        currentState?.request?.data?.txData?.JSONRepresentation
+      const isCreate = transactionJSON?.secretHash
+
+      if (!transactionJSON || !isCreate) {
+        return {
+          generatedSecret: null,
+          generatedSecretHash: null,
+          htlcTransactionState: null,
+        }
+      }
+
+      try {
+        const secretObj = Secret.generateSecretObject()
+        const updatedState = JSON.parse(JSON.stringify(currentState))
+        const updatedTransactionJSON =
+          updatedState.request.data.txData.JSONRepresentation
+
+        if (updatedTransactionJSON.secretHash) {
+          updatedTransactionJSON.secretHash = JSON.stringify({
+            secret_hash_hex: secretObj.secretHashHex,
+          })
+        }
+
+        return {
+          generatedSecret: secretObj.secretHex,
+          generatedSecretHash: secretObj.secretHashHex,
+          htlcTransactionState: updatedState,
+        }
+      } catch (error) {
+        console.error('Error generating secret:', error)
+        return {
+          generatedSecret: null,
+          generatedSecretHash: null,
+          htlcTransactionState: null,
+        }
+      }
+    }, [initialState])
+
+  const state = htlcTransactionState || initialState
 
   const revealed_secret =
     state?.request?.data?.txData?.JSONRepresentation.secret
@@ -107,51 +147,6 @@ export const SignBitcoinTransactionPage = () => {
   const isHTLCSpendTx =
     state?.request?.data?.txData?.JSONRepresentation?.type === 'spendHtlc'
   // const isHTLCRefundTx = state?.request?.data?.txData?.JSONRepresentation?.type === 'refundHtlc'
-
-  useEffect(() => {
-    // SECRET FOR HTLC
-    // Check if this is a create HTLC transaction and if secret needs to be generated
-    const currentState =
-      transactionState || external_state || MOCKS[selectedMock]
-    const transactionJSON =
-      currentState?.request?.data?.txData?.JSONRepresentation
-
-    if (!transactionJSON) {
-      return
-    }
-
-    // If this is an HTLC create transaction and we haven't generated a secret yet
-    if (isHTLCCreateTx && !generatedSecret) {
-      try {
-        const secretObj = Secret.generateSecretObject()
-        setGeneratedSecret(secretObj.secretHex)
-        setGeneratedSecretHash(secretObj.secretHashHex)
-
-        // Create a deep copy of the current state to avoid mutation
-        const updatedState = JSON.parse(JSON.stringify(currentState))
-        const updatedTransactionJSON =
-          updatedState.request.data.txData.JSONRepresentation
-
-        // Update the transaction with the generated secret hash
-        if (updatedTransactionJSON.secretHash) {
-          updatedTransactionJSON.secretHash = JSON.stringify({
-            secret_hash_hex: secretObj.secretHashHex,
-          })
-        }
-
-        // Update the transaction state
-        setTransactionState(updatedState)
-      } catch (error) {
-        console.error('Error generating secret:', error)
-      }
-    }
-  }, [
-    external_state,
-    selectedMock,
-    transactionState,
-    isHTLCCreateTx,
-    generatedSecret,
-  ])
 
   const handleApprove = async () => {
     setIsModalOpen(true) // Open the modal
@@ -225,7 +220,6 @@ export const SignBitcoinTransactionPage = () => {
       }
     }
 
-    // eslint-disable-next-line no-undef
     runtime.sendMessage(
       {
         action: 'popupResponse',
@@ -235,7 +229,6 @@ export const SignBitcoinTransactionPage = () => {
         result,
       },
       () => {
-        // eslint-disable-next-line no-undef
         storage.local.remove('pendingRequest', () => {
           window.close()
         })
@@ -297,7 +290,6 @@ export const SignBitcoinTransactionPage = () => {
     const result = {
       signedTxHex: tx,
     }
-    // eslint-disable-next-line no-undef
     runtime.sendMessage(
       {
         action: 'popupResponse',
@@ -307,7 +299,6 @@ export const SignBitcoinTransactionPage = () => {
         result,
       },
       () => {
-        // eslint-disable-next-line no-undef
         storage.local.remove('pendingRequest', () => {
           window.close()
         })
@@ -337,7 +328,6 @@ export const SignBitcoinTransactionPage = () => {
       signedTxHex: tx,
     }
 
-    // eslint-disable-next-line no-undef
     runtime.sendMessage(
       {
         action: 'popupResponse',
@@ -347,7 +337,6 @@ export const SignBitcoinTransactionPage = () => {
         result,
       },
       () => {
-        // eslint-disable-next-line no-undef
         storage.local.remove('pendingRequest', () => {
           window.close()
         })
@@ -396,7 +385,6 @@ export const SignBitcoinTransactionPage = () => {
     const requestId = state?.request?.requestId
     const method = 'signTransaction_reject'
     const result = 'null'
-    // eslint-disable-next-line no-undef
     runtime.sendMessage(
       {
         action: 'popupResponse',
@@ -406,7 +394,6 @@ export const SignBitcoinTransactionPage = () => {
         result,
       },
       () => {
-        // eslint-disable-next-line no-undef
         storage.local.remove('pendingRequest', () => {
           window.close()
         })
@@ -444,153 +431,155 @@ export const SignBitcoinTransactionPage = () => {
   }
 
   return (
-    <div className="SignTransaction">
-      <div className="header">
-        <h1 className="signTxTitle">Sign Transaction</h1>
-        <Button onClickHandle={switchHandle}>
-          {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
-        </Button>
-      </div>
+    <PageWrapper>
+      <div className="SignTransaction">
+        <div className="header">
+          <h1 className="signTxTitle">Sign Transaction</h1>
+          <Button onClickHandle={switchHandle}>
+            {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
+          </Button>
+        </div>
 
-      <div className="SignTxContent">
-        {!external_state && (
-          <div className="mock_selector">
-            {Object.keys(MOCKS).map((key) => {
-              return (
-                <div
-                  key={key}
-                  onClick={() => selectMock(key)}
-                  title={key}
-                  className={selectedMock === key ? 'active' : ''}
-                >
-                  {key}
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {state?.request?.data?.txData?.JSONRepresentation && (
-          <>
-            {mode === 'preview' && (
-              <div className="transaction-preview-wrapper">
-                <SignTransaction.JsonPreview data={state} />
-                {/*<SignTransaction.TransactionPreview data={state} />*/}
-              </div>
-            )}
-            {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
-          </>
-        )}
-
-        {/* HTLC Secret Information */}
-        {isHTLCCreateTx && generatedSecret && (
-          <div className="htlc-secret-section">
-            <h3>HTLC Secret Generated</h3>
-            <div className="secret-info">
-              <div className="secret-item">
-                <label>Secret (Hex):</label>
-                <div className="secret-value">
-                  <span>{generatedSecret}</span>
-                  <button
-                    onClick={() =>
-                      navigator.clipboard.writeText(generatedSecret)
-                    }
-                    title="Copy secret"
+        <div className="SignTxContent">
+          {!external_state && (
+            <div className="mock_selector">
+              {Object.keys(MOCKS).map((key) => {
+                return (
+                  <div
+                    key={key}
+                    onClick={() => selectMock(key)}
+                    title={key}
+                    className={selectedMock === key ? 'active' : ''}
                   >
-                    📋
-                  </button>
-                </div>
-              </div>
-              <div className="secret-item">
-                <label>Secret Hash (Hex):</label>
-                <div className="secret-value">
-                  <span>{generatedSecretHash}</span>
-                  <button
-                    onClick={() =>
-                      navigator.clipboard.writeText(generatedSecretHash)
-                    }
-                    title="Copy secret hash"
-                  >
-                    📋
-                  </button>
-                </div>
-              </div>
+                    {key}
+                  </div>
+                )
+              })}
             </div>
-            <div className="secret-warning">
-              <strong>⚠️ Important:</strong> Save this secret securely! You will
-              need it to claim the HTLC later.
-            </div>
-          </div>
-        )}
-      </div>
+          )}
 
-      <div className="footer">
-        <Button
-          onClickHandle={handleReject}
-          extraStyleClasses={extraButtonStyles}
-          alternate
-        >
-          Decline
-        </Button>
-        <Button
-          onClickHandle={handleApprove}
-          extraStyleClasses={extraButtonStyles}
-        >
-          Approve and return to page.
-        </Button>
-      </div>
+          {state?.request?.data?.txData?.JSONRepresentation && (
+            <>
+              {mode === 'preview' && (
+                <div className="transaction-preview-wrapper">
+                  <SignTransaction.JsonPreview data={state} />
+                  {/*<SignTransaction.TransactionPreview data={state} />*/}
+                </div>
+              )}
+              {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
+            </>
+          )}
 
-      {isModalOpen && (
-        <PopUp setOpen={setIsModalOpen}>
-          <div className="modal-content">
-            <TextField
-              label="Re-enter your Password"
-              password
-              value={password}
-              onChangeHandle={passwordChangeHandler}
-              placeHolder="Enter your password"
-              autoFocus
-            />
-            {isHTLCSpendTx && !revealed_secret && (
-              <>
-                <div className="htlc-secret-input">
-                  <label>HTLC Secret:</label>
-                  <TextField
-                    value={secret}
-                    onChangeHandle={secretChangeHandler}
-                    placeholder="Enter htlc secret in hex format (64 characters)"
-                    autoFocus
-                  />
-                  {secretError && (
-                    <div className="secret-error">{secretError}</div>
-                  )}
-                  <div className="secret-hint">
-                    <small>
-                      💡 Enter the 32-byte secret in hexadecimal format
-                    </small>
+          {/* HTLC Secret Information */}
+          {isHTLCCreateTx && generatedSecret && (
+            <div className="htlc-secret-section">
+              <h3>HTLC Secret Generated</h3>
+              <div className="secret-info">
+                <div className="secret-item">
+                  <label>Secret (Hex):</label>
+                  <div className="secret-value">
+                    <span>{generatedSecret}</span>
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(generatedSecret)
+                      }
+                      title="Copy secret"
+                    >
+                      📋
+                    </button>
                   </div>
                 </div>
-              </>
-            )}
-            <div className="modal-buttons">
-              <Button
-                onClickHandle={() => setIsModalOpen(false)}
-                extraStyleClasses={extraButtonStyles}
-                alternate
-              >
-                Decline
-              </Button>
-              <Button
-                onClickHandle={handleModalSubmit}
-                extraStyleClasses={extraButtonStyles}
-              >
-                Approve
-              </Button>
+                <div className="secret-item">
+                  <label>Secret Hash (Hex):</label>
+                  <div className="secret-value">
+                    <span>{generatedSecretHash}</span>
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(generatedSecretHash)
+                      }
+                      title="Copy secret hash"
+                    >
+                      📋
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="secret-warning">
+                <strong>⚠️ Important:</strong> Save this secret securely! You
+                will need it to claim the HTLC later.
+              </div>
             </div>
-          </div>
-        </PopUp>
-      )}
-    </div>
+          )}
+        </div>
+
+        <div className="footer">
+          <Button
+            onClickHandle={handleReject}
+            extraStyleClasses={extraButtonStyles}
+            alternate
+          >
+            Decline
+          </Button>
+          <Button
+            onClickHandle={handleApprove}
+            extraStyleClasses={extraButtonStyles}
+          >
+            Approve and return to page.
+          </Button>
+        </div>
+
+        {isModalOpen && (
+          <PopUp setOpen={setIsModalOpen}>
+            <div className="modal-content">
+              <TextField
+                label="Re-enter your Password"
+                password
+                value={password}
+                onChangeHandle={passwordChangeHandler}
+                placeHolder="Enter your password"
+                autoFocus
+              />
+              {isHTLCSpendTx && !revealed_secret && (
+                <>
+                  <div className="htlc-secret-input">
+                    <label>HTLC Secret:</label>
+                    <TextField
+                      value={secret}
+                      onChangeHandle={secretChangeHandler}
+                      placeholder="Enter htlc secret in hex format (64 characters)"
+                      autoFocus
+                    />
+                    {secretError && (
+                      <div className="secret-error">{secretError}</div>
+                    )}
+                    <div className="secret-hint">
+                      <small>
+                        💡 Enter the 32-byte secret in hexadecimal format
+                      </small>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="modal-buttons">
+                <Button
+                  onClickHandle={() => setIsModalOpen(false)}
+                  extraStyleClasses={extraButtonStyles}
+                  alternate
+                >
+                  Decline
+                </Button>
+                <Button
+                  onClickHandle={handleModalSubmit}
+                  extraStyleClasses={extraButtonStyles}
+                >
+                  Approve
+                </Button>
+              </div>
+            </div>
+          </PopUp>
+        )}
+      </div>
+    </PageWrapper>
   )
 }
 

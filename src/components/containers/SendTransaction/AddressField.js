@@ -2,11 +2,10 @@ import { useEffect, useState, useContext } from 'react'
 import { validate } from 'wallet-address-validator'
 
 import { Input } from '@BasicComponents'
-import TransactionField from './TransactionField'
 import { AppInfo } from '@Constants'
 import { ML } from '@Helpers'
 
-import './errorMessages.css'
+import styles from './AddressField.module.css'
 
 import { SettingsContext } from '@Contexts'
 
@@ -21,22 +20,24 @@ const AddressField = ({
   const { networkType } = useContext(SettingsContext)
   const [value, setValue] = useState(preEnterAddress)
 
-  //let inputValue = ''
   let placeholder = ''
   let addressErrorMessage = ''
-  let label = 'Send to:'
+  let label = 'Recipient address'
+  let networkLabel = ''
   let validity = true
 
   if (walletType.chain === 'bitcoin') {
+    networkLabel = 'Bitcoin network'
     placeholder =
       networkType === AppInfo.NETWORK_TYPES.MAINNET
-        ? 'bc1... or 1... or 3...'
-        : 'tb1... or 1... or 3...'
+        ? 'bc1q...  or  tb1q...'
+        : 'bc1q...  or  tb1q...'
     addressErrorMessage = 'This is not a valid BTC address.'
     validity = (val) => validate(val, 'btc', networkType)
   }
 
   if (walletType.chain === 'mintlayer') {
+    networkLabel = 'Mintlayer network'
     placeholder =
       networkType === AppInfo.NETWORK_TYPES.MAINNET ? 'mtc1...' : 'tmt1...'
     addressErrorMessage = 'This is not a valid ML address.'
@@ -48,7 +49,7 @@ const AddressField = ({
           ? 'mpool1...'
           : 'tpool1...'
       addressErrorMessage = 'This is not a valid ML pool id.'
-      label = 'Pool id:'
+      label = 'Pool id'
       validity = (val) => ML.isMlPoolIdValid(val, networkType)
     }
 
@@ -61,7 +62,7 @@ const AddressField = ({
           ? 'mdelg1...'
           : 'tdelg1...'
       addressErrorMessage = 'This is not a valid ML delegation id.'
-      label = 'Deleg id:'
+      label = 'Deleg id'
       validity = (val) => ML.isMlDelegationIdValid(val, networkType)
     }
   }
@@ -90,14 +91,24 @@ const AddressField = ({
   }, [errorMessage, setMessage])
 
   return (
-    <TransactionField>
-      <label htmlFor="address">{label}</label>
+    <div className={styles.field}>
+      <label
+        className={styles.label}
+        htmlFor="address"
+      >
+        {label}
+        {networkLabel && (
+          <>
+            {' '}
+            <span className={styles.separator}>&middot;</span>{' '}
+            <span className={styles.networkLabel}>{networkLabel}</span>
+          </>
+        )}
+      </label>
       <Input
         id="address"
         placeholder={placeholder}
-        extraStyleClasses={['address-field']}
         onChangeHandle={changeHandle}
-        setErrorMessage={setMessage}
         validity={isValid}
         value={value}
         disabled={
@@ -105,8 +116,8 @@ const AddressField = ({
           transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
         }
       />
-      <p className="error-message">{message}</p>
-    </TransactionField>
+      {message && <p className={styles.errorMessage}>{message}</p>}
+    </div>
   )
 }
 

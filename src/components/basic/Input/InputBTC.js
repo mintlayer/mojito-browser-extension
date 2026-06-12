@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from 'react'
+import { useState, useContext } from 'react'
 import { AppInfo, Expressions } from '@Constants'
 import { NumbersHelper } from '@Helpers'
 import Input from './Input'
@@ -16,6 +16,12 @@ const InputBTC = (props) => {
   const breakersRegex = /[.,]/g
 
   const [value, setValue] = useState(props.value || '')
+  const [prevPropsValue, setPrevPropsValue] = useState(props.value)
+
+  if (props.value !== prevPropsValue) {
+    setPrevPropsValue(props.value)
+    setValue(props.value)
+  }
 
   const removeBreakers = (value) => value.replaceAll(breakersRegex, '')
 
@@ -78,10 +84,6 @@ const InputBTC = (props) => {
     ev.target.originalValue = parsedVal.originalValue
     return parsedVal.value || ev.target.value
   }
-
-  useEffect(() => {
-    setValue(props.value)
-  }, [props.value])
 
   return (
     <Input

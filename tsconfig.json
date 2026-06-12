@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@BasicComponents": ["./src/components/basic/index.js"],
+      "@ComposedComponents": ["./src/components/composed/index.js"],
+      "@LayoutComponents": ["./src/components/layouts/index.js"],
+      "@ContainerComponents": ["./src/components/containers/index.js"],
+      "@Assets/*": ["./src/assets/*"],
+      "@Contexts": ["./src/contexts/index.js"],
+      "@Hooks": ["./src/hooks/index.js"],
+      "@Pages": ["./src/pages/index.js"],
+      "@APIs": ["./src/services/API/index.js"],
+      "@Cryptos": ["./src/services/Crypto/index.js"],
+      "@Databases": ["./src/services/Database/index.js"],
+      "@Entities": ["./src/services/Entity/index.js"],
+      "@Helpers": ["./src/utils/Helpers/index.js"],
+      "@Constants": ["./src/utils/Constants/index.js"],
+      "@TestData": ["./src/utils/TestData/index.js"],
+      "@Storage": ["./src/services/Storage/index.js"],
+      "@Version": ["./src/version/version.js"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "build"]
+}

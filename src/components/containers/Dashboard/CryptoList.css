@@ -21,6 +21,9 @@
   font-weight: bold;
 }
 .crypto-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   height: 240px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -36,13 +39,16 @@
   position: relative;
   display: flex;
   justify-content: space-between;
-  padding: 12px 30px 12px 18px;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  padding: 12px 29px 12px 8px;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
   background-color: rgb(var(--color-gray));
   border: 1px solid rgba(var(--color-light-green), 0.2);
-  border-radius: 45px;
+  border-radius: 35px;
+  max-height: 72px;
+  min-height: 72px;
+  box-sizing: border-box;
 }
 
 .logo-wrapper {
@@ -54,12 +60,15 @@
 }
 
 .crypto-item .name-values {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   width: 393px;
-  margin: 0.3rem 0 0.3rem 1.875rem;
+  margin: 0 0 0 1rem;
 }
 
 .crypto-item .name-values h5 {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: bold;
 }
 
@@ -95,7 +104,7 @@
 
 .crypto-item .name-values .values dt,
 .crypto-item .name-values .values dd {
-  font-size: 1.125rem;
+  font-size: 0.95rem;
   display: block;
 }
 
@@ -111,20 +120,42 @@
 
 .crypto-item .name-values .values dd {
   font-weight: 600;
-  line-height: 2.3rem;
+  line-height: 1.6rem;
   margin-bottom: auto;
 }
 
 .crypto-item svg {
-  height: 72px;
-  width: 72px;
+  height: 60px;
+  width: 60px;
+}
+
+.crypto-item .logo-round {
+  height: 60px;
+  width: 60px;
+  min-width: 60px;
+}
+
+.crypto-item .token-logo-round {
+  height: 60px;
+  width: 60px;
+  min-width: 60px;
+  min-height: 60px;
+  font-size: 18px;
+}
+
+.crypto-item .token-logo-round img {
+  right: -4px;
+  bottom: -2px;
+  height: 10px;
+  width: 10px;
+  padding: 3px;
 }
 
 .crypto-item .connect-logo {
   background: rgb(var(--color-green));
   border-radius: 50%;
-  height: 72px;
-  width: 72px;
+  height: 60px;
+  width: 60px;
 }
 
 .crypto-item .connect-logo img {

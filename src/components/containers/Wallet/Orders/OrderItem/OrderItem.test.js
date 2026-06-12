@@ -35,9 +35,19 @@ const mockTokenOrder = {
   },
 }
 
+const renderOrderItem = (order) => {
+  return render(
+    <table>
+      <tbody>
+        <OrderItem order={order} />
+      </tbody>
+    </table>,
+  )
+}
+
 describe('OrderItem', () => {
   it('renders order correctly', () => {
-    render(<OrderItem order={mockOrder} />)
+    renderOrderItem(mockOrder)
 
     expect(screen.getByTestId('order')).toBeInTheDocument()
     expect(screen.getByTestId('order-id')).toHaveTextContent(
@@ -50,7 +60,7 @@ describe('OrderItem', () => {
   })
 
   it('renders token order correctly', () => {
-    render(<OrderItem order={mockTokenOrder} />)
+    renderOrderItem(mockTokenOrder)
 
     expect(screen.getByTestId('order')).toBeInTheDocument()
     expect(screen.getByText('50.75')).toBeInTheDocument()
@@ -60,7 +70,7 @@ describe('OrderItem', () => {
   })
 
   it('formats order ID correctly', () => {
-    render(<OrderItem order={mockOrder} />)
+    renderOrderItem(mockOrder)
 
     expect(screen.getByTestId('order-id')).toHaveTextContent(
       ML.formatAddress(mockOrder.order_id),
@@ -68,17 +78,16 @@ describe('OrderItem', () => {
   })
 
   it('applies correct CSS classes', () => {
-    render(<OrderItem order={mockOrder} />)
+    renderOrderItem(mockOrder)
 
     const orderItem = screen.getByTestId('order')
-    expect(orderItem).toHaveClass('transaction')
+    expect(orderItem).toHaveClass('row')
   })
 
-  it('renders swap icons', () => {
-    render(<OrderItem order={mockOrder} />)
+  it('renders chevron indicator', () => {
+    renderOrderItem(mockOrder)
 
-    const swapIcons = screen.getAllByTestId('swap-icon')
-    expect(swapIcons).toHaveLength(2)
+    expect(screen.getByText('›')).toBeInTheDocument()
   })
 
   it('handles long decimal values', () => {
@@ -92,7 +101,7 @@ describe('OrderItem', () => {
       },
     }
 
-    render(<OrderItem order={orderWithLongDecimals} />)
+    renderOrderItem(orderWithLongDecimals)
 
     expect(screen.getByText('123.456789')).toBeInTheDocument()
     expect(screen.getByText('987.123456')).toBeInTheDocument()
@@ -109,8 +118,25 @@ describe('OrderItem', () => {
       },
     }
 
-    render(<OrderItem order={orderWithoutTicker} />)
+    renderOrderItem(orderWithoutTicker)
 
     expect(screen.getByTestId('order')).toBeInTheDocument()
+  })
+
+  it('shows exchange rate when quote_rate is available', () => {
+    const orderWithRate = {
+      ...mockOrder,
+      quote_rate: 2.0,
+    }
+
+    renderOrderItem(orderWithRate)
+
+    expect(screen.getByText('1 ML = 2 TKN')).toBeInTheDocument()
+  })
+
+  it('does not show exchange rate when quote_rate is missing', () => {
+    renderOrderItem(mockOrder)
+
+    expect(screen.queryByText(/1 ML =/)).not.toBeInTheDocument()
   })
 })

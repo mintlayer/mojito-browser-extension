@@ -1,0 +1,74 @@
+.nestedMenu {
+  margin-top: 10px;
+  transition: all 0.2s ease;
+}
+
+.nestedMenuItem {
+  position: relative;
+  margin-bottom: 1px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: rgb(var(--color-black));
+  background: rgba(var(--color-purple), 0.4);
+  transition: all 0.2s ease;
+}
+
+.nestedMenuItemOpen {
+  padding: 5px;
+}
+
+.nestedLabelWrapper {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.nestedLabelWrapper:hover {
+  color: rgb(var(--color-white));
+  background: rgba(var(--color-purple), 0.7);
+  transition: all 0.2s ease;
+}
+
+.nestedMenuItemOpen .nestedLabelWrapper {
+  color: rgb(var(--color-white));
+  background: rgba(var(--color-purple), 0.7);
+  transition: all 0.2s ease;
+}
+
+.nestedItemMenu {
+  margin-top: 5px;
+}
+
+.nestedItemMenuItem {
+  display: flex;
+  padding: 10px 15px;
+  margin-bottom: 1px;
+  border-radius: 4px;
+  font-size: 15px;
+  cursor: pointer;
+  background: rgb(var(--color-white));
+  transition: all 0.2s ease;
+}
+
+.nestedItemMenuItem:hover {
+  color: rgb(var(--color-white));
+  background-color: rgba(153, 196, 153, 0.8);
+}
+
+.navigationTriangle {
+  position: absolute;
+  top: 16px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  margin: 0;
+  transform: rotate(180deg);
+  transition: all 0.2s ease;
+}
+
+.navigationTriangleOpen {
+  transform: none;
+  top: 21px;
+}

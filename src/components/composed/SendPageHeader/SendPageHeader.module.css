@@ -1,0 +1,29 @@
+.header {
+  padding: 10px 0 20px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+  margin: 0;
+
+  @media screen and (min-width: 801px) {
+    font-size: 28px;
+  }
+}
+
+.ticker {
+  font-size: 22px;
+  color: rgb(var(--color-main-green));
+
+  @media screen and (min-width: 801px) {
+    font-size: 28px;
+  }
+}
+
+.subtitle {
+  font-size: 13px;
+  color: rgba(var(--color-black), 0.5);
+  margin: 4px 0 0;
+}

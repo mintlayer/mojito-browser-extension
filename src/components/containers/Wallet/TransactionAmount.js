@@ -25,7 +25,7 @@ const TransactionAmount = ({ transaction, title, extraStyleClasses = [] }) => {
             <span>{tokenMap[transaction.value?.from?.token_id] || 'ML'}</span>
           </div>
           <SwapIcon
-            className={'balance-swap-icon'}
+            className="balance-swap-icon"
             data-testid="swap-icon"
           />
           <div data-testid="transaction-amount-to">

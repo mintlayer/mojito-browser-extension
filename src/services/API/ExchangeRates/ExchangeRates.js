@@ -1,9 +1,12 @@
-const EXCHANGE_RATES_SERVER_URL = 'https://rates-api.mintlayer.org'
+import { EnvVars } from '@Constants'
+
+const EXCHANGE_RATES_SERVER_URL = EnvVars.EXCHANGE_RATES_SERVER
 
 const EXCHANGE_RATES_SERVER_ENDPOINTS = {
   GET_RATE: '/getCurrentRate/:crypto/:fiat',
   GET_OLD_RATE: '/getOneDayAgoRate/:crypto/:fiat',
   GET_HIST: '/getOneDayAgoHist/:crypto/:fiat',
+  GET_THIRTY_DAYS_HIST: '/getThirtyDaysHist/:crypto/:fiat',
 }
 
 const requestExchangeRates = async (endpoint, request = fetch) => {
@@ -42,4 +45,12 @@ const getOneDayAgoHist = (crypto, fiat) =>
     ),
   )
 
-export { getRate, getOneDayAgoRate, getOneDayAgoHist }
+const getThirtyDaysHist = (crypto, fiat) =>
+  requestExchangeRates(
+    EXCHANGE_RATES_SERVER_ENDPOINTS.GET_THIRTY_DAYS_HIST.replace(
+      ':crypto',
+      crypto,
+    ).replace(':fiat', fiat),
+  )
+
+export { getRate, getOneDayAgoRate, getOneDayAgoHist, getThirtyDaysHist }

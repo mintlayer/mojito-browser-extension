@@ -5,8 +5,8 @@ import { LocalStorageService } from '@Storage'
 import Decimal from 'decimal.js'
 
 const AVERAGE_MIN_PER_BLOCK = 15
-const SATOSHI_BTC_CONVERSION_FACTOR = 100_000_000
-const MAX_BTC = 21_000_000
+const SATOSHI_BTC_CONVERSION_FACTOR = 100000000
+const MAX_BTC = 21000000
 const MAX_BTC_IN_SATOSHIS = MAX_BTC * SATOSHI_BTC_CONVERSION_FACTOR
 
 const blockLevels = {
@@ -211,9 +211,11 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
 
 const getStats = (proportionDiffs, balanceDiffs, networkType) => {
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
-  const percentValue = isTestnet
-    ? 0
-    : new Decimal(proportionDiffs.total || 0).minus(1).times(100).toFixed(2)
+  const hasBalance = proportionDiffs.total !== 0
+  const percentValue =
+    isTestnet || !hasBalance
+      ? 0
+      : new Decimal(proportionDiffs.total || 0).minus(1).times(100).toFixed(2)
   const fiatValue = isTestnet
     ? 0
     : new Decimal(balanceDiffs.total || 0).toFixed(2)

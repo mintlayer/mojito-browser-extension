@@ -8,7 +8,7 @@ import { ReactComponent as SearchIcon } from '@Assets/images/icon-search.svg'
 import SwapPopupContent from './SwapPopupContent'
 import SelectTokenSwap from './SelectTokenSwap'
 
-import './SwapInterface.css'
+import styles from './SwapInterface.module.css'
 
 const SwapInterface = () => {
   const { tokenBalances, balance, allNetworkTokensData, fetchOrdersPairInfo } =
@@ -94,12 +94,12 @@ const SwapInterface = () => {
 
   return (
     <form
-      className="swap-interface"
+      className={styles.form}
       onSubmit={handleSubmit}
     >
-      <div className="swap-row">
-        <h3 className="swap-title">Swap From</h3>
-        <div className="inputs-wrapper">
+      <div className={styles.row}>
+        <h3 className={styles.label}>Swap From</h3>
+        <div className={styles.inputsWrapper}>
           <SelectTokenSwap
             token={fromToken}
             onClick={handleFromTokenClick}
@@ -109,23 +109,23 @@ const SwapInterface = () => {
             placeholder="0"
             value={amount}
             onChange={handleInputChange}
-            className="swap-amount-input"
+            className={styles.amountInput}
             id="swap-amount-input"
           />
         </div>
-        <p className="from-token-balance">
+        <p className={styles.balance}>
           Balance: {fromToken.balance} {fromToken.token_ticker}
         </p>
       </div>
 
-      <div className="swap-arrow-row">
-        <Button extraStyleClasses={['swap-arrow-button']}>
-          <ArrowIcon className="icon-arrow-swap" />
+      <div className={styles.arrowRow}>
+        <Button extraStyleClasses={[styles.arrowButton]}>
+          <ArrowIcon className={styles.arrowIcon} />
         </Button>
       </div>
-      <div className="swap-row">
-        <h3 className="swap-title">Swap To</h3>
-        <div className="inputs-wrapper">
+      <div className={styles.row}>
+        <h3 className={styles.label}>Swap To</h3>
+        <div className={styles.inputsWrapper}>
           <SelectTokenSwap
             token={toToken}
             onClick={handleToTokenClick}
@@ -133,10 +133,10 @@ const SwapInterface = () => {
           <Button
             onClickHandle={handleSubmit}
             disabled={!amount}
-            extraStyleClasses={['find-order-button']}
+            extraStyleClasses={[styles.findButton]}
           >
+            <SearchIcon className={styles.findOrderIcon} />
             Find orders
-            <SearchIcon className="find-order-button-icon" />
           </Button>
         </div>
       </div>

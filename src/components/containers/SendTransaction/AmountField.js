@@ -1,41 +1,55 @@
 import { useState } from 'react'
 import { CryptoFiatField } from '@ComposedComponents'
-import TransactionField from './TransactionField'
 
-import './errorMessages.css'
+import styles from './AmountField.module.css'
 
 const AmountField = ({
   amountChanged,
   transactionData,
   validity = undefined,
   errorMessage,
-  exchangeRate,
   maxValueInToken,
   setAmountValidity,
   totalFeeInCrypto,
   transactionMode,
+  inputValue,
+  placeholder,
+  validate,
+  label = 'Amount',
+  children,
 }) => {
   const [localMessage, setLocalMessage] = useState(undefined)
 
   return (
-    <TransactionField>
-      <label htmlFor="amount">Amount:</label>
+    <div className={styles.field}>
+      {label && (
+        <label
+          className={styles.label}
+          htmlFor="amount"
+        >
+          {label}
+        </label>
+      )}
       <CryptoFiatField
         id="amount"
         buttonTitle="Max"
-        placeholder="0"
+        placeholder={placeholder || '0'}
         transactionData={transactionData}
+        inputValue={inputValue}
         validity={validity}
         changeValueHandle={amountChanged}
         setErrorMessage={setLocalMessage}
-        exchangeRate={exchangeRate}
         maxValueInToken={maxValueInToken}
         setAmountValidity={setAmountValidity}
         totalFeeInCrypto={totalFeeInCrypto}
         transactionMode={transactionMode}
+        validate={validate}
       />
-      <p className="error-message">{localMessage ?? errorMessage}</p>
-    </TransactionField>
+      {children}
+      {(localMessage || errorMessage) && (
+        <p className={styles.errorMessage}>{localMessage ?? errorMessage}</p>
+      )}
+    </div>
   )
 }
 

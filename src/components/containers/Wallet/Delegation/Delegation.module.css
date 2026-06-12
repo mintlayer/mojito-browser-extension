@@ -1,0 +1,141 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: max-content;
+  padding: 1rem 1.25rem;
+  border-radius: 35px;
+  background: rgb(var(--color-white));
+  border: 1px solid rgb(var(--color-medium-gray));
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
+  list-style: none;
+}
+
+.card:hover {
+  border-color: rgba(var(--mojito-green), 0.4);
+  box-shadow: 0 2px 8px rgba(var(--color-black), 0.06);
+}
+
+.nonEmpty {
+  background: rgba(255, 223, 182, 0.3);
+  border-color: rgba(255, 200, 130, 0.4);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  min-width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgb(var(--color-dim-blue));
+  font-size: 1.5rem;
+  color: rgb(var(--color-white));
+  flex-shrink: 0;
+}
+
+.iconDecommissioned {
+  background: rgb(var(--color-dim-corail));
+}
+
+.stakeIcon {
+  width: 28px;
+  height: 28px;
+  color: rgb(var(--color-white));
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.poolId {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgb(var(--color-black));
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inactiveBadge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgb(var(--color-orange));
+  background: rgba(var(--color-orange), 0.12);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.date {
+  font-size: 0.8rem;
+  color: rgb(var(--color-dark-gray));
+  margin: 0.2rem 0 0;
+}
+
+.amountBlock {
+  text-align: right;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: rgb(var(--color-black));
+  margin: 0;
+}
+
+.currency {
+  font-size: 0.75rem;
+  color: rgb(var(--color-dark-gray));
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.actionButton {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+}
+
+.progressBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 40px;
+  background-color: rgb(17, 150, 127);
+  animation: grow 60s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.loadingWrapper {
+  position: absolute;
+  left: 36px;
+  top: 50%;
+  margin-top: -38px;
+  margin-left: -2px;
+  transform: scale(1.2);
+}
+
+@keyframes grow {
+  from {
+    width: 0;
+  }
+  to {
+    width: 95%;
+  }
+}

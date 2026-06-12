@@ -21,7 +21,7 @@ test('Render Inputs list item', () => {
   const inputComponent = screen.getByTestId('inputs-list-item')
 
   expect(inputComponent).toBeInTheDocument()
-  expect(inputComponent).toHaveClass('list-item')
+  expect(inputComponent).toHaveClass('listItem')
 })
 
 test('Render Inputs list item in restore mode', () => {
@@ -40,7 +40,7 @@ test('Render Inputs list item in restore mode', () => {
   expect(inputComponent).toBeInTheDocument()
   expect(inputComponent).toContainElement(inputNumber)
   expect(inputNumber).toHaveClass('number')
-  expect(inputComponent).toHaveClass('list-item')
+  expect(inputComponent).toHaveClass('listItem')
 })
 
 test('genNumberClasslist function valid', () => {
@@ -49,11 +49,11 @@ test('genNumberClasslist function valid', () => {
     VALIDITYSAMPLE,
     RESTOREMODESAMPLE,
   )
-  expect(generator).toBe('number number-finished')
+  expect(generator).toBe('number numberFinished')
 })
 
 test('genNumberClasslist function invalid', () => {
   const VALID = 'invalid'
   const generator = genNumberClasslist(VALUESAMPLE, VALID, RESTOREMODESAMPLE)
-  expect(generator).toBe('number number-invalid')
+  expect(generator).toBe('number numberInvalid')
 })

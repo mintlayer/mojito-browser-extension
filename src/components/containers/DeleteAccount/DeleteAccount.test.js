@@ -32,14 +32,10 @@ describe('DeleteAccount', () => {
         ,
       </BrowserRouter>,
     )
-    expect(
-      screen.getByText(
-        'Are you sure you want to permanently delete your wallet?',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Delete wallet permanently?')).toBeInTheDocument()
   })
 
-  it('changes step on Continue click', () => {
+  it('changes step on Delete wallet click after confirming checkboxes', () => {
     render(
       <BrowserRouter future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
@@ -50,7 +46,10 @@ describe('DeleteAccount', () => {
         ,
       </BrowserRouter>,
     )
-    fireEvent.click(screen.getByText('Continue'))
+    const checkboxes = screen.getAllByRole('checkbox')
+    fireEvent.click(checkboxes[0])
+    fireEvent.click(checkboxes[1])
+    fireEvent.click(screen.getByText('Delete wallet'))
     expect(screen.getByText('Delete Wallet')).toBeInTheDocument()
   })
 
@@ -69,7 +68,7 @@ describe('DeleteAccount', () => {
     expect(mockContext.setRemoveAccountPopupOpen).toHaveBeenCalledWith(false)
   })
 
-  it('calls deleteAccountHandler on form submit', async () => {
+  it('disables delete button until both checkboxes are checked', () => {
     render(
       <BrowserRouter future={memoryRouterFeature}>
         <AccountContext.Provider value={mockContext}>
@@ -80,16 +79,14 @@ describe('DeleteAccount', () => {
         ,
       </BrowserRouter>,
     )
-    fireEvent.click(screen.getByText('Continue'))
-    fireEvent.submit(screen.getByText('Delete Wallet'))
+    const deleteBtn = screen.getByText('Delete wallet').closest('button')
+    expect(deleteBtn).toBeDisabled()
 
-    // await waitFor(() => expect(Account.deleteAccount).toHaveBeenCalledWith('1'))
-    // await waitFor(() =>
-    //   expect(mockContext.verifyAccountsExistence).toHaveBeenCalled(),
-    // )
-    // await waitFor(() => expect(mockContext.logout).toHaveBeenCalled())
-    // await waitFor(() =>
-    //   expect(mockContext.setRemoveAccountPopupOpen).toHaveBeenCalledWith(false),
-    // )
+    const checkboxes = screen.getAllByRole('checkbox')
+    fireEvent.click(checkboxes[0])
+    expect(deleteBtn).toBeDisabled()
+
+    fireEvent.click(checkboxes[1])
+    expect(deleteBtn).not.toBeDisabled()
   })
 })

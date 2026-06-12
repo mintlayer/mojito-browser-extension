@@ -2,14 +2,19 @@ import { useContext, useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
+import { SendPageHeader } from '@ComposedComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
-import { AccountContext, MintlayerContext } from '@Contexts'
+import { AccountContext, MintlayerContext, SettingsContext } from '@Contexts'
+import { AppInfo } from '@Constants'
 
-import './SendMlTransaction.css'
+import { PageWrapper } from '@BasicComponents'
+import styles from './SendMlTransaction.module.css'
 
 const SendMlTransactionPage = () => {
   const { addresses, accountID } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
   const { coinType } = useParams()
   const walletType = useMemo(
@@ -27,6 +32,7 @@ const SendMlTransactionPage = () => {
   const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [feeLoading, setFeeLoading] = useState(false)
+  const [feeError, setFeeError] = useState('')
   const navigate = useNavigate()
 
   const { balance, tokenBalances } = datahook(currentMlAddresses, coinType)
@@ -56,23 +62,45 @@ const SendMlTransactionPage = () => {
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
 
   useEffect(() => {
-    const buildTransaction = async () => {
-      if (
-        isFormValid &&
-        transactionInformation?.to.length > 0 &&
-        transactionInformation?.amount > 0
-      ) {
-        setFeeLoading(true)
+    if (
+      !isFormValid ||
+      !(transactionInformation?.to.length > 0) ||
+      !(transactionInformation?.amount > 0)
+    ) {
+      setFeeLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setFeeLoading(true)
+    setFeeError('')
+
+    const timer = setTimeout(async () => {
+      try {
         const transaction = await client.buildTransfer({
           to: transactionInformation.to,
           amount: transactionInformation.amount,
           token_id: walletType?.tokenId,
         })
+        if (cancelled) return
         setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
-        setFeeLoading(false)
+      } catch (error) {
+        if (cancelled) return
+        console.error('Fee calculation failed:', error)
+        setTotalFeeCrypto(0)
+        const message = error.message?.includes('Not enough coin UTXOs')
+          ? 'Insufficient balance'
+          : error.message || 'Fee calculation failed'
+        setFeeError(message)
+      } finally {
+        if (!cancelled) setFeeLoading(false)
       }
+    }, 400)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
     }
-    buildTransaction()
   }, [transactionInformation, client, walletType, isFormValid])
 
   if (!accountID) {
@@ -103,12 +131,18 @@ const SendMlTransactionPage = () => {
   }
 
   return (
-    <>
-      <div className="page">
+    <PageWrapper>
+      <div className={styles.page}>
+        <SendPageHeader
+          ticker={tokenName}
+          networkName="Mintlayer"
+          isTestnet={isTestnet}
+        />
         <VerticalGroup smallGap>
           <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}
             feeLoading={feeLoading}
+            feeError={feeError}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={balance}
@@ -121,7 +155,7 @@ const SendMlTransactionPage = () => {
           />
         </VerticalGroup>
       </div>
-    </>
+    </PageWrapper>
   )
 }
 

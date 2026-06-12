@@ -1,0 +1,80 @@
+.progressTracker {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  width: 100%;
+  min-height: max-content;
+  margin: 2rem 0;
+  color: rgb(var(--color-black));
+}
+
+.step {
+  flex-grow: 1;
+  font-size: 11px;
+  font-weight: bold;
+  list-style: none;
+  padding: 0.5rem 0 0;
+  text-align: center;
+}
+
+.step.active {
+  color: rgb(var(--mojito-green));
+}
+
+.stepperBar {
+  position: relative;
+  height: 4px;
+  margin-bottom: 7px;
+  background: rgb(var(--color-light-gray));
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+.stepperBar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  background: rgb(var(--color-main-green));
+  border-radius: inherit;
+}
+
+.step.completed .stepperBar::after {
+  width: 100%;
+}
+
+.step.active.forward .stepperBar::after {
+  left: 0;
+  animation: fill 0.3s linear forwards;
+}
+
+.step.active.backward .stepperBar::after {
+  left: 0;
+  width: 100%;
+}
+
+.step.leaving.backward .stepperBar::after {
+  left: 0;
+  width: 100%;
+  animation: empty 0.3s linear forwards;
+}
+
+@keyframes fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes empty {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0;
+  }
+}

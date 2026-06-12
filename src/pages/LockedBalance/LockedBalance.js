@@ -1,12 +1,11 @@
 import { LockedBalanceList } from '@ComposedComponents'
-
-import './LockedBalance.css'
+import { PageWrapper } from '@BasicComponents'
 
 const LockedBalancePage = () => {
   return (
-    <>
+    <PageWrapper>
       <LockedBalanceList />
-    </>
+    </PageWrapper>
   )
 }
 

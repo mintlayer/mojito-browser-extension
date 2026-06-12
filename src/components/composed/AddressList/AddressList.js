@@ -4,7 +4,7 @@ import { useParams } from 'react-router'
 
 import { Loading } from '@ComposedComponents'
 import AddressListItem from './AddressListItem'
-import './AddressList.css'
+import styles from './AddressList.module.css'
 
 const getFormatedMlAddresses = (addressData) => {
   return addressData.map((address) => ({
@@ -60,21 +60,28 @@ const AddressList = ({ search }) => {
   })
 
   return (
-    <div className="address-table-wrapper">
+    <div className={styles.card}>
       {fetchingBalances ? (
-        <div className="address-loading-wrapper">
+        <div className={styles.loadingWrapper}>
           <Loading />
         </div>
       ) : (
         <table
-          className="address-table"
+          className={styles.table}
           data-testid="address-table"
         >
           <thead>
             <tr>
-              <th className="address-title">Address</th>
-              <th className="address-title">Status</th>
-              <th className="address-title">Balances</th>
+              <th className={`${styles.colHeader} ${styles.colAddress}`}>
+                ADDRESS
+              </th>
+              <th className={`${styles.colHeader} ${styles.colStatus}`}>
+                STATUS
+              </th>
+              <th className={`${styles.colHeader} ${styles.colBalance}`}>
+                BALANCE
+              </th>
+              <th className={`${styles.colHeader} ${styles.colAction}`}></th>
             </tr>
           </thead>
           <tbody>
@@ -89,8 +96,8 @@ const AddressList = ({ search }) => {
             ) : (
               <tr>
                 <td
-                  colSpan="3"
-                  className="no-addresses"
+                  colSpan="4"
+                  className={styles.noAddresses}
                 >
                   No addresses found
                 </td>

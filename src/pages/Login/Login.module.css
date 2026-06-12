@@ -1,0 +1,19 @@
+.pageWrapper {
+  background: rgb(var(--color-white));
+  flex-direction: row;
+  padding: 0;
+
+  @media screen and (min-width: 801px) {
+    padding: 0;
+  }
+}
+
+.page {
+  display: flex;
+  flex: 1;
+  padding: 1rem;
+
+  @media screen and (min-width: 801px) {
+    padding: 2rem;
+  }
+}

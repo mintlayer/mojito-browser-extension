@@ -25,11 +25,11 @@ const SettingsBackup = () => {
   return (
     <div
       className="settings-backup"
-      data-testid="settings-testnet"
+      data-testid="settings-backup-component"
     >
       <div className="backup-description">
         <VerticalGroup>
-          <h2 data-testid="title">BACKUP WALLET</h2>
+          <h2 data-testid="title">Backup wallet</h2>
           <p>
             Backup your wallet to a JSON file. This file contains all the
             information needed to restore your wallet. Keep it safe and secure.

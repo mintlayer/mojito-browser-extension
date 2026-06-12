@@ -1,0 +1,153 @@
+.transaction {
+  display: flex;
+  align-items: center;
+  padding: 12px 29px 12px 8px;
+  margin-bottom: 0;
+  border-radius: 35px;
+  background: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.2);
+  word-break: break-all;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+  max-height: 72px;
+  min-height: 72px;
+  box-sizing: border-box;
+}
+
+.logoType {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  min-width: 60px;
+  height: 60px;
+  background: rgb(var(--color-dim-green));
+  border-radius: 50%;
+  position: relative;
+  z-index: 5;
+}
+
+.logoTypeInfo {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgb(var(--color-dark-gray));
+}
+
+.logoTypeWithdrawal {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgb(var(--color-dark-gray));
+}
+
+.logoTypeSame {
+  position: absolute;
+  z-index: 10;
+  left: 22px;
+  background: rgb(var(--color-dark-gray));
+}
+
+.logoTypeSame .loopIcon {
+  transform: rotate(90deg);
+  width: 28px;
+  height: 28px;
+}
+
+.logoTypeSame .loopIcon path {
+  stroke: rgb(var(--color-white)) !important;
+}
+
+.detail {
+  margin-left: 16px;
+  flex-grow: 1;
+}
+
+.logoOut {
+  background: rgb(var(--color-dim-corail));
+}
+
+.logoTypeStake {
+  background: rgb(var(--color-dim-blue));
+}
+
+.logoTypeDelegate {
+  background: rgb(var(--color-dim-purple));
+}
+
+.logoTypeUnconfirmed {
+  background: rgb(var(--color-dim-yellow));
+}
+
+.arrowIcon {
+  width: 22px;
+  height: 26px;
+}
+
+.arrowIconStake {
+  width: 22px;
+  height: 26px;
+  margin-left: -3px;
+}
+
+.stakeIcon {
+  width: 26px;
+  height: 26px;
+}
+
+.unconfirmedIcon {
+  width: 26px;
+  height: 28px;
+  color: #fff;
+}
+
+.delegationIcon {
+  width: 28px;
+  height: 28px;
+  margin-left: 2px;
+  margin-top: -2px;
+  color: rgb(var(--color-black));
+}
+
+.delegationIcon svg {
+  color: rgb(var(--color-black));
+}
+
+.arrowIconOut {
+  transform: rotate(180deg);
+}
+
+.dateAmount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.idInfo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.id {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+  word-break: break-all;
+}
+
+.date {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.date span {
+  font-weight: 600;
+}
+
+.transaction:hover {
+  transform: scale(1.02);
+  border: 1px solid rgba(var(--color-light-green), 0.5);
+}

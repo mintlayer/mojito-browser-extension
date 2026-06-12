@@ -1,44 +1,59 @@
 import React, { useContext, useState } from 'react'
-import { Button, Error, SwapTokenLogo } from '@BasicComponents'
-import { CopyButton } from '@ComposedComponents'
+import Decimal from 'decimal.js'
+import { Button, SwapTokenLogo } from '@BasicComponents'
+import { CopyButton, Loading } from '@ComposedComponents'
+import { CryptoFiatField } from '@ComposedComponents'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-swap.svg'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ML } from '@Helpers'
 
 import { MintlayerContext } from '@Contexts'
 
-import './OrderDetails.css'
-import { Loading, TextField } from '@ComposedComponents'
-import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
+import styles from './OrderDetails.module.css'
+
+const formatRate = (rate) => new Decimal(rate).toDecimalPlaces(10).toString()
 
 const OrderDetailsItem = ({ title, content, copyContent }) => {
   return (
     <div
-      className={'order-details-item'}
+      className={styles.item}
       data-testid="order-details-item"
     >
-      {title && <h2 data-testid="order-details-item-title">{title}</h2>}
+      {title && (
+        <h2
+          className={styles.itemTitle}
+          data-testid="order-details-item-title"
+        >
+          {title}
+        </h2>
+      )}
       <div
-        className="order-details-content"
+        className={styles.itemContent}
         data-testid="order-details-item-content"
       >
-        {content}
-        {copyContent && <CopyButton content={copyContent} />}
+        <span className={styles.itemValue}>{content}</span>
+        {copyContent && (
+          <div className={styles.copyWrapper}>
+            <CopyButton content={copyContent} />
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 const SwapInfoContent = ({ order, from }) => {
-  const tokenId = from
-    ? order.ask_currency.token_id
-    : order.give_currency.token_id
-  const tokenTicker = from
-    ? order.ask_currency.ticker
-    : order.give_currency.ticker
+  const currency = from ? order.ask_currency : order.give_currency
+  const balance = from ? order.ask_balance : order.give_balance
+  const tokenId = currency.token_id
+  const tokenTicker = currency.ticker
+  const displayTicker = currency.type === 'Coin' ? 'ML' : currency.ticker
+  const subtitle =
+    currency.type === 'Token' ? `(${currency.token_id})` : '(Mintlayer Coin)'
+
   return (
     <div
-      className="token-info-content"
+      className={styles.swapCard}
       data-testid="token-info-content"
     >
       <SwapTokenLogo
@@ -47,49 +62,68 @@ const SwapInfoContent = ({ order, from }) => {
         size="big"
       />
       <div
-        className="token-info-content-text"
+        className={styles.swapCardText}
         data-testid="token-info-text"
       >
         <p
-          className="token-info-content-amount"
+          className={styles.swapAmount}
           data-testid="token-amount"
         >
-          {from
-            ? `${order.ask_balance.decimal} ${order.ask_currency.type === 'Coin' ? 'ML' : order.ask_currency.ticker}`
-            : `${order.give_balance.decimal} ${order.give_currency.type === 'Coin' ? 'ML' : order.give_currency.ticker}`}
+          <span className={styles.amountValue}>{balance.decimal}</span>{' '}
+          <span className={styles.amountTicker}>{displayTicker}</span>
         </p>
         <p
-          className="token-info-content-id"
+          className={styles.swapTokenId}
           data-testid="token-id"
         >
-          {from
-            ? `${order.ask_currency.type === 'Token' ? `(${order.ask_currency.token_id})` : '(Mintlayer Coin)'}`
-            : `${order.give_currency.type === 'Token' ? `(${order.give_currency.token_id})` : '(Mintlayer Coin)'}`}
+          {subtitle}
         </p>
       </div>
+      <span
+        className={`${styles.badge} ${from ? styles.badgeFrom : styles.badgeTo}`}
+      >
+        {from ? 'FROM' : 'TO'}
+      </span>
     </div>
   )
 }
 
 const OrderDetails = ({ order }) => {
-  const buttonExtraStyles = ['order-details-button']
-  const inputExtraClasses = ['order-details-input']
-  const { client, unusedAddresses } = useContext(MintlayerContext)
+  const { client, unusedAddresses, balance, tokenBalances } =
+    useContext(MintlayerContext)
   const [txErrorMessage, setTxErrorMessage] = useState(null)
   const [loading, setLoading] = useState(false)
-  const loadingExtraClasses = ['loading-big']
-
   const [amount, setAmount] = useState('')
   const [amountValidity, setAmountValidity] = useState(false)
+  const [inputValidity, setInputValidity] = useState('')
 
-  const amountChangeHandler = (value) => {
-    setAmount(value)
-    setAmountValidity(
-      value &&
-        !isNaN(value) &&
-        parseFloat(value) > 0 &&
-        parseFloat(value) <= Number(order.ask_balance.decimal),
-    )
+  const maxAmount = Number(order.ask_balance.decimal)
+
+  const walletBalance =
+    order.ask_currency.type === 'Coin'
+      ? balance
+      : tokenBalances[order.ask_currency.token_id]
+        ? Number(tokenBalances[order.ask_currency.token_id].balance)
+        : 0
+  console.log('Order ask balance:', order.ask_balance.decimal)
+  console.log('Wallet balance for token:', walletBalance)
+  console.log('Wallet balance:', balance)
+  console.log('Token balances:', tokenBalances)
+
+  const handleValueChange = ({ value }) => {
+    setAmount(value || '')
+  }
+
+  const handleAmountValidity = (valid) => {
+    setAmountValidity(valid)
+    setInputValidity(valid ? 'valid' : 'invalid')
+    if (valid) setTxErrorMessage(null)
+  }
+
+  const validateAmount = (value) => {
+    if (value > walletBalance) return 'Insufficient wallet balance.'
+    if (value > maxAmount) return 'Amount exceeds available order balance.'
+    return null
   }
 
   const handleSwapClick = async () => {
@@ -108,109 +142,103 @@ const OrderDetails = ({ order }) => {
         })
       }
     } catch (error) {
-      if (typeof error === 'string') {
-        if (error?.message?.includes('Not enough token UTXOs')) {
-          setTxErrorMessage('Token blance is not enough to fill the order')
-          return
-        }
+      const msg = typeof error === 'string' ? error : error?.message || ''
 
-        if (error?.message?.includes('Failed to fetch order')) {
-          setTxErrorMessage('Order not found or invalid order ID')
-          return
-        }
+      if (msg.includes('Not enough token UTXOs')) {
+        setTxErrorMessage('Token balance is not enough to fill the order')
+        return
+      }
 
-        if (error?.message?.includes('Invalid addressable')) {
-          setTxErrorMessage('Invalid destination address')
-          return
-        }
+      if (msg.includes('Failed to fetch order')) {
+        setTxErrorMessage('Order not found or invalid order ID')
+        return
+      }
 
-        if (error.includes('Invalid addressable')) {
-          setTxErrorMessage('Invalid destination address')
-          return
-        }
+      if (msg.includes('Invalid addressable')) {
+        setTxErrorMessage('Invalid destination address')
+        return
       }
 
       console.error('Error filling order:', error)
-      setTxErrorMessage(
-        error?.message || 'An error occurred while filling the order',
-      )
+      setTxErrorMessage(msg || 'An error occurred while filling the order')
     } finally {
       setLoading(false)
     }
   }
+
+  const placeholderTicker =
+    order.ask_currency.type === 'Coin' ? 'ML' : order.ask_currency.ticker
+
   return (
     <div
-      className="order-details"
+      className={styles.container}
       data-testid="order-details"
     >
       {loading ? (
-        <div className="swap-order-loading">
-          <Loading extraStyleClasses={loadingExtraClasses} />
+        <div className={styles.loadingWrapper}>
+          <Loading extraStyleClasses={['loading-big']} />
         </div>
       ) : (
         <>
-          <div className="order-details-items-wrapper">
-            <OrderDetailsItem
-              title={'Order id:'}
-              content={ML.formatAddress(order.order_id, 36)}
-              copyContent={order.order_id}
+          <h1 className={styles.title}>Order details</h1>
+
+          <OrderDetailsItem
+            title={'Order id:'}
+            content={ML.formatAddress(order.order_id, 36)}
+            copyContent={order.order_id}
+          />
+
+          <div className={styles.swapCardWrapper}>
+            <SwapInfoContent
+              order={order}
+              from
             />
-            <div className="order-details-swap-row">
-              <OrderDetailsItem
-                title={''}
-                content={
-                  <SwapInfoContent
-                    order={order}
-                    from
-                  />
-                }
-              />
-              <div className="swap-arrow-row">
-                <Button extraStyleClasses={['details-swap-arrow-button']}>
-                  <ArrowIcon className="details-icon-arrow-swap" />
-                </Button>
-              </div>
-              <OrderDetailsItem
-                title={''}
-                content={<SwapInfoContent order={order} />}
-              />
+            <div
+              className={styles.arrowSeparator}
+              aria-hidden="true"
+            >
+              <ArrowIcon className={styles.arrowIcon} />
             </div>
-            <div className="order-details-exchange-rate">
-              <span>Exchage rate:</span>
-              <span>
-                {` 1 ${order.ask_currency.ticker} ≈ ${Number(order.quote_rate).toFixed(10)} ${order.give_currency.ticker}`}
-              </span>
-            </div>
+            <SwapInfoContent order={order} />
           </div>
-          <CenteredLayout grow>
-            <VerticalGroup grow>
-              {txErrorMessage ? (
-                <>
-                  <Error error={txErrorMessage} />
-                </>
-              ) : (
-                <></>
-              )}
-              <div className="order-details-inputs-wrapper">
-                <TextField
-                  value={amount}
-                  onChangeHandle={amountChangeHandler}
-                  validity={amountValidity}
-                  placeHolder={`${order.ask_currency.type === 'Coin' ? 'ML' : order.ask_currency.ticker} amount`}
-                  extraStyleClasses={inputExtraClasses}
-                  bigGap={false}
-                  focus={false}
-                />
-                <Button
-                  extraStyleClasses={buttonExtraStyles}
-                  onClickHandle={handleSwapClick}
-                >
-                  Swap
-                  <IconArrowTopRight className="order-details-button-icon" />
-                </Button>
-              </div>
-            </VerticalGroup>
-          </CenteredLayout>
+
+          <div className={styles.exchangeRate}>
+            <span>
+              Exchage rate:{' '}
+              {` 1 ${order.ask_currency.ticker} ≈ ${formatRate(order.quote_rate)} ${order.give_currency.ticker}`}
+            </span>
+            <p className={styles.walletBalance}>
+              Available: {walletBalance} {placeholderTicker}
+            </p>
+          </div>
+
+          <div className={styles.actions}>
+            <CryptoFiatField
+              inputValue={amount}
+              placeholder={`${placeholderTicker} amount`}
+              extraStyleClasses={[styles.amountInput]}
+              transactionData={{
+                tokenName: placeholderTicker,
+                fiatName: 'USD',
+              }}
+              validity={inputValidity}
+              changeValueHandle={handleValueChange}
+              setAmountValidity={handleAmountValidity}
+              totalFeeInCrypto={0}
+              validate={validateAmount}
+              setErrorMessage={setTxErrorMessage}
+            />
+            <Button
+              extraStyleClasses={[styles.swapButton]}
+              onClickHandle={handleSwapClick}
+            >
+              <IconArrowTopRight className={styles.swapButtonIcon} />
+              Swap
+            </Button>
+            {txErrorMessage && (
+              <p className={styles.errorMessage}>{txErrorMessage}</p>
+            )}
+          </div>
         </>
       )}
     </div>

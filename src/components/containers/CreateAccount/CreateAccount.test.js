@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 
 import SetAccount from './CreateAccount'
 import { AccountProvider, SettingsProvider } from '@Contexts'
+import { AccountContext } from '@Contexts'
 
 const SETSTEPSAMPLE = jest.fn()
 const GENERATEMNEMONIC = jest.fn()
@@ -32,7 +33,7 @@ test('Renders set account page with step 1', async () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(1)
 
   expect(setAccountComponent).toBeInTheDocument()
   expect(setAccountForm).toBeInTheDocument()
@@ -73,7 +74,7 @@ test('Renders set account page with step 2', async () => {
   const buttons = screen.getAllByTestId('button')
   const inputComponent = screen.getByTestId('input')
 
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(1)
 
   expect(setAccountComponent).toBeInTheDocument()
   expect(setAccountForm).toBeInTheDocument()
@@ -154,7 +155,7 @@ test('Renders set account page with step 3 (description)', () => {
   const setAccountForm = screen.getByTestId('set-account-form')
   const buttons = screen.getAllByTestId('button')
 
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(1)
   expect(descriptionParagraphs).toHaveLength(2)
 
   act(() => {
@@ -180,7 +181,7 @@ test('Renders set account page with step 4 (show words)', () => {
   const buttons = screen.getAllByTestId('button')
   const inputs = screen.getAllByTestId('input')
 
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(1)
   expect(inputs).toHaveLength(WORDSSAMPLE.length)
 
   const input = inputs[0]
@@ -219,12 +220,13 @@ test('Renders set account page with step 5 (verify words)', () => {
   const buttons = screen.getAllByTestId('button')
   const inputs = screen.getAllByTestId('input')
 
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(1)
   expect(inputs).toHaveLength(WORDSSAMPLE.length)
 
   inputs.forEach((input, index) => {
     expect(input).toHaveAttribute('type', 'text')
-    expect(input).toHaveClass('invalid')
+    expect(input).not.toHaveClass('invalid')
+    expect(input).not.toHaveClass('valid')
     fireEvent.change(input, { target: { value: WORDSSAMPLE[index] } })
     fireEvent.blur(input)
     expect(input).toHaveClass('valid')
@@ -242,15 +244,28 @@ test('Renders set account page with step 5 (verify words)', () => {
 test('Checks back button behavior in a internal navigation component - first step', () => {
   let location
 
+  const BackButton = () => {
+    const { customBackAction } = useContext(AccountContext)
+    return (
+      <button
+        data-testid="back-button"
+        onClick={() => customBackAction && customBackAction()}
+      />
+    )
+  }
+
   const SetAccountMock = () => {
     location = useLocation()
     const [step, setStep] = useState(2)
 
     return (
-      <SetAccount
-        step={step}
-        setStep={setStep}
-      />
+      <>
+        <BackButton />
+        <SetAccount
+          step={step}
+          setStep={setStep}
+        />
+      </>
     )
   }
 
@@ -282,13 +297,13 @@ test('Checks back button behavior in a internal navigation component - first ste
     </AccountProvider>,
   )
 
-  const buttons = screen.getAllByTestId('button')
+  const backButton = screen.getByTestId('back-button')
   let progressSteps = screen.getAllByTestId('progress-step')
   expect(progressSteps[1]).toHaveClass('active')
   expect(location.pathname).toBe('/set-account')
 
   act(() => {
-    buttons[0].click()
+    backButton.click()
   })
 
   expect(location.pathname).toBe('/set-account')
@@ -296,7 +311,7 @@ test('Checks back button behavior in a internal navigation component - first ste
   expect(progressSteps[0]).toHaveClass('active')
 
   act(() => {
-    buttons[0].click()
+    backButton.click()
   })
 
   expect(location.pathname).toBe('/')

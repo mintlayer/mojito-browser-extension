@@ -1,0 +1,52 @@
+.popup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  height: 88%;
+}
+
+.popup h2 {
+  font-size: 1.2rem;
+  font-weight: bold;
+  min-height: max-content;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 36px;
+  border: 1px solid rgba(var(--color-black), 0.1);
+  background: transparent;
+  color: rgb(var(--color-black));
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.tokenList {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-grow: 1;
+  padding: 7px;
+  gap: 5px;
+}
+
+.tokenItem {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  gap: 10px;
+  border-radius: 10px;
+  background: rgb(var(--color-gray));
+  border: 1px solid rgba(var(--color-light-green), 0.2);
+  min-height: 54px;
+  word-break: break-all;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.tokenItem:hover {
+  transform: scale(1.01);
+  border: 1px solid rgba(var(--color-light-green), 0.5);
+}

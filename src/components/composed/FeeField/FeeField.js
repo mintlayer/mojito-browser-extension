@@ -1,11 +1,21 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
-import { InputInteger } from '@BasicComponents'
-import { OptionButtons } from '@ComposedComponents'
 import { Electrum } from '@APIs'
 import { BTC } from '@Helpers'
 
-import './FeeField.css'
+import styles from './FeeField.module.css'
+
+const TIERS = [
+  { key: 'low', label: 'Slow' },
+  { key: 'norm', label: 'Medium' },
+  { key: 'high', label: 'Fast' },
+]
+
+const formatTime = (minutes) => {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '~∞'
+  if (minutes <= 60) return `~${minutes} min`
+  return `~${Math.ceil(minutes / 60)} hr`
+}
 
 const FeeField = ({
   value: parentValue,
@@ -15,19 +25,16 @@ const FeeField = ({
 }) => {
   const effectCalled = useRef(false)
   const [options, setOptions] = useState([])
+  const [estimatedFees, setEstimatedFees] = useState({})
+  const [selectedKey, setSelectedKey] = useState('norm')
   const [inputValue, setInputValue] = useState(0)
-  const [radioButtonValue, setButtonValue] = useState(undefined)
-  const [timeToFirstConfirmations, setTimeToFirstConfirmations] =
-    useState('15 minutes')
-  const [estimatedFees, setEstimatedFees] = useState([])
-  const feeType = 'sat/B'
 
   const blocksToConfirm = useCallback(
     (value) => {
-      const seletedEstimate = Object.entries(estimatedFees).find(
-        ([_, fee]) => fee <= Number(value),
+      const selected = Object.entries(estimatedFees).find(
+        (entry) => entry[1] <= Number(value),
       )
-      return seletedEstimate ? seletedEstimate[0] : Number.POSITIVE_INFINITY
+      return selected ? Number(selected[0]) : Number.POSITIVE_INFINITY
     },
     [estimatedFees],
   )
@@ -37,37 +44,14 @@ const FeeField = ({
       if (value === '' || !Number(value)) {
         setFeeValidity(false)
         setInputValue(0)
-        setTimeToFirstConfirmations('∞')
         return
       }
 
       setFeeValidity(Number(value) && value.toString())
-
-      const blocksAmount = blocksToConfirm(value)
-      const minutesTo1stConfirmation = blocksAmount
-        ? blocksAmount * BTC.AVERAGE_MIN_PER_BLOCK
-        : blocksAmount
-      const timeTo1stConfirmation =
-        minutesTo1stConfirmation <= 60
-          ? `${minutesTo1stConfirmation} minutes`
-          : `${
-              Number.isFinite(minutesTo1stConfirmation)
-                ? Math.ceil(minutesTo1stConfirmation / 60)
-                : '∞'
-            } hours`
-
       setInputValue(Math.ceil(value))
-      setTimeToFirstConfirmations(`${timeTo1stConfirmation}`)
     },
-    [blocksToConfirm, setFeeValidity],
+    [setFeeValidity],
   )
-
-  const inputChangeHandler = ({ target: { value } }) => changeInputValue(value)
-
-  const optionSelectHandle = (selectedOption) => {
-    if (!selectedOption) return
-    changeInputValue(selectedOption.value)
-  }
 
   useEffect(() => {
     if (effectCalled.current) return
@@ -75,59 +59,80 @@ const FeeField = ({
 
     const populateOptions = async () => {
       const btcFees = await Electrum.getFeesEstimates()
-      const fees = btcFees
-      const estimates = JSON.parse(fees)
+      const estimates = JSON.parse(btcFees)
       setEstimatedFees(estimates)
-
       const parsedFees = BTC.parseFeesEstimates(estimates)
 
       setOptions([
-        { name: 'low', value: parsedFees.LOW },
-        { name: 'norm', value: parsedFees.MEDIUM },
-        { name: 'high', value: parsedFees.HIGH },
+        { key: 'low', value: parsedFees.LOW },
+        { key: 'norm', value: parsedFees.MEDIUM },
+        { key: 'high', value: parsedFees.HIGH },
       ])
     }
 
     populateOptions()
   }, [])
 
+  const parentValueRef = useRef(parentValue)
+  parentValueRef.current = parentValue
+
   useEffect(() => {
-    if (Number(parentValue)) {
-      changeInputValue(parentValue)
+    const pv = parentValueRef.current
+    if (Number(pv)) {
+      changeInputValue(pv)
       return
     }
 
-    const optionSelected = options.find((item) => item.name === parentValue)
-
-    setButtonValue(parentValue)
+    const optionSelected = options.find((item) => item.key === pv)
+    if (pv) setSelectedKey(pv)
     optionSelected
       ? changeInputValue(optionSelected.value)
       : changeInputValue(0)
-  }, [parentValue, options, changeInputValue])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options])
 
   useEffect(() => {
     changeValueHandle(inputValue)
   }, [inputValue, changeValueHandle])
 
+  const handleSelect = (tier) => {
+    setSelectedKey(tier.key)
+    const option = options.find((o) => o.key === tier.key)
+    if (option) changeInputValue(option.value)
+  }
+
   return (
-    <div className="fee-field-wrapper">
-      <div className="fee-field">
-        <div className="fee-input-wrapper">
-          <InputInteger
-            id={id}
-            value={inputValue}
-            onChangeHandle={inputChangeHandler}
-            disabled={true}
-          />
-          <small>{feeType}</small>
-        </div>
-        <OptionButtons
-          value={radioButtonValue}
-          options={options}
-          onSelect={optionSelectHandle}
-        />
-      </div>
-      <p>Estimated time for 1st confirmation: {timeToFirstConfirmations}</p>
+    <div
+      className={styles.tiers}
+      id={id}
+    >
+      {TIERS.map((tier) => {
+        const option = options.find((o) => o.key === tier.key)
+        const isSelected = selectedKey === tier.key
+        const blocks = option ? blocksToConfirm(option.value) : null
+        const time =
+          blocks != null
+            ? formatTime(blocks * BTC.AVERAGE_MIN_PER_BLOCK)
+            : '...'
+        return (
+          <button
+            key={tier.key}
+            type="button"
+            className={`${styles.tierCard} ${isSelected ? styles.tierCardSelected : ''}`}
+            onClick={() => handleSelect(tier)}
+          >
+            <span
+              className={`${styles.tierLabel} ${isSelected ? styles.tierLabelSelected : ''}`}
+            >
+              {tier.label}
+            </span>
+            <span className={styles.tierTime}>{time}</span>
+            <span className={styles.tierFee}>
+              {option ? `${option.value} sat/B` : '...'}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }

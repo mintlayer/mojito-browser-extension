@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 
 import { CurrentStaking } from '@ComposedComponents'
 import { AccountContext } from '@Contexts'
+import { PageWrapper } from '@BasicComponents'
 
 import './Staking.css'
 
@@ -17,9 +18,11 @@ const StakingPage = () => {
   }
 
   return (
-    <div className="staking-page">
-      <CurrentStaking />
-    </div>
+    <PageWrapper>
+      <div className="staking-page">
+        <CurrentStaking />
+      </div>
+    </PageWrapper>
   )
 }
 

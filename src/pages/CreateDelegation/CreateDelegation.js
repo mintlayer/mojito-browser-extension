@@ -8,7 +8,7 @@ import { AccountContext, MintlayerContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './CreateDelegation.css'
-import { Error } from '@BasicComponents'
+import { Error, PageWrapper } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 
 const CreateDelegationPage = () => {
@@ -59,13 +59,18 @@ const CreateDelegationPage = () => {
     const buildTransaction = async () => {
       if (transaction_conditions && transactionInformation?.to.length > 0) {
         setFeeLoading(true)
-        const unusedReceivingAddress = unusedAddresses.receive
-        const transaction = await client.buildDelegationCreate({
-          pool_id: transactionInformation.to,
-          destination: unusedReceivingAddress,
-        })
-        setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
-        setFeeLoading(false)
+        try {
+          const unusedReceivingAddress = unusedAddresses.receive
+          const transaction = await client.buildDelegationCreate({
+            pool_id: transactionInformation.to,
+            destination: unusedReceivingAddress,
+          })
+          setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
+        } catch (e) {
+          console.error('Failed to calculate delegation fee:', e)
+        } finally {
+          setFeeLoading(false)
+        }
       }
     }
     buildTransaction()
@@ -97,7 +102,7 @@ const CreateDelegationPage = () => {
   }
 
   return (
-    <>
+    <PageWrapper>
       <div className="page">
         <VerticalGroup>
           {loading ? (
@@ -127,7 +132,7 @@ const CreateDelegationPage = () => {
           )}
         </VerticalGroup>
       </div>
-    </>
+    </PageWrapper>
   )
 }
 

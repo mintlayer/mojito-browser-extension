@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 
 const ensureClassesAreArray = (classes) =>
   Array.isArray(classes) ? classes : classes.split(' ')
@@ -21,8 +21,9 @@ const removeItemsFromList = (oldList = '', newList = []) => {
 }
 
 const useStyleClasses = (classesList = []) => {
-  const effectCalled = useRef(false)
-  const [styleClasses, _setStyleClasses] = useState(formatClasses(classesList))
+  const [styleClasses, _setStyleClasses] = useState(
+    formatClasses(ensureClassesAreArray(classesList)),
+  )
 
   const setStyleClasses = useCallback((classes = []) => {
     _setStyleClasses(formatClasses(ensureClassesAreArray(classes)))
@@ -41,19 +42,6 @@ const useStyleClasses = (classesList = []) => {
       ),
     [],
   )
-
-  useEffect(() => {
-    /*
-      ! React version > 18 does mount, simulated unmount, and simulated mount
-      ! (https://reactjs.org/blog/2022/03/08/react-18-upgrade-guide.html#updates-to-strict-mode)
-      ! This if avoids the component the rest of the function to run more than once
-      ! (https://github.com/reactwg/react-18/discussions/18)
-    */
-    if (effectCalled.current) return
-    effectCalled.current = true
-
-    setStyleClasses(classesList)
-  }, [classesList, setStyleClasses])
 
   return { styleClasses, setStyleClasses, addStyleClass, removeStyleClass }
 }

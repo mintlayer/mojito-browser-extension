@@ -13,6 +13,7 @@ import {
 import { Dashboard } from '@ContainerComponents'
 import { NumbersHelper, ObjectHelpers } from '@Helpers'
 
+import { PageWrapper } from '@BasicComponents'
 import './Dashboard.css'
 import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { useNavigate } from 'react-router'
@@ -204,7 +205,7 @@ const DashboardPage = () => {
   }, [accountID])
 
   return (
-    <>
+    <PageWrapper>
       <div className="stats">
         <Dashboard.CryptoSharesChart
           cryptos={cryptos}
@@ -234,7 +235,7 @@ const DashboardPage = () => {
           />
         </PopUp>
       )}
-    </>
+    </PageWrapper>
   )
 }
 

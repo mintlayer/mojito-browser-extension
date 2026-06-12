@@ -9,9 +9,6 @@ import { LocalStorageService } from '@Storage'
 const MintlayerContext = createContext()
 
 class InMemoryAccountProvider {
-  addresses = {}
-  navigate = null
-
   constructor(addresses, navigate) {
     this.addresses = addresses
     this.navigate = navigate
@@ -261,6 +258,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const nftBalances = {}
     const transaction_ids = []
     const non_zero_addresses = []
+    const locked_addresses = []
 
     addresses_data
       .filter(({ error }) => !error)
@@ -285,6 +283,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
             tokens.some((token) => token.amount.atoms !== '0'))
         ) {
           non_zero_addresses.push(address_data.id)
+        }
+
+        if (locked_coin_balance && locked_coin_balance.atoms !== '0') {
+          locked_addresses.push(address_data.id)
         }
 
         if (tokens) {
@@ -380,11 +382,6 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const unconfirmedTransactions =
       LocalStorageService.getItem(unconfirmedTransactionString) || []
 
-    const fetchedUtxos = await ML.getBatchData(
-      non_zero_addresses,
-      '/address/:address/all-utxos',
-    )
-
     const fetchedSpendableUtxos = await ML.getBatchData(
       non_zero_addresses,
       '/address/:address/spendable-utxos',
@@ -413,12 +410,17 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       }, [])
 
     const availableUtxos = available.map((item) => item)
-    const lockedUtxos = fetchedUtxos.filter(
+
+    const fetchedLockedUtxos =
+      locked_addresses.length > 0
+        ? await ML.getBatchData(locked_addresses, '/address/:address/all-utxos')
+        : []
+    const lockedUtxos = fetchedLockedUtxos.filter(
       (obj) => obj.utxo.type === 'LockThenTransfer',
     )
 
     const availableNftInitialUtxos = fetchedSpendableUtxos.filter(
-      (item) => item.utxo.type === 'IssueNft',
+      (item) => item.utxo?.type === 'IssueNft',
     )
 
     setNftInitialUtxos(availableNftInitialUtxos)
@@ -442,10 +444,13 @@ const MintlayerProvider = ({ value: propValue, children }) => {
             ...currentMlAddresses.mlChangeAddresses,
           ]
         : []
-      const delegations = await ML.getBatchData(
+      const allDelegations = await ML.getBatchData(
         addressList,
         '/address/:address/delegations',
       )
+      const delegations = [
+        ...new Map(allDelegations.map((d) => [d.delegation_id, d])).values(),
+      ]
       const delegationList = delegations.map(
         (delegation) => delegation.delegation_id,
       )
@@ -481,7 +486,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
             delegation_details[index].creation_block_height,
           creation_time: blocks_data.find(
             ({ height }) =>
-              height === delegation_details[index].creation_block_height,
+              height === delegation_details[index]?.creation_block_height,
           ).header.timestamp.timestamp,
         }
       })
@@ -518,11 +523,20 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
   useEffect(() => {
     if (networkType !== currentNetworkType) {
+      setOrdersPairInfo([])
+      setMlDelegationList([])
+      setMlDelegationsBalance(0)
       fetchAllData(true)
       fetchDelegations(addresses)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [networkType, currentNetworkType, addresses])
+
+  useEffect(() => {
+    setOrdersPairInfo([])
+    setMlDelegationList([])
+    setMlDelegationsBalance(0)
+  }, [accountID])
 
   useEffect(() => {
     Mintlayer.cancelAllRequests()

@@ -2,16 +2,16 @@ import { SwapTokenLogo } from '@BasicComponents'
 import { ML } from '@Helpers'
 import { ReactComponent as ChevronDownIcon } from '@Assets/images/icon-chevron-down.svg'
 
-import './SelectTokenSwap.css'
+import styles from './SelectTokenSwap.module.css'
 
 const SelectTokenSwap = ({ token, onClick }) => {
   return (
     <div
-      className="swap-select-wrapper"
+      className={styles.selectWrapper}
       data-testid="select-token-swap"
     >
       <div
-        className="swap-token-select"
+        className={styles.tokenSelect}
         onClick={onClick}
         data-testid="select-token-swap-content"
       >
@@ -24,7 +24,7 @@ const SelectTokenSwap = ({ token, onClick }) => {
           : 'ML (Mintlayer)'}
       </div>
       <ChevronDownIcon
-        className="icon-chevron-down"
+        className={styles.chevronIcon}
         data-testid="chevron-down-icon"
       />
     </div>

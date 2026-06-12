@@ -1,23 +1,26 @@
 .transaction {
   display: flex;
   align-items: center;
-  padding: 12px 30px 12px 18px;
-  margin-bottom: 10px;
-  border-radius: 45px;
+  padding: 12px 29px 12px 8px;
+  margin-bottom: 0;
+  border-radius: 35px;
   background: rgb(var(--color-gray));
   border: 1px solid rgba(var(--color-light-green), 0.2);
   word-break: break-all;
   cursor: pointer;
   position: relative;
+  max-height: 72px;
+  min-height: 72px;
+  box-sizing: border-box;
 }
 
 .transaction-logo-type {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  min-width: 72px;
-  height: 72px;
+  width: 60px;
+  min-width: 60px;
+  height: 60px;
   background: rgb(var(--color-dim-green));
   border-radius: 50%;
   position: relative;
@@ -25,14 +28,14 @@
 }
 
 .transaction-logo-type-info {
-  font-size: 2.5rem;
+  font-size: 1.4rem;
   font-weight: 600;
   color: #fff;
   background: rgb(var(--color-dark-gray));
 }
 
 .transaction-logo-type.transaction-logo-type-widthdrawal {
-  font-size: 2.5rem;
+  font-size: 1.4rem;
   font-weight: 600;
   color: #fff;
   background: rgb(var(--color-dark-gray));
@@ -41,14 +44,14 @@
 .transaction-logo-type.transaction-logo-type-same {
   position: absolute;
   z-index: 10;
-  left: 30px;
+  left: 22px;
   background: rgb(var(--color-dark-gray));
 }
 
 .transaction-logo-type.transaction-logo-type-same .loop-icon {
   transform: rotate(90deg);
-  width: 45px;
-  height: 45px;
+  width: 24px;
+  height: 24px;
 }
 
 .transaction-logo-type.transaction-logo-type-same .loop-icon path {
@@ -56,7 +59,7 @@
 }
 
 .transaction-detail {
-  margin-left: 30px;
+  margin-left: 16px;
   flex-grow: 1;
 }
 
@@ -77,32 +80,32 @@
 }
 
 .arrow-icon {
-  width: 30px;
-  height: 36px;
+  width: 18px;
+  height: 22px;
 }
 
 .arrow-icon-stake {
-  width: 30px;
-  height: 36px;
-  margin-left: -7px;
+  width: 18px;
+  height: 22px;
+  margin-left: -3px;
 }
 
 .stake-icon {
-  width: 35px;
-  height: 35px;
+  width: 20px;
+  height: 20px;
 }
 
 .unconfirmed-icon {
-  width: 34px;
-  height: 40px;
+  width: 20px;
+  height: 24px;
   color: #fff;
 }
 
 .delegation-icon {
-  width: 40px;
-  height: 40px;
-  margin-left: 5px;
-  margin-top: -5px;
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  margin-top: -2px;
   color: rgb(var(--color-black));
 }
 
@@ -121,21 +124,21 @@
 }
 
 .transaction-id-info {
-  font-size: 1.4rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 2px;
   word-break: break-word;
 }
 
 .transaction-id {
-  font-size: 1.7rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 2px;
   word-break: break-all;
 }
 
 .transaction-date {
-  font-size: 1.2rem;
+  font-size: 0.85rem;
   font-weight: 400;
 }
 

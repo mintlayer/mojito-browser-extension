@@ -3,12 +3,12 @@ import Carousel from './Carousel/Carousel'
 import ArcChart from './Charts/ArcChart/ArcChart'
 import LineChart from './Charts/LineChart/LineChart'
 import OptionButtons from './OptionButtons/OptionButtons'
-import Header from './Header/Header'
-import InputList from './InputList/InputsList'
-import Loading from './Loading/Loading'
+import Header from './Header/Header.tsx'
+import InputList from './InputList/InputsList.tsx'
+import Loading from './Loading/Loading.tsx'
 import PopUp from './PopUp/Popup'
-import ProgressTracker from './ProgressTracker/ProgressTracker'
-import TextField from './TextField/TextField'
+import ProgressTracker from './ProgressTracker/ProgressTracker.tsx'
+import TextField from './TextField/TextField.tsx'
 import CryptoFiatField from './CryptoFiatField/CryptoFiatField'
 import FeeField from './FeeField/FeeField'
 import FeeFieldML from './FeeField/FeeFieldML'
@@ -20,14 +20,18 @@ import HelpTooltip from './HelpTooltip/HelpTooltip'
 import RestoreSeedField from './RestoreSeedField/RestoreSeedField'
 import UpdateButton from './UpdateButton/UpdateButton'
 import LockedBalanceList from './LockedBalanceList/LockedBalanceList'
-import SliderMenu from './SliderMenu/SliderMenu'
-import Navigation from './Navigation/Navigation'
+import SliderMenu from './SliderMenu/SliderMenu.tsx'
+import Navigation from './Navigation/Navigation.tsx'
 import ManualSwap from './ManualSwap/ManualSwap'
 import SwapInterface from './SwapInterface/SwapInterface'
 import CopyButton from './CopyButton/CopyButton'
 import StakingWarning from './StakingWarning/StakingWarning'
 import AddressList from './AddressList/AddressList'
 import PriceChart from './PriceChart/PriceChart'
+import WalletHeader from './WalletHeader/WalletHeader'
+import Sidebar from './Sidebar/Sidebar.tsx'
+import SendPageHeader from './SendPageHeader/SendPageHeader'
+import WalletCard from './WalletCard/WalletCard'
 
 export {
   Balance,
@@ -60,4 +64,8 @@ export {
   StakingWarning,
   AddressList,
   PriceChart,
+  WalletHeader,
+  Sidebar,
+  SendPageHeader,
+  WalletCard,
 }

@@ -1,16 +1,16 @@
 import Delegation from './Delegation'
-import { SkeletonLoader } from '@BasicComponents'
-import './DelegationList.css'
+import DelegationSkeleton from './DelegationSkeleton'
+import styles from './DelegationList.module.css'
 
 const DelegationList = ({ delegationsList, delegationsLoading }) => {
   const renderSkeletonLoaders = () =>
-    Array.from({ length: 6 }, (_, i) => <SkeletonLoader key={i} />)
+    Array.from({ length: 4 }, (_, i) => <DelegationSkeleton key={i} />)
 
   const renderDelegations = () => {
     if (!delegationsList || !delegationsList.length) {
       return (
         <li
-          className="empty-list"
+          className={styles.empty}
           data-testid="delegation"
         >
           No Delegations in this wallet
@@ -30,7 +30,7 @@ const DelegationList = ({ delegationsList, delegationsLoading }) => {
 
   return (
     <ul
-      className="delegation-list"
+      className={styles.list}
       data-testid={'delegation-list'}
     >
       {delegationsLoading ? renderSkeletonLoaders() : renderDelegations()}

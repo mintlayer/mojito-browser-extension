@@ -49,7 +49,7 @@ describe('SliderMenu', () => {
     expect(onCloseMock).toHaveBeenCalledTimes(1)
   })
 
-  test('calls onClose when clicking outside the slider menu', () => {
+  test('calls onClose when clicking the backdrop', () => {
     render(
       <SliderMenu
         isOpen={true}
@@ -59,7 +59,7 @@ describe('SliderMenu', () => {
       </SliderMenu>,
     )
 
-    fireEvent.mouseDown(document)
+    fireEvent.click(screen.getByTestId('backdrop'))
     expect(onCloseMock).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,0 +1,91 @@
+.card {
+  background: rgb(var(--color-white));
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.table {
+  width: 100%;
+  display: block;
+}
+
+.table thead {
+  display: block;
+  width: 100%;
+}
+
+.table tbody {
+  display: block;
+  overflow-y: auto;
+  width: 100%;
+  height: 93%;
+}
+
+.table thead tr,
+.table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.colHeader {
+  text-align: left;
+  padding: 14px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: rgba(var(--color-black), 0.4);
+  border-bottom: 1px solid rgba(var(--color-black), 0.06);
+  user-select: none;
+}
+
+/* Column widths */
+.colAddress {
+  width: 45%;
+}
+
+.colStatus {
+  width: 15%;
+}
+
+.colBalance {
+  width: 30%;
+}
+
+.colAction {
+  width: 10%;
+}
+
+.loadingWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+}
+
+.noAddresses {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(var(--color-black), 0.4);
+}
+
+.table tbody::-webkit-scrollbar {
+  width: 4px;
+}
+
+.table tbody::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table tbody::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-black), 0.1);
+  border-radius: 2px;
+}
+
+.table tbody::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--color-black), 0.2);
+}

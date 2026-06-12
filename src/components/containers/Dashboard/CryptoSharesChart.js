@@ -3,6 +3,7 @@ import { ArcChart } from '@ComposedComponents'
 import { Format } from '@Helpers'
 import { MintlayerContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
+import { BalanceSkeleton } from './DashboardSkeleton'
 
 import './CryptoSharesChart.css'
 
@@ -18,12 +19,21 @@ const CryptoSharesChart = ({
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? '0'
       : Format.fiatValue(totalBalance)
-  const data = cryptos.map((crypto) => ({
-    value: (crypto.balance * crypto.exchangeRate).toFixed(2),
-    asset: crypto.name,
-    color: AppInfo.COLOR_LIST[crypto.symbol.toLowerCase()],
-    valueSymbol: fiatSymbol,
-  }))
+  const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
+  const hasBalance = totalBalance > 0 && !isTestnet
+
+  const [integerPart, decimalPart] = totalBalanceInFiat.split(
+    AppInfo.decimalSeparator,
+  )
+
+  const data = hasBalance
+    ? cryptos.map((crypto) => ({
+        value: (crypto.balance * crypto.exchangeRate).toFixed(2),
+        asset: crypto.name,
+        color: AppInfo.COLOR_LIST[crypto.symbol.toLowerCase()],
+        valueSymbol: fiatSymbol,
+      }))
+    : [{ value: 1, asset: '', color: AppInfo.COLOR_LIST.ml, valueSymbol: '' }]
 
   return (
     <>
@@ -36,15 +46,23 @@ const CryptoSharesChart = ({
           />
         </div>
         <h2>
-          {balanceLoading ? (
-            ''
-          ) : (
-            <>
-              {totalBalanceInFiat}
-              <span> {fiatSymbol}</span>
-            </>
-          )}
           <em>{accountName}</em>
+          {balanceLoading ? (
+            <BalanceSkeleton />
+          ) : (
+            <span className="balance-display">
+              <span className="balance-symbol">$</span>
+              <span className="balance-integer">{integerPart}</span>
+              {decimalPart !== undefined && (
+                <>
+                  <span className="balance-decimal">
+                    {AppInfo.decimalSeparator}
+                    {decimalPart}
+                  </span>
+                </>
+              )}
+            </span>
+          )}
         </h2>
       </div>
     </>

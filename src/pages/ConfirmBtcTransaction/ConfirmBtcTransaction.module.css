@@ -1,0 +1,112 @@
+.signTransaction {
+  background-color: #ffffff;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
+  overflow: scroll;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.signTransaction .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.signTxTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.signTransaction .signTxContent {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 70%;
+
+  @media screen and (min-width: 801px) {
+    height: 80%;
+  }
+}
+
+.signTransaction .transactionPreviewWrapper {
+  height: 100%;
+  overflow: scroll;
+  width: 100%;
+}
+
+.signTransaction .footer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  bottom: 0;
+}
+
+.modalTitle {
+  width: 100%;
+}
+
+.modalContent {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.modalButtons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 5px;
+}
+
+.buttonSignTransaction {
+  width: 100%;
+}
+
+.transactionDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signTxSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.signTxSection h4 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.signTxSection p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #4a5568;
+  word-break: break-all;
+}
+
+.poolWarning {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(var(--color-red));
+  line-break: normal;
+  margin-top: 16px;
+}

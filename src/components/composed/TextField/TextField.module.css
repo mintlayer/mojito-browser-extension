@@ -1,0 +1,42 @@
+.inputLabel {
+  display: block;
+  text-align: center;
+}
+
+.inputLabel.alternate {
+  font-size: 1rem;
+  text-align: center;
+}
+
+.inputLabel.alternate strong {
+  display: block;
+  margin-top: 10px;
+  color: rgb(var(--color-main-green));
+}
+
+.inputLabel.inputLabelLeft {
+  text-align: left;
+}
+
+.inputLabel.inputLabelRight {
+  text-align: right;
+}
+
+.errorIcon {
+  display: none;
+}
+
+.errorText {
+  line-height: 1.3;
+}
+
+@keyframes errorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

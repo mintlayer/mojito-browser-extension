@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import { generatePBKDF2Key, encryptAES, decryptAES } from './Cipher'
 
 const CipherWorkerEnum = {

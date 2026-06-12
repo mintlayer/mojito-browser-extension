@@ -10,33 +10,58 @@ import { Button } from '@BasicComponents'
 import './TransactionButton.css'
 
 const TransactionButton = ({ title, mode, onClick, disabled }) => {
-  const buttonExtraClasses = ['button-transaction']
-  const buttonUpExtraClasses = ['button-transaction', 'button-transaction-up']
-  const buttonStakingExtraClasses = [
-    'button-transaction',
-    'button-transaction-staking',
-  ]
-  const buttonSwapExtraClasses = [
-    'button-transaction',
-    'button-transaction-swap',
-  ]
+  const isWide = mode === 'up' || !mode
 
   const getButtonStyles = () => {
+    if (mode === 'up')
+      return [
+        'button-transaction',
+        'button-transaction-wide',
+        'button-transaction-up',
+      ]
+    if (!mode)
+      return [
+        'button-transaction',
+        'button-transaction-wide',
+        'button-transaction-receive',
+      ]
+    if (mode === 'staking')
+      return [
+        'button-transaction',
+        'button-transaction-small',
+        'button-transaction-staking',
+      ]
+    if (mode === 'swap')
+      return [
+        'button-transaction',
+        'button-transaction-small',
+        'button-transaction-swap',
+      ]
+    return ['button-transaction', 'button-transaction-small']
+  }
+
+  const getIcon = () => {
     switch (mode) {
-      case 'up':
-        return buttonUpExtraClasses
       case 'staking':
-        return buttonStakingExtraClasses
+        return <DelegationIcon className="staking-icon" />
+      case 'sign':
+        return <SignIcon className="sign-icon" />
+      case 'nft':
+        return <NftIcon className="nft-icon" />
       case 'swap':
-        return buttonSwapExtraClasses
+        return <SwapIcon className="swap-icon" />
+      case 'addresses':
+        return <AddressesIcon className="swap-icon" />
+      case 'up':
+        return <ArrowIcon className="icon-arrow" />
       default:
-        return buttonExtraClasses
+        return <ArrowIcon className="icon-arrow" />
     }
   }
 
   return (
     <div
-      className="transaction-item"
+      className={`transaction-item ${isWide ? 'transaction-item-wide' : ''}`}
       data-testid={'transaction-button-container'}
     >
       <Button
@@ -44,21 +69,16 @@ const TransactionButton = ({ title, mode, onClick, disabled }) => {
         onClickHandle={onClick}
         disabled={disabled}
       >
-        {mode === 'staking' ? (
-          <DelegationIcon className="staking-icon" />
-        ) : mode === 'sign' ? (
-          <SignIcon className="sign-icon" />
-        ) : mode === 'nft' ? (
-          <NftIcon />
-        ) : mode === 'swap' ? (
-          <SwapIcon className="swap-icon" />
-        ) : mode === 'addresses' ? (
-          <AddressesIcon className="swap-icon" />
-        ) : (
-          <ArrowIcon className="icon-arrow" />
+        {getIcon()}
+        {title && (
+          <span
+            className="button-transaction-label"
+            data-testid={'transaction-button-title'}
+          >
+            {title}
+          </span>
         )}
       </Button>
-      {title && <span data-testid={'transaction-button-title'}>{title}</span>}
     </div>
   )
 }

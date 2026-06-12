@@ -10,11 +10,8 @@ const SettingsProvider = ({ value: propValue, children }) => {
 
   useEffect(() => {
     try {
-      const storedNetworkType = LocalStorageService.getItem('networkType')
-      if (storedNetworkType === null) {
+      if (!LocalStorageService.getItem('networkType')) {
         NetworkTypeEntity.set(AppInfo.NETWORK_TYPES.MAINNET)
-      } else {
-        setNetworkType(storedNetworkType)
       }
     } catch (error) {
       console.error('Error accessing localStorage:', error)

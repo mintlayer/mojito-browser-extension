@@ -1,0 +1,27 @@
+.transactionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.transactionForm input.invalid,
+.transactionForm input.valid {
+  padding: 1.8rem 1.685rem;
+}
+
+.loadingCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.resultTitle {
+  word-wrap: break-word;
+}
+
+.loadingText {
+  font-size: 24px;
+  font-weight: 400;
+  text-align: center;
+}

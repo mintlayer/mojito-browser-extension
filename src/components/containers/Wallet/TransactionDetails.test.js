@@ -1,9 +1,4 @@
-import {
-  render,
-  screen,
-  waitFor,
-  waitForElementToBeRemoved,
-} from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 
 import TransactionDetails from './TransactionDetails'
@@ -97,24 +92,11 @@ test('Render transaction component', async () => {
     getConfirmations: mockConfirmations,
   })
   const transactionDetails = screen.getByTestId('transaction-details')
-  const transactionDetailsItems = screen.getAllByTestId(
-    'transaction-details-item',
-  )
-  const transactionDetailsTitles = screen.getAllByTestId(
-    'transaction-details-item-title',
-  )
-  const transactionDetailsButton = screen.getByTestId('button')
 
   expect(transactionDetails).toBeInTheDocument()
-  expect(transactionDetailsButton).toBeInTheDocument()
-  expect(transactionDetailsItems).toHaveLength(5)
-
-  expect(transactionDetailsTitles).toHaveLength(5)
-  expect(transactionDetailsTitles[0]).toHaveTextContent('From:')
-
-  expect(transactionDetailsButton).toHaveTextContent('Open In Block Explorer')
-
-  transactionDetailsButton.click()
+  expect(screen.getByText('Receive')).toBeInTheDocument()
+  expect(screen.getByText('From')).toBeInTheDocument()
+  expect(screen.getByText(/View on Block Explorer/)).toBeInTheDocument()
 
   await waitFor(() => {
     expect(mockConfirmations).toHaveBeenCalled()
@@ -130,24 +112,12 @@ test('Render transaction out component', async () => {
   })
 
   const transactionDetails = screen.getByTestId('transaction-details')
-  const transactionDetailsItems = screen.getAllByTestId(
-    'transaction-details-item',
-  )
-  const transactionDetailsTitles = screen.getAllByTestId(
-    'transaction-details-item-title',
-  )
-  const transactionDetailsContent = screen.getAllByTestId(
-    'transaction-details-item-content',
-  )
 
   expect(transactionDetails).toBeInTheDocument()
-  expect(transactionDetailsItems).toHaveLength(5)
+  expect(screen.getByText('Send')).toBeInTheDocument()
+  expect(screen.getByText('To')).toBeInTheDocument()
 
-  expect(transactionDetailsTitles).toHaveLength(5)
-  expect(transactionDetailsTitles[0]).toHaveTextContent('To:')
-
-  await waitForElementToBeRemoved(() => screen.queryByTestId('loading'))
-  expect(Number(transactionDetailsContent[4].textContent)).toBeGreaterThan(
-    1_000_000,
-  )
+  await waitFor(() => {
+    expect(screen.getByText('1500000')).toBeInTheDocument()
+  })
 })

@@ -7,6 +7,7 @@ import { useExchangeRates, useMlWalletInfo } from '@Hooks'
 import { AccountContext, MintlayerContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
+import { PageWrapper } from '@BasicComponents'
 import styles from './NftSend.module.css'
 
 const NftSendPage = () => {
@@ -101,7 +102,7 @@ const NftSendPage = () => {
   }
 
   return (
-    <>
+    <PageWrapper>
       <div className={styles.page}>
         <VerticalGroup smallGap>
           <SendMlTransaction
@@ -120,7 +121,7 @@ const NftSendPage = () => {
           />
         </VerticalGroup>
       </div>
-    </>
+    </PageWrapper>
   )
 }
 

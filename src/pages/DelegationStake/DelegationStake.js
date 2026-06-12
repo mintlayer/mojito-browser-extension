@@ -8,7 +8,7 @@ import { AccountContext, MintlayerContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
 import './DelegationStake.css'
-import { Error } from '@BasicComponents'
+import { Error, PageWrapper } from '@BasicComponents'
 import { Loading } from '@ComposedComponents'
 
 const DelegationStakePage = () => {
@@ -65,12 +65,17 @@ const DelegationStakePage = () => {
         transactionInformation?.amount > 0
       ) {
         setFeeLoading(true)
-        const transaction = await client.buildDelegationStake({
-          amount: transactionInformation.amount,
-          delegation_id: transactionInformation.to,
-        })
-        setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
-        setFeeLoading(false)
+        try {
+          const transaction = await client.buildDelegationStake({
+            amount: transactionInformation.amount,
+            delegation_id: transactionInformation.to,
+          })
+          setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
+        } catch (e) {
+          console.error('Failed to calculate staking fee:', e)
+        } finally {
+          setFeeLoading(false)
+        }
       }
     }
     buildTransaction()
@@ -101,7 +106,7 @@ const DelegationStakePage = () => {
   }
 
   return (
-    <>
+    <PageWrapper>
       <div className="page">
         <VerticalGroup>
           {loading ? (
@@ -131,7 +136,7 @@ const DelegationStakePage = () => {
           )}
         </VerticalGroup>
       </div>
-    </>
+    </PageWrapper>
   )
 }
 

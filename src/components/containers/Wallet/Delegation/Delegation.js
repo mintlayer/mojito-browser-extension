@@ -6,14 +6,13 @@ import { Button } from '@BasicComponents'
 
 import DelegationDetails from './DelegationDetails'
 
-import './Delegation.css'
+import styles from './Delegation.module.css'
 import { format } from 'date-fns'
 import { useNavigate } from 'react-router'
 
 const Delegation = ({ delegation }) => {
   const navigate = useNavigate()
 
-  // staking only for Mintlayer
   const walletType = {
     name: 'Mintlayer',
     ticker: 'ML',
@@ -21,7 +20,6 @@ const Delegation = ({ delegation }) => {
   }
 
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
-  const [inactiveOpen, setInactiveOpen] = useState(false)
 
   let delegationOject = delegation
 
@@ -35,8 +33,6 @@ const Delegation = ({ delegation }) => {
   }
 
   const value = delegationOject.balance ? delegationOject.balance.decimal : 0
-
-  const buttonExtraStyles = ['delegation-action-button']
 
   const addFundsClickHandle = () => {
     navigate(
@@ -58,154 +54,143 @@ const Delegation = ({ delegation }) => {
     )
   }
 
-  delegationOject.addFundsClickHandle = addFundsClickHandle
-  delegationOject.withdrawClickHandle = withdrawClickHandle
-
   const date = delegationOject.creation_time
     ? format(new Date(delegationOject.creation_time * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
 
-  const delegationClickHandle = (delegation) => {
-    delegationOject.decommissioned && !inactiveOpen
-      ? setInactiveOpen(true)
-      : setDetailPopupOpen(true)
+  const delegationClickHandle = () => {
+    setDetailPopupOpen(true)
   }
+
+  const isDecommissioned = delegationOject.decommissioned
+  const isUnconfirmed =
+    delegation.type === 'Unconfirmed' && delegation.mode === 'delegation'
+  const hasBalance =
+    delegationOject.balance && delegationOject.balance.length > 11
+
+  const cardClasses = [
+    styles.card,
+    hasBalance && isDecommissioned ? styles.nonEmpty : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const iconClass = [
+    styles.icon,
+    isDecommissioned ? styles.iconDecommissioned : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const buttonExtraStyles = [styles.actionButton]
 
   return (
     <li
-      className={`transaction ${
-        delegationOject.decommissioned ? 'decommissioned' : ''
-      } ${inactiveOpen ? 'inactive-open' : ''} ${
-        delegationOject.balance.length > 11 ? 'non-empty' : 'empty'
-      }`}
+      className={cardClasses}
       data-testid="delegation"
       data-poolid={delegationOject.pool_id}
       onClick={delegationClickHandle}
     >
-      {delegation.type === 'Unconfirmed' &&
-        delegation.mode === 'delegation' && (
-          <>
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                height: '3px',
-                width: '40px',
-                backgroundColor: 'rgb(17, 150, 127)',
-                animation: 'grow 60s cubic-bezier(0.4, 0, 1, 1) forwards',
-              }}
-            ></div>
-            <div
-              style={{
-                position: 'absolute',
-                left: '36px',
-                top: '49%',
-                marginTop: '-38px',
-                marginLeft: '-2px',
-                transform: 'scale(1.2)',
-              }}
-            >
-              <Loading />
-            </div>
-          </>
-        )}
+      {isUnconfirmed && (
+        <>
+          <div className={styles.progressBar}></div>
+          <div className={styles.loadingWrapper}>
+            <Loading />
+          </div>
+        </>
+      )}
+
       <div
-        className={`transaction-logo-type transaction-logo-out delegation-icon ${
-          delegation.decommissioned ? 'decommissioned' : ''
-        }`}
+        className={iconClass}
         data-testid="delegation-icon"
       >
-        {delegation.decommissioned && !inactiveOpen ? (
-          '!'
-        ) : (
-          <StakeIcon
-            className={`delegation-staking-icon ${
-              delegation.decommissioned ? 'decommissioned' : ''
-            }`}
-          />
+        <StakeIcon className={styles.stakeIcon} />
+      </div>
+
+      <div className={styles.info}>
+        <p
+          className={styles.poolId}
+          data-testid="delegation-otherPart"
+        >
+          {delegation && delegationOject.pool_id
+            ? ML.formatAddress(delegationOject.pool_id)
+            : ''}
+          {isDecommissioned && (
+            <span className={styles.inactiveBadge}>Inactive</span>
+          )}
+        </p>
+        {delegationOject.creation_time && (
+          <p
+            className={styles.date}
+            data-testid="delegation-date"
+          >
+            {date}
+          </p>
+        )}
+        {isUnconfirmed && (
+          <p
+            className={styles.date}
+            data-testid="delegation-date"
+          >
+            Preparing delegation for staking
+          </p>
         )}
       </div>
-      <div className="transaction-detail">
-        <div>
-          <p
-            className="transaction-id"
-            data-testid="delegation-otherPart"
-          >
-            {delegation && delegationOject.pool_id
-              ? ML.formatAddress(delegationOject.pool_id)
-              : ''}
 
-            {delegationOject.decommissioned && (
-              <span className="decommissioned-text">Inactive</span>
-            )}
-          </p>
-          <div className="transaction-date-amount">
-            {delegationOject.creation_time && (
-              <p
-                className="transaction-date"
-                data-testid="delegation-date"
-              >
-                Date: <span>{date}</span>
-              </p>
-            )}
-
-            {delegation.type === 'Unconfirmed' &&
-              delegation.mode === 'delegation' && (
-                <p
-                  className="transaction-date"
-                  data-testid="delegation-date"
-                >
-                  Preparing delegation for staking
-                </p>
-              )}
-
-            <p
-              className="transaction-amount"
-              data-testid="delegation-amount"
-            >
-              Amount: <span>{delegation && value}</span>
-            </p>
-          </div>
-          {delegation.type !== 'Unconfirmed' && (
-            <div className="delegation-actions">
-              <Button
-                extraStyleClasses={buttonExtraStyles}
-                onClickHandle={addFundsClickHandle}
-                disabled={delegation.decommissioned}
-              >
-                Add funds
-              </Button>
-              <Button
-                extraStyleClasses={buttonExtraStyles}
-                onClickHandle={withdrawClickHandle}
-              >
-                Withdraw
-              </Button>
-            </div>
-          )}
-          {delegation.type === 'Unconfirmed' &&
-            delegation.mode === 'delegation' && (
-              <div className="delegation-actions">
-                <Button
-                  extraStyleClasses={buttonExtraStyles}
-                  disabled={true}
-                >
-                  Add funds
-                </Button>
-                <Button
-                  extraStyleClasses={buttonExtraStyles}
-                  disabled={true}
-                >
-                  Withdraw
-                </Button>
-              </div>
-            )}
-        </div>
+      <div className={styles.amountBlock}>
+        <p
+          className={styles.amount}
+          data-testid="delegation-amount"
+        >
+          {delegation && value ? value : '—'}
+        </p>
+        <p className={styles.currency}>ML</p>
       </div>
+
+      <div className={styles.actions}>
+        {delegation.type !== 'Unconfirmed' ? (
+          <>
+            <Button
+              extraStyleClasses={buttonExtraStyles}
+              onClickHandle={addFundsClickHandle}
+              disabled={isDecommissioned}
+            >
+              Add funds
+            </Button>
+            <Button
+              alternate
+              extraStyleClasses={buttonExtraStyles}
+              onClickHandle={withdrawClickHandle}
+            >
+              Withdraw
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              extraStyleClasses={buttonExtraStyles}
+              disabled={true}
+            >
+              Add funds
+            </Button>
+            <Button
+              alternate
+              extraStyleClasses={buttonExtraStyles}
+              disabled={true}
+            >
+              Withdraw
+            </Button>
+          </>
+        )}
+      </div>
+
       {detailPopupOpen && (
         <PopUp setOpen={setDetailPopupOpen}>
-          <DelegationDetails delegation={delegationOject} />
+          <DelegationDetails
+            delegation={delegationOject}
+            onAddFunds={addFundsClickHandle}
+            onWithdraw={withdrawClickHandle}
+          />
         </PopUp>
       )}
     </li>

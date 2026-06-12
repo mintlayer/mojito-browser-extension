@@ -1,0 +1,48 @@
+.navigationList {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 3px;
+}
+
+.navigationItem,
+.bottomMenuItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 16px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.labelWrapper {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.bottomMenuItem svg,
+.navigationItem svg {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+}
+
+.sliderVersion {
+  display: flex;
+  margin-top: 5px;
+  padding-left: 15px;
+  font-size: 11px;
+}
+
+.navigationItemActive {
+  background: rgb(var(--mojito-green-soft));
+  color: rgb(var(--mojito-green));
+}
+
+.navigationItem:hover,
+.bottomMenuItem:hover {
+  background: rgb(var(--mojito-green-soft));
+}

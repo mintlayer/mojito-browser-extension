@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 
 import { Message } from '@ContainerComponents'
+import { PageWrapper } from '@BasicComponents'
 
 import './MessagePage.css'
 
@@ -8,7 +9,7 @@ const MessagePage = () => {
   const [activeTab, setActiveTab] = useState('sign')
 
   return (
-    <div>
+    <PageWrapper>
       <div className="tabs">
         <button
           onClick={() => setActiveTab('sign')}
@@ -30,7 +31,7 @@ const MessagePage = () => {
           <Message.VerifyMessage />
         )}
       </div>
-    </div>
+    </PageWrapper>
   )
 }
 

@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 import { AccountProvider, SettingsProvider } from '@Contexts'
-import SetPassword from './SetPassword'
+import SetPassword from './SetPassword.tsx'
 
 const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -58,7 +58,7 @@ const setup = ({ data = _data } = {}) => {
       </SettingsProvider>
     </AccountProvider>,
   )
-  const title = screen.getByText('Password for')
+  const title = screen.getByText('Welcome back')
   const account = screen.getByText(data.account.name)
   const password = screen.getByPlaceholderText('Password')
   const loginButton = screen.getByTestId('login-password-submit')
