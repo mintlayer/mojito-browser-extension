@@ -1,8 +1,11 @@
-const V1 = { iterations: 10000 }
+// keySize is in bytes: 16 => AES-128, 32 => AES-256.
+// V1/V2 must keep keySize 16 so already-stored data stays decryptable.
+const V1 = { iterations: 10000, keySize: 16 }
 const V2 = { ...V1, iterations: 600000 }
+const V3 = { ...V2, keySize: 32 }
 
-const CURRENT_ENCRYPTION_VERSION = 2
-const ENCRYPTION_VERSIONS = { 1: V1, 2: V2 }
+const CURRENT_ENCRYPTION_VERSION = 3
+const ENCRYPTION_VERSIONS = { 1: V1, 2: V2, 3: V3 }
 
 const getVersionConfig = (version) => {
   const config = ENCRYPTION_VERSIONS[version]
@@ -10,12 +13,14 @@ const getVersionConfig = (version) => {
   return config
 }
 
-const KEYSIZE = 16
 const IVSIZE = 12
 const SALTSIZE = 16
 
-const hexToBytes = (hexString) =>
-  Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)))
+const hexToBytes = (hexString) => {
+  const pairs = hexString?.match(/.{1,2}/g)
+  if (!pairs) return new Uint8Array()
+  return Uint8Array.from(pairs.map((byte) => parseInt(byte, 16)))
+}
 
 const binaryStringToBytes = (str) =>
   new Uint8Array([...str].map((c) => c.charCodeAt(0)))
@@ -35,7 +40,7 @@ const generatePBKDF2Key = async ({
   salt,
   version = CURRENT_ENCRYPTION_VERSION,
 }) => {
-  const { iterations } = getVersionConfig(version)
+  const { iterations, keySize } = getVersionConfig(version)
   const currentSalt = salt || (await generateSalt(SALTSIZE))
   const encoder = new TextEncoder()
   const baseKey = await crypto.subtle.importKey(
@@ -53,7 +58,7 @@ const generatePBKDF2Key = async ({
       hash: 'SHA-512',
     },
     baseKey,
-    KEYSIZE * 8,
+    keySize * 8,
   )
   const key = [...new Uint8Array(derivedBits)]
 
