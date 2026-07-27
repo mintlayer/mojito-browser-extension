@@ -27,6 +27,7 @@
   font-size: 14px;
   color: rgb(var(--color-black));
   text-decoration: none;
+  white-space: nowrap;
   transition: color 0.15s ease;
 }
 
@@ -58,6 +59,7 @@
 .balanceAmount {
   font-size: var(--default-font-size);
   color: rgb(var(--color-black));
+  white-space: nowrap;
 }
 
 .balanceAmount strong {
@@ -194,21 +196,23 @@
   font-size: 11px;
 }
 
-/* Column widths */
+/* Column widths — must match AddressList thead (auto table layout) */
 .colAddress {
-  width: 45%;
+  min-width: 180px;
 }
 
 .colStatus {
-  width: 15%;
+  width: 1%;
+  white-space: nowrap;
 }
 
 .colBalance {
-  width: 30%;
+  min-width: 150px;
 }
 
 .colAction {
-  width: 10%;
+  width: 1%;
+  white-space: nowrap;
 }
 
 @keyframes tokensSlideDown {

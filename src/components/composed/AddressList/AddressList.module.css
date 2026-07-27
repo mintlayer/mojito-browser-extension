@@ -8,31 +8,22 @@
   flex-direction: column;
 }
 
+.tableScroll {
+  flex-grow: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
 .table {
   width: 100%;
-  display: block;
-}
-
-.table thead {
-  display: block;
-  width: 100%;
-}
-
-.table tbody {
-  display: block;
-  overflow-y: auto;
-  width: 100%;
-  height: 93%;
-}
-
-.table thead tr,
-.table tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
+  border-spacing: 0;
 }
 
 .colHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgb(var(--color-white));
   text-align: left;
   padding: 14px 20px;
   font-size: 11px;
@@ -43,21 +34,24 @@
   user-select: none;
 }
 
-/* Column widths */
+/* Column widths — auto layout: columns grow to fit content,
+   so nothing is clipped and horizontal scroll reveals everything */
 .colAddress {
-  width: 45%;
+  min-width: 180px;
 }
 
 .colStatus {
-  width: 15%;
+  width: 1%;
+  white-space: nowrap;
 }
 
 .colBalance {
-  width: 30%;
+  min-width: 150px;
 }
 
 .colAction {
-  width: 10%;
+  width: 1%;
+  white-space: nowrap;
 }
 
 .loadingWrapper {
@@ -73,19 +67,20 @@
   color: rgba(var(--color-black), 0.4);
 }
 
-.table tbody::-webkit-scrollbar {
+.tableScroll::-webkit-scrollbar {
   width: 4px;
+  height: 4px;
 }
 
-.table tbody::-webkit-scrollbar-track {
+.tableScroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.table tbody::-webkit-scrollbar-thumb {
+.tableScroll::-webkit-scrollbar-thumb {
   background: rgba(var(--color-black), 0.1);
   border-radius: 2px;
 }
 
-.table tbody::-webkit-scrollbar-thumb:hover {
+.tableScroll::-webkit-scrollbar-thumb:hover {
   background: rgba(var(--color-black), 0.2);
 }
