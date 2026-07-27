@@ -38,12 +38,7 @@ const CreateRestorePage = () => {
   }
 
   const goToRestoreAccountPage = () => {
-    if (isDevMode) {
-      return navigate('/restore-account')
-    }
-    isExtended
-      ? navigate('/restore-account')
-      : expandHandler('/restore-account')
+    navigate('/restore-account')
   }
 
   return (

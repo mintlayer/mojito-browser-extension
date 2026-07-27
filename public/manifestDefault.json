@@ -18,14 +18,16 @@
   },
   "action": {
     "default_icon": "logo192.png",
-    "default_title": "Mojito",
-    "default_popup": "index.html"
+    "default_title": "Mojito"
+  },
+  "side_panel": {
+    "default_path": "index.html"
   },
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": ["scripting", "storage"],
+  "permissions": ["scripting", "storage", "sidePanel"],
   "content_scripts": [
     {
       "run_at": "document_start",

@@ -11,6 +11,15 @@
   let connectedSites = {}
   const pendingResponses = new Map()
 
+  // Open the wallet in the browser side panel when the toolbar icon is clicked
+  if (api.sidePanel && api.sidePanel.setPanelBehavior) {
+    api.sidePanel
+      .setPanelBehavior({ openPanelOnActionClick: true })
+      .catch((error) =>
+        console.error('[Mintlayer] setPanelBehavior error:', error),
+      )
+  }
+
   // Load connected sites from storage
   api.storage.local.get(['connectedSites'], (data) => {
     if (api.runtime.lastError) {
