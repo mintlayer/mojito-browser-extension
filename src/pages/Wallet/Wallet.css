@@ -21,7 +21,9 @@
   align-items: flex-end;
   max-width: 100%;
   min-height: max-content;
+  margin: 15px 0 20px;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .balance-transactions-wrapper {

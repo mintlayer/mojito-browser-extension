@@ -2,7 +2,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  height: 19rem;
   overflow: auto;
   padding: 7px;
   animation: fadeInList 0.3s ease-in-out;

@@ -9,6 +9,10 @@
   justify-content: flex-end;
   height: 100%;
   width: 100%;
+
+  @media screen and (max-width: 800px) {
+    justify-content: center;
+  }
 }
 
 .stats-list ul {
@@ -21,6 +25,12 @@
   height: 100%;
   width: 100%;
   position: relative;
+
+  /* Narrow side panel: place the stats side by side under the chart */
+  @media screen and (max-width: 800px) {
+    flex-direction: row;
+    justify-content: center;
+  }
 }
 
 .stats-list ul::before {
@@ -32,6 +42,10 @@
   width: 1px;
   background: rgb(var(--color-light-gray));
   opacity: 0.5;
+
+  @media screen and (max-width: 800px) {
+    display: none;
+  }
 }
 
 .stat-item {
@@ -45,6 +59,12 @@
   flex: 1;
   justify-content: center;
   position: relative;
+
+  @media screen and (max-width: 800px) {
+    padding: 4px 16px;
+    text-align: center;
+    align-items: center;
+  }
 }
 
 .stat-item + .stat-item::before {
@@ -56,6 +76,16 @@
   height: 1px;
   background: rgb(var(--color-light-gray));
   opacity: 0.5;
+
+  /* Turn the horizontal separator into a vertical one for the row layout */
+  @media screen and (max-width: 800px) {
+    top: 18%;
+    bottom: 18%;
+    left: 0;
+    right: auto;
+    height: auto;
+    width: 1px;
+  }
 }
 
 .stat-item.stats-positive {
@@ -77,9 +107,16 @@
 }
 
 .stat-item dt {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
   font-weight: 700;
   font-size: 2.7rem;
   line-height: 1.1;
+
+  @media screen and (max-width: 800px) {
+    font-size: 1.6rem;
+  }
 }
 
 .stats-positive dt {

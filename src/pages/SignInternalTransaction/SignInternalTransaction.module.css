@@ -133,3 +133,7 @@
 .buttonSignTransaction {
   width: 100%;
 }
+
+.result-title {
+  word-break: break-all;
+}

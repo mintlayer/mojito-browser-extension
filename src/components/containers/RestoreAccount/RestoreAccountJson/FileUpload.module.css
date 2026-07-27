@@ -29,6 +29,10 @@
   transition:
     border-color 0.2s,
     background 0.2s;
+
+  @media screen and (max-width: 440px) {
+    min-width: 100%;
+  }
 }
 
 .dropzone:hover {

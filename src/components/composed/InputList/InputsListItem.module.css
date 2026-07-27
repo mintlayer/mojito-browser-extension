@@ -1,6 +1,7 @@
 .listItem {
   position: relative;
   margin-bottom: 9px;
+  max-height: fit-content;
 }
 
 .number {

@@ -2,7 +2,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 530px;
+  height: var(--page-content-height, 530px);
   padding: 1rem;
   flex: 1;
 

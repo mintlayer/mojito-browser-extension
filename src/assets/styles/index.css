@@ -94,3 +94,31 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
+
+/* Narrow side panel layout: fluid width down to a 320px minimum.
+   Anything below 800px is the side panel; the extended view is >=801px,
+   so this pairs exactly with the existing min-width: 801px breakpoint. */
+@media screen and (max-width: 800px) {
+  body {
+    width: 100%;
+    min-width: 400px;
+    height: 100vh;
+    /* Let page content grow with its height and scroll inside .App */
+    --page-content-height: auto;
+  }
+
+  #root {
+    height: 100%;
+  }
+
+  .app-content {
+    height: 100%;
+  }
+
+  .App {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}

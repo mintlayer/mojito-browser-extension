@@ -15,6 +15,7 @@
 
 .itemWrapper {
   width: 400px;
+  max-width: 100%;
 }
 
 .setAccountInput {
@@ -33,4 +34,41 @@
 .title {
   font-size: 20px;
   margin-bottom: 20px;
+}
+
+/* Narrow side panel: make the seed-phrase step fill the screen and pin the
+   action button to the bottom, like the "Choose an account" page.
+   Structure: form.setAccountFormWords > div.v-group > ul.inputsList + div.centeredLayout */
+@media screen and (max-width: 800px) {
+  .setAccountContainer {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .setAccountFormWords {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    margin-top: 1.5rem;
+  }
+
+  .setAccountFormWords > div {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .setAccountFormWords > div > ul {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    width: 100%;
+    overflow-y: auto;
+  }
+
+  .setAccountFormWords > div > div {
+    margin-top: auto;
+  }
 }

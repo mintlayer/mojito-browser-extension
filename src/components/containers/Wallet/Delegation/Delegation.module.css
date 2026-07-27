@@ -139,3 +139,23 @@
     width: 95%;
   }
 }
+
+/* Stacked layout: info row on top, full-width action buttons below */
+@media screen and (max-width: 650px) {
+  .card {
+    flex-wrap: wrap;
+    row-gap: 0.85rem;
+    border-radius: 24px;
+  }
+
+  .actions {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .actionButton {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}

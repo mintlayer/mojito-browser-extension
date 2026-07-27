@@ -8,12 +8,17 @@
   padding: 16px 20px;
   min-height: max-content;
 
+  @media screen and (max-width: 560px) {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
   @media screen and (min-width: 801px) {
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
     padding: 20px 24px;
-    margin: 0 0 20px 0;
     border-radius: 20px;
   }
 }
@@ -85,6 +90,11 @@
   margin-top: 12px;
   width: 50%;
   gap: 10px;
+
+  @media screen and (max-width: 560px) {
+    width: 100%;
+  }
+
   @media screen and (min-width: 801px) {
     width: 100%;
   }

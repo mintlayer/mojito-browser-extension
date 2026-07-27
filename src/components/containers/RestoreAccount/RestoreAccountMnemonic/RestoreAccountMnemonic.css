@@ -21,6 +21,7 @@
 
 .itemWrapper {
   width: 400px;
+  max-width: 100%;
 }
 
 .account-input {
