@@ -1,9 +1,9 @@
 .card {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-lg);
   min-height: 72px;
-  padding: 16px 18px;
+  padding: var(--space-lg) var(--space-xl);
   border-radius: 16px;
   border: 1px solid rgba(var(--color-black), 0.1);
   background: rgb(var(--color-white));
@@ -13,7 +13,7 @@
     box-shadow 0.2s;
 
   @media screen and (min-width: 801px) {
-    padding: 18px 22px;
+    padding: var(--space-xl) var(--space-2xl);
     border-radius: 18px;
   }
 }
@@ -41,13 +41,13 @@
 }
 
 .cardName {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: rgb(var(--color-black));
   margin: 0;
 
   @media screen and (min-width: 801px) {
-    font-size: 17px;
+    font-size: var(--font-size-xl);
   }
 }
 

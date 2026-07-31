@@ -11,9 +11,9 @@
 .page {
   display: flex;
   flex: 1;
-  padding: 1rem;
+  padding: var(--space-lg);
 
   @media screen and (min-width: 801px) {
-    padding: 2rem;
+    padding: var(--space-4xl);
   }
 }
