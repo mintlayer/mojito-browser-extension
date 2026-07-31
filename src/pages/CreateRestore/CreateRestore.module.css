@@ -3,12 +3,18 @@
 }
 
 .page {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
   text-align: center;
+
+  @media screen and (max-width: 800px) {
+    padding-bottom: var(--space-5xl);
+  }
 }
 
 .logoIcon {
@@ -31,13 +37,13 @@
 }
 
 .title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-display);
   font-weight: 700;
-  color: rgb(var(--color-black));
+  line-height: 1.1;
+  color: rgba(var(--color-black), 0.75);
   margin: 0 0 var(--space-3xl) 0;
 
   @media screen and (min-width: 801px) {
-    font-size: var(--font-size-4xl);
     margin: 0 0 var(--space-5xl) 0;
   }
 }

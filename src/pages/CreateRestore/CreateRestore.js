@@ -1,8 +1,7 @@
 import { useContext } from 'react'
 import { useNavigate } from 'react-router'
 
-import { Button, PageWrapper } from '@BasicComponents'
-import { ReactComponent as LogoIcon } from '@Assets/images/logo.svg'
+import { BrandBottomLogo, Button, PageWrapper } from '@BasicComponents'
 import { ReactComponent as ShieldIcon } from '@Assets/images/icon-shield.svg'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
 import { AccountContext } from '@Contexts'
@@ -47,7 +46,6 @@ const CreateRestorePage = () => {
         data-testid="create-restore"
         className={styles.page}
       >
-        <LogoIcon className={styles.logoIcon} />
         <h1 className={styles.title}>Mojito</h1>
         <h2 className={styles.heading}>A fresh way to hold Mintlayer assets</h2>
         <p className={styles.subtitle}>
@@ -83,6 +81,7 @@ const CreateRestorePage = () => {
           <span>Open source</span>
         </div>
       </div>
+      <BrandBottomLogo />
     </PageWrapper>
   )
 }

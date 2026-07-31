@@ -17,6 +17,7 @@ import EmptyListMessage from './EmptyList/EmptyList'
 import SwapTokenLogo from './SwapTokenLogo/SwapTokenLogo'
 import PageWrapper from './PageWrapper/PageWrapper.tsx'
 import BrandPanel from './BrandPanel/BrandPanel'
+import BrandBottomLogo from './BrandBottomLogo/BrandBottomLogo'
 import OptionCard from './OptionCard/OptionCard'
 
 export {
@@ -39,5 +40,6 @@ export {
   SwapTokenLogo,
   PageWrapper,
   BrandPanel,
+  BrandBottomLogo,
   OptionCard,
 }

@@ -1,0 +1,32 @@
+.brandBottomLogo {
+  display: none;
+}
+
+@media screen and (max-width: 800px) {
+  .brandBottomLogo {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 240px;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+@media screen and (min-width: 550px) {
+  .brandBottomLogo {
+    height: 320px;
+  }
+}
+
+.logo {
+  width: 100%;
+  height: auto;
+  flex-shrink: 0;
+  opacity: 0.16;
+}
