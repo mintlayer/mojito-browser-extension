@@ -1,9 +1,9 @@
 .card {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-lg);
   min-height: max-content;
-  padding: 1rem 1.25rem;
+  padding: var(--space-lg) var(--space-xl);
   border-radius: 35px;
   background: rgb(var(--color-white));
   border: 1px solid rgb(var(--color-medium-gray));
@@ -33,7 +33,7 @@
   height: 56px;
   border-radius: 50%;
   background: rgb(var(--color-dim-blue));
-  font-size: 1.5rem;
+  font-size: var(--font-size-4xl);
   color: rgb(var(--color-white));
   flex-shrink: 0;
 }
@@ -54,32 +54,32 @@
 }
 
 .poolId {
-  font-size: 1rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: rgb(var(--color-black));
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-xs);
 }
 
 .inactiveBadge {
   display: inline-block;
-  font-size: 0.7rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: rgb(var(--color-orange));
   background: rgba(var(--color-orange), 0.12);
-  padding: 0.2rem 0.6rem;
+  padding: var(--space-3xs) var(--space-sm);
   border-radius: 6px;
   flex-shrink: 0;
 }
 
 .date {
-  font-size: 0.8rem;
+  font-size: var(--font-size-sm);
   color: rgb(var(--color-dark-gray));
-  margin: 0.2rem 0 0;
+  margin: var(--space-3xs) 0 0;
 }
 
 .amountBlock {
@@ -89,27 +89,27 @@
 }
 
 .amount {
-  font-size: 1.25rem;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   color: rgb(var(--color-black));
   margin: 0;
 }
 
 .currency {
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   color: rgb(var(--color-dark-gray));
   margin: 0;
 }
 
 .actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-xs);
   flex-shrink: 0;
 }
 
 .actionButton {
-  padding: 0.5rem 1rem;
-  font-size: 0.8rem;
+  padding: var(--space-xs) var(--space-lg);
+  font-size: var(--font-size-sm);
 }
 
 .progressBar {
@@ -144,7 +144,7 @@
 @media screen and (max-width: 650px) {
   .card {
     flex-wrap: wrap;
-    row-gap: 0.85rem;
+    row-gap: var(--space-md);
     border-radius: 24px;
   }
 
@@ -155,7 +155,7 @@
 
   .actionButton {
     flex: 1;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
+    padding: var(--space-md) var(--space-lg);
+    font-size: var(--font-size-md);
   }
 }
