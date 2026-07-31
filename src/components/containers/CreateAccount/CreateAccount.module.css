@@ -10,7 +10,7 @@
 }
 
 .setAccountFormWords {
-  margin-top: 2rem;
+  margin-top: var(--space-4xl);
 }
 
 .itemWrapper {
@@ -19,11 +19,11 @@
 }
 
 .setAccountInput {
-  padding: 1.2rem 1.7rem;
+  padding: var(--space-xl) var(--space-3xl);
 }
 
 .createSubmitIcon {
-  margin-left: 10px;
+  margin-left: var(--space-sm);
   width: 15px;
 }
 
@@ -32,13 +32,10 @@
 }
 
 .title {
-  font-size: 20px;
-  margin-bottom: 20px;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-xl);
 }
 
-/* Narrow side panel: make the seed-phrase step fill the screen and pin the
-   action button to the bottom, like the "Choose an account" page.
-   Structure: form.setAccountFormWords > div.v-group > ul.inputsList + div.centeredLayout */
 @media screen and (max-width: 800px) {
   .setAccountContainer {
     flex: 1;
@@ -51,7 +48,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    margin-top: 1.5rem;
+    margin-top: var(--space-2xl);
   }
 
   .setAccountFormWords > div {

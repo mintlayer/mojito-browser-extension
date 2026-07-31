@@ -1,12 +1,9 @@
 .accountForm {
-  margin-top: 2rem;
-  @media (min-width: 801px) {
-    margin-top: 4rem;
-  }
+  margin-top: 4rem;
 }
 
 .submitIcon {
-  margin-left: 10px;
+  margin-left: var(--space-sm);
   width: 15px;
 }
 

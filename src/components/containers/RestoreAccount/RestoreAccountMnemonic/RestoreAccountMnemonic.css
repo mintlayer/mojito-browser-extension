@@ -11,12 +11,12 @@
 }
 
 .account-form-address-type {
-  margin-top: 2.5em;
+  margin-top: var(--space-5xl);
 }
 
 .restore-mnemonic-title {
-  font-size: 20px;
-  margin-bottom: 20px;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-xl);
 }
 
 .itemWrapper {
@@ -25,14 +25,14 @@
 }
 
 .account-input {
-  padding: 1.2rem 1.7rem;
+  padding: var(--space-xl) var(--space-3xl);
 }
 
 .words-description-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-2xl);
 }
 
 .words-description-icon {
@@ -52,25 +52,25 @@
 }
 
 .words-description {
-  font-size: 22px;
+  font-size: var(--font-size-3xl);
   text-align: center;
 }
 
 .walletTypeTopTitle {
-  font-size: 1.2rem;
-  margin-bottom: 0.2rem;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-3xs);
 }
 
 .walletTypeBottomTitle {
-  font-size: 0.8rem;
+  font-size: var(--font-size-sm);
 }
 
 .address-type-button {
-  padding: 0.9rem 0;
+  padding: var(--space-lg) 0;
 }
 
 .restore-submit-icon {
-  margin-left: 10px;
+  margin-left: var(--space-sm);
   transition: transform 0.3s ease;
   width: 17px;
 }

@@ -1,21 +1,21 @@
 .title {
-  font-size: 1.5rem;
+  font-size: var(--font-size-4xl);
   font-weight: 700;
   text-align: center;
   color: rgb(var(--color-black));
 
   @media (min-width: 801px) {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-xs);
   }
 }
 
 .subtitle {
-  font-size: 1rem;
+  font-size: var(--font-size-lg);
   text-align: center;
   color: rgb(var(--color-dark-gray));
 
   @media (min-width: 801px) {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-2xl);
   }
 }
 
@@ -30,8 +30,8 @@
 .detailsRow {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
+  gap: var(--space-lg);
+  padding: var(--space-xl) var(--space-2xl);
 }
 
 .detailsRow + .detailsRow {
@@ -56,7 +56,7 @@
 }
 
 .detailsLabel {
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -65,7 +65,7 @@
 }
 
 .detailsValue {
-  font-size: 1rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: rgb(var(--color-black));
   word-break: break-word;
@@ -74,14 +74,14 @@
 .infoBanner {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.25rem;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
   background: rgb(var(--mojito-green-50));
   border: 1px solid rgba(30, 187, 129, 0.2);
   border-radius: 12px;
 
   @media (min-width: 801px) {
-    margin-top: 1rem;
+    margin-top: var(--space-lg);
   }
 }
 
@@ -101,6 +101,6 @@
 }
 
 .infoBannerText {
-  font-size: 0.875rem;
+  font-size: var(--font-size-md);
   color: rgb(var(--color-dark-gray));
 }
