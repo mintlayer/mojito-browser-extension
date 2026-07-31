@@ -73,6 +73,7 @@
   --font-size-4xl: 24px;
   --font-size-5xl: 28px;
   --font-size-6xl: 32px;
+  --font-size-display: 80px;
 
   --space-3xs: 4px;
   --space-2xs: 6px;
@@ -99,6 +100,7 @@
     --font-size-4xl: 20px;
     --font-size-5xl: 22px;
     --font-size-6xl: 26px;
+    --font-size-display: 64px;
 
     --space-3xs: 3px;
     --space-2xs: 4px;
