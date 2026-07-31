@@ -47,14 +47,19 @@ html {
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  height: 600px;
-  width: 800px;
+  height: 100vh;
+  width: 100%;
+  min-width: 400px;
   background: #f0f2f5;
+  --page-content-height: auto;
+}
 
+html.extended-view body {
   @media screen and (min-width: 801px) {
     height: auto;
     border-radius: 30px;
     width: 111vh;
+    --page-content-height: 93%;
   }
 }
 
@@ -79,10 +84,17 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 530px;
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  overflow-y: auto;
+}
 
+html.extended-view .App {
   @media screen and (min-width: 801px) {
+    flex: none;
     height: 93%;
+    overflow-y: hidden;
   }
 }
 
@@ -93,32 +105,4 @@ body {
 .center-container {
   margin-left: auto;
   margin-right: auto;
-}
-
-/* Narrow side panel layout: fluid width down to a 320px minimum.
-   Anything below 800px is the side panel; the extended view is >=801px,
-   so this pairs exactly with the existing min-width: 801px breakpoint. */
-@media screen and (max-width: 800px) {
-  body {
-    width: 100%;
-    min-width: 400px;
-    height: 100vh;
-    /* Let page content grow with its height and scroll inside .App */
-    --page-content-height: auto;
-  }
-
-  #root {
-    height: 100%;
-  }
-
-  .app-content {
-    height: 100%;
-  }
-
-  .App {
-    flex: 1;
-    height: auto;
-    min-height: 0;
-    overflow-y: auto;
-  }
 }
