@@ -71,7 +71,8 @@
   --font-size-2xl: 20px;
   --font-size-3xl: 22px;
   --font-size-4xl: 24px;
-  --font-size-5xl: 32px;
+  --font-size-5xl: 28px;
+  --font-size-6xl: 32px;
 
   --space-3xs: 4px;
   --space-2xs: 6px;
@@ -96,7 +97,8 @@
     --font-size-2xl: 17px;
     --font-size-3xl: 19px;
     --font-size-4xl: 20px;
-    --font-size-5xl: 26px;
+    --font-size-5xl: 22px;
+    --font-size-6xl: 26px;
 
     --space-3xs: 3px;
     --space-2xs: 4px;

@@ -52,7 +52,7 @@
 }
 
 .bannerAmount {
-  font-size: var(--font-size-5xl);
+  font-size: var(--font-size-6xl);
   font-weight: 700;
   color: rgb(var(--color-black));
   display: flex;
@@ -62,7 +62,7 @@
 }
 
 .bannerAmountValue {
-  font-size: var(--font-size-5xl);
+  font-size: var(--font-size-6xl);
   font-weight: 800;
   line-break: anywhere;
 }
