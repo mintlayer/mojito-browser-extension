@@ -53,7 +53,7 @@
 }
 
 .button-transaction svg path {
-  stroke: rgb(var(--mojito-green));
+  stroke: rgb(var(--color-dark-gray));
   transition: stroke 0.2s ease;
 }
 
