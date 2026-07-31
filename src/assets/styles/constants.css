@@ -62,6 +62,54 @@
   --border-radius-input: 16px;
   --round-size-big: 99px;
   --default-font-size: 14px;
+
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 22px;
+  --font-size-4xl: 24px;
+  --font-size-5xl: 32px;
+
+  --space-3xs: 4px;
+  --space-2xs: 6px;
+  --space-xs: 8px;
+  --space-sm: 10px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 28px;
+  --space-4xl: 32px;
+  --space-5xl: 36px;
+}
+
+@media screen and (max-width: 500px) {
+  :root {
+    --font-size-xs: 10px;
+    --font-size-sm: 12px;
+    --font-size-md: 13px;
+    --font-size-lg: 14px;
+    --font-size-xl: 16px;
+    --font-size-2xl: 17px;
+    --font-size-3xl: 19px;
+    --font-size-4xl: 20px;
+    --font-size-5xl: 26px;
+
+    --space-3xs: 3px;
+    --space-2xs: 4px;
+    --space-xs: 6px;
+    --space-sm: 8px;
+    --space-md: 10px;
+    --space-lg: 12px;
+    --space-xl: 14px;
+    --space-2xl: 16px;
+    --space-3xl: 20px;
+    --space-4xl: 24px;
+    --space-5xl: 28px;
+  }
 }
 
 @keyframes moveArrowUpRight {
