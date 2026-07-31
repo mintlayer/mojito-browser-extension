@@ -6,19 +6,19 @@
 }
 
 .title {
-  font-size: 1.4rem;
+  font-size: var(--font-size-3xl);
   font-weight: bold;
 }
 
 .modeToggle {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .modeLabel {
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--font-size-md);
   color: rgba(var(--color-black), 0.6);
 }
 
@@ -27,13 +27,13 @@
   width: 100%;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-3xs);
   flex-grow: 1;
   min-height: 0;
 }
 
 @media screen and (min-width: 801px) {
   .content {
-    gap: 15px;
+    gap: var(--space-lg);
   }
 }
