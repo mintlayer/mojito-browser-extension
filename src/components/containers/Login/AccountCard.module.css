@@ -2,8 +2,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  min-height: 72px;
-  padding: var(--space-lg) var(--space-xl);
+  min-height: 68px;
+  padding: var(--space-md) var(--space-xl);
   border-radius: 16px;
   border: 1px solid rgba(var(--color-black), 0.1);
   background: rgb(var(--color-white));
@@ -11,9 +11,9 @@
   transition:
     border-color 0.2s,
     box-shadow 0.2s;
+  flex-shrink: 0;
 
-  @media screen and (min-width: 801px) {
-    padding: var(--space-xl) var(--space-2xl);
+  @media screen and (min-width: 901px) {
     border-radius: 18px;
   }
 }
@@ -28,11 +28,6 @@
   height: 48px;
   border-radius: 50%;
   flex-shrink: 0;
-
-  @media screen and (min-width: 801px) {
-    width: 56px;
-    height: 56px;
-  }
 }
 
 .cardInfo {
@@ -45,10 +40,6 @@
   font-weight: 600;
   color: rgb(var(--color-black));
   margin: 0;
-
-  @media screen and (min-width: 801px) {
-    font-size: var(--font-size-xl);
-  }
 }
 
 .deleteButton {
