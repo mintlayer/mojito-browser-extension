@@ -8,7 +8,7 @@ import './PriceChart.css'
 const PriceChart = ({ data, item }) => {
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
-  const isToken = item.name !== 'Mintlayer' && item.name !== 'Bitcoin'
+  const isToken = item.type === 'token'
   const color = AppInfo.COLOR_LIST[item.symbol.toLowerCase()]
 
   return (
