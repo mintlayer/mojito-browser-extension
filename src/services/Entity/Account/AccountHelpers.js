@@ -5,7 +5,10 @@ import loadAccountSubRoutines from './loadWorkers'
 const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
   const { generateSeed, generateEncryptionKey, encryptSeed } =
     await loadAccountSubRoutines()
-  const { key } = await generateEncryptionKey({ password, salt })
+  const { key, salt: usedSalt } = await generateEncryptionKey({
+    password,
+    salt,
+  })
   const seed = await generateSeed(mnemonic)
 
   const encryptData = async (data) => {
@@ -41,6 +44,7 @@ const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
   } = await encryptData(seed)
 
   return {
+    salt: usedSalt,
     encryptedMlTestnetPrivateKey,
     encryptedMlMainnetPrivateKey,
     btcEncryptedSeed,
