@@ -72,7 +72,7 @@ test('Cipher - generatePBKDF2Key returns correct key length', async () => {
   })
 
   expect(Array.isArray(key)).toBe(true)
-  expect(key.length).toBe(16)
+  expect(key.length).toBe(32)
   key.forEach((byte) => {
     expect(byte).toBeGreaterThanOrEqual(0)
     expect(byte).toBeLessThanOrEqual(255)
@@ -335,9 +335,13 @@ test('Cipher - decryptAES tampered tag throws', async () => {
 })
 
 test('Cipher - constants are correct', () => {
-  expect(CURRENT_ENCRYPTION_VERSION).toBe(2)
+  expect(CURRENT_ENCRYPTION_VERSION).toBe(3)
   expect(getVersionConfig(1).iterations).toBe(10000)
   expect(getVersionConfig(2).iterations).toBe(600000)
+  expect(getVersionConfig(3).iterations).toBe(600000)
+  expect(getVersionConfig(1).keySize).toBe(16)
+  expect(getVersionConfig(2).keySize).toBe(16)
+  expect(getVersionConfig(3).keySize).toBe(32)
   expect(IVSIZE).toBe(12)
 })
 
@@ -636,4 +640,81 @@ test('Cipher - full cycle with wrong password fails', async () => {
       key: wrongKey,
     }),
   ).rejects.toThrow('Incorrect password')
+})
+
+// Mirrors the migration flow in reEncryptAccount: decrypt with the old
+// version, then re-encrypt with a fresh salt under the new version.
+const migrateRoundTrip = async (password, data, fromVersion, toVersion) => {
+  const { key: fromKey, salt: fromSalt } = await generatePBKDF2Key({
+    password,
+    version: fromVersion,
+  })
+  const enc = await encryptAES({ data, key: fromKey })
+
+  const { key: fromKeyAgain } = await generatePBKDF2Key({
+    password,
+    salt: fromSalt,
+    version: fromVersion,
+  })
+  const decrypted = await decryptAES({
+    data: enc.encryptedData,
+    iv: enc.iv,
+    tag: enc.tag,
+    key: fromKeyAgain,
+  })
+  expect(Buffer.from(decrypted).toString()).toBe(data)
+
+  const { key: toKey, salt: toSalt } = await generatePBKDF2Key({
+    password,
+    version: toVersion,
+  })
+  const reEnc = await encryptAES({ data: decrypted, key: toKey })
+
+  const { key: toKeyAgain } = await generatePBKDF2Key({
+    password,
+    salt: toSalt,
+    version: toVersion,
+  })
+  const finalDecrypted = await decryptAES({
+    data: reEnc.encryptedData,
+    iv: reEnc.iv,
+    tag: reEnc.tag,
+    key: toKeyAgain,
+  })
+  expect(Buffer.from(finalDecrypted).toString()).toBe(data)
+
+  return { fromKey, toKey }
+}
+
+test('Cipher - migration v1 -> v2 preserves data (AES-128)', async () => {
+  const { fromKey, toKey } = await migrateRoundTrip(
+    'MyStr0ng!Pass',
+    'seed phrase v1 to v2',
+    1,
+    2,
+  )
+  expect(fromKey.length).toBe(16)
+  expect(toKey.length).toBe(16)
+})
+
+test('Cipher - migration v2 -> v3 upgrades to AES-256 and preserves data', async () => {
+  const { fromKey, toKey } = await migrateRoundTrip(
+    'MyStr0ng!Pass',
+    'seed phrase v2 to v3',
+    2,
+    3,
+  )
+  expect(fromKey.length).toBe(16) // AES-128
+  expect(toKey.length).toBe(32) // AES-256
+})
+
+test('Cipher - migration v1 -> v3 upgrades to AES-256 and preserves data', async () => {
+  const { fromKey, toKey } = await migrateRoundTrip(
+    'MyStr0ng!Pass',
+    'seed phrase v1 to v3',
+    1,
+    3,
+  )
+  expect(fromKey.length).toBe(16) // AES-128
+  expect(toKey.length).toBe(32) // AES-256
 })

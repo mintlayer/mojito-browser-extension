@@ -13,10 +13,9 @@ import { CURRENT_ENCRYPTION_VERSION } from '../../Crypto/Cipher/Cipher'
 const getAccountVersion = (account) => account.encryptionVersion || 1
 
 const saveAccount = async (data) => {
-  const { generateEncryptionKey } = await loadAccountSubRoutines()
   const { name, password, mnemonic, walletType, walletsToCreate } = data
-  const { salt } = await generateEncryptionKey({ password })
   const {
+    salt,
     encryptedMlTestnetPrivateKey,
     encryptedMlMainnetPrivateKey,
     btcEncryptedSeed,
@@ -26,7 +25,7 @@ const saveAccount = async (data) => {
     mlTestnetPrivKeyTag,
     mlMainnetPrivKeyTag,
     btcTag,
-  } = await getEncryptedPrivateKeys(password, salt, mnemonic)
+  } = await getEncryptedPrivateKeys(password, undefined, mnemonic)
 
   const account = {
     name,
@@ -50,8 +49,7 @@ const saveAccount = async (data) => {
 
 const getAccount = async (id) => {
   const accounts = await IndexedDB.loadAccounts()
-  const account = await IndexedDB.get(accounts, id)
-  return account
+  return IndexedDB.get(accounts, id)
 }
 
 const updateAccount = async (id, updates) => {
@@ -85,8 +83,7 @@ const restoreAccountFromJSON = async (json) => {
 const checkPasswordValidity = async (id, password) => {
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
   try {
-    const accounts = await IndexedDB.loadAccounts()
-    const account = await IndexedDB.get(accounts, id)
+    const account = await getAccount(id)
     if (!account?.salt || !account?.seed?.btcEncryptedSeed) return false
 
     const { key } = await generateEncryptionKey({
@@ -111,8 +108,7 @@ const checkPasswordValidity = async (id, password) => {
 
 const unlockHtlsSecret = async ({ accountId, password, hash }) => {
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
-  const accounts = await IndexedDB.loadAccounts()
-  const account = await IndexedDB.get(accounts, accountId)
+  const account = await getAccount(accountId)
   const isPasswordValid = await checkPasswordValidity(accountId, password)
   if (!isPasswordValid) return Promise.reject('Invalid password')
   if (!account) return Promise.reject('Account not found')
@@ -142,8 +138,7 @@ const unlockHtlsSecret = async ({ accountId, password, hash }) => {
 }
 
 const saveProvidedHtlsSecret = async ({ accountId, password, data }) => {
-  const accounts = await IndexedDB.loadAccounts()
-  const account = await IndexedDB.get(accounts, accountId)
+  const account = await getAccount(accountId)
   const isPasswordValid = await checkPasswordValidity(accountId, password)
   if (!isPasswordValid) return Promise.reject('Invalid password')
   if (!account) return Promise.reject('Account not found')
@@ -164,7 +159,8 @@ const saveProvidedHtlsSecret = async ({ accountId, password, data }) => {
 }
 
 const reEncryptAccount = async (id, password, account, decryptedSeeds) => {
-  const { generateEncryptionKey, encryptSeed } = await loadAccountSubRoutines()
+  const { generateEncryptionKey, encryptSeed, decryptSeed } =
+    await loadAccountSubRoutines()
 
   const { key: newKey, salt: newSalt } = await generateEncryptionKey({
     password,
@@ -197,7 +193,6 @@ const reEncryptAccount = async (id, password, account, decryptedSeeds) => {
   // Re-encrypt HTLS secrets if any
   const updatedHtlsSecrets = {}
   if (account.htlsSecrets) {
-    const { decryptSeed } = await loadAccountSubRoutines()
     const { key: oldKey } = await generateEncryptionKey({
       password,
       salt: account.salt,
@@ -246,8 +241,7 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
   const addresses = {}
 
   try {
-    const accounts = await IndexedDB.loadAccounts()
-    const account = await IndexedDB.get(accounts, id)
+    const account = await getAccount(id)
     const walletsToCreate = AppInfo.DEFAULT_WALLETS_TO_CREATE
 
     if (!account.walletsToCreate)
@@ -258,7 +252,7 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
     const { key } = await generateEncryptionKey({
       password,
       salt: account.salt,
-      version: getAccountVersion(account),
+      version: accountVersion,
     })
 
     const seed = await decryptSeed({
@@ -343,8 +337,8 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
   } catch (e) {
     console.error(e)
     return Promise.reject({
-      address: '',
-      btcPrivateKeys: '',
+      addresses: {},
+      btcPrivateKeys: { btcHDWallet: null, btcAddressData: null },
       name: '',
       mlPrivKeys: { mlMainnetPrivateKey: '', mlTestnetPrivateKey: '' },
     })
