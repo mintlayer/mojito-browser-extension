@@ -11,9 +11,16 @@
 .card-compact {
   padding: 8px 20px 8px 12px;
   margin-bottom: 0;
-  border-radius: 35px;
-  max-height: 72px;
-  min-height: 72px;
+  border-radius: 25px;
+  max-height: 76px;
+  min-height: 76px;
+}
+
+@media screen and (max-width: 900px) {
+  .card-compact {
+    max-height: 72px;
+    min-height: 72px;
+  }
 }
 
 .skeleton {
