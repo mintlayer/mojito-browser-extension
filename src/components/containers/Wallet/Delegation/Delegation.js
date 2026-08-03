@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { ReactComponent as StakeIcon } from '@Assets/images/icon-stake.svg'
 import { Loading, PopUp } from '@ComposedComponents'
 import { ML } from '@Helpers'
-import { Button } from '@BasicComponents'
 
 import DelegationDetails from './DelegationDetails'
 
@@ -82,8 +81,6 @@ const Delegation = ({ delegation }) => {
     .filter(Boolean)
     .join(' ')
 
-  const buttonExtraStyles = [styles.actionButton]
-
   return (
     <li
       className={cardClasses}
@@ -145,43 +142,6 @@ const Delegation = ({ delegation }) => {
           {delegation && value ? value : '—'}
         </p>
         <p className={styles.currency}>ML</p>
-      </div>
-
-      <div className={styles.actions}>
-        {delegation.type !== 'Unconfirmed' ? (
-          <>
-            <Button
-              extraStyleClasses={buttonExtraStyles}
-              onClickHandle={addFundsClickHandle}
-              disabled={isDecommissioned}
-            >
-              Add funds
-            </Button>
-            <Button
-              alternate
-              extraStyleClasses={buttonExtraStyles}
-              onClickHandle={withdrawClickHandle}
-            >
-              Withdraw
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              extraStyleClasses={buttonExtraStyles}
-              disabled={true}
-            >
-              Add funds
-            </Button>
-            <Button
-              alternate
-              extraStyleClasses={buttonExtraStyles}
-              disabled={true}
-            >
-              Withdraw
-            </Button>
-          </>
-        )}
       </div>
 
       {detailPopupOpen && (

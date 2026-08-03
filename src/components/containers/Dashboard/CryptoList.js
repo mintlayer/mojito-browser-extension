@@ -24,7 +24,7 @@ export const CryptoItem = ({ onClickItem, item }) => {
       Number(value),
     ])
   const symbol = !isTestnet ? item.symbol : 'Testnet'
-  const isToken = item.name !== 'Mintlayer' && item.name !== 'Bitcoin'
+  const isToken = item.type === 'token'
 
   const onClick = () => {
     if (!isBtcUnavailable) {
@@ -135,33 +135,51 @@ const CryptoList = ({ cryptoList, onWalletItemClick, onConnectItemClick }) => {
     (walletType) =>
       !cryptoList.find((crypto) => crypto.name === walletType.name),
   )
+  const coins = cryptoList.filter((crypto) => crypto.type !== 'token')
+  const tokens = cryptoList.filter((crypto) => crypto.type === 'token')
+  const showGroupTitles = tokens.some((token) => !token.isPlaceholder)
+
   return (
-    <>
-      <ul
-        data-testid="crypto-list"
-        className="crypto-list"
-      >
-        {cryptoList.length
-          ? cryptoList.map((crypto) => (
+    <div
+      data-testid="crypto-list"
+      className="crypto-list"
+    >
+      {showGroupTitles ? <h6 className="crypto-group-title">Coins</h6> : null}
+      <ul className="crypto-group">
+        {coins.map((crypto) => (
+          <CryptoItem
+            key={crypto.symbol}
+            item={crypto}
+            onClickItem={onWalletItemClick}
+          />
+        ))}
+
+        {missingWalletTypes.map((walletType) => (
+          <ConnectItem
+            key={walletType.name}
+            walletType={walletType}
+            onClick={onConnectItemClick}
+          />
+        ))}
+      </ul>
+
+      {tokens.length ? (
+        <>
+          {showGroupTitles ? (
+            <h6 className="crypto-group-title">Tokens</h6>
+          ) : null}
+          <ul className="crypto-group">
+            {tokens.map((token) => (
               <CryptoItem
-                key={crypto.symbol}
-                item={crypto}
+                key={token.id}
+                item={token}
                 onClickItem={onWalletItemClick}
               />
-            ))
-          : null}
-
-        {missingWalletTypes.length
-          ? missingWalletTypes.map((walletType) => (
-              <ConnectItem
-                key={walletType.name}
-                walletType={walletType}
-                onClick={onConnectItemClick}
-              />
-            ))
-          : null}
-      </ul>
-    </>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </div>
   )
 }
 

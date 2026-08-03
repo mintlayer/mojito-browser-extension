@@ -10,19 +10,20 @@
 }
 
 .setAccountFormWords {
-  margin-top: 2rem;
+  margin-top: var(--space-4xl);
 }
 
 .itemWrapper {
   width: 400px;
+  max-width: 100%;
 }
 
 .setAccountInput {
-  padding: 1.2rem 1.7rem;
+  padding: var(--space-xl) var(--space-3xl);
 }
 
 .createSubmitIcon {
-  margin-left: 10px;
+  margin-left: var(--space-sm);
   width: 15px;
 }
 
@@ -31,6 +32,40 @@
 }
 
 .title {
-  font-size: 20px;
-  margin-bottom: 20px;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-xl);
+}
+
+@media screen and (max-width: 900px) {
+  .setAccountContainer {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .setAccountFormWords {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    margin-top: var(--space-2xl);
+  }
+
+  .setAccountFormWords > div {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .setAccountFormWords > div > ul {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    width: 100%;
+    overflow-y: auto;
+  }
+
+  .setAccountFormWords > div > div {
+    margin-top: auto;
+  }
 }

@@ -66,45 +66,47 @@ const AddressList = ({ search }) => {
           <Loading />
         </div>
       ) : (
-        <table
-          className={styles.table}
-          data-testid="address-table"
-        >
-          <thead>
-            <tr>
-              <th className={`${styles.colHeader} ${styles.colAddress}`}>
-                ADDRESS
-              </th>
-              <th className={`${styles.colHeader} ${styles.colStatus}`}>
-                STATUS
-              </th>
-              <th className={`${styles.colHeader} ${styles.colBalance}`}>
-                BALANCE
-              </th>
-              <th className={`${styles.colHeader} ${styles.colAction}`}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {requiredAddresses && requiredAddresses.length > 0 ? (
-              filteredAddresses.map((address, index) => (
-                <AddressListItem
-                  key={address.id || index}
-                  index={index}
-                  address={address}
-                />
-              ))
-            ) : (
+        <div className={styles.tableScroll}>
+          <table
+            className={styles.table}
+            data-testid="address-table"
+          >
+            <thead>
               <tr>
-                <td
-                  colSpan="4"
-                  className={styles.noAddresses}
-                >
-                  No addresses found
-                </td>
+                <th className={`${styles.colHeader} ${styles.colAddress}`}>
+                  ADDRESS
+                </th>
+                <th className={`${styles.colHeader} ${styles.colStatus}`}>
+                  STATUS
+                </th>
+                <th className={`${styles.colHeader} ${styles.colBalance}`}>
+                  BALANCE
+                </th>
+                <th className={`${styles.colHeader} ${styles.colAction}`}></th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {requiredAddresses && requiredAddresses.length > 0 ? (
+                filteredAddresses.map((address, index) => (
+                  <AddressListItem
+                    key={address.id || index}
+                    index={index}
+                    address={address}
+                  />
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className={styles.noAddresses}
+                  >
+                    No addresses found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

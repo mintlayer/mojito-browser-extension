@@ -3,6 +3,11 @@
   flex-direction: column;
   width: 120px;
   justify-content: center;
+
+  /* Below 460px hide the per-item stats (24h change + chart) entirely */
+  @media screen and (max-width: 459px) {
+    display: none;
+  }
 }
 
 .crypto-stats .crypto-stats-numbers {

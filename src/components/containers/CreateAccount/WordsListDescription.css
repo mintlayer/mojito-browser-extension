@@ -1,15 +1,15 @@
 .words-list-description {
-  font-size: 22px;
-  margin-bottom: 20px;
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-xl);
 }
 
 .words-list-description:nth-child(2) {
-  font-size: 22px;
+  font-size: var(--font-size-3xl);
   margin: 0;
 }
 
 .word-list-highlighted {
   color: rgb(var(--mojito-green));
-  font-size: 22px;
+  font-size: var(--font-size-3xl);
   margin: 0;
 }

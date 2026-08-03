@@ -6,7 +6,7 @@
   height: 100%;
   background: rgba(var(--color-gray), 0.85);
   z-index: 2;
-  border-radius: 45px;
+  border-radius: 25px;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
@@ -23,16 +23,40 @@
 .crypto-list {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  height: 240px;
+  gap: var(--space-3xs);
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 7px;
+  padding: var(--space-2xs);
 
-  @media screen and (min-width: 801px) {
-    padding: 10px;
+  @media screen and (min-width: 901px) {
+    padding: var(--space-sm);
     flex-grow: 1;
   }
+}
+
+.crypto-group {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--space-3xs);
+  overflow: visible;
+  list-style: none;
+}
+
+.crypto-group-title {
+  flex-shrink: 0;
+  overflow: visible;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgb(var(--color-dark-gray));
+  padding-left: var(--space-sm);
+  margin-top: var(--space-2xs);
+}
+
+.crypto-group-title:first-child {
+  margin-top: 0;
 }
 
 .crypto-item {
@@ -45,10 +69,14 @@
   transition: all 0.3s ease-in-out;
   background-color: rgb(var(--color-gray));
   border: 1px solid rgba(var(--color-light-green), 0.2);
-  border-radius: 35px;
-  max-height: 72px;
+  border-radius: 25px;
+  max-height: 76px;
   min-height: 72px;
   box-sizing: border-box;
+
+  @media screen and (max-width: 900px) {
+    padding: 8px 14px 8px 8px;
+  }
 }
 
 .logo-wrapper {
@@ -65,11 +93,23 @@
   justify-content: center;
   width: 393px;
   margin: 0 0 0 1rem;
+
+  /* Narrow side panel: fill the row instead of a fixed width */
+  @media screen and (max-width: 900px) {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    margin-left: 0.6rem;
+  }
 }
 
 .crypto-item .name-values h5 {
   font-size: 1.2rem;
   font-weight: bold;
+
+  @media screen and (max-width: 900px) {
+    font-size: 1rem;
+  }
 }
 
 .crypto-item.add-item h5 {
@@ -116,6 +156,10 @@
 .crypto-item .name-values .values dt {
   font-weight: thin;
   margin: 0 1rem;
+
+  @media screen and (max-width: 900px) {
+    margin: 0 0.4rem;
+  }
 }
 
 .crypto-item .name-values .values dd {
@@ -125,22 +169,41 @@
 }
 
 .crypto-item svg {
-  height: 60px;
-  width: 60px;
+  height: 56px;
+  width: 56px;
+
+  @media screen and (max-width: 900px) {
+    height: 50px;
+    width: 50px;
+  }
 }
 
 .crypto-item .logo-round {
-  height: 60px;
-  width: 60px;
-  min-width: 60px;
+  height: 56px;
+  width: 56px;
+  min-width: 56px;
+
+  @media screen and (max-width: 900px) {
+    height: 50px;
+    width: 50px;
+    min-width: 50px;
+  }
 }
 
 .crypto-item .token-logo-round {
-  height: 60px;
-  width: 60px;
-  min-width: 60px;
-  min-height: 60px;
+  height: 56px;
+  width: 56px;
+  min-width: 56px;
+  min-height: 56px;
   font-size: 18px;
+
+  @media screen and (max-width: 900px) {
+    height: 50px;
+    width: 50px;
+    min-width: 50px;
+    min-height: 50px;
+    font-size: 14px;
+  }
 }
 
 .crypto-item .token-logo-round img {
@@ -156,6 +219,11 @@
   border-radius: 50%;
   height: 60px;
   width: 60px;
+
+  @media screen and (max-width: 900px) {
+    height: 50px;
+    width: 50px;
+  }
 }
 
 .crypto-item .connect-logo img {

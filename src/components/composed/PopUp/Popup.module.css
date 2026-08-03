@@ -41,7 +41,7 @@
   animation-timing-function: ease;
   cursor: default;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     top: 40px;
     right: 40px;
     bottom: 40px;

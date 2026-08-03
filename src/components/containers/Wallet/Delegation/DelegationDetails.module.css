@@ -1,7 +1,7 @@
 .delegationDetails {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-xl);
   width: 100%;
   overflow-y: auto;
   flex: 1;
@@ -15,9 +15,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2xs);
   min-height: max-content;
-  padding: 28px 20px 24px;
+  padding: var(--space-3xl) var(--space-xl) var(--space-2xl);
   background: rgb(var(--mojito-green-soft));
   border-radius: 16px;
   border: 1.5px solid rgba(var(--mojito-green), 0.15);
@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-3xs);
 }
 
 .bannerIcon svg {
@@ -44,7 +44,7 @@
 }
 
 .bannerLabel {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -52,22 +52,23 @@
 }
 
 .bannerAmount {
-  font-size: 32px;
+  font-size: var(--font-size-6xl);
   font-weight: 700;
   color: rgb(var(--color-black));
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  margin-top: 10px;
+  gap: var(--space-2xs);
+  margin-top: var(--space-sm);
 }
 
 .bannerAmountValue {
-  font-size: 32px;
+  font-size: var(--font-size-6xl);
   font-weight: 800;
+  line-break: anywhere;
 }
 
 .bannerTicker {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
   color: rgba(var(--color-black), 0.5);
 }
@@ -75,14 +76,14 @@
 .bannerStatus {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
+  gap: var(--space-3xs);
+  padding: var(--space-3xs) var(--space-md);
   border-radius: 99px;
   background: rgb(var(--color-white));
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: rgb(var(--mojito-green));
-  margin-top: 4px;
+  margin-top: var(--space-3xs);
 }
 
 .bannerStatusDecommissioned {
@@ -100,7 +101,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
+  padding: var(--space-lg) var(--space-xl);
   border-bottom: 1px solid rgba(var(--color-black), 0.06);
 }
 
@@ -109,14 +110,14 @@
 }
 
 .detailLabel {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 400;
   color: rgba(var(--color-black), 0.6);
   flex-shrink: 0;
 }
 
 .detailValue {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
   color: rgb(var(--color-black));
   text-align: right;
@@ -124,15 +125,15 @@
   max-width: 60%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .warning {
   background: rgba(var(--color-red), 0.08);
   border: 1.5px solid rgba(var(--color-red), 0.2);
   border-radius: 16px;
-  padding: 14px 18px;
-  font-size: 13px;
+  padding: var(--space-lg) var(--space-xl);
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: rgb(var(--color-red));
   line-height: 1.5;
@@ -140,17 +141,17 @@
 
 .actionRow {
   display: flex;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .actionButton {
   flex: 1;
-  padding: 10px 20px;
+  padding: var(--space-sm) var(--space-xl);
 }
 
 .explorerButton {
   width: 100%;
-  padding: 10px 20px;
+  padding: var(--space-sm) var(--space-xl);
 }
 
 .explorerButton svg {

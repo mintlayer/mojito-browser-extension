@@ -25,7 +25,7 @@
   height: 362px;
   overflow: auto;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     height: auto;
   }
 }

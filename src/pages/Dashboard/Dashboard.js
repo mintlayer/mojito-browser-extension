@@ -101,6 +101,24 @@ const DashboardPage = () => {
         network,
         fetchingBalances,
         disabled,
+        type: 'coin',
+      })
+    }
+
+    const addToken = (ticker, balance, id, fetchingBalances, isPlaceholder) => {
+      cryptos.push({
+        id,
+        name: ticker,
+        symbol: ticker,
+        balance: NumbersHelper.floatStringToNumber(balance),
+        exchangeRate: undefined,
+        change24h: 0,
+        historyRates: [],
+        network: 'mintlayer',
+        fetchingBalances,
+        disabled: false,
+        type: 'token',
+        isPlaceholder,
       })
     }
 
@@ -153,29 +171,14 @@ const DashboardPage = () => {
     }
 
     if (mlFetchingTokens && isTokensEmpty) {
-      addCrypto(
-        'Token',
-        'Token',
-        0,
-        undefined,
-        0,
-        [],
-        'mintlayer',
-        'Mintlayer',
-        mlFetchingTokens,
-      )
+      addToken('Token', 0, 'Mintlayer', mlFetchingTokens, true)
     }
 
     if (tokenBalances) {
       Object.keys(tokenBalances).forEach((token) => {
-        addCrypto(
-          tokenBalances[token].token_info.token_ticker.string,
+        addToken(
           tokenBalances[token].token_info.token_ticker.string,
           tokenBalances[token].balance,
-          undefined,
-          0,
-          [],
-          'mintlayer',
           token,
           mlFetchingTokens,
         )

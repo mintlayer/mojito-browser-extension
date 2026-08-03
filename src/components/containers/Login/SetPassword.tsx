@@ -2,7 +2,7 @@ import { useState, FormEvent, ReactNode } from 'react'
 import { useLocation } from 'react-router'
 
 import { Button } from '@BasicComponents'
-import { Loading, TextField } from '@ComposedComponents'
+import { LoadingScreen, TextField } from '@ComposedComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
 import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
@@ -138,13 +138,7 @@ const SetPassword = ({
                   </CenteredLayout>
                 </>
               ) : (
-                <div className={styles.loadingWrapper}>
-                  <h1 className={styles.loadingText}>
-                    {' '}
-                    Just a sec, we are validating your password...{' '}
-                  </h1>
-                  <Loading extraStyleClasses={[styles.loadingBig]} />
-                </div>
+                <LoadingScreen text="Just a sec, we are validating your password..." />
               )}
             </VerticalGroup>
           </form>

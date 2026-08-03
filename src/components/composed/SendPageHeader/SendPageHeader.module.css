@@ -8,7 +8,7 @@
   color: rgb(var(--color-black));
   margin: 0;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     font-size: 28px;
   }
 }
@@ -17,7 +17,7 @@
   font-size: 22px;
   color: rgb(var(--color-main-green));
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     font-size: 28px;
   }
 }

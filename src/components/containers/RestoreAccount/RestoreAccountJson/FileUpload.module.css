@@ -1,16 +1,16 @@
 .title {
-  margin-bottom: 0.5rem;
-  font-size: 1.5rem;
+  margin-bottom: var(--space-xs);
+  font-size: var(--font-size-4xl);
   font-weight: 700;
   text-align: center;
   color: rgb(var(--color-black));
 }
 
 .subtitle {
-  font-size: 1rem;
+  font-size: var(--font-size-lg);
   text-align: center;
   color: rgb(var(--color-dark-gray));
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-2xl);
 }
 
 .dropzone {
@@ -19,9 +19,9 @@
   align-items: center;
   justify-content: center;
   min-width: 440px;
-  gap: 1rem;
+  gap: var(--space-lg);
   min-height: 200px;
-  padding: 2.5rem 2rem;
+  padding: var(--space-5xl) var(--space-4xl);
   border: 2px dashed rgb(var(--color-light-gray));
   border-radius: 16px;
   background: rgb(var(--color-gray));
@@ -29,6 +29,10 @@
   transition:
     border-color 0.2s,
     background 0.2s;
+
+  @media screen and (max-width: 440px) {
+    min-width: 100%;
+  }
 }
 
 .dropzone:hover {
@@ -63,34 +67,34 @@
 }
 
 .dropzoneText {
-  font-size: 1rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: rgb(var(--color-black));
   text-align: center;
 }
 
 .dropzoneHint {
-  font-size: 0.875rem;
+  font-size: var(--font-size-md);
   color: rgb(var(--color-dark-gray));
   text-align: center;
 }
 
 .uploadedFileName {
-  font-size: 1rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: rgb(var(--color-black));
   text-align: center;
 }
 
 .uploadedStatus {
-  font-size: 0.875rem;
+  font-size: var(--font-size-md);
   color: rgb(var(--mojito-green));
   font-weight: 500;
   text-align: center;
 }
 
 .uploadedChange {
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   color: rgb(var(--color-dark-gray));
   text-align: center;
 }

@@ -4,46 +4,46 @@
   width: 100%;
   background: rgb(var(--color-white));
   border-radius: 16px;
-  gap: 4px;
+  gap: var(--space-3xs);
   min-height: max-content;
-  padding: 20px 24px;
+  padding: var(--space-xl) var(--space-2xl);
   color: rgb(var(--color-black));
   box-shadow: none;
 }
 
-@media screen and (min-width: 801px) {
+@media screen and (min-width: 901px) {
   .form {
-    gap: 12px;
-    padding: 28px 36px;
+    gap: var(--space-md);
+    padding: var(--space-3xl) var(--space-5xl);
   }
 }
 
 .row {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .label {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   letter-spacing: 0.8px;
   color: rgba(var(--color-light-green), 1);
   text-transform: uppercase;
-  padding-left: 5px;
+  padding-left: var(--space-3xs);
 }
 
 .inputsWrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .amountInput {
   width: 32%;
   height: 100%;
-  padding: 12px 16px;
-  font-size: 20px;
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   border-radius: 36px;
   border: 1px solid rgba(var(--color-black), 0.08);
@@ -73,14 +73,14 @@
 
 .balance {
   color: rgba(var(--color-black), 0.35);
-  padding-left: 18px;
-  font-size: 14px;
+  padding-left: var(--space-lg);
+  font-size: var(--font-size-md);
 }
 
 .arrowRow {
   display: flex;
   justify-content: center;
-  padding: 4px 0;
+  padding: var(--space-3xs) 0;
 }
 
 .arrowIcon {
@@ -113,13 +113,13 @@
 /* Find orders button */
 .findButton {
   width: 32%;
-  height: 100%;
+  height: 50px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-xs);
   border-radius: 36px;
 }
 
@@ -130,6 +130,7 @@
 .findOrderIcon {
   width: 18px;
   height: 18px;
+  min-width: 18px;
   max-width: 18px;
   max-height: 18px;
 }

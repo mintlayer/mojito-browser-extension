@@ -1,8 +1,7 @@
 import { useContext, useState } from 'react'
 import { useNavigate } from 'react-router'
 
-import { Loading } from '@ComposedComponents'
-import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
+import { LoadingScreen } from '@ComposedComponents'
 import { CreateAccount } from '@ContainerComponents'
 
 import { Account, loadAccountSubRoutines } from '@Entities'
@@ -55,17 +54,7 @@ const CreateAccountPage = () => {
   return (
     <PageWrapper className={styles.createAccountPage}>
       {creatingWallet ? (
-        <div className={styles.creatingLoadingWrapper}>
-          <CenteredLayout>
-            <VerticalGroup bigGap>
-              <h1 className={styles.loadingText}>
-                {' '}
-                Just a sec, we are creating your wallet...{' '}
-              </h1>
-              <Loading extraStyleClasses={[styles.loadingBig]} />
-            </VerticalGroup>
-          </CenteredLayout>
-        </div>
+        <LoadingScreen text="Just a sec, we are creating your wallet..." />
       ) : (
         <CreateAccount
           step={step}

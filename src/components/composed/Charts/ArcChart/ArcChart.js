@@ -2,8 +2,6 @@ import React, { useRef, useEffect, useState } from 'react'
 
 import { Svg, Arc } from '@BasicComponents'
 
-import './ArcChart.css'
-
 const DATASAMPLE = [
   { value: 35, asset: 'ASSET 1', color: 'orange' },
   { value: 65, asset: 'ASSET 2', color: 'lightblue' },
@@ -11,7 +9,6 @@ const DATASAMPLE = [
 
 const ArcChart = ({ data = DATASAMPLE, width = '200px', height = '100px' }) => {
   const container = useRef(null)
-  const [tooltip] = useState(Arc.createTooltip)
   const [pieGenerator] = useState(Arc.createPieGenerator)
   const [arcGenerator] = useState(Arc.createArcGenerator)
 
@@ -21,10 +18,9 @@ const ArcChart = ({ data = DATASAMPLE, width = '200px', height = '100px' }) => {
     Arc.buildArc({
       pathData,
       arcGenerator,
-      tooltip,
       container: container.current,
     })
-  }, [data, pieGenerator, arcGenerator, tooltip])
+  }, [data, pieGenerator, arcGenerator])
 
   const sorted = [...data].sort((a, b) => b.value - a.value)
   const firstColor = sorted[0]?.color || '#37DB8C'

@@ -14,7 +14,7 @@
   align-items: center;
   gap: 10px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     display: none;
   }
 }
@@ -75,7 +75,7 @@
   right: 22px;
   overflow: visible;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     display: none;
   }
 }
@@ -86,7 +86,7 @@
   top: 16px;
   right: 22px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     display: flex;
   }
 }

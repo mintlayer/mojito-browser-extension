@@ -1,7 +1,7 @@
 import React, { useState, useContext, useRef, useEffect } from 'react'
 
 import { Button, Textarea, Error } from '@BasicComponents'
-import { TextField, PopUp, Loading } from '@ComposedComponents'
+import { TextField, PopUp, LoadingScreen } from '@ComposedComponents'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 
@@ -29,7 +29,6 @@ const SignMessage = () => {
   const [passErrorMessage, setPassErrorMessage] = useState('')
   const { accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const loadingExtraClasses = ['loading-big']
 
   useEffect(() => {
     if (submitButtonRef.current) {
@@ -253,13 +252,7 @@ const SignMessage = () => {
           allowClosing={!loading}
         >
           {loading ? (
-            <VerticalGroup bigGap>
-              <h1 className="loadingText">
-                {' '}
-                Just a sec, we are validating your password...{' '}
-              </h1>
-              <Loading extraStyleClasses={loadingExtraClasses} />
-            </VerticalGroup>
+            <LoadingScreen text="Just a sec, we are validating your password..." />
           ) : (
             <VerticalGroup bigGap>
               <h2 className="message-title">Enter your Password</h2>

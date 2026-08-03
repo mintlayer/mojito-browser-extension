@@ -16,40 +16,40 @@
 }
 
 .heading {
-  font-size: 22px;
+  font-size: var(--font-size-3xl);
   font-weight: 700;
   color: rgb(var(--color-black));
-  margin: 20px 0 6px;
+  margin: var(--space-xl) 0 var(--space-2xs);
 
-  @media screen and (min-width: 801px) {
-    font-size: 28px;
-    margin: 30px 0 8px;
+  @media screen and (min-width: 901px) {
+    font-size: var(--font-size-5xl);
+    margin: var(--space-2xl) 0 var(--space-xs);
   }
 }
 
 .subtitle {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: rgba(var(--color-black), 0.5);
-  margin: 0 0 24px;
+  margin: 0 0 var(--space-2xl);
 
-  @media screen and (min-width: 801px) {
-    font-size: 15px;
-    margin: 0 0 32px;
+  @media screen and (min-width: 901px) {
+    font-size: var(--font-size-lg);
+    margin: 0 0 var(--space-3xl);
   }
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-md);
   width: 100%;
   max-width: 400px;
   min-height: 312px;
   flex: 1;
   overflow: auto;
 
-  @media screen and (min-width: 801px) {
-    gap: 14px;
+  @media screen and (min-width: 901px) {
+    gap: var(--space-lg);
     max-width: 460px;
   }
 }
@@ -58,26 +58,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-xs);
   width: 100%;
   max-width: 400px;
-  padding: 16px;
-  margin-top: 40px;
+  padding: var(--space-lg);
+  margin-top: var(--space-3xl);
   border-radius: 16px;
   border: 1.5px dashed rgba(var(--color-black), 0.15);
   background: transparent;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-md);
   color: rgba(var(--color-black), 0.45);
   transition:
     border-color 0.2s,
     color 0.2s;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     max-width: 460px;
-    padding: 18px;
+    padding: var(--space-xl);
     border-radius: 18px;
-    font-size: 15px;
   }
 }
 
@@ -87,7 +86,7 @@
 }
 
 .addIcon {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 300;
   line-height: 1;
 }

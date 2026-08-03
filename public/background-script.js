@@ -3,6 +3,20 @@ let popupWindowId = null
 let connectWindowId = null
 let isPopupOpening = false
 
+// Firefox has no sidePanel API: open the sidebar when the toolbar icon is clicked
+if (
+  typeof browser !== 'undefined' &&
+  browser.action &&
+  browser.sidebarAction &&
+  browser.sidebarAction.open
+) {
+  browser.action.onClicked.addListener(() => {
+    browser.sidebarAction.open().catch((error) => {
+      console.error('[Mintlayer] sidebarAction.open error:', error)
+    })
+  })
+}
+
 browser.runtime.onConnect.addListener((port) => {
   port.onMessage.addListener((msg) => {
     if (msg && msg.myProperty && msg.myProperty.message) {

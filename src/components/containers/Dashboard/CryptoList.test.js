@@ -290,4 +290,61 @@ describe('CryptoList', () => {
 
     expect(onConnectItemClick).toHaveBeenCalled()
   })
+
+  const coin = {
+    id: 'Mintlayer',
+    name: 'Mintlayer',
+    symbol: 'ML',
+    balance: 100,
+    exchangeRate: 1,
+    historyRates: [],
+    change24h: 0,
+    type: 'coin',
+  }
+
+  const token = {
+    id: 'token-id',
+    name: 'OHFORF',
+    symbol: 'OHFORF',
+    balance: 45,
+    change24h: 0,
+    historyRates: [],
+    type: 'token',
+  }
+
+  const renderWithList = (list) =>
+    render(
+      <SettingsContext.Provider value={{ networkType: 'mainnet' }}>
+        <MintlayerContext.Provider
+          value={{ balanceLoading: false, tokenBalances: [] }}
+        >
+          <CryptoList
+            cryptoList={list}
+            colorList={colorList}
+            onWalletItemClick={onWalletItemClick}
+            onConnectItemClick={onConnectItemClick}
+          />
+        </MintlayerContext.Provider>
+      </SettingsContext.Provider>,
+    )
+
+  it('splits coins and tokens into separate groups', () => {
+    renderWithList([coin, token])
+
+    expect(screen.getByText('Coins')).toBeInTheDocument()
+    expect(screen.getByText('Tokens')).toBeInTheDocument()
+
+    const groups = document.querySelectorAll('.crypto-group')
+    expect(groups).toHaveLength(2)
+    expect(groups[0]).toHaveTextContent('Mintlayer (ML)')
+    expect(groups[1]).toHaveTextContent('OHFORF (OHFORF)')
+  })
+
+  it('hides the group titles when there are no tokens', () => {
+    renderWithList([coin])
+
+    expect(screen.queryByText('Coins')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tokens')).not.toBeInTheDocument()
+    expect(document.querySelectorAll('.crypto-group')).toHaveLength(1)
+  })
 })

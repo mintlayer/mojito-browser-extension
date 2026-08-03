@@ -30,7 +30,7 @@
   flex-direction: column;
   height: 70%;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     height: 80%;
   }
 }

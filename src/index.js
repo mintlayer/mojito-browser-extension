@@ -67,6 +67,14 @@ import '@Assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
+const isExtendedView =
+  window.location.href.includes('popup.html') ||
+  [':300', ':800'].some((port) => window.location.href.includes(port))
+
+if (isExtendedView) {
+  document.documentElement.classList.add('extended-view')
+}
+
 const storage =
   typeof browser !== 'undefined' && browser.storage
     ? browser.storage

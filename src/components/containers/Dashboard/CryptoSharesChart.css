@@ -8,6 +8,14 @@
   width: 325px;
   height: 168px;
   overflow: visible;
+
+  /* Narrow side panel: let the scalable chart shrink to the panel width */
+  @media screen and (max-width: 900px) {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    aspect-ratio: 210 / 110;
+  }
 }
 
 .portifolio-chart h2 {
@@ -19,6 +27,10 @@
   text-align: center;
   font-weight: bold;
   font-size: 1.875rem;
+
+  @media screen and (max-width: 900px) {
+    font-size: 1.4rem;
+  }
 }
 
 .portifolio-chart h2 em {
@@ -37,6 +49,10 @@
   font-size: 3rem;
   font-weight: 800;
   line-height: 1;
+
+  @media screen and (max-width: 900px) {
+    font-size: 2rem;
+  }
 }
 
 .balance-symbol {
@@ -49,10 +65,18 @@
 .balance-integer {
   font-size: 4.2rem;
   font-weight: 800;
+
+  @media screen and (max-width: 900px) {
+    font-size: 2.6rem;
+  }
 }
 
 .balance-decimal {
   font-size: 4.2rem;
   font-weight: 800;
   opacity: 0.25;
+
+  @media screen and (max-width: 900px) {
+    font-size: 2.6rem;
+  }
 }

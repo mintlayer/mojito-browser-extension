@@ -5,9 +5,15 @@
   justify-content: center;
   align-items: center;
   gap: 55px;
-  min-height: 224px;
+  min-height: max-content;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     margin-bottom: 2.75rem;
+  }
+
+  @media screen and (max-width: 900px) {
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
   }
 }

@@ -1,8 +1,8 @@
 .card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
+  gap: var(--space-lg);
+  padding: var(--space-lg) var(--space-xl);
   border-radius: 35px;
   background: rgb(var(--color-white));
   border: 1px solid rgb(var(--color-medium-gray));
@@ -42,7 +42,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2xs);
 }
 
 .poolId {
@@ -62,7 +62,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.3rem;
+  gap: var(--space-3xs);
 }
 
 .amountValue {
@@ -77,7 +77,7 @@
 
 .actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-xs);
   flex-shrink: 0;
 }
 

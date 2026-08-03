@@ -3,75 +3,82 @@
 }
 
 .page {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   height: 100%;
   text-align: center;
+
+  @media screen and (max-width: 900px) {
+    padding-bottom: var(--space-5xl);
+  }
 }
 
 .logoIcon {
   width: 80px;
   height: 80px;
   border-radius: 24px;
-  padding: 16px;
-  margin: 3% 0 10px 0;
+  padding: var(--space-lg);
+  margin: 0 0 var(--space-sm) 0;
   background: linear-gradient(135deg, #e6f8f0, #fff);
   box-shadow: rgba(30, 187, 129, 0.18) 0px 10px 30px;
   border: 1px solid #e8ebf0;
 
-  @media screen and (min-width: 801px) {
-    width: 110px;
-    height: 110px;
-    padding: 22px;
-    margin: 7% 0 15px 0;
-    border-radius: 32px;
+  @media screen and (min-width: 901px) {
+    width: 90px;
+    height: 90px;
+    padding: var(--space-xl);
+    margin: 0 0 var(--space-lg) 0;
+    border-radius: 28px;
   }
 }
 
 .title {
-  font-size: 18px;
+  font-size: var(--font-size-display);
   font-weight: 700;
-  color: rgb(var(--color-black));
-  margin: 0 0 30px 0;
+  line-height: 1.1;
+  color: rgba(var(--color-black), 0.75);
+  margin: 0 0 var(--space-3xl) 0;
 
-  @media screen and (min-width: 801px) {
-    font-size: 24px;
-    margin: 0 0 40px 0;
+  @media screen and (min-width: 901px) {
+    margin: 0 0 var(--space-5xl) 0;
   }
 }
 
 .logoText {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-2xl);
 
-  @media screen and (min-width: 801px) {
-    margin-bottom: 32px;
+  @media screen and (min-width: 901px) {
+    margin-bottom: var(--space-4xl);
   }
 }
 
 .heading {
-  font-size: 26px;
+  font-size: var(--font-size-4xl);
   font-weight: 700;
   line-height: 1.3;
   color: rgb(var(--color-black));
-  margin: 8px 0px 10px;
+  margin: var(--space-xs) 0px var(--space-sm);
 
-  @media screen and (min-width: 801px) {
-    font-size: 30px;
-    margin: 0 0 12px 0;
+  @media screen and (min-width: 901px) {
+    font-size: var(--font-size-5xl);
+    margin: 0 0 var(--space-md) 0;
   }
 }
 
 .subtitle {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 400;
   line-height: 1.5;
   color: rgba(var(--color-black), 0.6);
-  margin: 0px 0px 28px;
+  margin: 0px 0px var(--space-3xl);
 
-  @media screen and (min-width: 801px) {
-    font-size: 16px;
-    margin: 0 0 40px 0;
+  @media screen and (min-width: 901px) {
+    font-size: var(--font-size-lg);
+    margin: 0 0 var(--space-5xl) 0;
     max-width: 460px;
   }
 }
@@ -79,26 +86,26 @@
 .buttons {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
   width: 100%;
   max-width: 320px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     max-width: 360px;
   }
 }
 
 .createButton {
   width: 100%;
-  padding: 14px 24px;
+  padding: var(--space-lg) var(--space-2xl);
   height: 46px;
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
 .restoreButton {
   width: 100%;
-  padding: 14px 24px;
+  padding: var(--space-lg) var(--space-2xl);
   height: 46px;
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
 
 .buttonIcon {
@@ -106,7 +113,7 @@
   height: 13px;
   max-width: 13px;
   max-height: 13px;
-  margin-left: 10px;
+  margin-left: var(--space-sm);
 }
 
 .restoreButton:hover .buttonIcon,
@@ -117,28 +124,28 @@
 .badges {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 28px;
+  gap: var(--space-xs);
+  margin-top: var(--space-3xl);
 
-  @media screen and (min-width: 801px) {
-    margin-top: 40px;
-    gap: 12px;
+  @media screen and (min-width: 901px) {
+    margin-top: var(--space-5xl);
+    gap: var(--space-md);
   }
 }
 
 .badges span {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: rgba(var(--color-black), 0.35);
 
-  @media screen and (min-width: 801px) {
-    font-size: 14px;
+  @media screen and (min-width: 901px) {
+    font-size: var(--font-size-md);
   }
 }
 
 .badgeDot {
   font-size: 6px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     font-size: 8px;
   }
 }
@@ -146,14 +153,14 @@
 .badgeWithIcon {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-3xs);
 }
 
 .badgeIcon {
   width: 14px;
   height: 14px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     width: 16px;
     height: 16px;
   }

@@ -1,8 +1,8 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 10px;
+  gap: var(--space-md);
+  padding: var(--space-sm);
   overflow: auto;
   flex-grow: 1;
   list-style: none;
@@ -10,11 +10,11 @@
 
 .empty {
   background: rgb(var(--color-white));
-  font-size: 1rem;
+  font-size: var(--font-size-lg);
   color: rgb(var(--color-dark-gray));
   list-style: none;
   text-align: center;
-  padding: 2rem 1.5rem;
+  padding: var(--space-4xl) var(--space-2xl);
   border-radius: 20px;
   border: 1px solid rgb(var(--color-medium-gray));
 }

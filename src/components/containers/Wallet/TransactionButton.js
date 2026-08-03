@@ -10,34 +10,10 @@ import { Button } from '@BasicComponents'
 import './TransactionButton.css'
 
 const TransactionButton = ({ title, mode, onClick, disabled }) => {
-  const isWide = mode === 'up' || !mode
-
   const getButtonStyles = () => {
-    if (mode === 'up')
-      return [
-        'button-transaction',
-        'button-transaction-wide',
-        'button-transaction-up',
-      ]
-    if (!mode)
-      return [
-        'button-transaction',
-        'button-transaction-wide',
-        'button-transaction-receive',
-      ]
-    if (mode === 'staking')
-      return [
-        'button-transaction',
-        'button-transaction-small',
-        'button-transaction-staking',
-      ]
-    if (mode === 'swap')
-      return [
-        'button-transaction',
-        'button-transaction-small',
-        'button-transaction-swap',
-      ]
-    return ['button-transaction', 'button-transaction-small']
+    const classes = ['button-transaction']
+    if (mode === 'up') classes.push('button-transaction-up')
+    return classes
   }
 
   const getIcon = () => {
@@ -61,7 +37,7 @@ const TransactionButton = ({ title, mode, onClick, disabled }) => {
 
   return (
     <div
-      className={`transaction-item ${isWide ? 'transaction-item-wide' : ''}`}
+      className="transaction-item"
       data-testid={'transaction-button-container'}
     >
       <Button
@@ -70,15 +46,15 @@ const TransactionButton = ({ title, mode, onClick, disabled }) => {
         disabled={disabled}
       >
         {getIcon()}
-        {title && (
-          <span
-            className="button-transaction-label"
-            data-testid={'transaction-button-title'}
-          >
-            {title}
-          </span>
-        )}
       </Button>
+      {title && (
+        <span
+          className="button-transaction-label"
+          data-testid={'transaction-button-title'}
+        >
+          {title}
+        </span>
+      )}
     </div>
   )
 }

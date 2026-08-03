@@ -13,48 +13,53 @@ html {
   background:
     radial-gradient(
       50% 50% at 20% 30%,
-      rgba(105, 238, 150, 0.4) 0%,
-      rgba(145, 155, 200, 0.4) 59%,
+      rgba(105, 238, 150, 0.22) 0%,
+      rgba(145, 155, 200, 0.16) 59%,
       rgba(195, 192, 225, 0) 100%
     ),
     radial-gradient(
       50% 50% at 80% 70%,
-      rgba(105, 238, 150, 0.4) 0%,
-      rgba(158, 188, 207, 0.4) 59%,
+      rgba(105, 238, 150, 0.22) 0%,
+      rgba(158, 188, 207, 0.16) 59%,
       rgba(195, 192, 225, 0) 100%
     ),
     radial-gradient(
       50% 50% at 50% 50%,
-      rgba(105, 238, 150, 0.4) 0%,
-      rgba(145, 155, 200, 0.4) 59%,
+      rgba(105, 238, 150, 0.18) 0%,
+      rgba(145, 155, 200, 0.14) 59%,
       rgba(195, 192, 225, 0) 100%
     ),
     radial-gradient(
       50% 50% at 30% 80%,
-      rgba(105, 238, 150, 0.4) 0%,
-      rgba(181, 139, 201, 0.4) 59%,
+      rgba(105, 238, 150, 0.18) 0%,
+      rgba(181, 139, 201, 0.14) 59%,
       rgba(195, 192, 225, 0) 100%
     ),
     radial-gradient(
       50% 50% at 70% 20%,
-      rgba(105, 238, 150, 0.4) 0%,
-      rgba(145, 155, 200, 0.4) 59%,
+      rgba(105, 238, 150, 0.18) 0%,
+      rgba(145, 155, 200, 0.14) 59%,
       rgba(195, 192, 225, 0) 100%
     ),
-    rgb(225, 225, 245);
+    rgb(235, 242, 240);
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  height: 600px;
-  width: 800px;
+  height: 100vh;
+  width: 100%;
+  min-width: 400px;
   background: #f0f2f5;
+  --page-content-height: auto;
+}
 
-  @media screen and (min-width: 801px) {
+html.extended-view body {
+  @media screen and (min-width: 901px) {
     height: auto;
-    border-radius: 30px;
-    width: 111vh;
+    border-radius: 21px;
+    width: 112vh;
+    --page-content-height: 93%;
   }
 }
 
@@ -62,7 +67,7 @@ body {
   position: relative;
   height: 100%;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     display: flex;
   }
 }
@@ -79,10 +84,17 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 530px;
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  overflow-y: auto;
+}
 
-  @media screen and (min-width: 801px) {
+html.extended-view .App {
+  @media screen and (min-width: 901px) {
+    flex: none;
     height: 93%;
+    overflow-y: hidden;
   }
 }
 

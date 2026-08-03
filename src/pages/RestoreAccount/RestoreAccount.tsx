@@ -5,9 +5,8 @@ import { AccountContext } from '@Contexts'
 import { Account } from '@Entities'
 import { BTC } from '@Cryptos'
 
-import { Loading } from '@ComposedComponents'
+import { LoadingScreen } from '@ComposedComponents'
 import { PageWrapper, OptionCard } from '@BasicComponents'
-import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { RestoreAccount } from '@ContainerComponents'
 import { ReactComponent as IconDocumentFilled } from '@Assets/images/icon-document-filled.svg'
 import { ReactComponent as IconUpload } from '@Assets/images/icon-upload.svg'
@@ -65,16 +64,7 @@ const RestoreAccountPage = () => {
   return (
     <PageWrapper className={styles.restoreAccountPage}>
       {creatingWallet ? (
-        <div className={styles.loadingWrapper}>
-          <CenteredLayout>
-            <VerticalGroup bigGap>
-              <h1 className={styles.loadingText}>
-                Just a sec, we are restoring your wallet...
-              </h1>
-              <Loading extraStyleClasses={[styles.loadingBig]} />
-            </VerticalGroup>
-          </CenteredLayout>
-        </div>
+        <LoadingScreen text="Just a sec, we are restoring your wallet..." />
       ) : (
         <>
           {!restoreMethod && (
