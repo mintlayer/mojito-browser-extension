@@ -6,6 +6,7 @@ import OptionButtons from './OptionButtons/OptionButtons'
 import Header from './Header/Header.tsx'
 import InputList from './InputList/InputsList.tsx'
 import Loading from './Loading/Loading.tsx'
+import LoadingScreen from './LoadingScreen/LoadingScreen'
 import PopUp from './PopUp/Popup'
 import ProgressTracker from './ProgressTracker/ProgressTracker.tsx'
 import TextField from './TextField/TextField.tsx'
@@ -42,6 +43,7 @@ export {
   Header,
   InputList,
   Loading,
+  LoadingScreen,
   PopUp,
   ProgressTracker,
   TextField,
