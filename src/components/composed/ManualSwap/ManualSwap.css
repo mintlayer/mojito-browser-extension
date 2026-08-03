@@ -8,7 +8,7 @@
   font-weight: bold;
   margin-bottom: var(--space-lg);
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     margin-bottom: var(--space-4xl);
   }
 }

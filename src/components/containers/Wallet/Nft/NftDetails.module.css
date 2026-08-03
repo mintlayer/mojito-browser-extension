@@ -3,7 +3,7 @@
   max-width: 510px;
   height: 500px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     height: 605px;
   }
 }
@@ -19,7 +19,7 @@
   background: rgb(var(--color-dim-green));
   border-radius: 50%;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     width: 200px;
     height: 200px;
   }
@@ -51,7 +51,7 @@
   overflow: auto;
   margin-bottom: 20px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     height: 630px;
   }
 }

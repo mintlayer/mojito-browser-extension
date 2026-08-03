@@ -23,7 +23,7 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     width: 60px;
     height: 60px;
     min-width: 60px;

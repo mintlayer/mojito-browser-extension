@@ -2,7 +2,7 @@
   display: none;
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 900px) {
   .brandBottomLogo {
     position: absolute;
     left: 10px;

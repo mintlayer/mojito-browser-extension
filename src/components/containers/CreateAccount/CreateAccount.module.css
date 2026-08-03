@@ -36,7 +36,7 @@
   margin-bottom: var(--space-xl);
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 900px) {
   .setAccountContainer {
     flex: 1;
     min-height: 0;

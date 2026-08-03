@@ -3,7 +3,7 @@
   flex-direction: row;
   padding: 0;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     padding: 0;
   }
 }
@@ -13,7 +13,7 @@
   flex: 1;
   padding: var(--space-lg);
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     padding: var(--space-4xl);
   }
 }

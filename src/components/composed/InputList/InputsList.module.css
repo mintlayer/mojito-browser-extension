@@ -4,7 +4,7 @@
   flex-wrap: wrap;
   overflow-y: auto;
 
-  @media screen and (max-width: 800px) {
+  @media screen and (max-width: 900px) {
     max-height: 60vh;
   }
 }

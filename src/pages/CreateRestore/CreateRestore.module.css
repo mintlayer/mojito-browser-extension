@@ -12,7 +12,7 @@
   height: 100%;
   text-align: center;
 
-  @media screen and (max-width: 800px) {
+  @media screen and (max-width: 900px) {
     padding-bottom: var(--space-5xl);
   }
 }
@@ -27,7 +27,7 @@
   box-shadow: rgba(30, 187, 129, 0.18) 0px 10px 30px;
   border: 1px solid #e8ebf0;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     width: 90px;
     height: 90px;
     padding: var(--space-xl);
@@ -43,7 +43,7 @@
   color: rgba(var(--color-black), 0.75);
   margin: 0 0 var(--space-3xl) 0;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     margin: 0 0 var(--space-5xl) 0;
   }
 }
@@ -51,7 +51,7 @@
 .logoText {
   margin-bottom: var(--space-2xl);
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     margin-bottom: var(--space-4xl);
   }
 }
@@ -63,7 +63,7 @@
   color: rgb(var(--color-black));
   margin: var(--space-xs) 0px var(--space-sm);
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     font-size: var(--font-size-5xl);
     margin: 0 0 var(--space-md) 0;
   }
@@ -76,7 +76,7 @@
   color: rgba(var(--color-black), 0.6);
   margin: 0px 0px var(--space-3xl);
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     font-size: var(--font-size-lg);
     margin: 0 0 var(--space-5xl) 0;
     max-width: 460px;
@@ -90,7 +90,7 @@
   width: 100%;
   max-width: 320px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     max-width: 360px;
   }
 }
@@ -127,7 +127,7 @@
   gap: var(--space-xs);
   margin-top: var(--space-3xl);
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     margin-top: var(--space-5xl);
     gap: var(--space-md);
   }
@@ -137,7 +137,7 @@
   font-size: var(--font-size-sm);
   color: rgba(var(--color-black), 0.35);
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     font-size: var(--font-size-md);
   }
 }
@@ -145,7 +145,7 @@
 .badgeDot {
   font-size: 6px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     font-size: 8px;
   }
 }
@@ -160,7 +160,7 @@
   width: 14px;
   height: 14px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     width: 16px;
     height: 16px;
   }

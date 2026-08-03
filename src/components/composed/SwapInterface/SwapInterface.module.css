@@ -11,7 +11,7 @@
   box-shadow: none;
 }
 
-@media screen and (min-width: 801px) {
+@media screen and (min-width: 901px) {
   .form {
     gap: var(--space-md);
     padding: var(--space-3xl) var(--space-5xl);

@@ -6,7 +6,7 @@
   padding: 7px;
   animation: fadeInList 0.3s ease-in-out;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     padding: 10px;
     flex-grow: 1;
   }

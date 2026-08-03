@@ -9,7 +9,7 @@
   overflow: auto;
   padding: 7px;
 
-  @media screen and (min-width: 801px) {
+  @media screen and (min-width: 901px) {
     padding: 10px;
     flex-grow: 1;
   }

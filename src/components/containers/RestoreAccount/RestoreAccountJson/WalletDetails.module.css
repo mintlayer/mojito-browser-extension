@@ -4,7 +4,7 @@
   text-align: center;
   color: rgb(var(--color-black));
 
-  @media (min-width: 801px) {
+  @media (min-width: 901px) {
     margin-bottom: var(--space-xs);
   }
 }
@@ -14,7 +14,7 @@
   text-align: center;
   color: rgb(var(--color-dark-gray));
 
-  @media (min-width: 801px) {
+  @media (min-width: 901px) {
     margin-bottom: var(--space-2xl);
   }
 }
@@ -80,7 +80,7 @@
   border: 1px solid rgba(30, 187, 129, 0.2);
   border-radius: 12px;
 
-  @media (min-width: 801px) {
+  @media (min-width: 901px) {
     margin-top: var(--space-lg);
   }
 }
