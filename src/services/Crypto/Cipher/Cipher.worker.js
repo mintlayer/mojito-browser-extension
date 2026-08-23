@@ -1,4 +1,5 @@
 import { generatePBKDF2Key, encryptAES, decryptAES } from './Cipher'
+import { registerWorkerJobs } from 'src/services/Crypto/Worker/WorkerContract'
 
 const CipherWorkerEnum = {
   GENERATE_PBKDF2_KEY: 'GENERATE_PBKDF2_KEY',
@@ -6,29 +7,10 @@ const CipherWorkerEnum = {
   DECRYPT_AES: 'DECRYPT_AES',
 }
 
-const CipherWorkerJobs = {
+registerWorkerJobs({
   GENERATE_PBKDF2_KEY: generatePBKDF2Key,
   ENCRYPT_AES: encryptAES,
   DECRYPT_AES: decryptAES,
-}
-
-const isValidJob = (choosenJob) => {
-  if (!choosenJob) return false
-  return Object.hasOwn(CipherWorkerJobs, choosenJob)
-}
-
-self.onmessage = async ({ data }) => {
-  if (!isValidJob(data.job)) return false
-
-  try {
-    const jobResult = await CipherWorkerJobs[data.job](data.data)
-
-    postMessage(jobResult)
-
-    return true
-  } catch (error) {
-    postMessage({ error: error.message })
-  }
-}
+})
 
 export { CipherWorkerEnum }

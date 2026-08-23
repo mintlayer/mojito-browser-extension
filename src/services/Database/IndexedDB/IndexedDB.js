@@ -1,7 +1,7 @@
 import {
-  accountsMigration_01_add_mlwallet_private_keys,
-  accountsMigration_02_add_htls_secrets_field,
-} from '../migrations/migrations'
+  ACCOUNT_MIGRATIONS,
+  migrateAccount,
+} from 'src/services/Database/migrations/migrations'
 
 const glob = typeof window !== 'undefined' ? window : self
 /* istanbul ignore next */
@@ -11,12 +11,13 @@ const IDB =
   glob.webkitIndexedDB ||
   glob.msIndexedDB
 
-const SCHEMAVERSION = 3
+const SCHEMAVERSION = ACCOUNT_MIGRATIONS.length + 1
 const DATABASENAME = 'mojito'
 const ACCOUNTSSTORENAME = 'accounts'
 
 const createOrUpdateDatabase = (event) => {
   const db = event.target.result
+  const { oldVersion } = event
 
   if (!db.objectStoreNames.contains(ACCOUNTSSTORENAME)) {
     const objectStore = db.createObjectStore(ACCOUNTSSTORENAME, {
@@ -27,9 +28,20 @@ const createOrUpdateDatabase = (event) => {
     // Create an index on the 'name' property
     objectStore.createIndex('name', 'name', { unique: false })
   }
-  // Apply migrations here
-  accountsMigration_01_add_mlwallet_private_keys()
-  accountsMigration_02_add_htls_secrets_field()
+
+  if (oldVersion === 0) return
+
+  // Apply migrations here, inside the upgrade transaction
+  const store = event.target.transaction.objectStore(ACCOUNTSSTORENAME)
+  const request = store.getAll()
+
+  request.onsuccess = () => {
+    request.result.forEach((account) => {
+      const migrated = migrateAccount(account, oldVersion)
+
+      if (migrated !== account) store.put(migrated)
+    })
+  }
 }
 
 const openDatabase = (DB = IDB) => {

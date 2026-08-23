@@ -19,6 +19,7 @@ const SettingsPage = ({ unlocked }: SettingsPageProps) => {
       key: 'wallet',
       visible: unlocked,
       items: [
+        { key: 'passkey', component: <Settings.SettingsPasskey /> },
         { key: 'backup', component: <Settings.SettingsBackup /> },
         { key: 'delete', component: <Settings.SettingsDelete /> },
       ],

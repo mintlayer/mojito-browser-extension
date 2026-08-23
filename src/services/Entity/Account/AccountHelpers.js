@@ -1,18 +1,26 @@
 import { AppInfo } from '@Constants'
-import { ML } from '@Cryptos'
+import { ML, Cipher } from '@Cryptos'
 import loadAccountSubRoutines from './loadWorkers'
 
-const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
+const getEnvelopeEncryptedPrivateKeys = async (password, salt, mnemonic) => {
   const { generateSeed, generateEncryptionKey, encryptSeed } =
     await loadAccountSubRoutines()
-  const { key, salt: usedSalt } = await generateEncryptionKey({
+
+  const { key: wrappingKey, salt: usedSalt } = await generateEncryptionKey({
     password,
     salt,
+    version: Cipher.ENVELOPE_ENCRYPTION_VERSION,
   })
+
+  const dek = await Cipher.generateDek()
   const seed = await generateSeed(mnemonic)
 
-  const encryptData = async (data) => {
-    const { encryptedData, iv, tag } = await encryptSeed({ data, key })
+  const encryptData = async (data, field) => {
+    const { encryptedData, iv, tag } = await encryptSeed({
+      data,
+      key: dek,
+      aad: Cipher.contentAad(field),
+    })
     return { encryptedData, iv, tag }
   }
 
@@ -29,22 +37,30 @@ const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
     encryptedData: encryptedMlTestnetPrivateKey,
     iv: mlTestnetPrivKeyIv,
     tag: mlTestnetPrivKeyTag,
-  } = await encryptData(mlTestnetPrivateKey)
+  } = await encryptData(mlTestnetPrivateKey, 'encryptedMlTestnetPrivateKey')
 
   const {
     encryptedData: encryptedMlMainnetPrivateKey,
     iv: mlMainnetPrivKeyIv,
     tag: mlMainnetPrivKeyTag,
-  } = await encryptData(mlMainnetPrivateKey)
+  } = await encryptData(mlMainnetPrivateKey, 'encryptedMlMainnetPrivateKey')
 
   const {
     encryptedData: btcEncryptedSeed,
     iv: btcIv,
     tag: btcTag,
-  } = await encryptData(seed)
+  } = await encryptData(seed, 'btcEncryptedSeed')
+
+  const passwordWrapper = await Cipher.wrapDek({
+    dek,
+    wrappingKey,
+    aad: Cipher.wrapperAad('password'),
+  })
 
   return {
     salt: usedSalt,
+    encryptionVersion: Cipher.ENVELOPE_ENCRYPTION_VERSION,
+    wrappedDek: { password: passwordWrapper, passkeys: [] },
     encryptedMlTestnetPrivateKey,
     encryptedMlMainnetPrivateKey,
     btcEncryptedSeed,
@@ -57,17 +73,46 @@ const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
   }
 }
 
-const getEncryptedHtlsSecret = async (password, salt, secret, version) => {
-  const { generateEncryptionKey, encryptSeed } = await loadAccountSubRoutines()
-  const { key } = await generateEncryptionKey({ password, salt, version })
+const buildPasskeyWrapper = async ({
+  dek,
+  credentialId,
+  prfSalt,
+  prfOutput,
+  label,
+}) => {
+  const wrappingKey = await Cipher.deriveKekFromPrf(prfOutput)
+  const { encryptedData, iv, tag } = await Cipher.wrapDek({
+    dek,
+    wrappingKey,
+    aad: Cipher.wrapperAad(credentialId),
+  })
+
+  return {
+    credentialId,
+    prfSalt,
+    kdf: Cipher.PASSKEY_KDF,
+    label,
+    createdAt: Date.now(),
+    encryptedData,
+    iv,
+    tag,
+  }
+}
+
+const getEncryptedHtlsSecret = async (key, secret, aad) => {
+  const { encryptSeed } = await loadAccountSubRoutines()
 
   const {
     encryptedData: encryptedHtlsSecret,
     iv: htlsIv,
     tag: htlsTag,
-  } = await encryptSeed({ data: secret, key })
+  } = await encryptSeed({ data: secret, key, aad })
 
   return { encryptedHtlsSecret, htlsIv, htlsTag }
 }
 
-export { getEncryptedPrivateKeys, getEncryptedHtlsSecret }
+export {
+  getEnvelopeEncryptedPrivateKeys,
+  buildPasskeyWrapper,
+  getEncryptedHtlsSecret,
+}

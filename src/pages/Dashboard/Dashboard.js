@@ -1,8 +1,6 @@
 /* eslint-disable max-params */
-import { useContext, useState, useEffect } from 'react'
-import { PopUp, AddWallet } from '@ComposedComponents'
+import { useContext } from 'react'
 import { AccountContext, SettingsContext } from '@Contexts'
-import { Account } from '@Entities'
 
 import {
   useExchangeRates,
@@ -21,14 +19,9 @@ import { BTC } from '@Helpers'
 import { AppInfo } from '@Constants'
 
 const DashboardPage = () => {
-  const { addresses, accountName, accountID } = useContext(AccountContext)
+  const { addresses, accountName } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
-  const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
-  const [allowClosing, setAllowClosing] = useState(true)
-  const [account, setAccount] = useState(null)
-
-  const [connectedWalletType, setConnectedWalletType] = useState('')
   const {
     balance: btcBalance,
     fetchingBalances: btcFetchingBalances,
@@ -192,21 +185,6 @@ const DashboardPage = () => {
     navigate('/wallet/' + walletType.id)
   }
 
-  const onConnectItemClick = (walletType) => {
-    setConnectedWalletType(walletType)
-    setOpenConnectConfirmation(true)
-    setAllowClosing(true)
-  }
-
-  const getCurrentAccount = async (accountID) => {
-    const currentAccount = await Account.getAccount(accountID)
-    return currentAccount
-  }
-
-  useEffect(() => {
-    getCurrentAccount(accountID).then((account) => setAccount(account))
-  }, [accountID])
-
   return (
     <PageWrapper>
       <div className="stats">
@@ -223,21 +201,7 @@ const DashboardPage = () => {
       <Dashboard.CryptoList
         cryptoList={getCryptoList(addresses, networkType, tokenBalances)}
         onWalletItemClick={goToWallet}
-        onConnectItemClick={onConnectItemClick}
       />
-      {openConnectConfirmation && (
-        <PopUp
-          setOpen={setOpenConnectConfirmation}
-          allowClosing={allowClosing}
-        >
-          <AddWallet
-            account={account}
-            walletType={connectedWalletType}
-            setAllowClosing={setAllowClosing}
-            setOpenConnectConfirmation={setOpenConnectConfirmation}
-          />
-        </PopUp>
-      )}
     </PageWrapper>
   )
 }

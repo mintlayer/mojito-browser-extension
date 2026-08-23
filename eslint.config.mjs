@@ -70,7 +70,7 @@ export default [
     },
   },
   {
-    files: ['src/tests/mock/**/*.js'],
+    files: ['src/tests/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node,

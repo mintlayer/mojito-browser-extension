@@ -1,89 +1,64 @@
-import { CipherWorkerEnum } from '../../Crypto/Cipher/Cipher.worker'
-import { WalletWorkerEnum } from '../../Crypto/BTC/BTC.worker'
+import { CipherWorkerEnum } from 'src/services/Crypto/Cipher/Cipher.worker'
+import { WalletWorkerEnum } from 'src/services/Crypto/BTC/BTC.worker'
+import { getWorkerError } from 'src/services/Crypto/Worker/WorkerContract'
 
 const getWalletWorker = () =>
   new Worker(new URL('../../Crypto/BTC/BTC.worker', import.meta.url))
 const getCipherWorker = () =>
   new Worker(new URL('../../Crypto/Cipher/Cipher.worker', import.meta.url))
 
-const generateNewAccountMnemonic = () => {
-  return new Promise((resolve) => {
-    const worker = getWalletWorker()
-    worker.postMessage({
-      job: WalletWorkerEnum.GENERATE_MNEMONIC,
-    })
-    worker.onmessage = ({ data }) => {
-      worker.terminate()
-      resolve(data)
-    }
-  })
-}
+const runJob = (createWorker, message) =>
+  new Promise((resolve, reject) => {
+    const worker = createWorker()
 
-const generateSeed = (mnemonic) => {
-  return new Promise((resolve) => {
-    const worker = getWalletWorker()
-    worker.postMessage({
-      job: WalletWorkerEnum.GET_SEED_FROM_MNEMONIC,
-      data: mnemonic,
-    })
     worker.onmessage = ({ data }) => {
       worker.terminate()
-      resolve(data)
-    }
-  })
-}
 
-const generateEncryptionKey = async (password) => {
-  return new Promise((resolve) => {
-    const worker = getCipherWorker()
-    worker.postMessage({
-      job: CipherWorkerEnum.GENERATE_PBKDF2_KEY,
-      data: password,
-    })
-    worker.onmessage = ({ data }) => {
-      worker.terminate()
-      resolve(data)
-    }
-  })
-}
+      const error = getWorkerError(data)
+      if (error) return reject(new Error(error))
 
-const encryptSeed = async ({ data, key }) => {
-  return new Promise((resolve) => {
-    const worker = getCipherWorker()
-    worker.postMessage({
-      job: CipherWorkerEnum.ENCRYPT_AES,
-      data: {
-        data,
-        key,
-      },
-    })
-    worker.onmessage = ({ data }) => {
-      worker.terminate()
       resolve(data)
     }
-  })
-}
 
-const decryptSeed = async ({ data, key, iv, tag }) => {
-  return new Promise((resolve) => {
-    const worker = getCipherWorker()
-    worker.postMessage({
-      job: CipherWorkerEnum.DECRYPT_AES,
-      data: {
-        data,
-        key,
-        iv,
-        tag,
-      },
-    })
-    worker.onmessage = ({ data }) => {
+    worker.onerror = (event) => {
       worker.terminate()
-      resolve(data)
+      reject(new Error(event.message || 'Worker failed'))
     }
+
+    worker.postMessage(message)
   })
-}
+
+const generateNewAccountMnemonic = () =>
+  runJob(getWalletWorker, { job: WalletWorkerEnum.GENERATE_MNEMONIC })
+
+const generateSeed = (mnemonic) =>
+  runJob(getWalletWorker, {
+    job: WalletWorkerEnum.GET_SEED_FROM_MNEMONIC,
+    data: mnemonic,
+  })
+
+// These forward their whole payload on purpose: re-listing the fields here is how
+// the aad argument was silently dropped before.
+const generateEncryptionKey = async (payload) =>
+  runJob(getCipherWorker, {
+    job: CipherWorkerEnum.GENERATE_PBKDF2_KEY,
+    data: payload,
+  })
+
+const encryptSeed = async (payload) =>
+  runJob(getCipherWorker, {
+    job: CipherWorkerEnum.ENCRYPT_AES,
+    data: payload,
+  })
+
+const decryptSeed = async (payload) =>
+  runJob(getCipherWorker, {
+    job: CipherWorkerEnum.DECRYPT_AES,
+    data: payload,
+  })
 
 export {
+  runJob,
   generateNewAccountMnemonic,
   generateSeed,
   generateEncryptionKey,

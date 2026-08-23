@@ -17,6 +17,12 @@ interface SetAccountPasswordPageProps {
   nextAfterUnlock?: NextAfterUnlock | null
 }
 
+const passkey = {
+  isEnrolled: async (id: string | number) =>
+    (await Account.getPasskeys(id)).length > 0,
+  unlock: Account.unlockAccountWithPasskey,
+}
+
 const SetAccountPasswordPage = ({
   nextAfterUnlock,
 }: SetAccountPasswordPageProps) => {
@@ -37,6 +43,7 @@ const SetAccountPasswordPage = ({
       <Login.SetPassword
         onSubmit={login}
         checkPassword={Account.unlockAccount}
+        passkey={passkey}
       />
     </PageWrapper>
   )
