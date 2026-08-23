@@ -39,7 +39,7 @@ module.exports = {
     '^react-router-dom$':
       '<rootDir>/node_modules/react-router-dom/dist/index.js',
     '^src/(.*)$': '<rootDir>/src/$1',
-    '.*wasm_wrappers.js': '<rootDir>/src/tests/mock/wasmCrypro/wasmCrypto.js',
+    '^buffer$': '<rootDir>/node_modules/buffer/index.js',
   },
   collectCoverageFrom: ['!src/pages'],
   coveragePathIgnorePatterns: [

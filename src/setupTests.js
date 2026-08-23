@@ -26,6 +26,26 @@ if (typeof global.crypto === 'undefined') {
 // Buffer polyfill
 global.Buffer = Buffer
 
+const deepClone = (value) => {
+  if (value === null || typeof value !== 'object') return value
+  if (ArrayBuffer.isView(value)) return new value.constructor(value)
+  if (value instanceof ArrayBuffer) return value.slice(0)
+  if (value instanceof Date) return new Date(value)
+  if (value instanceof RegExp) return new RegExp(value)
+  if (value instanceof Map)
+    return new Map([...value].map(([k, v]) => [deepClone(k), deepClone(v)]))
+  if (value instanceof Set) return new Set([...value].map(deepClone))
+  if (Array.isArray(value)) return value.map(deepClone)
+
+  return Object.fromEntries(
+    Object.entries(value).map(([k, v]) => [k, deepClone(v)]),
+  )
+}
+
+if (typeof global.structuredClone === 'undefined') {
+  global.structuredClone = deepClone
+}
+
 // Save the original fetch for integration tests
 global.originalFetch = global.fetch
 
