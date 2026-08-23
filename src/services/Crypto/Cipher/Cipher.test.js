@@ -6,9 +6,18 @@ import {
   decryptAES,
   hexToBytes,
   IVSIZE,
+  DEKSIZE,
   CURRENT_ENCRYPTION_VERSION,
+  ENVELOPE_ENCRYPTION_VERSION,
   ENCRYPTION_VERSIONS,
   getVersionConfig,
+  generateDek,
+  wrapDek,
+  unwrapDek,
+  deriveKekFromPrf,
+  contentAad,
+  wrapperAad,
+  htlsAad,
 } from './Cipher'
 
 test('Cipher - HEX to Bytes', () => {
@@ -335,7 +344,7 @@ test('Cipher - decryptAES tampered tag throws', async () => {
 })
 
 test('Cipher - constants are correct', () => {
-  expect(CURRENT_ENCRYPTION_VERSION).toBe(3)
+  expect(CURRENT_ENCRYPTION_VERSION).toBe(4)
   expect(getVersionConfig(1).iterations).toBe(10000)
   expect(getVersionConfig(2).iterations).toBe(600000)
   expect(getVersionConfig(3).iterations).toBe(600000)
@@ -717,4 +726,527 @@ test('Cipher - migration v1 -> v3 upgrades to AES-256 and preserves data', async
   )
   expect(fromKey.length).toBe(16) // AES-128
   expect(toKey.length).toBe(32) // AES-256
+})
+
+test('Cipher - v4 shares v3 KDF parameters', () => {
+  expect(ENVELOPE_ENCRYPTION_VERSION).toBe(4)
+  expect(getVersionConfig(4)).toStrictEqual(getVersionConfig(3))
+})
+
+test('Cipher - generateDek returns a fresh 32 byte key', async () => {
+  const dek1 = await generateDek()
+  const dek2 = await generateDek()
+
+  expect(dek1.length).toBe(DEKSIZE)
+  expect(Array.isArray(dek1)).toBe(true)
+  expect(dek1.every((byte) => byte >= 0 && byte <= 255)).toBe(true)
+  expect(dek1).not.toStrictEqual(dek2)
+})
+
+test('Cipher - wrapDek / unwrapDek round trip', async () => {
+  const dek = await generateDek()
+  const wrappingKey = await generateDek()
+
+  const wrapped = await wrapDek({ dek, wrappingKey })
+
+  expect(wrapped.encryptedData).toBeDefined()
+  expect(wrapped.iv.length).toBe(IVSIZE)
+  expect(wrapped.tag.length).toBe(16)
+
+  const unwrapped = await unwrapDek({
+    ...wrapped,
+    data: wrapped.encryptedData,
+    wrappingKey,
+  })
+
+  expect(unwrapped).toStrictEqual(dek)
+})
+
+test('Cipher - the same DEK can be wrapped by two independent keys', async () => {
+  const dek = await generateDek()
+  const { key: passwordKey } = await generatePBKDF2Key({
+    password: 'MyStr0ng!Pass',
+  })
+  const passkeyKey = [...crypto.getRandomValues(new Uint8Array(DEKSIZE))]
+
+  const byPassword = await wrapDek({ dek, wrappingKey: passwordKey })
+  const byPasskey = await wrapDek({ dek, wrappingKey: passkeyKey })
+
+  expect(byPassword.encryptedData).not.toBe(byPasskey.encryptedData)
+
+  await expect(
+    unwrapDek({
+      ...byPassword,
+      data: byPassword.encryptedData,
+      wrappingKey: passwordKey,
+    }),
+  ).resolves.toStrictEqual(dek)
+  await expect(
+    unwrapDek({
+      ...byPasskey,
+      data: byPasskey.encryptedData,
+      wrappingKey: passkeyKey,
+    }),
+  ).resolves.toStrictEqual(dek)
+})
+
+test('Cipher - unwrapDek rejects a wrong wrapping key', async () => {
+  const dek = await generateDek()
+  const wrappingKey = await generateDek()
+  const { key: wrongKey } = await generatePBKDF2Key({ password: 'WrongPass' })
+
+  const wrapped = await wrapDek({ dek, wrappingKey })
+
+  await expect(
+    unwrapDek({
+      ...wrapped,
+      data: wrapped.encryptedData,
+      wrappingKey: wrongKey,
+    }),
+  ).rejects.toThrow('Incorrect password')
+})
+
+test('Cipher - wrapDek rejects a DEK of the wrong size', async () => {
+  const wrappingKey = await generateDek()
+
+  const invalidDeks = [
+    ['too short', [1, 2, 3]],
+    ['too long', new Array(DEKSIZE + 1).fill(1)],
+    ['empty', []],
+    ['undefined', undefined],
+    ['null', null],
+  ]
+
+  for (const [, dek] of invalidDeks) {
+    await expect(wrapDek({ dek, wrappingKey })).rejects.toThrow(
+      'Invalid data encryption key',
+    )
+  }
+})
+
+test('Cipher - wrapDek rejects a wrapping key that is not 32 bytes', async () => {
+  const dek = await generateDek()
+  const { key: legacyKey } = await generatePBKDF2Key({
+    password: 'MyStr0ng!Pass',
+    version: 1,
+  })
+
+  expect(legacyKey.length).toBe(16)
+
+  await expect(wrapDek({ dek, wrappingKey: legacyKey })).rejects.toThrow(
+    'Invalid wrapping key',
+  )
+  await expect(wrapDek({ dek, wrappingKey: undefined })).rejects.toThrow(
+    'Invalid wrapping key',
+  )
+})
+
+test('Cipher - unwrapDek rejects a wrapping key that is not 32 bytes', async () => {
+  const dek = await generateDek()
+  const wrappingKey = await generateDek()
+  const wrapped = await wrapDek({ dek, wrappingKey })
+
+  await expect(
+    unwrapDek({
+      ...wrapped,
+      data: wrapped.encryptedData,
+      wrappingKey: [1, 2, 3],
+    }),
+  ).rejects.toThrow('Invalid wrapping key')
+})
+
+test('Cipher - unwrapDek reports a missing wrapper distinctly from a wrong key', async () => {
+  const dek = await generateDek()
+  const wrappingKey = await generateDek()
+  const wrapped = await wrapDek({ dek, wrappingKey })
+  const full = { ...wrapped, data: wrapped.encryptedData }
+
+  const incomplete = [
+    { ...full, data: undefined },
+    { ...full, iv: undefined },
+    { ...full, tag: undefined },
+    {},
+  ]
+
+  for (const wrapper of incomplete) {
+    await expect(unwrapDek({ ...wrapper, wrappingKey })).rejects.toThrow(
+      'Missing key wrapper',
+    )
+  }
+})
+
+test('Cipher - unwrapDek rejects a payload that is not a 32 byte key', async () => {
+  const wrappingKey = await generateDek()
+
+  const payloads = [new Uint8Array([1, 2, 3]), new Uint8Array(DEKSIZE + 1)]
+
+  for (const payload of payloads) {
+    const notAKey = await encryptAES({ data: payload, key: wrappingKey })
+    await expect(
+      unwrapDek({ ...notAKey, data: notAKey.encryptedData, wrappingKey }),
+    ).rejects.toThrow('Invalid data encryption key')
+  }
+})
+
+test('Cipher - unwrapDek rejects tampered ciphertext, tag and IV', async () => {
+  const dek = await generateDek()
+  const wrappingKey = await generateDek()
+  const wrapped = await wrapDek({ dek, wrappingKey })
+  const full = { ...wrapped, data: wrapped.encryptedData }
+
+  const flipFirstByte = (binaryString) =>
+    String.fromCharCode(binaryString.charCodeAt(0) ^ 0xff) +
+    binaryString.slice(1)
+
+  const tampered = [
+    { ...full, data: flipFirstByte(full.data) },
+    { ...full, tag: flipFirstByte(full.tag) },
+    { ...full, iv: flipFirstByte(full.iv) },
+  ]
+
+  for (const wrapper of tampered) {
+    await expect(unwrapDek({ ...wrapper, wrappingKey })).rejects.toThrow(
+      'Incorrect password',
+    )
+  }
+})
+
+test('Cipher - wrapDek uses a fresh IV for every wrap', async () => {
+  const dek = await generateDek()
+  const wrappingKey = await generateDek()
+
+  const first = await wrapDek({ dek, wrappingKey })
+  const second = await wrapDek({ dek, wrappingKey })
+
+  expect(first.iv).not.toBe(second.iv)
+  expect(first.encryptedData).not.toBe(second.encryptedData)
+
+  await expect(
+    unwrapDek({ ...first, data: first.encryptedData, wrappingKey }),
+  ).resolves.toStrictEqual(dek)
+  await expect(
+    unwrapDek({ ...second, data: second.encryptedData, wrappingKey }),
+  ).resolves.toStrictEqual(dek)
+})
+
+test('Cipher - generateDek uses crypto.getRandomValues', async () => {
+  const originalGetRandomValues = crypto.getRandomValues.bind(crypto)
+  const mockGetRandomValues = jest.fn((arr) => {
+    for (let i = 0; i < arr.length; i++) arr[i] = 0x5a
+    return arr
+  })
+  crypto.getRandomValues = mockGetRandomValues
+
+  const dek = await generateDek()
+
+  expect(mockGetRandomValues).toHaveBeenCalled()
+  expect(dek).toStrictEqual(new Array(DEKSIZE).fill(0x5a))
+
+  crypto.getRandomValues = originalGetRandomValues
+})
+
+test('Cipher - wrapDek accepts a Uint8Array DEK and unwraps to a plain array', async () => {
+  const wrappingKey = await generateDek()
+  const dek = new Uint8Array(DEKSIZE).fill(7)
+
+  const wrapped = await wrapDek({ dek, wrappingKey })
+  const unwrapped = await unwrapDek({
+    ...wrapped,
+    data: wrapped.encryptedData,
+    wrappingKey,
+  })
+
+  expect(Array.isArray(unwrapped)).toBe(true)
+  expect(unwrapped).toStrictEqual(new Array(DEKSIZE).fill(7))
+})
+
+test('Cipher - a wrapped DEK survives a JSON round trip at byte value edges', async () => {
+  const wrappingKey = await generateDek()
+
+  const edgeCases = [
+    new Array(DEKSIZE).fill(0x00),
+    new Array(DEKSIZE).fill(0xff),
+    Array.from({ length: DEKSIZE }, (_, i) => (i % 2 ? 0x00 : 0xff)),
+  ]
+
+  for (const dek of edgeCases) {
+    const wrapped = await wrapDek({ dek, wrappingKey })
+    const restored = JSON.parse(JSON.stringify(wrapped))
+
+    const unwrapped = await unwrapDek({
+      ...restored,
+      data: restored.encryptedData,
+      wrappingKey,
+    })
+
+    expect(unwrapped).toStrictEqual(dek)
+  }
+})
+
+test('Cipher - generatePBKDF2Key accepts version 4 and yields a 32 byte key', async () => {
+  const salt = 'fixedsalt'
+  const password = 'MyStr0ng!Pass'
+
+  const { key: v4Key } = await generatePBKDF2Key({
+    password,
+    salt,
+    version: ENVELOPE_ENCRYPTION_VERSION,
+  })
+  const { key: v3Key } = await generatePBKDF2Key({ password, salt, version: 3 })
+
+  expect(v4Key.length).toBe(DEKSIZE)
+  expect(v4Key).toStrictEqual(v3Key)
+})
+
+test('Cipher - ENCRYPTION_VERSIONS exposes every supported version', () => {
+  expect(Object.keys(ENCRYPTION_VERSIONS)).toStrictEqual(['1', '2', '3', '4'])
+  expect(() => getVersionConfig(5)).toThrow('Unknown encryption version: 5')
+})
+
+test('Cipher - hexToBytes returns an empty array for unusable input', () => {
+  expect(hexToBytes('')).toStrictEqual(new Uint8Array())
+  expect(hexToBytes(undefined)).toStrictEqual(new Uint8Array())
+  expect(hexToBytes(null)).toStrictEqual(new Uint8Array())
+})
+
+test('Cipher - deriveKekFromPrf is deterministic and returns a 32 byte key', async () => {
+  const prfOutput = [...crypto.getRandomValues(new Uint8Array(DEKSIZE))]
+
+  const first = await deriveKekFromPrf(prfOutput)
+  const second = await deriveKekFromPrf(prfOutput)
+
+  expect(first.length).toBe(DEKSIZE)
+  expect(Array.isArray(first)).toBe(true)
+  expect(first).toStrictEqual(second)
+})
+
+test('Cipher - deriveKekFromPrf never returns the raw PRF output', async () => {
+  const prfOutput = [...crypto.getRandomValues(new Uint8Array(DEKSIZE))]
+  const other = [...crypto.getRandomValues(new Uint8Array(DEKSIZE))]
+
+  const kek = await deriveKekFromPrf(prfOutput)
+
+  expect(kek).not.toStrictEqual(prfOutput)
+  expect(kek).not.toStrictEqual(await deriveKekFromPrf(other))
+})
+
+test('Cipher - deriveKekFromPrf rejects anything that is not 32 bytes', async () => {
+  const invalid = [
+    [1, 2, 3],
+    new Array(DEKSIZE + 1).fill(1),
+    [],
+    undefined,
+    null,
+  ]
+
+  for (const prfOutput of invalid) {
+    await expect(deriveKekFromPrf(prfOutput)).rejects.toThrow(
+      'Invalid PRF output',
+    )
+  }
+})
+
+test('Cipher - a DEK wrapped by a PRF-derived key round trips', async () => {
+  const dek = await generateDek()
+  const prfOutput = [...crypto.getRandomValues(new Uint8Array(DEKSIZE))]
+
+  const wrappingKey = await deriveKekFromPrf(prfOutput)
+  const wrapped = await wrapDek({ dek, wrappingKey })
+
+  await expect(
+    unwrapDek({
+      ...wrapped,
+      data: wrapped.encryptedData,
+      wrappingKey: await deriveKekFromPrf(prfOutput),
+    }),
+  ).resolves.toStrictEqual(dek)
+
+  await expect(
+    unwrapDek({
+      ...wrapped,
+      data: wrapped.encryptedData,
+      wrappingKey: prfOutput,
+    }),
+  ).rejects.toThrow('Incorrect password')
+})
+
+test('Cipher - keys must be real bytes, not just the right length', async () => {
+  const dek = await generateDek()
+  const notBytes = [
+    new Array(DEKSIZE).fill(undefined),
+    new Array(DEKSIZE).fill(NaN),
+    new Array(DEKSIZE).fill(1.5),
+    new Array(DEKSIZE).fill(256),
+    new Array(DEKSIZE).fill(-1),
+    'a'.repeat(DEKSIZE),
+    { length: DEKSIZE },
+  ]
+
+  for (const value of notBytes) {
+    await expect(wrapDek({ dek: value, wrappingKey: dek })).rejects.toThrow(
+      'Invalid data encryption key',
+    )
+    await expect(wrapDek({ dek, wrappingKey: value })).rejects.toThrow(
+      'Invalid wrapping key',
+    )
+    await expect(deriveKekFromPrf(value)).rejects.toThrow('Invalid PRF output')
+  }
+})
+
+test('Cipher - typed arrays are accepted as keys', async () => {
+  const dek = new Uint8Array(DEKSIZE).fill(3)
+  const wrappingKey = new Uint8Array(DEKSIZE).fill(9)
+
+  const wrapped = await wrapDek({ dek, wrappingKey })
+
+  await expect(
+    unwrapDek({ ...wrapped, data: wrapped.encryptedData, wrappingKey }),
+  ).resolves.toStrictEqual([...dek])
+})
+
+test('Cipher - additional data must match on decryption', async () => {
+  const key = await generateDek()
+  const encrypted = await encryptAES({ data: 'secret', key, aad: 'context/a' })
+
+  await expect(
+    decryptAES({
+      ...encrypted,
+      data: encrypted.encryptedData,
+      key,
+      aad: 'context/a',
+    }),
+  ).resolves.toBeDefined()
+
+  await expect(
+    decryptAES({
+      ...encrypted,
+      data: encrypted.encryptedData,
+      key,
+      aad: 'context/b',
+    }),
+  ).rejects.toThrow('Incorrect password')
+
+  await expect(
+    decryptAES({ ...encrypted, data: encrypted.encryptedData, key }),
+  ).rejects.toThrow('Incorrect password')
+})
+
+test('Cipher - data written without additional data still decrypts without it', async () => {
+  const key = await generateDek()
+  const encrypted = await encryptAES({ data: 'legacy', key })
+
+  const decrypted = await decryptAES({
+    ...encrypted,
+    data: encrypted.encryptedData,
+    key,
+  })
+
+  expect(Buffer.from(decrypted).toString()).toBe('legacy')
+})
+
+test('Cipher - a DEK wrapper is bound to the wrapper it belongs to', async () => {
+  const dek = await generateDek()
+  const wrappingKey = await generateDek()
+
+  const wrapped = await wrapDek({
+    dek,
+    wrappingKey,
+    aad: wrapperAad('password'),
+  })
+
+  await expect(
+    unwrapDek({
+      ...wrapped,
+      data: wrapped.encryptedData,
+      wrappingKey,
+      aad: wrapperAad('some-credential-id'),
+    }),
+  ).rejects.toThrow('Incorrect password')
+})
+
+test('Cipher - the aad builders are distinct per purpose and per field', () => {
+  expect(contentAad('btcEncryptedSeed')).not.toBe(
+    contentAad('encryptedMlMainnetPrivateKey'),
+  )
+  expect(wrapperAad('password')).not.toBe(wrapperAad('cred'))
+  expect(htlsAad('a')).not.toBe(htlsAad('b'))
+  expect(contentAad('x')).not.toBe(wrapperAad('x'))
+  expect(contentAad('x')).not.toBe(htlsAad('x'))
+})
+
+test('Cipher - the passkey KEK derivation is pinned to a known vector', async () => {
+  const prfOutput = Array.from({ length: 32 }, (_, i) => i)
+
+  expect(await deriveKekFromPrf(prfOutput)).toStrictEqual([
+    128, 134, 211, 213, 27, 178, 194, 105, 0, 85, 111, 79, 63, 120, 223, 76, 3,
+    92, 102, 175, 17, 153, 205, 237, 54, 226, 12, 209, 117, 179, 157, 239,
+  ])
+})
+
+const KNOWN_PASSWORD = 'correct horse battery staple'
+const KNOWN_SALT = '000102030405060708090a0b0c0d0e0f'
+const fromCodes = (codes) => String.fromCharCode(...codes)
+
+test.each([
+  [1, [54, 3, 60, 234, 152, 152, 20, 171, 192, 66, 40, 128, 46, 37, 81, 44]],
+  [
+    2,
+    [99, 123, 106, 23, 174, 237, 18, 166, 11, 134, 179, 112, 110, 201, 235, 79],
+  ],
+  [
+    3,
+    [
+      99, 123, 106, 23, 174, 237, 18, 166, 11, 134, 179, 112, 110, 201, 235, 79,
+      147, 133, 30, 40, 70, 44, 26, 215, 254, 11, 159, 186, 168, 109, 179, 6,
+    ],
+  ],
+  [
+    4,
+    [
+      99, 123, 106, 23, 174, 237, 18, 166, 11, 134, 179, 112, 110, 201, 235, 79,
+      147, 133, 30, 40, 70, 44, 26, 215, 254, 11, 159, 186, 168, 109, 179, 6,
+    ],
+  ],
+])(
+  'Cipher - the v%i key derivation is pinned to a known vector',
+  async (version, expected) => {
+    const { key } = await generatePBKDF2Key({
+      password: KNOWN_PASSWORD,
+      salt: KNOWN_SALT,
+      version,
+    })
+
+    expect(key).toStrictEqual(expected)
+  },
+)
+
+test('Cipher - a blob encrypted before this change still decrypts', async () => {
+  const { key } = await generatePBKDF2Key({
+    password: KNOWN_PASSWORD,
+    salt: KNOWN_SALT,
+    version: 4,
+  })
+
+  const decrypted = await decryptAES({
+    data: fromCodes([
+      107, 143, 59, 183, 211, 112, 106, 253, 33, 97, 249, 54, 47, 237, 187, 183,
+      59, 154, 142, 159, 223, 35, 203, 194, 204, 252, 98, 17,
+    ]),
+    iv: fromCodes([16, 167, 231, 76, 225, 178, 64, 6, 199, 106, 255, 246]),
+    tag: fromCodes([
+      27, 133, 117, 246, 162, 232, 227, 29, 64, 161, 172, 141, 11, 201, 145, 46,
+    ]),
+    key,
+    aad: contentAad('btcEncryptedSeed'),
+  })
+
+  expect(new TextDecoder().decode(decrypted)).toBe('attack at dawn')
+})
+
+test('Cipher - the additional data strings are part of the stored format', () => {
+  expect(contentAad('btcEncryptedSeed')).toBe(
+    'mojito/v4/content/btcEncryptedSeed',
+  )
+  expect(wrapperAad('password')).toBe('mojito/v4/dek/password')
+  expect(htlsAad('abc')).toBe('mojito/v4/htls/abc')
 })
