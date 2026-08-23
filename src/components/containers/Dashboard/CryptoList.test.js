@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, fireEvent, screen } from '@testing-library/react'
 import { SettingsContext, MintlayerContext } from '@Contexts'
-import { CryptoItem, ConnectItem } from './CryptoList'
+import { CryptoItem } from './CryptoList'
 import CryptoList from './CryptoList'
 
 describe('CryptoItem', () => {
@@ -104,93 +104,6 @@ describe('CryptoItem', () => {
   })
 })
 
-describe('ConnectItem', () => {
-  const walletType = {
-    name: 'Bitcoin',
-    symbol: 'BTC',
-    disabled: false,
-  }
-
-  const onClick = jest.fn()
-
-  const renderComponent = (networkType) =>
-    render(
-      <SettingsContext.Provider value={{ networkType }}>
-        <MintlayerContext.Provider
-          value={{ balanceLoading: false, tokenBalances: [] }}
-        >
-          <ConnectItem
-            walletType={walletType}
-            onClick={onClick}
-          />
-        </MintlayerContext.Provider>
-      </SettingsContext.Provider>,
-    )
-
-  it('renders the connect item correctly', () => {
-    renderComponent('mainnet')
-
-    expect(screen.getByText('Bitcoin (BTC)')).toBeInTheDocument()
-    expect(screen.getByText('Add wallet')).toBeInTheDocument()
-  })
-
-  it('renders the Mintlayer logo for Mintlayer items', () => {
-    const mintlayerWalletType = {
-      ...walletType,
-      name: 'Mintlayer',
-      symbol: 'ML',
-    }
-
-    render(
-      <SettingsContext.Provider value={{ networkType: 'mainnet' }}>
-        <MintlayerContext.Provider
-          value={{ balanceLoading: false, tokenBalances: [] }}
-        >
-          <ConnectItem
-            walletType={mintlayerWalletType}
-            onClick={onClick}
-          />
-        </MintlayerContext.Provider>
-      </SettingsContext.Provider>,
-    )
-
-    expect(screen.getByTestId('logo-round')).toBeInTheDocument()
-  })
-
-  it('calls the onClick callback when the item is clicked', () => {
-    renderComponent('mainnet')
-
-    fireEvent.click(screen.getByText('Add wallet'))
-
-    expect(onClick).toHaveBeenCalledWith(walletType)
-  })
-
-  it('does not disable the item for other wallet types on testnet', () => {
-    const otherWalletType = {
-      ...walletType,
-      name: 'Other',
-      symbol: 'OTH',
-      disabled: false,
-    }
-
-    render(
-      <SettingsContext.Provider value={{ networkType: 'testnet' }}>
-        <MintlayerContext.Provider
-          value={{ balanceLoading: false, tokenBalances: [] }}
-        >
-          <ConnectItem
-            walletType={otherWalletType}
-            onClick={onClick}
-          />
-        </MintlayerContext.Provider>
-      </SettingsContext.Provider>,
-    )
-
-    expect(screen.getByText('Add wallet')).toBeInTheDocument()
-    expect(screen.getByTestId('connect-item')).not.toHaveClass('disabled')
-  })
-})
-
 describe('CryptoList', () => {
   const colorList = {
     btc: '#f7931a',
@@ -227,7 +140,6 @@ describe('CryptoList', () => {
   // ]
 
   const onWalletItemClick = jest.fn()
-  const onConnectItemClick = jest.fn()
 
   //TDOO: enable this test when mainnet is ready
   // const renderComponent = (networkType) =>
@@ -238,7 +150,6 @@ describe('CryptoList', () => {
   //           cryptoList={cryptoList}
   //           colorList={colorList}
   //           onWalletItemClick={onWalletItemClick}
-  //           onConnectItemClick={onConnectItemClick}
   //         />
   //       </SettingsContext.Provider>
   //       ,
@@ -255,7 +166,6 @@ describe('CryptoList', () => {
             cryptoList={[]}
             colorList={colorList}
             onWalletItemClick={onWalletItemClick}
-            onConnectItemClick={onConnectItemClick}
           />
         </MintlayerContext.Provider>
       </SettingsContext.Provider>,
@@ -282,14 +192,6 @@ describe('CryptoList', () => {
   //   expect(onWalletItemClick).toHaveBeenCalledWith(cryptoList[1])
   //   expect(onWalletItemClick).toHaveBeenCalledTimes(2)
   // })
-
-  it('calls the onConnectItemClick callback when the add wallet item is clicked', () => {
-    renderEmptyComponent('mainnet')
-
-    fireEvent.click(screen.getAllByText('Add wallet')[0])
-
-    expect(onConnectItemClick).toHaveBeenCalled()
-  })
 
   const coin = {
     id: 'Mintlayer',
@@ -322,7 +224,6 @@ describe('CryptoList', () => {
             cryptoList={list}
             colorList={colorList}
             onWalletItemClick={onWalletItemClick}
-            onConnectItemClick={onConnectItemClick}
           />
         </MintlayerContext.Provider>
       </SettingsContext.Provider>,

@@ -15,7 +15,6 @@ import FeeField from './FeeField/FeeField'
 import FeeFieldML from './FeeField/FeeFieldML'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import WalletList from './WalletList/WalletList'
-import AddWallet from './AddWallet/AddWallet'
 import CurrentStaking from './CurrentStaking/CurrentStaking'
 import HelpTooltip from './HelpTooltip/HelpTooltip'
 import RestoreSeedField from './RestoreSeedField/RestoreSeedField'
@@ -52,7 +51,6 @@ export {
   FeeFieldML,
   ConnectionErrorPopup,
   WalletList,
-  AddWallet,
   CurrentStaking,
   HelpTooltip,
   RestoreSeedField,

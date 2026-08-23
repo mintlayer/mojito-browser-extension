@@ -102,39 +102,7 @@ export const CryptoItem = ({ onClickItem, item }) => {
   )
 }
 
-export const ConnectItem = ({ walletType, onClick }) => {
-  const { networkType } = useContext(SettingsContext)
-  const isDisabled = walletType.disabled
-  const symbol =
-    networkType === AppInfo.NETWORK_TYPES.MAINNET
-      ? walletType.symbol
-      : 'Testnet'
-
-  const onItemClick = () => {
-    if (!isDisabled) onClick(walletType)
-  }
-  const message = isDisabled ? 'Coming soon' : 'Add wallet'
-  return (
-    <li
-      className={`crypto-item add-item ${isDisabled ? 'disabled' : ''}`}
-      onClick={onItemClick}
-      data-testid="connect-item"
-    >
-      {walletType.name === 'Mintlayer' ? <LogoRound /> : <BtcLogo />}
-      <div className="name-values">
-        <h5>
-          {walletType.name} ({symbol})
-        </h5>
-      </div>
-      <div className="connect-message">{message}</div>
-    </li>
-  )
-}
-const CryptoList = ({ cryptoList, onWalletItemClick, onConnectItemClick }) => {
-  const missingWalletTypes = AppInfo.walletTypes.filter(
-    (walletType) =>
-      !cryptoList.find((crypto) => crypto.name === walletType.name),
-  )
+const CryptoList = ({ cryptoList, onWalletItemClick }) => {
   const coins = cryptoList.filter((crypto) => crypto.type !== 'token')
   const tokens = cryptoList.filter((crypto) => crypto.type === 'token')
   const showGroupTitles = tokens.some((token) => !token.isPlaceholder)
@@ -151,14 +119,6 @@ const CryptoList = ({ cryptoList, onWalletItemClick, onConnectItemClick }) => {
             key={crypto.symbol}
             item={crypto}
             onClickItem={onWalletItemClick}
-          />
-        ))}
-
-        {missingWalletTypes.map((walletType) => (
-          <ConnectItem
-            key={walletType.name}
-            walletType={walletType}
-            onClick={onConnectItemClick}
           />
         ))}
       </ul>
