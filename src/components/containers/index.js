@@ -32,6 +32,7 @@ import SettingsDelete from './Settings/SettingsDelete/SettingsDelete'
 import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet.tsx'
 import SettingsAbout from './Settings/SettingsAbout/SettingsAbout.tsx'
 import SettingsBackup from './Settings/SettingsBackup/SettingsBackup'
+import SettingsPasskey from './Settings/SettingsPasskey/SettingsPasskey'
 import SettingsSection from './Settings/SettingsSection/SettingsSection.tsx'
 
 import SignMessage from './Message/SignMessage/SignMessage'
@@ -74,6 +75,7 @@ const Settings = {
   SettingsTestnet,
   SettingsDelete,
   SettingsBackup,
+  SettingsPasskey,
   SettingsSection,
 }
 

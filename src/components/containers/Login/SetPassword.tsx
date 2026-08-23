@@ -1,4 +1,4 @@
-import { useState, FormEvent, ReactNode } from 'react'
+import { useState, useEffect, FormEvent, ReactNode } from 'react'
 import { useLocation } from 'react-router'
 
 import { Button } from '@BasicComponents'
@@ -6,6 +6,7 @@ import { LoadingScreen, TextField } from '@ComposedComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
 import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
+import { ReactComponent as IconPasskey } from '@Assets/images/icon-passkey.svg'
 
 import styles from './SetPassword.module.css'
 
@@ -29,6 +30,10 @@ interface SetPasswordProps {
   selectedAccount?: Account
   buttonTitle?: string
   customLabel?: string | ReactNode
+  passkey?: {
+    isEnrolled: (id: string | number) => Promise<boolean>
+    unlock: (id: string | number) => Promise<CheckPasswordResult>
+  }
 }
 
 const SetPassword = ({
@@ -38,6 +43,7 @@ const SetPassword = ({
   selectedAccount,
   buttonTitle = 'Unlock wallet',
   customLabel,
+  passkey,
 }: SetPasswordProps) => {
   const location = useLocation()
   const account: Account = selectedAccount
@@ -53,6 +59,39 @@ const SetPassword = ({
   const [accountPasswordErrorMessage, setAccountPasswordErrorMessage] =
     useState<string | null>(null)
   const [unlockingAccount, setUnlockingAccount] = useState(false)
+  const [passkeyAvailable, setPasskeyAvailable] = useState(false)
+
+  useEffect(() => {
+    if (!passkey) return
+
+    let active = true
+
+    passkey
+      .isEnrolled(account.id)
+      .then((available) => active && setPasskeyAvailable(available))
+      .catch(() => active && setPasskeyAvailable(false))
+
+    return () => {
+      active = false
+    }
+  }, [account.id, passkey])
+
+  const passkeyHandler = async () => {
+    setAccountPasswordPristinity(false)
+    setUnlockingAccount(true)
+
+    try {
+      const validated = await passkey!.unlock(account.id)
+
+      if (!validated?.addresses) throw new Error('Unlock failed')
+
+      onSubmit && onSubmit(validated.addresses, account.id, account.name)
+    } catch {
+      setUnlockingAccount(false)
+      setAccountPasswordValid(false)
+      setAccountPasswordErrorMessage('Could not unlock with the passkey')
+    }
+  }
 
   const passwordFieldValidity = async () => {
     try {
@@ -136,6 +175,19 @@ const SetPassword = ({
                       <IconArrowRight className={styles.loginButtonIcon} />
                     </Button>
                   </CenteredLayout>
+                  {passkeyAvailable ? (
+                    <CenteredLayout>
+                      <Button
+                        alternate
+                        onClickHandle={passkeyHandler}
+                        extraStyleClasses={[styles.loginPasskeySubmit]}
+                        dataTestId="login-passkey-submit"
+                      >
+                        <IconPasskey className={styles.passkeyButtonIcon} />
+                        Unlock with passkey
+                      </Button>
+                    </CenteredLayout>
+                  ) : null}
                 </>
               ) : (
                 <LoadingScreen text="Just a sec, we are validating your password..." />
