@@ -78,11 +78,10 @@ export const ConnectionPage = () => {
             ),
             publicKeys: {
               receiving: addresses?.btcAddresses?.btcReceivingAddresses.map(
-                (addr) =>
-                  Buffer.from(Object.values(addr)[0].pubkey).toString('hex'),
+                (addr) => toHexString(Object.values(addr)[0].pubkey),
               ),
               change: addresses?.btcAddresses?.btcChangeAddresses.map((addr) =>
-                Buffer.from(Object.values(addr)[0].pubkey).toString('hex'),
+                toHexString(Object.values(addr)[0].pubkey),
               ),
             },
           },
