@@ -62,6 +62,7 @@ import {
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
 
+import '@Assets/styles/fonts.css'
 import '@Assets/styles/constants.css'
 import '@Assets/styles/index.css'
 
