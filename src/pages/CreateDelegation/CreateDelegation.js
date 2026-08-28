@@ -1,4 +1,4 @@
-import { useEffect, useContext, useState } from 'react'
+import { useCallback, useEffect, useContext, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
@@ -55,13 +55,23 @@ const CreateDelegationPage = () => {
 
   const loading = preEnterAddress && (fetchingBalances || fetchingUtxos)
 
+  const buildDelegationTransaction = useCallback(
+    ({ pool_id, destination }) =>
+      client.buildTransaction({
+        type: 'CreateDelegationId',
+        params: { pool_id, destination },
+        ...(utxos.length ? { opts: { withUTXO: utxos } } : {}),
+      }),
+    [client, utxos],
+  )
+
   useEffect(() => {
     const buildTransaction = async () => {
       if (transaction_conditions && transactionInformation?.to.length > 0) {
         setFeeLoading(true)
         try {
           const unusedReceivingAddress = unusedAddresses.receive
-          const transaction = await client.buildDelegationCreate({
+          const transaction = await buildDelegationTransaction({
             pool_id: transactionInformation.to,
             destination: unusedReceivingAddress,
           })
@@ -74,7 +84,12 @@ const CreateDelegationPage = () => {
       }
     }
     buildTransaction()
-  }, [transaction_conditions, transactionInformation, client, unusedAddresses])
+  }, [
+    transaction_conditions,
+    transactionInformation,
+    buildDelegationTransaction,
+    unusedAddresses,
+  ])
 
   if (!accountID) {
     console.log('No account id.')
@@ -89,10 +104,11 @@ const CreateDelegationPage = () => {
   const confirmMlTransaction = async () => {
     const unusedReceivingAddress = unusedAddresses.receive
 
-    const result = await client.delegationCreate({
+    const transaction = await buildDelegationTransaction({
       pool_id: transactionInformation.to,
       destination: unusedReceivingAddress,
     })
+    const result = await client.signTransaction(transaction)
 
     if (result) {
       await fetchDelegations()

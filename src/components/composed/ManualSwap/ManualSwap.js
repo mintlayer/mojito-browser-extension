@@ -4,13 +4,14 @@ import { Loading, TextField } from '@ComposedComponents'
 import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { ML as MlHelpers } from '@Helpers'
-import { AccountContext, SettingsContext, MintlayerContext } from '@Contexts'
+import { useFillOrder } from '@Hooks'
+import { AccountContext, SettingsContext } from '@Contexts'
 
 import './ManualSwap.css'
 
 const ManualSwap = () => {
   const { balanceLoading } = useContext(AccountContext)
-  const { client } = useContext(MintlayerContext)
+  const fillOrder = useFillOrder()
   const { networkType } = useContext(SettingsContext)
   const [orderId, setOrderId] = useState('')
   const [orderIdValidity, setOrderIdValidity] = useState(false)
@@ -54,7 +55,7 @@ const ManualSwap = () => {
     try {
       setLoading(true)
       if (isFormValid) {
-        await client.fillOrder({
+        await fillOrder({
           order_id: orderId,
           amount,
           destination: destinationAddress,

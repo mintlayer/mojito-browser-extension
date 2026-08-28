@@ -6,6 +6,7 @@ import { CryptoFiatField } from '@ComposedComponents'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-swap.svg'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ML } from '@Helpers'
+import { useFillOrder } from '@Hooks'
 
 import { MintlayerContext } from '@Contexts'
 
@@ -89,8 +90,9 @@ const SwapInfoContent = ({ order, from }) => {
 }
 
 const OrderDetails = ({ order }) => {
-  const { client, unusedAddresses, balance, tokenBalances } =
+  const { unusedAddresses, balance, tokenBalances } =
     useContext(MintlayerContext)
+  const fillOrder = useFillOrder()
   const [txErrorMessage, setTxErrorMessage] = useState(null)
   const [loading, setLoading] = useState(false)
   const [amount, setAmount] = useState('')
@@ -135,7 +137,7 @@ const OrderDetails = ({ order }) => {
     try {
       setLoading(true)
       if (order) {
-        await client.fillOrder({
+        await fillOrder({
           order_id: order.order_id,
           amount,
           destination: unusedAddresses.receive,

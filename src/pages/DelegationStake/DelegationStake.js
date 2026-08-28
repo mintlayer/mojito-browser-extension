@@ -1,4 +1,4 @@
-import { useEffect, useContext, useState } from 'react'
+import { useCallback, useEffect, useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
@@ -57,6 +57,16 @@ const DelegationStakePage = () => {
 
   const loading = fetchingBalances || fetchingUtxos
 
+  const buildStakeTransaction = useCallback(
+    ({ amount, delegation_id }) =>
+      client.buildTransaction({
+        type: 'DelegateStaking',
+        params: { delegation_id, amount },
+        ...(utxos.length ? { opts: { withUTXO: utxos } } : {}),
+      }),
+    [client, utxos],
+  )
+
   useEffect(() => {
     const buildTransaction = async () => {
       if (
@@ -66,7 +76,7 @@ const DelegationStakePage = () => {
       ) {
         setFeeLoading(true)
         try {
-          const transaction = await client.buildDelegationStake({
+          const transaction = await buildStakeTransaction({
             amount: transactionInformation.amount,
             delegation_id: transactionInformation.to,
           })
@@ -82,7 +92,7 @@ const DelegationStakePage = () => {
   }, [
     transaction_conditions,
     transactionInformation,
-    client,
+    buildStakeTransaction,
     unusedAddresses,
     delegationId,
   ])
@@ -98,10 +108,11 @@ const DelegationStakePage = () => {
   }
 
   const confirmMlTransaction = async () => {
-    const result = await client.delegationStake({
+    const transaction = await buildStakeTransaction({
       amount: transactionInformation.amount,
       delegation_id: transactionInformation.to,
     })
+    const result = await client.signTransaction(transaction)
     return result
   }
 

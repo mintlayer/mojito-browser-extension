@@ -10,6 +10,13 @@ import {
 } from '@Contexts'
 import { ML } from '@Helpers'
 
+const mockFillOrder = jest.fn()
+
+jest.mock('@Hooks', () => ({
+  ...jest.requireActual('@Hooks'),
+  useFillOrder: () => mockFillOrder,
+}))
+
 describe('OrderDetailsItem', () => {
   it('renders with title and content', () => {
     const title = 'Test Title'
@@ -296,9 +303,6 @@ const mockCoinOrder = {
 }
 
 const mockMintlayerContext = {
-  client: {
-    fillOrder: jest.fn(),
-  },
   unusedAddresses: {
     receive: 'testnet_addr1',
   },
@@ -389,7 +393,7 @@ describe('OrderDetails', () => {
     fireEvent.click(swapButton)
 
     await waitFor(() => {
-      expect(mockMintlayerContext.client.fillOrder).toHaveBeenCalledWith({
+      expect(mockFillOrder).toHaveBeenCalledWith({
         order_id: 'order123456789',
         amount: '50',
         destination: 'testnet_addr1',

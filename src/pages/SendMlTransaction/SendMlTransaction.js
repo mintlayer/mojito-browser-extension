@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useMemo } from 'react'
+import { useCallback, useContext, useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
@@ -28,7 +28,7 @@ const SendMlTransactionPage = () => {
   )
 
   const datahook = useMlWalletInfo
-  const { client } = useContext(MintlayerContext)
+  const { client, utxos } = useContext(MintlayerContext)
   const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [feeLoading, setFeeLoading] = useState(false)
@@ -61,6 +61,25 @@ const SendMlTransactionPage = () => {
   const [transactionInformation, setTransactionInformation] = useState(null)
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
 
+  const buildMlTransaction = useCallback(
+    ({ to, amount }) => {
+      if (walletType?.tokenId) {
+        return client.buildTransfer({
+          to,
+          amount,
+          token_id: walletType.tokenId,
+        })
+      }
+
+      return client.buildTransaction({
+        type: 'Transfer',
+        params: { to, amount },
+        ...(utxos?.length ? { opts: { withUTXO: utxos } } : {}),
+      })
+    },
+    [client, walletType, utxos],
+  )
+
   useEffect(() => {
     if (
       !isFormValid ||
@@ -77,11 +96,7 @@ const SendMlTransactionPage = () => {
 
     const timer = setTimeout(async () => {
       try {
-        const transaction = await client.buildTransfer({
-          to: transactionInformation.to,
-          amount: transactionInformation.amount,
-          token_id: walletType?.tokenId,
-        })
+        const transaction = await buildMlTransaction(transactionInformation)
         if (cancelled) return
         setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
       } catch (error) {
@@ -101,7 +116,7 @@ const SendMlTransactionPage = () => {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [transactionInformation, client, walletType, isFormValid])
+  }, [transactionInformation, buildMlTransaction, isFormValid])
 
   if (!accountID) {
     console.log('No account id.')
@@ -114,11 +129,8 @@ const SendMlTransactionPage = () => {
   }
 
   const confirmMlTransaction = async () => {
-    const result = await client.transfer({
-      to: transactionInformation.to,
-      amount: transactionInformation.amount,
-      token_id: walletType?.tokenId,
-    })
+    const transaction = await buildMlTransaction(transactionInformation)
+    const result = await client.signTransaction(transaction)
     return result
   }
 
