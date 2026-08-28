@@ -128,6 +128,13 @@ const SendMlTransaction = ({
         setPassErrorMessage('Insufficient delegation balance')
         return
       }
+      if (!validity || amountDecimal.lte(0)) {
+        setAmountValidity(false)
+        return
+      }
+      setAmountValidity(true)
+      setPassErrorMessage('')
+      return
     }
     if (!validity || amountDecimal.lte(0)) {
       setAmountValidity(false)
