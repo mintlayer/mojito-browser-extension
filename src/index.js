@@ -113,7 +113,12 @@ const App = () => {
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
       const mintlayerResponse = await Mintlayer.getChainTip()
-      const exchangeResponse = await ExchangeRates.getRate('ml', 'usd')
+      const exchangeResponse = await ExchangeRates.getRate('ml', 'usd').catch(
+        (error) => {
+          console.error('Exchange rates unavailable:', error)
+          return null
+        },
+      )
       return !!mintlayerResponse && !!exchangeResponse
     } catch (error) {
       if (accountUnlocked) {
