@@ -2,7 +2,7 @@
 import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
-import { Button, PageWrapper } from '@BasicComponents'
+import { Button, PageWrapper, SiteBadge } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 
 import './SignChallenge.css'
@@ -35,6 +35,7 @@ export const SignChallengePage = () => {
   const extraButtonStyles = ['buttonSignTransaction']
 
   const state = external_state || MOCKS[selectedMock]
+  const origin = state?.request?.origin
 
   const { addresses, accountID } = useContext(AccountContext)
   const currentMlAddresses = addresses.mlAddresses
@@ -142,6 +143,13 @@ export const SignChallengePage = () => {
       <div className="SignChallenge">
         <div className="header">
           <h1 className="signChallengeTitle">Sign Challenge</h1>
+        </div>
+
+        <div className="requestOrigin">
+          <SiteBadge
+            origin={origin || 'Unknown Website'}
+            unknown={!origin}
+          />
         </div>
 
         <div className="SignChallengeContent">

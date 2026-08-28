@@ -242,3 +242,7 @@
 .secret-hint small {
   font-style: italic;
 }
+
+.requestOrigin {
+  margin-bottom: 20px;
+}
