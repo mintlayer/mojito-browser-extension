@@ -228,6 +228,11 @@
             pendingResponses.delete(requestId)
           }
         })
+      } else if (!result && message.method === 'connect') {
+        if (storedSendResponse) {
+          storedSendResponse({ error: error || 'User rejected the request' })
+          pendingResponses.delete(requestId)
+        }
       } else if (result && message.method === 'signTransaction_approve') {
         storedSendResponse({ result, error })
         pendingResponses.delete(requestId)
