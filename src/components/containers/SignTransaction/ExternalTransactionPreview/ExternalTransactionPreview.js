@@ -2,60 +2,12 @@ import React, { useContext } from 'react'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import './ExternalTransactionPreview.css'
 
-import { AccountContext } from '@Contexts'
+import { AccountContext, MintlayerContext, SettingsContext } from '@Contexts'
+import { AppInfo } from '@Constants'
 
-// Error Boundary Component for TransactionPreview
-class TransactionPreviewErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = { hasError: false, error: null }
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error('TransactionPreview error:', error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="transactionPreview">
-          <div className="preview-section summary">
-            <div className="preview-section-header">
-              <h3>Transaction Preview</h3>
-            </div>
-            <div className="transactionDetails">
-              <div className="signTxSection">
-                <h4>Unable to display transaction details</h4>
-                <p>
-                  An error occurred while parsing the transaction data. Please
-                  try again or contact support.
-                </p>
-              </div>
-              {this.props.basicInfo && (
-                <>
-                  <div className="signTxSection">
-                    <h4>Request from:</h4>
-                    <p>{this.props.basicInfo.origin || 'Unknown'}</p>
-                  </div>
-                  <div className="signTxSection">
-                    <h4>Request id:</h4>
-                    <p>{this.props.basicInfo.requestId || 'Unknown'}</p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
+import TransactionBreakdown from '../TransactionBreakdown/TransactionBreakdown'
+import TransactionPreviewErrorBoundary from '../TransactionPreviewErrorBoundary/TransactionPreviewErrorBoundary'
+import UnrecognizedOperation from '../UnrecognizedOperation/UnrecognizedOperation'
 
 const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
   const inputWithToken = inputs.find(
@@ -673,8 +625,16 @@ const TokenMintWithLock = ({ transactionData }) => {
 const SummaryView = ({ data }) => {
   const { flags, transactionData } = SignTxHelpers.getTransactionDetails(data)
   const { addresses } = useContext(AccountContext)
+  const { tokenMap } = useContext(MintlayerContext)
+  const { networkType } = useContext(SettingsContext)
 
   const requiredAddresses = addresses.mlAddresses.mlChangeAddresses
+  const ownAddresses = {
+    receiving: addresses.mlAddresses.mlReceivingAddresses,
+    change: addresses.mlAddresses.mlChangeAddresses,
+  }
+  const coinTicker =
+    networkType === AppInfo.NETWORK_TYPES.TESTNET ? 'TML' : 'ML'
 
   return (
     <div className="preview-section summary">
@@ -821,6 +781,15 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
+
+        {flags.isUnknown && <UnrecognizedOperation />}
+
+        <TransactionBreakdown
+          JSONRepresentation={transactionData?.data?.txData?.JSONRepresentation}
+          ownAddresses={ownAddresses}
+          tokenMap={tokenMap}
+          coinTicker={coinTicker}
+        />
 
         <NetworkFee transactionData={transactionData} />
         <RequestDetails transactionData={transactionData} />

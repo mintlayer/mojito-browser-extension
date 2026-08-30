@@ -1,0 +1,19 @@
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  padding: var(--space-sm);
+  border: 1px solid rgba(var(--color-red), 0.4);
+  border-radius: 8px;
+  background: rgba(var(--color-red), 0.06);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+.text {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}

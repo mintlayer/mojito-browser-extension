@@ -2,7 +2,12 @@ import React, { useEffect, useContext } from 'react'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import './InternalTransactionPreview.css'
 
-import { AccountContext, MintlayerContext } from '@Contexts'
+import { AccountContext, MintlayerContext, SettingsContext } from '@Contexts'
+import { AppInfo } from '@Constants'
+
+import TransactionBreakdown from '../TransactionBreakdown/TransactionBreakdown'
+import TransactionPreviewErrorBoundary from '../TransactionPreviewErrorBoundary/TransactionPreviewErrorBoundary'
+import UnrecognizedOperation from '../UnrecognizedOperation/UnrecognizedOperation'
 
 const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
   const inputWithToken = inputs.find(
@@ -489,8 +494,16 @@ const BridgeRequest = ({ transactionData }) => {
 const SummaryView = ({ data }) => {
   const { flags, transactionData } = SignTxHelpers.getTransactionDetails(data)
   const { addresses } = useContext(AccountContext)
+  const { tokenMap } = useContext(MintlayerContext)
+  const { networkType } = useContext(SettingsContext)
 
   const requiredAddresses = addresses.mlAddresses.mlChangeAddresses
+  const ownAddresses = {
+    receiving: addresses.mlAddresses.mlReceivingAddresses,
+    change: addresses.mlAddresses.mlChangeAddresses,
+  }
+  const coinTicker =
+    networkType === AppInfo.NETWORK_TYPES.TESTNET ? 'TML' : 'ML'
 
   return (
     <div className="preview-section summary">
@@ -551,6 +564,15 @@ const SummaryView = ({ data }) => {
             requiredAddresses={requiredAddresses}
           />
         )}
+
+        {flags.isUnknown && <UnrecognizedOperation />}
+
+        <TransactionBreakdown
+          JSONRepresentation={transactionData?.data?.txData?.JSONRepresentation}
+          ownAddresses={ownAddresses}
+          tokenMap={tokenMap}
+          coinTicker={coinTicker}
+        />
       </div>
     </div>
   )
@@ -558,9 +580,11 @@ const SummaryView = ({ data }) => {
 
 const InternalTransactionPreview = ({ data }) => {
   return (
-    <div className="transactionPreview">
-      <SummaryView data={data} />
-    </div>
+    <TransactionPreviewErrorBoundary>
+      <div className="transactionPreview">
+        <SummaryView data={data} />
+      </div>
+    </TransactionPreviewErrorBoundary>
   )
 }
 
