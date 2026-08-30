@@ -242,7 +242,7 @@ const SendMlTransaction = ({
 
           <CenteredLayout>
             <Button
-              extraStyleClasses={['send-transaction-button']}
+              extraStyleClasses={[styles.sendTransactionButton]}
               onClickHandle={sendTransaction}
               disabled={!isFormValid || feeLoading}
             >
