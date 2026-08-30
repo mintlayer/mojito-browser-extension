@@ -9,8 +9,9 @@
 }
 
 .preview-section h3 {
-  margin: 0 0 16px;
-  font-size: 1.2rem;
+  margin: 0 0 var(--space-md);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -109,18 +110,36 @@
 .transactionDetails {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .signTxSection {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 8px;
+  gap: var(--space-3xs);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid rgba(var(--color-black), 0.06);
+}
+
+.signTxSection:last-child {
+  border-bottom: none;
+}
+
+.signTxSection h4 {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--color-black), 0.45);
+}
+
+.signTxSection p {
+  margin: 0;
+  font-size: var(--font-size-md);
+  overflow-wrap: break-word;
 }
 
 .signTxAction {
-  color: rgb(var(--color-primary));
+  color: rgb(var(--color-stats-green));
+  font-weight: 600;
 }

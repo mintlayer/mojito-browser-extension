@@ -31,7 +31,7 @@ const findRelevantOutput = (inputs, outputs, requiredAddresses) => {
 const EstimatedChanges = ({ action }) => {
   return (
     <div className="signTxSection">
-      <h4>Estimated changes:</h4>
+      <h4>Estimated changes</h4>
       <p>
         You’re approving a one-time request to{' '}
         <span className="signTxAction">{action}</span>
@@ -43,9 +43,9 @@ const EstimatedChanges = ({ action }) => {
 const RequestDetails = ({ transactionData }) => {
   return (
     <div className="signTxSection">
-      <h4>Request from:</h4>
+      <h4>Request from</h4>
       <p>{transactionData.origin}</p>
-      <h4>Request id:</h4>
+      <h4>Request id</h4>
       <p>{transactionData.requestId}</p>
     </div>
   )
@@ -60,7 +60,7 @@ const NetworkFee = ({ transactionData }) => {
   }
   return (
     <div className="signTxSection">
-      <h4>Network fee:</h4>
+      <h4>Network fee</h4>
       <p>{fee}</p>
     </div>
   )
@@ -107,7 +107,7 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
           <p>Unable to determine transfer details</p>
           {inputWithToken && (
             <>
-              <h4>Token id:</h4>
+              <h4>Token id</h4>
               <p>{tokenId}</p>
             </>
           )}
@@ -120,15 +120,15 @@ const TransferDetails = ({ transactionData, requiredAddresses }) => {
     <div className="transactionDetails">
       <EstimatedChanges action={title} />
       <div className="signTxSection">
-        <h4>Destination:</h4>
+        <h4>Destination</h4>
         <p>{outputToUse.destination || 'Unknown'}</p>
         {inputWithToken && (
           <>
-            <h4>Token id:</h4>
+            <h4>Token id</h4>
             <p>{tokenId}</p>
           </>
         )}
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{outputToUse.value?.amount?.decimal || 'Unknown'}</p>
       </div>
     </div>
@@ -144,14 +144,14 @@ const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
   return (
     <div className="transactionDetails">
       <div className="signTxSection">
-        <h4>Estimated changes:</h4>
+        <h4>Estimated changes</h4>
         <p>
           You’re approving a one-time request to{' '}
           {unfreeze ? 'unfreeze' : 'freeze'} token
         </p>
       </div>
       <div className="signTxSection">
-        <h4>Token id:</h4>
+        <h4>Token id</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
     </div>
@@ -168,11 +168,11 @@ const ChangeTokenMetadata = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Change token metadata" />
       <div className="signTxSection">
-        <h4>Token id:</h4>
+        <h4>Token id</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
       <div className="signTxSection">
-        <h4>New metadata:</h4>
+        <h4>New metadata</h4>
         <p>{inputWithToken.input.new_metadata_uri}</p>
       </div>
     </div>
@@ -189,11 +189,11 @@ const ChangeTokenAuthority = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Change token authority" />
       <div className="signTxSection">
-        <h4>Token id:</h4>
+        <h4>Token id</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
       <div className="signTxSection">
-        <h4>New authority:</h4>
+        <h4>New authority</h4>
         <p>{inputWithToken.input.new_authority}</p>
       </div>
     </div>
@@ -211,7 +211,7 @@ const LockTokenSupply = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Lock token supply" />
       <div className="signTxSection">
-        <h4>Token id:</h4>
+        <h4>Token id</h4>
         <p>{inputWithToken.input.token_id}</p>
       </div>
     </div>
@@ -232,7 +232,7 @@ const BurnToken = ({ transactionData }) => {
       <EstimatedChanges action="Burn token" />
       {tokenId ? (
         <div className="signTxSection">
-          <h4>Token id:</h4>
+          <h4>Token id</h4>
           <p>{tokenId}</p>
         </div>
       ) : (
@@ -265,7 +265,7 @@ const ConcludeOrder = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Conclude order" />
       <div className="signTxSection">
-        <h4>Order ID:</h4>
+        <h4>Order ID</h4>
         <p>{inputWithOrderID.input.order_id}</p>
       </div>
     </div>
@@ -293,7 +293,7 @@ const FillOrder = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Fill order" />
       <div className="signTxSection">
-        <h4>Order id:</h4>
+        <h4>Order id</h4>
         <p>{inputWithOrderID.input.order_id}</p>
       </div>
     </div>
@@ -311,20 +311,20 @@ const CreateOrder = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Create order" />
       <div className="signTxSection">
-        <h4>Ask balance:</h4>
+        <h4>Ask balance</h4>
         <p>{outputWithCreateOrder.ask_balance.decimal}</p>
-        <h4>Ask currency:</h4>
+        <h4>Ask currency</h4>
         <p>{outputWithCreateOrder.ask_currency.type}</p>
-        <h4>Destination:</h4>
+        <h4>Destination</h4>
         <p>{outputWithCreateOrder.conclude_destination}</p>
-        <h4>Give balance:</h4>
+        <h4>Give balance</h4>
         <p>{outputWithCreateOrder.give_balance.decimal}</p>
-        <h4>Give currency:</h4>
+        <h4>Give currency</h4>
         <p>Token id: {outputWithCreateOrder.give_currency.token_id}</p>
         <p>type: {outputWithCreateOrder.give_currency.type}</p>
-        <h4>Initially asked:</h4>
+        <h4>Initially asked</h4>
         <p>{outputWithCreateOrder.initially_asked.decimal}</p>
-        <h4>Initially given:</h4>
+        <h4>Initially given</h4>
         <p>{outputWithCreateOrder.initially_given.decimal}</p>
       </div>
     </div>
@@ -341,23 +341,23 @@ const IssueToken = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Issue token" />
       <div className="signTxSection">
-        <h4>Authority:</h4>
+        <h4>Authority</h4>
         <p>{outputWithCreateOrder.authority}</p>
-        <h4>Freezable:</h4>
+        <h4>Freezable</h4>
         <p>{outputWithCreateOrder.is_freezable ? 'True' : 'False'}</p>
-        <h4>Metadata:</h4>
+        <h4>Metadata</h4>
         <p>Hex: {outputWithCreateOrder.metadata_uri.hex}</p>
         <p>String: {outputWithCreateOrder.metadata_uri.string}</p>
-        <h4>Number of decimals:</h4>
+        <h4>Number of decimals</h4>
         <p>{outputWithCreateOrder.number_of_decimals}</p>
-        <h4>Token ticker:</h4>
+        <h4>Token ticker</h4>
         <p>Hex: {outputWithCreateOrder.token_ticker.hex}</p>
         <p>String: {outputWithCreateOrder.token_ticker.string}</p>
-        <h4>Supply type:</h4>
+        <h4>Supply type</h4>
         <p>{outputWithCreateOrder.total_supply.type}</p>
         {outputWithCreateOrder.total_supply?.amount?.decimal && (
           <>
-            <h4>Total supply:</h4>
+            <h4>Total supply</h4>
             <p>{outputWithCreateOrder.total_supply.amount.decimal}</p>
           </>
         )}
@@ -376,7 +376,7 @@ const IssueNft = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Issue NFT" />
       <div className="signTxSection">
-        <h4>Destination:</h4>
+        <h4>Destination</h4>
         <p>{outputWithIssueNft.destination}</p>
       </div>
     </div>
@@ -393,7 +393,7 @@ const DataDeposit = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Data Deposit" />
       <div className="signTxSection">
-        <h4>Data:</h4>
+        <h4>Data</h4>
         <p>{outputWithDataDeposit.data}</p>
       </div>
     </div>
@@ -410,7 +410,7 @@ const CreateDelegationId = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Create Delegation" />
       <div className="signTxSection">
-        <h4>Pool Id:</h4>
+        <h4>Pool Id</h4>
         <p>{outputWithDataDeposit.pool_id}</p>
       </div>
     </div>
@@ -427,9 +427,9 @@ const DelegateStaking = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Stake to delegation" />
       <div className="signTxSection">
-        <h4>Delegation Id:</h4>
+        <h4>Delegation Id</h4>
         <p>{outputWithDataDeposit.delegation_id}</p>
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{outputWithDataDeposit.amount.decimal}</p>
       </div>
     </div>
@@ -446,9 +446,9 @@ const DelegateWithdraw = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Withdraw from delegation" />
       <div className="signTxSection">
-        <h4>Delegation Id:</h4>
+        <h4>Delegation Id</h4>
         <p>{inputWithWithdraw.delegation_id}</p>
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{inputWithWithdraw.amount.decimal}</p>
       </div>
     </div>
@@ -465,15 +465,15 @@ const CreateHtlc = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Create HTLC" />
       <div className="signTxSection">
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{outputWithHtlc.value.amount.decimal}</p>
-        <h4>Secret Hash:</h4>
+        <h4>Secret Hash</h4>
         <p>{outputWithHtlc.htlc.secret_hash.hex}</p>
-        <h4>Spend Key:</h4>
+        <h4>Spend Key</h4>
         <p>{outputWithHtlc.htlc.spend_key}</p>
-        <h4>Refund Key:</h4>
+        <h4>Refund Key</h4>
         <p>{outputWithHtlc.htlc.refund_key}</p>
-        <h4>Refund Timelock:</h4>
+        <h4>Refund Timelock</h4>
         <p>
           {outputWithHtlc.htlc.refund_timelock.type}:{' '}
           {outputWithHtlc.htlc.refund_timelock.content}
@@ -493,15 +493,15 @@ const SpendHtlc = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Spend HTLC" />
       <div className="signTxSection">
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{inputWithHtlc.utxo.value.amount.decimal}</p>
-        <h4>Secret Hash:</h4>
+        <h4>Secret Hash</h4>
         <p>{inputWithHtlc.utxo.htlc.secret_hash.hex}</p>
-        <h4>Spend Key:</h4>
+        <h4>Spend Key</h4>
         <p>{inputWithHtlc.utxo.htlc.spend_key}</p>
-        <h4>Refund Key:</h4>
+        <h4>Refund Key</h4>
         <p>{inputWithHtlc.utxo.htlc.refund_key}</p>
-        <h4>Refund Timelock:</h4>
+        <h4>Refund Timelock</h4>
         <p>
           {inputWithHtlc.utxo.htlc.refund_timelock.type}:{' '}
           {inputWithHtlc.utxo.htlc.refund_timelock.content}
@@ -525,9 +525,9 @@ const BridgeRequest = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="make a Bridge request" />
       <div className="signTxSection">
-        <h4>Token id:</h4>
+        <h4>Token id</h4>
         <p>{inputsWithTokens[0]?.utxo?.value?.token_id || 'Unknown'}</p>
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{outputsWithTokens[0]?.value?.amount?.decimal || 'Unknown'}</p>
       </div>
     </div>
@@ -544,7 +544,7 @@ const BurnCoin = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Burn coin" />
       <div className="signTxSection">
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{outputWithBurnCoin.value.amount.decimal}</p>
       </div>
     </div>
@@ -561,9 +561,9 @@ const TokenMint = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Mint tokens" />
       <div className="signTxSection">
-        <h4>Token id:</h4>
+        <h4>Token id</h4>
         <p>{inputWithMint.input.token_id}</p>
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{inputWithMint.input.amount.decimal}</p>
       </div>
     </div>
@@ -580,9 +580,9 @@ const TokenUnmint = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Unmint tokens" />
       <div className="signTxSection">
-        <h4>Token id:</h4>
+        <h4>Token id</h4>
         <p>{inputWithUnmint.input.token_id}</p>
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{inputWithUnmint.input.amount.decimal}</p>
       </div>
     </div>
@@ -599,21 +599,21 @@ const TokenMintWithLock = ({ transactionData }) => {
     <div className="transactionDetails">
       <EstimatedChanges action="Mint tokens with lock" />
       <div className="signTxSection">
-        <h4>Destination:</h4>
+        <h4>Destination</h4>
         <p>{outputWithLock.destination}</p>
-        <h4>Amount:</h4>
+        <h4>Amount</h4>
         <p>{outputWithLock.value.amount.decimal}</p>
         {outputWithLock.value.token_id && (
           <>
-            <h4>Token id:</h4>
+            <h4>Token id</h4>
             <p>{outputWithLock.value.token_id}</p>
           </>
         )}
-        <h4>Lock type:</h4>
+        <h4>Lock type</h4>
         <p>{outputWithLock.lock.type}</p>
         {outputWithLock.lock.content && (
           <>
-            <h4>Lock details:</h4>
+            <h4>Lock details</h4>
             <p>{JSON.stringify(outputWithLock.lock.content)}</p>
           </>
         )}
