@@ -29,6 +29,7 @@ const SendMlTransaction = ({
   preEnterAddress,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
   walletType,
+  decimals = AppInfo.ML_DECIMALS,
 }) => {
   const { balanceLoading } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
@@ -222,6 +223,7 @@ const SendMlTransaction = ({
                 errorMessage={feeError || passErrorMessage}
                 totalFeeInCrypto={totalFeeCrypto}
                 transactionMode={transactionMode}
+                decimals={decimals}
               />
             )}
 

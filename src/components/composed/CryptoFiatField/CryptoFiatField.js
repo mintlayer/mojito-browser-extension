@@ -19,6 +19,7 @@ const CryptoFiatField = ({
   totalFeeInCrypto,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
   validate,
+  decimals,
   extraStyleClasses = [],
 }) => {
   const isDelegationWithdraw =
@@ -124,6 +125,7 @@ const CryptoFiatField = ({
       <div className={styles.inputWrapper}>
         <InputBTC
           id={id}
+          decimals={decimals}
           extraStyleClasses={inputExtraClasses}
           placeholder={placeholder || Format.BTCValue(0)}
           value={value}

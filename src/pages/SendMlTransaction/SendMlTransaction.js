@@ -51,6 +51,10 @@ const SendMlTransactionPage = () => {
     return tokenBalances[walletType.name].token_info.token_ticker.string
   }
 
+  const tokenDecimals =
+    walletType.tokenId &&
+    tokenBalances?.[walletType.name]?.token_info?.number_of_decimals
+
   const tokenName = symbol()
   const fiatName = 'USD'
   const [transactionData] = useState({
@@ -164,6 +168,7 @@ const SendMlTransactionPage = () => {
             isFormValid={isFormValid}
             goBackToWallet={goBackToWallet}
             walletType={walletType}
+            decimals={tokenDecimals || AppInfo.ML_DECIMALS}
           />
         </VerticalGroup>
       </div>

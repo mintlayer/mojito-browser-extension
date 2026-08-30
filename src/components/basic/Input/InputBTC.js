@@ -10,6 +10,7 @@ const InputBTC = (props) => {
   const mask = Expressions.FIELDS.BTC.getExpression(
     AppInfo.decimalSeparator,
     AppInfo.thousandsSeparator,
+    props.decimals,
   )
 
   const [regexIntegerPartIndex, regexDecimalPartIndex] = [1, 5]

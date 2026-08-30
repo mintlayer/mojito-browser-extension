@@ -3,7 +3,7 @@ import { AppInfo } from '@Constants'
 const rawFieldExpression = {
   float:
     '(([0-9]{1,})$|([0-9]{1,3}\\:tsep:{0,})*|([0-9]{1,3}))(\\:dsep:{0,}[0-9]{0,2})?(.{0,})',
-  btc: '(([0-9]{1,})$|([0-9]{1,3}\\:tsep:{0,})*|([0-9]{1,3}))(\\:dsep:{0,}[0-9]{0,8})?(.{0,})',
+  btc: '(([0-9]{1,})$|([0-9]{1,3}\\:tsep:{0,})*|([0-9]{1,3}))(\\:dsep:{0,}[0-9]{0,:decimals:})?(.{0,})',
 }
 
 const Expressions = {
@@ -25,11 +25,14 @@ const Expressions = {
       getExpression: (
         dSep = AppInfo.decimalSeparator,
         tSep = AppInfo.thousandsSeparator,
+        decimals = AppInfo.BTC_DECIMALS,
       ) =>
         new RegExp(
-          rawFieldExpression.btc.replaceAll(/:tsep:|:dsep:/g, (char) =>
-            char === ':tsep:' ? tSep : dSep,
-          ),
+          rawFieldExpression.btc
+            .replace(':decimals:', decimals)
+            .replaceAll(/:tsep:|:dsep:/g, (char) =>
+              char === ':tsep:' ? tSep : dSep,
+            ),
         ),
     },
   },
