@@ -87,6 +87,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
     const coinTicker =
       networkType === AppInfo.NETWORK_TYPES.TESTNET ? 'TML' : 'ML'
     const swapPairsCurrency = orderPair.split('_')
+    const minAskBalance = Number(amount) || 0
     const ordersPairInfo = await Mintlayer.getOrdersListByPair(orderPair)
     if (!ordersPairInfo || ordersPairInfo.length === 0) {
       console.log('No orders found for this pair')
@@ -101,7 +102,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
             swapPairsCurrency[0] === coinTicker) ||
             (order.ask_currency.token_id &&
               order.ask_currency.token_id === swapPairsCurrency[0])) &&
-          Number(order.ask_balance.decimal) >= Number(amount)
+          Number(order.ask_balance.decimal) >= minAskBalance
         ) {
           acc.push({
             ...order,

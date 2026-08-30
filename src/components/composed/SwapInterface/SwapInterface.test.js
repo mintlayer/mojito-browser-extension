@@ -227,13 +227,22 @@ describe('SwapInterface', () => {
     )
   })
 
-  it('disables find orders button when no amount', () => {
+  it('looks for every order when no amount is entered', async () => {
     renderWithContext()
 
     const findOrdersButton = screen.getByRole('button', {
       name: /find orders/i,
     })
-    expect(findOrdersButton).toBeDisabled()
+    expect(findOrdersButton).toBeEnabled()
+
+    fireEvent.click(findOrdersButton)
+
+    await waitFor(() => {
+      expect(mockMintlayerContext.fetchOrdersPairInfo).toHaveBeenCalledWith(
+        'TML_network_token_1',
+        '',
+      )
+    })
   })
 
   it('enables find orders button when amount is entered', () => {
