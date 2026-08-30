@@ -1,4 +1,6 @@
 .signTransaction {
+  display: flex;
+  flex-direction: column;
   background-color: #ffffff;
   margin: 0 auto;
   font-family: 'Arial', sans-serif;
@@ -27,7 +29,7 @@
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  height: 70%;
+  flex-grow: 1;
 
   @media screen and (min-width: 901px) {
     height: 80%;
@@ -46,6 +48,7 @@
   justify-content: center;
   gap: 12px;
   bottom: 0;
+  flex-shrink: 0;
 }
 
 .modalTitle {
