@@ -62,6 +62,7 @@ import {
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
 
+import '@Assets/styles/fonts.css'
 import '@Assets/styles/constants.css'
 import '@Assets/styles/index.css'
 
@@ -106,14 +107,19 @@ const App = () => {
     useContext(MintlayerContext)
   const { networkType } = useContext(SettingsContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
-  const [request, setRequest] = useState(null)
+  const [, setRequest] = useState(null)
 
   const currentMlAddresses = addresses.mlAddresses
 
   const isConnectionAvailable = async (accountUnlocked) => {
     try {
       const mintlayerResponse = await Mintlayer.getChainTip()
-      const exchangeResponse = await ExchangeRates.getRate('ml', 'usd')
+      const exchangeResponse = await ExchangeRates.getRate('ml', 'usd').catch(
+        (error) => {
+          console.error('Exchange rates unavailable:', error)
+          return null
+        },
+      )
       return !!mintlayerResponse && !!exchangeResponse
     } catch (error) {
       if (accountUnlocked) {
@@ -197,38 +203,48 @@ const App = () => {
       if (!unlocked) {
         setNextAfterUnlock({
           route: '/connect',
-          state: { action: 'connect', origin, requestId, request },
+          state: {
+            action: 'connect',
+            origin,
+            requestId,
+            request: pendingRequest,
+          },
         })
         return
       }
 
       navigate('/connect', {
-        state: { action: 'connect', origin, requestId, request },
+        state: {
+          action: 'connect',
+          origin,
+          requestId,
+          request: pendingRequest,
+        },
       })
     }
 
     if (action === 'signTransaction') {
-      if (request.data.chain === 'bitcoin') {
+      if (pendingRequest.data.chain === 'bitcoin') {
         if (!unlocked) {
           setNextAfterUnlock({
             route: '/wallet/Bitcoin/sign-transaction',
-            state: { action: 'signTransaction', request },
+            state: { action: 'signTransaction', request: pendingRequest },
           })
           return
         }
         navigate('/wallet/Bitcoin/sign-transaction', {
-          state: { action: 'signTransaction', request },
+          state: { action: 'signTransaction', request: pendingRequest },
         })
       } else {
         if (!unlocked) {
           setNextAfterUnlock({
             route: '/wallet/Mintlayer/sign-external-transaction',
-            state: { action: 'signTransaction', request },
+            state: { action: 'signTransaction', request: pendingRequest },
           })
           return
         }
         navigate('/wallet/Mintlayer/sign-external-transaction', {
-          state: { action: 'signTransaction', request },
+          state: { action: 'signTransaction', request: pendingRequest },
         })
       }
     }
@@ -237,12 +253,12 @@ const App = () => {
       if (!unlocked) {
         setNextAfterUnlock({
           route: '/wallet/Mintlayer/sign-challenge',
-          state: { action: 'signChallenge', request },
+          state: { action: 'signChallenge', request: pendingRequest },
         })
         return
       }
       navigate('/wallet/Mintlayer/sign-challenge', {
-        state: { action: 'signChallenge', request },
+        state: { action: 'signChallenge', request: pendingRequest },
       })
     }
 
@@ -252,8 +268,8 @@ const App = () => {
           route: '/wallet/Mintlayer/staking/create-delegation',
           state: {
             action: 'createDelegate',
-            pool_id: request.data.pool_id,
-            referral_code: request.data.referral_code || '',
+            pool_id: pendingRequest.data.pool_id,
+            referral_code: pendingRequest.data.referral_code || '',
           },
         })
         storage.local.remove('pendingRequest', () => {
@@ -270,8 +286,8 @@ const App = () => {
       navigate('/wallet/Mintlayer/staking/create-delegation', {
         state: {
           action: 'createDelegate',
-          pool_id: request.data.pool_id,
-          referral_code: request.data.referral_code || '',
+          pool_id: pendingRequest.data.pool_id,
+          referral_code: pendingRequest.data.referral_code || '',
         },
       })
       storage.local.remove('pendingRequest', () => {

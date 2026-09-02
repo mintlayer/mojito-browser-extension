@@ -1,4 +1,4 @@
-import { useEffect, useContext, useState } from 'react'
+import { useCallback, useEffect, useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
@@ -6,6 +6,7 @@ import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
 import { AccountContext, MintlayerContext, TransactionContext } from '@Contexts'
 import { AppInfo } from '@Constants'
+import { Mintlayer } from '@APIs'
 
 import './DelegationWithdraw.css'
 import { Error, PageWrapper } from '@BasicComponents'
@@ -60,6 +61,21 @@ const DelegationWithdrawPage = () => {
 
   const loading = fetchingBalances || fetchingUtxos
 
+  const buildWithdrawTransaction = useCallback(
+    async ({ amount, delegation_id }) => {
+      const [delegation_details] = await Mintlayer.getDelegationDetails([
+        delegation_id,
+      ])
+
+      return client.buildTransaction({
+        type: 'DelegationWithdraw',
+        params: { delegation_id, amount, delegation_details },
+        ...(utxos.length ? { opts: { withUTXO: utxos } } : {}),
+      })
+    },
+    [client, utxos],
+  )
+
   useEffect(() => {
     const buildTransaction = async () => {
       if (
@@ -68,7 +84,7 @@ const DelegationWithdrawPage = () => {
         transactionInformation?.amount > 0
       ) {
         setFeeLoading(true)
-        const transaction = await client.buildDelegationWithdraw({
+        const transaction = await buildWithdrawTransaction({
           amount: transactionInformation.amount,
           delegation_id: transactionInformation.to,
         })
@@ -80,7 +96,7 @@ const DelegationWithdrawPage = () => {
   }, [
     transaction_conditions,
     transactionInformation,
-    client,
+    buildWithdrawTransaction,
     unusedAddresses,
     delegationId,
   ])
@@ -96,10 +112,11 @@ const DelegationWithdrawPage = () => {
   }
 
   const confirmMlTransaction = async () => {
-    const result = await client.delegationWithdraw({
+    const transaction = await buildWithdrawTransaction({
       amount: transactionInformation.amount,
       delegation_id: transactionInformation.to,
     })
+    const result = await client.signTransaction(transaction)
     return result
   }
 

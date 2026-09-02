@@ -25,3 +25,11 @@
   font-weight: 400;
   text-align: center;
 }
+
+.sendTransactionButton {
+  width: 100%;
+
+  @media screen and (min-width: 901px) {
+    width: 40%;
+  }
+}

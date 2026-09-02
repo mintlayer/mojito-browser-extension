@@ -19,6 +19,7 @@ import PageWrapper from './PageWrapper/PageWrapper.tsx'
 import BrandPanel from './BrandPanel/BrandPanel'
 import BrandBottomLogo from './BrandBottomLogo/BrandBottomLogo'
 import OptionCard from './OptionCard/OptionCard'
+import SiteBadge from './SiteBadge/SiteBadge.tsx'
 
 export {
   Arc,
@@ -42,4 +43,5 @@ export {
   BrandPanel,
   BrandBottomLogo,
   OptionCard,
+  SiteBadge,
 }

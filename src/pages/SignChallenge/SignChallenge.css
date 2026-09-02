@@ -51,9 +51,14 @@
   justify-content: center;
   padding: 20px;
   gap: 20px;
+  flex-shrink: 0;
 }
 
 .SignChallenge .challenge_details .label {
   font-weight: bold;
   color: #000;
+}
+
+.requestOrigin {
+  margin-bottom: 20px;
 }

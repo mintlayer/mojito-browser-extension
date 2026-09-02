@@ -2,7 +2,7 @@
 import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers, Secret } from '@Helpers'
 import { MOCKS } from './mocks'
-import { Button, PageWrapper } from '@BasicComponents'
+import { Button, PageWrapper, SiteBadge } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 import { MintlayerContext } from '@Contexts'
@@ -54,6 +54,7 @@ export const SignTransactionPage = () => {
   const [transactionState, setTransactionState] = useState(null)
 
   const state = transactionState || external_state || MOCKS[selectedMock]
+  const origin = state?.request?.origin
 
   const { addresses, accountID } = useContext(AccountContext)
   const currentMlAddresses = addresses.mlAddresses
@@ -433,6 +434,13 @@ export const SignTransactionPage = () => {
           <Button onClickHandle={switchHandle}>
             {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
           </Button>
+        </div>
+
+        <div className="requestOrigin">
+          <SiteBadge
+            origin={origin || 'Unknown Website'}
+            unknown={!origin}
+          />
         </div>
 
         <div className="SignTxContent">

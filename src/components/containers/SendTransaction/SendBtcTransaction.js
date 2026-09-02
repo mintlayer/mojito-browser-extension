@@ -212,7 +212,7 @@ const SendBtcTransaction = ({
 
           <CenteredLayout>
             <Button
-              extraStyleClasses={['send-transaction-button']}
+              extraStyleClasses={[styles.sendTransactionButton]}
               onClickHandle={openConfirmation}
               disabled={!isFormValid}
             >

@@ -29,6 +29,7 @@ const SendMlTransaction = ({
   preEnterAddress,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
   walletType,
+  decimals = AppInfo.ML_DECIMALS,
 }) => {
   const { balanceLoading } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
@@ -128,6 +129,13 @@ const SendMlTransaction = ({
         setPassErrorMessage('Insufficient delegation balance')
         return
       }
+      if (!validity || amountDecimal.lte(0)) {
+        setAmountValidity(false)
+        return
+      }
+      setAmountValidity(true)
+      setPassErrorMessage('')
+      return
     }
     if (!validity || amountDecimal.lte(0)) {
       setAmountValidity(false)
@@ -215,6 +223,7 @@ const SendMlTransaction = ({
                 errorMessage={feeError || passErrorMessage}
                 totalFeeInCrypto={totalFeeCrypto}
                 transactionMode={transactionMode}
+                decimals={decimals}
               />
             )}
 
@@ -235,7 +244,7 @@ const SendMlTransaction = ({
 
           <CenteredLayout>
             <Button
-              extraStyleClasses={['send-transaction-button']}
+              extraStyleClasses={[styles.sendTransactionButton]}
               onClickHandle={sendTransaction}
               disabled={!isFormValid || feeLoading}
             >

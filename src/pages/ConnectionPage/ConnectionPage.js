@@ -1,10 +1,15 @@
 /* eslint-disable no-undef */
-import './ConnectionPage.css'
 import { useLocation } from 'react-router'
 import { useContext, useState } from 'react'
 import { AccountContext } from '@Contexts'
-import { Button, Toggle, PageWrapper } from '@BasicComponents'
+import { Button, PageWrapper, SiteBadge } from '@BasicComponents'
 import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
+import { ReactComponent as IconEye } from '@Assets/images/icon-eye.svg'
+import { ReactComponent as IconSign } from '@Assets/images/icon-sign.svg'
+import { ReactComponent as IconLoop } from '@Assets/images/icon-loop.svg'
+import PermissionItem from './PermissionItem'
+import BitcoinDataNotice from './BitcoinDataNotice'
+import styles from './ConnectionPage.module.css'
 
 const toHexString = (obj) => {
   return Object.values(obj)
@@ -39,8 +44,9 @@ export const ConnectionPage = () => {
   const permissions = state?.request?.permissions || []
 
   const requireBTC = permissions.includes('bitcoin')
+  const isUnknownOrigin = origin === website
 
-  const connectButtonExtraStyles = ['connectButton']
+  const connectButtonExtraStyles = [styles.actionButton]
 
   const handleConnect = () => {
     const remember = document.querySelector('.connect-page__checkbox')?.checked
@@ -78,11 +84,10 @@ export const ConnectionPage = () => {
             ),
             publicKeys: {
               receiving: addresses?.btcAddresses?.btcReceivingAddresses.map(
-                (addr) =>
-                  Buffer.from(Object.values(addr)[0].pubkey).toString('hex'),
+                (addr) => toHexString(Object.values(addr)[0].pubkey),
               ),
               change: addresses?.btcAddresses?.btcChangeAddresses.map((addr) =>
-                Buffer.from(Object.values(addr)[0].pubkey).toString('hex'),
+                toHexString(Object.values(addr)[0].pubkey),
               ),
             },
           },
@@ -162,80 +167,89 @@ export const ConnectionPage = () => {
   return (
     <PageWrapper>
       <form
-        className="connect-page__form"
+        className={styles.form}
         onSubmit={submitHandler}
         method="POST"
       >
-        <div className="connect-page__title">
-          <h2 className="connect-page__title">
-            Connect Website to Your Mojito Wallet
-          </h2>
-          <p className="connect-page__description">
-            The website <span className="connect-page__host">{origin}</span> is
-            requesting access to your wallet.
-          </p>
-        </div>
+        <div className={styles.scrollArea}>
+          <div className={styles.intro}>
+            <span className={styles.shield}>
+              <IconShield className={styles.shieldIcon} />
+            </span>
+            <h2 className={styles.title}>
+              Connect website to your Mojito wallet
+            </h2>
+            <p className={styles.subtitle}>
+              This website is requesting access to your wallet.
+            </p>
+            <SiteBadge
+              origin={origin}
+              unknown={isUnknownOrigin}
+            />
+          </div>
 
-        <div className="connect-page__content">
-          <div>
-            <ul className="connect-page__permissions">
-              <IconShield className="connect-page__icon" />
-              <li>View your public addresses</li>
-              <li>Request transaction signing</li>
-              <li>Track connection status</li>
+          <div className={styles.card}>
+            <span className={styles.cardTitle}>
+              This will allow the website to
+            </span>
+
+            <ul className={styles.permissions}>
+              <PermissionItem
+                icon={IconEye}
+                title="View your public addresses"
+                description="Public addresses and keys only, never your private keys or seed phrase."
+              />
+              <PermissionItem
+                icon={IconSign}
+                title="Request transaction signing"
+                description="Every request opens in Mojito and needs your approval."
+              />
+              <PermissionItem
+                icon={IconLoop}
+                title="Track connection status"
+                description="Check whether your wallet is still connected to this website."
+              />
             </ul>
 
             {requireBTC && (
-              <>
-                <div className="connect-page__bitcoin-section">
-                  <div className="connect-page__bitcoin-toggle">
-                    <div>Provide Bitcoin data (addresses AND public keys)</div>
-                    <Toggle
-                      label="Provide Bitcoin data (addresses AND public keys)"
-                      name="provideBitcoinData"
-                      toggled={provideBitcoinData}
-                      onClick={setProvideBitcoinData}
-                    />
-                  </div>
-
-                  <div className="connect-page__info-block">
-                    <div className="connect-page__info-icon">i</div>
-                    <p className="connect-page__info-text">
-                      <strong>Note:</strong> This option is mandatory when
-                      connecting to HTLC Atomic Swaps dApps. It provides both
-                      Bitcoin addresses and public keys required for cross-chain
-                      transactions.
-                    </p>
-                  </div>
-                </div>
-              </>
+              <div className={styles.bitcoinSlot}>
+                <BitcoinDataNotice
+                  provideBitcoinData={provideBitcoinData}
+                  onToggle={setProvideBitcoinData}
+                />
+              </div>
             )}
           </div>
 
-          {/* // TODO: Make this work */}
-          {/* <label className="connect-page__remember">
-            <input
-              type="checkbox"
-              className="connect-page__checkbox"
-            />
-            <span>Always allow this app</span>
-          </label> */}
+          <p className={styles.disclaimer}>
+            Only connect to websites you trust. You can reject this request and
+            nothing will be shared.
+          </p>
+        </div>
 
-          <div className="connect-page__actions">
-            <Button
-              onClickHandle={handleReject}
-              extraStyleClasses={connectButtonExtraStyles}
-              alternate
-            >
-              Reject
-            </Button>
-            <Button
-              onClickHandle={handleConnect}
-              extraStyleClasses={connectButtonExtraStyles}
-            >
-              Connect
-            </Button>
-          </div>
+        {/* // TODO: Make this work */}
+        {/* <label className="connect-page__remember">
+          <input
+            type="checkbox"
+            className="connect-page__checkbox"
+          />
+          <span>Always allow this app</span>
+        </label> */}
+
+        <div className={styles.actions}>
+          <Button
+            onClickHandle={handleReject}
+            extraStyleClasses={connectButtonExtraStyles}
+            alternate
+          >
+            Reject
+          </Button>
+          <Button
+            onClickHandle={handleConnect}
+            extraStyleClasses={connectButtonExtraStyles}
+          >
+            Connect
+          </Button>
         </div>
       </form>
     </PageWrapper>

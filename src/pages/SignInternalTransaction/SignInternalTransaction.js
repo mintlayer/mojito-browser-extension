@@ -207,6 +207,9 @@ export const SignTransactionPage = () => {
           mode: txPreviewInfo.action || 'transfer',
           poolId: '',
           delegationId: '',
+          usedUtxosOutpoints: transactionJSONrepresentation.inputs
+            .filter(({ input }) => input.input_type === 'UTXO')
+            .map(({ input: { index, source_id } }) => ({ index, source_id })),
         })
         LocalStorageService.setItem(
           unconfirmedTransactionString,

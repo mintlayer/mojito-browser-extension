@@ -61,7 +61,7 @@ const SwapInterface = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+    if (amount && (isNaN(amount) || parseFloat(amount) <= 0)) {
       console.error('Invalid amount')
       return
     }
@@ -132,7 +132,7 @@ const SwapInterface = () => {
           />
           <Button
             onClickHandle={handleSubmit}
-            disabled={!amount}
+            disabled={!fromToken || !toToken}
             extraStyleClasses={[styles.findButton]}
           >
             <SearchIcon className={styles.findOrderIcon} />

@@ -25,7 +25,7 @@ const SkeletonLoader = ({ variant = 'default' }) => {
       data-testid="card"
     >
       <div
-        className="cardHeader"
+        className={`cardHeader ${isCompact ? 'cardHeader-compact' : ''}`}
         data-testid="cardHeader headerImg skeleton"
       >
         <div

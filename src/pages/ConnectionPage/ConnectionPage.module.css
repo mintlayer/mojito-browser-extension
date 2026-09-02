@@ -1,0 +1,148 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%;
+  max-width: 480px;
+  margin-top: var(--space-3xl);
+  align-self: center;
+  flex: 1;
+  min-height: 0;
+}
+
+.scrollArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+}
+
+.shield {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  background: rgba(var(--color-main-green), 0.12);
+  color: rgb(var(--mojito-green));
+}
+
+.shieldIcon {
+  width: 28px;
+  height: 28px;
+  stroke: rgb(var(--mojito-green));
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  line-height: 1.25;
+  color: rgb(var(--color-black));
+}
+
+.subtitle {
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: 1.4;
+  color: rgba(var(--color-black), 0.6);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border-radius: var(--round-size);
+  border: 1px solid rgba(var(--color-black), 0.07);
+  background: rgb(var(--surface));
+  box-shadow: var(--shadow-sm);
+}
+
+.cardTitle {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(var(--color-black), 0.45);
+}
+
+.permissions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bitcoinSlot {
+  padding-top: var(--space-lg);
+  border-top: 1px solid rgba(var(--color-black), 0.07);
+}
+
+.disclaimer {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  color: rgba(var(--color-black), 0.5);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-md);
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.actionButton.actionButton {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-md);
+}
+
+@media screen and (max-width: 319px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+}
+
+@media screen and (min-width: 901px) {
+  .form {
+    gap: var(--space-xl);
+    max-width: 520px;
+  }
+
+  .title {
+    font-size: var(--font-size-4xl);
+  }
+
+  .card {
+    padding: var(--space-2xl);
+  }
+
+  .shield {
+    width: 64px;
+    height: 64px;
+  }
+
+  .shieldIcon {
+    width: 32px;
+    height: 32px;
+  }
+}

@@ -1,5 +1,7 @@
 /* SignTransaction.css */
 .SignTransaction {
+  display: flex;
+  flex-direction: column;
   background-color: #ffffff;
   margin: 0 auto;
   font-family: 'Arial', sans-serif;
@@ -17,6 +19,7 @@
   justify-content: space-between;
   font-size: 1.5rem;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .signTxTitle {
@@ -28,7 +31,7 @@
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  height: 70%;
+  flex-grow: 1;
 
   @media screen and (min-width: 901px) {
     height: 80%;
@@ -95,6 +98,7 @@
   justify-content: center;
   gap: 12px;
   bottom: 0;
+  flex-shrink: 0;
 }
 
 .modal {
@@ -241,4 +245,8 @@
 
 .secret-hint small {
   font-style: italic;
+}
+
+.requestOrigin {
+  margin-bottom: 20px;
 }

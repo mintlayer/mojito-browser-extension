@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 import { useLocation } from 'react-router'
 import { MOCKS } from './mocks'
-import { Button, PageWrapper } from '@BasicComponents'
+import { Button, PageWrapper, SiteBadge } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 
@@ -131,6 +131,7 @@ export const SignBitcoinTransactionPage = () => {
     }, [initialState])
 
   const state = htlcTransactionState || initialState
+  const origin = state?.request?.origin
 
   const revealed_secret =
     state?.request?.data?.txData?.JSONRepresentation.secret
@@ -438,6 +439,13 @@ export const SignBitcoinTransactionPage = () => {
           <Button onClickHandle={switchHandle}>
             {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
           </Button>
+        </div>
+
+        <div className="requestOrigin">
+          <SiteBadge
+            origin={origin || 'Unknown Website'}
+            unknown={!origin}
+          />
         </div>
 
         <div className="SignTxContent">

@@ -97,14 +97,16 @@
 
 .createButton {
   width: 100%;
-  padding: var(--space-lg) var(--space-2xl);
-  height: 46px;
+  padding: 0 var(--space-2xl);
+  height: 52px;
+  min-height: 52px;
   font-size: var(--font-size-lg);
 }
 .restoreButton {
   width: 100%;
-  padding: var(--space-lg) var(--space-2xl);
-  height: 46px;
+  padding: 0 var(--space-2xl);
+  height: 52px;
+  min-height: 52px;
   font-size: var(--font-size-lg);
 }
 

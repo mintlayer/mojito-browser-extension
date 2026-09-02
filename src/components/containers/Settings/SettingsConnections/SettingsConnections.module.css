@@ -1,0 +1,67 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+}
+
+.row + .row {
+  border-top: 1px solid rgba(var(--color-light-gray), 0.3);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.date {
+  font-size: var(--font-size-sm);
+  color: rgba(var(--color-black), 0.5);
+}
+
+.disconnectButton.disconnectButton {
+  flex-shrink: 0;
+  padding: var(--space-xs) var(--space-lg);
+  font-size: var(--font-size-sm);
+  background: transparent;
+  background-color: transparent;
+  border: 1.5px solid rgba(var(--color-red), 0.5);
+  color: rgb(var(--color-red));
+}
+
+.disconnectButton.disconnectButton:hover,
+.disconnectButton.disconnectButton:focus {
+  background: rgba(var(--color-red), 0.08);
+  background-color: rgba(var(--color-red), 0.08);
+  color: rgb(var(--color-red));
+}
+
+.empty {
+  padding: var(--space-lg) var(--space-xl);
+  font-size: var(--font-size-sm);
+  color: rgba(var(--color-black), 0.5);
+}
+
+@media screen and (max-width: 420px) {
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+
+  .disconnectButton.disconnectButton {
+    width: 100%;
+  }
+}
