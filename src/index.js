@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import React, { useState, useEffect, useContext } from 'react'
 import ReactDOM from 'react-dom/client'
 import {
@@ -61,6 +60,7 @@ import {
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
+import { Browser } from '@Browser'
 
 import '@Assets/styles/fonts.css'
 import '@Assets/styles/constants.css'
@@ -76,19 +76,7 @@ if (isExtendedView) {
   document.documentElement.classList.add('extended-view')
 }
 
-const storage =
-  typeof browser !== 'undefined' && browser.storage
-    ? browser.storage
-    : typeof chrome !== 'undefined' && chrome.storage
-      ? chrome.storage
-      : null
-
-const runtime =
-  typeof browser !== 'undefined' && browser.runtime
-    ? browser.runtime
-    : typeof chrome !== 'undefined' && chrome.runtime
-      ? chrome.runtime
-      : null
+const { storage, runtime } = Browser
 
 const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
@@ -107,7 +95,6 @@ const App = () => {
     useContext(MintlayerContext)
   const { networkType } = useContext(SettingsContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
-  const [, setRequest] = useState(null)
 
   const currentMlAddresses = addresses.mlAddresses
 
@@ -123,7 +110,7 @@ const App = () => {
       return !!mintlayerResponse && !!exchangeResponse
     } catch (error) {
       if (accountUnlocked) {
-        console.log(error)
+        console.error('Connection check failed:', error)
         setErrorPopupOpen(true)
         setAllDataFetching(false)
         logout()
@@ -188,7 +175,6 @@ const App = () => {
         }
         const pendingRequest = data.pendingRequest
         if (pendingRequest) {
-          setRequest(pendingRequest)
           handlePendingRequest(pendingRequest)
         }
       })

@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { useLocation } from 'react-router'
 import { MOCKS } from './mocks'
 import { Button, PageWrapper, SiteBadge } from '@BasicComponents'
@@ -12,21 +11,27 @@ import * as bitcoin from 'bitcoinjs-lib'
 import { Account } from '@Entities'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { BTCTransaction } from '@Cryptos'
-import { Secret } from '@Helpers'
+import { BTC as BTCHelpers, Secret } from '@Helpers'
+import { Electrum } from '@APIs'
+import { sendPopupResponse } from '@Browser'
 
-const storage =
-  typeof browser !== 'undefined' && browser.storage
-    ? browser.storage
-    : typeof chrome !== 'undefined' && chrome.storage
-      ? chrome.storage
-      : null
+const isDevelopment = process.env.NODE_ENV === 'development'
 
-const runtime =
-  typeof browser !== 'undefined' && browser.runtime
-    ? browser.runtime
-    : typeof chrome !== 'undefined' && chrome.runtime
-      ? chrome.runtime
-      : null
+// sat/vB used when the fee service is unreachable
+const FALLBACK_BTC_FEE_RATE = 10
+
+const getBtcFeeRate = async () => {
+  try {
+    const estimates = JSON.parse(await Electrum.getFeesEstimates())
+    return (
+      Math.ceil(BTCHelpers.parseFeesEstimates(estimates).MEDIUM) ||
+      FALLBACK_BTC_FEE_RATE
+    )
+  } catch (error) {
+    console.error('Fee estimates unavailable, using fallback rate:', error)
+    return FALLBACK_BTC_FEE_RATE
+  }
+}
 
 function parseSecretHashFromRedeemScript(redeemScriptHex) {
   // Decompile the redeem script hex into chunks
@@ -80,12 +85,14 @@ export const SignBitcoinTransactionPage = () => {
   // Secret management state for HTLC transactions
   const [secretError, setSecretError] = useState('')
 
-  const [mode, setMode] = useState('preview')
-
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = ['buttonSignTransaction']
 
-  const initialState = external_state || MOCKS[selectedMock]
+  const [isSigning, setIsSigning] = useState(false)
+  const [signError, setSignError] = useState('')
+
+  const initialState =
+    external_state || (isDevelopment ? MOCKS[selectedMock] : null)
 
   // Generate secret and prepare transaction state once for HTLC create transactions
   const { generatedSecret, generatedSecretHash, htlcTransactionState } =
@@ -149,7 +156,8 @@ export const SignBitcoinTransactionPage = () => {
     state?.request?.data?.txData?.JSONRepresentation?.type === 'spendHtlc'
   // const isHTLCRefundTx = state?.request?.data?.txData?.JSONRepresentation?.type === 'refundHtlc'
 
-  const handleApprove = async () => {
+  const handleApprove = () => {
+    setSignError('')
     setIsModalOpen(true) // Open the modal
   }
 
@@ -185,8 +193,8 @@ export const SignBitcoinTransactionPage = () => {
 
     const [, txHex, txId] = await BTCTransaction.buildTransaction({
       to: address,
-      amount: parseInt(transactionJSONrepresentation.amount), // atoms
-      fee: 2000, // TODO: update calculation of fee
+      amount: parseInt(transactionJSONrepresentation.amount), // satoshis
+      fee: await getBtcFeeRate(), // sat/vB, estimated like the wallet's own sends
       wif: WIF,
       from: currentBtcAddress,
       networkType,
@@ -221,20 +229,12 @@ export const SignBitcoinTransactionPage = () => {
       }
     }
 
-    runtime.sendMessage(
-      {
-        action: 'popupResponse',
-        method,
-        requestId,
-        origin,
-        result,
-      },
-      () => {
-        storage.local.remove('pendingRequest', () => {
-          window.close()
-        })
-      },
-    )
+    sendPopupResponse({
+      method,
+      requestId,
+      origin,
+      result,
+    })
   }
 
   const submitSpend = async () => {
@@ -291,20 +291,12 @@ export const SignBitcoinTransactionPage = () => {
     const result = {
       signedTxHex: tx,
     }
-    runtime.sendMessage(
-      {
-        action: 'popupResponse',
-        method,
-        requestId,
-        origin,
-        result,
-      },
-      () => {
-        storage.local.remove('pendingRequest', () => {
-          window.close()
-        })
-      },
-    )
+    sendPopupResponse({
+      method,
+      requestId,
+      origin,
+      result,
+    })
   }
 
   const submitRefund = async () => {
@@ -329,23 +321,17 @@ export const SignBitcoinTransactionPage = () => {
       signedTxHex: tx,
     }
 
-    runtime.sendMessage(
-      {
-        action: 'popupResponse',
-        method,
-        requestId,
-        origin,
-        result,
-      },
-      () => {
-        storage.local.remove('pendingRequest', () => {
-          window.close()
-        })
-      },
-    )
+    sendPopupResponse({
+      method,
+      requestId,
+      origin,
+      result,
+    })
   }
 
   const handleModalSubmit = async () => {
+    if (isSigning) return
+
     try {
       // Validate secret if it's an HTLC spend transaction and secret is manually entered
       if (isHTLCSpendTx && secret && !Secret.validateSecretHex(secret.trim())) {
@@ -354,6 +340,9 @@ export const SignBitcoinTransactionPage = () => {
         )
         return
       }
+
+      setIsSigning(true)
+      setSignError('')
 
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
@@ -376,38 +365,27 @@ export const SignBitcoinTransactionPage = () => {
       console.error('Error during transaction signing:', error)
       // If it's a secret validation error, keep the modal open
       if (error.message && error.message.includes('secret')) {
+        setIsSigning(false)
         return
       }
-      setIsModalOpen(false)
+      setSignError(
+        error?.message || 'Signing failed. Check your password and try again.',
+      )
+      setIsSigning(false)
     }
   }
 
   const handleReject = () => {
-    const requestId = state?.request?.requestId
-    const method = 'signTransaction_reject'
-    const result = 'null'
-    runtime.sendMessage(
-      {
-        action: 'popupResponse',
-        method,
-        requestId,
-        origin,
-        result,
-      },
-      () => {
-        storage.local.remove('pendingRequest', () => {
-          window.close()
-        })
-      },
-    )
+    sendPopupResponse({
+      method: 'signTransaction_reject',
+      requestId: state?.request?.requestId,
+      origin,
+      error: 'Transaction rejected',
+    })
   }
 
   const selectMock = (name) => {
     setSelectedMock(name)
-  }
-
-  const switchHandle = () => {
-    setMode(mode === 'json' ? 'preview' : 'json')
   }
 
   const passwordChangeHandler = (value) => {
@@ -436,9 +414,6 @@ export const SignBitcoinTransactionPage = () => {
       <div className="SignTransaction">
         <div className="header">
           <h1 className="signTxTitle">Sign Transaction</h1>
-          <Button onClickHandle={switchHandle}>
-            {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
-          </Button>
         </div>
 
         <div className="requestOrigin">
@@ -449,7 +424,7 @@ export const SignBitcoinTransactionPage = () => {
         </div>
 
         <div className="SignTxContent">
-          {!external_state && (
+          {!external_state && isDevelopment && (
             <div className="mock_selector">
               {Object.keys(MOCKS).map((key) => {
                 return (
@@ -467,15 +442,9 @@ export const SignBitcoinTransactionPage = () => {
           )}
 
           {state?.request?.data?.txData?.JSONRepresentation && (
-            <>
-              {mode === 'preview' && (
-                <div className="transaction-preview-wrapper">
-                  <SignTransaction.JsonPreview data={state} />
-                  {/*<SignTransaction.TransactionPreview data={state} />*/}
-                </div>
-              )}
-              {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
-            </>
+            <div className="transaction-preview-wrapper">
+              <SignTransaction.JsonPreview data={state} />
+            </div>
           )}
 
           {/* HTLC Secret Information */}
@@ -532,7 +501,7 @@ export const SignBitcoinTransactionPage = () => {
             onClickHandle={handleApprove}
             extraStyleClasses={extraButtonStyles}
           >
-            Approve and return to page.
+            Approve and return to page
           </Button>
         </div>
 
@@ -568,19 +537,21 @@ export const SignBitcoinTransactionPage = () => {
                   </div>
                 </>
               )}
+              {signError && <div className="sign-error">{signError}</div>}
               <div className="modal-buttons">
                 <Button
                   onClickHandle={() => setIsModalOpen(false)}
                   extraStyleClasses={extraButtonStyles}
                   alternate
                 >
-                  Decline
+                  Cancel
                 </Button>
                 <Button
                   onClickHandle={handleModalSubmit}
                   extraStyleClasses={extraButtonStyles}
+                  disabled={isSigning || !password}
                 >
-                  Approve
+                  {isSigning ? 'Signing…' : 'Approve'}
                 </Button>
               </div>
             </div>

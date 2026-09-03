@@ -28,6 +28,7 @@ const aliases = {
   '@Cryptos': path.resolve(__dirname, 'src/services/Crypto/index.js'),
   '@Databases': path.resolve(__dirname, 'src/services/Database/index.js'),
   '@Entities': path.resolve(__dirname, 'src/services/Entity/index.js'),
+  '@Browser': path.resolve(__dirname, 'src/services/Browser/index.js'),
   '@Helpers': path.resolve(__dirname, 'src/utils/Helpers/index.js'),
   '@Constants': path.resolve(__dirname, 'src/utils/Constants/index.js'),
   '@TestData': path.resolve(__dirname, 'src/utils/TestData/index.js'),

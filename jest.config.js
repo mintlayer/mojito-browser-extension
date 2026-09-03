@@ -30,6 +30,7 @@ module.exports = {
     '^@Entities$': '<rootDir>/src/services/Entity/index.js',
     '^@APIs$': '<rootDir>/src/services/API/index.js',
     '^@Storage$': '<rootDir>/src/services/Storage/index.js',
+    '^@Browser$': '<rootDir>/src/services/Browser/index.js',
     '^@Version$': '<rootDir>/src/version/version.js',
     '^d3$': '<rootDir>/node_modules/d3/dist/d3.min.js',
     '^react-router$':

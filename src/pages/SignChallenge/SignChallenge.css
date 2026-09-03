@@ -62,3 +62,12 @@
 .requestOrigin {
   margin-bottom: 20px;
 }
+
+.sign-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  padding: 6px 8px;
+}

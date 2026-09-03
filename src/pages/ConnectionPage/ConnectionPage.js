@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { useLocation } from 'react-router'
 import { useContext, useState } from 'react'
 import { AccountContext } from '@Contexts'
@@ -9,6 +8,7 @@ import { ReactComponent as IconSign } from '@Assets/images/icon-sign.svg'
 import { ReactComponent as IconLoop } from '@Assets/images/icon-loop.svg'
 import PermissionItem from './PermissionItem'
 import BitcoinDataNotice from './BitcoinDataNotice'
+import { sendPopupResponse } from '@Browser'
 import styles from './ConnectionPage.module.css'
 
 const toHexString = (obj) => {
@@ -17,40 +17,23 @@ const toHexString = (obj) => {
     .join('')
 }
 
-const storage =
-  typeof browser !== 'undefined' && browser.storage
-    ? browser.storage
-    : typeof chrome !== 'undefined' && chrome.storage
-      ? chrome.storage
-      : null
-
-const runtime =
-  typeof browser !== 'undefined' && browser.runtime
-    ? browser.runtime
-    : typeof chrome !== 'undefined' && chrome.runtime
-      ? chrome.runtime
-      : null
+const UNKNOWN_WEBSITE = 'Unknown Website'
 
 export const ConnectionPage = () => {
   const { state: external_state } = useLocation()
   const { addresses } = useContext(AccountContext)
-  const website = 'Unknown Website' // This should be replaced with the actual website name or URL
-  const [, setProvideBitcoinData] = useState(false)
-
-  const provideBitcoinData = true
+  const [provideBitcoinData, setProvideBitcoinData] = useState(true)
 
   const state = external_state
-  const origin = state?.request?.origin || website
+  const origin = state?.request?.origin || UNKNOWN_WEBSITE
   const permissions = state?.request?.permissions || []
 
   const requireBTC = permissions.includes('bitcoin')
-  const isUnknownOrigin = origin === website
+  const isUnknownOrigin = origin === UNKNOWN_WEBSITE
 
   const connectButtonExtraStyles = [styles.actionButton]
 
   const handleConnect = () => {
-    const remember = document.querySelector('.connect-page__checkbox')?.checked
-    const sessionKey = `session_${origin}`
     const sessionData = {
       origin,
       connected: true,
@@ -96,66 +79,20 @@ export const ConnectionPage = () => {
       timestamp: Date.now(),
     }
 
-    const requestId = state?.request?.requestId
-    const response = {
-      action: 'popupResponse',
+    sendPopupResponse({
       method: 'connect',
-      requestId,
+      requestId: state?.request?.requestId,
       origin,
       result: sessionData,
-    }
-
-    const saveAndClose = () => {
-      storage.local.remove('pendingRequest', () => {
-        if (runtime.lastError) {
-          console.error(
-            '[Mojito Popup] Error removing pendingRequest:',
-            runtime.lastError,
-          )
-        }
-        window.close()
-      })
-    }
-
-    if (remember) {
-      // Save session only if checkbox is checked
-      storage.local.set({ [sessionKey]: sessionData }, () => {
-        console.log('[Mojito Popup] Session saved for', origin)
-        runtime.sendMessage(response, () => {
-          console.log('[Popup] Response sent:', response)
-          saveAndClose()
-        })
-      })
-    } else {
-      // No session save
-      runtime.sendMessage(response, () => {
-        console.log('[Popup] Response sent:', response)
-        saveAndClose()
-      })
-    }
+    })
   }
 
   const handleReject = () => {
-    const requestId = state?.request?.requestId
-    const response = {
-      action: 'popupResponse',
+    sendPopupResponse({
       method: 'connect',
-      requestId,
+      requestId: state?.request?.requestId,
       origin,
       result: null,
-    }
-    runtime.sendMessage(response, () => {
-      console.log('[Popup] Response sent:', response)
-      // Remove pendingRequest after sending response
-      storage.local.remove('pendingRequest', () => {
-        if (runtime.lastError) {
-          console.error(
-            '[Mojito Popup] Error removing pendingRequest:',
-            runtime.lastError,
-          )
-        }
-        window.close()
-      })
     })
   }
 
@@ -226,15 +163,6 @@ export const ConnectionPage = () => {
             nothing will be shared.
           </p>
         </div>
-
-        {/* // TODO: Make this work */}
-        {/* <label className="connect-page__remember">
-          <input
-            type="checkbox"
-            className="connect-page__checkbox"
-          />
-          <span>Always allow this app</span>
-        </label> */}
 
         <div className={styles.actions}>
           <Button

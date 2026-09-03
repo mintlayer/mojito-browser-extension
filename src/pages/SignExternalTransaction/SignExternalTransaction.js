@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers, Secret } from '@Helpers'
 import { MOCKS } from './mocks'
@@ -14,20 +13,9 @@ import { Account } from '@Entities'
 import { ML } from '@Cryptos'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { Mintlayer } from '@APIs'
+import { sendPopupResponse } from '@Browser'
 
-const storage =
-  typeof browser !== 'undefined' && browser.storage
-    ? browser.storage
-    : typeof chrome !== 'undefined' && chrome.storage
-      ? chrome.storage
-      : null
-
-const runtime =
-  typeof browser !== 'undefined' && browser.runtime
-    ? browser.runtime
-    : typeof chrome !== 'undefined' && chrome.runtime
-      ? chrome.runtime
-      : null
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 export const SignTransactionPage = () => {
   const { state: external_state } = useLocation()
@@ -45,6 +33,9 @@ export const SignTransactionPage = () => {
   const [generatedSecretHash, setGeneratedSecretHash] = useState(null)
   const [secretError, setSecretError] = useState('')
 
+  const [isSigning, setIsSigning] = useState(false)
+  const [signError, setSignError] = useState('')
+
   const [mode, setMode] = useState('preview')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
@@ -53,7 +44,10 @@ export const SignTransactionPage = () => {
   // State to hold the potentially modified transaction data
   const [transactionState, setTransactionState] = useState(null)
 
-  const state = transactionState || external_state || MOCKS[selectedMock]
+  const state =
+    transactionState ||
+    external_state ||
+    (isDevelopment ? MOCKS[selectedMock] : null)
   const origin = state?.request?.origin
 
   const { addresses, accountID } = useContext(AccountContext)
@@ -82,7 +76,8 @@ export const SignTransactionPage = () => {
       (output) => output?.destination === HtlcInput.utxo.htlc.spend_key,
     )
 
-  const handleApprove = async () => {
+  const handleApprove = () => {
+    setSignError('')
     setIsModalOpen(true) // Open the modal
   }
 
@@ -171,6 +166,11 @@ export const SignTransactionPage = () => {
   }, [transactionState, external_state, selectedMock, generatedSecret])
 
   const handleModalSubmit = async () => {
+    if (isSigning) return
+
+    setIsSigning(true)
+    setSignError('')
+
     try {
       // Validate secret if it's an HTLC claim transaction
       if (isHTLCClaim && secret && !Secret.validateSecretHex(secret.trim())) {
@@ -296,8 +296,6 @@ export const SignTransactionPage = () => {
         }
       }
 
-      console.log('order_info', order_info)
-
       const transactionHex = SignTxHelpers.getTransactionHEX(
         {
           transactionBINrepresentation,
@@ -321,8 +319,6 @@ export const SignTransactionPage = () => {
           order_info,
         },
       )
-
-      console.log('transactionHex', transactionHex)
 
       if (isHTLCCreateTx) {
         // save secret to account
@@ -349,47 +345,28 @@ export const SignTransactionPage = () => {
         result = transactionHex
       }
 
-      console.log('result', result)
-
-      runtime.sendMessage(
-        {
-          action: 'popupResponse',
-          method,
-          requestId,
-          origin,
-          result,
-        },
-        () => {
-          storage.local.remove('pendingRequest', () => {
-            window.close()
-          })
-        },
-      )
-    } catch (error) {
-      console.error('Error during transaction signing:', error)
-      setIsModalOpen(false)
-    }
-  }
-
-  const handleReject = () => {
-    const requestId = state?.request?.requestId
-    const method = 'signTransaction_reject'
-    const result = 'null'
-
-    runtime.sendMessage(
-      {
-        action: 'popupResponse',
+      sendPopupResponse({
         method,
         requestId,
         origin,
         result,
-      },
-      () => {
-        storage.local.remove('pendingRequest', () => {
-          window.close()
-        })
-      },
-    )
+      })
+    } catch (error) {
+      console.error('Error during transaction signing:', error)
+      setSignError(
+        error?.message || 'Signing failed. Check your password and try again.',
+      )
+      setIsSigning(false)
+    }
+  }
+
+  const handleReject = () => {
+    sendPopupResponse({
+      method: 'signTransaction_reject',
+      requestId: state?.request?.requestId,
+      origin,
+      error: 'Transaction rejected',
+    })
   }
 
   const selectMock = (name) => {
@@ -444,7 +421,7 @@ export const SignTransactionPage = () => {
         </div>
 
         <div className="SignTxContent">
-          {!external_state && (
+          {!external_state && isDevelopment && (
             <div className="mock_selector">
               {Object.keys(MOCKS).map((key) => {
                 return (
@@ -567,19 +544,21 @@ export const SignTransactionPage = () => {
                   </div>
                 </>
               )}
+              {signError && <div className="sign-error">{signError}</div>}
               <div className="modal-buttons">
                 <Button
                   onClickHandle={() => setIsModalOpen(false)}
                   extraStyleClasses={extraButtonStyles}
                   alternate
                 >
-                  Decline
+                  Cancel
                 </Button>
                 <Button
                   onClickHandle={handleModalSubmit}
                   extraStyleClasses={extraButtonStyles}
+                  disabled={isSigning || !password}
                 >
-                  Approve
+                  {isSigning ? 'Signing…' : 'Approve'}
                 </Button>
               </div>
             </div>

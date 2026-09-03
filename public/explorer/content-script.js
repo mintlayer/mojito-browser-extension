@@ -2,95 +2,93 @@
 ;(function () {
   const api = typeof browser !== 'undefined' ? browser : chrome
 
+  const cloneForPage = (value) =>
+    typeof cloneInto !== 'undefined' ? cloneInto(value, window) : value
+
+  const postToPage = (message) => {
+    window.postMessage(cloneForPage(message), '*')
+  }
+
   // Inject mojito.js into the page
   try {
     const script = document.createElement('script')
     script.src = api.runtime.getURL('mojito.js')
     script.onload = () => script.remove()
     ;(document.head || document.documentElement).appendChild(script)
-  } catch (err) {
-    console.error('[Content] Failed to inject Mojito SDK:', err)
+  } catch (error) {
+    console.error('[Mojito] Failed to inject SDK:', error)
   }
 
   const origin = window.location.origin
+  const pendingRequests = new Map() // requestId -> timeout id
+  const RESPONSE_TIMEOUT_MS = 5 * 60 * 1000 // approvals can take a while
 
-  chrome.runtime.sendMessage({ action: 'getSession', origin }, (res) => {
-    if (res?.session) {
-      console.log('[Mojito] Session restored:', res.session)
-      window.postMessage(
-        {
-          type: 'MINTLAYER_EVENT',
-          event: 'accountsChanged',
-          data: res.session.address,
-        },
-        '*',
-      )
-    }
+  // Tell pages with an existing session as soon as the content script loads.
+  api.runtime.sendMessage({ method: 'getSession', origin }, (response) => {
+    if (api.runtime.lastError || !response?.result) return
+
+    postToPage({
+      type: 'MINTLAYER_EVENT',
+      event: 'accountsChanged',
+      data: response.result.address,
+    })
   })
 
   window.addEventListener('message', (event) => {
-    if (event.source === window && event.data.type === 'MINTLAYER_REQUEST') {
-      console.log('[Content] Received from SDK:', event.data)
+    if (event.source !== window || event.data?.type !== 'MINTLAYER_REQUEST') {
+      return
+    }
 
-      const requestData = {
-        requestId: event.data.requestId,
+    const requestId = event.data.requestId
+
+    // Guard against duplicate requests and answer stale ids at once.
+    if (pendingRequests.has(requestId)) return
+
+    const timeoutId = setTimeout(() => {
+      if (!pendingRequests.has(requestId)) return
+
+      pendingRequests.delete(requestId)
+      console.error('[Mojito] Timeout waiting for background response')
+      postToPage({
+        type: 'MINTLAYER_RESPONSE',
+        requestId,
+        error: 'Response timeout from background',
+      })
+    }, RESPONSE_TIMEOUT_MS)
+
+    pendingRequests.set(requestId, timeoutId)
+
+    api.runtime.sendMessage(
+      {
+        requestId,
         method: event.data.method,
         params: event.data.params || {},
-      }
+      },
+      (response) => {
+        if (!pendingRequests.has(requestId)) return
 
-      const message =
-        typeof cloneInto !== 'undefined'
-          ? cloneInto(requestData, window)
-          : requestData
+        clearTimeout(pendingRequests.get(requestId))
+        pendingRequests.delete(requestId)
 
-      // Send message to background with timeout
-      api.runtime.sendMessage(message, (response) => {
         if (api.runtime.lastError) {
-          console.error('[Content] Runtime error:', api.runtime.lastError)
-          window.postMessage(
-            {
-              type: 'MINTLAYER_RESPONSE',
-              requestId: event.data.requestId,
-              error:
-                api.runtime.lastError.message ||
-                'Could not connect to background',
-            },
-            '*',
-          )
+          console.error('[Mojito] Runtime error:', api.runtime.lastError)
+          postToPage({
+            type: 'MINTLAYER_RESPONSE',
+            requestId,
+            error:
+              api.runtime.lastError.message ||
+              'Could not connect to background',
+          })
           return
         }
 
-        console.log('[Content] Response from background:', response)
-        const responseData = {
+        postToPage({
           type: 'MINTLAYER_RESPONSE',
-          requestId: event.data.requestId,
-          result: response && response.result,
-          error: response && response.error,
-        }
-
-        const responseMessage =
-          typeof cloneInto !== 'undefined'
-            ? cloneInto(responseData, window)
-            : responseData
-        window.postMessage(responseMessage, '*')
-      })
-
-      // Timeout fallback
-      setTimeout(() => {
-        if (!pendingResponses.has(event.data.requestId)) {
-          console.error('[Content] Timeout waiting for background response')
-          window.postMessage(
-            {
-              type: 'MINTLAYER_RESPONSE',
-              requestId: event.data.requestId,
-              error: 'Response timeout from background',
-            },
-            '*',
-          )
-        }
-      }, 1000 * 120) // 2-minute timeout
-    }
+          requestId,
+          result: response?.result,
+          error: response?.error,
+        })
+      },
+    )
   })
-
-  const pendingResponses = new Set() // Track pending requests
 })()

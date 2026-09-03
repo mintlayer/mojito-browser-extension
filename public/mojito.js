@@ -49,8 +49,10 @@
 
     async connect() {
       const result = await mojito.request('connect')
-      mojito.connectedAddresses = result || {}
-      return mojito.connectedAddresses
+      // The session carries the per-network map under `address`; older
+      // responses may already be that map.
+      mojito.connectedAddresses = result?.address ?? result ?? {}
+      return result
     },
 
     async restore() {
@@ -102,16 +104,21 @@
       })
     },
 
-    disconnect() {
-      mojito.connectedAddresses = []
-      window.postMessage(
-        {
-          type: 'MINTLAYER_EVENT',
-          event: 'disconnect',
-          data: {},
-        },
-        '*',
-      )
+    async disconnect() {
+      try {
+        // Ask the wallet to drop the session too, not only the page state.
+        await mojito.request('disconnect')
+      } finally {
+        mojito.connectedAddresses = []
+        window.postMessage(
+          {
+            type: 'MINTLAYER_EVENT',
+            event: 'disconnect',
+            data: {},
+          },
+          '*',
+        )
+      }
     },
   }
 

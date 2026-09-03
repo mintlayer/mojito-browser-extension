@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
@@ -10,41 +9,39 @@ import { useState, useContext } from 'react'
 
 import { Account } from '@Entities'
 import { ML } from '@Cryptos'
-import { AccountContext } from '@Contexts'
+import { AccountContext, SettingsContext } from '@Contexts'
+import { sendPopupResponse } from '@Browser'
 
-const storage =
-  typeof browser !== 'undefined' && browser.storage
-    ? browser.storage
-    : typeof chrome !== 'undefined' && chrome.storage
-      ? chrome.storage
-      : null
-
-const runtime =
-  typeof browser !== 'undefined' && browser.runtime
-    ? browser.runtime
-    : typeof chrome !== 'undefined' && chrome.runtime
-      ? chrome.runtime
-      : null
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 export const SignChallengePage = () => {
   const { state: external_state } = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
+  const [isSigning, setIsSigning] = useState(false)
+  const [signError, setSignError] = useState('')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = ['buttonSignTransaction']
 
-  const state = external_state || MOCKS[selectedMock]
+  const state = external_state || (isDevelopment ? MOCKS[selectedMock] : null)
   const origin = state?.request?.origin
 
   const { addresses, accountID } = useContext(AccountContext)
+  const { networkType } = useContext(SettingsContext)
   const currentMlAddresses = addresses.mlAddresses
 
-  const handleApprove = async () => {
+  const handleApprove = () => {
+    setSignError('')
     setIsModalOpen(true) // Open the modal
   }
 
   const handleModalSubmit = async () => {
+    if (isSigning) return
+
+    setIsSigning(true)
+    setSignError('')
+
     try {
       const message = state?.request?.data?.message
       const address =
@@ -82,52 +79,32 @@ export const SignChallengePage = () => {
         '',
       )
 
-      const requestId = state?.request?.requestId
-      const method = 'signChallenge_approve'
-      const result = {
-        message,
-        address,
-        signature: signatureHex,
-      }
-
-      runtime.sendMessage(
-        {
-          action: 'popupResponse',
-          method,
-          requestId,
-          origin,
-          result,
+      sendPopupResponse({
+        method: 'signChallenge_approve',
+        requestId: state?.request?.requestId,
+        origin,
+        result: {
+          message,
+          address,
+          signature: signatureHex,
         },
-        () => {
-          storage.local.remove('pendingRequest', () => {
-            window.close()
-          })
-        },
-      )
+      })
     } catch (error) {
       console.error('Error during challenge signing:', error)
-      setIsModalOpen(false)
+      setSignError(
+        error?.message || 'Signing failed. Check your password and try again.',
+      )
+      setIsSigning(false)
     }
   }
 
   const handleReject = () => {
-    const requestId = state?.request?.requestId
-    const method = 'signChallenge_reject'
-    const result = 'null'
-    runtime.sendMessage(
-      {
-        action: 'popupResponse',
-        method,
-        requestId,
-        origin,
-        result,
-      },
-      () => {
-        storage.local.remove('pendingRequest', () => {
-          window.close()
-        })
-      },
-    )
+    sendPopupResponse({
+      method: 'signChallenge_reject',
+      requestId: state?.request?.requestId,
+      origin,
+      error: 'Challenge signing rejected',
+    })
   }
 
   const selectMock = (name) => {
@@ -153,7 +130,7 @@ export const SignChallengePage = () => {
         </div>
 
         <div className="SignChallengeContent">
-          {!external_state && (
+          {!external_state && isDevelopment && (
             <div className="mock_selector">
               {Object.keys(MOCKS).map((key) => {
                 return (
@@ -215,19 +192,21 @@ export const SignChallengePage = () => {
                 placeHolder="Enter your password"
                 autoFocus
               />
+              {signError && <div className="sign-error">{signError}</div>}
               <div className="modal-buttons">
                 <Button
                   onClickHandle={() => setIsModalOpen(false)}
                   extraStyleClasses={extraButtonStyles}
                   alternate
                 >
-                  Decline
+                  Cancel
                 </Button>
                 <Button
                   onClickHandle={handleModalSubmit}
                   extraStyleClasses={extraButtonStyles}
+                  disabled={isSigning || !password}
                 >
-                  Approve
+                  {isSigning ? 'Signing…' : 'Approve'}
                 </Button>
               </div>
             </div>

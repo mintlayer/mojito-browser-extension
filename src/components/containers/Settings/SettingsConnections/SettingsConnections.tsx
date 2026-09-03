@@ -1,23 +1,11 @@
-/* eslint-disable no-undef */
 import { useCallback, useEffect, useState } from 'react'
 
 import { Button, SiteBadge } from '@BasicComponents'
+import { Browser } from '@Browser'
 
 import styles from './SettingsConnections.module.css'
 
-const storage =
-  typeof browser !== 'undefined' && browser.storage
-    ? browser.storage
-    : typeof chrome !== 'undefined' && chrome.storage
-      ? chrome.storage
-      : null
-
-const runtime =
-  typeof browser !== 'undefined' && browser.runtime
-    ? browser.runtime
-    : typeof chrome !== 'undefined' && chrome.runtime
-      ? chrome.runtime
-      : null
+const { storage, runtime } = Browser
 
 interface ConnectedSite {
   origin: string
