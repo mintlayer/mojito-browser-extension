@@ -32,6 +32,7 @@
       "@Constants": ["./src/utils/Constants/index.js"],
       "@TestData": ["./src/utils/TestData/index.js"],
       "@Storage": ["./src/services/Storage/index.js"],
+      "@Browser": ["./src/services/Browser/index.js"],
       "@Version": ["./src/version/version.js"]
     }
   },
