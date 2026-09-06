@@ -52,7 +52,10 @@
       postToPage({
         type: 'MINTLAYER_RESPONSE',
         requestId,
-        error: 'Response timeout from background',
+        error: {
+          code: 'TIMEOUT',
+          message: 'The wallet did not respond in time. Please try again.',
+        },
       })
     }, RESPONSE_TIMEOUT_MS)
 
@@ -75,9 +78,12 @@
           postToPage({
             type: 'MINTLAYER_RESPONSE',
             requestId,
-            error:
-              api.runtime.lastError.message ||
-              'Could not connect to background',
+            error: {
+              code: 'EXTENSION_ERROR',
+              message:
+                api.runtime.lastError.message ||
+                'Could not reach the wallet. Is it installed and enabled?',
+            },
           })
           return
         }
