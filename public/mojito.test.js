@@ -136,6 +136,46 @@ describe('window.mojito provider', () => {
       expect(window.mojito.network).toBe('testnet')
     })
 
+    it('synthesizes addressesByChain for stale popups that respond with the map under `address` only', async () => {
+      // Regression: a stale extension build responds without
+      // `addressesByChain`; the @mintlayer/sdk Client.connect() reads
+      // `addresses.addressesByChain.mintlayer` unguarded and would crash
+      // the dApp with "Cannot read properties of undefined (reading
+      // 'mintlayer')".
+      onMessage((event) => {
+        if (event.data?.type !== 'MINTLAYER_REQUEST') return
+        if (event.data.method !== 'connect') return
+        const { requestId } = event.data
+        setTimeout(() => {
+          window.postMessage(
+            {
+              type: 'MINTLAYER_RESPONSE',
+              requestId,
+              result: {
+                address: {
+                  testnet: { receiving: ['tmtc1qold'], change: ['tmtc1qocg'] },
+                },
+                network: 'testnet',
+              },
+            },
+            '*',
+          )
+        }, 0)
+      })
+
+      const result = await window.mojito.connect()
+
+      // SDK Client.connect() survives and gets a usable address map.
+      expect(result.addressesByChain.mintlayer.receiving).toEqual(['tmtc1qold'])
+      expect(result.addressesByChain.mintlayer.change).toEqual(['tmtc1qocg'])
+      expect(result.addressesByChain.mintlayer.publicKeys).toEqual({
+        receiving: [],
+        change: [],
+      })
+      // Page-side tracking keeps working from the raw map.
+      expect(window.mojito.isConnected()).toBe(true)
+    })
+
     it('rejects with the structured error code when the user denies', async () => {
       onMessage((event) => {
         if (event.data?.type !== 'MINTLAYER_REQUEST') return

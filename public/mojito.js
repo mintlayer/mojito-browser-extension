@@ -62,9 +62,30 @@
       const result = await mojito.request('connect')
       // The session carries the per-network map under `address`; older
       // responses may already be that map.
-      mojito.connectedAddresses = result?.address ?? result ?? {}
+      const map = result?.address ?? result ?? {}
+      mojito.connectedAddresses = map
       if (result?.network) {
         mojito.network = result.network
+      }
+      // The @mintlayer/sdk Client.connect() reads
+      // `addresses.addressesByChain.mintlayer` unguarded — a response from
+      // a stale popup (map under `address` only) would crash the dApp with
+      // "Cannot read properties of undefined (reading 'mintlayer')".
+      // Synthesize the chain-keyed view when it is missing so any
+      // extension build combination works.
+      if (result && typeof result === 'object' && !result.addressesByChain) {
+        const mlMap =
+          map.mintlayer ?? Object.values(map).find((v) => v?.receiving) ?? {}
+        return {
+          ...result,
+          addressesByChain: {
+            mintlayer: {
+              receiving: mlMap.receiving ?? [],
+              change: mlMap.change ?? [],
+              publicKeys: mlMap.publicKeys ?? { receiving: [], change: [] },
+            },
+          },
+        }
       }
       return result
     },
