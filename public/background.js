@@ -65,6 +65,12 @@
     }
   }
 
+  // Errors sent to dApps are `{ code, message }` so the caller can
+  // distinguish rejected / cancelled / busy / not-connected without string
+  // sniffing. Keep messages free of wallet-brand words: the bridge shows an
+  // "install the wallet" hint when an error message matches /mojito/i.
+  const errorOf = (code, message) => ({ code, message })
+
   // Approval responses and disconnections must come from the wallet's own
   // pages, never from a content script injected into a website.
   const isFromExtensionPage = (sender) =>
@@ -81,7 +87,7 @@
   }
 
   // Fails a pending approval: clears the slot and answers the waiting dApp.
-  const failSlot = (slot, errorMessage) => {
+  const failSlot = (slot, error) => {
     slot.id = false
     slot.opening = false
 
@@ -91,15 +97,20 @@
     pendingResponses.delete(slot.requestId)
     slot.requestId = null
     clearPendingRequest()
-    respond?.({ error: errorMessage })
+    respond?.({ error })
   }
 
   // Opens one approval window for the request and keeps the dApp's message
   // channel open until the wallet answers. Returns true while waiting.
-  const openApprovalWindow = (slot, request, sendResponse, busyError) => {
+  const openApprovalWindow = (slot, request, sendResponse) => {
     if (typeof slot.id === 'number' || slot.opening) {
       if (typeof slot.id === 'number') focusWindow(slot.id)
-      sendResponse({ error: busyError })
+      sendResponse({
+        error: errorOf(
+          'REQUEST_IN_PROGRESS',
+          'An approval window is already open. Complete or close it first.',
+        ),
+      })
       return false
     }
 
@@ -120,7 +131,7 @@
         slot.id = win?.id ?? false
 
         if (typeof slot.id !== 'number') {
-          failSlot(slot, 'Request cancelled')
+          failSlot(slot, errorOf('REQUEST_CANCELLED', 'Request cancelled'))
           return
         }
 
@@ -128,7 +139,7 @@
         // which case onRemoved fired before the id was tracked.
         api.windows.get(slot.id, (existing) => {
           if (!existing) {
-            failSlot(slot, 'Request cancelled')
+            failSlot(slot, errorOf('REQUEST_CANCELLED', 'Request cancelled'))
             return
           }
 
@@ -138,7 +149,13 @@
                 '[Mintlayer] Storage set error:',
                 api.runtime.lastError,
               )
-              failSlot(slot, 'Could not create the wallet request')
+              failSlot(
+                slot,
+                errorOf(
+                  'STORAGE_ERROR',
+                  'Could not create the wallet request. Please try again.',
+                ),
+              )
             }
           })
         })
@@ -164,19 +181,34 @@
       !result || Boolean(error) || (method && method.endsWith('_reject'))
 
     if (rejected) {
-      respond({ error: error || 'User rejected the request' })
+      respond({
+        error:
+          error ||
+          errorOf('USER_REJECTED', 'User rejected the request in the wallet'),
+      })
       return
     }
 
     if (method === 'connect' && origin) {
       connectedSites[origin] = {
+        // `address` is the network-keyed map for the injected SDK's
+        // isConnected(); `addressesByChain` is what the @mintlayer/sdk
+        // Client.connect()/restore() consume; `network` records which
+        // network the grant was made on so signing can detect a switch.
         address: result.address,
+        addressesByChain: result.addressesByChain,
+        network: result.network,
         timestamp: Date.now(),
       }
       api.storage.local.set({ connectedSites }, () => {
         if (api.runtime.lastError) {
           console.error('[Mintlayer] Storage set error:', api.runtime.lastError)
-          respond({ error: 'Could not save the wallet connection' })
+          respond({
+            error: errorOf(
+              'STORAGE_ERROR',
+              'Could not save the wallet connection. Please try again.',
+            ),
+          })
           return
         }
         respond({ result })
@@ -244,11 +276,15 @@
           action: 'connect',
         },
         sendResponse,
-        'Connection window already open',
       )
     } else if (message.method === 'signTransaction') {
       if (!connectedSites[origin]) {
-        sendResponse({ error: 'Not connected. Call connect first.' })
+        sendResponse({
+          error: errorOf(
+            'NOT_CONNECTED',
+            'This site is not connected to the wallet. Call connect first.',
+          ),
+        })
         return false
       }
 
@@ -259,13 +295,21 @@
           requestId: message.requestId,
           action: 'signTransaction',
           data: message.params || {},
+          // The network the grant was made on: the approval UI compares it
+          // with the wallet's active network so we never sign on the wrong
+          // chain after a network switch.
+          network: connectedSites[origin]?.network,
         },
         sendResponse,
-        'Transaction signing window already open',
       )
     } else if (message.method === 'signChallenge') {
       if (!connectedSites[origin]) {
-        sendResponse({ error: 'Not connected. Call connect first.' })
+        sendResponse({
+          error: errorOf(
+            'NOT_CONNECTED',
+            'This site is not connected to the wallet. Call connect first.',
+          ),
+        })
         return false
       }
 
@@ -276,9 +320,9 @@
           requestId: message.requestId,
           action: 'signChallenge',
           data: message.params || {},
+          network: connectedSites[origin]?.network,
         },
         sendResponse,
-        'Transaction signing window already open',
       )
     } else if (message.method === 'version') {
       sendResponse({ result: api.runtime.getManifest().version })
@@ -291,7 +335,12 @@
               '[Mintlayer] Storage set error:',
               api.runtime.lastError,
             )
-            sendResponse({ error: 'Could not disconnect the site' })
+            sendResponse({
+              error: errorOf(
+                'STORAGE_ERROR',
+                'Could not disconnect the site. Please try again.',
+              ),
+            })
             return
           }
           sendResponse({ result: true })
@@ -301,13 +350,16 @@
 
       sendResponse({ result: true })
     } else if (message.method === 'getSession') {
-      const sessionOrigin = message.origin || origin
-      const session = connectedSites[sessionOrigin]
+      // Origin MUST come from the browser's `sender` — a caller-supplied
+      // origin would let any page read another origin's session.
+      const session = connectedSites[origin]
 
       if (session && session.address) {
         sendResponse({
           result: {
             address: session.address,
+            addressesByChain: session.addressesByChain,
+            network: session.network,
           },
         })
       } else {
@@ -316,7 +368,12 @@
 
       return true
     } else {
-      sendResponse({ error: 'Unknown method' })
+      sendResponse({
+        error: errorOf(
+          'UNSUPPORTED_METHOD',
+          `Unsupported wallet method: ${message.method}`,
+        ),
+      })
     }
 
     return false
@@ -325,8 +382,12 @@
   // Clean up window state and answer waiting dApps when an approval window
   // is closed without a decision.
   api.windows.onRemoved.addListener((winId) => {
-    if (popupSlot.id === winId) failSlot(popupSlot, 'Request cancelled')
-    if (connectSlot.id === winId) failSlot(connectSlot, 'Request cancelled')
+    if (popupSlot.id === winId) {
+      failSlot(popupSlot, errorOf('REQUEST_CANCELLED', 'Request cancelled'))
+    }
+    if (connectSlot.id === winId) {
+      failSlot(connectSlot, errorOf('REQUEST_CANCELLED', 'Request cancelled'))
+    }
   })
 
   console.log('[Mintlayer Extension] Background script loaded')

@@ -171,6 +171,24 @@ export const SignTransactionPage = () => {
     setIsSigning(true)
     setSignError('')
 
+    // Wrong-chain guard: the session records the network the site was
+    // granted on. If the wallet has since been switched, refuse instead of
+    // silently signing with keys for the other chain.
+    const grantedNetwork = state?.request?.network
+    if (grantedNetwork && grantedNetwork !== networkType) {
+      setIsSigning(false)
+      sendPopupResponse({
+        method: 'signTransaction_reject',
+        requestId: state?.request?.requestId,
+        origin: state?.request?.origin,
+        error: {
+          code: 'WRONG_NETWORK',
+          message: `Wrong network: this site was connected on '${grantedNetwork}' but the wallet is now on '${networkType}'. Switch the wallet network or reconnect the site.`,
+        },
+      })
+      return
+    }
+
     try {
       // Validate secret if it's an HTLC claim transaction
       if (isHTLCClaim && secret && !Secret.validateSecretHex(secret.trim())) {

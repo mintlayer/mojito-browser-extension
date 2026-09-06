@@ -29,8 +29,19 @@
             data.requestId === requestId
           ) {
             window.removeEventListener('message', handle)
-            if (data.error) reject(new Error(data.error))
-            else resolve(data.result)
+            if (data.error) {
+              // Errors are `{ code, message }` (or a legacy plain string) so
+              // callers can distinguish rejected / locked / cancelled /
+              // wrong-network instead of string-sniffing.
+              const err =
+                typeof data.error === 'string'
+                  ? new Error(data.error)
+                  : new Error(data.error?.message || 'Wallet request failed')
+              if (data.error?.code) err.code = data.error.code
+              reject(err)
+            } else {
+              resolve(data.result)
+            }
           }
         }
 
@@ -52,13 +63,19 @@
       // The session carries the per-network map under `address`; older
       // responses may already be that map.
       mojito.connectedAddresses = result?.address ?? result ?? {}
+      if (result?.network) {
+        mojito.network = result.network
+      }
       return result
     },
 
     async restore() {
       return new Promise((resolve) => {
         const origin = window.location.origin
-        const requestId = '__restore'
+        // Unique per call: a fixed id would make a second concurrent restore
+        // be swallowed by the content script's duplicate-request guard and
+        // hang forever (e.g. React strict-mode double Client.create()).
+        const requestId = `__restore_${Math.random().toString(36).slice(2)}`
 
         window.postMessage(
           {
@@ -80,10 +97,18 @@
           ) {
             window.removeEventListener('message', handler)
 
-            if (data.result?.address) {
-              mojito.connectedAddresses = data.result.address
-              resolve(data.result.address)
+            const session = data.result
+            if (session?.addressesByChain) {
+              mojito.connectedAddresses = session.address ?? {}
+              if (session.network) {
+                mojito.network = session.network
+              }
+              // Resolve the whole session: the SDK's Client.restore() reads
+              // `addressesByChain.mintlayer.receiving` to re-engage.
+              resolve(session)
             } else {
+              // No grant (or a pre-addressesByChain session): treat as
+              // "nothing to restore".
               resolve(null)
             }
           }
