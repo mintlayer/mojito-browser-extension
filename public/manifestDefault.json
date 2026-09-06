@@ -31,13 +31,14 @@
   "content_scripts": [
     {
       "run_at": "document_start",
-      "all_frames": true,
+      "all_frames": false,
       "matches": [
-        "*://*/*",
-        "*://localhost/*",
-        "*://explorer.mintlayer.org/*",
-        "*://lovelace.explorer.mintlayer.org/*",
-        "*://blockexplorer-staging.mintlayer.org/*"
+        "https://*/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://explorer.mintlayer.org/*",
+        "https://lovelace.explorer.mintlayer.org/*",
+        "https://blockexplorer-staging.mintlayer.org/*"
       ],
       "js": ["explorer/content-script.js"]
     }
@@ -45,7 +46,7 @@
   "web_accessible_resources": [
     {
       "resources": ["mojito.js"],
-      "matches": ["<all_urls>"]
+      "matches": ["https://*/*", "http://localhost/*", "http://127.0.0.1/*"]
     }
   ]
 }
