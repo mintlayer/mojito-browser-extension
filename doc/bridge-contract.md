@@ -63,17 +63,18 @@ the wallet brand (the bridge maps `/mojito/i` messages to an
 `'Mojito extension not available'` when `window.mojito` is missing should
 trigger that).
 
-| code                  | meaning                                                             |
-| --------------------- | ------------------------------------------------------------------- |
-| `USER_REJECTED`       | user denied the approval                                            |
-| `REQUEST_CANCELLED`   | approval window closed without a decision                           |
-| `REQUEST_IN_PROGRESS` | an approval window is already open                                  |
-| `NOT_CONNECTED`       | sign/challenge without a prior connect grant                        |
-| `WRONG_NETWORK`       | session granted on a different network than the wallet's active one |
-| `UNSUPPORTED_METHOD`  | method not implemented by the wallet                                |
-| `TIMEOUT`             | no answer from the wallet within 5 minutes                          |
-| `EXTENSION_ERROR`     | content script could not reach the background                       |
-| `STORAGE_ERROR`       | wallet failed to persist/read state                                 |
+| code                  | meaning                                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `USER_REJECTED`       | user denied the approval                                                                                                |
+| `REQUEST_CANCELLED`   | approval window closed without a decision                                                                               |
+| `REQUEST_IN_PROGRESS` | an approval window is already open                                                                                      |
+| `NOT_CONNECTED`       | sign/challenge without a prior connect grant                                                                            |
+| `WRONG_NETWORK`       | session granted on a different network than the wallet's active one                                                     |
+| `UNSUPPORTED_METHOD`  | method not implemented by the wallet                                                                                    |
+| `TIMEOUT`             | no answer from the wallet within 5 minutes                                                                              |
+| `CONTEXT_INVALIDATED` | the extension was reloaded/updated/disabled while the page was open; the page must be reloaded and connect called again |
+| `EXTENSION_ERROR`     | content script could not reach the background                                                                           |
+| `STORAGE_ERROR`       | wallet failed to persist/read state                                                                                     |
 
 ## Method relayed by `request()`
 
