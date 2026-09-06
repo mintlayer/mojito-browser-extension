@@ -3,7 +3,7 @@ require('dotenv').config()
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
-  testPathIgnorePatterns: ['/node_modules/', '/tests/', 'src/pages'],
+  testPathIgnorePatterns: ['/node_modules/', '/tests/', '/build/'],
   transform: {
     '\\.[jt]sx?$': 'babel-jest',
   },
