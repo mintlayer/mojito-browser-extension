@@ -7,14 +7,14 @@
 .title {
   font-size: 13px;
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .switcher {
   display: flex;
   gap: 8px;
   padding: 4px;
-  background: rgb(var(--color-gray));
+  background: var(--be-bg-1);
   border-radius: var(--round-size-big);
 }
 
@@ -36,7 +36,7 @@
 }
 
 .optionActive {
-  background: rgb(var(--mojito-green-soft));
+  background: rgba(var(--mojito-green), 0.12);
   border-color: rgb(var(--mojito-green));
   color: rgb(var(--mojito-green));
 }
