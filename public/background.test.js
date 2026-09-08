@@ -72,7 +72,14 @@ describe('background service worker', () => {
         onMessage: {
           addListener: (fn) => messageListeners.push(fn),
         },
+        // self-healing sweep registers itself here on load
+        onInstalled: { addListener: jest.fn() },
+        onStartup: { addListener: jest.fn() },
         lastError: null,
+      },
+      // used by the sweep to re-inject dead content scripts
+      scripting: {
+        executeScript: jest.fn().mockResolvedValue([]),
       },
       storage: {
         local: {
@@ -737,6 +744,134 @@ describe('background service worker', () => {
         origin: 'https://bridge.example',
         requestId: 'r2',
       })
+    })
+  })
+
+  describe('self-healing content-script injection', () => {
+    const CONTENT_SCRIPT_FILE = 'explorer/content-script.js'
+
+    // A reload/update wipes content scripts from already-open tabs. The
+    // sweep pings every tab and re-injects where the ping goes unanswered
+    // (MV3 signals that via runtime.lastError, not a throw).
+    const useSweepTabs = () => {
+      // includes a tab with a non-numeric id: the sweep must skip it
+      global.chrome.tabs.query.mockImplementation((query, cb) =>
+        cb([{ id: 1 }, { id: 2 }, { id: 'no-id' }]),
+      )
+    }
+
+    const registeredListener = (event) => {
+      expect(event.addListener).toHaveBeenCalledTimes(1)
+      return event.addListener.mock.calls[0][0]
+    }
+
+    // Fire the callbacks the sweep stored on tabs.sendMessage. lastError is
+    // shared mutable state across the whole chrome mock: set it only around
+    // each invocation and delete it afterwards so nothing leaks into later
+    // callbacks or tests.
+    const answerPings = ({ withLastError }) => {
+      for (const call of global.chrome.tabs.sendMessage.mock.calls) {
+        const sendCallback = call[2]
+        if (typeof sendCallback !== 'function') continue
+        if (withLastError) {
+          global.chrome.runtime.lastError = { message: 'context invalidated' }
+        }
+        try {
+          sendCallback()
+        } finally {
+          delete global.chrome.runtime.lastError
+        }
+      }
+    }
+
+    afterEach(() => {
+      delete global.chrome.runtime.lastError
+    })
+
+    it('sweeps every open tab on install/update and re-injects where the content script is dead', () => {
+      useSweepTabs()
+      const onInstalledListener = registeredListener(
+        global.chrome.runtime.onInstalled,
+      )
+
+      onInstalledListener()
+
+      // every numerically-id'd tab was pinged...
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      // ...but the non-numeric-id tab was never touched
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        'no-id',
+        expect.anything(),
+        expect.anything(),
+      )
+      // pings alone inject nothing: injection happens only when a ping
+      // comes back with lastError (the default mock never answers)
+      expect(global.chrome.scripting.executeScript).not.toHaveBeenCalled()
+
+      // the pings now answer as dead content scripts (extension reloaded)
+      answerPings({ withLastError: true })
+
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledTimes(2)
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledWith({
+        target: { tabId: 1 },
+        files: [CONTENT_SCRIPT_FILE],
+      })
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledWith({
+        target: { tabId: 2 },
+        files: [CONTENT_SCRIPT_FILE],
+      })
+    })
+
+    it('does not re-inject when the content script is alive (no lastError)', () => {
+      useSweepTabs()
+      registeredListener(global.chrome.runtime.onInstalled)()
+
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+
+      // every ping answers cleanly: the content scripts are alive
+      answerPings({ withLastError: false })
+
+      expect(global.chrome.scripting.executeScript).not.toHaveBeenCalled()
+    })
+
+    it('runs the same sweep on browser start (onStartup)', () => {
+      useSweepTabs()
+      const onStartupListener = registeredListener(
+        global.chrome.runtime.onStartup,
+      )
+
+      onStartupListener()
+
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        'no-id',
+        expect.anything(),
+        expect.anything(),
+      )
+
+      // dead content scripts on startup get re-injected too
+      answerPings({ withLastError: true })
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledTimes(2)
     })
   })
 })
