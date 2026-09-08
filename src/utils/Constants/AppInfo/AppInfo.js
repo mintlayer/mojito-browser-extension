@@ -10,7 +10,10 @@ const appAccounts = async () => {
 
 const decimalSeparator = '.'
 const thousandsSeparator = ' '
-const amountRegex = /^\d+(.\d+)?$/
+// Digits with an optional decimal part only — rejects exponent notation
+// ('1e3') and garbage separators ('1x5'); the '.' is escaped so it cannot
+// match any character.
+const amountRegex = /^\d+(\.\d+)?$/
 const DEFAULT_WALLETS_TO_CREATE = ['btc', 'ml']
 const ML_ATOMS_PER_COIN = 100000000000
 const ML_DECIMALS = 11
@@ -19,7 +22,6 @@ const DEFAULT_ML_WALLET_OFFSET = 21
 const APPROPRIATE_COST_PER_BLOCK = 190
 const APPROPRIATE_MARGIN_RATIO_PER_THOUSAND = 80
 const UNCONFIRMED_TRANSACTION_NAME = 'ml_unconfirmed_transaction'
-const APP_LOCAL_STORAGE_CUSTOM_SERVERS = 'customAPIServers'
 const MAX_UPLOAD_FILE_SIZE = 2 * 1024 // 2 kb
 const SIGNED_MESSAGE_STRING_SEPARATOR = '.'
 const BATCH_REQUEST_MINTLAYER_LIMIT = 150
@@ -36,7 +38,7 @@ const BTC_MAX_TRANSACTION_FEE = 100000 // 0.001 BTC
 const BTC_MAX_FEERATE = 200
 const COLOR_LIST = {
   btc: '#F7931A',
-  ml: '#37DB8C',
+  ml: '#7ED0D7',
 }
 
 const NETWORK_TYPES = {
@@ -70,65 +72,6 @@ const walletTypes = [
   },
 ]
 
-const WALLETS_NAVIGATION = [
-  {
-    id: '1',
-    label: 'Bitcoin',
-    value: 'bitcoin',
-    type: 'menu',
-    actions: [
-      {
-        id: '1.1',
-        name: 'Open Wallet',
-        link: '/wallet/Bitcoin',
-      },
-      {
-        id: '1.2',
-        name: 'Send Transaction',
-        link: '/wallet/Bitcoin/send-transaction',
-      },
-    ],
-  },
-  {
-    id: '2',
-    label: 'Mintlayer',
-    value: 'mintlayer',
-    type: 'menu',
-    actions: [
-      {
-        id: '2.1',
-        name: 'Open Wallet',
-        link: '/wallet/Mintlayer',
-      },
-      {
-        id: '2.2',
-        name: 'Send Transaction',
-        link: '/wallet/Mintlayer/send-transaction',
-      },
-      {
-        id: '2.3',
-        name: 'Staking',
-        link: '/wallet/Mintlayer/staking',
-      },
-      {
-        id: '2.4',
-        name: 'NFT',
-        link: '/wallet/Mintlayer/nft',
-      },
-      {
-        id: '2.5',
-        name: 'Sign/Verify Message',
-        link: '/wallet/Mintlayer/sign-message',
-      },
-      {
-        id: '2.6',
-        name: 'Swap',
-        link: '/wallet/Mintlayer/order-swap',
-      },
-    ],
-  },
-]
-
 const WALLET_NAME_ERROR = 'The wallet name should have at least 4 characters.'
 const WALLET_PASSWORD_ERROR = [
   'Your password should have at least 8 characters.',
@@ -156,10 +99,8 @@ export {
   MAX_ML_FEE,
   APPROPRIATE_COST_PER_BLOCK,
   APPROPRIATE_MARGIN_RATIO_PER_THOUSAND,
-  APP_LOCAL_STORAGE_CUSTOM_SERVERS,
   REFRESH_INTERVAL,
   MAX_UPLOAD_FILE_SIZE,
-  WALLETS_NAVIGATION,
   SIGNED_MESSAGE_STRING_SEPARATOR,
   BATCH_REQUEST_MINTLAYER_LIMIT,
   BATCH_REQUEST_BITCOIN_LIMIT,

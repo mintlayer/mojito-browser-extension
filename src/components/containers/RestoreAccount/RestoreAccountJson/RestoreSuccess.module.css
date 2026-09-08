@@ -2,7 +2,7 @@
   font-size: var(--font-size-5xl);
   font-weight: 700;
   text-align: center;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .description {

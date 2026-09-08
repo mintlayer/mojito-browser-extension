@@ -18,7 +18,7 @@
 .backup-description p {
   font-size: 13px;
   line-height: 1.5;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .settings-backup-button {

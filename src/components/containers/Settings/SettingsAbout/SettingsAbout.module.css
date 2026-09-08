@@ -16,13 +16,13 @@
 }
 
 .rowClickable:hover {
-  background: rgba(var(--color-black), 0.02);
+  background: oklch(1 0 0 / 0.02);
 }
 
 .label {
   font-size: 14px;
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .value {
@@ -33,6 +33,6 @@
 .chevron {
   width: 16px;
   height: 16px;
-  color: rgba(var(--color-black), 0.25);
+  color: var(--be-text-3);
   transform: rotate(-90deg);
 }

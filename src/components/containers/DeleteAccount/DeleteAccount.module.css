@@ -29,7 +29,7 @@
   font-size: 20px;
   font-weight: 700;
   text-align: center;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin-bottom: 8px;
 }
 
@@ -87,7 +87,7 @@
   gap: 12px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: rgb(var(--color-gray));
+  background: var(--be-bg-1);
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -114,7 +114,7 @@
 
 .checkboxItem span {
   font-size: 14px;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .buttonRow {

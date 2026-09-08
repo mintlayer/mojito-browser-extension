@@ -5,8 +5,8 @@
   min-height: max-content;
   padding: var(--space-lg) var(--space-xl);
   border-radius: 25px;
-  background: rgb(var(--color-white));
-  border: 1px solid rgb(var(--color-medium-gray));
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   position: relative;
@@ -20,8 +20,8 @@
 }
 
 .nonEmpty {
-  background: rgba(255, 223, 182, 0.3);
-  border-color: rgba(255, 200, 130, 0.4);
+  background: var(--be-amber-soft);
+  border-color: rgba(247, 178, 103, 0.4);
 }
 
 .icon {
@@ -56,7 +56,7 @@
 .poolId {
   font-size: var(--font-size-lg);
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin: 0;
   display: flex;
   align-items: center;
@@ -78,7 +78,7 @@
 
 .date {
   font-size: var(--font-size-sm);
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   margin: var(--space-3xs) 0 0;
 }
 
@@ -91,14 +91,14 @@
 .amount {
   font-size: var(--font-size-2xl);
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin: 0;
   overflow-wrap: anywhere;
 }
 
 .currency {
   font-size: var(--font-size-sm);
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   margin: 0;
 }
 
@@ -108,7 +108,7 @@
   left: 0;
   height: 3px;
   width: 40px;
-  background-color: rgb(17, 150, 127);
+  background-color: var(--be-teal);
   animation: grow 60s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 

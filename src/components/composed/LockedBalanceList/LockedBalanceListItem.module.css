@@ -1,5 +1,5 @@
 .card {
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   border-radius: 16px;
   padding: 16px;
   box-shadow: var(--shadow-sm);
@@ -36,7 +36,7 @@
 .cardDate {
   font-size: 14px;
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin: 0;
 }
 
@@ -67,7 +67,7 @@
 .cardAmount {
   font-size: 20px;
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin: 12px 0 0 48px;
 }
 

@@ -33,6 +33,8 @@ const Header = () => {
   const noBackButtonPages = ['/dashboard', '/']
   const noBackButton = noBackButtonPages.includes(location.pathname)
   const isCreateRestorePage = location.pathname === '/create-restore'
+  // Onboarding welcome screen is self-contained in the new design: no chrome.
+  const isBarePage = location.pathname === '/'
 
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
@@ -50,7 +52,7 @@ const Header = () => {
       return
     }
     if (isStakingPage) {
-      navigate('/wallet/' + coinType)
+      navigate('/dashboard')
       return
     }
     return customBackAction ? customBackAction() : navigate(-1)
@@ -63,6 +65,8 @@ const Header = () => {
   const closeSliderMenu = () => {
     setSliderMenuOpen(false)
   }
+
+  if (isBarePage) return null
 
   return (
     <header

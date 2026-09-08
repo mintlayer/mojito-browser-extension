@@ -34,7 +34,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .headerText p {
@@ -45,7 +45,7 @@
 }
 
 .summary {
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   border-radius: 16px;
   padding: 16px 20px;
   display: flex;
@@ -67,7 +67,7 @@
 .summaryValue {
   font-size: 24px;
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin: 4px 0 0;
 }
 

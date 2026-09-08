@@ -1,5 +1,5 @@
 .row {
-  border-bottom: 1px solid rgba(var(--color-black), 0.05);
+  border-bottom: 1px solid var(--be-line-soft);
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -9,7 +9,7 @@
 }
 
 .row:hover {
-  background: rgba(var(--color-black), 0.02);
+  background: oklch(1 0 0 / 0.02);
 }
 
 .orderIdCell {
@@ -24,12 +24,12 @@
   font-weight: 700;
   font-size: 14px;
   display: block;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .exchangeRate {
   font-size: 12px;
-  color: rgba(var(--color-black), 0.4);
+  color: var(--be-text-3);
   margin-top: 2px;
   display: block;
 }
@@ -43,7 +43,7 @@
 .amount {
   font-weight: 700;
   font-size: 16px;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .amountGreen {
@@ -52,7 +52,7 @@
 
 .ticker {
   font-size: 12px;
-  color: rgba(var(--color-black), 0.4);
+  color: var(--be-text-3);
   margin-left: 4px;
 }
 
@@ -65,5 +65,5 @@
 
 .chevron {
   font-size: 18px;
-  color: rgba(var(--color-black), 0.3);
+  color: var(--be-text-3);
 }
