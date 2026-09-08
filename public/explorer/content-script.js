@@ -64,6 +64,14 @@
     console.error('[Mojito] Extension context unavailable:', error.message)
   }
 
+  // Self-healing ping: the background pings every tab on extension
+  // install/update/reload and re-injects this script where the ping fails.
+  api.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type === 'MOJITO_PING') {
+      sendResponse({ pong: true })
+    }
+  })
+
   // Revocation propagation: the wallet notifies this tab when its origin's
   // grant is revoked (settings disconnect / dApp disconnect). Relay it to
   // the page so its SDK client drops the stale session.

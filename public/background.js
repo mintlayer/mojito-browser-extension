@@ -55,6 +55,53 @@
     })
   }
 
+  // --- Self-healing content-script injection -------------------------------
+  // When the extension is reloaded/updated, Chrome wipes the old content
+  // scripts (and the page-world window.mojito) from already-open tabs and
+  // re-injects at nondeterministic times — so a dApp's first connect after
+  // a reload can fail with "wallet not found". On install/update/reload
+  // (runtime.onInstalled) and browser start (onStartup), ping every open
+  // tab's content script and re-inject where it is dead.
+  const CONTENT_SCRIPT_FILE = 'explorer/content-script.js'
+
+  const ensureContentScript = (tabId) => {
+    if (typeof tabId !== 'number') return
+    api.tabs.sendMessage(tabId, { type: 'MOJITO_PING' }, () => {
+      // lastError = no live content script in that tab: inject a fresh one.
+      // (Restricted pages like chrome:// simply error here too — ignored.)
+      if (!api.runtime.lastError) return
+      api.scripting
+        .executeScript({
+          target: { tabId },
+          files: [CONTENT_SCRIPT_FILE],
+        })
+        .catch((error) => {
+          console.error(
+            '[Mintlayer] content-script re-injection failed:',
+            error.message,
+          )
+        })
+    })
+  }
+
+  const sweepAllTabs = () => {
+    api.tabs.query({}, (tabs) => {
+      if (api.runtime.lastError) return
+      for (const tab of tabs) {
+        if (typeof tab.id === 'number') ensureContentScript(tab.id)
+      }
+    })
+  }
+
+  api.runtime.onInstalled.addListener(() => {
+    sweepAllTabs()
+  })
+  if (api.runtime.onStartup) {
+    api.runtime.onStartup.addListener(() => {
+      sweepAllTabs()
+    })
+  }
+
   // Load connected sites from storage. Messages arriving before the load
   // completes are queued: acting on a half-loaded session map would tell
   // already-connected sites they are NOT_CONNECTED.

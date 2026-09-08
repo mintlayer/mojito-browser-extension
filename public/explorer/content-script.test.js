@@ -25,7 +25,8 @@ const sendMessageCalls = []
 let messageListeners = []
 let addSpy
 // Listeners the content script registers on chrome.runtime.onMessage
-// (currently the MOJITO_SESSION_REVOKED relay), so tests can invoke them.
+// (the self-healing MOJITO_PING responder and the MOJITO_SESSION_REVOKED
+// relay), so tests can dispatch background messages to them.
 let onMessageListeners = []
 
 const setup = ({ sendMessageImpl }) => {
@@ -83,6 +84,17 @@ const nextMessage = () =>
     }
     window.addEventListener('message', listener)
   })
+
+// Chrome delivers a runtime message to EVERY listener the context has
+// registered, each with its own sendResponse; unrelated listeners simply
+// ignore messages that are not theirs. The content script registers more
+// than one handler (the MOJITO_PING responder and the revocation relay),
+// so tests must dispatch to all of them instead of poking one by index.
+const dispatchFromBackground = (message) => {
+  for (const listener of onMessageListeners) {
+    listener(message, { id: 'ext-id' }, jest.fn())
+  }
+}
 
 describe('content script relay', () => {
   it('relays a page request to the background and back', async () => {
@@ -238,20 +250,6 @@ describe('reload ownership', () => {
 })
 
 describe('session revocation relay', () => {
-  const nextDisconnect = () =>
-    new Promise((resolve) => {
-      const listener = (event) => {
-        if (
-          event.data?.type === 'MINTLAYER_EVENT' &&
-          event.data.event === 'disconnect'
-        ) {
-          window.removeEventListener('message', listener)
-          resolve(event.data)
-        }
-      }
-      window.addEventListener('message', listener)
-    })
-
   it('relays MOJITO_SESSION_REVOKED from the background to the page as a disconnect event', async () => {
     setup({
       sendMessageImpl: (_message, callback) => {
@@ -259,16 +257,32 @@ describe('session revocation relay', () => {
       },
     })
 
-    // The content script registered exactly one runtime.onMessage listener
-    expect(onMessageListeners).toHaveLength(1)
+    // The script registers the self-healing MOJITO_PING responder plus
+    // this revocation relay; the background message reaches every listener
+    expect(onMessageListeners.length).toBeGreaterThanOrEqual(2)
 
-    const incoming = nextDisconnect()
-    onMessageListeners[0]({
+    const disconnects = []
+    const listener = (event) => {
+      if (
+        event.data?.type === 'MINTLAYER_EVENT' &&
+        event.data.event === 'disconnect'
+      ) {
+        disconnects.push(event.data)
+      }
+    }
+    window.addEventListener('message', listener)
+
+    dispatchFromBackground({
       type: 'MOJITO_SESSION_REVOKED',
       origin: window.location.origin,
     })
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    window.removeEventListener('message', listener)
 
-    await expect(incoming).resolves.toMatchObject({
+    // Exactly one listener reacts — the revocation relay, not the ping
+    // responder — and it relays the origin to the page.
+    expect(disconnects).toHaveLength(1)
+    expect(disconnects[0]).toMatchObject({
       type: 'MINTLAYER_EVENT',
       event: 'disconnect',
       data: { origin: window.location.origin },
@@ -293,11 +307,14 @@ describe('session revocation relay', () => {
     }
     window.addEventListener('message', listener)
 
-    onMessageListeners[0]({
+    // Dispatch to every registered listener (as Chrome does): the ping
+    // responder ignores these messages, and the revocation relay must
+    // filter by type and origin.
+    dispatchFromBackground({
       type: 'MOJITO_SESSION_REVOKED',
       origin: 'https://other-origin.example',
     })
-    onMessageListeners[0]({
+    dispatchFromBackground({
       type: 'SOMETHING_ELSE',
       origin: window.location.origin,
     })
