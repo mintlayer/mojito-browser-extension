@@ -74,7 +74,7 @@ test('cycles gateway mirrors on load failure before falling back to the tile', a
   await failUntilTile()
   expect(getByTestId('token-icon')).toHaveTextContent('$')
 
-  const srcAfterFirstError = 'https://dweb.link/ipfs/bafyicon/broken.png'
+  const srcAfterFirstMirror = 'https://dweb.link/ipfs/bafyicon/broken.png'
   // re-render a fresh instance to verify the first mirror swap specifically
   const second = render(
     <TokenIcon
@@ -84,6 +84,6 @@ test('cycles gateway mirrors on load failure before falling back to the tile', a
   )
   fireEvent.error(second.getByTestId('token-icon-image'))
   expect((second.getByTestId('token-icon-image') as HTMLImageElement).src).toBe(
-    srcAfterFirstError,
+    srcAfterFirstMirror,
   )
 })

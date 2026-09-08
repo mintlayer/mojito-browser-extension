@@ -332,19 +332,24 @@ const getNftsData = async (tokens) => {
 // document (metadata_uri, usually ipfs://) whose JSON holds the icon under
 // `tokenIcon` (also tolerate `icon_uri`/`icon`). The icon itself is often an
 // ipfs:// uri again.
-// Gateways are tried in order: ipfs.io is preferred but frequently times out
-// or returns empty for CIDs; dweb.link and pinata are the reliable backups.
+// The raw ipfs:// scheme is never fetched or rendered: every uri is mapped
+// to one of these gateways. Public gateway availability varies per network
+// (ipfs.io needs a VPN here today), so all of them are RACED in parallel and
+// the first usable JSON wins — a dead gateway loses the race without adding
+// serial latency.
 const IPFS_GATEWAYS = [
   'https://ipfs.io/ipfs',
   'https://dweb.link/ipfs',
-  'https://gateway.pinata.cloud/ipfs',
+  'https://w3s.link/ipfs',
 ]
 const IPFS_GATEWAY = IPFS_GATEWAYS[0]
 
 const fromIpfs = (uri) =>
   uri.startsWith('ipfs://') ? uri.replace('ipfs://', `${IPFS_GATEWAY}/`) : uri
 
-const tokenIconCache = new Map() // metadata uri -> icon url | null
+const NEGATIVE_CACHE_TTL_MS = 5 * 60 * 1000
+const tokenIconCache = new Map() // metadata uri -> { value, expires? }
+const failedLookupsLogged = new Set()
 
 const fetchJsonWithGatewayFallback = async (uri) => {
   const candidates = uri.startsWith('ipfs://')
@@ -353,48 +358,65 @@ const fetchJsonWithGatewayFallback = async (uri) => {
       )
     : [uri]
 
-  for (const candidate of candidates) {
-    try {
-      // Timeout: this runs inside the wallet data refresh and ipfs gateways
-      // can hang — never block the whole refresh on an icon.
-      const response = await fetch(candidate, {
-        signal: AbortSignal.timeout(6000),
-      })
-      if (response.ok) {
-        return await response.json()
-      }
-    } catch (error) {
-      console.error(
-        `Token metadata request failed (${candidate}):`,
-        error.message,
-      )
+  const attempts = candidates.map(async (candidate) => {
+    // Timeout: this runs inside the wallet data refresh and gateways can
+    // hang — never block the whole refresh on an icon.
+    const response = await fetch(candidate, {
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
     }
+    return response.json()
+  })
+
+  try {
+    return await Promise.any(attempts)
+  } catch {
+    return null
   }
-  return null
 }
 
 const resolveTokenIcon = async (metadataUri) => {
   if (!metadataUri) return undefined
-  if (tokenIconCache.has(metadataUri)) {
-    return tokenIconCache.get(metadataUri) ?? undefined
+
+  const cached = tokenIconCache.get(metadataUri)
+  if (cached) {
+    // Negative entries carry a TTL; positive results are permanent.
+    if (cached.expires && cached.expires < Date.now()) {
+      tokenIconCache.delete(metadataUri)
+    } else {
+      return cached.value ?? undefined
+    }
   }
 
   const metadata = await fetchJsonWithGatewayFallback(metadataUri)
 
-  // A definitive "document has no icon" is cached; network/timeout failures
-  // are NOT cached so the next refresh retries.
-  let iconUrl
   if (metadata) {
     const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
     if (raw && typeof raw === 'string') {
-      iconUrl = fromIpfs(raw)
-      tokenIconCache.set(metadataUri, iconUrl)
-    } else {
-      tokenIconCache.set(metadataUri, null)
+      const iconUrl = fromIpfs(raw)
+      tokenIconCache.set(metadataUri, { value: iconUrl })
+      return iconUrl
     }
+    // Definitive "document has no icon": cache with a TTL so the gateways
+    // are not hammered on every refresh.
+    tokenIconCache.set(metadataUri, {
+      value: null,
+      expires: Date.now() + NEGATIVE_CACHE_TTL_MS,
+    })
+    return undefined
   }
 
-  return iconUrl
+  // Every gateway failed: log once per uri, do NOT cache — the next refresh
+  // retries.
+  if (!failedLookupsLogged.has(metadataUri)) {
+    failedLookupsLogged.add(metadataUri)
+    console.error(
+      `Failed to resolve token metadata from every gateway: ${metadataUri}`,
+    )
+  }
+  return undefined
 }
 
 const getAddressDelegations = (address) =>

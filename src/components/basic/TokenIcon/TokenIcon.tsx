@@ -32,11 +32,11 @@ const toRenderableUri = (uri: string) =>
     ? uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
     : uri
 
-// If the resolved icon URL times out (ipfs.io does that regularly), the img
-// onError cycles through mirror gateways before giving up entirely.
+// If the resolved icon URL times out on a gateway, the img onError cycles
+// through the remaining mirrors before giving up entirely.
 const IMG_GATEWAY_FALLBACKS: Array<[string, string]> = [
   ['https://ipfs.io/ipfs/', 'https://dweb.link/ipfs/'],
-  ['https://dweb.link/ipfs/', 'https://gateway.pinata.cloud/ipfs/'],
+  ['https://dweb.link/ipfs/', 'https://w3s.link/ipfs/'],
 ]
 
 // Native BTC/ML assets get the real chain logos; tokens show their metadata

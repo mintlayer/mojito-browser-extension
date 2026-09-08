@@ -122,32 +122,41 @@ describe('resolveTokenIcon', () => {
   })
 
   it('resolves tokenIcon from the metadata document and maps ipfs uris', async () => {
-    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      okJson({
-        tokenIcon: 'ipfs://bafyicon/logo.png',
-      }),
-    )
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(okJson({ tokenIcon: 'ipfs://bafyicon/logo.png' }))
 
     await expect(
       resolveTokenIcon('ipfs://bafymetadata/doc.json'),
     ).resolves.toBe('https://ipfs.io/ipfs/bafyicon/logo.png')
+    // all gateways are raced, starting with ipfs.io
     expect(fetchSpy.mock.calls[0][0]).toBe(
       'https://ipfs.io/ipfs/bafymetadata/doc.json',
     )
+    expect(fetchSpy.mock.calls[1][0]).toBe(
+      'https://dweb.link/ipfs/bafymetadata/doc.json',
+    )
   })
 
-  it('falls back to the next gateway when one fails', async () => {
+  it('races gateways — a dead one loses the race without blocking', async () => {
     const fetchSpy = jest
       .spyOn(global, 'fetch')
-      .mockRejectedValueOnce(new Error('signal timed out'))
-      .mockResolvedValueOnce(okJson({ tokenIcon: 'ipfs://bafyicon/i.png' }))
+      .mockImplementation(async (url) => {
+        if (String(url).startsWith('https://ipfs.io/')) {
+          throw new Error('signal timed out')
+        }
+        return okJson({ tokenIcon: 'ipfs://bafyicon/i.png' })
+      })
 
     await expect(
       resolveTokenIcon('ipfs://bafymetadata/slow.json'),
     ).resolves.toBe('https://ipfs.io/ipfs/bafyicon/i.png')
-    expect(fetchSpy.mock.calls[1][0]).toBe(
-      'https://dweb.link/ipfs/bafymetadata/slow.json',
-    )
+
+    // invariant: a raw ipfs:// uri is never fetched — only gateway URLs
+    for (const [candidate] of fetchSpy.mock.calls) {
+      expect(String(candidate)).toMatch(/^https:\/\//)
+      expect(String(candidate)).not.toMatch(/^ipfs:\/\//)
+    }
   })
 
   it('is cached once resolved, per metadata uri', async () => {
@@ -155,28 +164,13 @@ describe('resolveTokenIcon', () => {
       .spyOn(global, 'fetch')
       .mockResolvedValue(okJson({ tokenIcon: 'https://x.example/i.png' }))
 
-    await resolveTokenIcon('https://example.test/meta1.json')
-    await resolveTokenIcon('https://example.test/meta1.json')
+    await resolveTokenIcon('ipfs://bafymetadata/cached.json')
+    await resolveTokenIcon('ipfs://bafymetadata/cached.json')
 
-    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy).toHaveBeenCalledTimes(3) // 3 gateways raced once
   })
 
-  it('returns undefined — without caching — when every gateway fails', async () => {
-    const fetchSpy = jest
-      .spyOn(global, 'fetch')
-      .mockRejectedValue(new Error('signal timed out'))
-
-    await expect(
-      resolveTokenIcon('ipfs://bafymetadata/fail.json'),
-    ).resolves.toBeUndefined()
-    // failures are not cached: the next refresh retries
-    await expect(
-      resolveTokenIcon('ipfs://bafymetadata/fail.json'),
-    ).resolves.toBeUndefined()
-    expect(fetchSpy).toHaveBeenCalledTimes(6) // 3 gateways x 2 attempts
-  })
-
-  it('caches a definitive no-icon answer', async () => {
+  it('caches a definitive no-icon answer with a TTL', async () => {
     const fetchSpy = jest
       .spyOn(global, 'fetch')
       .mockResolvedValue(okJson({ name: 'no icon here' }))
@@ -187,6 +181,21 @@ describe('resolveTokenIcon', () => {
     await expect(
       resolveTokenIcon('ipfs://bafymetadata/noicon.json'),
     ).resolves.toBeUndefined()
-    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    // 3 gateways raced once; the negative answer is cached for 5 minutes
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+  })
+
+  it('does not cache total gateway failures — the next refresh retries', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockRejectedValue(new Error('signal timed out'))
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/fail.json'),
+    ).resolves.toBeUndefined()
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/fail.json'),
+    ).resolves.toBeUndefined()
+    expect(fetchSpy).toHaveBeenCalledTimes(6) // 3 gateways x 2 attempts
   })
 })
