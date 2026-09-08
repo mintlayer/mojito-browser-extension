@@ -9,8 +9,8 @@ import { useState, useContext, useMemo } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 import * as bitcoin from 'bitcoinjs-lib'
 import { Account } from '@Entities'
-import { AccountContext, SettingsContext } from '@Contexts'
-import { BTCTransaction } from '@Cryptos'
+import { AccountContext, BitcoinContext, SettingsContext } from '@Contexts'
+import { BTCTransaction, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 import { BTC as BTCHelpers, Secret } from '@Helpers'
 import { Electrum } from '@APIs'
 import { sendPopupResponse } from '@Browser'
@@ -144,9 +144,10 @@ export const SignBitcoinTransactionPage = () => {
     state?.request?.data?.txData?.JSONRepresentation.secret
 
   const { addresses, accountID } = useContext(AccountContext)
+  const { btcUtxos, unusedAddresses: unusedBtcAddresses } =
+    useContext(BitcoinContext)
   const { networkType } = useContext(SettingsContext)
 
-  const currentBtcAddress = addresses.btcAddresses
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
   // Helper functions to detect transaction types
@@ -185,8 +186,9 @@ export const SignBitcoinTransactionPage = () => {
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
 
-    const { WIF } = await Account.unlockAccount(accountID, pass)
-
+    // buildHTLCAndFundingAddress builds the HTLC script only — it never
+    // used a WIF (the old code destructured a phantom `{ WIF }` from
+    // unlockAccount, which always came back undefined and threw later).
     const htlc = await BTCTransaction.buildHTLCAndFundingAddress({
       receiverPubKey: transactionJSONrepresentation.recipientPublicKey,
       senderPubKey: transactionJSONrepresentation.refundPublicKey,
@@ -196,27 +198,46 @@ export const SignBitcoinTransactionPage = () => {
       lock: transactionJSONrepresentation.timeoutBlocks,
       secretHashHex: JSON.parse(transactionJSONrepresentation.secretHash)
         .secret_hash_hex,
-      wif: WIF,
       networkType,
-      fundingKeyPair: {
-        publicKey: Buffer.from(
-          transactionJSONrepresentation.refundPublicKey,
-          'hex',
-        ),
-      }, // TODO: take another key from the wallet
     })
 
     // address to send funds to
     const address = htlc.p2wshAddress
 
-    const [, txHex, txId] = await BTCTransaction.buildTransaction({
+    // Fund the HTLC the same way ConfirmBtcTransaction funds a transfer:
+    // wallet UTXOs + feeRate + change address + the HD root for signing.
+    const currentAccount = await Account.getAccount(accountID)
+    const btcWalletType =
+      currentAccount.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
+
+    const { btcPrivateKeys } = await Account.unlockAccount(accountID, pass, {
+      wallets: ['btc'],
+    })
+
+    const getChangeAddress = () => {
+      const candidate =
+        unusedBtcAddresses?.changeAddress ||
+        addresses?.btcAddresses?.btcChangeAddresses?.[0]
+
+      if (typeof candidate === 'string') return candidate
+      if (typeof candidate?.address === 'string') return candidate.address
+      if (typeof candidate === 'object') {
+        const key = Object.keys(candidate)[0]
+        if (typeof key === 'string') return key
+      }
+      throw new Error('Missing BTC change address')
+    }
+
+    const [tx, txHex] = await BTCTransaction.buildTransaction({
       to: address,
       amount: parseInt(transactionJSONrepresentation.amount), // satoshis
-      fee: await getBtcFeeRate(), // sat/vB, estimated like the wallet's own sends
-      wif: WIF,
-      from: currentBtcAddress,
-      networkType,
+      utxos: btcUtxos || [],
+      feeRate: await getBtcFeeRate(),
+      walletType: btcWalletType,
+      changeAddress: getChangeAddress(),
+      root: btcPrivateKeys,
     })
+    const txId = tx?.getId()
 
     const requestId = state?.request?.requestId
     const method = 'signTransaction_approve'
