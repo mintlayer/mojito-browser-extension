@@ -11,5 +11,5 @@
   min-height: 400px;
   position: absolute;
   z-index: 40;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: oklch(0 0 0 / 0.5);
 }

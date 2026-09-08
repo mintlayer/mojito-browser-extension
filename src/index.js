@@ -4,6 +4,7 @@ import {
   MemoryRouter,
   Routes,
   Route,
+  Navigate,
   useLocation,
   useNavigate,
 } from 'react-router'
@@ -14,7 +15,7 @@ import {
   PopUp,
   Sidebar,
 } from '@ComposedComponents'
-import { BrandPanel } from '@BasicComponents'
+import { BrandPanel, ErrorBoundary } from '@BasicComponents'
 import { DeleteAccount } from '@ContainerComponents'
 import { Client } from '@mintlayer/sdk'
 
@@ -22,14 +23,13 @@ import {
   HomePage,
   CreateAccountPage,
   RestoreAccountPage,
-  WalletPage,
   SetAccountPasswordPage,
   CreateRestorePage,
   SendBtcTransactionPage,
   SendMlTransactionPage,
   DashboardPage,
   SettingsPage,
-  StakingPage,
+  StakePage,
   ConnectionPage,
   CreateDelegationPage,
   DelegationStakePage,
@@ -45,6 +45,9 @@ import {
   SignBitcoinTransactionPage,
   ConfirmBtcTransactionPage,
   AddressPage,
+  AssetPage,
+  ActivityPage,
+  ReceivePage,
 } from '@Pages'
 
 import {
@@ -64,6 +67,7 @@ import { Browser } from '@Browser'
 
 import '@Assets/styles/fonts.css'
 import '@Assets/styles/constants.css'
+import '@Assets/styles/theme.css'
 import '@Assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
@@ -314,115 +318,153 @@ const App = () => {
               <DeleteAccount />
             </PopUp>
           )}
-          <Routes>
-            <Route
-              path="/dashboard"
-              element={<DashboardPage />}
-            />
-            <Route
-              path="/set-account"
-              element={<CreateAccountPage />}
-            />
-            <Route
-              path="/restore-account"
-              element={<RestoreAccountPage />}
-            />
-            <Route
-              path="/set-account-password"
-              element={
-                <SetAccountPasswordPage nextAfterUnlock={nextAfterUnlock} />
-              }
-            />
-            <Route
-              path="/create-restore"
-              element={<CreateRestorePage />}
-            />
-            <Route
-              path="/settings"
-              element={<SettingsPage unlocked={unlocked} />}
-            />
-            <Route
-              path="/connect"
-              element={<ConnectionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/sign-external-transaction"
-              element={<SignExternalTransactionPage />}
-            />
-            <Route
-              path="/wallet/Mintlayer/sign-internal-transaction"
-              element={<SignInternalTransaction />}
-            />
-            <Route
-              path="/wallet/Bitcoin/sign-transaction"
-              element={<SignBitcoinTransactionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/sign-challenge"
-              element={<SignChallengePage />}
-            />
-            <Route
-              path="/wallet/:coinType"
-              element={<WalletPage />}
-            />
-            <Route
-              path="/wallet/:coinType/send-btc-transaction"
-              element={<SendBtcTransactionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/send-btc-transaction/confirm"
-              element={<ConfirmBtcTransactionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/send-ml-transaction"
-              element={<SendMlTransactionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/staking"
-              element={<StakingPage />}
-            />
-            <Route
-              path="/wallet/:coinType/staking/:delegationId/add-funds"
-              element={<DelegationStakePage />}
-            />
-            <Route
-              path="/wallet/:coinType/staking/:delegationId/withdraw"
-              element={<DelegationWithdrawPage />}
-            />
-            <Route
-              path="/wallet/:coinType/staking/create-delegation"
-              element={<CreateDelegationPage />}
-            />
-            <Route
-              path="/wallet/:coinType/locked-balance"
-              element={<LockedBalancePage />}
-            />
-            <Route
-              path="/wallet/:coinType/sign-message"
-              element={<MessagePage />}
-            />
-            <Route
-              path="/wallet/:coinType/nft"
-              element={<NftPage />}
-            />
-            <Route
-              path="/wallet/:coinType/nft/:tokenId/send"
-              element={<NftSendPage />}
-            />
-            <Route
-              path="/wallet/:coinType/order-swap"
-              element={<OrderSwapPage />}
-            />
-            <Route
-              exact
-              path="/"
-              element={<HomePage />}
-            />
-            <Route
-              path="/wallet/:coinType/address"
-              element={<AddressPage />}
-            />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route
+                path="/dashboard"
+                element={<DashboardPage />}
+              />
+              <Route
+                path="/set-account"
+                element={<CreateAccountPage />}
+              />
+              <Route
+                path="/restore-account"
+                element={<RestoreAccountPage />}
+              />
+              <Route
+                path="/set-account-password"
+                element={
+                  <SetAccountPasswordPage nextAfterUnlock={nextAfterUnlock} />
+                }
+              />
+              <Route
+                path="/create-restore"
+                element={<CreateRestorePage />}
+              />
+              <Route
+                path="/settings"
+                element={<SettingsPage unlocked={unlocked} />}
+              />
+              <Route
+                path="/connect"
+                element={<ConnectionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/sign-external-transaction"
+                element={<SignExternalTransactionPage />}
+              />
+              <Route
+                path="/wallet/Mintlayer/sign-internal-transaction"
+                element={<SignInternalTransaction />}
+              />
+              <Route
+                path="/wallet/Bitcoin/sign-transaction"
+                element={<SignBitcoinTransactionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/sign-challenge"
+                element={<SignChallengePage />}
+              />
+              <Route
+                path="/wallet/:coinType"
+                element={
+                  <Navigate
+                    to="/dashboard"
+                    replace
+                  />
+                }
+              />
+              <Route
+                path="/wallet/:coinType/send-btc-transaction"
+                element={<SendBtcTransactionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/send-btc-transaction/confirm"
+                element={<ConfirmBtcTransactionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/send-ml-transaction"
+                element={<SendMlTransactionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/staking"
+                element={
+                  <Navigate
+                    to="/staking"
+                    replace
+                  />
+                }
+              />
+              <Route
+                path="/staking"
+                element={<StakePage />}
+              />
+              <Route
+                path="/wallet/:coinType/staking/:delegationId/add-funds"
+                element={<DelegationStakePage />}
+              />
+              <Route
+                path="/wallet/:coinType/staking/:delegationId/withdraw"
+                element={<DelegationWithdrawPage />}
+              />
+              <Route
+                path="/wallet/:coinType/staking/create-delegation"
+                element={<CreateDelegationPage />}
+              />
+              <Route
+                path="/wallet/:coinType/locked-balance"
+                element={<LockedBalancePage />}
+              />
+              <Route
+                path="/wallet/:coinType/sign-message"
+                element={<MessagePage />}
+              />
+              <Route
+                path="/wallet/:coinType/nft"
+                element={<NftPage />}
+              />
+              <Route
+                path="/wallet/:coinType/nft/:tokenId/send"
+                element={<NftSendPage />}
+              />
+              <Route
+                path="/wallet/:coinType/order-swap"
+                element={<OrderSwapPage />}
+              />
+              <Route
+                path="/"
+                element={<HomePage />}
+              />
+              <Route
+                path="/wallet/:coinType/address"
+                element={<AddressPage />}
+              />
+              <Route
+                path="/asset/:id"
+                element={<AssetPage />}
+              />
+              <Route
+                path="/activity"
+                element={<ActivityPage />}
+              />
+              <Route
+                path="/receive"
+                element={<ReceivePage />}
+              />
+              {/* Safety net: unknown routes land on the Dashboard instead of
+                rendering a blank panel. */}
+              <Route
+                path="*"
+                element={
+                  <Navigate
+                    to="/dashboard"
+                    replace
+                  />
+                }
+              />
+            </Routes>
+          </ErrorBoundary>
         </main>
       </div>
     </>

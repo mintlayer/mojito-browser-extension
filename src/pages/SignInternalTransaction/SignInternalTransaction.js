@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router'
-import { SignTransaction as SignTxHelpers } from '@Helpers'
+import { SignTransaction as SignTxHelpers, ML as MLHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button, Error, PageWrapper } from '@BasicComponents'
 import { PopUp, TextField, Loading } from '@ComposedComponents'
@@ -20,7 +20,7 @@ import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 const TxResult = ({ transactionTxid }) => {
   const navigate = useNavigate()
   const goBackToWallet = () => {
-    navigate('/wallet/Mintlayer')
+    navigate('/dashboard')
   }
   return (
     <VerticalGroup bigGap>
@@ -190,7 +190,8 @@ export const SignTransactionPage = () => {
       if (txPreviewInfo) {
         const account = LocalStorageService.getItem('unlockedAccount')
         const accountName = account.name
-        const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkName}`
+        const unconfirmedTransactionString =
+          MLHelpers.getUnconfirmedTransactionKey(accountName, networkName)
         const unconfirmedTransactions =
           LocalStorageService.getItem(unconfirmedTransactionString) || []
 
@@ -231,7 +232,7 @@ export const SignTransactionPage = () => {
   }
 
   const handleReject = () => {
-    navigate('/wallet/Mintlayer')
+    navigate('/dashboard')
   }
 
   const selectMock = (name) => {
@@ -257,7 +258,7 @@ export const SignTransactionPage = () => {
         </div>
 
         <div className={styles.signTxContent}>
-          {!external_state && (
+          {!external_state && process.env.NODE_ENV === 'development' && (
             <div className={styles.mockSelector}>
               {Object.keys(MOCKS).map((key) => {
                 return (

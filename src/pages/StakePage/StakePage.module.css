@@ -1,0 +1,121 @@
+.pageWrapper {
+  padding: 0;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px 14px 16px;
+  overflow-y: auto;
+  animation: be-fade-in 400ms ease both;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px 0 12px;
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--be-text-0);
+}
+
+.balanceCard {
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.balanceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.balanceValue {
+  font-family: var(--be-font-mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--be-text-0);
+}
+
+.balanceTicker {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--be-text-2);
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: var(--font-size-xs);
+  color: var(--be-text-2);
+}
+
+.statValueEarned {
+  font-family: var(--be-font-mono);
+  font-weight: 700;
+  color: var(--be-teal);
+}
+
+.statDot {
+  color: var(--be-text-3);
+}
+
+.chartCard {
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.chartWrap {
+  margin-top: 10px;
+  padding-bottom: 4px;
+}
+
+.section {
+  margin-top: 4px;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--be-text-0);
+  margin-bottom: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.actions a {
+  flex: 1;
+  display: block;
+}
+
+.actionButton {
+  flex: 1;
+}
+
+.actionSecondary {
+  width: 100%;
+}
+
+.poolIcon {
+  width: 12px;
+  height: 12px;
+  margin-left: 4px;
+}

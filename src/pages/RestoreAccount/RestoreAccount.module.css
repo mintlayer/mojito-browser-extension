@@ -1,5 +1,5 @@
 .restoreAccountPage {
-  background-color: rgb(var(--color-white));
+  background-color: var(--be-bg-1);
 }
 
 .page {
@@ -12,7 +12,7 @@
 .title {
   font-size: var(--font-size-4xl);
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin-bottom: var(--space-xs);
   text-align: center;
 }

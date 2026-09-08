@@ -1,0 +1,141 @@
+.pageWrapper {
+  padding: 0;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px 14px 16px;
+  overflow-y: auto;
+  animation: be-fade-in 400ms ease both;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 4px;
+  text-align: center;
+}
+
+.amount {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 10px;
+  color: var(--be-text-0);
+  font-variant-numeric: tabular-nums;
+}
+
+.ticker {
+  font-size: var(--font-size-md);
+  color: var(--be-text-2);
+  font-weight: 500;
+}
+
+.fiatLine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.fiat {
+  font-family: var(--be-font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--be-text-2);
+}
+
+.badges {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.chartCard {
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
+  border-radius: 16px;
+  padding: 12px 12px 8px;
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.actionButton,
+.page .actionButton {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  color: oklch(0.18 0.02 70);
+  background: linear-gradient(180deg, oklch(0.88 0.15 75), oklch(0.78 0.16 65));
+  border: none;
+}
+
+.page .actionButton:hover,
+.page .actionButton:focus {
+  color: oklch(0.18 0.02 70);
+  background: linear-gradient(180deg, oklch(0.9 0.15 75), oklch(0.8 0.16 65));
+}
+
+.actionSecondary,
+.page .actionSecondary {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  color: var(--be-text-0);
+  background: oklch(1 0 0 / 0.05);
+  border: 1px solid var(--be-line);
+}
+
+.page .actionSecondary:hover,
+.page .actionSecondary:focus {
+  color: var(--be-text-0);
+  background: oklch(1 0 0 / 0.09);
+}
+
+.section {
+  margin-top: 16px;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--be-text-0);
+  margin-bottom: 10px;
+}
+
+.kvGap {
+  height: 8px;
+}
+
+.card {
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
+  border-radius: 16px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.empty {
+  padding: 22px 16px;
+  text-align: center;
+  color: var(--be-text-2);
+  font-size: var(--font-size-sm);
+}
+
+.assetName {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--be-text-2);
+  margin-top: 8px;
+}
