@@ -27,7 +27,7 @@
 
 .value {
   font-size: 13px;
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
 }
 
 .chevron {

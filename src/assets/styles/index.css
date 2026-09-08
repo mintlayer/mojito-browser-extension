@@ -45,7 +45,10 @@ body {
    autocomplete="off" is ignored for saved addresses, so override the paint. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--be-text-0);
   caret-color: var(--be-text-0);
   -webkit-box-shadow: 0 0 0 1000px var(--be-bg-2) inset;

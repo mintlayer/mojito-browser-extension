@@ -9,7 +9,7 @@
 .subtitle {
   font-size: var(--font-size-lg);
   text-align: center;
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   margin-bottom: var(--space-2xl);
 }
 
@@ -63,7 +63,7 @@
 .uploadIcon {
   width: 24px;
   height: 24px;
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
 }
 
 .dropzoneText {
@@ -75,7 +75,7 @@
 
 .dropzoneHint {
   font-size: var(--font-size-md);
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   text-align: center;
 }
 
@@ -95,7 +95,7 @@
 
 .uploadedChange {
   font-size: var(--font-size-sm);
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   text-align: center;
 }
 

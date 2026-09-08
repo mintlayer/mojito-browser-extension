@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styles from './Counter.module.css'
 
 interface CounterProps {
@@ -9,7 +9,9 @@ interface CounterProps {
   duration?: number
 }
 
-// Animated number ticker from the design system.
+// Animated number ticker from the design system. Interpolates from the
+// PREVIOUS value (not from zero — a periodic refresh must not re-roll the
+// balance through $0.00) and respects prefers-reduced-motion.
 const Counter = ({
   value,
   decimals = 2,
@@ -17,19 +19,34 @@ const Counter = ({
   suffix = '',
   duration = 1200,
 }: CounterProps) => {
-  const [v, setV] = useState(0)
+  const [v, setV] = useState(value)
+  const previousValue = useRef(value)
+  const rafRef = useRef<number>(0)
 
   useEffect(() => {
+    const reduceMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const from = previousValue.current
+    previousValue.current = value
+
+    if (reduceMotion || from === value) {
+      // sync prop->state sync (documented React "adjust state when props
+      // change" pattern) — no animation needed
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setV(value)
+      return
+    }
+
     const start = performance.now()
-    let raf: number
     const tick = (t: number) => {
       const p = Math.min(1, (t - start) / duration)
       const eased = 1 - Math.pow(1 - p, 3)
-      setV(value * eased)
-      if (p < 1) raf = requestAnimationFrame(tick)
+      setV(from + (value - from) * eased)
+      if (p < 1) rafRef.current = requestAnimationFrame(tick)
     }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
   }, [value, duration])
 
   return (

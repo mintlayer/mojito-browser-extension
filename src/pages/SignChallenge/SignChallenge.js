@@ -42,6 +42,25 @@ export const SignChallengePage = () => {
     setIsSigning(true)
     setSignError('')
 
+    // Fail-closed network guard (same contract as transaction signing):
+    // a session without a recorded network is a pre-upgrade grant.
+    const grantedNetwork = state?.request?.network
+    if (!grantedNetwork || grantedNetwork !== networkType) {
+      setIsSigning(false)
+      sendPopupResponse({
+        method: 'signChallenge_reject',
+        requestId: state?.request?.requestId,
+        origin: state?.request?.origin,
+        error: {
+          code: 'WRONG_NETWORK',
+          message: grantedNetwork
+            ? `Wrong network: this site was connected on '${grantedNetwork}' but the wallet is now on '${networkType}'. Switch the wallet network or reconnect the site.`
+            : 'This site was connected before the wallet recorded its network. Reconnect the site and approve again.',
+        },
+      })
+      return
+    }
+
     try {
       const message = state?.request?.data?.message
       const address =

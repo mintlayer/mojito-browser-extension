@@ -19,7 +19,7 @@
 
 .subtitle {
   font-size: var(--font-size-md);
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   text-align: center;
   margin-bottom: var(--space-3xl);
 }

@@ -16,6 +16,7 @@ export interface DesignAsset {
   mock?: boolean
   authority?: boolean
   iconUri?: string
+  disabled?: boolean
   onClick?: () => void
   index?: number
 }
@@ -25,7 +26,7 @@ const AssetRow = ({ a }: { a: DesignAsset }) => {
   const fiat = a.price != null ? a.amount * a.price : undefined
   return (
     <div
-      className={styles.row}
+      className={`${styles.row} ${a.disabled ? styles.disabled : ''}`}
       onClick={a.onClick}
       data-testid="crypto-item"
     >
@@ -42,6 +43,7 @@ const AssetRow = ({ a }: { a: DesignAsset }) => {
             <Tag c="teal">Token</Tag>
           )}
           {a.authority && <Tag c="violet">Issuer</Tag>}
+          {a.disabled && <Tag c="grey">Sync issue</Tag>}
           {a.mock && <Tag c="amber">Demo</Tag>}
         </div>
         <div className={styles.sub}>

@@ -162,6 +162,24 @@ export const SignBitcoinTransactionPage = () => {
   }
 
   const submitCreate = async () => {
+    // Fail-closed network guard (same contract as ML signing): a session
+    // without a recorded network must reconnect before signing.
+    const grantedNetwork = state?.request?.network
+    if (!grantedNetwork || grantedNetwork !== networkType) {
+      sendPopupResponse({
+        method: 'signTransaction_reject',
+        requestId: state?.request?.requestId,
+        origin: state?.request?.origin,
+        error: {
+          code: 'WRONG_NETWORK',
+          message: grantedNetwork
+            ? `Wrong network: this site was connected on '${grantedNetwork}' but the wallet is now on '${networkType}'. Switch the wallet network or reconnect the site.`
+            : 'This site was connected before the wallet recorded its network. Reconnect the site and approve again.',
+        },
+      })
+      return
+    }
+
     const pass = password
 
     const transactionJSONrepresentation =
@@ -240,6 +258,23 @@ export const SignBitcoinTransactionPage = () => {
   const submitSpend = async () => {
     const pass = password
 
+    // Fail-closed network guard (same contract as ML signing).
+    const grantedNetwork = state?.request?.network
+    if (!grantedNetwork || grantedNetwork !== networkType) {
+      sendPopupResponse({
+        method: 'signTransaction_reject',
+        requestId: state?.request?.requestId,
+        origin: state?.request?.origin,
+        error: {
+          code: 'WRONG_NETWORK',
+          message: grantedNetwork
+            ? `Wrong network: this site was connected on '${grantedNetwork}' but the wallet is now on '${networkType}'. Switch the wallet network or reconnect the site.`
+            : 'This site was connected before the wallet recorded its network. Reconnect the site and approve again.',
+        },
+      })
+      return
+    }
+
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
 
@@ -301,6 +336,23 @@ export const SignBitcoinTransactionPage = () => {
 
   const submitRefund = async () => {
     const pass = password
+
+    // Fail-closed network guard (same contract as ML signing).
+    const grantedNetwork = state?.request?.network
+    if (!grantedNetwork || grantedNetwork !== networkType) {
+      sendPopupResponse({
+        method: 'signTransaction_reject',
+        requestId: state?.request?.requestId,
+        origin: state?.request?.origin,
+        error: {
+          code: 'WRONG_NETWORK',
+          message: grantedNetwork
+            ? `Wrong network: this site was connected on '${grantedNetwork}' but the wallet is now on '${networkType}'. Switch the wallet network or reconnect the site.`
+            : 'This site was connected before the wallet recorded its network. Reconnect the site and approve again.',
+        },
+      })
+      return
+    }
 
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation

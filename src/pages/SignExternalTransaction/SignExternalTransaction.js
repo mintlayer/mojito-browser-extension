@@ -172,10 +172,10 @@ export const SignTransactionPage = () => {
     setSignError('')
 
     // Wrong-chain guard: the session records the network the site was
-    // granted on. If the wallet has since been switched, refuse instead of
-    // silently signing with keys for the other chain.
+    // granted on. Fail CLOSED — a session without a recorded network is a
+    // pre-upgrade grant and must reconnect before signing.
     const grantedNetwork = state?.request?.network
-    if (grantedNetwork && grantedNetwork !== networkType) {
+    if (!grantedNetwork || grantedNetwork !== networkType) {
       setIsSigning(false)
       sendPopupResponse({
         method: 'signTransaction_reject',
@@ -183,7 +183,9 @@ export const SignTransactionPage = () => {
         origin: state?.request?.origin,
         error: {
           code: 'WRONG_NETWORK',
-          message: `Wrong network: this site was connected on '${grantedNetwork}' but the wallet is now on '${networkType}'. Switch the wallet network or reconnect the site.`,
+          message: grantedNetwork
+            ? `Wrong network: this site was connected on '${grantedNetwork}' but the wallet is now on '${networkType}'. Switch the wallet network or reconnect the site.`
+            : 'This site was connected before the wallet recorded its network. Reconnect the site and approve again.',
         },
       })
       return

@@ -226,6 +226,7 @@ const DashboardPage = () => {
       change24h: Number(c.change24h) || 0,
       spark: Object.values(c.historyRates || {}),
       disabled: c.disabled,
+      onClick: c.disabled ? undefined : () => navigate('/asset/' + c.id),
     }))
 
   const onConnectItemClick = (walletType) => {
@@ -256,12 +257,9 @@ const DashboardPage = () => {
   const renderAssetRow = (a, index) => (
     <div
       key={a.id}
-      onClick={() => !a.disabled && navigate('/asset/' + a.id)}
-      data-testid="crypto-item"
+      style={{ animationDelay: `${index * 50}ms` }}
     >
-      <div style={{ animationDelay: `${index * 50}ms` }}>
-        <AssetRow a={a} />
-      </div>
+      <AssetRow a={a} />
     </div>
   )
 
@@ -409,6 +407,7 @@ const DashboardPage = () => {
                       spark: [],
                       iconUri:
                         tokenBalances[c.id]?.token_info?.icon_uri?.string,
+                      onClick: () => navigate('/asset/' + c.id),
                     },
                     coinAssets.length + i,
                   ),

@@ -352,16 +352,21 @@ const IPFS_GATEWAY = IPFS_GATEWAYS[0]
 const fromIpfs = (uri) =>
   uri.startsWith('ipfs://') ? uri.replace('ipfs://', `${IPFS_GATEWAY}/`) : uri
 
+// Token metadata is issuer-controlled: only ipfs:// metadata documents are
+// resolved (through the fixed gateway list) and only gateway-hosted icons
+// are returned. Arbitrary https/http metadata or icon urls would turn token
+// issuance into a request-forgery/tracking vector from the wallet UI.
+const isAllowedIpfsUri = (uri) =>
+  typeof uri === 'string' && uri.startsWith('ipfs://')
+
 const NEGATIVE_CACHE_TTL_MS = 5 * 60 * 1000
 const tokenIconCache = new Map() // metadata uri -> { value, expires? }
 const failedLookupsLogged = new Set()
 
-const fetchJsonWithGatewayFallback = async (uri) => {
-  const candidates = uri.startsWith('ipfs://')
-    ? IPFS_GATEWAYS.map(
-        (gateway) => `${gateway}/${uri.slice('ipfs://'.length)}`,
-      )
-    : [uri]
+const fetchJsonWithGatewayFallback = async (metadataUri) => {
+  const candidates = IPFS_GATEWAYS.map(
+    (gateway) => `${gateway}/${metadataUri.slice('ipfs://'.length)}`,
+  )
 
   const attempts = candidates.map(async (candidate) => {
     // Timeout: this runs inside the wallet data refresh and gateways can
@@ -383,7 +388,7 @@ const fetchJsonWithGatewayFallback = async (uri) => {
 }
 
 const resolveTokenIcon = async (metadataUri) => {
-  if (!metadataUri) return undefined
+  if (!isAllowedIpfsUri(metadataUri)) return undefined
 
   const cached = tokenIconCache.get(metadataUri)
   if (cached) {
@@ -399,7 +404,10 @@ const resolveTokenIcon = async (metadataUri) => {
 
   if (metadata) {
     const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
-    if (raw && typeof raw === 'string') {
+    // Scheme allowlist: ipfs:// maps to a gateway, https:// renders as-is.
+    // http:// (cleartext/internal-network) and exotic schemes are rejected —
+    // token metadata is issuer-controlled.
+    if (raw && typeof raw === 'string' && /^(ipfs|https):\/\//.test(raw)) {
       const iconUrl = fromIpfs(raw)
       tokenIconCache.set(metadataUri, { value: iconUrl })
       return iconUrl
