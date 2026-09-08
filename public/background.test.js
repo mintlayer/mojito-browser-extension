@@ -19,6 +19,12 @@ const dappSender = {
   origin: 'https://bridge.example',
   url: 'https://bridge.example/page',
 }
+// Chromium content-script senders carry the tab the dApp runs in: the
+// side-panel approval surface keys its requests off the tab's WINDOW id.
+const tabDappSender = {
+  ...dappSender,
+  tab: { id: 5, windowId: 3 },
+}
 const extensionSender = {
   id: EXT_ID,
   origin: `chrome-extension://${EXT_ID}`,
@@ -97,6 +103,9 @@ describe('background service worker', () => {
         get: (id, cb) => cb({ id }),
         update: (id, opts, cb) => cb && cb({ id }),
         onRemoved: { addListener: () => {} },
+      },
+      sidePanel: {
+        open: jest.fn().mockResolvedValue(undefined),
       },
     }
 
@@ -437,6 +446,93 @@ describe('background service worker', () => {
         requestId: 's1',
         network: 'testnet',
       })
+    })
+  })
+
+  describe('side-panel approval surface (dApp request from a tab)', () => {
+    it('opens the side panel on the dApp tab instead of a popup window', () => {
+      const { reply, keptOpen } = dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        tabDappSender,
+      )
+
+      // the panel is opened on the dApp's TAB
+      expect(global.chrome.sidePanel.open).toHaveBeenCalledWith({ tabId: 5 })
+      // the panel path creates NO popup window
+      expect(createdWindows).toHaveLength(0)
+      // the request is keyed by the dApp tab's WINDOW id (3), not the tab id
+      expect(storageData['pendingRequest:3']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+        requestId: 'r1',
+      })
+      expect(storageData['pendingRequest:5']).toBeUndefined()
+      // the channel stays open until the approval answers it
+      expect(keptOpen).toBe(true)
+      expect(reply.current).toBeUndefined()
+    })
+
+    it('falls back to a popup window when the side panel cannot open', async () => {
+      global.chrome.sidePanel.open.mockRejectedValue(new Error('no gesture'))
+
+      const connect = dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        tabDappSender,
+      )
+      expect(connect.keptOpen).toBe(true)
+
+      // let the sidePanel.open rejection settle and the fallback run
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+
+      expect(global.chrome.sidePanel.open).toHaveBeenCalledWith({ tabId: 5 })
+      // the fallback opens ONE popup window (id 700 per the mock)
+      expect(createdWindows).toHaveLength(1)
+      // the request now lives under the popup's window id
+      expect(storageData['pendingRequest:700']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+        requestId: 'r1',
+      })
+      // the panel registration was rolled back
+      expect(storageData['pendingRequest:3']).toBeUndefined()
+
+      // approving in the popup resolves the ORIGINAL dApp channel
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: 'r1',
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+
+      expect(connect.reply.current.result).toEqual(sessionData)
+      // and the pending request is consumed
+      expect(storageData['pendingRequest:700']).toBeUndefined()
+    })
+
+    it('answers REQUEST_IN_PROGRESS for a second request while the panel approval is pending', () => {
+      dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        tabDappSender,
+      )
+
+      const second = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        tabDappSender,
+      )
+
+      expect(second.reply.current).toMatchObject({
+        error: { code: 'REQUEST_IN_PROGRESS' },
+      })
+      expect(second.keptOpen).toBe(false)
+      // the busy answer must not have opened any approval window
+      expect(createdWindows).toHaveLength(0)
     })
   })
 })
