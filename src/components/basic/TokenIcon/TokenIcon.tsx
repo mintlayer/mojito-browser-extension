@@ -32,18 +32,51 @@ const toRenderableUri = (uri: string) =>
     ? uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
     : uri
 
+// If the resolved icon URL times out (ipfs.io does that regularly), the img
+// onError cycles through mirror gateways before giving up entirely.
+const IMG_GATEWAY_FALLBACKS: Array<[string, string]> = [
+  ['https://ipfs.io/ipfs/', 'https://dweb.link/ipfs/'],
+  ['https://dweb.link/ipfs/', 'https://gateway.pinata.cloud/ipfs/'],
+]
+
 // Native BTC/ML assets get the real chain logos; tokens show their metadata
 // icon when available, otherwise the procedural design-system tile (unknown
 // symbols fall back to first letter).
 const TokenIcon = ({ symbol, size = 36, iconUri }: TokenIconProps) => {
   const [iconFailed, setIconFailed] = useState(false)
+  const [iconSrc, setIconSrc] = useState<string | undefined>(
+    iconUri ? toRenderableUri(iconUri) : undefined,
+  )
   const logo = LOGOS[symbol]
   const { c1, c2 } = GRADIENTS[symbol] ?? {
     c1: 'oklch(0.6 0.05 60)',
     c2: 'oklch(0.4 0.05 60)',
   }
 
-  const showImage = Boolean(iconUri) && !iconFailed && !logo
+  // Keep the displayed src in sync when the resolved icon arrives late.
+  const [lastIconUri, setLastIconUri] = useState(iconUri)
+  if (iconUri !== lastIconUri) {
+    setLastIconUri(iconUri)
+    setIconSrc(iconUri ? toRenderableUri(iconUri) : undefined)
+    setIconFailed(false)
+  }
+
+  const showImage = Boolean(iconSrc) && !iconFailed && !logo
+
+  const handleIconError = () => {
+    if (!iconSrc) {
+      setIconFailed(true)
+      return
+    }
+    const fallback = IMG_GATEWAY_FALLBACKS.find(([from]) =>
+      iconSrc.startsWith(from),
+    )
+    if (fallback) {
+      setIconSrc(iconSrc.replace(fallback[0], fallback[1]))
+    } else {
+      setIconFailed(true)
+    }
+  }
 
   return (
     <div
@@ -60,11 +93,11 @@ const TokenIcon = ({ symbol, size = 36, iconUri }: TokenIconProps) => {
       {showImage ? (
         <img
           className={styles.tokenImage}
-          src={toRenderableUri(iconUri)}
+          src={iconSrc}
           alt={symbol}
           width={size}
           height={size}
-          onError={() => setIconFailed(true)}
+          onError={handleIconError}
           data-testid="token-icon-image"
         />
       ) : logo ? (

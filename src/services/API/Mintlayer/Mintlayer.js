@@ -332,12 +332,46 @@ const getNftsData = async (tokens) => {
 // document (metadata_uri, usually ipfs://) whose JSON holds the icon under
 // `tokenIcon` (also tolerate `icon_uri`/`icon`). The icon itself is often an
 // ipfs:// uri again.
-const IPFS_GATEWAY = 'https://ipfs.io/ipfs'
+// Gateways are tried in order: ipfs.io is preferred but frequently times out
+// or returns empty for CIDs; dweb.link and pinata are the reliable backups.
+const IPFS_GATEWAYS = [
+  'https://ipfs.io/ipfs',
+  'https://dweb.link/ipfs',
+  'https://gateway.pinata.cloud/ipfs',
+]
+const IPFS_GATEWAY = IPFS_GATEWAYS[0]
 
 const fromIpfs = (uri) =>
   uri.startsWith('ipfs://') ? uri.replace('ipfs://', `${IPFS_GATEWAY}/`) : uri
 
 const tokenIconCache = new Map() // metadata uri -> icon url | null
+
+const fetchJsonWithGatewayFallback = async (uri) => {
+  const candidates = uri.startsWith('ipfs://')
+    ? IPFS_GATEWAYS.map(
+        (gateway) => `${gateway}/${uri.slice('ipfs://'.length)}`,
+      )
+    : [uri]
+
+  for (const candidate of candidates) {
+    try {
+      // Timeout: this runs inside the wallet data refresh and ipfs gateways
+      // can hang — never block the whole refresh on an icon.
+      const response = await fetch(candidate, {
+        signal: AbortSignal.timeout(6000),
+      })
+      if (response.ok) {
+        return await response.json()
+      }
+    } catch (error) {
+      console.error(
+        `Token metadata request failed (${candidate}):`,
+        error.message,
+      )
+    }
+  }
+  return null
+}
 
 const resolveTokenIcon = async (metadataUri) => {
   if (!metadataUri) return undefined
@@ -345,28 +379,21 @@ const resolveTokenIcon = async (metadataUri) => {
     return tokenIconCache.get(metadataUri) ?? undefined
   }
 
+  const metadata = await fetchJsonWithGatewayFallback(metadataUri)
+
+  // A definitive "document has no icon" is cached; network/timeout failures
+  // are NOT cached so the next refresh retries.
   let iconUrl
-  try {
-    // Timeout: this runs inside the wallet data refresh and ipfs gateways
-    // can hang — never block the whole refresh on an icon.
-    const response = await fetch(fromIpfs(metadataUri), {
-      signal: AbortSignal.timeout(8000),
-    })
-    if (response.ok) {
-      const metadata = await response.json()
-      const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
-      if (raw && typeof raw === 'string') {
-        iconUrl = fromIpfs(raw)
-      }
+  if (metadata) {
+    const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
+    if (raw && typeof raw === 'string') {
+      iconUrl = fromIpfs(raw)
+      tokenIconCache.set(metadataUri, iconUrl)
+    } else {
+      tokenIconCache.set(metadataUri, null)
     }
-  } catch (error) {
-    console.error(
-      `Failed to resolve token icon from ${metadataUri}:`,
-      error.message,
-    )
   }
 
-  tokenIconCache.set(metadataUri, iconUrl ?? null)
   return iconUrl
 }
 

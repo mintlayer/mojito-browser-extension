@@ -49,21 +49,41 @@ test('maps ipfs:// icon uris to the ipfs.io gateway', () => {
   expect(img.src).toBe('https://ipfs.io/ipfs/bafyabc/icon.png')
 })
 
-test('falls back to the procedural tile when the icon fails to load', async () => {
+test('cycles gateway mirrors on load failure before falling back to the tile', async () => {
   const { getByTestId, queryByTestId } = render(
     <TokenIcon
       symbol="USDC"
-      iconUri="https://example.com/broken.png"
+      iconUri="https://ipfs.io/ipfs/bafyicon/broken.png"
     />,
   )
 
-  // jsdom may report the load failure on its own; if the img is still
-  // there, drive the failure the way a browser would.
-  const img = queryByTestId('token-icon-image')
-  if (img) fireEvent.error(img)
+  const failUntilTile = async () => {
+    // each error moves to the next gateway mirror; exhausting them removes
+    // the img and restores the procedural tile
+    for (let i = 0; i < 4; i++) {
+      const img = queryByTestId('token-icon-image')
+      if (!img) break
+      fireEvent.error(img)
+      await waitFor(() => {})
+    }
+    await waitFor(() =>
+      expect(queryByTestId('token-icon-image')).not.toBeInTheDocument(),
+    )
+  }
 
-  await waitFor(() =>
-    expect(queryByTestId('token-icon-image')).not.toBeInTheDocument(),
-  )
+  await failUntilTile()
   expect(getByTestId('token-icon')).toHaveTextContent('$')
+
+  const srcAfterFirstError = 'https://dweb.link/ipfs/bafyicon/broken.png'
+  // re-render a fresh instance to verify the first mirror swap specifically
+  const second = render(
+    <TokenIcon
+      symbol="USDC"
+      iconUri="https://ipfs.io/ipfs/bafyicon/broken.png"
+    />,
+  )
+  fireEvent.error(second.getByTestId('token-icon-image'))
+  expect((second.getByTestId('token-icon-image') as HTMLImageElement).src).toBe(
+    srcAfterFirstError,
+  )
 })

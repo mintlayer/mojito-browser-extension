@@ -122,7 +122,7 @@ describe('resolveTokenIcon', () => {
   })
 
   it('resolves tokenIcon from the metadata document and maps ipfs uris', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
+    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
       okJson({
         tokenIcon: 'ipfs://bafyicon/logo.png',
       }),
@@ -131,9 +131,26 @@ describe('resolveTokenIcon', () => {
     await expect(
       resolveTokenIcon('ipfs://bafymetadata/doc.json'),
     ).resolves.toBe('https://ipfs.io/ipfs/bafyicon/logo.png')
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      'https://ipfs.io/ipfs/bafymetadata/doc.json',
+    )
   })
 
-  it('is cached per metadata uri', async () => {
+  it('falls back to the next gateway when one fails', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockRejectedValueOnce(new Error('signal timed out'))
+      .mockResolvedValueOnce(okJson({ tokenIcon: 'ipfs://bafyicon/i.png' }))
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/slow.json'),
+    ).resolves.toBe('https://ipfs.io/ipfs/bafyicon/i.png')
+    expect(fetchSpy.mock.calls[1][0]).toBe(
+      'https://dweb.link/ipfs/bafymetadata/slow.json',
+    )
+  })
+
+  it('is cached once resolved, per metadata uri', async () => {
     const fetchSpy = jest
       .spyOn(global, 'fetch')
       .mockResolvedValue(okJson({ tokenIcon: 'https://x.example/i.png' }))
@@ -144,15 +161,32 @@ describe('resolveTokenIcon', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1)
   })
 
-  it('returns undefined when the document has no icon field or fetch fails', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(okJson({ name: 'no icon' }))
-    await expect(
-      resolveTokenIcon('ipfs://bafymetadata/noicon.json'),
-    ).resolves.toBeUndefined()
+  it('returns undefined — without caching — when every gateway fails', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockRejectedValue(new Error('signal timed out'))
 
-    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('offline'))
     await expect(
       resolveTokenIcon('ipfs://bafymetadata/fail.json'),
     ).resolves.toBeUndefined()
+    // failures are not cached: the next refresh retries
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/fail.json'),
+    ).resolves.toBeUndefined()
+    expect(fetchSpy).toHaveBeenCalledTimes(6) // 3 gateways x 2 attempts
+  })
+
+  it('caches a definitive no-icon answer', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(okJson({ name: 'no icon here' }))
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/noicon.json'),
+    ).resolves.toBeUndefined()
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/noicon.json'),
+    ).resolves.toBeUndefined()
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
   })
 })
