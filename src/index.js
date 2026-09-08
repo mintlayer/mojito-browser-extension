@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useRef } from 'react'
 import ReactDOM from 'react-dom/client'
 import {
   MemoryRouter,
@@ -193,7 +193,37 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses, isAccountUnlocked, navigate])
 
+  // Approvals can arrive while the side panel is already open: react to the
+  // storage write immediately instead of waiting for the next effect run.
+  useEffect(() => {
+    if (!storage?.onChanged) return
+    const listener = (changes, areaName) => {
+      if (areaName !== 'local') return
+      const key = Object.keys(changes).find((k) =>
+        k.startsWith('pendingRequest:'),
+      )
+      if (!key) return
+      const request = changes[key].newValue
+      if (request) handlePendingRequestRef.current(request)
+    }
+    storage.onChanged.addListener(listener)
+    return () => storage.onChanged.removeListener(listener)
+  }, [])
+
+  // keep a stable handle for listeners registered once
+  const handlePendingRequestRef = useRef()
+  handlePendingRequestRef.current = handlePendingRequest
+
+  const handledRequestIds = useRef(new Set())
+
   const handlePendingRequest = (pendingRequest) => {
+    // the mount read and the storage.onChanged listener can both observe the
+    // same request — only route it once
+    if (pendingRequest.requestId) {
+      if (handledRequestIds.current.has(pendingRequest.requestId)) return
+      handledRequestIds.current.add(pendingRequest.requestId)
+    }
+
     const { action, origin, requestId } = pendingRequest
 
     if (action === 'connect') {

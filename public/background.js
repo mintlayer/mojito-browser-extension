@@ -5,11 +5,15 @@
   // Detect browser API (Chrome or Firefox)
   const api = typeof browser !== 'undefined' ? browser : chrome
 
-  // One slot tracks the state of each approval window: connect vs signing.
+  // One slot tracks the state of each approval surface: connect vs signing.
+  // Approvals open either in the browser side panel (panelMode) or, when the
+  // panel cannot be opened, in a popup window — each slot remembers which.
   const createApprovalSlot = () => ({
     id: false,
     opening: false,
     requestId: null,
+    panelMode: false,
+    windowId: null,
   })
 
   const popupSlot = createApprovalSlot()
@@ -102,9 +106,10 @@
 
   // Fails a pending approval: clears the slot and answers the waiting dApp.
   const failSlot = (slot, error) => {
-    const windowId = slot.id
+    const windowId = slot.panelMode ? slot.windowId : slot.id
     slot.id = false
     slot.opening = false
+    slot.panelMode = false
 
     if (!slot.requestId) return
 
@@ -115,9 +120,103 @@
     respond?.({ error })
   }
 
-  // Opens one approval window for the request and keeps the dApp's message
-  // channel open until the wallet answers. Returns true while waiting.
-  const openApprovalWindow = (slot, request, sendResponse) => {
+  // Opens the approval in the browser side panel docked to the dApp's
+  // window. The request is keyed by that window id so the panel reads its
+  // own. Falls back to a popup when the panel cannot be opened.
+  const openPanelApproval = (
+    slot,
+    request,
+    sendResponse,
+    sender,
+    onFallback,
+  ) => {
+    const windowId = sender.tab.windowId
+    slot.panelMode = true
+    slot.windowId = windowId
+    slot.opening = true
+    slot.requestId = request.requestId
+    pendingResponses.set(request.requestId, sendResponse)
+
+    api.storage.local.set(
+      { [pendingRequestKeyFor(windowId)]: { ...request, windowId } },
+      () => {
+        if (api.runtime.lastError) {
+          console.error('[Mintlayer] Storage set error:', api.runtime.lastError)
+          failSlot(
+            slot,
+            errorOf(
+              'STORAGE_ERROR',
+              'Could not create the wallet request. Please try again.',
+            ),
+          )
+          return
+        }
+
+        api.sidePanel
+          .open({ tabId: sender.tab.id })
+          .then(() => {
+            slot.opening = false
+          })
+          .catch((error) => {
+            console.error(
+              '[Mojito] sidePanel.open failed, using a popup window:',
+              error,
+            )
+            // roll back the panel registration and use a popup instead
+            pendingResponses.delete(request.requestId)
+            slot.requestId = null
+            slot.panelMode = false
+            slot.windowId = null
+            // the popup fallback re-opens the slot: without this reset the
+            // fallback hits openPopupApproval's busy guard and the dApp is
+            // answered REQUEST_IN_PROGRESS instead of getting a window
+            slot.opening = false
+            api.storage.local.remove(pendingRequestKeyFor(windowId))
+            onFallback()
+          })
+      },
+    )
+  }
+
+  // Chooses the approval surface: side panel for the dApp's window when the
+  // browser supports it, popup window otherwise. Returns true while the
+  // dApp's message channel stays open.
+  const openApprovalTarget = (slot, request, sendResponse, sender) => {
+    const canUsePanel =
+      Boolean(api.sidePanel?.open) &&
+      sender?.tab?.id != null &&
+      sender?.tab?.windowId != null
+
+    if (!canUsePanel) {
+      return openPopupApproval(slot, request, sendResponse)
+    }
+
+    const busy =
+      slot.opening ||
+      (typeof slot.id === 'number' && !slot.panelMode) ||
+      (slot.panelMode && slot.requestId != null)
+
+    if (busy) {
+      // surface the pending request again
+      api.sidePanel.open({ tabId: sender.tab.id }).catch(() => {})
+      sendResponse({
+        error: errorOf(
+          'REQUEST_IN_PROGRESS',
+          'An approval is already pending. Complete or reject it first.',
+        ),
+      })
+      return false
+    }
+
+    openPanelApproval(slot, request, sendResponse, sender, () => {
+      openPopupApproval(slot, request, sendResponse)
+    })
+    return true
+  }
+
+  // Popup fallback: opens one approval window for the request and keeps the
+  // dApp's message channel open until the wallet answers.
+  const openPopupApproval = (slot, request, sendResponse) => {
     if (typeof slot.id === 'number' || slot.opening) {
       if (typeof slot.id === 'number') focusWindow(slot.id)
       sendResponse({
@@ -194,6 +293,17 @@
     const respond = pendingResponses.get(requestId)
     pendingResponses.delete(requestId)
     clearPendingRequest(windowId)
+
+    // release the owning approval slot (panel-mode slots have no
+    // window-removed event to reset them)
+    for (const slot of [connectSlot, popupSlot]) {
+      if (slot.requestId === requestId) {
+        slot.id = false
+        slot.opening = false
+        slot.panelMode = false
+        slot.requestId = null
+      }
+    }
 
     if (!respond) {
       console.warn('[Mintlayer] Response for unknown request:', requestId)
@@ -289,7 +399,7 @@
         return false
       }
 
-      return openApprovalWindow(
+      return openApprovalTarget(
         connectSlot,
         {
           origin,
@@ -298,6 +408,7 @@
           action: 'connect',
         },
         sendResponse,
+        sender,
       )
     } else if (message.method === 'signTransaction') {
       if (!connectedSites[origin]) {
@@ -310,7 +421,7 @@
         return false
       }
 
-      return openApprovalWindow(
+      return openApprovalTarget(
         popupSlot,
         {
           origin,
@@ -323,6 +434,7 @@
           network: connectedSites[origin]?.network,
         },
         sendResponse,
+        sender,
       )
     } else if (message.method === 'signChallenge') {
       if (!connectedSites[origin]) {
@@ -335,7 +447,7 @@
         return false
       }
 
-      return openApprovalWindow(
+      return openApprovalTarget(
         popupSlot,
         {
           origin,
@@ -345,6 +457,7 @@
           network: connectedSites[origin]?.network,
         },
         sendResponse,
+        sender,
       )
     } else if (message.method === 'version') {
       sendResponse({ result: api.runtime.getManifest().version })
