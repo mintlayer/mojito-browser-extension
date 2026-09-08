@@ -43,7 +43,8 @@
     "pretty-quick-check": "pretty-quick --check",
     "pretty-quick-check-branch": "pretty-quick --check --branch main",
     "prepare": "husky install",
-    "version": "node src/version/version-manifest.js && node src/version/version-mojito.js"
+    "version": "node src/version/version-manifest.js && node src/version/version-mojito.js",
+    "audit:imports": "node scripts/audit-imports.js"
   },
   "browserslist": {
     "production": [

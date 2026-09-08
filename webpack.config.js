@@ -1,4 +1,5 @@
 const path = require('path')
+const fs = require('fs')
 const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
@@ -60,7 +61,9 @@ module.exports = (env, argv) => {
       clean: true,
     },
 
-    devtool: isDevelopment ? 'cheap-module-source-map' : 'source-map',
+    // No source maps in production: shipping full unminified sources with a
+    // wallet package only helps attackers.
+    devtool: isDevelopment ? 'cheap-module-source-map' : false,
 
     devServer: {
       static: {
@@ -251,6 +254,21 @@ module.exports = (env, argv) => {
             to: '',
             globOptions: {
               ignore: ['**/index.html'],
+            },
+          },
+          {
+            // Generate manifest.json for local/unpacked builds. When
+            // manifest-key.txt is present, its public key keeps the Chrome
+            // Web Store extension ID (and thus the extension storage) stable.
+            from: 'public/manifestDefault.json',
+            to: 'manifest.json',
+            transform(content) {
+              const manifest = JSON.parse(content)
+              const keyPath = path.resolve(__dirname, 'manifest-key.txt')
+              if (fs.existsSync(keyPath)) {
+                manifest.key = fs.readFileSync(keyPath, 'utf8').trim()
+              }
+              return JSON.stringify(manifest, null, 2)
             },
           },
         ],
