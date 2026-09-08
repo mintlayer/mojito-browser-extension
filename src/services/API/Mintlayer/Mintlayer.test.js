@@ -116,64 +116,96 @@ describe('resolveTokenIcon', () => {
     ok: true,
     json: async () => body,
   })
+  const okImage = () => ({
+    ok: true,
+    headers: { get: () => 'image/png' },
+    blob: async () => ({ size: 1024, type: 'image/png' }),
+  })
+
+  beforeAll(() => {
+    global.URL.createObjectURL = jest.fn(() => 'blob:mock-icon')
+  })
 
   afterEach(() => {
     jest.restoreAllMocks()
   })
 
-  it('resolves tokenIcon from the metadata document and maps ipfs uris', async () => {
-    const fetchSpy = jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValue(okJson({ tokenIcon: 'ipfs://bafyicon/logo.png' }))
+  // fetch mock: bafymetadata* answers the metadata JSON, bafyicon* answers
+  // with image bytes
+  const mockGateways = ({ metadata, metadataFail = false, iconFail = false }) =>
+    jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
+      const target = String(url)
+      if (target.includes('bafyicon')) {
+        if (iconFail) throw new Error('signal timed out')
+        return okImage()
+      }
+      if (target.includes('bafymetadata')) {
+        if (metadataFail) throw new Error('signal timed out')
+        return okJson(metadata)
+      }
+      throw new Error(`unexpected url ${target}`)
+    })
 
-    await expect(
-      resolveTokenIcon('ipfs://bafymetadata/doc.json'),
-    ).resolves.toBe('https://ipfs.io/ipfs/bafyicon/logo.png')
-    // all gateways are raced, starting with ipfs.io
-    expect(fetchSpy.mock.calls[0][0]).toBe(
-      'https://ipfs.io/ipfs/bafymetadata/doc.json',
-    )
-    expect(fetchSpy.mock.calls[1][0]).toBe(
-      'https://dweb.link/ipfs/bafymetadata/doc.json',
-    )
+  it('resolves the metadata, fetches the icon bytes and returns a blob url', async () => {
+    const fetchSpy = mockGateways({
+      metadata: { tokenIcon: 'ipfs://bafyicon/logo.png' },
+    })
+
+    const url = await resolveTokenIcon('ipfs://bafymetadata/doc.json')
+
+    expect(url).toBe('blob:mock-icon')
+    expect(global.URL.createObjectURL).toHaveBeenCalled()
+    // 3 gateways raced for the metadata + 3 for the icon bytes
+    expect(
+      fetchSpy.mock.calls.filter(([u]) => String(u).includes('bafymetadata')),
+    ).toHaveLength(3)
+    expect(
+      fetchSpy.mock.calls.filter(([u]) => String(u).includes('bafyicon')),
+    ).toHaveLength(3)
+  })
+
+  it('is fully cached after the first resolution (zero gateway traffic)', async () => {
+    const fetchSpy = mockGateways({
+      metadata: { tokenIcon: 'ipfs://bafyicon/logo.png' },
+    })
+
+    await resolveTokenIcon('ipfs://bafymetadata/cached.json')
+    const callsAfterFirst = fetchSpy.mock.calls.length
+    await resolveTokenIcon('ipfs://bafymetadata/cached.json')
+
+    expect(fetchSpy.mock.calls.length).toBe(callsAfterFirst)
   })
 
   it('races gateways — a dead one loses the race without blocking', async () => {
-    const fetchSpy = jest
-      .spyOn(global, 'fetch')
-      .mockImplementation(async (url) => {
-        if (String(url).startsWith('https://ipfs.io/')) {
-          throw new Error('signal timed out')
-        }
+    const fetchSpy = mockGateways({
+      metadata: { tokenIcon: 'ipfs://bafyicon/i.png' },
+    })
+    // make the ipfs.io candidate fail for every request
+    fetchSpy.mockImplementation(async (url) => {
+      const target = String(url)
+      if (target.startsWith('https://ipfs.io/')) {
+        throw new Error('signal timed out')
+      }
+      if (target.includes('bafyicon')) return okImage()
+      if (target.includes('bafymetadata')) {
         return okJson({ tokenIcon: 'ipfs://bafyicon/i.png' })
-      })
+      }
+      throw new Error(`unexpected url ${target}`)
+    })
 
     await expect(
       resolveTokenIcon('ipfs://bafymetadata/slow.json'),
-    ).resolves.toBe('https://ipfs.io/ipfs/bafyicon/i.png')
+    ).resolves.toBe('blob:mock-icon')
 
-    // invariant: a raw ipfs:// uri is never fetched — only gateway URLs
+    // invariant: only gateway https urls are requested, never raw ipfs://
     for (const [candidate] of fetchSpy.mock.calls) {
       expect(String(candidate)).toMatch(/^https:\/\//)
       expect(String(candidate)).not.toMatch(/^ipfs:\/\//)
     }
   })
 
-  it('is cached once resolved, per metadata uri', async () => {
-    const fetchSpy = jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValue(okJson({ tokenIcon: 'https://x.example/i.png' }))
-
-    await resolveTokenIcon('ipfs://bafymetadata/cached.json')
-    await resolveTokenIcon('ipfs://bafymetadata/cached.json')
-
-    expect(fetchSpy).toHaveBeenCalledTimes(3) // 3 gateways raced once
-  })
-
   it('caches a definitive no-icon answer with a TTL', async () => {
-    const fetchSpy = jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValue(okJson({ name: 'no icon here' }))
+    const fetchSpy = mockGateways({ metadata: { name: 'no icon here' } })
 
     await expect(
       resolveTokenIcon('ipfs://bafymetadata/noicon.json'),
@@ -181,8 +213,8 @@ describe('resolveTokenIcon', () => {
     await expect(
       resolveTokenIcon('ipfs://bafymetadata/noicon.json'),
     ).resolves.toBeUndefined()
-    // 3 gateways raced once; the negative answer is cached for 5 minutes
-    expect(fetchSpy).toHaveBeenCalledTimes(3)
+    // 3 gateways raced once for the metadata; the negative answer is cached
+    expect(fetchSpy.mock.calls.length).toBe(3)
   })
 
   it('does not cache total gateway failures — the next refresh retries', async () => {
@@ -196,6 +228,18 @@ describe('resolveTokenIcon', () => {
     await expect(
       resolveTokenIcon('ipfs://bafymetadata/fail.json'),
     ).resolves.toBeUndefined()
-    expect(fetchSpy).toHaveBeenCalledTimes(6) // 3 gateways x 2 attempts
+    // 3 gateway attempts per resolution, nothing cached
+    expect(fetchSpy).toHaveBeenCalledTimes(6)
+  })
+
+  it('rejects non-ipfs metadata uris without any network request', async () => {
+    const fetchSpy = jest.spyOn(global, 'fetch')
+    await expect(
+      resolveTokenIcon('https://evil.example/metadata.json'),
+    ).resolves.toBeUndefined()
+    await expect(
+      resolveTokenIcon('http://localhost:8080/metadata.json'),
+    ).resolves.toBeUndefined()
+    expect(fetchSpy).not.toHaveBeenCalled()
   })
 })
