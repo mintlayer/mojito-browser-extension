@@ -51,7 +51,7 @@
     "default_panel": "index.html"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; style-src-elem 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; img-src 'self' data: https:; style-src 'self'; font-src 'self'; style-src-elem 'self'"
   },
   "commands": {
     "_execute_action": {
