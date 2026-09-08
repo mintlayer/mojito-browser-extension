@@ -51,6 +51,10 @@ const SettingsConnections = () => {
     return () => storage.onChanged.removeListener(onStorageChanged)
   }, [readSites])
 
+  // SECURITY: revoking a connection is a permission revocation — it must
+  // immediately delete the grant (storage + the service worker's session
+  // map) and propagate to the site's open tabs. Never leave a half-removed
+  // grant behind.
   const disconnectHandler = (origin: string) => {
     if (!runtime) return
 

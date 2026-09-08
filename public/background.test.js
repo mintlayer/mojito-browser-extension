@@ -107,6 +107,11 @@ describe('background service worker', () => {
       sidePanel: {
         open: jest.fn().mockResolvedValue(undefined),
       },
+      // used only by notifyOriginRevoked (revocation broadcast to open tabs)
+      tabs: {
+        query: jest.fn((query, cb) => cb([{ id: 1 }, { id: 2 }])),
+        sendMessage: jest.fn(),
+      },
     }
 
     loadBackground()
@@ -533,6 +538,205 @@ describe('background service worker', () => {
       expect(second.keptOpen).toBe(false)
       // the busy answer must not have opened any approval window
       expect(createdWindows).toHaveLength(0)
+    })
+
+    // Chrome silently no-ops sidePanel.open() without a user gesture: the
+    // promise resolves but nothing opens. The background therefore waits for
+    // an `approvalDisplayed` ack from the panel and falls back to a popup
+    // when it does not arrive within 2s.
+    describe('ack-or-fallback (silent sidePanel.open no-op)', () => {
+      const flushMicrotasks = async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+        await Promise.resolve()
+      }
+
+      it('cancels the popup fallback when the panel acks approvalDisplayed in time', async () => {
+        jest.useFakeTimers()
+        try {
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            tabDappSender,
+          )
+          expect(connect.keptOpen).toBe(true)
+
+          // let sidePanel.open resolve
+          await flushMicrotasks()
+          expect(createdWindows).toHaveLength(0)
+
+          // the panel confirms it rendered the approval
+          dispatch(
+            { action: 'approvalDisplayed', requestId: 'r1' },
+            extensionSender,
+          )
+
+          // the fallback window would have fired within this window
+          jest.advanceTimersByTime(2000)
+          await flushMicrotasks()
+
+          // NO popup was created
+          expect(createdWindows).toHaveLength(0)
+          expect(storageData['pendingRequest:700']).toBeUndefined()
+          // the panel registration survives: the panel owns this request now
+          expect(storageData['pendingRequest:3']).toMatchObject({
+            action: 'connect',
+            requestId: 'r1',
+          })
+          // the dApp's channel is still open, awaiting the panel's decision
+          expect(connect.reply.current).toBeUndefined()
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('falls back to a popup window when no ack arrives within 2s', async () => {
+        jest.useFakeTimers()
+        try {
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            tabDappSender,
+          )
+          expect(connect.keptOpen).toBe(true)
+
+          await flushMicrotasks()
+          // sidePanel.open resolved, but the panel never acked
+          expect(createdWindows).toHaveLength(0)
+
+          jest.advanceTimersByTime(2000)
+          await flushMicrotasks()
+
+          // the panel registration was rolled back...
+          expect(storageData['pendingRequest:3']).toBeUndefined()
+          // ...and a POPUP fallback was created, re-keyed for its window
+          expect(createdWindows).toHaveLength(1)
+          expect(storageData['pendingRequest:700']).toMatchObject({
+            action: 'connect',
+            origin: 'https://bridge.example',
+            requestId: 'r1',
+          })
+          // the ORIGINAL dApp channel is still the one being answered
+          expect(connect.reply.current).toBeUndefined()
+
+          // approving in the popup resolves the original channel
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: 'r1',
+              origin: 'https://bridge.example',
+              windowId: 700,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(connect.reply.current.result).toEqual(sessionData)
+          expect(storageData['pendingRequest:700']).toBeUndefined()
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('ignores an approvalDisplayed ack forged from a web page sender', async () => {
+        jest.useFakeTimers()
+        try {
+          dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            tabDappSender,
+          )
+
+          await flushMicrotasks()
+
+          // a dApp page tries to forge the panel's "displayed" ack
+          dispatch({ action: 'approvalDisplayed', requestId: 'r1' }, dappSender)
+
+          jest.advanceTimersByTime(2000)
+          await flushMicrotasks()
+
+          // the forged ack was ignored: the popup fallback happened anyway
+          expect(createdWindows).toHaveLength(1)
+          expect(storageData['pendingRequest:700']).toMatchObject({
+            requestId: 'r1',
+          })
+          expect(storageData['pendingRequest:3']).toBeUndefined()
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+    })
+  })
+
+  describe('revocation propagation (disconnectSite)', () => {
+    const connectAndApprove = () => {
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: 'r1',
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+    }
+
+    it('broadcasts MOJITO_SESSION_REVOKED to every open tab and removes the grant', () => {
+      connectAndApprove()
+
+      const { reply } = dispatch(
+        { action: 'disconnectSite', origin: 'https://bridge.example' },
+        extensionSender,
+      )
+
+      expect(reply.current.result).toEqual({
+        origin: 'https://bridge.example',
+      })
+      // every tab is notified so no page keeps acting on the dead grant
+      expect(global.chrome.tabs.query).toHaveBeenCalledWith(
+        {},
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      // and the grant is durably gone
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toBeUndefined()
+    })
+
+    it('a revoked site can never shortcut-connect again (bypass regression)', () => {
+      connectAndApprove()
+      dispatch(
+        { action: 'disconnectSite', origin: 'https://bridge.example' },
+        extensionSender,
+      )
+      expect(storageData.connectedSites).toEqual({})
+
+      const reconnect = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        dappSender,
+      )
+
+      // NOT the stored session: the channel stays open for a fresh approval
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
+      // a NEW approval window was created (the first was 700)
+      expect(createdWindows).toHaveLength(2)
+      expect(storageData['pendingRequest:701']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+        requestId: 'r2',
+      })
     })
   })
 })

@@ -24,10 +24,14 @@ Object.defineProperty(MessageEvent.prototype, 'source', {
 const sendMessageCalls = []
 let messageListeners = []
 let addSpy
+// Listeners the content script registers on chrome.runtime.onMessage
+// (currently the MOJITO_SESSION_REVOKED relay), so tests can invoke them.
+let onMessageListeners = []
 
 const setup = ({ sendMessageImpl }) => {
   sendMessageCalls.length = 0
   global.browser = undefined
+  onMessageListeners = []
   global.chrome = {
     runtime: {
       id: 'ext-id',
@@ -36,6 +40,9 @@ const setup = ({ sendMessageImpl }) => {
       sendMessage: (message, callback) => {
         sendMessageCalls.push(message)
         sendMessageImpl(message, callback)
+      },
+      onMessage: {
+        addListener: jest.fn((listener) => onMessageListeners.push(listener)),
       },
       lastError: null,
     },
@@ -171,6 +178,7 @@ describe('runtime lastError path', () => {
           })
           callback(undefined)
         },
+        onMessage: { addListener: jest.fn() },
         lastError: null,
       },
     }
@@ -226,5 +234,76 @@ describe('reload ownership', () => {
     expect(responses).toHaveLength(1)
     expect(responses[0].result).toEqual({ from: 'new' })
     window.removeEventListener('message', listener)
+  })
+})
+
+describe('session revocation relay', () => {
+  const nextDisconnect = () =>
+    new Promise((resolve) => {
+      const listener = (event) => {
+        if (
+          event.data?.type === 'MINTLAYER_EVENT' &&
+          event.data.event === 'disconnect'
+        ) {
+          window.removeEventListener('message', listener)
+          resolve(event.data)
+        }
+      }
+      window.addEventListener('message', listener)
+    })
+
+  it('relays MOJITO_SESSION_REVOKED from the background to the page as a disconnect event', async () => {
+    setup({
+      sendMessageImpl: (_message, callback) => {
+        callback({ result: null })
+      },
+    })
+
+    // The content script registered exactly one runtime.onMessage listener
+    expect(onMessageListeners).toHaveLength(1)
+
+    const incoming = nextDisconnect()
+    onMessageListeners[0]({
+      type: 'MOJITO_SESSION_REVOKED',
+      origin: window.location.origin,
+    })
+
+    await expect(incoming).resolves.toMatchObject({
+      type: 'MINTLAYER_EVENT',
+      event: 'disconnect',
+      data: { origin: window.location.origin },
+    })
+  })
+
+  it('ignores revocation messages for other origins or of other types', async () => {
+    setup({
+      sendMessageImpl: (_message, callback) => {
+        callback({ result: null })
+      },
+    })
+
+    const disconnects = []
+    const listener = (event) => {
+      if (
+        event.data?.type === 'MINTLAYER_EVENT' &&
+        event.data.event === 'disconnect'
+      ) {
+        disconnects.push(event.data)
+      }
+    }
+    window.addEventListener('message', listener)
+
+    onMessageListeners[0]({
+      type: 'MOJITO_SESSION_REVOKED',
+      origin: 'https://other-origin.example',
+    })
+    onMessageListeners[0]({
+      type: 'SOMETHING_ELSE',
+      origin: window.location.origin,
+    })
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    window.removeEventListener('message', listener)
+
+    expect(disconnects).toHaveLength(0)
   })
 })

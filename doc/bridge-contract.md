@@ -54,6 +54,21 @@ Notes:
   "no auto-restore").
 - Restores use unique request ids; concurrent `restore()` calls all resolve.
 
+## Connection lifecycle / revocation (authoritative)
+
+- A grant is created only by explicit user approval and is stored per-origin.
+- Revoking it — from the wallet Settings, via `window.mojito.disconnect()`,
+  or on wallet lock/logout — is **immediate and persistent**: the wallet
+  deletes the session, and open tabs for that origin receive
+  `MINTLAYER_EVENT: disconnect`.
+- Bridges MUST treat that event as authoritative: drop every cached
+  session/address from the SDK client. Do not trust an in-memory client
+  state that predates the revocation (this caused an incident where the
+  bridge "connected without authorization" from a stale client).
+- Before performing wallet-dependent actions after a long-idle period,
+  verify with `client.isConnected()` **plus** a fresh
+  `window.mojito.request('checkConnection')`.
+
 ## Error model
 
 All dApp-facing errors are `{ code, message }`; `window.mojito` rejects with

@@ -1,6 +1,22 @@
 /* eslint-disable no-undef */
 /* global chrome */
 
+/**
+ * SECURITY CONTRACT — dApp connections are PERMISSION-LEVEL AUTHORIZATIONS.
+ *
+ * - A grant is created ONLY by an explicit user approval (handlePopupResponse
+ *   with a connect result) and stored per-origin in `connectedSites`.
+ * - A grant is revoked IMMEDIATELY and durably on disconnect — from the
+ *   dApp itself (`disconnect` method), from the wallet settings
+ *   (`disconnectSite`), or on wallet lock/logout — and every revocation is
+ *   persisted to storage and PROPAGATED to the site's open tabs
+ *   (notifyOriginRevoked), so no page keeps acting on a dead grant.
+ * - No code path may return wallet addresses (getSession/connect/
+ *   checkConnection/signTransaction/signChallenge) without a live grant.
+ * - Any change to these handlers must keep this invariant and add a
+ *   regression test (see public/background.test.js).
+ */
+
 ;(function () {
   // Detect browser API (Chrome or Firefox)
   const api = typeof browser !== 'undefined' ? browser : chrome
@@ -89,6 +105,33 @@
   // "install the wallet" hint when an error message matches /mojito/i.
   const errorOf = (code, message) => ({ code, message })
 
+  // Side-panel approvals wait a short moment for the panel to confirm it
+  // actually rendered the request. Chrome silently no-ops sidePanel.open()
+  // when it is called without a user gesture — without this ack-or-fallback
+  // the dApp would hang with NO approval surface at all.
+  const PANEL_ACK_TIMEOUT_MS = 2000
+  const approvalAcks = new Map() // requestId -> timeout id
+
+  // Revocation must reach open dApp tabs: broadcast to every tab, the
+  // content script filters by its own origin. Rare + tiny, so spraying is
+  // acceptable and needs no extra permissions.
+  const notifyOriginRevoked = (origin) => {
+    if (!origin || !api.tabs?.query || !api.tabs?.sendMessage) return
+    api.tabs.query({}, (tabs) => {
+      if (api.runtime.lastError) return
+      for (const tab of tabs) {
+        if (typeof tab.id !== 'number') continue
+        api.tabs.sendMessage(
+          tab.id,
+          { type: 'MOJITO_SESSION_REVOKED', origin },
+          () => {
+            // no content script in that tab — expected, ignore
+          },
+        )
+      }
+    })
+  }
+
   // Approval responses and disconnections must come from the wallet's own
   // pages, never from a content script injected into a website.
   const isFromExtensionPage = (sender) =>
@@ -152,9 +195,29 @@
           return
         }
 
+        // Chrome silently no-ops sidePanel.open() without a user gesture:
+        // the promise resolves but nothing opens. If the panel does not
+        // confirm it rendered the approval within the timeout, fall back to
+        // a popup window so the dApp always gets an approval surface.
+        const ackTimer = setTimeout(() => {
+          approvalAcks.delete(request.requestId)
+          console.error(
+            '[Mojito] side panel did not display the approval — using a popup window',
+          )
+          pendingResponses.delete(request.requestId)
+          slot.requestId = null
+          slot.panelMode = false
+          slot.windowId = null
+          api.storage.local.remove(pendingRequestKeyFor(windowId))
+          onFallback()
+        }, PANEL_ACK_TIMEOUT_MS)
+        approvalAcks.set(request.requestId, ackTimer)
+
         api.sidePanel
           .open({ tabId: sender.tab.id })
           .then(() => {
+            // the panel displayed the approval; keep the slot open until
+            // the response arrives
             slot.opening = false
           })
           .catch((error) => {
@@ -162,6 +225,8 @@
               '[Mojito] sidePanel.open failed, using a popup window:',
               error,
             )
+            clearTimeout(approvalAcks.get(request.requestId))
+            approvalAcks.delete(request.requestId)
             // roll back the panel registration and use a popup instead
             pendingResponses.delete(request.requestId)
             slot.requestId = null
@@ -363,6 +428,21 @@
       return false
     }
 
+    if (message.action === 'approvalDisplayed') {
+      // the panel confirmed it rendered the request: cancel the popup
+      // fallback for that request
+      if (!isFromExtensionPage(sender)) return false
+      const timer = approvalAcks.get(message.requestId)
+      if (timer) {
+        clearTimeout(timer)
+        approvalAcks.delete(message.requestId)
+      }
+      for (const slot of [connectSlot, popupSlot]) {
+        if (slot.requestId === message.requestId) slot.opening = false
+      }
+      return false
+    }
+
     if (message.action === 'disconnectSite') {
       if (!isFromExtensionPage(sender)) return false
 
@@ -380,6 +460,7 @@
           sendResponse({ error: api.runtime.lastError.message })
           return
         }
+        notifyOriginRevoked(targetOrigin)
         sendResponse({ result: { origin: targetOrigin } })
       })
       return true
@@ -478,6 +559,7 @@
             })
             return
           }
+          notifyOriginRevoked(origin)
           sendResponse({ result: true })
         })
         return true

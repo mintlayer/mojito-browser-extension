@@ -1,4 +1,10 @@
 // mojito.js — injected SDK
+//
+// SECURITY NOTE: a wallet connection is a PERMISSION-LEVEL AUTHORIZATION.
+// This provider must never return addresses without a live grant, and when
+// the wallet revokes (settings disconnect / dApp disconnect) this provider
+// clears its cached state and notifies the page so no stale session keeps
+// acting as connected.
 
 // eslint-disable-next-line no-extra-semi
 ;(function () {
@@ -171,5 +177,17 @@
   if (!window.mojito) {
     window.mojito = mojito
     console.log('[Mojito] SDK injected')
+
+    // A revoked grant clears this provider's cached addresses immediately,
+    // whether or not the page subscribed to the event.
+    window.addEventListener('message', (event) => {
+      if (event.source !== window) return
+      if (
+        event.data?.type === 'MINTLAYER_EVENT' &&
+        event.data.event === 'disconnect'
+      ) {
+        mojito.connectedAddresses = []
+      }
+    })
   }
 })()

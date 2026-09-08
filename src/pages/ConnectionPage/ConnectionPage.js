@@ -58,6 +58,10 @@ export const ConnectionPage = () => {
 
   const connectButtonExtraStyles = [styles.actionButton]
 
+  // SECURITY: approving here creates a PERMISSION-LEVEL grant — the site
+  // receives wallet addresses and public keys and can request signatures.
+  // Only include data the site explicitly asked for, and remember every
+  // grant is revocable in Settings → Connections.
   const handleConnect = () => {
     if (!hasWalletAddresses) return
 

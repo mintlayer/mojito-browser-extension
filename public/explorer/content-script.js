@@ -64,6 +64,22 @@
     console.error('[Mojito] Extension context unavailable:', error.message)
   }
 
+  // Revocation propagation: the wallet notifies this tab when its origin's
+  // grant is revoked (settings disconnect / dApp disconnect). Relay it to
+  // the page so its SDK client drops the stale session.
+  api.runtime.onMessage.addListener((message) => {
+    if (
+      message?.type === 'MOJITO_SESSION_REVOKED' &&
+      message.origin === window.location.origin
+    ) {
+      postToPage({
+        type: 'MINTLAYER_EVENT',
+        event: 'disconnect',
+        data: { origin: message.origin },
+      })
+    }
+  })
+
   window.addEventListener('message', (event) => {
     if (event.source !== window || event.data?.type !== 'MINTLAYER_REQUEST') {
       return
