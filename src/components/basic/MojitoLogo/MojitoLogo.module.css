@@ -1,0 +1,8 @@
+.orbit {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px dashed oklch(0.82 0.16 70 / 0.35);
+  animation: be-spin-slow 18s linear infinite;
+  pointer-events: none;
+}

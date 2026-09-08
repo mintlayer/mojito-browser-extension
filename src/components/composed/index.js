@@ -16,7 +16,6 @@ import FeeFieldML from './FeeField/FeeFieldML'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import WalletList from './WalletList/WalletList'
 import AddWallet from './AddWallet/AddWallet'
-import CurrentStaking from './CurrentStaking/CurrentStaking'
 import HelpTooltip from './HelpTooltip/HelpTooltip'
 import RestoreSeedField from './RestoreSeedField/RestoreSeedField'
 import UpdateButton from './UpdateButton/UpdateButton'
@@ -33,6 +32,9 @@ import WalletHeader from './WalletHeader/WalletHeader'
 import Sidebar from './Sidebar/Sidebar.tsx'
 import SendPageHeader from './SendPageHeader/SendPageHeader'
 import WalletCard from './WalletCard/WalletCard'
+import BeSheet from './BeSheet/BeSheet'
+import TxRow from './TxRow/TxRow'
+import AssetRow from './AssetRow/AssetRow'
 
 export {
   Balance,
@@ -53,7 +55,6 @@ export {
   ConnectionErrorPopup,
   WalletList,
   AddWallet,
-  CurrentStaking,
   HelpTooltip,
   RestoreSeedField,
   UpdateButton,
@@ -70,4 +71,7 @@ export {
   Sidebar,
   SendPageHeader,
   WalletCard,
+  BeSheet,
+  TxRow,
+  AssetRow,
 }

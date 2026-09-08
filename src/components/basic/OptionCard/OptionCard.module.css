@@ -4,7 +4,7 @@
   gap: 8px;
   padding: 24px;
   border-radius: 20px;
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   border: 1px solid rgba(var(--color-light-gray), 0.4);
   cursor: pointer;
   transition:
@@ -37,7 +37,7 @@
 .title {
   font-size: 16px;
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .description {

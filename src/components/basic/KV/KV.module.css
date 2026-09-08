@@ -1,0 +1,33 @@
+.kvCard {
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
+  border-radius: 14px;
+  padding: 4px 14px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--be-line-soft);
+}
+
+.key {
+  font-size: var(--font-size-sm);
+  color: var(--be-text-2);
+  flex-shrink: 0;
+}
+
+.value {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--be-text-0);
+  text-align: right;
+  word-break: break-all;
+  font-variant-numeric: tabular-nums;
+}

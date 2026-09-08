@@ -1,0 +1,18 @@
+.qr {
+  margin: 0 auto;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--be-text-3);
+  background: repeating-linear-gradient(
+    45deg,
+    oklch(1 0 0 / 0.05),
+    oklch(1 0 0 / 0.05) 6px,
+    oklch(1 0 0 / 0.02) 6px,
+    oklch(1 0 0 / 0.02) 12px
+  );
+  border: 1px solid var(--be-line);
+}

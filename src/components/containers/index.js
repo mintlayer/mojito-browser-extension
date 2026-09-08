@@ -23,10 +23,6 @@ import OrderDetails from './Wallet/Orders/OrderDetails/OrderDetails'
 import SendBtcTransaction from './SendTransaction/SendBtcTransaction'
 import SendMlTransaction from './SendTransaction/SendMlTransaction'
 
-import CryptoSharesChart from './Dashboard/CryptoSharesChart'
-import Statistics from './Dashboard/Statistics'
-import CryptoList from './Dashboard/CryptoList'
-
 import DeleteAccount from './DeleteAccount/DeleteAccount'
 import SettingsDelete from './Settings/SettingsDelete/SettingsDelete'
 import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet.tsx'
@@ -63,13 +59,6 @@ const Login = {
   SetPassword,
 }
 
-/* istanbul ignore next */
-const Dashboard = {
-  CryptoSharesChart,
-  Statistics,
-  CryptoList,
-}
-
 const Settings = {
   SettingsAbout,
   SettingsTestnet,
@@ -103,7 +92,6 @@ export {
   Login,
   SendBtcTransaction,
   SendMlTransaction,
-  Dashboard,
   Settings,
   Message,
   SignTransaction,
