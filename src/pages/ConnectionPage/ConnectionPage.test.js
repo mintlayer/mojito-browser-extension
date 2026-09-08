@@ -156,6 +156,37 @@ describe('ConnectionPage', () => {
     ])
   })
 
+  it('omits the bitcoin block when the site never asked for the bitcoin permission', () => {
+    const addresses = {
+      mlAddresses: {
+        mlReceivingAddresses: ['mtc1qnew'],
+        mlChangeAddresses: ['mtc1qnewc'],
+        mlReceivingPublicKeys: [{ 1: 2 }],
+        mlChangePublicKeys: [{ 5: 6 }],
+      },
+      btcAddresses: {
+        btcReceivingAddresses: [{ bc1qnew: { pubkey: { 1: 2 } } }],
+        btcChangeAddresses: [{ bc1qnewc: { pubkey: { 3: 4 } } }],
+      },
+    }
+
+    // no 'bitcoin' entry in the requested permissions
+    renderWithAddresses(addresses, {
+      request: {
+        origin: 'https://bridge.example',
+        requestId: 'r1',
+        permissions: [],
+      },
+    })
+
+    fireEvent.click(screen.getByTestId('connect-button'))
+
+    const payload = sendPopupResponse.mock.calls[0][0]
+    // the wallet must not silently hand out bitcoin addresses/keys
+    expect(payload.result.addressesByChain.bitcoin).toBeUndefined()
+    expect(payload.result.address.mainnet.receiving).toEqual(['mtc1qnew'])
+  })
+
   it('omits the bitcoin block when no BTC address data exists', () => {
     const addresses = {
       mlAddresses: { mlReceivingAddresses: ['mtc1qonlyml'] },

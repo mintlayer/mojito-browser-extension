@@ -30,7 +30,6 @@ export const ConnectionPage = () => {
   const { state: external_state } = useLocation()
   const { addresses } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
-  const [provideBitcoinData, setProvideBitcoinData] = useState(true)
 
   const state = external_state
   const origin = state?.request?.origin || UNKNOWN_WEBSITE
@@ -38,6 +37,11 @@ export const ConnectionPage = () => {
 
   const requireBTC = permissions.includes('bitcoin')
   const isUnknownOrigin = origin === UNKNOWN_WEBSITE
+
+  // Only include Bitcoin data when the site actually asked for the
+  // 'bitcoin' permission AND the user keeps the toggle on — the toggle only
+  // renders for such sites, so the default must match.
+  const [provideBitcoinData, setProvideBitcoinData] = useState(requireBTC)
 
   const ml = addresses?.mlAddresses ?? {}
   const btc = addresses?.btcAddresses ?? {}
