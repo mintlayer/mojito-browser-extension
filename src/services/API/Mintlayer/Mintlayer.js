@@ -347,11 +347,6 @@ const IPFS_GATEWAYS = [
   'https://dweb.link/ipfs',
   'https://w3s.link/ipfs',
 ]
-const IPFS_GATEWAY = IPFS_GATEWAYS[0]
-
-const fromIpfs = (uri) =>
-  uri.startsWith('ipfs://') ? uri.replace('ipfs://', `${IPFS_GATEWAY}/`) : uri
-
 // Token metadata is issuer-controlled: only ipfs:// metadata documents are
 // resolved (through the fixed gateway list) and only gateway-hosted icons
 // are returned. Arbitrary https/http metadata or icon urls would turn token
@@ -360,7 +355,12 @@ const isAllowedIpfsUri = (uri) =>
   typeof uri === 'string' && uri.startsWith('ipfs://')
 
 const NEGATIVE_CACHE_TTL_MS = 5 * 60 * 1000
-const tokenIconCache = new Map() // metadata uri -> { value, expires? }
+const ICON_MAX_BYTES = 5 * 1024 * 1024
+// metadata uri -> { value: blobUrl, expires? } (negative entries carry a TTL)
+const tokenIconCache = new Map()
+// metadata uri -> parsed JSON. Ipfs content is content-addressed, so a
+// resolved metadata document never needs to be fetched again.
+const metadataCache = new Map()
 const failedLookupsLogged = new Set()
 
 const fetchJsonWithGatewayFallback = async (metadataUri) => {
@@ -387,6 +387,42 @@ const fetchJsonWithGatewayFallback = async (metadataUri) => {
   }
 }
 
+// Races the gateways for the icon BYTES and returns an in-memory object
+// URL. Once fetched, the icon never touches a gateway again — it renders
+// from the blob, so the periodic refresh stops hammering public gateways
+// (they rate-limit aggressively).
+const fetchIconBlobUrl = async (iconUri) => {
+  const candidates = iconUri.startsWith('ipfs://')
+    ? IPFS_GATEWAYS.map(
+        (gateway) => `${gateway}/${iconUri.slice('ipfs://'.length)}`,
+      )
+    : [iconUri]
+
+  const attempts = candidates.map(async (candidate) => {
+    const response = await fetch(candidate, {
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    const type = response.headers?.get?.('content-type') || ''
+    if (type && !type.startsWith('image/')) {
+      throw new Error(`Not an image: ${type}`)
+    }
+    const blob = await response.blob()
+    if (blob.size > ICON_MAX_BYTES) {
+      throw new Error('Icon too large')
+    }
+    return URL.createObjectURL(blob)
+  })
+
+  try {
+    return await Promise.any(attempts)
+  } catch {
+    return null
+  }
+}
+
 const resolveTokenIcon = async (metadataUri) => {
   if (!isAllowedIpfsUri(metadataUri)) return undefined
 
@@ -400,18 +436,30 @@ const resolveTokenIcon = async (metadataUri) => {
     }
   }
 
-  const metadata = await fetchJsonWithGatewayFallback(metadataUri)
-
+  const metadata =
+    metadataCache.get(metadataUri) ??
+    (await fetchJsonWithGatewayFallback(metadataUri))
   if (metadata) {
-    const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
-    // Scheme allowlist: ipfs:// maps to a gateway, https:// renders as-is.
-    // http:// (cleartext/internal-network) and exotic schemes are rejected —
-    // token metadata is issuer-controlled.
-    if (raw && typeof raw === 'string' && /^(ipfs|https):\/\//.test(raw)) {
-      const iconUrl = fromIpfs(raw)
-      tokenIconCache.set(metadataUri, { value: iconUrl })
-      return iconUrl
+    // Ipfs content is content-addressed: cache the document permanently so
+    // the refresh loop never re-fetches it.
+    metadataCache.set(metadataUri, metadata)
+  } else {
+    // Every gateway failed: log once per uri, do NOT cache — the next
+    // refresh retries.
+    if (!failedLookupsLogged.has(metadataUri)) {
+      failedLookupsLogged.add(metadataUri)
+      console.error(
+        `Failed to resolve token metadata from every gateway: ${metadataUri}`,
+      )
     }
+    return undefined
+  }
+
+  const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
+  // Scheme allowlist: ipfs:// resolves through the gateway race, https://
+  // is fetched directly. http:// (cleartext/internal-network) and exotic
+  // schemes are rejected — token metadata is issuer-controlled.
+  if (!(raw && typeof raw === 'string' && /^(ipfs|https):\/\//.test(raw))) {
     // Definitive "document has no icon": cache with a TTL so the gateways
     // are not hammered on every refresh.
     tokenIconCache.set(metadataUri, {
@@ -421,14 +469,13 @@ const resolveTokenIcon = async (metadataUri) => {
     return undefined
   }
 
-  // Every gateway failed: log once per uri, do NOT cache — the next refresh
-  // retries.
-  if (!failedLookupsLogged.has(metadataUri)) {
-    failedLookupsLogged.add(metadataUri)
-    console.error(
-      `Failed to resolve token metadata from every gateway: ${metadataUri}`,
-    )
+  const blobUrl = await fetchIconBlobUrl(raw)
+  if (blobUrl) {
+    tokenIconCache.set(metadataUri, { value: blobUrl })
+    return blobUrl
   }
+
+  // Icon bytes unreachable right now: not cached, retried next refresh.
   return undefined
 }
 

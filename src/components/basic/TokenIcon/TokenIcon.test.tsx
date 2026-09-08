@@ -26,64 +26,45 @@ test('applies the requested size', () => {
   expect(screen.getByTestId('token-icon')).toHaveStyle({ width: '48px' })
 })
 
-test('renders the token metadata icon when an iconUri is provided', () => {
+test('renders the resolved blob icon uri as given', () => {
+  // the wallet provider resolves metadata icons to in-memory blob: urls;
+  // the component must render them verbatim
+  const iconUri = 'blob:chrome-extension://ext-id/abc-123'
   const { getByTestId } = render(
     <TokenIcon
       symbol="USDC"
-      iconUri="https://example.com/mlusdc.png"
+      iconUri={iconUri}
     />,
   )
   const img = getByTestId('token-icon-image') as HTMLImageElement
   expect(img).toBeInTheDocument()
-  expect(img.src).toBe('https://example.com/mlusdc.png')
+  expect(img.src).toBe(iconUri)
 })
 
-test('maps ipfs:// icon uris to the ipfs.io gateway', () => {
-  const { getByTestId } = render(
-    <TokenIcon
-      symbol="USDC"
-      iconUri="ipfs://bafyabc/icon.png"
-    />,
-  )
-  const img = getByTestId('token-icon-image') as HTMLImageElement
-  expect(img.src).toBe('https://ipfs.io/ipfs/bafyabc/icon.png')
-})
-
-test('cycles gateway mirrors on load failure before falling back to the tile', async () => {
+test('falls back to the glyph tile when the icon image fails to load', async () => {
   const { getByTestId, queryByTestId } = render(
     <TokenIcon
       symbol="USDC"
-      iconUri="https://ipfs.io/ipfs/bafyicon/broken.png"
+      iconUri="blob:chrome-extension://ext-id/broken"
     />,
   )
 
-  const failUntilTile = async () => {
-    // each error moves to the next gateway mirror; exhausting them removes
-    // the img and restores the procedural tile
-    for (let i = 0; i < 4; i++) {
-      const img = queryByTestId('token-icon-image')
-      if (!img) break
-      fireEvent.error(img)
-      await waitFor(() => {})
-    }
-    await waitFor(() =>
-      expect(queryByTestId('token-icon-image')).not.toBeInTheDocument(),
-    )
-  }
-
-  await failUntilTile()
+  fireEvent.error(getByTestId('token-icon-image'))
+  await waitFor(() =>
+    expect(queryByTestId('token-icon-image')).not.toBeInTheDocument(),
+  )
   expect(getByTestId('token-icon')).toHaveTextContent('$')
+})
 
-  const srcAfterFirstMirror = 'https://dweb.link/ipfs/bafyicon/broken.png'
-  // re-render a fresh instance to verify the first mirror swap specifically
-  const second = render(
+test('never renders a raw ipfs:// uri as the img src', () => {
+  // last line of defense: even if a caller leaks an unresolved ipfs:// uri,
+  // the component must not hand it to the browser as-is
+  render(
     <TokenIcon
       symbol="USDC"
-      iconUri="https://ipfs.io/ipfs/bafyicon/broken.png"
+      iconUri="ipfs://bafy/x.png"
     />,
   )
-  fireEvent.error(second.getByTestId('token-icon-image'))
-  expect((second.getByTestId('token-icon-image') as HTMLImageElement).src).toBe(
-    srcAfterFirstMirror,
-  )
+  const img = screen.getByTestId('token-icon-image') as HTMLImageElement
+  expect(img.src).not.toMatch(/^ipfs:/)
 })

@@ -6,8 +6,9 @@ import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 interface TokenIconProps {
   symbol: string
   size?: number
-  // Token metadata icon (token_info.icon_uri.string). ipfs:// is mapped to a
-  // public gateway; anything unreachable falls back to the generated tile.
+  // Token metadata icon, resolved by the wallet to an in-memory blob: URL
+  // (fetched once from the ipfs gateways). On load failure the procedural
+  // tile renders instead.
   iconUri?: string
 }
 
@@ -27,56 +28,26 @@ const LOGOS: Record<string, ReactElement> = {
   ML: <MlLogo />,
 }
 
+// Safety net: the wallet provider normally resolves metadata icons to blob:
+// urls, but if an unresolved ipfs:// uri ever leaks through, map it to the
+// public gateway so the browser gets a fetchable https url.
 const toRenderableUri = (uri: string) =>
   uri.startsWith('ipfs://')
-    ? uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
+    ? `https://ipfs.io/ipfs/${uri.slice('ipfs://'.length)}`
     : uri
-
-// If the resolved icon URL times out on a gateway, the img onError cycles
-// through the remaining mirrors before giving up entirely.
-const IMG_GATEWAY_FALLBACKS: Array<[string, string]> = [
-  ['https://ipfs.io/ipfs/', 'https://dweb.link/ipfs/'],
-  ['https://dweb.link/ipfs/', 'https://w3s.link/ipfs/'],
-]
 
 // Native BTC/ML assets get the real chain logos; tokens show their metadata
 // icon when available, otherwise the procedural design-system tile (unknown
 // symbols fall back to first letter).
 const TokenIcon = ({ symbol, size = 36, iconUri }: TokenIconProps) => {
   const [iconFailed, setIconFailed] = useState(false)
-  const [iconSrc, setIconSrc] = useState<string | undefined>(
-    iconUri ? toRenderableUri(iconUri) : undefined,
-  )
   const logo = LOGOS[symbol]
   const { c1, c2 } = GRADIENTS[symbol] ?? {
     c1: 'oklch(0.6 0.05 60)',
     c2: 'oklch(0.4 0.05 60)',
   }
 
-  // Keep the displayed src in sync when the resolved icon arrives late.
-  const [lastIconUri, setLastIconUri] = useState(iconUri)
-  if (iconUri !== lastIconUri) {
-    setLastIconUri(iconUri)
-    setIconSrc(iconUri ? toRenderableUri(iconUri) : undefined)
-    setIconFailed(false)
-  }
-
-  const showImage = Boolean(iconSrc) && !iconFailed && !logo
-
-  const handleIconError = () => {
-    if (!iconSrc) {
-      setIconFailed(true)
-      return
-    }
-    const fallback = IMG_GATEWAY_FALLBACKS.find(([from]) =>
-      iconSrc.startsWith(from),
-    )
-    if (fallback) {
-      setIconSrc(iconSrc.replace(fallback[0], fallback[1]))
-    } else {
-      setIconFailed(true)
-    }
-  }
+  const showImage = Boolean(iconUri) && !iconFailed && !logo
 
   return (
     <div
@@ -93,11 +64,11 @@ const TokenIcon = ({ symbol, size = 36, iconUri }: TokenIconProps) => {
       {showImage ? (
         <img
           className={styles.tokenImage}
-          src={iconSrc}
+          src={toRenderableUri(iconUri)}
           alt={symbol}
           width={size}
           height={size}
-          onError={handleIconError}
+          onError={() => setIconFailed(true)}
           data-testid="token-icon-image"
         />
       ) : logo ? (
