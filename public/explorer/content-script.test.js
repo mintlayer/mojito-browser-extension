@@ -45,6 +45,7 @@ const setup = ({ sendMessageImpl }) => {
   // the test (the IIFE registers it on the shared jsdom window). Call through
   // so test-side listeners still register normally.
   messageListeners = []
+  addSpy?.mockRestore()
   const originalAddEventListener = window.addEventListener.bind(window)
   addSpy = jest
     .spyOn(window, 'addEventListener')
@@ -138,5 +139,92 @@ describe('content script relay', () => {
     })
     // after invalidation no further runtime calls are attempted
     expect(sendMessageCalls.filter((m) => m.requestId === 'r2')).toHaveLength(0)
+  })
+})
+
+describe('runtime lastError path', () => {
+  const nextResponse = () =>
+    new Promise((resolve) => {
+      const listener = (event) => {
+        if (event.data?.type === 'MINTLAYER_RESPONSE') {
+          window.removeEventListener('message', listener)
+          resolve(event.data)
+        }
+      }
+      window.addEventListener('message', listener)
+    })
+
+  it('answers the page with EXTENSION_ERROR when the background errors', async () => {
+    global.browser = undefined
+    global.chrome = {
+      runtime: {
+        id: 'ext-id',
+        getURL: (p) => `chrome-extension://ext-id/${p}`,
+        sendMessage: (message, callback) => {
+          // MV3 sets lastError instead of throwing when the port dies
+          Object.defineProperty(chrome.runtime, 'lastError', {
+            value: {
+              message:
+                'The message port closed before a response was received.',
+            },
+            configurable: true,
+          })
+          callback(undefined)
+        },
+        lastError: null,
+      },
+    }
+
+    // eslint-disable-next-line no-eval
+    window.eval(CONTENT_SCRIPT_SRC)
+
+    const incoming = nextResponse()
+    window.postMessage(
+      { type: 'MINTLAYER_REQUEST', requestId: 'e1', method: 'connect' },
+      '*',
+    )
+
+    await expect(incoming).resolves.toMatchObject({
+      requestId: 'e1',
+      error: { code: 'EXTENSION_ERROR' },
+    })
+    delete chrome.runtime.lastError
+  })
+})
+
+describe('reload ownership', () => {
+  const bootInstance = () => {
+    // eslint-disable-next-line no-eval
+    window.eval(CONTENT_SCRIPT_SRC)
+  }
+
+  it('lets a freshly injected instance take over from an orphaned one', async () => {
+    const responses = []
+    const listener = (event) => {
+      if (event.data?.type === 'MINTLAYER_RESPONSE') responses.push(event.data)
+    }
+    window.addEventListener('message', listener)
+
+    // instance 1 (later orphaned)
+    setup({
+      sendMessageImpl: (_m, cb) => cb({ result: { from: 'old' } }),
+    })
+
+    // instance 2 (fresh injection after extension reload)
+    setup({
+      sendMessageImpl: (_m, cb) => cb({ result: { from: 'new' } }),
+    })
+
+    window.postMessage(
+      { type: 'MINTLAYER_REQUEST', requestId: 'own1', method: 'connect' },
+      '*',
+    )
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    // exactly one answer, from the current owner — the orphan must not
+    // poison the fresh channel with a stale error
+    expect(responses).toHaveLength(1)
+    expect(responses[0].result).toEqual({ from: 'new' })
+    window.removeEventListener('message', listener)
   })
 })

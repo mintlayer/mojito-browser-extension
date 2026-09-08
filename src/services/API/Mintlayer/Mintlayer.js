@@ -36,12 +36,17 @@ const getMintlayerServers = (networkType) =>
 const requestMintlayer = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
   const controller = new AbortController()
-  abortControllers.set(url, controller)
+  // Keyed by url+method: concurrent requests to the same url must not
+  // clobber each other's controllers.
+  abortControllers.set(`${method} ${url}`, controller)
 
   try {
     const result = await request(url, {
       method,
       body,
+      // Wire the signal: without it cancelAllRequests() aborts nothing and
+      // stale responses land after a network switch.
+      signal: controller.signal,
     })
     if (!result.ok) {
       const error = await result.json()
@@ -85,7 +90,7 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
     console.error(error)
     throw error
   } finally {
-    abortControllers.delete(url)
+    abortControllers.delete(`${method} ${url}`)
   }
 }
 

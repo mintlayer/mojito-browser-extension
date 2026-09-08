@@ -33,7 +33,10 @@ const StakePage = () => {
     transactions,
     mlDelegationsBalance || 0,
   )
-  const earned = Math.max(0, mlDelegationsBalance - (contributed - withdrawn))
+  const earned = Math.max(
+    0,
+    (mlDelegationsBalance || 0) - (contributed - withdrawn),
+  )
 
   const confirmed = mlDelegationList.filter(
     (d) => d.type !== 'Unconfirmed' && d.balance?.decimal,

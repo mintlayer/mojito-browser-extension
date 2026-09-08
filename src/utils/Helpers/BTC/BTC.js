@@ -247,7 +247,10 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
 
 const getStats = (proportionDiffs, balanceDiffs, networkType) => {
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
-  const hasBalance = proportionDiffs.total != null
+  // null = rates missing (show nothing); 0 = real zero balance (an empty
+  // wallet must not render as "-100%").
+  const hasBalance =
+    proportionDiffs.total != null && proportionDiffs.total !== 0
   const percentValue =
     isTestnet || !hasBalance
       ? 0

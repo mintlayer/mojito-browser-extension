@@ -482,6 +482,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       setNftInitialUtxos(availableNftInitialUtxos)
       setUtxos(availableUtxos)
       setLockedUtxos(lockedUtxos)
+      setFetchError(null)
     } catch (error) {
       // Never leave the UI wedged: surface the error and let `finally`
       // release every loading flag so the next poll can retry.

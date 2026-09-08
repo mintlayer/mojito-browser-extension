@@ -540,6 +540,12 @@ const buildStakeGrowthSeries = (transactions, currentTotal = null) => {
     series.push(currentTotal)
   }
 
+  // Delegation predates the parsed transaction history: still chart the
+  // live total instead of hiding the chart entirely.
+  if (series.length === 0 && currentTotal != null && currentTotal > 0) {
+    series.push(0, currentTotal)
+  }
+
   return { series, contributed, withdrawn }
 }
 

@@ -23,9 +23,17 @@
   const pendingRequests = new Map() // requestId -> timeout id
   const RESPONSE_TIMEOUT_MS = 5 * 60 * 1000 // approvals can take a while
 
-  // True once the extension has been reloaded/updated/disabled underneath
-  // this orphaned content script: every runtime call will throw, so answer
-  // immediately with a clear error instead of letting requests hang.
+  // Instance ownership: on extension reload/update Chrome injects a fresh
+  // content script into already-open pages while the orphaned one keeps its
+  // message listener. The last injected instance owns the channel; orphans
+  // stop answering so they cannot poison the fresh instance's responses.
+  const OWNER_KEY = '__mojitoContentScriptOwner'
+  const myInstanceId = `${Date.now()}_${Math.random().toString(36).slice(2)}`
+  window[OWNER_KEY] = myInstanceId
+
+  // True once this (still-owning) instance discovers the extension context
+  // is gone: every further request is answered immediately with a clear
+  // error instead of hanging until the timeout.
   let contextInvalidated = false
 
   const failRequest = (requestId, code, message) => {
@@ -60,6 +68,10 @@
     if (event.source !== window || event.data?.type !== 'MINTLAYER_REQUEST') {
       return
     }
+
+    // An orphaned instance (superseded by a freshly injected one) must not
+    // answer — its runtime channel is stale and would race the real one.
+    if (window[OWNER_KEY] !== myInstanceId) return
 
     const requestId = event.data.requestId
 
@@ -102,19 +114,18 @@
         (response) => {
           if (!pendingRequests.has(requestId)) return
 
-          clearTimeout(pendingRequests.get(requestId))
-          pendingRequests.delete(requestId)
-
           if (api.runtime.lastError) {
             console.error('[Mojito] Runtime error:', api.runtime.lastError)
             failRequest(
               requestId,
               'EXTENSION_ERROR',
-              api.runtime.lastError.message ||
-                'Could not reach the wallet. Is it installed and enabled?',
+              'Could not reach the wallet. Is it installed and enabled?',
             )
             return
           }
+
+          clearTimeout(pendingRequests.get(requestId))
+          pendingRequests.delete(requestId)
 
           postToPage({
             type: 'MINTLAYER_RESPONSE',

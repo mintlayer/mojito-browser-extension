@@ -26,12 +26,14 @@ const requestElectrum = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
   const header = body ? { 'Content-Type': 'application/json' } : {}
   const controller = new AbortController()
-  abortControllers.set(url, controller)
+  abortControllers.set(`${method} ${url}`, controller)
 
   const options = {
     method: method,
     headers: header,
     body,
+    // Wire the signal so cancelAllRequests() actually cancels.
+    signal: controller.signal,
   }
 
   try {
@@ -43,7 +45,7 @@ const requestElectrum = async (url, body = null, request = fetch) => {
     console.error(error)
     throw error
   } finally {
-    abortControllers.delete(url)
+    abortControllers.delete(`${method} ${url}`)
   }
 }
 
