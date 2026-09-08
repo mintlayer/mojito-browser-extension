@@ -43,8 +43,6 @@ export const SignTransactionPage = () => {
   const loadingExtraClasses = ['loading-big']
   const navigate = useNavigate()
 
-  const [mode, setMode] = useState('preview')
-
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = [styles.buttonSignTransaction]
 
@@ -239,10 +237,6 @@ export const SignTransactionPage = () => {
     setSelectedMock(name)
   }
 
-  const switchHandle = () => {
-    setMode(mode === 'json' ? 'preview' : 'json')
-  }
-
   const passwordChangeHandler = (value) => {
     setPassword(value)
   }
@@ -251,10 +245,7 @@ export const SignTransactionPage = () => {
     <PageWrapper>
       <div className={styles.signTransaction}>
         <div className={styles.header}>
-          <h1 className={styles.signTxTitle}>Sign Transaction</h1>
-          <Button onClickHandle={switchHandle}>
-            {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
-          </Button>
+          <h1 className={styles.signTxTitle}>Sign transaction</h1>
         </div>
 
         <div className={styles.signTxContent}>
@@ -276,14 +267,18 @@ export const SignTransactionPage = () => {
           )}
 
           {state?.request?.data?.txData?.JSONRepresentation && (
-            <>
-              {mode === 'preview' && (
-                <div className={styles.transactionPreviewWrapper}>
-                  <SignTransaction.InternalTransactionPreview data={state} />
-                </div>
-              )}
-              {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
-            </>
+            <SignTransaction.TransactionSummary
+              jsonRepresentation={state.request.data.txData.JSONRepresentation}
+              intent={state.request.data.txData.intent}
+              ownAddresses={{
+                receiving: currentMlAddresses.mlReceivingAddresses,
+                change: currentMlAddresses.mlChangeAddresses,
+              }}
+              technicalDetails={
+                <SignTransaction.InternalTransactionPreview data={state} />
+              }
+              rawJsonNode={<SignTransaction.JsonPreview data={state} />}
+            />
           )}
         </div>
 

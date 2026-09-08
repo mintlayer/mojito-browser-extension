@@ -37,6 +37,7 @@ import VerifyMessage from './Message/VerifyMessage/VerifyMessage'
 import ExternalTransactionPreview from './SignTransaction/ExternalTransactionPreview/ExternalTransactionPreview'
 import InternalTransactionPreview from './SignTransaction/InternalTransactionPreview/InternalTransactionPreview'
 import JsonPreview from './SignTransaction/JsonPreview/JsonPreview'
+import TransactionSummary from './SignTransaction/TransactionSummary/TransactionSummary'
 
 /* istanbul ignore next */
 const Wallet = {
@@ -82,6 +83,7 @@ const SignTransaction = {
   ExternalTransactionPreview,
   InternalTransactionPreview,
   JsonPreview,
+  TransactionSummary,
 }
 
 export {

@@ -36,8 +36,6 @@ export const SignTransactionPage = () => {
   const [isSigning, setIsSigning] = useState(false)
   const [signError, setSignError] = useState('')
 
-  const [mode, setMode] = useState('preview')
-
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = ['buttonSignTransaction']
 
@@ -398,10 +396,6 @@ export const SignTransactionPage = () => {
     setGeneratedSecretHash(null)
   }
 
-  const switchHandle = () => {
-    setMode(mode === 'json' ? 'preview' : 'json')
-  }
-
   const passwordChangeHandler = (value) => {
     setPassword(value)
   }
@@ -427,10 +421,7 @@ export const SignTransactionPage = () => {
     <PageWrapper>
       <div className="SignTransaction">
         <div className="header">
-          <h1 className="signTxTitle">Sign Transaction</h1>
-          <Button onClickHandle={switchHandle}>
-            {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
-          </Button>
+          <h1 className="signTxTitle">Sign transaction</h1>
         </div>
 
         <div className="requestOrigin">
@@ -459,14 +450,18 @@ export const SignTransactionPage = () => {
           )}
 
           {state?.request?.data?.txData?.JSONRepresentation && (
-            <>
-              {mode === 'preview' && (
-                <div className="transaction-preview-wrapper">
-                  <SignTransaction.ExternalTransactionPreview data={state} />
-                </div>
-              )}
-              {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
-            </>
+            <SignTransaction.TransactionSummary
+              jsonRepresentation={state.request.data.txData.JSONRepresentation}
+              intent={state.request.data.txData.intent}
+              ownAddresses={{
+                receiving: currentMlAddresses.mlReceivingAddresses,
+                change: currentMlAddresses.mlChangeAddresses,
+              }}
+              technicalDetails={
+                <SignTransaction.ExternalTransactionPreview data={state} />
+              }
+              rawJsonNode={<SignTransaction.JsonPreview data={state} />}
+            />
           )}
 
           {/* HTLC Secret Information */}
