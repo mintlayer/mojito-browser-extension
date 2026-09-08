@@ -37,7 +37,7 @@ describe('NftDetails', () => {
     expect(screen.getByTestId('nft-details')).toBeInTheDocument()
     expect(screen.getByRole('img')).toHaveAttribute(
       'src',
-      'https://gateway.ipfs.io/ipfs/test-icon',
+      'https://ipfs.io/ipfs/test-icon',
     )
 
     expect(screen.getAllByTestId('nft-details-item')).toHaveLength(5)

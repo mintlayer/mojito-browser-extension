@@ -38,7 +38,7 @@ test('renders the token metadata icon when an iconUri is provided', () => {
   expect(img.src).toBe('https://example.com/mlusdc.png')
 })
 
-test('maps ipfs:// icon uris to a public gateway', () => {
+test('maps ipfs:// icon uris to the ipfs.io gateway', () => {
   const { getByTestId } = render(
     <TokenIcon
       symbol="USDC"
@@ -46,7 +46,7 @@ test('maps ipfs:// icon uris to a public gateway', () => {
     />,
   )
   const img = getByTestId('token-icon-image') as HTMLImageElement
-  expect(img.src).toBe('https://gateway.ipfs.io/ipfs/bafyabc/icon.png')
+  expect(img.src).toBe('https://ipfs.io/ipfs/bafyabc/icon.png')
 })
 
 test('falls back to the procedural tile when the icon fails to load', async () => {

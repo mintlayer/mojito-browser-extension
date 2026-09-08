@@ -10,11 +10,12 @@ const MINTLAYER_ENDPOINTS = {
   POST_TRANSACTION: '/transaction',
   GET_FEES_ESTIMATES: '/feerate',
   GET_ADDRESS_DELEGATIONS: '/address/:address/delegations',
-  GET_DELEGATION: '/delegation/:delegation',
+  GET_DELEGATION: '/delegation/:address',
   GET_CHAIN_TIP: '/chain/tip',
-  GET_BLOCK_HASH: '/chain/:height',
-  GET_BLOCK_DATA: '/block/:hash',
-  GET_POOL_DATA: '/pool/:hash',
+  GET_BLOCK_HASH: '/chain/:address',
+  GET_BLOCK_DATA: '/block/:address',
+  GET_POOL_DATA: '/pool/:address',
+  GET_NFT: '/nft/:tokenId',
   GET_ORDER_DATA: '/order/:hash',
   GET_ORDERS_LIST: '/order',
   GET_TOKEN: '/token/:tokenId',
@@ -22,6 +23,15 @@ const MINTLAYER_ENDPOINTS = {
 }
 
 const abortControllers = new Map()
+
+// Server fallback chain for the active network. Deliberately does NOT honor
+// any localStorage 'customAPIServers' override: an unvalidated entry would
+// silently redirect every request — including transaction broadcasts — to an
+// arbitrary endpoint serving spoofed UTXOs/fees.
+const getMintlayerServers = (networkType) =>
+  networkType === AppInfo.NETWORK_TYPES.TESTNET
+    ? EnvVars.TESTNET_MINTLAYER_SERVERS
+    : EnvVars.MAINNET_MINTLAYER_SERVERS
 
 const requestMintlayer = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
@@ -85,23 +95,7 @@ export const batchRequestMintlayer = async ({ ids, type }) => {
   }
 
   const networkType = LocalStorageService.getItem('networkType')
-  const customMintlayerServerList = LocalStorageService.getItem(
-    AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
-  )
-  const customMintlayerServer = customMintlayerServerList
-    ? networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? customMintlayerServerList.mintlayer_testnet
-      : customMintlayerServerList.mintlayer_mainnet
-    : null
-
-  const defaultMintlayerServers =
-    networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? EnvVars.TESTNET_MINTLAYER_SERVERS
-      : EnvVars.MAINNET_MINTLAYER_SERVERS
-
-  const combinedMintlayerServers = customMintlayerServer
-    ? [customMintlayerServer, ...defaultMintlayerServers]
-    : [...defaultMintlayerServers]
+  const combinedMintlayerServers = getMintlayerServers(networkType)
 
   const res = await fetch(combinedMintlayerServers[0] + '/batch', {
     method: 'POST',
@@ -126,23 +120,7 @@ export const batchRequestMintlayer = async ({ ids, type }) => {
 
 const tryServers = async (endpoint, body = null, forceNetwork) => {
   const networkType = forceNetwork || LocalStorageService.getItem('networkType')
-  const customMintlayerServerList = LocalStorageService.getItem(
-    AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
-  )
-  const customMintlayerServer = customMintlayerServerList
-    ? networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? customMintlayerServerList.mintlayer_testnet
-      : customMintlayerServerList.mintlayer_mainnet
-    : null
-
-  const defaultMintlayerServers =
-    networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? EnvVars.TESTNET_MINTLAYER_SERVERS
-      : EnvVars.MAINNET_MINTLAYER_SERVERS
-
-  const combinedMintlayerServers = customMintlayerServer
-    ? [customMintlayerServer, ...defaultMintlayerServers]
-    : [...defaultMintlayerServers]
+  const combinedMintlayerServers = getMintlayerServers(networkType)
 
   for (let i = 0; i < combinedMintlayerServers.length; i++) {
     try {
@@ -350,33 +328,75 @@ const getNftsData = async (tokens) => {
   return { tokensData, excludedTokenIds }
 }
 
+// Mintlayer tokens carry no on-chain icon: the token points at a metadata
+// document (metadata_uri, usually ipfs://) whose JSON holds the icon under
+// `tokenIcon` (also tolerate `icon_uri`/`icon`). The icon itself is often an
+// ipfs:// uri again.
+const IPFS_GATEWAY = 'https://ipfs.io/ipfs'
+
+const fromIpfs = (uri) =>
+  uri.startsWith('ipfs://') ? uri.replace('ipfs://', `${IPFS_GATEWAY}/`) : uri
+
+const tokenIconCache = new Map() // metadata uri -> icon url | null
+
+const resolveTokenIcon = async (metadataUri) => {
+  if (!metadataUri) return undefined
+  if (tokenIconCache.has(metadataUri)) {
+    return tokenIconCache.get(metadataUri) ?? undefined
+  }
+
+  let iconUrl
+  try {
+    // Timeout: this runs inside the wallet data refresh and ipfs gateways
+    // can hang — never block the whole refresh on an icon.
+    const response = await fetch(fromIpfs(metadataUri), {
+      signal: AbortSignal.timeout(8000),
+    })
+    if (response.ok) {
+      const metadata = await response.json()
+      const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
+      if (raw && typeof raw === 'string') {
+        iconUrl = fromIpfs(raw)
+      }
+    }
+  } catch (error) {
+    console.error(
+      `Failed to resolve token icon from ${metadataUri}:`,
+      error.message,
+    )
+  }
+
+  tokenIconCache.set(metadataUri, iconUrl ?? null)
+  return iconUrl
+}
+
 const getAddressDelegations = (address) =>
   tryServers(
     MINTLAYER_ENDPOINTS.GET_ADDRESS_DELEGATIONS.replace(':address', address),
   )
 
 const getDelegation = (delegation) =>
-  tryServers(
-    MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(':delegation', delegation),
-  )
+  tryServers(MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(':address', delegation))
 
 const getPool = (pool) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_POOL_DATA.replace(':hash', pool))
+  tryServers(MINTLAYER_ENDPOINTS.GET_POOL_DATA.replace(':address', pool))
 
 const getBlockDataByHeight = (height) => {
   return tryServers(
-    MINTLAYER_ENDPOINTS.GET_BLOCK_HASH.replace(':height', height),
+    MINTLAYER_ENDPOINTS.GET_BLOCK_HASH.replace(':address', height),
   )
     .then(JSON.parse)
     .then((response) => {
       return tryServers(
-        MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':hash', response),
+        MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':address', response),
       )
     })
 }
 
 const getBlockDataByHash = (hash) => {
-  return tryServers(MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':hash', hash))
+  return tryServers(
+    MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':address', hash),
+  )
 }
 
 const getWalletDelegations = (addresses) => {
@@ -484,6 +504,7 @@ export {
   getBlockDataByHash,
   getTokenById,
   getTokensData,
+  resolveTokenIcon,
   getPoolsData,
   getNftsData,
   getOrderById,

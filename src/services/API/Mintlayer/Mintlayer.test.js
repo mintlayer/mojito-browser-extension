@@ -108,3 +108,51 @@ test('Mintlayer API request - not ok', async () => {
 //   const result = await getAddressBalance(TESTNET_WALLET)
 //   expect(Number(result.balance.balanceInAtoms)).toBeGreaterThan(0)
 // })
+
+describe('resolveTokenIcon', () => {
+  const { resolveTokenIcon } = require('./Mintlayer.js')
+
+  const okJson = (body) => ({
+    ok: true,
+    json: async () => body,
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it('resolves tokenIcon from the metadata document and maps ipfs uris', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      okJson({
+        tokenIcon: 'ipfs://bafyicon/logo.png',
+      }),
+    )
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/doc.json'),
+    ).resolves.toBe('https://ipfs.io/ipfs/bafyicon/logo.png')
+  })
+
+  it('is cached per metadata uri', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(okJson({ tokenIcon: 'https://x.example/i.png' }))
+
+    await resolveTokenIcon('https://example.test/meta1.json')
+    await resolveTokenIcon('https://example.test/meta1.json')
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns undefined when the document has no icon field or fetch fails', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(okJson({ name: 'no icon' }))
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/noicon.json'),
+    ).resolves.toBeUndefined()
+
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('offline'))
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/fail.json'),
+    ).resolves.toBeUndefined()
+  })
+})

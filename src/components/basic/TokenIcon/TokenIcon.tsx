@@ -29,7 +29,7 @@ const LOGOS: Record<string, ReactElement> = {
 
 const toRenderableUri = (uri: string) =>
   uri.startsWith('ipfs://')
-    ? uri.replace('ipfs://', 'https://gateway.ipfs.io/ipfs/')
+    ? uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
     : uri
 
 // Native BTC/ML assets get the real chain logos; tokens show their metadata

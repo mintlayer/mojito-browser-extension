@@ -352,22 +352,38 @@ const MintlayerProvider = ({ value: propValue, children }) => {
         Object.keys(tokenBalances),
       )
 
-      const mergedTokensData = Object.keys(tokenBalances).reduce((acc, key) => {
-        if (tokensData[key] && Object.keys(tokensData[key]).length > 0) {
-          acc[key] = {
-            balance: tokenBalances[key].toNumber(),
-            token_info: {
-              number_of_decimals: tokensData[key].number_of_decimals,
-              token_ticker: tokensData[key].token_ticker,
-              token_id: key,
-              // { hex, string } token metadata — string is the icon URL
-              // (https or ipfs) shown next to the token everywhere.
-              icon_uri: tokensData[key].icon_uri,
-            },
+      const mergedTokensDataEntries = await Promise.all(
+        Object.keys(tokenBalances).map(async (key) => {
+          if (!(tokensData[key] && Object.keys(tokensData[key]).length > 0)) {
+            return null
           }
-        }
-        return acc
-      }, {})
+
+          // Tokens have no on-chain icon: resolve it from the metadata
+          // document (cached, non-fatal — no icon means the fallback tile).
+          const iconUri = await Mintlayer.resolveTokenIcon(
+            tokensData[key].metadata_uri?.string,
+          ).catch(() => undefined)
+
+          return [
+            key,
+            {
+              balance: tokenBalances[key].toNumber(),
+              token_info: {
+                number_of_decimals: tokensData[key].number_of_decimals,
+                token_ticker: tokensData[key].token_ticker,
+                token_id: key,
+                // { string } keeps the same shape the UI already reads
+                // (token_info.icon_uri.string).
+                ...(iconUri ? { icon_uri: { string: iconUri } } : {}),
+              },
+            },
+          ]
+        }),
+      )
+
+      const mergedTokensData = Object.fromEntries(
+        mergedTokensDataEntries.filter(Boolean),
+      )
 
       const newTokenMap = {}
 
