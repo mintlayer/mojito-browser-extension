@@ -7,6 +7,7 @@ import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
 import { ML as MLHelpers } from '@Helpers'
 import { AppInfo } from '@Constants'
+import Decimal from 'decimal.js'
 
 const getUtxoBalance = (item) => {
   return BigInt(item.utxo.value.amount.atoms)
@@ -511,7 +512,10 @@ const sendTransaction = async ({
 
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
+  const unconfirmedTransactionString = MLHelpers.getUnconfirmedTransactionKey(
+    accountName,
+    network,
+  )
   const unconfirmedTransactions =
     LocalStorageService.getItem(unconfirmedTransactionString) || []
 
@@ -557,12 +561,15 @@ const spendFromDelegation = async (
   if (fee > AppInfo.MAX_ML_FEE) {
     throw new Error('Fee is too high, please try again later.')
   }
-  let amountToUse = Number(amount) + fee
-  let outputAmount = Number(amount)
+  // Decimal arithmetic: float addition on coin amounts drifts at 11 decimals.
+  const amountDecimal = new Decimal(amount)
+  const balanceDecimal = new Decimal(delegation.balance)
+  let amountToUse = amountDecimal.plus(fee)
+  let outputAmount = amountDecimal
 
-  if (amountToUse > Number(delegation.balance)) {
-    amountToUse = Number(delegation.balance)
-    outputAmount = amountToUse - fee
+  if (amountToUse.greaterThan(balanceDecimal)) {
+    amountToUse = balanceDecimal
+    outputAmount = amountToUse.minus(fee)
   }
 
   const input = ML.getAccountOutpointInput(
@@ -607,7 +614,10 @@ const spendFromDelegation = async (
 
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
+  const unconfirmedTransactionString = MLHelpers.getUnconfirmedTransactionKey(
+    accountName,
+    network,
+  )
   const unconfirmedTransactions =
     LocalStorageService.getItem(unconfirmedTransactionString) || []
 
@@ -706,7 +716,10 @@ const sendIssueNft = async ({
 
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
+  const unconfirmedTransactionString = MLHelpers.getUnconfirmedTransactionKey(
+    accountName,
+    network,
+  )
   const unconfirmedTransactions =
     LocalStorageService.getItem(unconfirmedTransactionString) || []
 
@@ -830,7 +843,10 @@ const createNft = async ({
 
   const account = LocalStorageService.getItem('unlockedAccount')
   const accountName = account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${network}`
+  const unconfirmedTransactionString = MLHelpers.getUnconfirmedTransactionKey(
+    accountName,
+    network,
+  )
   const unconfirmedTransactions =
     LocalStorageService.getItem(unconfirmedTransactionString) || []
 

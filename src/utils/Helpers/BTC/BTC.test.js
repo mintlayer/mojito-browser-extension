@@ -5,6 +5,7 @@ import {
   getConfirmationsAmount,
   parseFeesEstimates,
   convertBtcToSatoshi,
+  getBtcAddressString,
 } from './BTC'
 
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
@@ -28,6 +29,16 @@ test('Parse Fees Estimates', () => {
   const estimates = parseFeesEstimates(fees)
   expect(estimates.LOW).toBeLessThan(estimates.MEDIUM)
   expect(estimates.MEDIUM).toBeLessThan(estimates.HIGH)
+})
+
+test('Extracts an address string from both stored BTC address shapes', () => {
+  const newStoreEntry = { bc1qnew: { pubkey: { 1: 2 } } }
+  const oldStoreEntry = 'bc1qold'
+
+  expect(getBtcAddressString(newStoreEntry)).toBe('bc1qnew')
+  expect(getBtcAddressString(oldStoreEntry)).toBe('bc1qold')
+  expect(getBtcAddressString(undefined)).toBeUndefined()
+  expect(getBtcAddressString(null)).toBeUndefined()
 })
 
 test('Calculate Balance From Utxo List', () => {

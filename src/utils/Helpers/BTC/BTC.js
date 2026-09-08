@@ -117,21 +117,36 @@ const getYesterdayFiatBalances = (cryptos, yesterdayExchangeRateList) => {
   const btcCrypto = cryptos.find((crypto) => crypto.symbol === 'BTC')
   const mlCrypto = cryptos.find((crypto) => crypto.symbol === 'ML')
 
-  const btcYesterdayBalance = btcCrypto
-    ? new Decimal(btcCrypto.balance || 0)
-        .times(new Decimal(yesterdayExchangeRateList.btc || 0))
-        .toNumber()
-    : 0
-  const mlYesterdayBalance = mlCrypto
-    ? new Decimal(mlCrypto.balance || 0)
-        .times(new Decimal(yesterdayExchangeRateList.ml || 0))
-        .toNumber()
-    : 0
+  // A missing/zero yesterday rate must be distinguishable from a real 0
+  // balance, otherwise 24h diffs explode (current/0-fallback).
+  const btcRateMissing =
+    !btcCrypto || !(Number(yesterdayExchangeRateList?.btc) > 0)
+  const mlRateMissing =
+    !mlCrypto || !(Number(yesterdayExchangeRateList?.ml) > 0)
+
+  const btcYesterdayBalance =
+    btcCrypto && !btcRateMissing
+      ? new Decimal(btcCrypto.balance || 0)
+          .times(new Decimal(yesterdayExchangeRateList.btc))
+          .toNumber()
+      : 0
+  const mlYesterdayBalance =
+    mlCrypto && !mlRateMissing
+      ? new Decimal(mlCrypto.balance || 0)
+          .times(new Decimal(yesterdayExchangeRateList.ml))
+          .toNumber()
+      : 0
   const totalYesterdayBalance = new Decimal(btcYesterdayBalance)
     .plus(new Decimal(mlYesterdayBalance))
     .toNumber()
 
-  return { btcYesterdayBalance, mlYesterdayBalance, totalYesterdayBalance }
+  return {
+    btcYesterdayBalance,
+    mlYesterdayBalance,
+    totalYesterdayBalance,
+    btcRateMissing,
+    mlRateMissing,
+  }
 }
 
 const getCurrentFiatBalances = (cryptos) => {
@@ -164,8 +179,13 @@ const getCurrentFiatBalances = (cryptos) => {
 }
 
 const calculateBalances = (cryptos, yesterdayExchangeRates) => {
-  const { btcYesterdayBalance, mlYesterdayBalance, totalYesterdayBalance } =
-    getYesterdayFiatBalances(cryptos, yesterdayExchangeRates)
+  const {
+    btcYesterdayBalance,
+    mlYesterdayBalance,
+    totalYesterdayBalance,
+    btcRateMissing,
+    mlRateMissing,
+  } = getYesterdayFiatBalances(cryptos, yesterdayExchangeRates)
 
   const { btcCurrentBalance, mlCurrentBalance, totalCurrentBalance } =
     getCurrentFiatBalances(cryptos)
@@ -182,28 +202,44 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
     total: totalYesterdayBalance,
   }
 
+  // null = "not computable" (yesterday rate unavailable) — consumers must
+  // treat null as "show nothing", never as 0.
   const proportionDiffs = {
-    btc: new Decimal(currentBalances.btc || 0)
-      .div(new Decimal(yesterdayBalances.btc || 1))
-      .toNumber(),
-    ml: new Decimal(currentBalances.ml || 0)
-      .div(new Decimal(yesterdayBalances.ml || 1))
-      .toNumber(),
-    total: new Decimal(currentBalances.total || 0)
-      .div(new Decimal(yesterdayBalances.total || 1))
-      .toNumber(),
+    btc: btcRateMissing
+      ? null
+      : new Decimal(currentBalances.btc || 0)
+          .div(new Decimal(yesterdayBalances.btc || 1))
+          .toNumber(),
+    ml: mlRateMissing
+      ? null
+      : new Decimal(currentBalances.ml || 0)
+          .div(new Decimal(yesterdayBalances.ml || 1))
+          .toNumber(),
+    total:
+      btcRateMissing || mlRateMissing
+        ? null
+        : new Decimal(currentBalances.total || 0)
+            .div(new Decimal(yesterdayBalances.total || 1))
+            .toNumber(),
   }
 
   const balanceDiffs = {
-    btc: new Decimal(currentBalances.btc || 0)
-      .minus(new Decimal(btcYesterdayBalance || 0))
-      .toNumber(),
-    ml: new Decimal(currentBalances.ml || 0)
-      .minus(new Decimal(mlYesterdayBalance || 0))
-      .toNumber(),
-    total: new Decimal(currentBalances.total || 0)
-      .minus(new Decimal(yesterdayBalances.total || 0))
-      .toNumber(),
+    btc: btcRateMissing
+      ? null
+      : new Decimal(currentBalances.btc || 0)
+          .minus(new Decimal(btcYesterdayBalance || 0))
+          .toNumber(),
+    ml: mlRateMissing
+      ? null
+      : new Decimal(currentBalances.ml || 0)
+          .minus(new Decimal(mlYesterdayBalance || 0))
+          .toNumber(),
+    total:
+      btcRateMissing || mlRateMissing
+        ? null
+        : new Decimal(currentBalances.total || 0)
+            .minus(new Decimal(yesterdayBalances.total || 0))
+            .toNumber(),
   }
 
   return { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs }
@@ -211,14 +247,15 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
 
 const getStats = (proportionDiffs, balanceDiffs, networkType) => {
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
-  const hasBalance = proportionDiffs.total !== 0
+  const hasBalance = proportionDiffs.total != null
   const percentValue =
     isTestnet || !hasBalance
       ? 0
       : new Decimal(proportionDiffs.total || 0).minus(1).times(100).toFixed(2)
-  const fiatValue = isTestnet
-    ? 0
-    : new Decimal(balanceDiffs.total || 0).toFixed(2)
+  const fiatValue =
+    isTestnet || balanceDiffs.total == null
+      ? 0
+      : new Decimal(balanceDiffs.total || 0).toFixed(2)
   return [
     {
       name: '24h percent',
@@ -310,6 +347,13 @@ const getBtcAddresses = (addresses) => {
   return { btcChangeAddresses, btcReceivingAddresses }
 }
 
+// Stored BTC address entries are plain strings (old store blobs) or
+// { [address]: { pubkey } } objects (new store). Returns the address string.
+const getBtcAddressString = (entry) => {
+  if (typeof entry === 'string') return entry
+  return entry ? Object.keys(entry)[0] : undefined
+}
+
 const getBatchData = async (ids, networkRequest) => {
   const uniqueIds = [...new Set(ids)]
 
@@ -346,6 +390,7 @@ export {
   getBtcAddressLink,
   getBtcTransactionLink,
   getBtcAddresses,
+  getBtcAddressString,
   getBatchData,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,
