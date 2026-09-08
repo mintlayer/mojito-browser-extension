@@ -121,7 +121,8 @@ describe('background service worker', () => {
       expect(reply.current).toBeUndefined()
       expect(keptOpen).toBe(true)
       expect(createdWindows).toHaveLength(1)
-      expect(storageData.pendingRequest).toMatchObject({
+      // keyed by the window that will show the approval
+      expect(storageData['pendingRequest:700']).toMatchObject({
         action: 'connect',
         origin: 'https://bridge.example',
         requestId: 'r1',
@@ -140,6 +141,7 @@ describe('background service worker', () => {
           method: 'connect',
           requestId: 'r1',
           origin: 'https://bridge.example',
+          windowId: 700,
           result: sessionData,
         },
         extensionSender,
@@ -154,7 +156,7 @@ describe('background service worker', () => {
         network: 'testnet',
       })
       // the pending request is consumed
-      expect(storageData.pendingRequest).toBeUndefined()
+      expect(storageData['pendingRequest:700']).toBeUndefined()
     })
 
     it('rejects with USER_REJECTED when the wallet denies', () => {
@@ -168,6 +170,7 @@ describe('background service worker', () => {
           method: 'connect',
           requestId: 'r2',
           origin: 'https://bridge.example',
+          windowId: 700,
           result: null,
         },
         extensionSender,
@@ -190,6 +193,7 @@ describe('background service worker', () => {
           method: 'connect',
           requestId: 'r1',
           origin: 'https://bridge.example',
+          windowId: 700,
           result: sessionData,
         },
         extensionSender,
@@ -238,6 +242,7 @@ describe('background service worker', () => {
           method: 'connect',
           requestId: 'r1',
           origin: 'https://bridge.example',
+          windowId: 700,
           result: sessionData,
         },
         extensionSender,
@@ -255,7 +260,7 @@ describe('background service worker', () => {
       )
 
       expect(keptOpen).toBe(true)
-      expect(storageData.pendingRequest).toMatchObject({
+      expect(storageData['pendingRequest:701']).toMatchObject({
         action: 'signTransaction',
         network: 'testnet',
         data: { txData: { JSONRepresentation: {} } },
@@ -289,6 +294,7 @@ describe('background service worker', () => {
           method: 'connect',
           requestId: 'r1',
           origin: 'https://bridge.example',
+          windowId: 700,
           result: sessionData,
         },
         extensionSender,
@@ -313,6 +319,7 @@ describe('background service worker', () => {
           method: 'connect',
           requestId: 'r1',
           origin: 'https://bridge.example',
+          windowId: 700,
           result: sessionData,
         },
         extensionSender,
@@ -353,6 +360,7 @@ describe('background service worker', () => {
           method: 'connect',
           requestId: 'r1',
           origin: 'https://bridge.example',
+          windowId: 700,
           result: sessionData,
         },
         extensionSender,
@@ -375,6 +383,59 @@ describe('background service worker', () => {
       expect(reply.current.error).toMatchObject({
         code: 'UNSUPPORTED_METHOD',
         message: expect.stringContaining('requestSecretHash'),
+      })
+    })
+  })
+  describe('concurrent approval windows (the blocker scenario)', () => {
+    it('a connect window and a signing window keep separate pending requests', () => {
+      // origin A opens a connect approval (window 700) and approves it
+      dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        {
+          id: 'site-a',
+          origin: 'https://a.example',
+          url: 'https://a.example/',
+        },
+      )
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: 'r1',
+          origin: 'https://a.example',
+          windowId: 700,
+          result: {
+            address: { testnet: { receiving: ['tmtc1qabc'], change: [] } },
+            addressesByChain: {
+              mintlayer: { receiving: ['tmtc1qabc'], change: [] },
+            },
+            network: 'testnet',
+          },
+        },
+        extensionSender,
+      )
+      // while A's connect window is pending, a signing approval opens
+      // (window 701) for the same origin
+      dispatch(
+        {
+          requestId: 's1',
+          method: 'signTransaction',
+          params: { txData: { JSONRepresentation: {} } },
+        },
+        {
+          id: 'site-a',
+          origin: 'https://a.example',
+          url: 'https://a.example/',
+        },
+      )
+
+      // the connect request was consumed on approval; the signing window
+      // has its own record — the two never overwrote each other
+      expect(storageData['pendingRequest:700']).toBeUndefined()
+      expect(storageData['pendingRequest:701']).toMatchObject({
+        action: 'signTransaction',
+        requestId: 's1',
+        network: 'testnet',
       })
     })
   })

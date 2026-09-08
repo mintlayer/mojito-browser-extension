@@ -17,16 +17,19 @@ describe('Browser', () => {
   })
 
   it('picks the chrome APIs when browser is not available', () => {
+    const windows = { getCurrent: jest.fn() }
     const chromeMock = {
       runtime: { id: 'test-id', sendMessage: jest.fn() },
       storage: { local: { remove: jest.fn() } },
+      windows,
     }
     global.chrome = chromeMock
 
-    const { runtime, storage } = loadBrowserModule()
+    const { runtime, storage, windows: windowsApi } = loadBrowserModule()
 
     expect(runtime).toBe(chromeMock.runtime)
     expect(storage).toBe(chromeMock.storage)
+    expect(windowsApi).toBe(chromeMock.windows)
   })
 
   it('picks the browser APIs when available', () => {
@@ -49,10 +52,12 @@ describe('Browser', () => {
     expect(storage).toBeNull()
   })
 
-  it('sends a result response and clears the pending request', () => {
+  it('sends a result response tagged with the popup window id', async () => {
+    const windows = { getCurrent: jest.fn((cb) => cb({ id: 42 })) }
     const chromeMock = {
       runtime: { id: 'test-id', sendMessage: jest.fn() },
       storage: { local: { remove: jest.fn() } },
+      windows,
     }
     global.chrome = chromeMock
 
@@ -64,29 +69,27 @@ describe('Browser', () => {
       origin: 'https://dapp.example',
       result: { address: {} },
     })
+    await Promise.resolve() // flush the windows.getCurrent callback
 
+    expect(windows.getCurrent).toHaveBeenCalled()
     expect(chromeMock.runtime.sendMessage).toHaveBeenCalledWith(
       {
         action: 'popupResponse',
         method: 'connect',
         requestId: 'r1',
         origin: 'https://dapp.example',
+        windowId: 42,
         result: { address: {} },
       },
       expect.any(Function),
     )
-
-    chromeMock.runtime.sendMessage.mock.calls[0][1]()
-    expect(chromeMock.storage.local.remove).toHaveBeenCalledWith(
-      'pendingRequest',
-      expect.any(Function),
-    )
   })
 
-  it('sends an error response without a result field', () => {
+  it('sends an error response without a result field', async () => {
     const chromeMock = {
       runtime: { id: 'test-id', sendMessage: jest.fn() },
       storage: { local: { remove: jest.fn() } },
+      windows: { getCurrent: jest.fn((cb) => cb({ id: 7 })) },
     }
     global.chrome = chromeMock
 
@@ -98,6 +101,7 @@ describe('Browser', () => {
       origin: 'https://dapp.example',
       error: 'Transaction rejected',
     })
+    await Promise.resolve()
 
     const payload = chromeMock.runtime.sendMessage.mock.calls[0][0]
     expect(payload.error).toBe('Transaction rejected')

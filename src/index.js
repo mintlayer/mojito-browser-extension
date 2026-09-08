@@ -80,7 +80,7 @@ if (isExtendedView) {
   document.documentElement.classList.add('extended-view')
 }
 
-const { storage, runtime } = Browser
+const { storage, runtime, windows } = Browser
 
 const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
@@ -170,18 +170,25 @@ const App = () => {
   }, [location.pathname])
 
   useEffect(() => {
-    if (storage) {
-      // Load pending request from storage
-      storage.local.get(['pendingRequest'], (data) => {
-        if (runtime.lastError) {
-          console.error('[Mojito Popup] Storage error:', runtime.lastError)
-          return
-        }
-        const pendingRequest = data.pendingRequest
-        if (pendingRequest) {
-          handlePendingRequest(pendingRequest)
-        }
+    let cancelled = false
+    if (storage && windows) {
+      // Read THIS window's pending request. Approval requests are keyed by
+      // window id, so two approval windows can never read (and approve)
+      // each other's request.
+      windows.getCurrent((win) => {
+        if (cancelled || !win) return
+        const key = `pendingRequest:${win.id}`
+        storage.local.get([key], (data) => {
+          if (cancelled) return
+          const pendingRequest = data?.[key]
+          if (pendingRequest) {
+            handlePendingRequest(pendingRequest)
+          }
+        })
       })
+    }
+    return () => {
+      cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses, isAccountUnlocked, navigate])

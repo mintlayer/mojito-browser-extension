@@ -35,17 +35,31 @@
     })
   }
 
-  // Load connected sites from storage
+  // Load connected sites from storage. Messages arriving before the load
+  // completes are queued: acting on a half-loaded session map would tell
+  // already-connected sites they are NOT_CONNECTED.
+  let connectedSitesLoaded = false
+  const messageQueue = []
   api.storage.local.get(['connectedSites'], (data) => {
     if (api.runtime.lastError) {
       console.error('[Mintlayer] Storage get error:', api.runtime.lastError)
-      return
+    } else {
+      connectedSites = data.connectedSites || {}
     }
-    connectedSites = data.connectedSites || {}
+    // one-time cleanup of the pre-window-keyed pending request
+    api.storage.local.remove('pendingRequest')
+    connectedSitesLoaded = true
+    for (const [queuedMessage, queuedSender, queuedResponse] of messageQueue) {
+      processMessage(queuedMessage, queuedSender, queuedResponse)
+    }
+    messageQueue.length = 0
   })
 
-  const clearPendingRequest = () => {
-    api.storage.local.remove('pendingRequest', () => {
+  const pendingRequestKeyFor = (windowId) => `pendingRequest:${windowId}`
+
+  const clearPendingRequest = (windowId) => {
+    if (typeof windowId !== 'number') return
+    api.storage.local.remove(pendingRequestKeyFor(windowId), () => {
       if (api.runtime.lastError) {
         console.error(
           '[Mintlayer] Storage remove error:',
@@ -88,6 +102,7 @@
 
   // Fails a pending approval: clears the slot and answers the waiting dApp.
   const failSlot = (slot, error) => {
+    const windowId = slot.id
     slot.id = false
     slot.opening = false
 
@@ -96,7 +111,7 @@
     const respond = pendingResponses.get(slot.requestId)
     pendingResponses.delete(slot.requestId)
     slot.requestId = null
-    clearPendingRequest()
+    clearPendingRequest(windowId)
     respond?.({ error })
   }
 
@@ -138,26 +153,34 @@
         // The window may have been closed while it was being created, in
         // which case onRemoved fired before the id was tracked.
         api.windows.get(slot.id, (existing) => {
-          if (!existing) {
+          if (api.runtime.lastError || !existing) {
+            // check lastError: a failed lookup used to log
+            // "Unchecked runtime.lastError" alongside the intended path
             failSlot(slot, errorOf('REQUEST_CANCELLED', 'Request cancelled'))
             return
           }
 
-          api.storage.local.set({ pendingRequest: request }, () => {
-            if (api.runtime.lastError) {
-              console.error(
-                '[Mintlayer] Storage set error:',
-                api.runtime.lastError,
-              )
-              failSlot(
-                slot,
-                errorOf(
-                  'STORAGE_ERROR',
-                  'Could not create the wallet request. Please try again.',
-                ),
-              )
-            }
-          })
+          // Keyed by window id: two approval windows can be open at once
+          // (a connect and a signing) and must never overwrite each other's
+          // request — the popup approves what ITS window was opened for.
+          api.storage.local.set(
+            { [pendingRequestKeyFor(slot.id)]: request },
+            () => {
+              if (api.runtime.lastError) {
+                console.error(
+                  '[Mintlayer] Storage set error:',
+                  api.runtime.lastError,
+                )
+                failSlot(
+                  slot,
+                  errorOf(
+                    'STORAGE_ERROR',
+                    'Could not create the wallet request. Please try again.',
+                  ),
+                )
+              }
+            },
+          )
         })
       },
     )
@@ -167,10 +190,10 @@
 
   // Handle popup responses from the wallet UI
   const handlePopupResponse = (message) => {
-    const { requestId, origin, result, error, method } = message
+    const { requestId, origin, result, error, method, windowId } = message
     const respond = pendingResponses.get(requestId)
     pendingResponses.delete(requestId)
-    clearPendingRequest()
+    clearPendingRequest(windowId)
 
     if (!respond) {
       console.warn('[Mintlayer] Response for unknown request:', requestId)
@@ -219,8 +242,7 @@
     respond({ result, error })
   }
 
-  // Single listener for all messages
-  api.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const processMessage = (message, sender, sendResponse) => {
     const origin = getRequestOrigin(sender)
 
     // Wallet-UI-only actions. These must be checked before dApp requests:
@@ -377,6 +399,17 @@
     }
 
     return false
+  }
+
+  // Single listener for all messages. Queue everything until the persisted
+  // session map is loaded — answering a "connect" against a half-loaded map
+  // would tell already-connected sites they are not connected.
+  api.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (!connectedSitesLoaded) {
+      messageQueue.push([message, sender, sendResponse])
+      return true
+    }
+    return processMessage(message, sender, sendResponse)
   })
 
   // Clean up window state and answer waiting dApps when an approval window
