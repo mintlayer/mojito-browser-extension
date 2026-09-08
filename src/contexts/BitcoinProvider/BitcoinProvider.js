@@ -72,13 +72,12 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     setCurrentNetworkType(networkType)
     setCurrentAccountId(accountID)
 
-    const receivingAddresses =
-      addresses.btcAddresses.btcReceivingAddresses.flatMap((addr) =>
-        Object.keys(addr),
-      )
-    const changeAddresses = addresses.btcAddresses.btcChangeAddresses.flatMap(
-      (addr) => Object.keys(addr),
-    )
+    const receivingAddresses = addresses.btcAddresses.btcReceivingAddresses
+      .map(BTC.getBtcAddressString)
+      .filter(Boolean)
+    const changeAddresses = addresses.btcAddresses.btcChangeAddresses
+      .map(BTC.getBtcAddressString)
+      .filter(Boolean)
 
     const allAddresses = changeAddresses.concat(receivingAddresses)
 
@@ -240,12 +239,14 @@ const BitcoinProvider = ({ value: propValue, children }) => {
       } catch (error) {
         console.error('Error in getWalletUtxos:', error)
         setFetchingUtxos(false)
+        // Never undefined: consumers map/filter the utxo list.
+        return []
       }
     }
 
     const getBalance = async (utxos) => {
       try {
-        const satoshiBalance = BTC.calculateBalanceFromUtxoList(utxos)
+        const satoshiBalance = BTC.calculateBalanceFromUtxoList(utxos || [])
         const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
         const formattedBalance = Format.BTCValue(balanceConvertedToBTC)
         setBtcBalance(formattedBalance)
@@ -257,7 +258,6 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     }
     await getTransactions()
     const fetchedUtxos = await getWalletUtxos()
-    setBtcUtxos(fetchedUtxos)
     await getBalance(fetchedUtxos)
     getBalanceFromAddressInfo()
   }
@@ -293,7 +293,10 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     if (networkType !== currentNetworkType) {
       fetchAllData(true)
     }
-  })
+    // Only re-run on actual network changes; a dependency-less effect would
+    // re-fire on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [networkType])
 
   const value = {
     btcBalance,

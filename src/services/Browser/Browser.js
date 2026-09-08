@@ -23,18 +23,29 @@ export const sendPopupResponse = ({
 }) => {
   if (!runtime || !storage) return
 
-  runtime.sendMessage(
-    {
-      action: 'popupResponse',
-      method,
-      requestId,
-      origin,
-      ...(error ? { error } : { result }),
-    },
-    () => {
-      storage.local.remove('pendingRequest', () => {
-        window.close()
-      })
-    },
-  )
+  const cleanup = () => {
+    storage.local.remove('pendingRequest', () => {
+      window.close()
+      // Fallback for contexts where window.close() is ignored (e.g. the
+      // approval page opened as a tab in dev): go back to the wallet.
+      setTimeout(() => {
+        if (!window.closed) window.location.replace('/')
+      }, 150)
+    })
+  }
+
+  try {
+    runtime.sendMessage(
+      {
+        action: 'popupResponse',
+        method,
+        requestId,
+        origin,
+        ...(error ? { error } : { result }),
+      },
+      cleanup,
+    )
+  } catch {
+    cleanup()
+  }
 }

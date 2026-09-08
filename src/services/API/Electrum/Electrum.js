@@ -49,24 +49,13 @@ const requestElectrum = async (url, body = null, request = fetch) => {
 
 const tryServers = async (endpoint, body = null) => {
   const networkType = LocalStorageService.getItem('networkType')
-  const customElectrumServerList = LocalStorageService.getItem(
-    AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
-  )
 
-  const customServer = customElectrumServerList
-    ? networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? customElectrumServerList.bitcoin_testnet
-      : customElectrumServerList.bitcoin_mainnet
-    : null
-
-  const defaultElectrumServes =
+  // No localStorage custom-server override: an unvalidated entry would
+  // silently redirect all Bitcoin data (and broadcasts) elsewhere.
+  const combinedElectrumServers =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? EnvVars.TESTNET_ELECTRUM_SERVERS
       : EnvVars.MAINNET_ELECTRUM_SERVERS
-
-  const combinedElectrumServers = customServer
-    ? [customServer, ...defaultElectrumServes]
-    : [...defaultElectrumServes]
 
   for (let i = 0; i < combinedElectrumServers.length; i++) {
     try {
