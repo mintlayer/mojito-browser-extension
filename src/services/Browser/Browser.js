@@ -61,3 +61,21 @@ export const sendPopupResponse = ({
     send(null)
   }
 }
+
+// Tells the background the approval surface (side panel or popup) rendered
+// the request: it cancels the popup-fallback timer for that requestId.
+// Without this ack the background assumes the panel did not display the
+// request and opens a new popup window for every approval.
+export const notifyApprovalDisplayed = (requestId) => {
+  if (!runtime || !requestId) return
+  try {
+    runtime.sendMessage({ action: 'approvalDisplayed', requestId }, () => {
+      // Fire-and-forget: swallow the unchecked lastError (no responder
+      // is expected for this message).
+      void runtime.lastError
+    })
+  } catch {
+    /* messaging unavailable — the popup fallback then guarantees an
+       approval surface, which is the safe outcome */
+  }
+}

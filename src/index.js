@@ -226,6 +226,12 @@ const App = () => {
 
     const { action, origin, requestId } = pendingRequest
 
+    // Acknowledge ownership: the background cancels its 2s popup-fallback
+    // timer for this requestId once the approval surface has taken the
+    // request (locked → the panel shows unlock first, the approval follows
+    // here — either way the panel owns it, no popup window is needed).
+    Browser.notifyApprovalDisplayed(requestId)
+
     if (action === 'connect') {
       if (!unlocked) {
         setNextAfterUnlock({

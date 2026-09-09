@@ -102,11 +102,11 @@ describe('background service worker', () => {
         },
       },
       windows: {
-        create: (opts, cb) => {
+        create: jest.fn((opts, cb) => {
           const win = { id: 700 + createdWindows.length }
           createdWindows.push(win)
           cb(win)
-        },
+        }),
         get: (id, cb) => cb({ id }),
         update: (id, opts, cb) => cb && cb({ id }),
         onRemoved: { addListener: () => {} },
@@ -638,6 +638,79 @@ describe('background service worker', () => {
           )
           expect(connect.reply.current.result).toEqual(sessionData)
           expect(storageData['pendingRequest:700']).toBeUndefined()
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      // Regression for the approval-ack fix: the panel's ack must cancel the
+      // 2s popup-fallback timer for ITS request only — a later request that
+      // never gets an ack still falls back to a popup window.
+      it('cancels only the acked request: a later unacked request still falls back', async () => {
+        jest.useFakeTimers()
+        try {
+          // request 1: the panel acks it after opening
+          const first = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            tabDappSender,
+          )
+          expect(first.keptOpen).toBe(true)
+          await flushMicrotasks()
+
+          dispatch(
+            { action: 'approvalDisplayed', requestId: 'r1' },
+            extensionSender,
+          )
+
+          // past the 2s fallback deadline: NO popup for the acked request
+          jest.advanceTimersByTime(2000)
+          await flushMicrotasks()
+          expect(global.chrome.windows.create).not.toHaveBeenCalled()
+          expect(createdWindows).toHaveLength(0)
+          // the panel still owns the request
+          expect(storageData['pendingRequest:3']).toMatchObject({
+            action: 'connect',
+            requestId: 'r1',
+          })
+
+          // free the panel slot by rejecting r1 (as the approval page does)
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: 'r1',
+              origin: 'https://bridge.example',
+              windowId: 3,
+              result: null,
+            },
+            extensionSender,
+          )
+          expect(first.reply.current.error).toMatchObject({
+            code: 'USER_REJECTED',
+          })
+
+          // request 2 from the same tab: NEVER acked
+          const second = dispatch(
+            { requestId: 'r2', method: 'connect', params: {} },
+            tabDappSender,
+          )
+          expect(second.keptOpen).toBe(true)
+          await flushMicrotasks()
+          expect(createdWindows).toHaveLength(0)
+
+          jest.advanceTimersByTime(2000)
+          await flushMicrotasks()
+
+          // the unacked request fell back to a popup window
+          expect(global.chrome.windows.create).toHaveBeenCalledTimes(1)
+          expect(createdWindows).toHaveLength(1)
+          expect(storageData['pendingRequest:700']).toMatchObject({
+            action: 'connect',
+            origin: 'https://bridge.example',
+            requestId: 'r2',
+          })
+          // the panel registration for r2 was rolled back
+          expect(storageData['pendingRequest:3']).toBeUndefined()
         } finally {
           jest.useRealTimers()
         }

@@ -115,4 +115,64 @@ describe('Browser', () => {
       sendPopupResponse({ method: 'connect', requestId: 'r3', origin: 'x' }),
     ).not.toThrow()
   })
+
+  describe('notifyApprovalDisplayed', () => {
+    it('sends exactly the approvalDisplayed ack for the request', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', sendMessage: jest.fn() },
+        storage: { local: { remove: jest.fn() } },
+      }
+      global.chrome = chromeMock
+
+      const { notifyApprovalDisplayed } = loadBrowserModule()
+
+      notifyApprovalDisplayed('req-1')
+
+      expect(chromeMock.runtime.sendMessage).toHaveBeenCalledTimes(1)
+      const [payload, callback] = chromeMock.runtime.sendMessage.mock.calls[0]
+      // exactly { action, requestId }: no extra fields
+      expect(payload).toEqual({
+        action: 'approvalDisplayed',
+        requestId: 'req-1',
+      })
+      expect(callback).toEqual(expect.any(Function))
+
+      // the fire-and-forget reply callback must tolerate a lastError
+      // response (no responder is expected for this message)
+      chromeMock.runtime.lastError = { message: 'No responder' }
+      expect(() => callback()).not.toThrow()
+    })
+
+    it('is a no-op when the requestId is missing', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', sendMessage: jest.fn() },
+        storage: { local: { remove: jest.fn() } },
+      }
+      global.chrome = chromeMock
+
+      const { notifyApprovalDisplayed } = loadBrowserModule()
+
+      expect(() => notifyApprovalDisplayed()).not.toThrow()
+      expect(() => notifyApprovalDisplayed('')).not.toThrow()
+      expect(chromeMock.runtime.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('swallows sendMessage throwing (messaging unavailable)', () => {
+      const chromeMock = {
+        runtime: {
+          id: 'test-id',
+          sendMessage: jest.fn(() => {
+            throw new Error('Extension context invalidated')
+          }),
+        },
+        storage: { local: { remove: jest.fn() } },
+      }
+      global.chrome = chromeMock
+
+      const { notifyApprovalDisplayed } = loadBrowserModule()
+
+      expect(() => notifyApprovalDisplayed('req-1')).not.toThrow()
+      expect(chromeMock.runtime.sendMessage).toHaveBeenCalledTimes(1)
+    })
+  })
 })
