@@ -130,6 +130,22 @@ interval)` + `useNetworkSync()` shared by Mintlayer/Bitcoin/ExchangeRates
 
 ## Accepted risks (documented, not scheduled)
 
+- **elliptic GHSA-848j (crypto-browserify webpack polyfill)**: no patched
+  elliptic release exists; npm's only suggestion is downgrading
+  crypto-browserify to 3.3.0 (older = strictly worse). The polyfill exists
+  only to satisfy webpack's node-crypto resolution — wallet cryptography
+  runs on the vendored wasm lib and noble curves. Revisit when
+  crypto-browserify ships a fixed line or the polyfill can be dropped.
+- **Public ipfs gateway rate limiting**: the wallet races ipfs.io /
+  dweb.link / w3s.link once per token icon, then serves from an in-memory
+  blob forever. Shared team IPs can still get throttled on first load —
+  the proper long-term fix is an `/ipfs/<cid>` proxy on
+  mojito-api.mintlayer.org (Cloudflare-cached), after which
+  `IPFS_GATEWAYS` shrinks to that single trusted origin.
+- **Dev tooling advisories** may reappear between lockfile refreshes
+  (webpack-dev-server chain); none ship in the extension bundle — re-run
+  `npm audit fix` periodically.
+
 - **`window.mojito` fingerprinting**: any HTTPS site can detect the wallet.
   Inherent to the user-approved model (manual connect approval, no static
   allowlist). Mitigated: HTTPS-only, top-frame only, manual approval popup,
