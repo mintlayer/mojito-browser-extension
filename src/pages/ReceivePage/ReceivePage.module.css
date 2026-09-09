@@ -11,6 +11,12 @@
   animation: be-fade-in 400ms ease both;
 }
 
+/* flex children must keep their natural height: shrinking them
+   overlaps content visually and never triggers the scroll */
+.page > * {
+  flex-shrink: 0;
+}
+
 .header {
   display: flex;
   justify-content: center;

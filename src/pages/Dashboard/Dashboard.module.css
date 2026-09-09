@@ -98,6 +98,12 @@
   padding-bottom: 16px;
 }
 
+/* flex children must keep their natural height: shrinking them
+   overlaps content visually and never triggers the scroll */
+.scroll > * {
+  flex-shrink: 0;
+}
+
 /* ── Balance card ────────────────────────────────────────── */
 .balanceCard {
   position: relative;

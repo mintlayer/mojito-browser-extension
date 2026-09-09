@@ -12,6 +12,10 @@
   border-radius: 10px;
 }
 
+.signTransaction > * {
+  flex-shrink: 0;
+}
+
 .signTransaction .header {
   display: flex;
   align-items: center;

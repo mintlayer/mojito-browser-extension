@@ -3,7 +3,7 @@ import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 
 import { PopUp, AddWallet, TxRow, AssetRow } from '@ComposedComponents'
-import { AccountContext, SettingsContext } from '@Contexts'
+import { AccountContext, MintlayerContext, SettingsContext } from '@Contexts'
 import { Account as AccountEntity } from '@Entities'
 
 import {
@@ -24,7 +24,7 @@ import {
   LivePill,
   Seg,
 } from '@BasicComponents'
-const { adaptDesignTx } = Transactions
+const { adaptDesignTx, resolveTxSymbol } = Transactions
 
 import { AppInfo } from '@Constants'
 
@@ -52,8 +52,9 @@ const DashboardPage = () => {
     tokenBalances,
     fetchingBalances: mlFetchingBalances,
     fetchingTokens: mlFetchingTokens,
-    transactions: mlTransactions,
   } = useMlWalletInfo()
+  const { transactions: mlAllTransactions, tokenMap } =
+    useContext(MintlayerContext)
   const { exchangeRate: btcExchangeRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlExchangeRate } = useExchangeRates('ml', 'usd')
   const { yesterdayExchangeRate: btcYesterdayExchangeRate } =
@@ -244,13 +245,24 @@ const DashboardPage = () => {
     getCurrentAccount(accountID).then((account) => setAccount(account))
   }, [accountID])
 
-  // Recent activity: real transactions first, a demo row as fallback.
-  const adaptTx = (tx, sym, chain) => adaptDesignTx(tx, sym, chain)
-
+  // Recent activity: BTC + ML coin + token transactions (token tickers
+  // resolved from the wallet's token data), newest first per chain.
   const recentTxs = [
-    ...(btcTransactions || []).map((t) => adaptTx(t, 'BTC', 'Bitcoin')),
-    ...(mlTransactions || []).map((t) => adaptTx(t, 'ML', 'Mintlayer')),
-  ].slice(0, 3)
+    ...(btcTransactions || []).map((t) => ({
+      ...adaptDesignTx(t, 'BTC', 'Bitcoin'),
+      _seq: t.date || 0,
+    })),
+    ...(mlAllTransactions || []).map((t) => ({
+      ...adaptDesignTx(
+        t,
+        resolveTxSymbol(t, tokenBalances, tokenMap),
+        'Mintlayer',
+      ),
+      _seq: t.date || 0,
+    })),
+  ]
+    .sort((a, b) => b._seq - a._seq)
+    .slice(0, 3)
 
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 

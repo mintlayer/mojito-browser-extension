@@ -53,4 +53,17 @@ const adaptDesignTx = (tx, sym, chain) => {
   }
 }
 
-export { adaptDesignTx }
+// Resolves the ticker shown next to a Mintlayer transaction's amount:
+// coin txs -> ML, token txs -> the token's ticker from the balances or the
+// whole-network token map, with a neutral fallback.
+const resolveTxSymbol = (tx, tokenBalances = {}, tokenMap = {}) => {
+  const tokenId = tx?.token_id
+  if (!tokenId) return 'ML'
+
+  const info = tokenBalances[tokenId]?.token_info?.token_ticker
+  const ticker =
+    (typeof info === 'object' ? info?.string : info) || tokenMap[tokenId]
+  return ticker || 'Token'
+}
+
+export { adaptDesignTx, resolveTxSymbol }

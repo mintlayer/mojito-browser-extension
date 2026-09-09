@@ -1,10 +1,13 @@
 import React from 'react'
 import { MemoryRouter, Routes, Route } from 'react-router'
-import { render } from '@testing-library/react'
+import { render, within } from '@testing-library/react'
 
 const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
 
 const TOKEN_ID = 'tmltk1q2c7d9a4hm3'
+// UI review finding: the Token ID row shows the id truncated
+// (ML.formatAddress(id, 24)) with a copy button, never in full.
+const TRUNCATED_TOKEN_ID = 'tmltk1q2c7d9...1q2c7d9a4hm3'
 
 jest.mock('@Hooks', () => {
   const mockTokenBalances = {
@@ -128,12 +131,17 @@ describe('AssetPage', () => {
   )
 
   it('renders a real Mintlayer token from tokenBalances', () => {
-    const { container } = renderAt(TOKEN_ID)
+    const { container, getByText } = renderAt(TOKEN_ID)
 
     expect(container.textContent).toContain('CBEAT')
-    expect(container.textContent).toContain(TOKEN_ID)
+    // The id is rendered truncated — the full id must not leak verbatim.
+    expect(container.textContent).not.toContain(TOKEN_ID)
+    expect(container.textContent).toContain(TRUNCATED_TOKEN_ID)
     expect(container.textContent).toContain('Decimals')
     expect(container.textContent).toContain('Token info')
+    // The Token ID row offers a copy action for the full id.
+    const tokenIdRow = getByText('Token ID').closest('div')
+    expect(within(tokenIdRow).getByTestId('copy-btn')).toBeInTheDocument()
     // Balance comes from the token-scoped hook (10 CBEAT), not the ML coin balance.
     expect(container.textContent).toContain('10')
     // No fake price data for tokens.

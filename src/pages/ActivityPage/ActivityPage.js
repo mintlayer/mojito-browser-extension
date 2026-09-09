@@ -1,31 +1,38 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 
 import { TxRow, BeSheet, CopyButton } from '@ComposedComponents'
 import { PageWrapper, Seg, ChainBadge, KV, Eyebrow } from '@BasicComponents'
-import { useBtcWalletInfo, useMlWalletInfo } from '@Hooks'
+import { useBtcWalletInfo } from '@Hooks'
+import { MintlayerContext } from '@Contexts'
 import { Transactions } from '@Helpers'
-const { adaptDesignTx } = Transactions
+const { adaptDesignTx, resolveTxSymbol } = Transactions
 
 import styles from './ActivityPage.module.css'
 
 /**
  * Activity screen from the design (doc/ be-settings.jsx ActivityScreenBE +
- * TxSheet). Real transactions; the design's confirmation counts and fiat-at-
- * tx-time are mocked/partial — see doc/server-requirements.md.
+ * TxSheet). Real transactions — BTC, ML coin AND Mintlayer token activity
+ * (token tickers resolved from the wallet's token data); the design's
+ * confirmation counts and fiat-at-tx-time are mocked/partial — see
+ * doc/server-requirements.md.
  */
 const ActivityPage = () => {
   const [filter, setFilter] = useState('All')
   const [selected, setSelected] = useState(null)
 
+  const { transactions, tokenBalances, tokenMap } = useContext(MintlayerContext)
   const btcInfo = useBtcWalletInfo()
-  const mlInfo = useMlWalletInfo()
 
   const all = [
     ...(btcInfo.transactions || []).map((t) =>
       adaptDesignTx(t, 'BTC', 'Bitcoin'),
     ),
-    ...(mlInfo.transactions || []).map((t) =>
-      adaptDesignTx(t, 'ML', 'Mintlayer'),
+    ...(transactions || []).map((t) =>
+      adaptDesignTx(
+        t,
+        resolveTxSymbol(t, tokenBalances, tokenMap),
+        'Mintlayer',
+      ),
     ),
   ]
 

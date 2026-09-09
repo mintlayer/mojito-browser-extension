@@ -11,6 +11,12 @@
   animation: be-fade-in 400ms ease both;
 }
 
+/* flex children must keep their natural height: shrinking them
+   overlaps content visually and never triggers the scroll */
+.page > * {
+  flex-shrink: 0;
+}
+
 .header {
   display: flex;
   flex-direction: column;
@@ -138,4 +144,11 @@
   font-weight: 600;
   color: var(--be-text-2);
   margin-top: 8px;
+}
+
+.valueLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
 }

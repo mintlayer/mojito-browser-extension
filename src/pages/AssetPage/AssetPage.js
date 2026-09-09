@@ -19,7 +19,8 @@ import {
   useBtcWalletInfo,
   useMlWalletInfo,
 } from '@Hooks'
-import { Transactions, BTC } from '@Helpers'
+import { CopyButton } from '@ComposedComponents'
+import { ML, Transactions, BTC } from '@Helpers'
 const { adaptDesignTx } = Transactions
 
 import styles from './AssetPage.module.css'
@@ -172,7 +173,16 @@ const AssetPage = () => {
             <KV
               rows={[
                 ['Ticker', ticker],
-                ['Token ID', id],
+                [
+                  'Token ID',
+                  <span
+                    key="token-id"
+                    className={styles.valueLine}
+                  >
+                    {ML.formatAddress(id, 24)}
+                    <CopyButton content={id} />
+                  </span>,
+                ],
                 ['Decimals', tokenData.token_info?.number_of_decimals ?? '—'],
                 [
                   'Balance',
