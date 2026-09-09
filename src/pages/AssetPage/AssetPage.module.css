@@ -152,3 +152,7 @@
   gap: 6px;
   font-size: var(--font-size-sm);
 }
+
+.addressCard {
+  margin-top: 14px;
+}

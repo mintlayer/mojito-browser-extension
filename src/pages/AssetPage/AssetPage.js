@@ -83,7 +83,9 @@ const AssetPage = () => {
 
   const sendTarget = isBtc
     ? '/wallet/Bitcoin/send-btc-transaction'
-    : '/wallet/Mintlayer/send-ml-transaction'
+    : isMl
+      ? '/wallet/Mintlayer/send-ml-transaction'
+      : `/wallet/${id}/send-ml-transaction`
   const receiveAddress = isBtc
     ? BTC.getBtcAddressString(
         addresses?.btcAddresses?.btcReceivingAddresses?.[0],
@@ -135,14 +137,12 @@ const AssetPage = () => {
         )}
 
         <div className={styles.actions}>
-          {isReal && (
-            <Button
-              extraStyleClasses={[styles.actionButton]}
-              onClickHandle={() => navigate(sendTarget)}
-            >
-              Send
-            </Button>
-          )}
+          <Button
+            extraStyleClasses={[styles.actionButton]}
+            onClickHandle={() => navigate(sendTarget)}
+          >
+            Send
+          </Button>
           <Button
             extraStyleClasses={[styles.actionSecondary]}
             onClickHandle={() =>
@@ -156,14 +156,16 @@ const AssetPage = () => {
         </div>
 
         {receiveAddress && (
-          <KV
-            rows={[
-              [
-                isBtc ? 'BTC address' : 'ML address',
-                `${receiveAddress.slice(0, 10)}…${receiveAddress.slice(-8)}`,
-              ],
-            ]}
-          />
+          <div className={styles.addressCard}>
+            <KV
+              rows={[
+                [
+                  isBtc ? 'BTC address' : 'ML address',
+                  `${receiveAddress.slice(0, 10)}…${receiveAddress.slice(-8)}`,
+                ],
+              ]}
+            />
+          </div>
         )}
 
         {tokenData && (
