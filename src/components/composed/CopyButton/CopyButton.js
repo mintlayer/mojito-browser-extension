@@ -9,11 +9,18 @@ const CopyButton = ({ content }) => {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    if (content) {
-      navigator.clipboard.writeText(content)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1200)
-    }
+    if (!content) return
+
+    navigator.clipboard
+      .writeText(content)
+      .then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1200)
+      })
+      .catch(() => {
+        // clipboard can be denied (unfocused document, permissions) — never
+        // show a false "copied" confirmation
+      })
   }
 
   return (
@@ -22,6 +29,7 @@ const CopyButton = ({ content }) => {
       onClick={handleCopy}
       type="button"
       data-testid="copy-btn"
+      aria-label="Copy to clipboard"
     >
       {copied ? (
         <SuccessIcon data-testid="success-icon" />

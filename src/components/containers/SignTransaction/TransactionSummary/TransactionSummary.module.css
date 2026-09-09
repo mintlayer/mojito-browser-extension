@@ -1,0 +1,95 @@
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rowLabel {
+  color: var(--be-text-2);
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.rowValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--be-text-0);
+  font-family: var(--be-font-mono);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+  min-width: 0;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.valueLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amount {
+  font-weight: 700;
+  color: var(--be-text-0);
+}
+
+.intentRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-xs);
+  color: var(--be-text-2);
+}
+
+.intentValue {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailsToggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--be-text-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.detailsToggle:hover {
+  color: var(--be-text-0);
+}
+
+.technical {
+  border-top: 1px solid var(--be-line-soft);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.headerLabel {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--be-text-0);
+}

@@ -19,8 +19,8 @@
   height: 100%;
   width: 300px;
   padding: 65px 30px 40px;
-  background: rgb(var(--color-white));
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  background: var(--be-bg-1);
+  box-shadow: -2px 0 5px oklch(0 0 0 / 0.4);
   transform: translateX(100%);
   transition: transform 0.3s ease-in-out;
   z-index: 99999;
@@ -59,7 +59,7 @@
 }
 
 .closeButton svg path {
-  stroke: rgb(var(--color-black));
+  stroke: var(--be-text-1);
 }
 
 .closeButton:hover {
@@ -67,5 +67,5 @@
 }
 
 .closeButton:hover svg path {
-  stroke: rgb(var(--color-black));
+  stroke: var(--be-text-1);
 }

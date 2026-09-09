@@ -8,8 +8,6 @@ import { ReactComponent as SettingsImg } from '@Assets/images/icon-settings.svg'
 import { ReactComponent as LoginImg } from '@Assets/images/icon-login.svg'
 import { ReactComponent as AddWalletImg } from '@Assets/images/icon-add-wallet.svg'
 import { ReactComponent as HomeImg } from '@Assets/images/icon-home.svg'
-import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
-import { ReactComponent as MlLogo } from '@Assets/images/logo.svg'
 
 import { APP_VERSION } from '@Version'
 
@@ -27,14 +25,10 @@ interface NavigationItem {
 }
 
 interface NavigationProps {
-  customNavigation?: NavigationItem[]
   toggleMenu?: boolean
 }
 
-const Navigation = ({
-  customNavigation,
-  toggleMenu = true,
-}: NavigationProps) => {
+const Navigation = ({ toggleMenu = true }: NavigationProps) => {
   const [unlocked, setUnlocked] = useState(false)
   const [navigationItemID, setNavigationItemID] = useState<number | null>(null)
   const navigate = useNavigate()
@@ -90,19 +84,6 @@ const Navigation = ({
       label: 'Dashboard',
       icon: <HomeImg />,
       link: '/dashboard',
-    },
-
-    {
-      id: 2,
-      label: 'Bitcoin Wallet',
-      icon: <BtcLogo />,
-      link: '/wallet/Bitcoin',
-    },
-    {
-      id: 3,
-      label: 'Mintlayer Wallet',
-      icon: <MlLogo />,
-      link: '/wallet/Mintlayer',
     },
 
     {
@@ -182,11 +163,7 @@ const Navigation = ({
     return location.pathname.startsWith(item.link)
   }
 
-  const navList = customNavigation
-    ? customNavigation
-    : unlocked
-      ? loggedNavigationList
-      : navigationList
+  const navList = unlocked ? loggedNavigationList : navigationList
 
   return (
     <>

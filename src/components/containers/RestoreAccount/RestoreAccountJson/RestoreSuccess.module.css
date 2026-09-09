@@ -2,13 +2,13 @@
   font-size: var(--font-size-5xl);
   font-weight: 700;
   text-align: center;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .description {
   font-size: var(--font-size-lg);
   text-align: center;
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   line-height: 1.5;
 }
 

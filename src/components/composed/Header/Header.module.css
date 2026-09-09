@@ -3,9 +3,9 @@
   justify-content: center;
   position: relative;
   min-height: 70px;
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   padding: 20px 31px;
-  border-bottom: 1px solid rgba(var(--color-black), 0.1);
+  border-bottom: 1px solid var(--be-line-soft);
 }
 
 .logoWrapper {
@@ -31,7 +31,7 @@
 }
 
 .backButton:hover {
-  background-color: rgba(var(--color-black), 0.05) !important;
+  background-color: oklch(1 0 0 / 0.06) !important;
 }
 
 .backButton svg {
@@ -41,7 +41,7 @@
 
 .backButton svg path,
 .backButton svg path {
-  stroke: rgb(var(--color-black));
+  stroke: var(--be-text-1);
 }
 
 .backButton:hover svg path,
@@ -65,7 +65,7 @@
 }
 
 .menuButton svg path {
-  stroke: rgb(var(--color-black));
+  stroke: var(--be-text-1);
 }
 
 .expandWrapped {
@@ -100,7 +100,7 @@
 }
 
 .settingsButton:hover {
-  background-color: rgba(var(--color-black), 0.05) !important;
+  background-color: oklch(1 0 0 / 0.06) !important;
 }
 
 .settingsButton svg {
@@ -109,7 +109,7 @@
 }
 
 .settingsButton svg path {
-  stroke: rgb(var(--color-black));
+  stroke: var(--be-text-1);
 }
 
 .invisible {

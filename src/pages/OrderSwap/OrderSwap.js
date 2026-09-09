@@ -24,7 +24,7 @@ const OrderSwapPage = () => {
 
   if (!accountID) {
     console.log('No account id.')
-    navigate('/wallet')
+    navigate('/dashboard')
     return
   }
 

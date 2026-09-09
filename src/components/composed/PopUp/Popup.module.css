@@ -4,7 +4,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(var(--color-black), 0.25);
+  background: oklch(0 0 0 / 0.55);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 9999;
@@ -32,9 +32,9 @@
   align-items: center;
   justify-content: center;
   padding: 68px 16px 14px;
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   border-radius: 20px;
-  box-shadow: 0 20px 60px -10px rgba(var(--color-black), 0.25);
+  box-shadow: 0 20px 60px -10px oklch(0 0 0 / 0.6);
   overflow: hidden;
   animation-name: popupAppear;
   animation-duration: 0.3s;
@@ -67,12 +67,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(var(--color-black), 0.05);
+  background-color: oklch(1 0 0 / 0.06);
   border-radius: 10px;
 }
 
 .popupCloseButton:hover {
-  background-color: rgba(var(--color-black), 0.1);
+  background-color: oklch(1 0 0 / 0.12);
 }
 
 .popupCloseButton svg {
@@ -81,11 +81,12 @@
 }
 
 .popupCloseButton svg path {
-  stroke: rgba(var(--color-black), 0.6);
+  /* black stroke was invisible on the dark panel */
+  stroke: var(--be-text-2);
 }
 
 .popupCloseButton:hover svg path {
-  stroke: rgb(var(--color-black));
+  stroke: var(--be-text-0);
 }
 
 @keyframes popupAppear {

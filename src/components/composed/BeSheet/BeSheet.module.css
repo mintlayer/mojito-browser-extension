@@ -1,0 +1,10 @@
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--be-text-0);
+}
+
+.scroll {
+  overflow-y: auto;
+}

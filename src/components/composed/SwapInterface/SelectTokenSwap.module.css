@@ -16,9 +16,9 @@
   font-size: var(--font-size-xl);
   border-radius: 21px;
   padding: var(--space-xs) var(--space-3xl) var(--space-xs) var(--space-md);
-  border: 1px solid rgba(var(--color-black), 0.06);
-  background: rgb(var(--color-white));
-  color: rgb(var(--color-black));
+  border: 1px solid var(--be-line-soft);
+  background: var(--be-bg-1);
+  color: var(--be-text-0);
   cursor: pointer;
   transition: border-color 0.15s ease;
 }
@@ -40,5 +40,5 @@
   transform: translateY(-50%);
   width: 1em;
   height: 1em;
-  color: rgba(var(--color-black), 0.4);
+  color: var(--be-text-3);
 }

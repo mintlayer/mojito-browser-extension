@@ -143,7 +143,7 @@ const ConfirmBtcTransactionPage = () => {
   }
 
   const goBackToWallet = async () => {
-    navigate('/wallet/Bitcoin')
+    navigate('/dashboard')
   }
 
   const passwordChangeHandler = (value) => {
@@ -151,7 +151,7 @@ const ConfirmBtcTransactionPage = () => {
   }
 
   if (!state) {
-    navigate('/wallet/Bitcoin')
+    navigate('/dashboard')
     return null
   }
 

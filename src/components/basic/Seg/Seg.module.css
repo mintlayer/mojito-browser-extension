@@ -1,0 +1,25 @@
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: oklch(1 0 0 / 0.04);
+  border: 1px solid var(--be-line-soft);
+}
+
+.item {
+  border: none;
+  background: transparent;
+  color: var(--be-text-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.on {
+  background: var(--be-amber-soft);
+  color: var(--be-amber);
+}

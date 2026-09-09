@@ -2,23 +2,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: fadeIn 0.3s ease-in-out;
+  justify-content: center;
+  flex: 1;
+  animation: be-fade-in 0.3s ease-in-out;
   width: 100%;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .heading {
   font-size: var(--font-size-3xl);
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin: var(--space-xl) 0 var(--space-2xs);
 
   @media screen and (min-width: 901px) {
@@ -29,7 +22,7 @@
 
 .subtitle {
   font-size: var(--font-size-sm);
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-2);
   margin: 0 0 var(--space-2xl);
 
   @media screen and (min-width: 901px) {
@@ -63,26 +56,29 @@
   max-width: 400px;
   padding: var(--space-lg);
   margin-top: var(--space-3xl);
-  border-radius: 16px;
-  border: 1.5px dashed rgba(var(--color-black), 0.15);
-  background: transparent;
+  border-radius: 14px;
+  border: 1px solid var(--be-line);
+  background: oklch(1 0 0 / 0.05);
   cursor: pointer;
   font-size: var(--font-size-md);
-  color: rgba(var(--color-black), 0.45);
+  font-weight: 600;
+  color: var(--be-text-0);
   transition:
+    background 0.2s,
     border-color 0.2s,
     color 0.2s;
 
   @media screen and (min-width: 901px) {
     max-width: 460px;
     padding: var(--space-xl);
-    border-radius: 18px;
+    border-radius: 14px;
   }
 }
 
 .addButton:hover {
-  border: 1.5px dashed rgba(var(--mojito-green), 1);
-  color: rgba(var(--mojito-green), 1);
+  border-color: oklch(0.82 0.16 70 / 0.5);
+  background: var(--be-amber-soft);
+  color: var(--be-amber);
 }
 
 .addIcon {

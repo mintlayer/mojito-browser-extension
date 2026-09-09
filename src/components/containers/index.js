@@ -23,10 +23,6 @@ import OrderDetails from './Wallet/Orders/OrderDetails/OrderDetails'
 import SendBtcTransaction from './SendTransaction/SendBtcTransaction'
 import SendMlTransaction from './SendTransaction/SendMlTransaction'
 
-import CryptoSharesChart from './Dashboard/CryptoSharesChart'
-import Statistics from './Dashboard/Statistics'
-import CryptoList from './Dashboard/CryptoList'
-
 import DeleteAccount from './DeleteAccount/DeleteAccount'
 import SettingsDelete from './Settings/SettingsDelete/SettingsDelete'
 import SettingsTestnet from './Settings/SettingsTestnet/SettingsTestnet.tsx'
@@ -41,6 +37,7 @@ import VerifyMessage from './Message/VerifyMessage/VerifyMessage'
 import ExternalTransactionPreview from './SignTransaction/ExternalTransactionPreview/ExternalTransactionPreview'
 import InternalTransactionPreview from './SignTransaction/InternalTransactionPreview/InternalTransactionPreview'
 import JsonPreview from './SignTransaction/JsonPreview/JsonPreview'
+import TransactionSummary from './SignTransaction/TransactionSummary/TransactionSummary'
 
 /* istanbul ignore next */
 const Wallet = {
@@ -61,13 +58,6 @@ const Wallet = {
 const Login = {
   Login: LoginContainer,
   SetPassword,
-}
-
-/* istanbul ignore next */
-const Dashboard = {
-  CryptoSharesChart,
-  Statistics,
-  CryptoList,
 }
 
 const Settings = {
@@ -93,6 +83,7 @@ const SignTransaction = {
   ExternalTransactionPreview,
   InternalTransactionPreview,
   JsonPreview,
+  TransactionSummary,
 }
 
 export {
@@ -103,7 +94,6 @@ export {
   Login,
   SendBtcTransaction,
   SendMlTransaction,
-  Dashboard,
   Settings,
   Message,
   SignTransaction,

@@ -29,7 +29,9 @@ const SendBtcTransactionPage = () => {
     tokenId: ['Mintlayer', 'Bitcoin'].includes(coinType) ? null : coinType,
   }
 
-  const currentBtcAddress = addresses.btcAddresses.btcReceivingAddresses[0]
+  const currentBtcAddress = BTCHelper.getBtcAddressString(
+    addresses?.btcAddresses?.btcReceivingAddresses?.[0],
+  )
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
@@ -50,7 +52,7 @@ const SendBtcTransactionPage = () => {
 
   if (!accountID) {
     console.log('No account id.')
-    navigate('/wallet')
+    navigate('/dashboard')
     return
   }
 

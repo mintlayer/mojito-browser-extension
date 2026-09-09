@@ -7,7 +7,7 @@ button {
   display: flex;
   height: 16rem;
   padding: 1px;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .back {

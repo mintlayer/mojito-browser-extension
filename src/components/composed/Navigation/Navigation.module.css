@@ -38,11 +38,11 @@
 }
 
 .navigationItemActive {
-  background: rgb(var(--mojito-green-soft));
-  color: rgb(var(--mojito-green));
+  background: var(--be-amber-soft);
+  color: var(--be-amber);
 }
 
 .navigationItem:hover,
 .bottomMenuItem:hover {
-  background: rgb(var(--mojito-green-soft));
+  background: oklch(1 0 0 / 0.06);
 }

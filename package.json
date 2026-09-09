@@ -1,6 +1,6 @@
 {
   "name": "browser-extension",
-  "version": "1.6.1",
+  "version": "2.0.0",
   "private": true,
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.2.0",
@@ -17,14 +17,14 @@
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
     "decimal.js": "^10.6.0",
-    "ecpair": "3.0.0",
+    "ecpair": "^3.0.2",
     "konva": "^10.2.0",
     "process": "^0.11.10",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-konva": "^19.2.2",
     "react-qr-code": "^2.0.18",
-    "react-router-dom": "^7.13.0",
+    "react-router-dom": "^7.18.3",
     "stream-browserify": "^3.0.0"
   },
   "scripts": {
@@ -43,7 +43,8 @@
     "pretty-quick-check": "pretty-quick --check",
     "pretty-quick-check-branch": "pretty-quick --check --branch main",
     "prepare": "husky install",
-    "version": "node src/version/version-manifest.js && node src/version/version-mojito.js"
+    "version": "node src/version/version-manifest.js && node src/version/version-mojito.js",
+    "audit:imports": "node scripts/audit-imports.js"
   },
   "browserslist": {
     "production": [
@@ -81,6 +82,8 @@
     "dotenv-webpack": "^8.1.1",
     "env-cmd": "^11.0.0",
     "eslint": "^9.39.2",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "fake-indexeddb": "^6.2.5",
@@ -106,5 +109,10 @@
     "webpack": "^5.105.1",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.3"
+  },
+  "overrides": {
+    "qs": "^6.16.0",
+    "serialize-javascript": "^7.1.1",
+    "uuid": "^14.0.2"
   }
 }

@@ -22,7 +22,7 @@
   font-size: 1.1rem;
   font-weight: 700;
   margin: 0;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 
   @media screen and (min-width: 901px) {
     font-size: 1.4rem;
@@ -32,16 +32,16 @@
 .subtitle {
   font-size: 0.9rem;
   font-weight: 500;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-2);
 }
 
 .changePositive {
-  color: rgb(var(--color-green));
+  color: var(--be-green);
   font-weight: 600;
 }
 
 .changeNegative {
-  color: rgb(var(--color-red));
+  color: var(--be-red);
   font-weight: 600;
 }
 

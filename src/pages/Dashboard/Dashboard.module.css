@@ -1,0 +1,265 @@
+.pageWrapper {
+  padding: 0;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px 14px 0;
+  animation: be-fade-in 400ms ease both;
+}
+
+/* ── Top bar ─────────────────────────────────────────────── */
+.top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 4px 8px;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  cursor: pointer;
+  padding: 4px 8px 4px 4px;
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.account:hover {
+  background: oklch(1 0 0 / 0.04);
+}
+
+.accountName {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--be-text-0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border: 1px solid var(--be-line);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chipTeal {
+  background: var(--be-teal-soft);
+  border-color: oklch(0.82 0.12 195 / 0.35);
+  color: var(--be-teal);
+}
+
+.chipAmber {
+  background: var(--be-amber-soft);
+  border-color: oklch(0.82 0.16 70 / 0.35);
+  color: var(--be-amber);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentcolor;
+  box-shadow: 0 0 8px currentcolor;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--be-text-1);
+}
+
+.iconButton:hover {
+  background: oklch(1 0 0 / 0.06);
+}
+
+/* ── Scroll area ─────────────────────────────────────────── */
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: 16px;
+}
+
+/* flex children must keep their natural height: shrinking them
+   overlaps content visually and never triggers the scroll */
+.scroll > * {
+  flex-shrink: 0;
+}
+
+/* ── Balance card ────────────────────────────────────────── */
+.balanceCard {
+  position: relative;
+  padding: 18px 18px 16px;
+  border-radius: 20px;
+  background:
+    radial-gradient(
+      120% 140% at 85% -20%,
+      oklch(0.82 0.16 70 / 0.28),
+      transparent 60%
+    ),
+    linear-gradient(155deg, oklch(0.24 0.02 60), oklch(0.18 0.014 60));
+  border: 1px solid var(--be-line-soft);
+  overflow: hidden;
+}
+
+.balanceHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  width: max-content;
+}
+
+.balanceValue {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-top: 4px;
+  color: var(--be-text-0);
+  font-variant-numeric: tabular-nums;
+}
+
+.balanceSymbol {
+  color: var(--be-text-2);
+  font-weight: 500;
+}
+
+.balanceMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.fiat24h {
+  font-family: var(--be-font-mono);
+  font-size: 11px;
+  color: var(--be-text-2);
+}
+
+/* ── Quick actions ───────────────────────────────────────── */
+.quickActions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.quickActions button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+  border-radius: 14px;
+  border: 1px solid var(--be-line-soft);
+  background: var(--be-bg-1);
+  color: var(--be-text-1);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.quickActions button:hover {
+  border-color: oklch(0.82 0.16 70 / 0.4);
+  color: var(--be-text-0);
+}
+
+/* ── Sections ────────────────────────────────────────────── */
+.section {
+  margin-top: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--be-text-0);
+}
+
+.seeAll {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--be-amber);
+  cursor: pointer;
+}
+
+.card {
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
+  border-radius: 16px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--be-text-1);
+  cursor: pointer;
+}
+
+.addRow:hover {
+  background: oklch(1 0 0 / 0.03);
+}
+
+/* ── NFT grid ────────────────────────────────────────────── */
+.nftGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.nftTile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  border: 1px solid var(--be-line-soft);
+  overflow: hidden;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: pointer;
+  animation: be-slide-up 400ms both;
+}
+
+.nftName {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--be-text-0);
+}
+
+.nftCollection {
+  font-size: 10px;
+  color: var(--be-text-2);
+}

@@ -1,47 +1,38 @@
 * {
   box-sizing: border-box;
-  color: var(--color-black);
+  color: var(--be-text-1);
   font-family: 'Montserrat', sans-serif;
   font-size: var(--default-font-size);
   margin: 0;
   padding: 0;
   overflow: hidden;
   text-decoration: none;
+  /* wallet UI: content scrolls, the scrollbar itself stays invisible */
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 html {
   background:
     radial-gradient(
-      50% 50% at 20% 30%,
-      rgba(105, 238, 150, 0.22) 0%,
-      rgba(145, 155, 200, 0.16) 59%,
-      rgba(195, 192, 225, 0) 100%
+      120% 60% at 50% -10%,
+      oklch(0.82 0.16 70 / 0.16) 0%,
+      transparent 60%
     ),
     radial-gradient(
-      50% 50% at 80% 70%,
-      rgba(105, 238, 150, 0.22) 0%,
-      rgba(158, 188, 207, 0.16) 59%,
-      rgba(195, 192, 225, 0) 100%
+      80% 50% at 100% 100%,
+      oklch(0.74 0.16 290 / 0.1) 0%,
+      transparent 60%
     ),
     radial-gradient(
-      50% 50% at 50% 50%,
-      rgba(105, 238, 150, 0.18) 0%,
-      rgba(145, 155, 200, 0.14) 59%,
-      rgba(195, 192, 225, 0) 100%
+      80% 50% at 0% 100%,
+      oklch(0.82 0.12 195 / 0.08) 0%,
+      transparent 60%
     ),
-    radial-gradient(
-      50% 50% at 30% 80%,
-      rgba(105, 238, 150, 0.18) 0%,
-      rgba(181, 139, 201, 0.14) 59%,
-      rgba(195, 192, 225, 0) 100%
-    ),
-    radial-gradient(
-      50% 50% at 70% 20%,
-      rgba(105, 238, 150, 0.18) 0%,
-      rgba(145, 155, 200, 0.14) 59%,
-      rgba(195, 192, 225, 0) 100%
-    ),
-    rgb(235, 242, 240);
+    var(--be-bg-0);
 }
 
 body {
@@ -49,9 +40,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
   height: 100vh;
   width: 100%;
-  min-width: 400px;
-  background: #f0f2f5;
+  /* No min-width: Chrome's side panel can be narrower than 400px and the
+     global `overflow: hidden` would clip the right edge with no scrollbar. */
+  background: var(--be-bg-0);
   --page-content-height: auto;
+}
+
+/* Chrome autofill repaints inputs with its own light background while the
+   dark theme keeps the near-white text color — white text on white input.
+   autocomplete="off" is ignored for saved addresses, so override the paint. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--be-text-0);
+  caret-color: var(--be-text-0);
+  -webkit-box-shadow: 0 0 0 1000px var(--be-bg-2) inset;
+  transition: background-color 9999s ease-out;
+}
+
+/* Raw (non-component) text inputs and selects would otherwise get the UA
+   stylesheet's white background in light color-scheme. Checkboxes, radios,
+   file and button inputs keep their native rendering. */
+input:not([type='checkbox']):not([type='radio']):not([type='button']):not(
+    [type='submit']
+  ):not([type='file']),
+select {
+  background: var(--be-bg-2);
+  color: var(--be-text-0);
 }
 
 html.extended-view body {

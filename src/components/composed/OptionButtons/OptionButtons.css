@@ -34,7 +34,7 @@
 
 .option-buttons-column .option-button {
   width: 100%;
-  background-color: rgb(var(--color-gray));
+  background-color: var(--be-bg-1);
   border: 1px solid rgba(var(--color-light-green), 0.1);
   border-radius: 20px;
   margin-bottom: 18px;
@@ -44,5 +44,5 @@
 .option-buttons-column .option-button:focus {
   background-color: rgba(var(--color-main-green), 0.2);
   border: 1px solid rgba(var(--color-light-green), 0.5);
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }

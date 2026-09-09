@@ -1,11 +1,10 @@
 import { useState, FormEvent, ReactNode } from 'react'
 import { useLocation } from 'react-router'
 
-import { Button } from '@BasicComponents'
+import { Button, MojitoLogo } from '@BasicComponents'
 import { LoadingScreen, TextField } from '@ComposedComponents'
 import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
-import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
 
 import styles from './SetPassword.module.css'
 
@@ -110,8 +109,11 @@ const SetPassword = ({
             <VerticalGroup>
               {!unlockingAccount ? (
                 <>
-                  <div className={styles.shieldBadge}>
-                    <IconShield />
+                  <div className={styles.logoBadge}>
+                    <MojitoLogo
+                      size={64}
+                      animate={false}
+                    />
                   </div>
                   <TextField
                     value={accountPasswordValue}

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router'
-import { SignTransaction as SignTxHelpers } from '@Helpers'
+import { SignTransaction as SignTxHelpers, ML as MLHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button, Error, PageWrapper } from '@BasicComponents'
 import { PopUp, TextField, Loading } from '@ComposedComponents'
@@ -20,7 +20,7 @@ import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 const TxResult = ({ transactionTxid }) => {
   const navigate = useNavigate()
   const goBackToWallet = () => {
-    navigate('/wallet/Mintlayer')
+    navigate('/dashboard')
   }
   return (
     <VerticalGroup bigGap>
@@ -42,8 +42,6 @@ export const SignTransactionPage = () => {
   const [txErrorMessage, setTxErrorMessage] = useState(null)
   const loadingExtraClasses = ['loading-big']
   const navigate = useNavigate()
-
-  const [mode, setMode] = useState('preview')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = [styles.buttonSignTransaction]
@@ -190,7 +188,8 @@ export const SignTransactionPage = () => {
       if (txPreviewInfo) {
         const account = LocalStorageService.getItem('unlockedAccount')
         const accountName = account.name
-        const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkName}`
+        const unconfirmedTransactionString =
+          MLHelpers.getUnconfirmedTransactionKey(accountName, networkName)
         const unconfirmedTransactions =
           LocalStorageService.getItem(unconfirmedTransactionString) || []
 
@@ -231,15 +230,11 @@ export const SignTransactionPage = () => {
   }
 
   const handleReject = () => {
-    navigate('/wallet/Mintlayer')
+    navigate('/dashboard')
   }
 
   const selectMock = (name) => {
     setSelectedMock(name)
-  }
-
-  const switchHandle = () => {
-    setMode(mode === 'json' ? 'preview' : 'json')
   }
 
   const passwordChangeHandler = (value) => {
@@ -250,14 +245,11 @@ export const SignTransactionPage = () => {
     <PageWrapper>
       <div className={styles.signTransaction}>
         <div className={styles.header}>
-          <h1 className={styles.signTxTitle}>Sign Transaction</h1>
-          <Button onClickHandle={switchHandle}>
-            {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
-          </Button>
+          <h1 className={styles.signTxTitle}>Sign transaction</h1>
         </div>
 
         <div className={styles.signTxContent}>
-          {!external_state && (
+          {!external_state && process.env.NODE_ENV === 'development' && (
             <div className={styles.mockSelector}>
               {Object.keys(MOCKS).map((key) => {
                 return (
@@ -275,14 +267,18 @@ export const SignTransactionPage = () => {
           )}
 
           {state?.request?.data?.txData?.JSONRepresentation && (
-            <>
-              {mode === 'preview' && (
-                <div className={styles.transactionPreviewWrapper}>
-                  <SignTransaction.InternalTransactionPreview data={state} />
-                </div>
-              )}
-              {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
-            </>
+            <SignTransaction.TransactionSummary
+              jsonRepresentation={state.request.data.txData.JSONRepresentation}
+              intent={state.request.data.txData.intent}
+              ownAddresses={{
+                receiving: currentMlAddresses.mlReceivingAddresses,
+                change: currentMlAddresses.mlChangeAddresses,
+              }}
+              technicalDetails={
+                <SignTransaction.InternalTransactionPreview data={state} />
+              }
+              rawJsonNode={<SignTransaction.JsonPreview data={state} />}
+            />
           )}
         </div>
 

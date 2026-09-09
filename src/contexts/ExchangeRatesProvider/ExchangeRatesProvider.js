@@ -13,50 +13,68 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
   const [yesterdayExchangeRate, setYesterdayExchangeRate] = useState({})
   const [historyRates, setHistoryRates] = useState({})
   const [thirtyDaysHistoryRates, setThirtyDaysHistoryRates] = useState({})
+  const [fetchError, setFetchError] = useState(null)
+  const [fetching, setFetching] = useState(true)
   const { accountID } = useContext(AccountContext)
 
   useEffect(() => {
     if (!accountID) return
     const default_crypto = ['btc', 'ml']
-    const getData = async () => {
-      const rates = {}
-      const yesterdayRates = {}
-      const historyRates = {}
-      const thirtyDaysRates = {}
-      for (let i = 0; i < default_crypto.length; i++) {
-        const response_rates = await ExchangeRates.getRate(
-          default_crypto[i],
-          fiat,
-        )
-        rates[`${default_crypto[i]}-${fiat}`] =
-          JSON.parse(response_rates)[`${default_crypto[i]}-${fiat}`]
 
-        const response_yesterday = await ExchangeRates.getOneDayAgoRate(
-          default_crypto[i],
-          fiat,
-        )
-        yesterdayRates[`${default_crypto[i]}-${fiat}`] =
-          JSON.parse(response_yesterday)[`${default_crypto[i]}-${fiat}`]
+    const fetchCoinRates = async (crypto) => {
+      const [
+        response_rates,
+        response_yesterday,
+        response_history,
+        response_thirty_days,
+      ] = await Promise.all([
+        ExchangeRates.getRate(crypto, fiat),
+        ExchangeRates.getOneDayAgoRate(crypto, fiat),
+        ExchangeRates.getOneDayAgoHist(crypto, fiat),
+        ExchangeRates.getThirtyDaysHist(crypto, fiat),
+      ])
 
-        const response_history = await ExchangeRates.getOneDayAgoHist(
-          default_crypto[i],
-          fiat,
-        )
-        historyRates[`${default_crypto[i]}-${fiat}`] =
-          JSON.parse(response_history)[`${default_crypto[i]}-${fiat}`]
-
-        const response_thirty_days = await ExchangeRates.getThirtyDaysHist(
-          default_crypto[i],
-          fiat,
-        )
-        thirtyDaysRates[`${default_crypto[i]}-${fiat}`] =
-          JSON.parse(response_thirty_days)[`${default_crypto[i]}-${fiat}`]
+      return {
+        rate: JSON.parse(response_rates)[`${crypto}-${fiat}`],
+        yesterday: JSON.parse(response_yesterday)[`${crypto}-${fiat}`],
+        history: JSON.parse(response_history)[`${crypto}-${fiat}`],
+        thirtyDays: JSON.parse(response_thirty_days)[`${crypto}-${fiat}`],
       }
+    }
 
-      setExchangeRate(rates)
-      setYesterdayExchangeRate(yesterdayRates)
-      setHistoryRates(historyRates)
-      setThirtyDaysHistoryRates(thirtyDaysRates)
+    const getData = async () => {
+      setFetching(true)
+      try {
+        // Coins are independent: fetch in parallel instead of 8 sequential
+        // round-trips.
+        const results = await Promise.all(
+          default_crypto.map((crypto) => fetchCoinRates(crypto)),
+        )
+
+        const rates = {}
+        const yesterdayRates = {}
+        const historyRates = {}
+        const thirtyDaysRates = {}
+        default_crypto.forEach((crypto, i) => {
+          rates[`${crypto}-${fiat}`] = results[i].rate
+          yesterdayRates[`${crypto}-${fiat}`] = results[i].yesterday
+          historyRates[`${crypto}-${fiat}`] = results[i].history
+          thirtyDaysRates[`${crypto}-${fiat}`] = results[i].thirtyDays
+        })
+
+        setExchangeRate(rates)
+        setYesterdayExchangeRate(yesterdayRates)
+        setHistoryRates(historyRates)
+        setThirtyDaysHistoryRates(thirtyDaysRates)
+        setFetchError(null)
+      } catch (error) {
+        // Keep the last good rates; expose the failure so consumers can
+        // distinguish "stale" from "zero".
+        console.error('Failed to fetch exchange rates:', error)
+        setFetchError(error)
+      } finally {
+        setFetching(false)
+      }
     }
     getData()
 
@@ -69,6 +87,8 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
     yesterdayExchangeRate,
     historyRates,
     thirtyDaysHistoryRates,
+    fetchError,
+    fetching,
   }
 
   return (

@@ -11,7 +11,7 @@
 .title {
   font-size: 20px;
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin: 0;
   padding-left: 5px;
 }
@@ -29,7 +29,7 @@
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.8px;
-  color: rgba(var(--color-black), 0.45);
+  color: var(--be-text-3);
   text-transform: uppercase;
 }
 
@@ -39,7 +39,7 @@
   gap: 10px;
   padding: 8px 8px 8px 18px;
   border-radius: 14px;
-  background: rgba(var(--color-black), 0.04);
+  background: oklch(1 0 0 / 0.04);
   min-height: 52px;
 }
 
@@ -48,7 +48,7 @@
   font-family: monospace;
   font-size: 15px;
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   word-break: break-all;
 }
 
@@ -91,7 +91,7 @@
   flex-direction: column;
   min-height: max-content;
   gap: 23px;
-  background: rgba(var(--color-black), 0.03);
+  background: oklch(1 0 0 / 0.03);
   border-radius: 20px;
   padding: 16px;
 }
@@ -101,8 +101,8 @@
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  background: rgb(var(--color-white));
-  border: 1px solid rgba(var(--color-black), 0.06);
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
   border-radius: 16px;
 }
 
@@ -123,20 +123,20 @@
 }
 
 .amountValue {
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .amountTicker {
-  color: rgba(var(--color-black), 0.3);
+  color: var(--be-text-3);
   font-weight: 600;
 }
 
 .swapTokenId {
   margin: 0;
   font-size: 12px;
-  color: rgba(var(--color-black), 0.45);
+  color: var(--be-text-3);
   font-family: monospace;
   white-space: nowrap;
   overflow: hidden;
@@ -153,8 +153,8 @@
 }
 
 .badgeFrom {
-  background: rgba(var(--color-black), 0.05);
-  color: rgba(var(--color-black), 0.4);
+  background: oklch(1 0 0 / 0.05);
+  color: var(--be-text-3);
 }
 
 .badgeTo {
@@ -190,7 +190,7 @@
   gap: 8px;
   padding: 0 4px;
   font-size: 13px;
-  color: rgba(var(--color-black), 0.55);
+  color: var(--be-text-2);
 }
 
 .exchangeRate span {
@@ -199,7 +199,7 @@
 
 .exchangeRate span:last-child {
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .actions {
@@ -220,9 +220,9 @@
 .amountInput {
   width: 100%;
   padding: 14px 18px;
-  border: 1px solid rgba(var(--color-black), 0.08);
+  border: 1px solid var(--be-line-soft);
   border-radius: 14px;
-  background: rgba(var(--color-black), 0.04);
+  background: oklch(1 0 0 / 0.04);
   font-size: 20px;
 }
 .amountInput::placeholder {
@@ -231,7 +231,7 @@
 
 .walletBalance {
   font-size: 12px;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
   margin: 0;
   padding: 0 4px;
 }

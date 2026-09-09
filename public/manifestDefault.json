@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Mojito - A Mintlayer Wallet",
-  "version": "1.6.1",
+  "version": "2.0.0",
   "short_name": "Mojito",
   "description": "Mojito is a non-custodial decentralized crypto wallet that lets you send and receive BTC and ML from any other address.",
   "homepage_url": "https://www.mintlayer.org/",
@@ -14,7 +14,7 @@
     "512": "logo512.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; style-src-elem 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; img-src 'self' data: blob: https://ipfs.io https://dweb.link https://*.dweb.link https://w3s.link https://*.w3s.link; style-src 'self'; font-src 'self'; style-src-elem 'self'"
   },
   "action": {
     "default_icon": "logo192.png",
@@ -31,13 +31,14 @@
   "content_scripts": [
     {
       "run_at": "document_start",
-      "all_frames": true,
+      "all_frames": false,
       "matches": [
-        "*://*/*",
-        "*://localhost/*",
-        "*://explorer.mintlayer.org/*",
-        "*://lovelace.explorer.mintlayer.org/*",
-        "*://blockexplorer-staging.mintlayer.org/*"
+        "https://*/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://explorer.mintlayer.org/*",
+        "https://lovelace.explorer.mintlayer.org/*",
+        "https://blockexplorer-staging.mintlayer.org/*"
       ],
       "js": ["explorer/content-script.js"]
     }
@@ -45,7 +46,7 @@
   "web_accessible_resources": [
     {
       "resources": ["mojito.js"],
-      "matches": ["<all_urls>"]
+      "matches": ["https://*/*", "http://localhost/*", "http://127.0.0.1/*"]
     }
   ]
 }
