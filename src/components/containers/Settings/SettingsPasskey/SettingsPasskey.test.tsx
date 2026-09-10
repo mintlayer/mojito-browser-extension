@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import SettingsPasskey from './SettingsPasskey.tsx'
 import { AccountContext } from '@Contexts'
 import { Account } from '@Entities'
-import * as Passkey from '@Cryptos/Passkey/Passkey'
+import * as Passkey from '../../../../services/Crypto/Passkey/Passkey'
 
 jest.mock('@Entities', () => ({
   Account: {
@@ -15,12 +15,12 @@ jest.mock('@Entities', () => ({
   AccountHelpers: {},
 }))
 
-// '@Cryptos/Passkey/Passkey' is not mapped in jest.config.js (only the bare
-// '@Cryptos' alias is), so jest cannot resolve it from disk — a virtual mock
-// registers the module for this exact specifier, which is what the component
-// imports.
+// The component imports the passkey service via this relative path (webpack
+// cannot resolve subpaths of the '@Cryptos' alias). This exact specifier is
+// mocked — with a virtual registration — so both the component's import and
+// the handle imported above resolve to the mocked module.
 jest.mock(
-  '@Cryptos/Passkey/Passkey',
+  '../../../../services/Crypto/Passkey/Passkey',
   () => ({
     isSupported: jest.fn(),
   }),

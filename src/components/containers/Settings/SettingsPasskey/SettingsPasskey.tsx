@@ -4,7 +4,7 @@ import { Button } from '@BasicComponents'
 import { TextField } from '@ComposedComponents'
 import { Account } from '@Entities'
 import { AccountContext } from '@Contexts'
-import * as Passkey from '@Cryptos/Passkey/Passkey'
+import * as Passkey from '../../../../services/Crypto/Passkey/Passkey'
 
 import styles from './SettingsPasskey.module.css'
 
