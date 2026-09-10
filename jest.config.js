@@ -27,6 +27,7 @@ module.exports = {
     '^@Contexts$': '<rootDir>/src/contexts/index.js',
     '^@Databases$': '<rootDir>/src/services/Database/index.js',
     '^@Cryptos$': '<rootDir>/src/services/Crypto/index.js',
+    '^@Cryptos/(.*)$': '<rootDir>/src/services/Crypto/$1',
     '^@Entities$': '<rootDir>/src/services/Entity/index.js',
     '^@APIs$': '<rootDir>/src/services/API/index.js',
     '^@Storage$': '<rootDir>/src/services/Storage/index.js',

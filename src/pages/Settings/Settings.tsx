@@ -24,6 +24,12 @@ const SettingsPage = ({ unlocked }: SettingsPageProps) => {
       ],
     },
     {
+      title: 'Passkey',
+      key: 'passkey',
+      visible: unlocked,
+      content: <Settings.SettingsPasskey />,
+    },
+    {
       title: 'Connections',
       key: 'connections',
       visible: true,

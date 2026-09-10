@@ -30,6 +30,7 @@ import SettingsAbout from './Settings/SettingsAbout/SettingsAbout.tsx'
 import SettingsBackup from './Settings/SettingsBackup/SettingsBackup'
 import SettingsSection from './Settings/SettingsSection/SettingsSection.tsx'
 import SettingsConnections from './Settings/SettingsConnections/SettingsConnections.tsx'
+import SettingsPasskey from './Settings/SettingsPasskey/SettingsPasskey'
 
 import SignMessage from './Message/SignMessage/SignMessage'
 import VerifyMessage from './Message/VerifyMessage/VerifyMessage'
@@ -67,6 +68,7 @@ const Settings = {
   SettingsBackup,
   SettingsSection,
   SettingsConnections,
+  SettingsPasskey,
 }
 
 const RestoreAccount = {

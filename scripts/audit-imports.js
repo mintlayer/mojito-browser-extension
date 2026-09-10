@@ -25,6 +25,7 @@ const ALIASES = {
   '@Contexts': 'src/contexts/index.js',
   '@Databases': 'src/services/Database/index.js',
   '@Cryptos': 'src/services/Crypto/index.js',
+  '@Cryptos/Passkey/Passkey': 'src/services/Crypto/Passkey/Passkey.js',
   '@Entities': 'src/services/Entity/index.js',
   '@APIs': 'src/services/API/index.js',
   '@Storage': 'src/services/Storage/index.js',
