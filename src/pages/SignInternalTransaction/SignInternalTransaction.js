@@ -8,7 +8,7 @@ import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
 
 import styles from './SignInternalTransaction.module.css'
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
 import { AppInfo } from '@Constants'
@@ -37,6 +37,20 @@ export const SignTransactionPage = () => {
   const { state: external_state } = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
+
+  const [hasPasskey, setHasPasskey] = useState(false)
+
+  useEffect(() => {
+    if (!accountID) return
+    let cancelled = false
+    Account.hasPasskey(accountID).then((has) => {
+      if (!cancelled) setHasPasskey(has)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [accountID])
+  const [usePasswordEntry, setPasswordEntry] = useState(false)
   const [sendingTransaction, setSendingTransaction] = useState(false)
   const [transactionId, setTransactionId] = useState(null)
   const [txErrorMessage, setTxErrorMessage] = useState(null)
@@ -72,7 +86,7 @@ export const SignTransactionPage = () => {
     fetchDelegations()
   }
 
-  const handleModalSubmit = async () => {
+  const handleModalSubmit = async ({ usePasskey = false } = {}) => {
     setSendingTransaction(true)
     try {
       const transactionJSONrepresentation =
@@ -86,11 +100,23 @@ export const SignTransactionPage = () => {
 
       let unlockedAccount
       try {
-        unlockedAccount = await Account.unlockAccount(accountID, password, {
-          wallets: ['ml'],
-        })
+        unlockedAccount = usePasskey
+          ? await Account.unlockAccountWithPasskey(accountID, {
+              wallets: ['ml'],
+            })
+          : await Account.unlockAccount(accountID, password, {
+              wallets: ['ml'],
+            })
       } catch {
-        setTxErrorMessage('Incorrect password')
+        // a passkey cancellation falls back to the password form
+        if (usePasskey) {
+          setPasswordEntry(true)
+          setTxErrorMessage(
+            'Passkey unlock failed — use your password instead.',
+          )
+        } else {
+          setTxErrorMessage('Incorrect password')
+        }
         setPassword('')
         return
       }
@@ -317,32 +343,63 @@ export const SignTransactionPage = () => {
 
             {!sendingTransaction && !transactionId && (
               <div className={styles.modalContent}>
-                <div className={styles.modalTitle}>
-                  <TextField
-                    label="Re-enter your Password"
-                    password
-                    value={password}
-                    onChangeHandle={passwordChangeHandler}
-                    placeHolder="Enter your password"
-                    autoFocus
-                  />
-                  {txErrorMessage ? <Error error={txErrorMessage} /> : <></>}
-                </div>
-                <div className={styles.modalButtons}>
-                  <Button
-                    onClickHandle={handleDecline}
-                    extraStyleClasses={extraButtonStyles}
-                    alternate
-                  >
-                    Decline
-                  </Button>
-                  <Button
-                    onClickHandle={handleModalSubmit}
-                    extraStyleClasses={extraButtonStyles}
-                  >
-                    Submit
-                  </Button>
-                </div>
+                {hasPasskey && !usePasswordEntry ? (
+                  <div className={styles.modalContent}>
+                    <p className={styles.passkeyHint}>
+                      Confirm with this device (biometrics or screen lock).
+                    </p>
+                    <div className={styles.modalButtons}>
+                      <Button
+                        onClickHandle={handleDecline}
+                        extraStyleClasses={extraButtonStyles}
+                        alternate
+                      >
+                        Decline
+                      </Button>
+                      <Button
+                        onClickHandle={() =>
+                          handleModalSubmit({ usePasskey: true })
+                        }
+                        extraStyleClasses={extraButtonStyles}
+                      >
+                        Confirm
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.modalContent}>
+                    <div className={styles.modalTitle}>
+                      <TextField
+                        label="Re-enter your Password"
+                        password
+                        value={password}
+                        onChangeHandle={passwordChangeHandler}
+                        placeHolder="Enter your password"
+                        autoFocus
+                      />
+                      {txErrorMessage ? (
+                        <Error error={txErrorMessage} />
+                      ) : (
+                        <></>
+                      )}
+                    </div>
+                    <div className={styles.modalButtons}>
+                      <Button
+                        onClickHandle={handleDecline}
+                        extraStyleClasses={extraButtonStyles}
+                        alternate
+                      >
+                        Decline
+                      </Button>
+                      <Button
+                        onClickHandle={handleModalSubmit}
+                        extraStyleClasses={extraButtonStyles}
+                      >
+                        Submit
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </PopUp>
@@ -351,5 +408,4 @@ export const SignTransactionPage = () => {
     </PageWrapper>
   )
 }
-
 export default SignTransactionPage

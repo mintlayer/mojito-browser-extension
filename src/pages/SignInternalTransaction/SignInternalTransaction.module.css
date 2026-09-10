@@ -145,3 +145,8 @@
 .result-title {
   word-break: break-all;
 }
+
+.passkeyHint {
+  font-size: var(--font-size-sm);
+  color: var(--be-text-2);
+}

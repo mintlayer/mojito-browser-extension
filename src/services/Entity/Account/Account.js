@@ -370,6 +370,16 @@ const getPasskeyBlob = async (id) => {
   return account?.passkeyBlob ?? null
 }
 
+const hasPasskey = async (id) => Boolean(await getPasskeyBlob(id))
+
+// Evaluates the PRF secret and returns the account password IN MEMORY ONLY
+// (identical trust level to the user typing it). Never persisted anywhere.
+const getPasswordWithPasskey = async (id) => {
+  const blob = await getPasskeyBlob(id)
+  if (!blob) throw new Error('PASSKEY_NOT_ENROLLED')
+  return Passkey.unlockPasswordWithPasskey(blob)
+}
+
 // Unlocks with the passkey-wrapped password: returns the same unlocked
 // account the password path returns.
 const unlockAccountWithPasskey = async (id, { wallets } = {}) => {
@@ -385,6 +395,8 @@ export {
   enrollPasskey,
   removePasskey,
   getPasskeyBlob,
+  hasPasskey,
+  getPasswordWithPasskey,
   unlockAccountWithPasskey,
   updateAccount,
   getAccount,

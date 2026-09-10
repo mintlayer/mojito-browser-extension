@@ -21,6 +21,20 @@ export const SignTransactionPage = () => {
   const { state: external_state } = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
+
+  const [hasPasskey, setHasPasskey] = useState(false)
+
+  useEffect(() => {
+    if (!accountID) return
+    let cancelled = false
+    Account.hasPasskey(accountID).then((has) => {
+      if (!cancelled) setHasPasskey(has)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [accountID])
+  const [usePasswordEntry, setPasswordEntry] = useState(false)
   const [secret, setSecret] = useState('')
 
   const { currentHeight } = useContext(MintlayerContext)
@@ -163,7 +177,7 @@ export const SignTransactionPage = () => {
     }
   }, [transactionState, external_state, selectedMock, generatedSecret])
 
-  const handleModalSubmit = async () => {
+  const handleModalSubmit = async ({ usePasskey = false } = {}) => {
     if (isSigning) return
 
     setIsSigning(true)
@@ -208,11 +222,15 @@ export const SignTransactionPage = () => {
           blockHeight,
         )
 
-      const pass = password
+      const pass = usePasskey
+        ? await Account.getPasswordWithPasskey(accountID)
+        : password
 
-      const unlockedAccount = await Account.unlockAccount(accountID, password, {
-        wallets: ['ml'],
-      })
+      const unlockedAccount = usePasskey
+        ? await Account.unlockAccount(accountID, pass, { wallets: ['ml'] })
+        : await Account.unlockAccount(accountID, password, {
+            wallets: ['ml'],
+          })
 
       const mlPrivKeys = unlockedAccount.mlPrivKeys
 
@@ -530,52 +548,87 @@ export const SignTransactionPage = () => {
         {isModalOpen && (
           <PopUp setOpen={setIsModalOpen}>
             <div className="modal-content">
-              <TextField
-                label="Re-enter your Password"
-                password
-                value={password}
-                onChangeHandle={passwordChangeHandler}
-                placeHolder="Enter your password"
-                autoFocus
-              />
-              {isHTLCClaim && (
+              {hasPasskey && !usePasswordEntry ? (
                 <>
-                  <div className="htlc-secret-input">
-                    <label>HTLC Secret:</label>
-                    <TextField
-                      value={secret}
-                      onChangeHandle={secretChangeHandler}
-                      placeholder="Enter htlc secret in hex format (64 characters)"
-                      autoFocus
-                    />
-                    {secretError && (
-                      <div className="secret-error">{secretError}</div>
-                    )}
-                    <div className="secret-hint">
-                      <small>
-                        💡 Enter the 32-byte secret in hexadecimal format
-                      </small>
-                    </div>
+                  <Button
+                    onClickHandle={() =>
+                      handleModalSubmit({ usePasskey: true })
+                    }
+                    extraStyleClasses={extraButtonStyles}
+                    disabled={isSigning}
+                  >
+                    Confirm with passkey
+                  </Button>
+                  <Button
+                    onClickHandle={() => setPasswordEntry(true)}
+                    extraStyleClasses={extraButtonStyles}
+                    alternate
+                  >
+                    Use password instead
+                  </Button>
+                  {isHTLCClaim && (
+                    <>
+                      <div className="htlc-secret-input">
+                        <label>HTLC Secret:</label>
+                        <TextField
+                          value={secret}
+                          onChangeHandle={secretChangeHandler}
+                          placeholder="Enter htlc secret in hex format (64 characters)"
+                          autoFocus
+                        />
+                        {secretError && (
+                          <div className="secret-error">{secretError}</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {signError && <div className="sign-error">{signError}</div>}
+                </>
+              ) : (
+                <>
+                  <TextField
+                    label="Re-enter your Password"
+                    password
+                    value={password}
+                    onChangeHandle={passwordChangeHandler}
+                    placeHolder="Enter your password"
+                    autoFocus
+                  />
+                  {isHTLCClaim && (
+                    <>
+                      <div className="htlc-secret-input">
+                        <label>HTLC Secret:</label>
+                        <TextField
+                          value={secret}
+                          onChangeHandle={secretChangeHandler}
+                          placeholder="Enter htlc secret in hex format (64 characters)"
+                          autoFocus
+                        />
+                        {secretError && (
+                          <div className="secret-error">{secretError}</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {signError && <div className="sign-error">{signError}</div>}
+                  <div className="modal-buttons">
+                    <Button
+                      onClickHandle={() => setIsModalOpen(false)}
+                      extraStyleClasses={extraButtonStyles}
+                      alternate
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClickHandle={() => handleModalSubmit()}
+                      extraStyleClasses={extraButtonStyles}
+                      disabled={isSigning || !password}
+                    >
+                      {isSigning ? 'Signing…' : 'Approve'}
+                    </Button>
                   </div>
                 </>
               )}
-              {signError && <div className="sign-error">{signError}</div>}
-              <div className="modal-buttons">
-                <Button
-                  onClickHandle={() => setIsModalOpen(false)}
-                  extraStyleClasses={extraButtonStyles}
-                  alternate
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClickHandle={handleModalSubmit}
-                  extraStyleClasses={extraButtonStyles}
-                  disabled={isSigning || !password}
-                >
-                  {isSigning ? 'Signing…' : 'Approve'}
-                </Button>
-              </div>
             </div>
           </PopUp>
         )}

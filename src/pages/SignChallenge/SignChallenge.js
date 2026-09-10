@@ -18,6 +18,7 @@ export const SignChallengePage = () => {
   const { state: external_state } = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
+
   const [isSigning, setIsSigning] = useState(false)
   const [signError, setSignError] = useState('')
 
