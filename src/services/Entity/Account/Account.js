@@ -9,6 +9,7 @@ import { BTC as BtcHelpers } from '@Helpers'
 import loadAccountSubRoutines from './loadWorkers'
 import { LocalStorageService } from '@Storage'
 import { CURRENT_ENCRYPTION_VERSION } from '../../Crypto/Cipher/Cipher'
+import * as Passkey from '../../Crypto/Passkey/Passkey'
 
 const getAccountVersion = (account) => account.encryptionVersion || 1
 
@@ -345,9 +346,46 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
   }
 }
 
+// ── Passkey unlock (Chromium only; password remains the fallback) ────────
+// SECURITY: the passkey wraps the account password via the WebAuthn PRF
+// extension — the wrapped blob is stored on the account, the PRF secret
+// never leaves memory, and the password itself is never persisted. Enroll
+// and remove both verify the password first.
+
+const enrollPasskey = async (id, password) => {
+  // verify the password by unlocking before binding the passkey to it
+  await unlockAccount(id, password)
+  const blob = await Passkey.enrollPasskeyCredential(password)
+  updateAccount(id, { passkeyBlob: blob })
+  return blob
+}
+
+const removePasskey = async (id, password) => {
+  await unlockAccount(id, password)
+  updateAccount(id, { passkeyBlob: null })
+}
+
+const getPasskeyBlob = async (id) => {
+  const account = await getAccount(id)
+  return account?.passkeyBlob ?? null
+}
+
+// Unlocks with the passkey-wrapped password: returns the same unlocked
+// account the password path returns.
+const unlockAccountWithPasskey = async (id, { wallets } = {}) => {
+  const blob = await getPasskeyBlob(id)
+  if (!blob) throw new Error('PASSKEY_NOT_ENROLLED')
+  const password = await Passkey.unlockPasswordWithPasskey(blob)
+  return unlockAccount(id, password, { wallets })
+}
+
 export {
   saveAccount,
   unlockAccount,
+  enrollPasskey,
+  removePasskey,
+  getPasskeyBlob,
+  unlockAccountWithPasskey,
   updateAccount,
   getAccount,
   deleteAccount,

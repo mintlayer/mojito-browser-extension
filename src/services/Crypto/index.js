@@ -5,9 +5,11 @@ import BTC_ADDRESS_TYPE_MAP, {
   BTC_ADDRESS_TYPE_ENUM,
 } from './BTC/BTC.addressType'
 import * as Cipher from './Cipher/Cipher'
+import * as Passkey from './Passkey/Passkey'
 
 export {
   BTC,
+  Passkey,
   ML,
   Cipher,
   BTCTransaction,
