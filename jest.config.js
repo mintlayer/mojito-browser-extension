@@ -3,7 +3,7 @@ require('dotenv').config()
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
-  testPathIgnorePatterns: ['/node_modules/', '/tests/', 'src/pages'],
+  testPathIgnorePatterns: ['/node_modules/', '/tests/', '/build/'],
   transform: {
     '\\.[jt]sx?$': 'babel-jest',
   },
@@ -27,9 +27,11 @@ module.exports = {
     '^@Contexts$': '<rootDir>/src/contexts/index.js',
     '^@Databases$': '<rootDir>/src/services/Database/index.js',
     '^@Cryptos$': '<rootDir>/src/services/Crypto/index.js',
+    '^@Cryptos/(.*)$': '<rootDir>/src/services/Crypto/$1',
     '^@Entities$': '<rootDir>/src/services/Entity/index.js',
     '^@APIs$': '<rootDir>/src/services/API/index.js',
     '^@Storage$': '<rootDir>/src/services/Storage/index.js',
+    '^@Browser$': '<rootDir>/src/services/Browser/index.js',
     '^@Version$': '<rootDir>/src/version/version.js',
     '^d3$': '<rootDir>/node_modules/d3/dist/d3.min.js',
     '^react-router$':

@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Login } from '@ContainerComponents'
@@ -20,8 +20,20 @@ interface SetAccountPasswordPageProps {
 const SetAccountPasswordPage = ({
   nextAfterUnlock,
 }: SetAccountPasswordPageProps) => {
-  const { setWalletInfo } = useContext(AccountContext)
+  const { accountID, setWalletInfo } = useContext(AccountContext)
   const navigate = useNavigate()
+  const [hasPasskey, setHasPasskey] = useState(false)
+
+  useEffect(() => {
+    if (!accountID) return
+    let cancelled = false
+    Account.getPasskeyBlob(accountID).then((blob) => {
+      if (!cancelled) setHasPasskey(Boolean(blob))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [accountID])
 
   const login = (addresses: unknown, id: string | number, name: string) => {
     setWalletInfo(addresses, id, name)
@@ -37,6 +49,8 @@ const SetAccountPasswordPage = ({
       <Login.SetPassword
         onSubmit={login}
         checkPassword={Account.unlockAccount}
+        hasPasskey={hasPasskey}
+        unlockWithPasskey={Account.unlockAccountWithPasskey}
       />
     </PageWrapper>
   )

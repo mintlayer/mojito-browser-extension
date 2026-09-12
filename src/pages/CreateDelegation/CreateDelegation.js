@@ -31,7 +31,7 @@ const CreateDelegationPage = () => {
     tokenName,
   })
   const goBackToWallet = () => {
-    navigate('/wallet/' + walletType.name + '/staking')
+    navigate('/staking')
   }
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
@@ -93,7 +93,7 @@ const CreateDelegationPage = () => {
 
   if (!accountID) {
     console.log('No account id.')
-    navigate('/wallet')
+    navigate('/dashboard')
     return
   }
 

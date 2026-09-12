@@ -12,7 +12,7 @@ const NftItem = ({ nft }) => {
   const getImageLink = () => {
     const rawImageLink = nft?.data?.icon_uri?.string || 'NFT'
     if (rawImageLink.startsWith('ipfs://')) {
-      return rawImageLink.replace('ipfs://', 'https://gateway.ipfs.io/ipfs/')
+      return rawImageLink.replace('ipfs://', 'https://ipfs.io/ipfs/')
     }
     return rawImageLink
   }

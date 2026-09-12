@@ -2,15 +2,19 @@
 .SignTransaction {
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
+  background-color: var(--be-bg-1);
   margin: 0 auto;
-  font-family: 'Arial', sans-serif;
+
   overflow: scroll;
   width: 100%;
   height: 100%;
   position: relative;
   padding: 20px;
   border-radius: 10px;
+}
+
+.SignTransaction > * {
+  flex-shrink: 0;
 }
 
 .SignTransaction .header {
@@ -56,7 +60,7 @@
 }
 
 .SignTransaction .mock_selector div {
-  background-color: #f3f4f6;
+  background-color: var(--be-bg-2);
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 14px;
@@ -66,7 +70,7 @@
 }
 
 .SignTransaction .mock_selector div:hover {
-  background-color: #e5e7eb;
+  background-color: var(--be-bg-3);
 }
 
 .SignTransaction .transaction-preview-wrapper {
@@ -76,12 +80,12 @@
 }
 
 .SignTransaction .transaction-raw-wrapper {
-  background-color: #f9fafb;
+  background-color: var(--be-bg-2);
   padding: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--be-line-soft);
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--be-text-1);
   word-break: break-all;
   unicode-bidi: embed;
   font-family: monospace;
@@ -92,12 +96,12 @@
 }
 
 .SignTransaction .footer {
-  position: absolute;
-  width: 100%;
+  /* in flow: an absolutely-positioned footer inside this scroll container
+     scrolled away with the content on long transactions */
   display: flex;
   justify-content: center;
   gap: 12px;
-  bottom: 0;
+  padding-top: 14px;
   flex-shrink: 0;
 }
 
@@ -119,7 +123,7 @@
   flex-direction: column;
   align-items: center;
   gap: 40px;
-  background-color: #ffffff;
+  background-color: var(--be-bg-1);
   padding: 20px;
   border-radius: 8px;
   text-align: center;
@@ -139,8 +143,8 @@
 
 /* HTLC Secret Section Styles */
 .htlc-secret-section {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: var(--be-bg-2);
+  border: 1px solid var(--be-line-soft);
   border-radius: 8px;
   padding: 16px;
   margin: 16px 0;
@@ -148,7 +152,7 @@
 
 .htlc-secret-section h3 {
   margin: 0 0 12px 0;
-  color: #1e293b;
+  color: var(--be-text-0);
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -167,7 +171,7 @@
 
 .secret-item label {
   font-weight: 500;
-  color: #475569;
+  color: var(--be-text-2);
   font-size: 0.875rem;
 }
 
@@ -175,8 +179,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
+  background-color: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
   border-radius: 4px;
   padding: 8px;
 }
@@ -186,7 +190,7 @@
   font-size: 0.75rem;
   word-break: break-all;
   flex: 1;
-  color: #374151;
+  color: var(--be-text-1);
 }
 
 .secret-value button {
@@ -199,18 +203,18 @@
 }
 
 .secret-value button:hover {
-  background-color: #f3f4f6;
+  background-color: var(--be-bg-2);
 }
 
 .secret-actions {
   margin-top: 8px;
   padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--be-line-soft);
 }
 
 .secret-actions p {
   margin: 0;
-  color: #6b7280;
+  color: var(--be-text-2);
   font-size: 0.875rem;
 }
 
@@ -225,21 +229,21 @@
 
 .htlc-secret-input label {
   font-weight: 500;
-  color: #374151;
+  color: var(--be-text-1);
   font-size: 0.875rem;
 }
 
 .secret-error {
-  color: #dc2626;
+  color: rgb(var(--color-red));
   font-size: 0.75rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  background-color: rgba(235, 87, 87, 0.12);
+  border: 1px solid rgba(235, 87, 87, 0.45);
   border-radius: 4px;
   padding: 6px 8px;
 }
 
 .secret-hint {
-  color: #6b7280;
+  color: var(--be-text-2);
   font-size: 0.75rem;
 }
 
@@ -249,4 +253,13 @@
 
 .requestOrigin {
   margin-bottom: 20px;
+}
+
+.sign-error {
+  color: rgb(var(--color-red));
+  font-size: 0.75rem;
+  background-color: rgba(235, 87, 87, 0.12);
+  border: 1px solid rgba(235, 87, 87, 0.45);
+  border-radius: 4px;
+  padding: 6px 8px;
 }

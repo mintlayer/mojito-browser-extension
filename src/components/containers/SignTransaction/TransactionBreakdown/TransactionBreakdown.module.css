@@ -17,7 +17,7 @@
 
 .heroLabel {
   font-size: var(--font-size-sm);
-  color: rgba(var(--color-black), 0.55);
+  color: var(--be-text-2);
 }
 
 .heroList {
@@ -48,7 +48,7 @@
 .heroEmpty {
   margin: 0;
   font-size: var(--font-size-sm);
-  color: rgba(var(--color-black), 0.55);
+  color: var(--be-text-2);
 }
 
 .group {
@@ -66,14 +66,14 @@
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(var(--color-black), 0.45);
+  color: var(--be-text-3);
 }
 
 .groupHead::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(var(--color-black), 0.08);
+  background: oklch(1 0 0 / 0.08);
 }
 
 .rows {
@@ -89,7 +89,7 @@
   justify-content: space-between;
   gap: var(--space-3xs) var(--space-sm);
   padding: var(--space-sm) 0;
-  border-bottom: 1px solid rgba(var(--color-black), 0.06);
+  border-bottom: 1px solid var(--be-line-soft);
 }
 
 .row:last-child {
@@ -117,7 +117,7 @@
 .rowAddress {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: var(--font-size-xs);
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
   word-break: break-all;
 }
 
@@ -145,7 +145,7 @@
 
 .fieldKey {
   flex-shrink: 0;
-  color: rgba(var(--color-black), 0.45);
+  color: var(--be-text-3);
 }
 
 .fieldValue {

@@ -1,0 +1,86 @@
+import { useState, cloneElement, ReactElement } from 'react'
+import styles from './TokenIcon.module.css'
+import { ReactComponent as MlLogo } from '@Assets/images/logo.svg'
+import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
+
+interface TokenIconProps {
+  symbol: string
+  size?: number
+  // Token metadata icon, resolved by the wallet to an in-memory blob: URL
+  // (fetched once from the ipfs gateways). On load failure the procedural
+  // tile renders instead.
+  iconUri?: string
+}
+
+const MAP: Record<string, { c1: string; c2: string; g: string }> = {
+  ETH: { c1: 'oklch(0.74 0.06 280)', c2: 'oklch(0.55 0.08 280)', g: 'Ξ' },
+  USDT: { c1: 'oklch(0.78 0.13 160)', c2: 'oklch(0.6 0.12 160)', g: '₮' },
+  USDC: { c1: 'oklch(0.7 0.13 240)', c2: 'oklch(0.55 0.14 250)', g: '$' },
+}
+
+const GRADIENTS: Record<string, { c1: string; c2: string }> = {
+  BTC: { c1: 'oklch(0.82 0.16 70)', c2: 'oklch(0.7 0.17 50)' },
+  ML: { c1: 'oklch(0.36 0.015 70)', c2: 'oklch(0.26 0.015 70)' },
+}
+
+const LOGOS: Record<string, ReactElement> = {
+  BTC: <BtcLogo />,
+  ML: <MlLogo />,
+}
+
+// Safety net: the wallet provider normally resolves metadata icons to blob:
+// urls, but if an unresolved ipfs:// uri ever leaks through, map it to the
+// public gateway so the browser gets a fetchable https url.
+const toRenderableUri = (uri: string) =>
+  uri.startsWith('ipfs://')
+    ? `https://ipfs.io/ipfs/${uri.slice('ipfs://'.length)}`
+    : uri
+
+// Native BTC/ML assets get the real chain logos; tokens show their metadata
+// icon when available, otherwise the procedural design-system tile (unknown
+// symbols fall back to first letter).
+const TokenIcon = ({ symbol, size = 36, iconUri }: TokenIconProps) => {
+  const [iconFailed, setIconFailed] = useState(false)
+  const logo = LOGOS[symbol]
+  const { c1, c2 } = GRADIENTS[symbol] ?? {
+    c1: 'oklch(0.6 0.05 60)',
+    c2: 'oklch(0.4 0.05 60)',
+  }
+
+  const showImage = Boolean(iconUri) && !iconFailed && !logo
+
+  return (
+    <div
+      className={styles.token}
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * 0.42,
+        background: `linear-gradient(135deg, ${c1}, ${c2})`,
+        boxShadow: `0 4px 14px -4px ${c1}, inset 0 1px 0 oklch(1 0 0 / 0.3)`,
+      }}
+      data-testid="token-icon"
+    >
+      {showImage ? (
+        <img
+          className={styles.tokenImage}
+          src={toRenderableUri(iconUri)}
+          alt={symbol}
+          width={size}
+          height={size}
+          onError={() => setIconFailed(true)}
+          data-testid="token-icon-image"
+        />
+      ) : logo ? (
+        cloneElement(logo, {
+          width: size * 0.62,
+          height: size * 0.62,
+        })
+      ) : (
+        (MAP[symbol]?.g ?? symbol[0])
+      )}
+    </div>
+  )
+}
+
+export default TokenIcon

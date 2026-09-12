@@ -28,7 +28,7 @@
 
 .date {
   font-size: var(--font-size-sm);
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
 }
 
 .disconnectButton.disconnectButton {
@@ -51,7 +51,7 @@
 .empty {
   padding: var(--space-lg) var(--space-xl);
   font-size: var(--font-size-sm);
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
 }
 
 @media screen and (max-width: 420px) {

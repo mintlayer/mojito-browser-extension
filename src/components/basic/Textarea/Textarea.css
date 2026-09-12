@@ -2,8 +2,11 @@
   width: 100%;
   padding: 15px 15px 30px;
   resize: none;
-  border: 1px solid rgb(var(--color-light-gray));
+  border: 1px solid var(--be-line);
   border-radius: var(--round-size);
+  /* UA default would be white in light color-scheme. */
+  background: var(--be-bg-2);
+  color: var(--be-text-0);
 }
 
 .textarea-invalid {

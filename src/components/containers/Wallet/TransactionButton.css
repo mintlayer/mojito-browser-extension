@@ -18,8 +18,8 @@
   padding: 0;
   border: none;
   border-radius: 50%;
-  background-color: rgb(var(--color-white));
-  box-shadow: var(--shadow-sm);
+  background-color: var(--be-bg-2);
+  box-shadow: 0 4px 14px oklch(0 0 0 / 0.35);
   cursor: pointer;
   transition: background-color 0.2s ease;
 
@@ -33,12 +33,12 @@
 
 .button-transaction:hover:not(:disabled),
 .button-transaction:focus-visible {
-  background-color: rgb(var(--mojito-green));
+  background-color: var(--be-amber);
 }
 
 .button-transaction:hover:not(:disabled) svg path,
 .button-transaction:focus-visible svg path {
-  stroke: rgb(var(--color-white));
+  stroke: oklch(0.18 0.02 70);
 }
 
 .button-transaction:disabled {
@@ -53,19 +53,19 @@
 }
 
 .button-transaction svg path {
-  stroke: rgb(var(--color-dark-gray));
+  stroke: var(--be-text-1);
   transition: stroke 0.2s ease;
 }
 
 /* Primary "Send" — filled green circle with a white icon */
 .button-transaction-up {
-  background-color: rgb(var(--color-main-green));
-  box-shadow: 0 6px 16px rgba(var(--color-main-green), 0.35);
+  background: linear-gradient(180deg, oklch(0.88 0.15 75), oklch(0.78 0.16 65));
+  box-shadow: 0 6px 16px oklch(0.82 0.16 70 / 0.45);
 }
 
 .button-transaction-up:hover:not(:disabled),
 .button-transaction-up:focus-visible {
-  background-color: rgb(var(--mojito-green));
+  background: linear-gradient(180deg, oklch(0.9 0.15 75), oklch(0.8 0.16 65));
 }
 
 .button-transaction-up svg {
@@ -73,14 +73,14 @@
 }
 
 .button-transaction-up svg path {
-  stroke: rgb(var(--color-white));
+  stroke: oklch(0.18 0.02 70);
 }
 
 /* Label below the circle */
 .button-transaction-label {
   font-size: 13px;
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-1);
   text-align: center;
   line-height: 1.2;
 }

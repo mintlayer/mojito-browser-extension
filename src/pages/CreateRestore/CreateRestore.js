@@ -1,9 +1,7 @@
 import { useContext } from 'react'
 import { useNavigate } from 'react-router'
 
-import { BrandBottomLogo, Button, PageWrapper } from '@BasicComponents'
-import { ReactComponent as ShieldIcon } from '@Assets/images/icon-shield.svg'
-import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
+import { Button, MojitoLogo, PageWrapper } from '@BasicComponents'
 import { AccountContext } from '@Contexts'
 import { LocalStorageService } from '@Storage'
 
@@ -46,42 +44,46 @@ const CreateRestorePage = () => {
         data-testid="create-restore"
         className={styles.page}
       >
-        <h1 className={styles.title}>Mojito</h1>
-        <h2 className={styles.heading}>A fresh way to hold Mintlayer assets</h2>
-        <p className={styles.subtitle}>
-          Self-custody wallet for Bitcoin and Mintlayer tokens.
-          <br />
-          Live prices, fast swaps, no custodians.
-        </p>
+        <div className={styles.center}>
+          <div className={styles.logo}>
+            <MojitoLogo size={88} />
+          </div>
+          <h1 className={styles.title}>Mojito</h1>
+          <p className={styles.subtitle}>
+            Self-custody wallet for Bitcoin and Mintlayer.
+            <br />
+            Your keys never leave this browser.
+          </p>
+          <div className={styles.chips}>
+            <span className={`${styles.chip} ${styles.chipAmber}`}>
+              <span className={styles.dot} />
+              Bitcoin
+            </span>
+            <span className={`${styles.chip} ${styles.chipTeal}`}>
+              <span className={styles.dot} />
+              Mintlayer
+            </span>
+          </div>
+        </div>
         <div className={styles.buttons}>
           <Button
             onClickHandle={goToSetAccountPage}
-            extraStyleClasses={[styles.createButton]}
+            extraStyleClasses={[styles.primaryButton]}
           >
-            Create a new wallet{' '}
-            <IconArrowTopRight className={styles.buttonIcon} />
+            Create a new wallet
           </Button>
           <Button
-            alternate
             onClickHandle={goToRestoreAccountPage}
-            extraStyleClasses={[styles.restoreButton]}
+            extraStyleClasses={[styles.secondaryButton]}
           >
-            Import existing wallet{' '}
-            <IconArrowTopRight className={styles.buttonIcon} />
+            I already have a recovery phrase
           </Button>
-        </div>
-        <div className={styles.badges}>
-          <span className={styles.badgeWithIcon}>
-            <ShieldIcon className={styles.badgeIcon} />
-            Non-custodial
-          </span>
-          <span className={styles.badgeDot}>&middot;</span>
-          <span>Audited</span>
-          <span className={styles.badgeDot}>&middot;</span>
-          <span>Open source</span>
+          <p className={styles.terms}>
+            By continuing you agree to the <a href="#terms">Terms</a> and{' '}
+            <a href="#privacy">Privacy policy</a>.
+          </p>
         </div>
       </div>
-      <BrandBottomLogo />
     </PageWrapper>
   )
 }

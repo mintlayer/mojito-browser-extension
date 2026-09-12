@@ -2,8 +2,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(var(--color-black), 0.04);
-  border: 1px solid rgba(var(--color-black), 0.1);
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
   border-radius: 16px;
   padding: 16px 20px;
   min-height: max-content;
@@ -26,7 +26,7 @@
 .balance-label {
   font-size: 1rem;
   font-weight: 500;
-  color: rgba(var(--color-black), 0.45);
+  color: var(--be-text-2);
   margin-bottom: 4px;
 
   @media screen and (min-width: 901px) {
@@ -44,7 +44,7 @@
 .balance-value {
   font-size: 1.8rem;
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 
   @media screen and (min-width: 901px) {
     font-size: 2rem;
@@ -54,7 +54,7 @@
 .balance-ticker {
   font-size: 0.9rem;
   font-weight: 600;
-  color: rgba(var(--color-black), 0.35);
+  color: var(--be-text-3);
 
   @media screen and (min-width: 901px) {
     font-size: 1rem;
@@ -64,14 +64,14 @@
 .balance-fiat {
   font-size: 1rem;
   font-weight: 500;
-  color: rgba(var(--color-black), 0.45);
+  color: var(--be-text-2);
   margin-top: 2px;
 }
 
 .balance-locked {
   font-size: 14px;
   font-weight: 500;
-  color: rgba(var(--color-black), 0.4);
+  color: var(--be-text-2);
   margin: 6px 0 0 10px;
   cursor: pointer;
   background: none;
@@ -81,7 +81,7 @@
 }
 
 .balance-locked:hover {
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .balance-chart {

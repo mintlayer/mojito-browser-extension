@@ -1,5 +1,5 @@
 .row {
-  border-bottom: 1px solid rgba(var(--color-black), 0.05);
+  border-bottom: 1px solid var(--be-line-soft);
   transition: background 0.15s ease;
 }
 
@@ -8,13 +8,13 @@
 }
 
 .row:hover {
-  background: rgba(var(--color-black), 0.02);
+  background: oklch(1 0 0 / 0.02);
 }
 
 .cell {
   padding: 16px 20px;
   vertical-align: middle;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   font-size: 14px;
 }
 
@@ -25,7 +25,7 @@
 .addressValue {
   font-family: monospace;
   font-size: 14px;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   text-decoration: none;
   white-space: nowrap;
   transition: color 0.15s ease;
@@ -46,8 +46,8 @@
 }
 
 .statusUsed {
-  background: rgba(var(--color-black), 0.07);
-  color: rgba(var(--color-black), 0.7);
+  background: oklch(1 0 0 / 0.07);
+  color: var(--be-text-2);
 }
 
 .statusUnused {
@@ -58,7 +58,7 @@
 /* Balance */
 .balanceAmount {
   font-size: var(--default-font-size);
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   white-space: nowrap;
 }
 
@@ -68,18 +68,18 @@
 
 .balanceTicker {
   font-weight: 400;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
 }
 
 .balanceDash {
-  color: rgba(var(--color-black), 0.25);
+  color: var(--be-text-3);
   font-size: 16px;
 }
 
 .lockedBalance {
   display: block;
   font-size: 12px;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
   margin-top: 2px;
 }
 
@@ -88,17 +88,17 @@
   width: 36px;
   height: 36px;
   padding: 0;
-  background: rgba(var(--color-black), 0.04);
-  background-color: rgba(var(--color-black), 0.04);
+  background: oklch(1 0 0 / 0.04);
+  background-color: oklch(1 0 0 / 0.04);
   border-radius: 8px;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   transition: background 0.15s ease;
 }
 
 .qrButton.qrButton:hover,
 .qrButton.qrButton:focus {
-  background: rgba(var(--color-black), 0.08);
-  background-color: rgba(var(--color-black), 0.08);
+  background: oklch(1 0 0 / 0.08);
+  background-color: oklch(1 0 0 / 0.08);
 }
 
 .qrButton.qrButton svg path {
@@ -131,7 +131,7 @@
   justify-content: space-between;
   gap: 6px;
   background: none;
-  border: 1px solid rgba(var(--color-black), 0.1);
+  border: 1px solid var(--be-line-soft);
   border-radius: 6px;
   padding: 4px 12px;
   cursor: pointer;
@@ -153,19 +153,19 @@
 
 .tokensCount {
   font-weight: 500;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .toggleIcon {
   font-size: 8px;
   transition: transform 0.2s ease;
-  color: rgba(var(--color-black), 0.4);
+  color: var(--be-text-3);
 }
 
 .tokensList {
   padding: 8px;
   background: rgba(var(--color-green), 0.03);
-  border: 1px solid rgba(var(--color-black), 0.1);
+  border: 1px solid var(--be-line-soft);
   border-top: 0;
   border-radius: 0 0 10px 10px;
   animation: tokensSlideDown 0.2s ease-out;
@@ -176,7 +176,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 4px 0;
-  border-bottom: 1px solid rgba(var(--color-black), 0.05);
+  border-bottom: 1px solid var(--be-line-soft);
   font-size: 12px;
   gap: 3px;
 }
@@ -187,12 +187,12 @@
 
 .tokenAmount {
   font-weight: 500;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .tokenId {
   font-family: monospace;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
   font-size: 11px;
 }
 

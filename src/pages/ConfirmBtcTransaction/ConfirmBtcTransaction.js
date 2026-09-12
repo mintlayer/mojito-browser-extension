@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router'
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { Button, Error, PageWrapper } from '@BasicComponents'
 import { PopUp, TextField, Loading } from '@ComposedComponents'
 import { AccountContext, BitcoinContext, SettingsContext } from '@Contexts'
@@ -26,6 +26,17 @@ const ConfirmBtcTransactionPage = () => {
   const extraButtonStyles = [styles.buttonSignTransaction]
 
   const { accountID, addresses } = useContext(AccountContext)
+  const [hasPasskey, setHasPasskey] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    Account.hasPasskey(accountID).then((has) => {
+      if (!cancelled) setHasPasskey(has)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [accountID])
   const {
     btcUtxos,
     unusedAddresses: unusedBtcAddresses,
@@ -92,9 +103,12 @@ const ConfirmBtcTransactionPage = () => {
 
     setSendingTransaction(true)
     try {
+      const unwrappedPassword = hasPasskey
+        ? await Account.getPasswordWithPasskey(accountID)
+        : password
       const { btcPrivateKeys } = await Account.unlockAccount(
         accountID,
-        password,
+        unwrappedPassword,
         { wallets: ['btc'] },
       )
 
@@ -143,7 +157,7 @@ const ConfirmBtcTransactionPage = () => {
   }
 
   const goBackToWallet = async () => {
-    navigate('/wallet/Bitcoin')
+    navigate('/dashboard')
   }
 
   const passwordChangeHandler = (value) => {
@@ -151,7 +165,7 @@ const ConfirmBtcTransactionPage = () => {
   }
 
   if (!state) {
-    navigate('/wallet/Bitcoin')
+    navigate('/dashboard')
     return null
   }
 

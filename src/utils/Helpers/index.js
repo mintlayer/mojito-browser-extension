@@ -11,6 +11,7 @@ import * as MLTransaction from './ML/MLTransaction'
 import * as StringHelpers from './String/String'
 import * as ObjectHelpers from './Object/Object'
 import * as Secret from './Secret/Secret'
+import * as Transactions from './Transactions/Transactions'
 
 export {
   BTC,
@@ -26,4 +27,5 @@ export {
   StringHelpers,
   ObjectHelpers,
   Secret,
+  Transactions,
 }

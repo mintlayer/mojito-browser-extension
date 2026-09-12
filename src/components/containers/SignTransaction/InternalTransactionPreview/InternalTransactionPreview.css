@@ -1,5 +1,5 @@
 .transactionPreview {
-  background: #ffffff;
+  background: var(--be-bg-1);
   border-radius: 12px;
 }
 
@@ -61,7 +61,7 @@
 
 .detail-item {
   padding: 16px;
-  background: #ffffff;
+  background: var(--be-bg-1);
   border: 1px solid #e2e8f0;
   border-radius: 6px;
 }
@@ -99,7 +99,7 @@
 }
 
 .transaction-table td {
-  background: #ffffff;
+  background: var(--be-bg-1);
   color: #4a5568;
 }
 
@@ -117,7 +117,7 @@
   flex-direction: column;
   gap: var(--space-3xs);
   padding: var(--space-sm) 0;
-  border-bottom: 1px solid rgba(var(--color-black), 0.06);
+  border-bottom: 1px solid var(--be-line-soft);
 }
 
 .signTxSection:last-child {
@@ -130,7 +130,7 @@
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(var(--color-black), 0.45);
+  color: var(--be-text-3);
 }
 
 .signTxSection p {

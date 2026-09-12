@@ -36,14 +36,14 @@
   height: 56px;
   flex-shrink: 0;
   border-radius: 18px;
-  background: rgba(var(--color-main-green), 0.12);
-  color: rgb(var(--mojito-green));
+  background: var(--be-amber-soft);
+  color: var(--be-amber);
 }
 
 .shieldIcon {
   width: 28px;
   height: 28px;
-  stroke: rgb(var(--mojito-green));
+  stroke: var(--be-amber);
 }
 
 .title {
@@ -51,14 +51,14 @@
   font-size: var(--font-size-3xl);
   font-weight: 700;
   line-height: 1.25;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .subtitle {
   margin: 0;
   font-size: var(--font-size-md);
   line-height: 1.4;
-  color: rgba(var(--color-black), 0.6);
+  color: var(--be-text-2);
 }
 
 .card {
@@ -67,9 +67,9 @@
   gap: var(--space-lg);
   padding: var(--space-lg);
   border-radius: var(--round-size);
-  border: 1px solid rgba(var(--color-black), 0.07);
-  background: rgb(var(--surface));
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--be-line-soft);
+  background: var(--be-bg-1);
+  box-shadow: 0 8px 24px oklch(0 0 0 / 0.3);
 }
 
 .cardTitle {
@@ -77,7 +77,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(var(--color-black), 0.45);
+  color: var(--be-text-3);
 }
 
 .permissions {
@@ -91,7 +91,19 @@
 
 .bitcoinSlot {
   padding-top: var(--space-lg);
-  border-top: 1px solid rgba(var(--color-black), 0.07);
+  border-top: 1px solid var(--be-line-soft);
+}
+
+.warning {
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--round-size);
+  border: 1px solid var(--be-amber);
+  background: var(--be-amber-soft);
+  color: var(--be-amber);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  text-align: center;
 }
 
 .disclaimer {
@@ -99,7 +111,7 @@
   text-align: center;
   font-size: var(--font-size-sm);
   line-height: 1.45;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-2);
 }
 
 .actions {

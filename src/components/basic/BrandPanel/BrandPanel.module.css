@@ -7,9 +7,21 @@
     align-items: center;
     justify-content: center;
     width: 38%;
-    background: rgb(var(--mojito-green));
+    background:
+      radial-gradient(
+        120% 60% at 50% -10%,
+        oklch(0.82 0.16 70 / 0.16),
+        transparent 60%
+      ),
+      radial-gradient(
+        80% 50% at 100% 100%,
+        oklch(0.74 0.16 290 / 0.1),
+        transparent 60%
+      ),
+      var(--be-bg-0);
     overflow: hidden;
     flex-shrink: 0;
+    border-right: 1px solid var(--be-line-soft);
   }
 }
 
@@ -26,6 +38,7 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  color: var(--be-text-0);
 }
 
 .brandLogo {
@@ -38,7 +51,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #fff;
+  color: var(--be-text-0);
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.5px;
@@ -52,7 +65,7 @@
 
 .brandSubtitle {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--be-text-2);
   text-align: center;
   line-height: 1.5;
   margin: 0;

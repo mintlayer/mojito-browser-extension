@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mojito bridge smoke test</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 720px;
+        margin: 24px auto;
+        padding: 0 16px;
+        background: #14121a;
+        color: #eee;
+      }
+      h1 {
+        font-size: 18px;
+      }
+      p {
+        color: #aaa;
+        font-size: 13px;
+      }
+      button {
+        margin: 4px 8px 4px 0;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #444;
+        background: #26222e;
+        color: #eee;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: #888;
+      }
+      pre {
+        background: #0c0b10;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 12px;
+        min-height: 200px;
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 12px;
+      }
+      .row {
+        margin: 8px 0;
+      }
+      code {
+        color: #ffd27d;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Mojito extension — bridge smoke test</h1>
+    <p>
+      Served over <code>http://localhost</code> so the content script injects
+      <code>window.mojito</code>. Open DevTools to see SDK errors. Signing with
+      a real transaction must be tested from the bridge frontend; this page
+      covers the connect / restore / error-code / disconnect contract.
+    </p>
+    <div class="row">
+      <button id="b-detect">Detect window.mojito</button>
+      <button id="b-connect">connect()</button>
+      <button id="b-isconnected">isConnected()</button>
+      <button id="b-restore">restore()</button>
+      <button id="b-getsession">request('getSession')</button>
+      <button id="b-unknown">request('unknownMethod')</button>
+      <button id="b-disconnect">disconnect()</button>
+    </div>
+    <pre id="log"></pre>
+    <script>
+      const logEl = document.getElementById('log')
+      const log = (label, value) => {
+        logEl.textContent += `[${new Date().toLocaleTimeString()}] ${label}: `
+        logEl.textContent +=
+          typeof value === 'string' ? value : JSON.stringify(value, null, 2)
+        logEl.textContent += '\n\n'
+      }
+
+      const run = (label, fn) => async () => {
+        try {
+          log(label + ' ✓', (await fn()) ?? 'ok')
+        } catch (error) {
+          log(
+            label + ' ✗ ' + (error.code ? `(code=${error.code})` : '(no code)'),
+            error.message,
+          )
+        }
+      }
+
+      document.getElementById('b-detect').onclick = () =>
+        log(
+          'window.mojito',
+          window.mojito
+            ? {
+                isExtension: window.mojito.isExtension,
+                version: window.mojito.version,
+                network: window.mojito.network,
+                hasRestore: typeof window.mojito.restore === 'function',
+              }
+            : 'NOT INJECTED — reload the page, is the extension installed & enabled?',
+        )
+
+      document.getElementById('b-connect').onclick = run('connect()', () =>
+        window.mojito.connect(),
+      )
+      document.getElementById('b-isconnected').onclick = run(
+        'isConnected()',
+        () => window.mojito.isConnected(),
+      )
+      document.getElementById('b-restore').onclick = run('restore()', () =>
+        window.mojito.restore(),
+      )
+      document.getElementById('b-getsession').onclick = run(
+        "request('getSession')",
+        () => window.mojito.request('getSession'),
+      )
+      document.getElementById('b-unknown').onclick = run(
+        "request('unknownMethod')",
+        () => window.mojito.request('unknownMethod'),
+      )
+      document.getElementById('b-disconnect').onclick = run(
+        'disconnect()',
+        () => window.mojito.disconnect(),
+      )
+    </script>
+  </body>
+</html>

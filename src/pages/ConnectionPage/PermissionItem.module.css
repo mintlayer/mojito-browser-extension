@@ -13,8 +13,8 @@
   height: 32px;
   flex-shrink: 0;
   border-radius: 10px;
-  background: rgba(var(--color-main-green), 0.12);
-  color: rgb(var(--mojito-green));
+  background: var(--be-amber-soft);
+  color: var(--be-amber);
 }
 
 .icon {
@@ -32,13 +32,13 @@
 .title {
   font-size: var(--font-size-md);
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   line-height: 1.3;
 }
 
 .description {
   font-size: var(--font-size-sm);
-  color: rgba(var(--color-black), 0.55);
+  color: var(--be-text-2);
   line-height: 1.4;
 }
 

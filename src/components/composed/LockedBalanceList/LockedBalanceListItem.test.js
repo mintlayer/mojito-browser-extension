@@ -1,5 +1,18 @@
+import { format } from 'date-fns'
 import { render, screen } from '@testing-library/react'
 import LockedBalanceListItem from './LockedBalanceListItem'
+
+// The component renders `format(new Date(timestamp * 1000), 'dd/MM/yyyy · HH:mm')`
+// using the machine's local timezone. Jest sandboxes the environment, so pinning
+// `process.env.TZ` from inside a test file has no effect on date rendering.
+// To stay deterministic on any machine, expected strings are computed from the
+// SAME timestamp with the SAME date-fns format the component uses. The absolute
+// UTC instants of the fixtures are documented below via `toISOString()`, which
+// is timezone-independent by definition.
+const formatTimestamp = (timestamp) =>
+  format(new Date(timestamp * 1000), 'dd/MM/yyyy · HH:mm')
+
+const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 const forBlockCountUtxo = {
   outpoint: { source_id: 'tx1', index: 0 },
@@ -47,7 +60,25 @@ describe('LockedBalanceListItem', () => {
   it('renders formatted date', () => {
     renderItem(forBlockCountUtxo)
 
-    expect(screen.getByText(/14\/11\/2023/)).toBeInTheDocument()
+    // 1700000000 -> 2023-11-14T22:13:20Z (UTC)
+    expect(new Date(1700000000 * 1000).toISOString()).toMatch(
+      /^2023-11-14T22:13/,
+    )
+    expect(
+      screen.getByText(new RegExp(escapeRegExp(formatTimestamp(1700000000)))),
+    ).toBeInTheDocument()
+  })
+
+  it('renders formatted date for UntilTime', () => {
+    renderItem(untilTimeUtxo)
+
+    // 1700050000 -> 2023-11-15T12:06:40Z (UTC)
+    expect(new Date(1700050000 * 1000).toISOString()).toMatch(
+      /^2023-11-15T12:06/,
+    )
+    expect(
+      screen.getByText(new RegExp(escapeRegExp(formatTimestamp(1700050000)))),
+    ).toBeInTheDocument()
   })
 
   it('renders block badge for ForBlockCount', () => {

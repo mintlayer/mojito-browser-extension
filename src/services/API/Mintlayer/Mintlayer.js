@@ -10,11 +10,12 @@ const MINTLAYER_ENDPOINTS = {
   POST_TRANSACTION: '/transaction',
   GET_FEES_ESTIMATES: '/feerate',
   GET_ADDRESS_DELEGATIONS: '/address/:address/delegations',
-  GET_DELEGATION: '/delegation/:delegation',
+  GET_DELEGATION: '/delegation/:address',
   GET_CHAIN_TIP: '/chain/tip',
-  GET_BLOCK_HASH: '/chain/:height',
-  GET_BLOCK_DATA: '/block/:hash',
-  GET_POOL_DATA: '/pool/:hash',
+  GET_BLOCK_HASH: '/chain/:address',
+  GET_BLOCK_DATA: '/block/:address',
+  GET_POOL_DATA: '/pool/:address',
+  GET_NFT: '/nft/:tokenId',
   GET_ORDER_DATA: '/order/:hash',
   GET_ORDERS_LIST: '/order',
   GET_TOKEN: '/token/:tokenId',
@@ -23,15 +24,29 @@ const MINTLAYER_ENDPOINTS = {
 
 const abortControllers = new Map()
 
+// Server fallback chain for the active network. Deliberately does NOT honor
+// any localStorage 'customAPIServers' override: an unvalidated entry would
+// silently redirect every request — including transaction broadcasts — to an
+// arbitrary endpoint serving spoofed UTXOs/fees.
+const getMintlayerServers = (networkType) =>
+  networkType === AppInfo.NETWORK_TYPES.TESTNET
+    ? EnvVars.TESTNET_MINTLAYER_SERVERS
+    : EnvVars.MAINNET_MINTLAYER_SERVERS
+
 const requestMintlayer = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
   const controller = new AbortController()
-  abortControllers.set(url, controller)
+  // Keyed by url+method: concurrent requests to the same url must not
+  // clobber each other's controllers.
+  abortControllers.set(`${method} ${url}`, controller)
 
   try {
     const result = await request(url, {
       method,
       body,
+      // Wire the signal: without it cancelAllRequests() aborts nothing and
+      // stale responses land after a network switch.
+      signal: controller.signal,
     })
     if (!result.ok) {
       const error = await result.json()
@@ -75,7 +90,7 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
     console.error(error)
     throw error
   } finally {
-    abortControllers.delete(url)
+    abortControllers.delete(`${method} ${url}`)
   }
 }
 
@@ -85,23 +100,7 @@ export const batchRequestMintlayer = async ({ ids, type }) => {
   }
 
   const networkType = LocalStorageService.getItem('networkType')
-  const customMintlayerServerList = LocalStorageService.getItem(
-    AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
-  )
-  const customMintlayerServer = customMintlayerServerList
-    ? networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? customMintlayerServerList.mintlayer_testnet
-      : customMintlayerServerList.mintlayer_mainnet
-    : null
-
-  const defaultMintlayerServers =
-    networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? EnvVars.TESTNET_MINTLAYER_SERVERS
-      : EnvVars.MAINNET_MINTLAYER_SERVERS
-
-  const combinedMintlayerServers = customMintlayerServer
-    ? [customMintlayerServer, ...defaultMintlayerServers]
-    : [...defaultMintlayerServers]
+  const combinedMintlayerServers = getMintlayerServers(networkType)
 
   const res = await fetch(combinedMintlayerServers[0] + '/batch', {
     method: 'POST',
@@ -126,23 +125,7 @@ export const batchRequestMintlayer = async ({ ids, type }) => {
 
 const tryServers = async (endpoint, body = null, forceNetwork) => {
   const networkType = forceNetwork || LocalStorageService.getItem('networkType')
-  const customMintlayerServerList = LocalStorageService.getItem(
-    AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
-  )
-  const customMintlayerServer = customMintlayerServerList
-    ? networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? customMintlayerServerList.mintlayer_testnet
-      : customMintlayerServerList.mintlayer_mainnet
-    : null
-
-  const defaultMintlayerServers =
-    networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? EnvVars.TESTNET_MINTLAYER_SERVERS
-      : EnvVars.MAINNET_MINTLAYER_SERVERS
-
-  const combinedMintlayerServers = customMintlayerServer
-    ? [customMintlayerServer, ...defaultMintlayerServers]
-    : [...defaultMintlayerServers]
+  const combinedMintlayerServers = getMintlayerServers(networkType)
 
   for (let i = 0; i < combinedMintlayerServers.length; i++) {
     try {
@@ -350,33 +333,179 @@ const getNftsData = async (tokens) => {
   return { tokensData, excludedTokenIds }
 }
 
+// Mintlayer tokens carry no on-chain icon: the token points at a metadata
+// document (metadata_uri, usually ipfs://) whose JSON holds the icon under
+// `tokenIcon` (also tolerate `icon_uri`/`icon`). The icon itself is often an
+// ipfs:// uri again.
+// The raw ipfs:// scheme is never fetched or rendered: every uri is mapped
+// to one of these gateways. Public gateway availability varies per network
+// (ipfs.io needs a VPN here today), so all of them are RACED in parallel and
+// the first usable JSON wins — a dead gateway loses the race without adding
+// serial latency.
+const IPFS_GATEWAYS = [
+  'https://ipfs.io/ipfs',
+  'https://dweb.link/ipfs',
+  'https://w3s.link/ipfs',
+]
+// Token metadata is issuer-controlled: only ipfs:// metadata documents are
+// resolved (through the fixed gateway list) and only gateway-hosted icons
+// are returned. Arbitrary https/http metadata or icon urls would turn token
+// issuance into a request-forgery/tracking vector from the wallet UI.
+const isAllowedIpfsUri = (uri) =>
+  typeof uri === 'string' && uri.startsWith('ipfs://')
+
+const NEGATIVE_CACHE_TTL_MS = 5 * 60 * 1000
+const ICON_MAX_BYTES = 5 * 1024 * 1024
+// metadata uri -> { value: blobUrl, expires? } (negative entries carry a TTL)
+const tokenIconCache = new Map()
+// metadata uri -> parsed JSON. Ipfs content is content-addressed, so a
+// resolved metadata document never needs to be fetched again.
+const metadataCache = new Map()
+const failedLookupsLogged = new Set()
+
+const fetchJsonWithGatewayFallback = async (metadataUri) => {
+  const candidates = IPFS_GATEWAYS.map(
+    (gateway) => `${gateway}/${metadataUri.slice('ipfs://'.length)}`,
+  )
+
+  const attempts = candidates.map(async (candidate) => {
+    // Timeout: this runs inside the wallet data refresh and gateways can
+    // hang — never block the whole refresh on an icon.
+    const response = await fetch(candidate, {
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    return response.json()
+  })
+
+  try {
+    return await Promise.any(attempts)
+  } catch {
+    return null
+  }
+}
+
+// Races the gateways for the icon BYTES and returns an in-memory object
+// URL. Once fetched, the icon never touches a gateway again — it renders
+// from the blob, so the periodic refresh stops hammering public gateways
+// (they rate-limit aggressively).
+const fetchIconBlobUrl = async (iconUri) => {
+  const candidates = iconUri.startsWith('ipfs://')
+    ? IPFS_GATEWAYS.map(
+        (gateway) => `${gateway}/${iconUri.slice('ipfs://'.length)}`,
+      )
+    : [iconUri]
+
+  const attempts = candidates.map(async (candidate) => {
+    const response = await fetch(candidate, {
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    const type = response.headers?.get?.('content-type') || ''
+    if (type && !type.startsWith('image/')) {
+      throw new Error(`Not an image: ${type}`)
+    }
+    const blob = await response.blob()
+    if (blob.size > ICON_MAX_BYTES) {
+      throw new Error('Icon too large')
+    }
+    return URL.createObjectURL(blob)
+  })
+
+  try {
+    return await Promise.any(attempts)
+  } catch {
+    return null
+  }
+}
+
+const resolveTokenIcon = async (metadataUri) => {
+  if (!isAllowedIpfsUri(metadataUri)) return undefined
+
+  const cached = tokenIconCache.get(metadataUri)
+  if (cached) {
+    // Negative entries carry a TTL; positive results are permanent.
+    if (cached.expires && cached.expires < Date.now()) {
+      tokenIconCache.delete(metadataUri)
+    } else {
+      return cached.value ?? undefined
+    }
+  }
+
+  const metadata =
+    metadataCache.get(metadataUri) ??
+    (await fetchJsonWithGatewayFallback(metadataUri))
+  if (metadata) {
+    // Ipfs content is content-addressed: cache the document permanently so
+    // the refresh loop never re-fetches it.
+    metadataCache.set(metadataUri, metadata)
+  } else {
+    // Every gateway failed: log once per uri, do NOT cache — the next
+    // refresh retries.
+    if (!failedLookupsLogged.has(metadataUri)) {
+      failedLookupsLogged.add(metadataUri)
+      console.error(
+        `Failed to resolve token metadata from every gateway: ${metadataUri}`,
+      )
+    }
+    return undefined
+  }
+
+  const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
+  // Scheme allowlist: ipfs:// resolves through the gateway race, https://
+  // is fetched directly. http:// (cleartext/internal-network) and exotic
+  // schemes are rejected — token metadata is issuer-controlled.
+  if (!(raw && typeof raw === 'string' && /^(ipfs|https):\/\//.test(raw))) {
+    // Definitive "document has no icon": cache with a TTL so the gateways
+    // are not hammered on every refresh.
+    tokenIconCache.set(metadataUri, {
+      value: null,
+      expires: Date.now() + NEGATIVE_CACHE_TTL_MS,
+    })
+    return undefined
+  }
+
+  const blobUrl = await fetchIconBlobUrl(raw)
+  if (blobUrl) {
+    tokenIconCache.set(metadataUri, { value: blobUrl })
+    return blobUrl
+  }
+
+  // Icon bytes unreachable right now: not cached, retried next refresh.
+  return undefined
+}
+
 const getAddressDelegations = (address) =>
   tryServers(
     MINTLAYER_ENDPOINTS.GET_ADDRESS_DELEGATIONS.replace(':address', address),
   )
 
 const getDelegation = (delegation) =>
-  tryServers(
-    MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(':delegation', delegation),
-  )
+  tryServers(MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(':address', delegation))
 
 const getPool = (pool) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_POOL_DATA.replace(':hash', pool))
+  tryServers(MINTLAYER_ENDPOINTS.GET_POOL_DATA.replace(':address', pool))
 
 const getBlockDataByHeight = (height) => {
   return tryServers(
-    MINTLAYER_ENDPOINTS.GET_BLOCK_HASH.replace(':height', height),
+    MINTLAYER_ENDPOINTS.GET_BLOCK_HASH.replace(':address', height),
   )
     .then(JSON.parse)
     .then((response) => {
       return tryServers(
-        MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':hash', response),
+        MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':address', response),
       )
     })
 }
 
 const getBlockDataByHash = (hash) => {
-  return tryServers(MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':hash', hash))
+  return tryServers(
+    MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':address', hash),
+  )
 }
 
 const getWalletDelegations = (addresses) => {
@@ -484,6 +613,7 @@ export {
   getBlockDataByHash,
   getTokenById,
   getTokensData,
+  resolveTokenIcon,
   getPoolsData,
   getNftsData,
   getOrderById,

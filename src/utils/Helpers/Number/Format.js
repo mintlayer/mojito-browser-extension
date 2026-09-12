@@ -18,7 +18,9 @@ const BTCValue = (value) => {
 }
 
 const atomsToDecimal = (atoms, decimals) => {
-  const atomsBigInt = BigInt(Number(atoms))
+  // BigInt() directly: Number(atoms) would silently corrupt values above
+  // 2^53 (ML has 11 decimals, so ~90,000 ML is already out of float range).
+  const atomsBigInt = typeof atoms === 'bigint' ? atoms : BigInt(atoms)
   const divisor = BigInt(10 ** decimals)
   const quotient = atomsBigInt / divisor
   const remainder = atomsBigInt % divisor

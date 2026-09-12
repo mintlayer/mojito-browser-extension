@@ -22,12 +22,12 @@
 .toggleTitle {
   font-size: var(--font-size-md);
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .toggleDescription {
   font-size: var(--font-size-sm);
-  color: rgba(var(--color-black), 0.55);
+  color: var(--be-text-2);
 }
 
 .infoBlock {
@@ -36,8 +36,8 @@
   gap: var(--space-sm);
   padding: var(--space-md);
   border-radius: 12px;
-  border: 1px solid rgba(var(--color-main-green), 0.3);
-  background: rgba(var(--color-main-green), 0.08);
+  border: 1px solid oklch(0.82 0.16 70 / 0.3);
+  background: var(--be-amber-soft);
 }
 
 .infoIcon {
@@ -49,8 +49,8 @@
   flex-shrink: 0;
   margin-top: 1px;
   border-radius: 50%;
-  background: rgb(var(--color-main-green));
-  color: rgb(var(--color-white));
+  background: var(--be-amber);
+  color: oklch(0.18 0.02 70);
   font-size: var(--font-size-xs);
   font-weight: bold;
   font-style: italic;
@@ -60,10 +60,10 @@
   margin: 0;
   font-size: var(--font-size-sm);
   line-height: 1.45;
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
 }
 
 .infoText strong {
-  color: rgb(var(--color-main-green));
+  color: var(--be-amber);
   font-weight: 600;
 }

@@ -5,8 +5,8 @@
   min-height: 68px;
   padding: var(--space-md) var(--space-xl);
   border-radius: 16px;
-  border: 1px solid rgba(var(--color-black), 0.1);
-  background: rgb(var(--color-white));
+  border: 1px solid var(--be-line-soft);
+  background: var(--be-bg-1);
   cursor: pointer;
   transition:
     border-color 0.2s,
@@ -19,8 +19,8 @@
 }
 
 .card:hover {
-  border-color: rgba(var(--mojito-green), 1);
-  box-shadow: 0 2px 12px rgba(var(--color-black), 0.06);
+  border-color: oklch(0.82 0.16 70 / 0.5);
+  box-shadow: 0 4px 20px oklch(0 0 0 / 0.3);
 }
 
 .avatar {
@@ -38,7 +38,7 @@
 .cardName {
   font-size: var(--font-size-lg);
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin: 0;
 }
 
@@ -64,18 +64,18 @@
 .deleteIcon {
   width: 13px;
   height: 13px;
-  fill: rgba(var(--color-black), 0.3);
+  fill: var(--be-text-3);
   transition: fill 0.2s;
 }
 
 .deleteButton:hover .deleteIcon {
-  fill: rgb(var(--color-red));
+  fill: var(--be-red);
 }
 
 .chevron {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  color: rgba(var(--color-black), 0.25);
+  color: var(--be-text-3);
   transform: rotate(-90deg);
 }

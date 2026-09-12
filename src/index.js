@@ -1,10 +1,10 @@
-/* eslint-disable no-undef */
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useRef } from 'react'
 import ReactDOM from 'react-dom/client'
 import {
   MemoryRouter,
   Routes,
   Route,
+  Navigate,
   useLocation,
   useNavigate,
 } from 'react-router'
@@ -15,7 +15,7 @@ import {
   PopUp,
   Sidebar,
 } from '@ComposedComponents'
-import { BrandPanel } from '@BasicComponents'
+import { BrandPanel, ErrorBoundary } from '@BasicComponents'
 import { DeleteAccount } from '@ContainerComponents'
 import { Client } from '@mintlayer/sdk'
 
@@ -23,14 +23,13 @@ import {
   HomePage,
   CreateAccountPage,
   RestoreAccountPage,
-  WalletPage,
   SetAccountPasswordPage,
   CreateRestorePage,
   SendBtcTransactionPage,
   SendMlTransactionPage,
   DashboardPage,
   SettingsPage,
-  StakingPage,
+  StakePage,
   ConnectionPage,
   CreateDelegationPage,
   DelegationStakePage,
@@ -46,6 +45,9 @@ import {
   SignBitcoinTransactionPage,
   ConfirmBtcTransactionPage,
   AddressPage,
+  AssetPage,
+  ActivityPage,
+  ReceivePage,
 } from '@Pages'
 
 import {
@@ -61,9 +63,11 @@ import {
 } from '@Contexts'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
+import { Browser } from '@Browser'
 
 import '@Assets/styles/fonts.css'
 import '@Assets/styles/constants.css'
+import '@Assets/styles/theme.css'
 import '@Assets/styles/index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
@@ -76,19 +80,7 @@ if (isExtendedView) {
   document.documentElement.classList.add('extended-view')
 }
 
-const storage =
-  typeof browser !== 'undefined' && browser.storage
-    ? browser.storage
-    : typeof chrome !== 'undefined' && chrome.storage
-      ? chrome.storage
-      : null
-
-const runtime =
-  typeof browser !== 'undefined' && browser.runtime
-    ? browser.runtime
-    : typeof chrome !== 'undefined' && chrome.runtime
-      ? chrome.runtime
-      : null
+const { storage, runtime, windows } = Browser
 
 const App = () => {
   const [errorPopupOpen, setErrorPopupOpen] = useState(false)
@@ -107,7 +99,6 @@ const App = () => {
     useContext(MintlayerContext)
   const { networkType } = useContext(SettingsContext)
   const [nextAfterUnlock, setNextAfterUnlock] = useState(null)
-  const [, setRequest] = useState(null)
 
   const currentMlAddresses = addresses.mlAddresses
 
@@ -123,7 +114,7 @@ const App = () => {
       return !!mintlayerResponse && !!exchangeResponse
     } catch (error) {
       if (accountUnlocked) {
-        console.log(error)
+        console.error('Connection check failed:', error)
         setErrorPopupOpen(true)
         setAllDataFetching(false)
         logout()
@@ -179,25 +170,67 @@ const App = () => {
   }, [location.pathname])
 
   useEffect(() => {
-    if (storage) {
-      // Load pending request from storage
-      storage.local.get(['pendingRequest'], (data) => {
-        if (runtime.lastError) {
-          console.error('[Mojito Popup] Storage error:', runtime.lastError)
-          return
-        }
-        const pendingRequest = data.pendingRequest
-        if (pendingRequest) {
-          setRequest(pendingRequest)
-          handlePendingRequest(pendingRequest)
-        }
+    let cancelled = false
+    if (storage && windows) {
+      // Read THIS window's pending request. Approval requests are keyed by
+      // window id, so two approval windows can never read (and approve)
+      // each other's request.
+      windows.getCurrent((win) => {
+        if (cancelled || !win) return
+        const key = `pendingRequest:${win.id}`
+        storage.local.get([key], (data) => {
+          if (cancelled) return
+          const pendingRequest = data?.[key]
+          if (pendingRequest) {
+            handlePendingRequest(pendingRequest)
+          }
+        })
       })
+    }
+    return () => {
+      cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses, isAccountUnlocked, navigate])
 
+  // Approvals can arrive while the side panel is already open: react to the
+  // storage write immediately instead of waiting for the next effect run.
+  useEffect(() => {
+    if (!storage?.onChanged) return
+    const listener = (changes, areaName) => {
+      if (areaName !== 'local') return
+      const key = Object.keys(changes).find((k) =>
+        k.startsWith('pendingRequest:'),
+      )
+      if (!key) return
+      const request = changes[key].newValue
+      if (request) handlePendingRequestRef.current(request)
+    }
+    storage.onChanged.addListener(listener)
+    return () => storage.onChanged.removeListener(listener)
+  }, [])
+
+  // keep a stable handle for listeners registered once
+  const handlePendingRequestRef = useRef()
+  handlePendingRequestRef.current = handlePendingRequest
+
+  const handledRequestIds = useRef(new Set())
+
   const handlePendingRequest = (pendingRequest) => {
+    // the mount read and the storage.onChanged listener can both observe the
+    // same request — only route it once
+    if (pendingRequest.requestId) {
+      if (handledRequestIds.current.has(pendingRequest.requestId)) return
+      handledRequestIds.current.add(pendingRequest.requestId)
+    }
+
     const { action, origin, requestId } = pendingRequest
+
+    // Acknowledge ownership: the background cancels its 2s popup-fallback
+    // timer for this requestId once the approval surface has taken the
+    // request (locked → the panel shows unlock first, the approval follows
+    // here — either way the panel owns it, no popup window is needed).
+    Browser.notifyApprovalDisplayed(requestId)
 
     if (action === 'connect') {
       if (!unlocked) {
@@ -328,115 +361,153 @@ const App = () => {
               <DeleteAccount />
             </PopUp>
           )}
-          <Routes>
-            <Route
-              path="/dashboard"
-              element={<DashboardPage />}
-            />
-            <Route
-              path="/set-account"
-              element={<CreateAccountPage />}
-            />
-            <Route
-              path="/restore-account"
-              element={<RestoreAccountPage />}
-            />
-            <Route
-              path="/set-account-password"
-              element={
-                <SetAccountPasswordPage nextAfterUnlock={nextAfterUnlock} />
-              }
-            />
-            <Route
-              path="/create-restore"
-              element={<CreateRestorePage />}
-            />
-            <Route
-              path="/settings"
-              element={<SettingsPage unlocked={unlocked} />}
-            />
-            <Route
-              path="/connect"
-              element={<ConnectionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/sign-external-transaction"
-              element={<SignExternalTransactionPage />}
-            />
-            <Route
-              path="/wallet/Mintlayer/sign-internal-transaction"
-              element={<SignInternalTransaction />}
-            />
-            <Route
-              path="/wallet/Bitcoin/sign-transaction"
-              element={<SignBitcoinTransactionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/sign-challenge"
-              element={<SignChallengePage />}
-            />
-            <Route
-              path="/wallet/:coinType"
-              element={<WalletPage />}
-            />
-            <Route
-              path="/wallet/:coinType/send-btc-transaction"
-              element={<SendBtcTransactionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/send-btc-transaction/confirm"
-              element={<ConfirmBtcTransactionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/send-ml-transaction"
-              element={<SendMlTransactionPage />}
-            />
-            <Route
-              path="/wallet/:coinType/staking"
-              element={<StakingPage />}
-            />
-            <Route
-              path="/wallet/:coinType/staking/:delegationId/add-funds"
-              element={<DelegationStakePage />}
-            />
-            <Route
-              path="/wallet/:coinType/staking/:delegationId/withdraw"
-              element={<DelegationWithdrawPage />}
-            />
-            <Route
-              path="/wallet/:coinType/staking/create-delegation"
-              element={<CreateDelegationPage />}
-            />
-            <Route
-              path="/wallet/:coinType/locked-balance"
-              element={<LockedBalancePage />}
-            />
-            <Route
-              path="/wallet/:coinType/sign-message"
-              element={<MessagePage />}
-            />
-            <Route
-              path="/wallet/:coinType/nft"
-              element={<NftPage />}
-            />
-            <Route
-              path="/wallet/:coinType/nft/:tokenId/send"
-              element={<NftSendPage />}
-            />
-            <Route
-              path="/wallet/:coinType/order-swap"
-              element={<OrderSwapPage />}
-            />
-            <Route
-              exact
-              path="/"
-              element={<HomePage />}
-            />
-            <Route
-              path="/wallet/:coinType/address"
-              element={<AddressPage />}
-            />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route
+                path="/dashboard"
+                element={<DashboardPage />}
+              />
+              <Route
+                path="/set-account"
+                element={<CreateAccountPage />}
+              />
+              <Route
+                path="/restore-account"
+                element={<RestoreAccountPage />}
+              />
+              <Route
+                path="/set-account-password"
+                element={
+                  <SetAccountPasswordPage nextAfterUnlock={nextAfterUnlock} />
+                }
+              />
+              <Route
+                path="/create-restore"
+                element={<CreateRestorePage />}
+              />
+              <Route
+                path="/settings"
+                element={<SettingsPage unlocked={unlocked} />}
+              />
+              <Route
+                path="/connect"
+                element={<ConnectionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/sign-external-transaction"
+                element={<SignExternalTransactionPage />}
+              />
+              <Route
+                path="/wallet/Mintlayer/sign-internal-transaction"
+                element={<SignInternalTransaction />}
+              />
+              <Route
+                path="/wallet/Bitcoin/sign-transaction"
+                element={<SignBitcoinTransactionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/sign-challenge"
+                element={<SignChallengePage />}
+              />
+              <Route
+                path="/wallet/:coinType"
+                element={
+                  <Navigate
+                    to="/dashboard"
+                    replace
+                  />
+                }
+              />
+              <Route
+                path="/wallet/:coinType/send-btc-transaction"
+                element={<SendBtcTransactionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/send-btc-transaction/confirm"
+                element={<ConfirmBtcTransactionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/send-ml-transaction"
+                element={<SendMlTransactionPage />}
+              />
+              <Route
+                path="/wallet/:coinType/staking"
+                element={
+                  <Navigate
+                    to="/staking"
+                    replace
+                  />
+                }
+              />
+              <Route
+                path="/staking"
+                element={<StakePage />}
+              />
+              <Route
+                path="/wallet/:coinType/staking/:delegationId/add-funds"
+                element={<DelegationStakePage />}
+              />
+              <Route
+                path="/wallet/:coinType/staking/:delegationId/withdraw"
+                element={<DelegationWithdrawPage />}
+              />
+              <Route
+                path="/wallet/:coinType/staking/create-delegation"
+                element={<CreateDelegationPage />}
+              />
+              <Route
+                path="/wallet/:coinType/locked-balance"
+                element={<LockedBalancePage />}
+              />
+              <Route
+                path="/wallet/:coinType/sign-message"
+                element={<MessagePage />}
+              />
+              <Route
+                path="/wallet/:coinType/nft"
+                element={<NftPage />}
+              />
+              <Route
+                path="/wallet/:coinType/nft/:tokenId/send"
+                element={<NftSendPage />}
+              />
+              <Route
+                path="/wallet/:coinType/order-swap"
+                element={<OrderSwapPage />}
+              />
+              <Route
+                path="/"
+                element={<HomePage />}
+              />
+              <Route
+                path="/wallet/:coinType/address"
+                element={<AddressPage />}
+              />
+              <Route
+                path="/asset/:id"
+                element={<AssetPage />}
+              />
+              <Route
+                path="/activity"
+                element={<ActivityPage />}
+              />
+              <Route
+                path="/receive"
+                element={<ReceivePage />}
+              />
+              {/* Safety net: unknown routes land on the Dashboard instead of
+                rendering a blank panel. */}
+              <Route
+                path="*"
+                element={
+                  <Navigate
+                    to="/dashboard"
+                    replace
+                  />
+                }
+              />
+            </Routes>
+          </ErrorBoundary>
         </main>
       </div>
     </>

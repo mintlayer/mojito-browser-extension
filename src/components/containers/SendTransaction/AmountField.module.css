@@ -7,7 +7,7 @@
 
 .label {
   font-size: 13px;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
 }
 
 .errorMessage {

@@ -2,6 +2,7 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import reactPlugin from 'eslint-plugin-react'
 import reactHooksPlugin from 'eslint-plugin-react-hooks'
+import importPlugin from 'eslint-plugin-import'
 import globals from 'globals'
 
 const sharedRules = {
@@ -22,7 +23,19 @@ const sharedRules = {
   'max-depth': ['error', 3],
   'eol-last': ['error', 'always'],
   'testing-library/no-unnecessary-act': 'off',
+  'import/named': 'error',
   ...reactHooksPlugin.configs.recommended.rules,
+}
+
+const sharedSettings = {
+  react: {
+    version: 'detect',
+  },
+  'import/resolver': {
+    typescript: {
+      project: './tsconfig.json',
+    },
+  },
 }
 
 const sharedLanguageOptions = {
@@ -83,13 +96,10 @@ export default [
     plugins: {
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
+      import: importPlugin,
     },
     languageOptions: sharedLanguageOptions,
-    settings: {
-      react: {
-        version: 'detect',
-      },
-    },
+    settings: sharedSettings,
     rules: {
       ...sharedRules,
       'no-unused-vars': 'error',
@@ -101,16 +111,13 @@ export default [
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
       '@typescript-eslint': tseslint.plugin,
+      import: importPlugin,
     },
     languageOptions: {
       ...sharedLanguageOptions,
       parser: tseslint.parser,
     },
-    settings: {
-      react: {
-        version: 'detect',
-      },
-    },
+    settings: sharedSettings,
     rules: {
       ...sharedRules,
       'no-unused-vars': 'off',

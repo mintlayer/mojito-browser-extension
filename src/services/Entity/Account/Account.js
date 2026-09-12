@@ -9,6 +9,7 @@ import { BTC as BtcHelpers } from '@Helpers'
 import loadAccountSubRoutines from './loadWorkers'
 import { LocalStorageService } from '@Storage'
 import { CURRENT_ENCRYPTION_VERSION } from '../../Crypto/Cipher/Cipher'
+import * as Passkey from '../../Crypto/Passkey/Passkey'
 
 const getAccountVersion = (account) => account.encryptionVersion || 1
 
@@ -260,6 +261,17 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
       iv: account.iv.btcIv,
       tag: account.tag.btcTag,
       key,
+    }).catch((decryptError) => {
+      console.error(
+        '[Account] decryptSeed failed — password/key mismatch or corrupted data.',
+        'Salt:',
+        account.salt,
+        'Version:',
+        accountVersion,
+        'Error:',
+        decryptError,
+      )
+      throw decryptError
     })
 
     const mlTestnetPrivateKey = await decryptSeed({
@@ -345,9 +357,58 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
   }
 }
 
+// ── Passkey unlock (Chromium only; password remains the fallback) ────────
+// SECURITY: the passkey wraps the account password via the WebAuthn PRF
+// extension — the wrapped blob is stored on the account, the PRF secret
+// never leaves memory, and the password itself is never persisted. Enroll
+// and remove both verify the password first.
+
+const enrollPasskey = async (id, password) => {
+  // verify the password by unlocking before binding the passkey to it
+  await unlockAccount(id, password)
+  const blob = await Passkey.enrollPasskeyCredential(password)
+  updateAccount(id, { passkeyBlob: blob })
+  return blob
+}
+
+const removePasskey = async (id, password) => {
+  await unlockAccount(id, password)
+  updateAccount(id, { passkeyBlob: null })
+}
+
+const getPasskeyBlob = async (id) => {
+  const account = await getAccount(id)
+  return account?.passkeyBlob ?? null
+}
+
+const hasPasskey = async (id) => Boolean(await getPasskeyBlob(id))
+
+// Evaluates the PRF secret and returns the account password IN MEMORY ONLY
+// (identical trust level to the user typing it). Never persisted anywhere.
+const getPasswordWithPasskey = async (id) => {
+  const blob = await getPasskeyBlob(id)
+  if (!blob) throw new Error('PASSKEY_NOT_ENROLLED')
+  return Passkey.unlockPasswordWithPasskey(blob)
+}
+
+// Unlocks with the passkey-wrapped password: returns the same unlocked
+// account the password path returns.
+const unlockAccountWithPasskey = async (id, { wallets } = {}) => {
+  const blob = await getPasskeyBlob(id)
+  if (!blob) throw new Error('PASSKEY_NOT_ENROLLED')
+  const password = await Passkey.unlockPasswordWithPasskey(blob)
+  return unlockAccount(id, password, { wallets })
+}
+
 export {
   saveAccount,
   unlockAccount,
+  enrollPasskey,
+  removePasskey,
+  getPasskeyBlob,
+  hasPasskey,
+  getPasswordWithPasskey,
+  unlockAccountWithPasskey,
   updateAccount,
   getAccount,
   deleteAccount,

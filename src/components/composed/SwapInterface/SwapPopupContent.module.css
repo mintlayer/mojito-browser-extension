@@ -16,9 +16,9 @@
   width: 100%;
   padding: var(--space-sm) var(--space-lg);
   border-radius: 36px;
-  border: 1px solid rgba(var(--color-black), 0.1);
+  border: 1px solid var(--be-line-soft);
   background: transparent;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   font-size: var(--font-size-lg);
   margin-bottom: var(--space-sm);
 }
@@ -38,7 +38,7 @@
   padding: var(--space-sm) var(--space-lg);
   gap: var(--space-sm);
   border-radius: 10px;
-  background: rgb(var(--color-gray));
+  background: var(--be-bg-1);
   border: 1px solid rgba(var(--color-light-green), 0.2);
   min-height: 54px;
   word-break: break-all;

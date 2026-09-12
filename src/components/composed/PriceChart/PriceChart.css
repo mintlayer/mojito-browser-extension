@@ -22,11 +22,11 @@
   display: block;
 }
 .crypto-stats .crypto-stats-numbers > .negative {
-  color: rgb(var(--color-red));
+  color: var(--be-red);
 }
 
 .crypto-stats .crypto-stats-numbers > .positive {
-  color: rgb(var(--color-green));
+  color: var(--be-green);
 }
 
 .crypto-stats .crypto-stats-numbers > strong {
@@ -53,9 +53,9 @@
 
 @keyframes skeleton-loading {
   0% {
-    background: rgba(var(--color-main-green), 0.1);
+    background: oklch(1 0 0 / 0.06);
   }
   100% {
-    background: rgba(var(--color-main-green), 0.2);
+    background: oklch(1 0 0 / 0.14);
   }
 }

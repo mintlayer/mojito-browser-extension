@@ -15,6 +15,7 @@
       "@Cryptos": ["./src/services/Crypto/index.js"],
       "@Databases": ["./src/services/Database/index.js"],
       "@Entities": ["./src/services/Entity/index.js"],
+      "@Browser": ["./src/services/Browser/index.js"],
       "@Helpers": ["./src/utils/Helpers/index.js"],
       "@Constants": ["./src/utils/Constants/index.js"],
       "@TestData": ["./src/utils/TestData/index.js"],

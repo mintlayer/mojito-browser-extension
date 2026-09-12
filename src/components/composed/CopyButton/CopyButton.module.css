@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(var(--color-black), 0.3);
+  color: var(--be-text-3);
   transition: color 0.2s;
 }
 

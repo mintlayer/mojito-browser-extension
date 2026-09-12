@@ -16,11 +16,25 @@ const shortenId = (id) =>
 
 const MAX_FIELD_DEPTH = 2
 const MAX_FIELD_LENGTH = 80
+const MAX_SERIALIZED_LENGTH = 400
 
 const shortenData = (data) =>
   data && data.length > MAX_FIELD_LENGTH
     ? `${data.slice(0, MAX_FIELD_LENGTH)}…`
     : data
+
+// dApp-supplied data can be deeply nested or cyclic; never trust it with a
+// bare stringify.
+const boundedStringify = (value) => {
+  try {
+    const text = JSON.stringify(value) ?? 'null'
+    return text.length > MAX_SERIALIZED_LENGTH
+      ? `${text.slice(0, MAX_SERIALIZED_LENGTH)}…`
+      : text
+  } catch {
+    return '[unserializable]'
+  }
+}
 
 const getAmount = (source) =>
   source?.value?.amount?.decimal ??
@@ -93,8 +107,8 @@ const FieldValue = ({ value, depth = 0 }) => {
   }
 
   if (depth >= MAX_FIELD_DEPTH) {
-    const text = JSON.stringify(value)
-    return <span title={text}>{shortenData(text)}</span>
+    const text = shortenData(boundedStringify(value))
+    return <span title={text}>{text}</span>
   }
 
   return (

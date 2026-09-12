@@ -32,7 +32,7 @@ const DelegationStakePage = () => {
   })
   const goBackToWallet = () => {
     setDelegationStep(1)
-    navigate('/wallet/' + walletType.name + '/staking')
+    navigate('/staking')
   }
   const { setDelegationStep } = useContext(TransactionContext)
   const [isFormValid, setFormValid] = useState(false)
@@ -99,7 +99,7 @@ const DelegationStakePage = () => {
 
   if (!accountID) {
     console.log('No account id.')
-    navigate('/wallet')
+    navigate('/dashboard')
     return
   }
 

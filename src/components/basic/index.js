@@ -20,6 +20,24 @@ import BrandPanel from './BrandPanel/BrandPanel'
 import BrandBottomLogo from './BrandBottomLogo/BrandBottomLogo'
 import OptionCard from './OptionCard/OptionCard'
 import SiteBadge from './SiteBadge/SiteBadge.tsx'
+import MojitoLogo from './MojitoLogo/MojitoLogo'
+import Progress from './Progress/Progress'
+import Icon from './Icon/Icon'
+import Tag from './Tag/Tag'
+import Seg from './Seg/Seg'
+import LivePill from './LivePill/LivePill'
+import Sparkline from './Sparkline/Sparkline'
+import TokenIcon from './TokenIcon/TokenIcon'
+import Eyebrow from './Eyebrow/Eyebrow'
+import IconTile from './IconTile/IconTile'
+import Avatar from './Avatar/Avatar'
+import Counter from './Counter/Counter'
+import Sheet from './Sheet/Sheet'
+import KV from './KV/KV'
+import QrPlaceholder from './QrPlaceholder/QrPlaceholder'
+import QrCode from './QrCode/QrCode'
+import ChainBadge from './ChainBadge/ChainBadge'
+import ErrorBoundary from './ErrorBoundary/ErrorBoundary'
 
 export {
   Arc,
@@ -44,4 +62,22 @@ export {
   BrandBottomLogo,
   OptionCard,
   SiteBadge,
+  MojitoLogo,
+  Progress,
+  Icon,
+  Tag,
+  Seg,
+  LivePill,
+  Sparkline,
+  TokenIcon,
+  Eyebrow,
+  IconTile,
+  Avatar,
+  Counter,
+  Sheet,
+  KV,
+  QrPlaceholder,
+  QrCode,
+  ChainBadge,
+  ErrorBoundary,
 }

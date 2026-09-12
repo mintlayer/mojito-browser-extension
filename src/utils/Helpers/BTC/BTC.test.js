@@ -5,6 +5,9 @@ import {
   getConfirmationsAmount,
   parseFeesEstimates,
   convertBtcToSatoshi,
+  getBtcAddressString,
+  calculateBalances,
+  getStats,
 } from './BTC'
 
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
@@ -28,6 +31,16 @@ test('Parse Fees Estimates', () => {
   const estimates = parseFeesEstimates(fees)
   expect(estimates.LOW).toBeLessThan(estimates.MEDIUM)
   expect(estimates.MEDIUM).toBeLessThan(estimates.HIGH)
+})
+
+test('Extracts an address string from both stored BTC address shapes', () => {
+  const newStoreEntry = { bc1qnew: { pubkey: { 1: 2 } } }
+  const oldStoreEntry = 'bc1qold'
+
+  expect(getBtcAddressString(newStoreEntry)).toBe('bc1qnew')
+  expect(getBtcAddressString(oldStoreEntry)).toBe('bc1qold')
+  expect(getBtcAddressString(undefined)).toBeUndefined()
+  expect(getBtcAddressString(null)).toBeUndefined()
 })
 
 test('Calculate Balance From Utxo List', () => {
@@ -137,4 +150,56 @@ test('Check confirmations amount - success', async () => {
 
   const confirmations = await getConfirmationsAmount(transaction)
   expect(confirmations).toBe(1_000_002)
+})
+
+describe('calculateBalances / getStats null-semantics', () => {
+  const cryptosWithRates = (btcRate, mlRate) => [
+    {
+      name: 'Bitcoin',
+      symbol: 'BTC',
+      balance: 1,
+      exchangeRate: btcRate,
+    },
+    {
+      name: 'Mintlayer',
+      symbol: 'ML',
+      balance: 100,
+      exchangeRate: mlRate,
+    },
+  ]
+
+  it('treats missing rates as "no data" instead of exploding the 24h change', () => {
+    const { proportionDiffs, balanceDiffs } = calculateBalances(
+      cryptosWithRates(50000, 0.05),
+      {},
+    )
+
+    expect(proportionDiffs.total).toBeNull()
+    expect(balanceDiffs.total).toBeNull()
+
+    const stats = getStats(proportionDiffs, balanceDiffs, 'mainnet')
+    expect(stats.find((s) => s.name === '24h percent').value).toBe(0)
+    expect(stats.find((s) => s.name === '24h fiat').value).toBe(0)
+  })
+
+  it('renders neutral stats for an empty wallet with valid rates (no -100%)', () => {
+    const { proportionDiffs } = calculateBalances(
+      cryptosWithRates(50000, 0.05).map((c) => ({ ...c, balance: 0 })),
+      { btc: 49000, ml: 0.049 },
+    )
+    const stats = getStats(proportionDiffs, { total: 0 }, 'mainnet')
+
+    expect(stats.find((s) => s.name === '24h percent').value).toBe(0)
+  })
+
+  it('computes real 24h changes when rates exist and balances are non-zero', () => {
+    const { proportionDiffs, balanceDiffs } = calculateBalances(
+      cryptosWithRates(50000, 0.05),
+      { btc: 49000, ml: 0.049 },
+    )
+
+    expect(proportionDiffs.total).not.toBeNull()
+    expect(proportionDiffs.total).toBeGreaterThan(1)
+    expect(balanceDiffs.total).toBeGreaterThan(0)
+  })
 })

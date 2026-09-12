@@ -9,12 +9,12 @@
 }
 
 .empty {
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   font-size: var(--font-size-lg);
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   list-style: none;
   text-align: center;
   padding: var(--space-4xl) var(--space-2xl);
   border-radius: 20px;
-  border: 1px solid rgb(var(--color-medium-gray));
+  border: 1px solid var(--be-line-soft);
 }

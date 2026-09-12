@@ -6,8 +6,8 @@
   max-width: 100%;
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--round-size-big);
-  border: 1px solid rgba(var(--color-main-green), 0.35);
-  background: rgba(var(--color-main-green), 0.1);
+  border: 1px solid var(--be-line);
+  background: oklch(1 0 0 / 0.06);
 }
 
 .dot {
@@ -15,22 +15,22 @@
   height: 8px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: rgb(var(--mojito-green));
+  background: var(--be-teal);
 }
 
 .origin {
   font-size: var(--font-size-sm);
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   overflow-wrap: anywhere;
   line-height: 1.3;
 }
 
 .unknown {
-  border-color: rgba(var(--color-orange), 0.4);
-  background: rgba(var(--color-orange), 0.12);
+  border-color: oklch(0.82 0.16 70 / 0.4);
+  background: var(--be-amber-soft);
 }
 
 .unknown .dot {
-  background: rgb(var(--color-orange));
+  background: var(--be-amber);
 }

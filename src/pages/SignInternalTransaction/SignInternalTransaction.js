@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router'
-import { SignTransaction as SignTxHelpers } from '@Helpers'
+import { SignTransaction as SignTxHelpers, ML as MLHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button, Error, PageWrapper } from '@BasicComponents'
 import { PopUp, TextField, Loading } from '@ComposedComponents'
@@ -8,7 +8,7 @@ import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
 
 import styles from './SignInternalTransaction.module.css'
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 
 import { AppInfo } from '@Constants'
@@ -20,7 +20,7 @@ import { VerticalGroup, CenteredLayout } from '@LayoutComponents'
 const TxResult = ({ transactionTxid }) => {
   const navigate = useNavigate()
   const goBackToWallet = () => {
-    navigate('/wallet/Mintlayer')
+    navigate('/dashboard')
   }
   return (
     <VerticalGroup bigGap>
@@ -37,13 +37,25 @@ export const SignTransactionPage = () => {
   const { state: external_state } = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
+
+  const [hasPasskey, setHasPasskey] = useState(false)
+
+  useEffect(() => {
+    if (!accountID) return
+    let cancelled = false
+    Account.hasPasskey(accountID).then((has) => {
+      if (!cancelled) setHasPasskey(has)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [accountID])
+  const [usePasswordEntry, setPasswordEntry] = useState(false)
   const [sendingTransaction, setSendingTransaction] = useState(false)
   const [transactionId, setTransactionId] = useState(null)
   const [txErrorMessage, setTxErrorMessage] = useState(null)
   const loadingExtraClasses = ['loading-big']
   const navigate = useNavigate()
-
-  const [mode, setMode] = useState('preview')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = [styles.buttonSignTransaction]
@@ -74,7 +86,7 @@ export const SignTransactionPage = () => {
     fetchDelegations()
   }
 
-  const handleModalSubmit = async () => {
+  const handleModalSubmit = async ({ usePasskey = false } = {}) => {
     setSendingTransaction(true)
     try {
       const transactionJSONrepresentation =
@@ -88,11 +100,23 @@ export const SignTransactionPage = () => {
 
       let unlockedAccount
       try {
-        unlockedAccount = await Account.unlockAccount(accountID, password, {
-          wallets: ['ml'],
-        })
+        unlockedAccount = usePasskey
+          ? await Account.unlockAccountWithPasskey(accountID, {
+              wallets: ['ml'],
+            })
+          : await Account.unlockAccount(accountID, password, {
+              wallets: ['ml'],
+            })
       } catch {
-        setTxErrorMessage('Incorrect password')
+        // a passkey cancellation falls back to the password form
+        if (usePasskey) {
+          setPasswordEntry(true)
+          setTxErrorMessage(
+            'Passkey unlock failed — use your password instead.',
+          )
+        } else {
+          setTxErrorMessage('Incorrect password')
+        }
         setPassword('')
         return
       }
@@ -190,7 +214,8 @@ export const SignTransactionPage = () => {
       if (txPreviewInfo) {
         const account = LocalStorageService.getItem('unlockedAccount')
         const accountName = account.name
-        const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkName}`
+        const unconfirmedTransactionString =
+          MLHelpers.getUnconfirmedTransactionKey(accountName, networkName)
         const unconfirmedTransactions =
           LocalStorageService.getItem(unconfirmedTransactionString) || []
 
@@ -231,15 +256,11 @@ export const SignTransactionPage = () => {
   }
 
   const handleReject = () => {
-    navigate('/wallet/Mintlayer')
+    navigate('/dashboard')
   }
 
   const selectMock = (name) => {
     setSelectedMock(name)
-  }
-
-  const switchHandle = () => {
-    setMode(mode === 'json' ? 'preview' : 'json')
   }
 
   const passwordChangeHandler = (value) => {
@@ -250,14 +271,11 @@ export const SignTransactionPage = () => {
     <PageWrapper>
       <div className={styles.signTransaction}>
         <div className={styles.header}>
-          <h1 className={styles.signTxTitle}>Sign Transaction</h1>
-          <Button onClickHandle={switchHandle}>
-            {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
-          </Button>
+          <h1 className={styles.signTxTitle}>Sign transaction</h1>
         </div>
 
         <div className={styles.signTxContent}>
-          {!external_state && (
+          {!external_state && process.env.NODE_ENV === 'development' && (
             <div className={styles.mockSelector}>
               {Object.keys(MOCKS).map((key) => {
                 return (
@@ -275,14 +293,18 @@ export const SignTransactionPage = () => {
           )}
 
           {state?.request?.data?.txData?.JSONRepresentation && (
-            <>
-              {mode === 'preview' && (
-                <div className={styles.transactionPreviewWrapper}>
-                  <SignTransaction.InternalTransactionPreview data={state} />
-                </div>
-              )}
-              {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
-            </>
+            <SignTransaction.TransactionSummary
+              jsonRepresentation={state.request.data.txData.JSONRepresentation}
+              intent={state.request.data.txData.intent}
+              ownAddresses={{
+                receiving: currentMlAddresses.mlReceivingAddresses,
+                change: currentMlAddresses.mlChangeAddresses,
+              }}
+              technicalDetails={
+                <SignTransaction.InternalTransactionPreview data={state} />
+              }
+              rawJsonNode={<SignTransaction.JsonPreview data={state} />}
+            />
           )}
         </div>
 
@@ -321,32 +343,63 @@ export const SignTransactionPage = () => {
 
             {!sendingTransaction && !transactionId && (
               <div className={styles.modalContent}>
-                <div className={styles.modalTitle}>
-                  <TextField
-                    label="Re-enter your Password"
-                    password
-                    value={password}
-                    onChangeHandle={passwordChangeHandler}
-                    placeHolder="Enter your password"
-                    autoFocus
-                  />
-                  {txErrorMessage ? <Error error={txErrorMessage} /> : <></>}
-                </div>
-                <div className={styles.modalButtons}>
-                  <Button
-                    onClickHandle={handleDecline}
-                    extraStyleClasses={extraButtonStyles}
-                    alternate
-                  >
-                    Decline
-                  </Button>
-                  <Button
-                    onClickHandle={handleModalSubmit}
-                    extraStyleClasses={extraButtonStyles}
-                  >
-                    Submit
-                  </Button>
-                </div>
+                {hasPasskey && !usePasswordEntry ? (
+                  <div className={styles.modalContent}>
+                    <p className={styles.passkeyHint}>
+                      Confirm with this device (biometrics or screen lock).
+                    </p>
+                    <div className={styles.modalButtons}>
+                      <Button
+                        onClickHandle={handleDecline}
+                        extraStyleClasses={extraButtonStyles}
+                        alternate
+                      >
+                        Decline
+                      </Button>
+                      <Button
+                        onClickHandle={() =>
+                          handleModalSubmit({ usePasskey: true })
+                        }
+                        extraStyleClasses={extraButtonStyles}
+                      >
+                        Confirm
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.modalContent}>
+                    <div className={styles.modalTitle}>
+                      <TextField
+                        label="Re-enter your Password"
+                        password
+                        value={password}
+                        onChangeHandle={passwordChangeHandler}
+                        placeHolder="Enter your password"
+                        autoFocus
+                      />
+                      {txErrorMessage ? (
+                        <Error error={txErrorMessage} />
+                      ) : (
+                        <></>
+                      )}
+                    </div>
+                    <div className={styles.modalButtons}>
+                      <Button
+                        onClickHandle={handleDecline}
+                        extraStyleClasses={extraButtonStyles}
+                        alternate
+                      >
+                        Decline
+                      </Button>
+                      <Button
+                        onClickHandle={handleModalSubmit}
+                        extraStyleClasses={extraButtonStyles}
+                      >
+                        Submit
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </PopUp>
@@ -355,5 +408,4 @@ export const SignTransactionPage = () => {
     </PageWrapper>
   )
 }
-
 export default SignTransactionPage

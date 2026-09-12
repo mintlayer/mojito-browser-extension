@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers, Secret } from '@Helpers'
 import { MOCKS } from './mocks'
@@ -14,25 +13,28 @@ import { Account } from '@Entities'
 import { ML } from '@Cryptos'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { Mintlayer } from '@APIs'
+import { sendPopupResponse } from '@Browser'
 
-const storage =
-  typeof browser !== 'undefined' && browser.storage
-    ? browser.storage
-    : typeof chrome !== 'undefined' && chrome.storage
-      ? chrome.storage
-      : null
-
-const runtime =
-  typeof browser !== 'undefined' && browser.runtime
-    ? browser.runtime
-    : typeof chrome !== 'undefined' && chrome.runtime
-      ? chrome.runtime
-      : null
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 export const SignTransactionPage = () => {
   const { state: external_state } = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
+
+  const [hasPasskey, setHasPasskey] = useState(false)
+
+  useEffect(() => {
+    if (!accountID) return
+    let cancelled = false
+    Account.hasPasskey(accountID).then((has) => {
+      if (!cancelled) setHasPasskey(has)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [accountID])
+  const [usePasswordEntry, setPasswordEntry] = useState(false)
   const [secret, setSecret] = useState('')
 
   const { currentHeight } = useContext(MintlayerContext)
@@ -45,7 +47,8 @@ export const SignTransactionPage = () => {
   const [generatedSecretHash, setGeneratedSecretHash] = useState(null)
   const [secretError, setSecretError] = useState('')
 
-  const [mode, setMode] = useState('preview')
+  const [isSigning, setIsSigning] = useState(false)
+  const [signError, setSignError] = useState('')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = ['buttonSignTransaction']
@@ -53,7 +56,10 @@ export const SignTransactionPage = () => {
   // State to hold the potentially modified transaction data
   const [transactionState, setTransactionState] = useState(null)
 
-  const state = transactionState || external_state || MOCKS[selectedMock]
+  const state =
+    transactionState ||
+    external_state ||
+    (isDevelopment ? MOCKS[selectedMock] : null)
   const origin = state?.request?.origin
 
   const { addresses, accountID } = useContext(AccountContext)
@@ -82,7 +88,8 @@ export const SignTransactionPage = () => {
       (output) => output?.destination === HtlcInput.utxo.htlc.spend_key,
     )
 
-  const handleApprove = async () => {
+  const handleApprove = () => {
+    setSignError('')
     setIsModalOpen(true) // Open the modal
   }
 
@@ -170,7 +177,32 @@ export const SignTransactionPage = () => {
     }
   }, [transactionState, external_state, selectedMock, generatedSecret])
 
-  const handleModalSubmit = async () => {
+  const handleModalSubmit = async ({ usePasskey = false } = {}) => {
+    if (isSigning) return
+
+    setIsSigning(true)
+    setSignError('')
+
+    // Wrong-chain guard: the session records the network the site was
+    // granted on. Fail CLOSED — a session without a recorded network is a
+    // pre-upgrade grant and must reconnect before signing.
+    const grantedNetwork = state?.request?.network
+    if (!grantedNetwork || grantedNetwork !== networkType) {
+      setIsSigning(false)
+      sendPopupResponse({
+        method: 'signTransaction_reject',
+        requestId: state?.request?.requestId,
+        origin: state?.request?.origin,
+        error: {
+          code: 'WRONG_NETWORK',
+          message: grantedNetwork
+            ? `Wrong network: this site was connected on '${grantedNetwork}' but the wallet is now on '${networkType}'. Switch the wallet network or reconnect the site.`
+            : 'This site was connected before the wallet recorded its network. Reconnect the site and approve again.',
+        },
+      })
+      return
+    }
+
     try {
       // Validate secret if it's an HTLC claim transaction
       if (isHTLCClaim && secret && !Secret.validateSecretHex(secret.trim())) {
@@ -190,11 +222,15 @@ export const SignTransactionPage = () => {
           blockHeight,
         )
 
-      const pass = password
+      const pass = usePasskey
+        ? await Account.getPasswordWithPasskey(accountID)
+        : password
 
-      const unlockedAccount = await Account.unlockAccount(accountID, password, {
-        wallets: ['ml'],
-      })
+      const unlockedAccount = usePasskey
+        ? await Account.unlockAccount(accountID, pass, { wallets: ['ml'] })
+        : await Account.unlockAccount(accountID, password, {
+            wallets: ['ml'],
+          })
 
       const mlPrivKeys = unlockedAccount.mlPrivKeys
 
@@ -296,8 +332,6 @@ export const SignTransactionPage = () => {
         }
       }
 
-      console.log('order_info', order_info)
-
       const transactionHex = SignTxHelpers.getTransactionHEX(
         {
           transactionBINrepresentation,
@@ -321,8 +355,6 @@ export const SignTransactionPage = () => {
           order_info,
         },
       )
-
-      console.log('transactionHex', transactionHex)
 
       if (isHTLCCreateTx) {
         // save secret to account
@@ -349,47 +381,28 @@ export const SignTransactionPage = () => {
         result = transactionHex
       }
 
-      console.log('result', result)
-
-      runtime.sendMessage(
-        {
-          action: 'popupResponse',
-          method,
-          requestId,
-          origin,
-          result,
-        },
-        () => {
-          storage.local.remove('pendingRequest', () => {
-            window.close()
-          })
-        },
-      )
-    } catch (error) {
-      console.error('Error during transaction signing:', error)
-      setIsModalOpen(false)
-    }
-  }
-
-  const handleReject = () => {
-    const requestId = state?.request?.requestId
-    const method = 'signTransaction_reject'
-    const result = 'null'
-
-    runtime.sendMessage(
-      {
-        action: 'popupResponse',
+      sendPopupResponse({
         method,
         requestId,
         origin,
         result,
-      },
-      () => {
-        storage.local.remove('pendingRequest', () => {
-          window.close()
-        })
-      },
-    )
+      })
+    } catch (error) {
+      console.error('Error during transaction signing:', error)
+      setSignError(
+        error?.message || 'Signing failed. Check your password and try again.',
+      )
+      setIsSigning(false)
+    }
+  }
+
+  const handleReject = () => {
+    sendPopupResponse({
+      method: 'signTransaction_reject',
+      requestId: state?.request?.requestId,
+      origin,
+      error: 'Transaction rejected',
+    })
   }
 
   const selectMock = (name) => {
@@ -399,10 +412,6 @@ export const SignTransactionPage = () => {
     // Reset generated secret state when switching mocks
     setGeneratedSecret(null)
     setGeneratedSecretHash(null)
-  }
-
-  const switchHandle = () => {
-    setMode(mode === 'json' ? 'preview' : 'json')
   }
 
   const passwordChangeHandler = (value) => {
@@ -430,10 +439,7 @@ export const SignTransactionPage = () => {
     <PageWrapper>
       <div className="SignTransaction">
         <div className="header">
-          <h1 className="signTxTitle">Sign Transaction</h1>
-          <Button onClickHandle={switchHandle}>
-            {`Switch to ${mode === 'json' ? 'preview' : 'json'}`}
-          </Button>
+          <h1 className="signTxTitle">Sign transaction</h1>
         </div>
 
         <div className="requestOrigin">
@@ -444,7 +450,7 @@ export const SignTransactionPage = () => {
         </div>
 
         <div className="SignTxContent">
-          {!external_state && (
+          {!external_state && isDevelopment && (
             <div className="mock_selector">
               {Object.keys(MOCKS).map((key) => {
                 return (
@@ -462,14 +468,18 @@ export const SignTransactionPage = () => {
           )}
 
           {state?.request?.data?.txData?.JSONRepresentation && (
-            <>
-              {mode === 'preview' && (
-                <div className="transaction-preview-wrapper">
-                  <SignTransaction.ExternalTransactionPreview data={state} />
-                </div>
-              )}
-              {mode === 'json' && <SignTransaction.JsonPreview data={state} />}
-            </>
+            <SignTransaction.TransactionSummary
+              jsonRepresentation={state.request.data.txData.JSONRepresentation}
+              intent={state.request.data.txData.intent}
+              ownAddresses={{
+                receiving: currentMlAddresses.mlReceivingAddresses,
+                change: currentMlAddresses.mlChangeAddresses,
+              }}
+              technicalDetails={
+                <SignTransaction.ExternalTransactionPreview data={state} />
+              }
+              rawJsonNode={<SignTransaction.JsonPreview data={state} />}
+            />
           )}
 
           {/* HTLC Secret Information */}
@@ -538,50 +548,87 @@ export const SignTransactionPage = () => {
         {isModalOpen && (
           <PopUp setOpen={setIsModalOpen}>
             <div className="modal-content">
-              <TextField
-                label="Re-enter your Password"
-                password
-                value={password}
-                onChangeHandle={passwordChangeHandler}
-                placeHolder="Enter your password"
-                autoFocus
-              />
-              {isHTLCClaim && (
+              {hasPasskey && !usePasswordEntry ? (
                 <>
-                  <div className="htlc-secret-input">
-                    <label>HTLC Secret:</label>
-                    <TextField
-                      value={secret}
-                      onChangeHandle={secretChangeHandler}
-                      placeholder="Enter htlc secret in hex format (64 characters)"
-                      autoFocus
-                    />
-                    {secretError && (
-                      <div className="secret-error">{secretError}</div>
-                    )}
-                    <div className="secret-hint">
-                      <small>
-                        💡 Enter the 32-byte secret in hexadecimal format
-                      </small>
-                    </div>
+                  <Button
+                    onClickHandle={() =>
+                      handleModalSubmit({ usePasskey: true })
+                    }
+                    extraStyleClasses={extraButtonStyles}
+                    disabled={isSigning}
+                  >
+                    Confirm with passkey
+                  </Button>
+                  <Button
+                    onClickHandle={() => setPasswordEntry(true)}
+                    extraStyleClasses={extraButtonStyles}
+                    alternate
+                  >
+                    Use password instead
+                  </Button>
+                  {isHTLCClaim && (
+                    <>
+                      <div className="htlc-secret-input">
+                        <label>HTLC Secret:</label>
+                        <TextField
+                          value={secret}
+                          onChangeHandle={secretChangeHandler}
+                          placeholder="Enter htlc secret in hex format (64 characters)"
+                          autoFocus
+                        />
+                        {secretError && (
+                          <div className="secret-error">{secretError}</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {signError && <div className="sign-error">{signError}</div>}
+                </>
+              ) : (
+                <>
+                  <TextField
+                    label="Re-enter your Password"
+                    password
+                    value={password}
+                    onChangeHandle={passwordChangeHandler}
+                    placeHolder="Enter your password"
+                    autoFocus
+                  />
+                  {isHTLCClaim && (
+                    <>
+                      <div className="htlc-secret-input">
+                        <label>HTLC Secret:</label>
+                        <TextField
+                          value={secret}
+                          onChangeHandle={secretChangeHandler}
+                          placeholder="Enter htlc secret in hex format (64 characters)"
+                          autoFocus
+                        />
+                        {secretError && (
+                          <div className="secret-error">{secretError}</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {signError && <div className="sign-error">{signError}</div>}
+                  <div className="modal-buttons">
+                    <Button
+                      onClickHandle={() => setIsModalOpen(false)}
+                      extraStyleClasses={extraButtonStyles}
+                      alternate
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClickHandle={() => handleModalSubmit()}
+                      extraStyleClasses={extraButtonStyles}
+                      disabled={isSigning || !password}
+                    >
+                      {isSigning ? 'Signing…' : 'Approve'}
+                    </Button>
                   </div>
                 </>
               )}
-              <div className="modal-buttons">
-                <Button
-                  onClickHandle={() => setIsModalOpen(false)}
-                  extraStyleClasses={extraButtonStyles}
-                  alternate
-                >
-                  Decline
-                </Button>
-                <Button
-                  onClickHandle={handleModalSubmit}
-                  extraStyleClasses={extraButtonStyles}
-                >
-                  Approve
-                </Button>
-              </div>
             </div>
           </PopUp>
         )}
