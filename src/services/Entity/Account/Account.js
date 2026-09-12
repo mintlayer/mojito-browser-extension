@@ -261,6 +261,17 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
       iv: account.iv.btcIv,
       tag: account.tag.btcTag,
       key,
+    }).catch((decryptError) => {
+      console.error(
+        '[Account] decryptSeed failed — password/key mismatch or corrupted data.',
+        'Salt:',
+        account.salt,
+        'Version:',
+        accountVersion,
+        'Error:',
+        decryptError,
+      )
+      throw decryptError
     })
 
     const mlTestnetPrivateKey = await decryptSeed({

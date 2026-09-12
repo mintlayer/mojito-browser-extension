@@ -41,11 +41,19 @@ const RestoreAccountPage = () => {
     Account.saveAccount(data)
       .then((id: string) => {
         accountID = id
+        console.log('[Restore] Account saved, id:', id)
         return Account.unlockAccount(id, accountPassword)
       })
       .then(({ addresses }) => {
+        console.log('[Restore] Unlocked successfully')
         setWalletInfo(addresses, accountID, accountName)
         navigate('/dashboard')
+      })
+      .catch((error) => {
+        console.error('[Restore] Account restore failed:', error)
+        setCreatingWallet(false)
+        // surface the error to the user instead of silently swallowing it
+        alert(`Restore failed: ${error?.message || 'Unknown error'}`)
       })
   }
 
