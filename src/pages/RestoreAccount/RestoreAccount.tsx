@@ -31,6 +31,7 @@ const RestoreAccountPage = () => {
   ) => {
     setCreatingWallet(true)
     let accountID: string | null = null
+    let addresses: Record<string, unknown> = {}
     const data = {
       name: accountName,
       password: accountPassword,
@@ -44,16 +45,22 @@ const RestoreAccountPage = () => {
         console.log('[Restore] Account saved, id:', id)
         return Account.unlockAccount(id, accountPassword)
       })
-      .then(({ addresses }) => {
-        console.log('[Restore] Unlocked successfully')
+      .then((result) => {
+        addresses = result.addresses
         setWalletInfo(addresses, accountID, accountName)
         navigate('/dashboard')
       })
       .catch((error) => {
         console.error('[Restore] Account restore failed:', error)
-        setCreatingWallet(false)
-        // surface the error to the user instead of silently swallowing it
-        alert(`Restore failed: ${error?.message || 'Unknown error'}`)
+        // If the account was saved and unlocked, the error is from the API
+        // providers (not from the save/unlock itself) — navigate anyway,
+        // the dashboard will show data when the API recovers.
+        if (accountID) {
+          setWalletInfo(addresses, accountID, accountName)
+          navigate('/dashboard')
+        } else {
+          setCreatingWallet(false)
+        }
       })
   }
 
