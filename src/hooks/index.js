@@ -7,6 +7,7 @@ import useOneDayAgoExchangeRates from './UseOneDayAgoExchangeRates/useOneDayAgoE
 import useOneDayAgoHist from './UseOneDayAgoHist/useOneDayAgoHist'
 import useMediaQuery from './useMediaQuery/useMediaQuery'
 import useFillOrder from './UseFillOrder/useFillOrder'
+import useTokenPrices from './UseTokenPrices/useTokenPrices'
 
 export {
   useStyleClasses,
@@ -18,4 +19,5 @@ export {
   useOneDayAgoHist,
   useMediaQuery,
   useFillOrder,
+  useTokenPrices,
 }

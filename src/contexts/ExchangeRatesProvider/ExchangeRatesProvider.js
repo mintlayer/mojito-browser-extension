@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useState, useContext } from 'react'
-import { ExchangeRates } from '@APIs'
+import { ExchangeRates, PriceFeed } from '@APIs'
 import { AccountContext } from '../AccountProvider/AccountProvider'
 
 const ExchangeRatesContext = createContext()
@@ -13,6 +13,7 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
   const [yesterdayExchangeRate, setYesterdayExchangeRate] = useState({})
   const [historyRates, setHistoryRates] = useState({})
   const [thirtyDaysHistoryRates, setThirtyDaysHistoryRates] = useState({})
+  const [tokenPrices, setTokenPrices] = useState({})
   const [fetchError, setFetchError] = useState(null)
   const [fetching, setFetching] = useState(true)
   const { accountID } = useContext(AccountContext)
@@ -39,6 +40,22 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
         yesterday: JSON.parse(response_yesterday)[`${crypto}-${fiat}`],
         history: JSON.parse(response_history)[`${crypto}-${fiat}`],
         thirtyDays: JSON.parse(response_thirty_days)[`${crypto}-${fiat}`],
+      }
+    }
+
+    // Token prices come from the price feed (current USD only, no history),
+    // fetched as one batched call. Kept independent from the coin rates so
+    // a feed outage cannot take down btc/ml rates, and vice versa: each
+    // keeps its last good snapshot on failure.
+    const fetchTokenPrices = async () => {
+      try {
+        // Merge instead of replace: the feed validates values it returns but
+        // cannot know the full covered set, so a partial 200 must not wipe
+        // prices already on screen.
+        const prices = await PriceFeed.getPrices()
+        setTokenPrices((prev) => ({ ...prev, ...prices }))
+      } catch (error) {
+        console.error('Failed to fetch token prices:', error)
       }
     }
 
@@ -75,6 +92,7 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
       } finally {
         setFetching(false)
       }
+      fetchTokenPrices()
     }
     getData()
 
@@ -87,6 +105,7 @@ const ExchangeRatesProvider = ({ value: propValue, children }) => {
     yesterdayExchangeRate,
     historyRates,
     thirtyDaysHistoryRates,
+    tokenPrices,
     fetchError,
     fetching,
   }

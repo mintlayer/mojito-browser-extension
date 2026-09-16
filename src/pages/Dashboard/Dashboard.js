@@ -11,9 +11,11 @@ import {
   useBtcWalletInfo,
   useMlWalletInfo,
   useOneDayAgoExchangeRates,
+  useTokenPrices,
 } from '@Hooks'
 import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { NumbersHelper, ObjectHelpers, BTC, Transactions } from '@Helpers'
+import { PriceFeed } from '@APIs'
 
 import {
   PageWrapper,
@@ -63,6 +65,14 @@ const DashboardPage = () => {
     useOneDayAgoExchangeRates('ml', 'usd')
   const { historyRates: btcHistoryRates } = useOneDayAgoHist('btc', 'usd')
   const { historyRates: mlHistoryrates } = useOneDayAgoHist('ml', 'usd')
+  const { tokenPrices } = useTokenPrices()
+
+  // USD price for an on-chain token ticker (e.g. mlUSDT), or undefined when
+  // the token is not covered by the price feed.
+  const resolveTokenPrice = (onchainTicker) => {
+    const feedTicker = PriceFeed.toFeedTicker(onchainTicker)
+    return feedTicker != null ? tokenPrices[feedTicker] : undefined
+  }
   const navigate = useNavigate()
 
   const yesterdayExchangeRateList = {
@@ -121,14 +131,24 @@ const DashboardPage = () => {
       })
     }
 
-    const addToken = (ticker, balance, id, fetchingBalances, isPlaceholder) => {
+    const addToken = (
+      ticker,
+      balance,
+      id,
+      fetchingBalances,
+      isPlaceholder,
+      exchangeRate,
+    ) => {
       cryptos.push({
         id,
         name: ticker,
         symbol: ticker,
         balance: NumbersHelper.floatStringToNumber(balance),
-        exchangeRate: undefined,
-        change24h: 0,
+        exchangeRate,
+        // Tokens have no 24h history source yet; the render mapping below
+        // omits change24h, which keeps AssetRow's pill hidden instead of
+        // showing a misleading 0.00%.
+        change24h: undefined,
         historyRates: [],
         network: 'mintlayer',
         fetchingBalances,
@@ -193,11 +213,14 @@ const DashboardPage = () => {
 
     if (tokenBalances) {
       Object.keys(tokenBalances).forEach((token) => {
+        const ticker = tokenBalances[token].token_info.token_ticker.string
         addToken(
-          tokenBalances[token].token_info.token_ticker.string,
+          ticker,
           tokenBalances[token].balance,
           token,
           mlFetchingTokens,
+          false,
+          resolveTokenPrice(ticker),
         )
       })
     }
@@ -416,6 +439,7 @@ const DashboardPage = () => {
                       symbol: c.symbol,
                       chain: 'Mintlayer',
                       amount: c.balance || 0,
+                      price: c.exchangeRate,
                       spark: [],
                       iconUri:
                         tokenBalances[c.id]?.token_info?.icon_uri?.string,
