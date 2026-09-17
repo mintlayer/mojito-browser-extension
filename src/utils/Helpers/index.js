@@ -12,6 +12,7 @@ import * as StringHelpers from './String/String'
 import * as ObjectHelpers from './Object/Object'
 import * as Secret from './Secret/Secret'
 import * as Transactions from './Transactions/Transactions'
+import { isAbortError } from './AbortError/AbortError'
 
 export {
   BTC,
@@ -28,4 +29,5 @@ export {
   ObjectHelpers,
   Secret,
   Transactions,
+  isAbortError,
 }

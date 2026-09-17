@@ -9,7 +9,7 @@ import Decimal from 'decimal.js'
 
 import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
-import { ML } from '@Helpers'
+import { ML, isAbortError } from '@Helpers'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
 
@@ -484,10 +484,13 @@ const MintlayerProvider = ({ value: propValue, children }) => {
       setLockedUtxos(lockedUtxos)
       setFetchError(null)
     } catch (error) {
-      // Never leave the UI wedged: surface the error and let `finally`
-      // release every loading flag so the next poll can retry.
-      console.error('fetchAllData failed:', error)
-      setFetchError(error)
+      // A superseding run (network switch, refresh) aborts in-flight
+      // requests by design — surface only real failures. `finally` still
+      // releases every loading flag so the next poll can retry.
+      if (!isAbortError(error)) {
+        console.error('fetchAllData failed:', error)
+        setFetchError(error)
+      }
     } finally {
       setAllDataFetching(false)
       setFetchingTransactions(false)
@@ -578,7 +581,7 @@ const MintlayerProvider = ({ value: propValue, children }) => {
           creation_time: blocks_data.find(
             ({ height }) =>
               height === delegation_details[index]?.creation_block_height,
-          ).header.timestamp.timestamp,
+          )?.header?.timestamp?.timestamp,
         }
       })
 

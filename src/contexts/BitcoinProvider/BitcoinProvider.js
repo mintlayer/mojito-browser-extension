@@ -1,10 +1,10 @@
-import { useEffect, useState, createContext, useContext } from 'react'
+import { useEffect, useRef, useState, createContext, useContext } from 'react'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { LocalStorageService } from '@Storage'
 import { AppInfo } from '@Constants'
 
 import { Electrum } from '@APIs'
-import { BTC, Format } from '@Helpers'
+import { BTC, Format, isAbortError } from '@Helpers'
 import Decimal from 'decimal.js'
 
 const BitcoinContext = createContext()
@@ -103,7 +103,8 @@ const BitcoinProvider = ({ value: propValue, children }) => {
           )
           allTransactions.push(...parsedTransactions)
         } catch (error) {
-          console.error('Error fetching transactions:', error)
+          if (!isAbortError(error))
+            console.error('Error fetching transactions:', error)
         }
 
         const uniqueTransactions = allTransactions
@@ -122,7 +123,8 @@ const BitcoinProvider = ({ value: propValue, children }) => {
         setBtcTransactions(uniqueTransactions)
         setFetchingTransactions(false)
       } catch (error) {
-        console.error('Error fetching transactions:', error)
+        if (!isAbortError(error))
+          console.error('Error fetching transactions:', error)
         setFetchingTransactions(false)
       }
     }
@@ -262,8 +264,18 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     getBalanceFromAddressInfo()
   }
 
+  const previousIdentityRef = useRef()
   useEffect(() => {
-    Electrum.cancelAllRequests()
+    // Cancel in-flight requests only when the wallet or network actually
+    // changed. This effect also re-runs on every onlineHeight/addresses
+    // update; a blanket cancel there would abort the fetches it just
+    // started (AbortError storm on every block-height poll).
+    const identity = `${accountID}-${networkType}`
+    const identityChanged = previousIdentityRef.current !== identity
+    previousIdentityRef.current = identity
+    if (identityChanged) {
+      Electrum.cancelAllRequests()
+    }
     setCurrentBlockHeight(onlineHeight)
     const getData = async () => {
       await fetchAllData()
@@ -279,6 +291,9 @@ const BitcoinProvider = ({ value: propValue, children }) => {
         setOnlineHeight(result)
         setBtcApiAvailable(true)
       } catch (error) {
+        // An aborted height check means a superseding effect took over —
+        // not an outage. Only real failures mark the API unavailable.
+        if (isAbortError(error)) return
         console.error('Bitcoin API is not available:', error)
         setBtcApiAvailable(false)
       }

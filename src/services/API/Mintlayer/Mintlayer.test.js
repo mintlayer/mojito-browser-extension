@@ -243,3 +243,49 @@ describe('resolveTokenIcon', () => {
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 })
+
+describe('abort handling', () => {
+  const { getChainTip } = require('./Mintlayer.js')
+
+  // setupTests.js installs a default global fetch mock — restore it after
+  // each test so its global beforeEach (fetch.mockClear) keeps working.
+  const defaultFetch = global.fetch
+
+  let warnSpy
+  let errorSpy
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+    global.fetch = defaultFetch
+  })
+
+  test('tryServers silences console.warn for aborted requests but still throws', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.reject(
+        new DOMException('The operation has been aborted.', 'AbortError'),
+      ),
+    )
+
+    await expect(getChainTip()).rejects.toThrow()
+
+    // An abort is not a server outage — tryServers must not warn with it.
+    const warnedAbortErrors = warnSpy.mock.calls.filter(
+      ([, error]) => error?.name === 'AbortError',
+    )
+    expect(warnedAbortErrors).toHaveLength(0)
+  })
+
+  test('tryServers still warns for real failures', async () => {
+    global.fetch = jest.fn(() => Promise.reject(new Error('boom')))
+
+    await expect(getChainTip()).rejects.toThrow('boom')
+
+    expect(warnSpy).toHaveBeenCalled()
+    expect(warnSpy.mock.calls[0][0]).toContain('request failed')
+  })
+})

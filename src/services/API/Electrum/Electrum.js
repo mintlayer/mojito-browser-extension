@@ -1,6 +1,7 @@
 import { EnvVars } from '@Constants'
 import { AppInfo } from '@Constants'
 import { LocalStorageService } from '@Storage'
+import { isAbortError } from 'src/utils/Helpers/AbortError/AbortError'
 
 const ELECTRUM_ENDPOINTS = {
   GET_LAST_BLOCK_HASH: '/blocks/tip/hash',
@@ -42,7 +43,9 @@ const requestElectrum = async (url, body = null, request = fetch) => {
     const content = await result.text()
     return Promise.resolve(content)
   } catch (error) {
-    console.error(error)
+    // Superseded requests (network switch, refresh) abort by design —
+    // not an API failure. Callers still receive the throw and decide.
+    if (!isAbortError(error)) console.error(error)
     throw error
   } finally {
     abortControllers.delete(`${method} ${url}`)

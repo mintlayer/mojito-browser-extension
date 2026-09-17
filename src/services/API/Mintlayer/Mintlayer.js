@@ -1,4 +1,5 @@
 import { EnvVars } from '@Constants'
+import { isAbortError } from 'src/utils/Helpers/AbortError/AbortError'
 import { LocalStorageService } from '@Storage'
 import { AppInfo } from '@Constants'
 
@@ -87,7 +88,9 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
     const content = await result.text()
     return Promise.resolve(content)
   } catch (error) {
-    console.error(error)
+    // Superseded requests (network switch, refresh) abort by design —
+    // not an API failure. Callers still receive the throw and decide.
+    if (!isAbortError(error)) console.error(error)
     throw error
   } finally {
     abortControllers.delete(`${method} ${url}`)
@@ -135,10 +138,12 @@ const tryServers = async (endpoint, body = null, forceNetwork) => {
       )
       return response
     } catch (error) {
-      console.warn(
-        `${combinedMintlayerServers[i] + endpoint} request failed: `,
-        error,
-      )
+      if (!isAbortError(error)) {
+        console.warn(
+          `${combinedMintlayerServers[i] + endpoint} request failed: `,
+          error,
+        )
+      }
       if (i === combinedMintlayerServers.length - 1) {
         throw error
       }
@@ -339,13 +344,16 @@ const getNftsData = async (tokens) => {
 // ipfs:// uri again.
 // The raw ipfs:// scheme is never fetched or rendered: every uri is mapped
 // to one of these gateways. Public gateway availability varies per network
-// (ipfs.io needs a VPN here today), so all of them are RACED in parallel and
-// the first usable JSON wins — a dead gateway loses the race without adding
-// serial latency.
+// and providers have multi-hour outages (2026-09-09: ipfs.io hung,
+// dweb.link answered 429 with its service-worker-only migration notice,
+// w3s.link 301'd straight into dweb.link), so the list is ordered
+// verified-working first and all of them are RACED in parallel — the first
+// usable JSON wins and a dead gateway loses the race without adding serial
+// latency.
 const IPFS_GATEWAYS = [
+  'https://gateway.pinata.cloud/ipfs',
+  'https://4everland.io/ipfs',
   'https://ipfs.io/ipfs',
-  'https://dweb.link/ipfs',
-  'https://w3s.link/ipfs',
 ]
 // Token metadata is issuer-controlled: only ipfs:// metadata documents are
 // resolved (through the fixed gateway list) and only gateway-hosted icons
