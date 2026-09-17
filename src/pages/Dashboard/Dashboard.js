@@ -16,6 +16,7 @@ import {
 import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { NumbersHelper, ObjectHelpers, BTC, Transactions } from '@Helpers'
 import { PriceFeed } from '@APIs'
+import Decimal from 'decimal.js'
 
 import {
   PageWrapper,
@@ -95,10 +96,40 @@ const DashboardPage = () => {
     },
   ]
 
-  const { currentBalances, proportionDiffs, balanceDiffs } =
+  // Token fiat value: tokens have no yesterday snapshot (the price feed is
+  // current-only), so they add to the displayed total but contribute zero
+  // to the 24h change — they only shift its base.
+  const tokenFiatTotal = Object.values(tokenBalances || {}).reduce(
+    (acc, tb) => {
+      const price = resolveTokenPrice(tb.token_info.token_ticker.string)
+      return price != null
+        ? acc.plus(
+            new Decimal(
+              NumbersHelper.floatStringToNumber(tb.balance || 0),
+            ).times(new Decimal(price)),
+          )
+        : acc
+    },
+    new Decimal(0),
+  )
+
+  const { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs } =
     BTC.calculateBalances(cryptos, yesterdayExchangeRateList)
 
-  const stats = BTC.getStats(proportionDiffs, balanceDiffs, networkType)
+  const totalBalance = currentBalances.total + tokenFiatTotal
+  const combinedYesterdayTotal =
+    (yesterdayBalances?.total || 0) + tokenFiatTotal
+  const combinedProportionDiffs =
+    proportionDiffs.total == null
+      ? proportionDiffs
+      : {
+          ...proportionDiffs,
+          total: new Decimal(totalBalance || 0)
+            .div(new Decimal(combinedYesterdayTotal || 1))
+            .toNumber(),
+        }
+
+  const stats = BTC.getStats(combinedProportionDiffs, balanceDiffs, networkType)
   const stat = (name) => stats.find((s) => s.name === name)?.value ?? 0
 
   const getCryptoList = (addresses, network, tokenBalances) => {
@@ -360,7 +391,7 @@ const DashboardPage = () => {
                 <>
                   <span className={styles.balanceSymbol}>$</span>
                   <Counter
-                    value={currentBalances.total || 0}
+                    value={totalBalance || 0}
                     decimals={2}
                   />
                 </>
