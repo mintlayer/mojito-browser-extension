@@ -28,6 +28,11 @@
     "type": "module"
   },
   "permissions": ["scripting", "storage", "sidePanel"],
+  "host_permissions": [
+    "https://mojito-api.mintlayer.org/*",
+    "https://price-feed-api.mintlayer.org/*",
+    "https://rates-api.mintlayer.org/*"
+  ],
   "content_scripts": [
     {
       "run_at": "document_start",

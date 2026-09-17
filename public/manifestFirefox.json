@@ -14,10 +14,13 @@
   },
   "permissions": ["activeTab", "tabs", "storage"],
   "host_permissions": [
-    "*://localhost/*",
+    "*://blockexplorer-staging.mintlayer.org/*",
     "*://explorer.mintlayer.org/*",
+    "*://localhost/*",
     "*://lovelace.explorer.mintlayer.org/*",
-    "*://blockexplorer-staging.mintlayer.org/*"
+    "https://mojito-api.mintlayer.org/*",
+    "https://price-feed-api.mintlayer.org/*",
+    "https://rates-api.mintlayer.org/*"
   ],
   "content_scripts": [
     {

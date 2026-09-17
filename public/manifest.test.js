@@ -63,4 +63,70 @@ describe('extension manifest (bridge integration contract)', () => {
       expect(source).not.toContain('__APP_VERSION__PLACEHOLDER')
     })
   })
+
+  describe('API host permissions (network contract)', () => {
+    // First-party APIs the wallet talks to. This is the whole network
+    // contract: no broader host access may be granted.
+    const API_HOSTS = [
+      'https://mojito-api.mintlayer.org/*',
+      'https://price-feed-api.mintlayer.org/*',
+      'https://rates-api.mintlayer.org/*',
+    ]
+
+    // Firefox still carries pre-contract explorer/localhost grants with a
+    // wildcard scheme. They are exempt from the https-only rule; anything
+    // newly added must be https.
+    const FIREFOX_LEGACY_HOSTS = [
+      '*://blockexplorer-staging.mintlayer.org/*',
+      '*://explorer.mintlayer.org/*',
+      '*://localhost/*',
+      '*://lovelace.explorer.mintlayer.org/*',
+    ]
+
+    it.each([
+      ['chromium', chromium],
+      ['firefox', firefox],
+    ])('%s manifest declares the first-party API hosts', (_name, manifest) => {
+      expect(Array.isArray(manifest.host_permissions)).toBe(true)
+      expect(manifest.host_permissions).toEqual(
+        expect.arrayContaining(API_HOSTS),
+      )
+    })
+
+    it('chromium grants exactly the three API hosts, nothing more', () => {
+      expect(chromium.host_permissions).toHaveLength(API_HOSTS.length)
+      expect(chromium.host_permissions).toEqual(
+        expect.arrayContaining(API_HOSTS),
+      )
+    })
+
+    it('keeps host permissions https-only (firefox legacy entries exempt)', () => {
+      for (const entry of chromium.host_permissions) {
+        expect(entry).toMatch(/^https?:\/\//)
+      }
+
+      const legacy = new Set(FIREFOX_LEGACY_HOSTS)
+      for (const entry of firefox.host_permissions) {
+        if (!legacy.has(entry)) {
+          expect(entry).toMatch(/^https?:\/\//)
+        }
+      }
+    })
+
+    it.each([
+      ['chromium', chromium],
+      ['firefox', firefox],
+    ])(
+      '%s never grants <all_urls> or all-hosts wildcards',
+      (_name, manifest) => {
+        for (const entry of manifest.host_permissions) {
+          expect(entry).not.toBe('<all_urls>')
+          expect(entry).not.toBe('*/*')
+          // A '*' scheme paired with a '*' host would grant every origin.
+          // Firefox's legacy '*://' entries are host-scoped, so they pass.
+          expect(entry).not.toMatch(/^\*:\/\/\*\/\*$/)
+        }
+      },
+    )
+  })
 })
