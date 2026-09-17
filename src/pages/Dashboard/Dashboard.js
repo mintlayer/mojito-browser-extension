@@ -16,7 +16,6 @@ import {
 import useOneDayAgoHist from 'src/hooks/UseOneDayAgoHist/useOneDayAgoHist'
 import { NumbersHelper, ObjectHelpers, BTC, Transactions } from '@Helpers'
 import { PriceFeed } from '@APIs'
-import Decimal from 'decimal.js'
 
 import {
   PageWrapper,
@@ -99,35 +98,17 @@ const DashboardPage = () => {
   // Token fiat value: tokens have no yesterday snapshot (the price feed is
   // current-only), so they add to the displayed total but contribute zero
   // to the 24h change — they only shift its base.
-  const tokenFiatTotal = Object.values(tokenBalances || {}).reduce(
-    (acc, tb) => {
-      const price = resolveTokenPrice(tb.token_info.token_ticker.string)
-      return price != null
-        ? acc.plus(
-            new Decimal(
-              NumbersHelper.floatStringToNumber(tb.balance || 0),
-            ).times(new Decimal(price)),
-          )
-        : acc
-    },
-    new Decimal(0),
+  const tokenFiatTotal = BTC.getTokenFiatTotal(tokenBalances, resolveTokenPrice)
+
+  const balancesResult = BTC.calculateBalances(
+    cryptos,
+    yesterdayExchangeRateList,
   )
-
-  const { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs } =
-    BTC.calculateBalances(cryptos, yesterdayExchangeRateList)
-
-  const totalBalance = currentBalances.total + tokenFiatTotal
-  const combinedYesterdayTotal =
-    (yesterdayBalances?.total || 0) + tokenFiatTotal
-  const combinedProportionDiffs =
-    proportionDiffs.total == null
-      ? proportionDiffs
-      : {
-          ...proportionDiffs,
-          total: new Decimal(totalBalance || 0)
-            .div(new Decimal(combinedYesterdayTotal || 1))
-            .toNumber(),
-        }
+  const { balanceDiffs } = balancesResult
+  const { totalBalance, combinedProportionDiffs } = BTC.combineTotalBalances(
+    balancesResult,
+    tokenFiatTotal,
+  )
 
   const stats = BTC.getStats(combinedProportionDiffs, balanceDiffs, networkType)
   const stat = (name) => stats.find((s) => s.name === name)?.value ?? 0
@@ -195,8 +176,9 @@ const DashboardPage = () => {
     if (btcAddress) {
       // 24h change is only meaningful when yesterday's rate resolved.
       const change24h =
-        network === AppInfo.NETWORK_TYPES.MAINNET && proportionDiffs.btc != null
-          ? Number((proportionDiffs.btc - 1) * 100).toFixed(2)
+        network === AppInfo.NETWORK_TYPES.MAINNET &&
+        combinedProportionDiffs.btc != null
+          ? Number((combinedProportionDiffs.btc - 1) * 100).toFixed(2)
           : 0
       addCrypto(
         'Bitcoin',
@@ -222,8 +204,9 @@ const DashboardPage = () => {
 
     if (mlAddress) {
       const change24h =
-        network === AppInfo.NETWORK_TYPES.MAINNET && proportionDiffs.ml != null
-          ? Number((proportionDiffs.ml - 1) * 100).toFixed(2)
+        network === AppInfo.NETWORK_TYPES.MAINNET &&
+        combinedProportionDiffs.ml != null
+          ? Number((combinedProportionDiffs.ml - 1) * 100).toFixed(2)
           : 0
       addCrypto(
         'Mintlayer',

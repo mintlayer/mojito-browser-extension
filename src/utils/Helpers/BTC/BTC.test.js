@@ -8,7 +8,10 @@ import {
   getBtcAddressString,
   calculateBalances,
   getStats,
+  getTokenFiatTotal,
+  combineTotalBalances,
 } from './BTC'
+import Decimal from 'decimal.js'
 
 import { localStorageMock } from 'src/tests/mock/localStorage/localStorage'
 import { LocalStorageService } from '@Storage'
@@ -201,5 +204,147 @@ describe('calculateBalances / getStats null-semantics', () => {
     expect(proportionDiffs.total).not.toBeNull()
     expect(proportionDiffs.total).toBeGreaterThan(1)
     expect(balanceDiffs.total).toBeGreaterThan(0)
+  })
+})
+
+describe('token fiat totals (combineTotalBalances)', () => {
+  // Realistic mainnet-shaped coin balances: BTC + ML priced by a
+  // current-only feed. Token fiat value is folded in separately via
+  // combineTotalBalances, so every expected value below is computed from
+  // these two sources only.
+  const buildBalancesResult = () =>
+    calculateBalances(
+      [
+        {
+          name: 'Bitcoin',
+          symbol: 'BTC',
+          balance: 0.0005, // × 1000 => 0.5 USD
+          exchangeRate: 1000,
+        },
+        {
+          name: 'Mintlayer',
+          symbol: 'ML',
+          balance: 628.79, // × 0.005 => ~3.14395 USD
+          exchangeRate: 0.005,
+        },
+      ],
+      { btc: 990, ml: 0.0048 },
+    )
+
+  it('getTokenFiatTotal returns a plain number, never a Decimal or string — regression for the DecimalError concat crash', () => {
+    const tokenBalances = {
+      tok1: {
+        token_info: { token_ticker: { string: 'mlUSDT' } },
+        balance: '3.1393262969443981',
+      },
+    }
+    const resolvePrice = (ticker) =>
+      ticker === 'mlUSDT' ? 0.39406397015 : undefined
+
+    const result = getTokenFiatTotal(tokenBalances, resolvePrice)
+
+    expect(typeof result).toBe('number')
+    expect(result instanceof Decimal).toBe(false)
+    expect(result).toBeCloseTo(3.1393262969443981 * 0.39406397015, 10)
+  })
+
+  it('getTokenFiatTotal sums multiple tokens and skips unpriced ones', () => {
+    const tokenBalances = {
+      usdt: {
+        token_info: { token_ticker: { string: 'mlUSDT' } },
+        balance: '100',
+      },
+      usdc: {
+        token_info: { token_ticker: { string: 'mlUSDC' } },
+        balance: '50',
+      },
+      unpriced: {
+        token_info: { token_ticker: { string: 'mlUSDS' } },
+        balance: '999',
+      },
+    }
+    const resolvePrice = (ticker) =>
+      ticker === 'mlUSDT' ? 1 : ticker === 'mlUSDC' ? 0.999 : undefined
+
+    const result = getTokenFiatTotal(tokenBalances, resolvePrice)
+
+    expect(result).toBeCloseTo(new Decimal(100).plus(50 * 0.999).toNumber(), 2)
+  })
+
+  it('getTokenFiatTotal handles null/undefined tokenBalances', () => {
+    const resolvePrice = () => 1
+
+    expect(getTokenFiatTotal(null, resolvePrice)).toBe(0)
+    expect(getTokenFiatTotal(undefined, resolvePrice)).toBe(0)
+  })
+
+  it('combineTotalBalances adds token value to the total numerically (regression: must never concatenate strings)', () => {
+    const balancesResult = buildBalancesResult()
+    const tokenFiatTotal = 0.39406397015
+
+    const { totalBalance } = combineTotalBalances(
+      balancesResult,
+      tokenFiatTotal,
+    )
+
+    expect(typeof totalBalance).toBe('number')
+    expect(Number.isFinite(totalBalance)).toBe(true)
+    expect(totalBalance).toBeCloseTo(
+      balancesResult.currentBalances.total + tokenFiatTotal,
+      10,
+    )
+    // Pre-fix, currentBalances.total was a Decimal-reduce string, so
+    // total + tokenFiatTotal concatenated ('3.139…' + '0.394…' became
+    // '3.139…0.394…') and new Decimal(that) threw [DecimalError].
+    // A double-dot string is the exact fingerprint of that crash.
+    expect(String(totalBalance)).not.toMatch(/\d\.\d+\.\d/)
+  })
+
+  it('combineTotalBalances: tokens contribute zero to the 24h fiat diff', () => {
+    const balancesResult = buildBalancesResult()
+    const diffBefore = balancesResult.balanceDiffs.total
+
+    combineTotalBalances(balancesResult, 0.39406397015)
+    expect(balancesResult.balanceDiffs.total).toBe(diffBefore)
+
+    // A second combine with a different token value must leave the
+    // original result untouched too (immutability + zero-contribution).
+    const withDifferentTokens = combineTotalBalances(balancesResult, 1234.56)
+    expect(balancesResult.balanceDiffs.total).toBe(diffBefore)
+    expect(withDifferentTokens.combinedProportionDiffs).not.toBe(
+      balancesResult.proportionDiffs,
+    )
+  })
+
+  it('combineTotalBalances adjusts the 24h percent base', () => {
+    const balancesResult = buildBalancesResult()
+    const tokenFiatTotal = 0.39406397015
+
+    const { combinedProportionDiffs } = combineTotalBalances(
+      balancesResult,
+      tokenFiatTotal,
+    )
+
+    const expected = new Decimal(
+      balancesResult.currentBalances.total + tokenFiatTotal,
+    )
+      .div(new Decimal(balancesResult.yesterdayBalances.total + tokenFiatTotal))
+      .toNumber()
+
+    expect(combinedProportionDiffs.total).toBeCloseTo(expected, 10)
+  })
+
+  it('combineTotalBalances keeps null proportionDiffs (missing coin rates) untouched', () => {
+    const result = combineTotalBalances(
+      {
+        currentBalances: { total: 5 },
+        yesterdayBalances: {},
+        proportionDiffs: { btc: null, ml: null, total: null },
+      },
+      1,
+    )
+
+    expect(result.combinedProportionDiffs.total).toBeNull()
+    expect(result.totalBalance).toBe(6)
   })
 })

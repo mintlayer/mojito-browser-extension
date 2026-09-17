@@ -3,6 +3,7 @@ import * as bitcoin from 'bitcoinjs-lib'
 import { AppInfo } from '@Constants'
 import { LocalStorageService } from '@Storage'
 import Decimal from 'decimal.js'
+import { floatStringToNumber } from '../Number/Number'
 
 const AVERAGE_MIN_PER_BLOCK = 15
 const SATOSHI_BTC_CONVERSION_FACTOR = 100000000
@@ -245,6 +246,57 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
   return { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs }
 }
 
+/**
+ * Total USD fiat value of all priced token balances.
+ *
+ * tokenBalances is the MintlayerProvider map (token id -> {balance, ...});
+ * resolvePrice maps an on-chain token ticker to its USD price (from the
+ * price feed) or returns undefined for tokens without coverage. Unpriced
+ * tokens contribute nothing; the result is always a plain number.
+ */
+const getTokenFiatTotal = (tokenBalances, resolvePrice) => {
+  return Object.values(tokenBalances || {})
+    .reduce((acc, tb) => {
+      const price = resolvePrice(tb.token_info.token_ticker.string)
+      return price != null
+        ? acc.plus(
+            new Decimal(floatStringToNumber(tb.balance || 0)).times(
+              new Decimal(price),
+            ),
+          )
+        : acc
+    }, new Decimal(0))
+    .toNumber()
+}
+
+/**
+ * Folds the token fiat value into the coin totals from calculateBalances:
+ * the displayed total grows by the token value, and the 24h percent's base
+ * grows with it — but tokens contribute ZERO to the 24h fiat diff (the
+ * feed is current-only, there is no yesterday snapshot, so their
+ * contribution cancels between today and yesterday).
+ *
+ * Always returns plain numbers (toNumber()-ed), never Decimal instances.
+ */
+const combineTotalBalances = (balancesResult, tokenFiatTotal) => {
+  const { currentBalances, yesterdayBalances, proportionDiffs } = balancesResult
+
+  const totalBalance = currentBalances.total + tokenFiatTotal
+  const combinedYesterdayTotal =
+    (yesterdayBalances?.total || 0) + tokenFiatTotal
+  const combinedProportionDiffs =
+    proportionDiffs.total == null
+      ? proportionDiffs
+      : {
+          ...proportionDiffs,
+          total: new Decimal(totalBalance || 0)
+            .div(new Decimal(combinedYesterdayTotal || 1))
+            .toNumber(),
+        }
+
+  return { totalBalance, combinedProportionDiffs }
+}
+
 const getStats = (proportionDiffs, balanceDiffs, networkType) => {
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
   // null = rates missing (show nothing); 0 = real zero balance (an empty
@@ -388,6 +440,8 @@ export {
   getYesterdayFiatBalances,
   calculateBalances,
   getStats,
+  getTokenFiatTotal,
+  combineTotalBalances,
   getNetwork,
   checkFee,
   getBtcAddressLink,
