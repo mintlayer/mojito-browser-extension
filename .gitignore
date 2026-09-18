@@ -35,3 +35,5 @@ yarn-error.log*
 # local manifest key for unpacked builds
 /manifest-key.txt
 /HANDOFF.md
+.output/
+.wxt/

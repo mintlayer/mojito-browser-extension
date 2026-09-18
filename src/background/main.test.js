@@ -1,16 +1,10 @@
 /**
- * Tests for the background service worker (public/background.js) covering the
- * bridge-integration contract: connect approval + session persistence
+ * Tests for the background service worker (src/background/main.js) covering
+ * the bridge-integration contract: connect approval + session persistence
  * (addressesByChain + network), structured error codes, sign-request network
  * stamping, and disconnect actually revoking the session.
  */
-const fs = require('fs')
-const path = require('path')
-
-const BACKGROUND_SRC = fs.readFileSync(
-  path.join(__dirname, 'background.js'),
-  'utf8',
-)
+const { initBackground } = require('./main.js')
 
 const EXT_ID = 'ext-id-123'
 
@@ -37,8 +31,9 @@ describe('background service worker', () => {
   let createdWindows
 
   const loadBackground = () => {
-    // eslint-disable-next-line no-eval
-    window.eval(BACKGROUND_SRC)
+    // The WXT entrypoint wraps the original IIFE body in a factory; each
+    // test boots a fresh worker instance by invoking it again.
+    initBackground()
   }
 
   const dispatch = (message, sender) => {

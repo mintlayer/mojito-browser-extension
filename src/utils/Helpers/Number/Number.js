@@ -1,4 +1,4 @@
-import { AppInfo } from '@Constants'
+import * as AppInfo from '../../Constants/AppInfo/AppInfoCore'
 import { getNumber } from './Format'
 const INTEGER_LENGHT_THRESHOLD = 2
 const SAFE_INTEGER_LENGTH =

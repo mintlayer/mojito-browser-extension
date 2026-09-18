@@ -1,17 +1,11 @@
 /**
- * Tests for the injected content script (public/explorer/content-script.js):
+ * Tests for the injected content script (src/content-scripts/explorer/main.js):
  * relays page requests to the background and — critically — answers the page
  * with a structured error when the extension context is invalidated (the
  * extension was reloaded/updated/disabled while the page stayed open),
  * instead of leaving the page's promise hanging forever.
  */
-const fs = require('fs')
-const path = require('path')
-
-const CONTENT_SCRIPT_SRC = fs.readFileSync(
-  path.join(__dirname, 'content-script.js'),
-  'utf8',
-)
+const { initExplorerContentScript } = require('./main.js')
 
 // jsdom's MessageEvent.source is a different wrapper object than the global
 // window (in browsers they are identical), which would make the script's
@@ -50,8 +44,8 @@ const setup = ({ sendMessageImpl }) => {
   }
 
   // Track the content script's message listener so it can be removed after
-  // the test (the IIFE registers it on the shared jsdom window). Call through
-  // so test-side listeners still register normally.
+  // the test (the script registers it on the shared jsdom window). Call
+  // through so test-side listeners still register normally.
   messageListeners = []
   addSpy?.mockRestore()
   const originalAddEventListener = window.addEventListener.bind(window)
@@ -62,8 +56,9 @@ const setup = ({ sendMessageImpl }) => {
       return originalAddEventListener(type, fn, opts)
     })
 
-  // eslint-disable-next-line no-eval
-  window.eval(CONTENT_SCRIPT_SRC)
+  // The WXT entrypoint wraps the original IIFE body in a factory; boot a
+  // fresh instance per setup.
+  initExplorerContentScript()
 }
 
 afterEach(() => {
@@ -195,8 +190,7 @@ describe('runtime lastError path', () => {
       },
     }
 
-    // eslint-disable-next-line no-eval
-    window.eval(CONTENT_SCRIPT_SRC)
+    initExplorerContentScript()
 
     const incoming = nextResponse()
     window.postMessage(
@@ -214,8 +208,7 @@ describe('runtime lastError path', () => {
 
 describe('reload ownership', () => {
   const bootInstance = () => {
-    // eslint-disable-next-line no-eval
-    window.eval(CONTENT_SCRIPT_SRC)
+    initExplorerContentScript()
   }
 
   it('lets a freshly injected instance take over from an orphaned one', async () => {

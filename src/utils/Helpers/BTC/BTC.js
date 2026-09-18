@@ -1,6 +1,6 @@
 import { Electrum } from '@APIs'
 import * as bitcoin from 'bitcoinjs-lib'
-import { AppInfo } from '@Constants'
+import * as AppInfo from '../../Constants/AppInfo/AppInfoCore'
 import { LocalStorageService } from '@Storage'
 import Decimal from 'decimal.js'
 import { floatStringToNumber } from '../Number/Number'

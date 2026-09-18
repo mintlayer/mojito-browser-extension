@@ -6,8 +6,7 @@
 // clears its cached state and notifies the page so no stale session keeps
 // acting as connected.
 
-// eslint-disable-next-line no-extra-semi
-;(function () {
+export const initMojito = (appVersion) => {
   const NETWORKS = {
     mainnet: 'mainnet',
     testnet: 'testnet',
@@ -15,7 +14,7 @@
 
   const mojito = {
     isExtension: true,
-    version: '__APP_VERSION__',
+    version: appVersion,
     connectedAddresses: [],
     network: NETWORKS['testnet'], // default network
 
@@ -190,4 +189,4 @@
       }
     })
   }
-})()
+}

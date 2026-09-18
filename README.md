@@ -18,15 +18,16 @@ In the project directory, you can run:
 
 ### `npm start`
 
-Runs the app in the development mode.
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Runs the extension in development mode with HMR (WXT): build output lives in
+`.output/chrome-mv3` and the browser auto-reloads extension pages when you
+save. Load it once via `chrome://extensions` → _Load unpacked_ →
+`.output/chrome-mv3`.
 
-The page will reload when you make changes.
-You may also see any lint errors in the console.
+`npm run start:firefox` does the same for Firefox (`.output/firefox-mv3`).
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.
+Runs the Jest unit-test suite.
 
 ### `npm run e2e`
 
@@ -44,16 +45,25 @@ If you want to debug existing tests, run:
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
+Builds the extension for production to `.output/chrome-mv3` (WXT + Vite).
 The build is minified and the filenames include the hashes.
 
-## After Build
+`npm run build:firefox` targets Firefox and `npm run build:staging` builds
+with `.env.staging` variables.
 
-The build process generates a `ext.zip` and a `extFF.zip` files in the project's root directory. The first one should be used for Chromium based browsers, while the last is meant just for Firefox.
+## Packaging & Loading
 
-They can be imported in the browser as a developer extension on Mozilla Firefox. To test in Chomium-based browsers, you can point the `build` directory as the `unpacked extension`.
+`npm run zip` produces a store-ready archive at
+`.output/browser-extension-{version}-chrome.zip` (and `npm run zip:firefox`
+the Firefox one).
+
+To load a build manually: `chrome://extensions` → _Load unpacked_ →
+`.output/chrome-mv3` (Firefox: `about:debugging` → _Load Temporary Add-on_ →
+any file inside `.output/firefox-mv3`).
+
+> Manifest changes (permissions, hosts, entrypoints) require a full
+> extension reload in the browser — WXT reloads pages, but Chrome only
+> re-reads the manifest on `chrome://extensions` → reload.
 
 ## How to Contribute
 

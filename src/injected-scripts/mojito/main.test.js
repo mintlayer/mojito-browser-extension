@@ -1,15 +1,13 @@
 /**
- * Tests for the injected `window.mojito` provider (public/mojito.js) against
- * the @mintlayer/sdk contract:
+ * Tests for the injected `window.mojito` provider (src/injected-scripts/mojito/main.js)
+ * against the @mintlayer/sdk contract:
  * - connect() resolves the session (SDK reads `addressesByChain.mintlayer`)
  * - restore() resolves the stored session or null, unique request ids
  * - errors carry a machine-readable `code`
  * - disconnect() revokes the wallet-side session and clears page state
  */
-const fs = require('fs')
-const path = require('path')
-
-const MOJITO_SRC = fs.readFileSync(path.join(__dirname, 'mojito.js'), 'utf8')
+const { initMojito } = require('./main.js')
+const { version: APP_VERSION } = require('../../../package.json')
 
 // jsdom's MessageEvent.source is a different wrapper object than the global
 // window (in browsers they are identical), which would make the provider's
@@ -80,8 +78,9 @@ describe('window.mojito provider', () => {
       if (event.data?.type === 'MINTLAYER_EVENT') postedEvents.push(event.data)
     })
     installContentScript()
-    // eslint-disable-next-line no-eval
-    window.eval(MOJITO_SRC)
+    // The WXT entrypoint wraps the original IIFE body in a factory that
+    // receives the extension version (APP_VERSION from package.json).
+    initMojito(APP_VERSION)
   })
 
   afterEach(() => {
