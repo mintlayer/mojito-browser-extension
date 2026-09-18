@@ -64,11 +64,27 @@
   // tab's content script and re-inject where it is dead.
   const CONTENT_SCRIPT_FILE = 'explorer/content-script.js'
 
-  const ensureContentScript = (tabId) => {
+  // The wallet content script can only live on web pages. Restricted
+  // targets (chrome://, about:, file:, other extensions' pages...) can
+  // never be injected into — attempting it only produces permission
+  // errors — so they are skipped up front. A hidden URL (undefined, e.g.
+  // without the "tabs" permission) is NOT treated as restricted: the tab
+  // may still be injectable.
+  const isRestrictedTarget = (url) => {
+    if (typeof url !== 'string' || url === '') return false
+    try {
+      const { protocol } = new URL(url)
+      return protocol !== 'http:' && protocol !== 'https:'
+    } catch {
+      return true
+    }
+  }
+
+  const ensureContentScript = (tabId, tabUrl) => {
     if (typeof tabId !== 'number') return
+    if (isRestrictedTarget(tabUrl)) return
     api.tabs.sendMessage(tabId, { type: 'MOJITO_PING' }, () => {
       // lastError = no live content script in that tab: inject a fresh one.
-      // (Restricted pages like chrome:// simply error here too — ignored.)
       if (!api.runtime.lastError) return
       api.scripting
         .executeScript({
@@ -76,8 +92,12 @@
           files: [CONTENT_SCRIPT_FILE],
         })
         .catch((error) => {
-          console.error(
-            '[Mintlayer] content-script re-injection failed:',
+          // Best-effort sweep: the URL may be hidden from us (undefined,
+          // restricted pages like chrome://) or the tab may have closed
+          // mid-sweep. Those targets are unreachable by design — not
+          // failures worth error noise.
+          console.debug(
+            '[Mintlayer] content-script re-injection skipped:',
             error.message,
           )
         })
@@ -88,7 +108,7 @@
     api.tabs.query({}, (tabs) => {
       if (api.runtime.lastError) return
       for (const tab of tabs) {
-        if (typeof tab.id === 'number') ensureContentScript(tab.id)
+        if (typeof tab.id === 'number') ensureContentScript(tab.id, tab.url)
       }
     })
   }

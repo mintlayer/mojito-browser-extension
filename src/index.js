@@ -17,7 +17,7 @@ import {
 } from '@ComposedComponents'
 import { BrandPanel, ErrorBoundary } from '@BasicComponents'
 import { DeleteAccount } from '@ContainerComponents'
-import { Client } from '@mintlayer/sdk'
+import { Client, MintlayerApiProvider } from '@mintlayer/sdk'
 
 import {
   HomePage,
@@ -61,6 +61,7 @@ import {
   MintlayerContext,
   SettingsContext,
 } from '@Contexts'
+import { EnvVars } from '@Constants'
 import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
 import { Browser } from '@Browser'
@@ -126,8 +127,20 @@ const App = () => {
   useEffect(() => {
     if (currentMlAddresses?.mlReceivingAddresses?.length > 0) {
       const initClient = async () => {
+        // The SDK's hardcoded fallback API server for mainnet is often
+        // unreachable, which fails the whole init ("Failed to fetch") and
+        // blocks connect approvals. Point it at the same servers the
+        // wallet's own Mintlayer API service uses instead.
+        const mlServers =
+          networkType === 'testnet'
+            ? EnvVars.TESTNET_MINTLAYER_SERVERS
+            : EnvVars.MAINNET_MINTLAYER_SERVERS
         const clientInstance = await Client.create({
           network: networkType,
+          apiProvider: new MintlayerApiProvider(
+            mlServers[0],
+            `${mlServers[0]}/batch`,
+          ),
           accountProvider: new InMemoryAccountProvider(
             {
               addressesByChain: {

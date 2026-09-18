@@ -946,5 +946,97 @@ describe('background service worker', () => {
       answerPings({ withLastError: true })
       expect(global.chrome.scripting.executeScript).toHaveBeenCalledTimes(2)
     })
+
+    // Regression: restricted targets (chrome://, other extensions' pages,
+    // about:, file:) can never host the wallet content script — sweeping
+    // them used to surface user-visible errors like "Cannot access a
+    // chrome:// URL". The sweep must consult the tab's url up front and
+    // ping/re-inject ONLY injectable http(s) tabs.
+    it('skips restricted targets (chrome://, extension pages) entirely', () => {
+      global.chrome.tabs.query.mockImplementation((query, cb) =>
+        cb([
+          { id: 1, url: 'https://bridge.example/' },
+          { id: 2, url: 'chrome://settings/' },
+          { id: 3, url: `chrome-extension://${EXT_ID}/popup.html` },
+          { id: 4, url: 'about:blank' },
+          { id: 5, url: 'file:///home/user/page.html' },
+        ]),
+      )
+      registeredListener(global.chrome.runtime.onInstalled)()
+
+      // only the plain https tab was pinged...
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(1)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      // ...and none of the restricted targets were ever touched
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        2,
+        expect.anything(),
+        expect.anything(),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        3,
+        expect.anything(),
+        expect.anything(),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        4,
+        expect.anything(),
+        expect.anything(),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        5,
+        expect.anything(),
+        expect.anything(),
+      )
+
+      // the https tab's ping answers as a dead content script: exactly one
+      // re-injection, for that tab only — restricted targets never get one
+      answerPings({ withLastError: true })
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledTimes(1)
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledWith({
+        target: { tabId: 1 },
+        files: [CONTENT_SCRIPT_FILE],
+      })
+    })
+
+    // Regression: without the "tabs" permission Chrome hides the tab url
+    // (undefined) — such a tab is NOT restricted (it may be injectable), so
+    // the sweep still pings it. But if the page turns out unreachable, the
+    // failed re-injection used to log user-visible console.error noise
+    // ("... manifest must request permission to access the respective
+    // host."). Unreachable-by-design targets must stay quiet.
+    it('stays quiet when injection fails on an unreachable page', async () => {
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+      try {
+        global.chrome.tabs.query.mockImplementation((query, cb) =>
+          cb([{ id: 1 }]),
+        )
+        global.chrome.scripting.executeScript = jest
+          .fn()
+          .mockRejectedValue(
+            new Error(
+              'Cannot access contents of the page. Extension manifest must request permission to access the respective host.',
+            ),
+          )
+
+        registeredListener(global.chrome.runtime.onInstalled)()
+        answerPings({ withLastError: true })
+
+        // let the executeScript rejection settle into the .catch handler
+        await Promise.resolve()
+        await Promise.resolve()
+
+        expect(global.chrome.scripting.executeScript).toHaveBeenCalledTimes(1)
+        expect(consoleErrorSpy).not.toHaveBeenCalled()
+      } finally {
+        consoleErrorSpy.mockRestore()
+      }
+    })
   })
 })
