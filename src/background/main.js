@@ -17,7 +17,7 @@
  *   regression test (see public/background.test.js).
  */
 
-;(function () {
+export const initBackground = () => {
   // Detect browser API (Chrome or Firefox)
   const api = typeof browser !== 'undefined' ? browser : chrome
 
@@ -239,6 +239,7 @@
     sendResponse,
     sender,
     onFallback,
+    // eslint-disable-next-line max-params -- message-handler plumbing; splitting it hides the flow
   ) => {
     const windowId = sender.tab.windowId
     slot.panelMode = true
@@ -686,4 +687,4 @@
   })
 
   console.log('[Mintlayer Extension] Background script loaded')
-})()
+}

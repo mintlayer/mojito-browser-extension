@@ -1,4 +1,4 @@
-import { AppInfo } from '@Constants'
+import * as AppInfo from '../../Constants/AppInfo/AppInfoCore'
 import { NumbersHelper } from '@Helpers'
 import { getDecimalNumber } from './Number'
 

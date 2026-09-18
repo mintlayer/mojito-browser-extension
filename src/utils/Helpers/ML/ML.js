@@ -1,4 +1,4 @@
-import { AppInfo } from '@Constants'
+import * as AppInfo from '../../Constants/AppInfo/AppInfoCore'
 import { ArrayHelper } from '@Helpers'
 import { LocalStorageService } from '@Storage'
 import Decimal from 'decimal.js'

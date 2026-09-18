@@ -71,6 +71,9 @@ import '@Assets/styles/constants.css'
 import '@Assets/styles/theme.css'
 import '@Assets/styles/index.css'
 
+document.title =
+  process.env.REACT_APP_WEBSITE_NAME || 'Mojito - A Mintlayer Wallet'
+
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
 const isExtendedView =

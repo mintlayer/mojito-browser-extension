@@ -6,7 +6,7 @@ import { ML } from '@Cryptos'
 import { Mintlayer } from '@APIs'
 import { LocalStorageService } from '@Storage'
 import { ML as MLHelpers } from '@Helpers'
-import { AppInfo } from '@Constants'
+import * as AppInfo from '../../Constants/AppInfo/AppInfoCore'
 import Decimal from 'decimal.js'
 
 const getUtxoBalance = (item) => {

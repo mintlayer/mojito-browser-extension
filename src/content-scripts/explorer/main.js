@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-;(function () {
+export const initExplorerContentScript = () => {
   const api = typeof browser !== 'undefined' ? browser : chrome
 
   const cloneForPage = (value) =>
@@ -171,4 +171,4 @@
       )
     }
   })
-})()
+}
