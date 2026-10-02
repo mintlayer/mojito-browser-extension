@@ -53,10 +53,10 @@ test('Render transactions list component - empty', () => {
     </MintlayerContext.Provider>,
   )
   const transactionsList = screen.getByTestId('transactions-list')
-  const transactions = screen.getAllByTestId('transaction')
 
   expect(transactionsList).toBeInTheDocument()
-  expect(transactions).toHaveLength(1)
+  expect(screen.getByTestId('empty-list')).toBeInTheDocument()
+  expect(screen.queryByTestId('transaction')).not.toBeInTheDocument()
 })
 
 test('Render transactions list component - loading', () => {

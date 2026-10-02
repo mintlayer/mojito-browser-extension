@@ -1,6 +1,4 @@
 import Balance from './Balance/Balance'
-import Carousel from './Carousel/Carousel'
-import ArcChart from './Charts/ArcChart/ArcChart'
 import LineChart from './Charts/LineChart/LineChart'
 import OptionButtons from './OptionButtons/OptionButtons'
 import Header from './Header/Header.tsx'
@@ -27,7 +25,6 @@ import SwapInterface from './SwapInterface/SwapInterface'
 import CopyButton from './CopyButton/CopyButton'
 import StakingWarning from './StakingWarning/StakingWarning'
 import AddressList from './AddressList/AddressList'
-import PriceChart from './PriceChart/PriceChart'
 import WalletHeader from './WalletHeader/WalletHeader'
 import Sidebar from './Sidebar/Sidebar.tsx'
 import SendPageHeader from './SendPageHeader/SendPageHeader'
@@ -38,8 +35,6 @@ import AssetRow from './AssetRow/AssetRow'
 
 export {
   Balance,
-  Carousel,
-  ArcChart,
   LineChart,
   OptionButtons,
   Header,
@@ -66,7 +61,6 @@ export {
   CopyButton,
   StakingWarning,
   AddressList,
-  PriceChart,
   WalletHeader,
   Sidebar,
   SendPageHeader,

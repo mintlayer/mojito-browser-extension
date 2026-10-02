@@ -16,6 +16,11 @@ const RestoreSuccess = () => {
         <p className={styles.description}>
           Your wallet has been successfully restored from the backup file.
         </p>
+        <p className={styles.warning}>
+          ⚠️ This wallet came from a file, not from this device. Only restore
+          backups from sources you trust — never move funds into a wallet you
+          did not create yourself.
+        </p>
       </VerticalGroup>
     </CenteredLayout>
   )

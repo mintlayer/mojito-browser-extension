@@ -7,11 +7,11 @@ import { useExchangeRates, useMlWalletInfo } from '@Hooks'
 import { AccountContext, MintlayerContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 
-import { PageWrapper } from '@BasicComponents'
+import { PageWrapper, Error } from '@BasicComponents'
 import styles from './NftSend.module.css'
 
 const NftSendPage = () => {
-  const { addresses, accountID } = useContext(AccountContext)
+  const { accountID } = useContext(AccountContext)
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.NFT_SEND
   const { coinType, tokenId } = useParams()
   const walletType = useMemo(
@@ -26,15 +26,12 @@ const NftSendPage = () => {
 
   const { client, utxos, nftInitialUtxos, nftData } =
     useContext(MintlayerContext)
-  const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [feeLoading, setFeeLoading] = useState(false)
+  const [feeError, setFeeError] = useState('')
   const navigate = useNavigate()
 
-  const { balance, tokenBalances } = useMlWalletInfo(
-    currentMlAddresses,
-    coinType,
-  )
+  const { balance, tokenBalances } = useMlWalletInfo(coinType)
 
   const symbol = () => {
     if (walletType.name === 'Mintlayer') {
@@ -52,11 +49,14 @@ const NftSendPage = () => {
 
   const tokenName = symbol()
   const fiatName = 'USD'
-  const [transactionData] = useState({
-    fiatName,
-    tokenName,
-    tokenId,
-  })
+  const transactionData = useMemo(
+    () => ({
+      fiatName,
+      tokenName,
+      tokenId,
+    }),
+    [fiatName, tokenName, tokenId],
+  )
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
@@ -100,18 +100,30 @@ const NftSendPage = () => {
     const buildTransaction = async () => {
       if (transactionInformation?.to.length > 0) {
         setFeeLoading(true)
-        const transaction = await buildNftTransaction(transactionInformation)
-        setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
-        setFeeLoading(false)
+        setFeeError('')
+        try {
+          const transaction = await buildNftTransaction(transactionInformation)
+          setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
+        } catch (error) {
+          console.error('Fee calculation failed:', error)
+          setTotalFeeCrypto(0)
+          setFeeError(error.message || 'Fee calculation failed')
+        } finally {
+          setFeeLoading(false)
+        }
       }
     }
     buildTransaction()
   }, [transactionInformation, buildNftTransaction])
 
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
+
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/dashboard')
-    return
+    return null
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -139,6 +151,7 @@ const NftSendPage = () => {
           <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}
             feeLoading={feeLoading}
+            feeError={feeError}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={balance}
@@ -150,6 +163,7 @@ const NftSendPage = () => {
             walletType={walletType}
             transactionMode={transactionMode}
           />
+          {feeError && <Error error={feeError} />}
         </VerticalGroup>
       </div>
     </PageWrapper>

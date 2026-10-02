@@ -44,7 +44,7 @@ const AssetPage = () => {
   const btcInfo = useBtcWalletInfo()
   // Token mode for Mintlayer token ids (token-scoped balance + txs),
   // full ML wallet info for coins.
-  const mlInfo = useMlWalletInfo(undefined, id)
+  const mlInfo = useMlWalletInfo(id)
   const { exchangeRate: btcRate } = useExchangeRates('btc', 'usd')
   const { exchangeRate: mlRate } = useExchangeRates('ml', 'usd')
   const { historyRates: btcHist } = useOneDayAgoHist('btc', 'usd')
@@ -101,6 +101,7 @@ const AssetPage = () => {
             symbol={ticker}
             size={48}
             iconUri={tokenData?.token_info?.icon_uri?.string}
+            native={isBtc || isMl}
           />
           <div className={styles.assetName}>{name}</div>
           <div className={styles.amount}>

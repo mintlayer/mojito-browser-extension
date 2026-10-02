@@ -109,13 +109,20 @@ describe('StakePage', () => {
     expect(getByTestId('sparkline')).toBeInTheDocument()
   })
 
-  it('renders the delegation list and only the explorer pool list action', () => {
-    const { container, getAllByTestId } = renderPage()
+  it('renders the delegation list with create-delegation and pool-list actions', () => {
+    const { container, getByTestId, getAllByTestId } = renderPage()
 
     expect(getAllByTestId('delegation')).toHaveLength(2)
+    expect(getByTestId('create-delegation')).toHaveTextContent(
+      'Create new delegation',
+    )
     expect(container.textContent).toContain('Pool list')
-    // Delegation management happens on the explorer, not in the app.
-    expect(container.textContent).not.toContain('Create delegation')
-    expect(container.textContent).not.toContain('Staking guide')
+  })
+
+  it('warns about delegations stuck in decommissioned pools', () => {
+    // second mock delegation is decommissioned and still holds 150 ML
+    const { getByTestId } = renderPage()
+
+    expect(getByTestId('inactive-warning')).toBeInTheDocument()
   })
 })

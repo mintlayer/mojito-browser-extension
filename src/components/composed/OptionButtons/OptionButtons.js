@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '@BasicComponents'
 
@@ -12,7 +12,14 @@ const OptionButtons = ({
   buttonExtraStyles,
   multiple,
 }) => {
-  const [value, setValue] = useState(parentValue)
+  const [value, setValue] = useState(
+    multiple ? (parentValue ?? []) : parentValue,
+  )
+  const [prevParentValue, setPrevParentValue] = useState(parentValue)
+  if (prevParentValue !== parentValue) {
+    setPrevParentValue(parentValue)
+    setValue(multiple ? (parentValue ?? []) : parentValue)
+  }
 
   const isAlternate = (option) => {
     if (!value) return
@@ -33,7 +40,7 @@ const OptionButtons = ({
     if (value.includes(option.value)) {
       const newValue = value.filter((item) => item !== option.value)
       setValue(newValue)
-      onSelect && onSelect(newValue ? newValue : undefined)
+      onSelect && onSelect(newValue)
     } else {
       onSelect && onSelect([...value, option.value])
       setValue([...value, option.value])
@@ -45,18 +52,14 @@ const OptionButtons = ({
     multiple ? multipleClick(option) : singleClick(option)
   }
 
-  useEffect(() => {
-    setValue(parentValue)
-  }, [parentValue])
-
   return (
     <div
       className={`option-buttons ${column && 'option-buttons-column'}`}
       data-testid="option-buttons"
     >
-      {options.map((option, i) => (
+      {options.map((option) => (
         <Button
-          key={i}
+          key={option.value}
           alternate={isAlternate(option)}
           extraStyleClasses={['option-button', buttonExtraStyles]}
           onClickHandle={() => onClick(option)}

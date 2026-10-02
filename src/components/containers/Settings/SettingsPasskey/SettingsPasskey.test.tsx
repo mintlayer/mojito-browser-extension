@@ -16,16 +16,13 @@ jest.mock('@Entities', () => ({
 }))
 
 // The component imports the passkey service via this relative path (webpack
-// cannot resolve subpaths of the '@Cryptos' alias). This exact specifier is
-// mocked — with a virtual registration — so both the component's import and
-// the handle imported above resolve to the mocked module.
-jest.mock(
-  '../../../../services/Crypto/Passkey/Passkey',
-  () => ({
-    isSupported: jest.fn(),
-  }),
-  { virtual: true },
-)
+// cannot resolve subpaths of the '@Cryptos' alias). Mocking this exact
+// specifier (no virtual registration — the module exists, and virtual mocks
+// are applied unreliably across suites in --runInBand runs) makes both the
+// component's import and the handle imported above resolve to the mock.
+jest.mock('../../../../services/Crypto/Passkey/Passkey', () => ({
+  isSupported: jest.fn(),
+}))
 
 const mockedPasskey = Passkey.isSupported as jest.Mock
 const mockedEnrollPasskey = Account.enrollPasskey as jest.Mock
@@ -123,6 +120,76 @@ describe('SettingsPasskey', () => {
       const error = await screen.findByTestId('passkey-error')
       expect(error).toHaveTextContent('Something failed')
       expect(screen.queryByTestId('passkey-message')).not.toBeInTheDocument()
+    })
+
+    it('shows the incorrect-password message for an unlock-shaped rejection', async () => {
+      // unlockAccount rejects a PLAIN OBJECT ({ name: '', error }) with no
+      // .message property — it must map to the incorrect-password text.
+      mockedEnrollPasskey.mockRejectedValue({
+        name: '',
+        addresses: {},
+        error: 'cipher failure detail',
+      })
+
+      renderComponent()
+
+      await typePassword('wallet-password')
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Enable passkey unlock' }),
+      )
+
+      const error = await screen.findByTestId('passkey-error')
+      expect(error).toHaveTextContent('Incorrect password. Please try again.')
+      expect(screen.queryByTestId('passkey-message')).not.toBeInTheDocument()
+    })
+
+    it('maps a PASSKEY_UNSUPPORTED message to friendly text', async () => {
+      mockedEnrollPasskey.mockRejectedValue(new Error('PASSKEY_UNSUPPORTED'))
+
+      renderComponent()
+
+      await typePassword('wallet-password')
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Enable passkey unlock' }),
+      )
+
+      const error = await screen.findByTestId('passkey-error')
+      expect(error).toHaveTextContent(
+        'This device or browser does not support passkey unlock.',
+      )
+    })
+
+    it('maps a NotAllowedError DOMException to friendly text', async () => {
+      mockedEnrollPasskey.mockRejectedValue({
+        name: 'NotAllowedError',
+        message: 'NotAllowedError: The user aborted the request.',
+      })
+
+      renderComponent()
+
+      await typePassword('wallet-password')
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Enable passkey unlock' }),
+      )
+
+      const error = await screen.findByTestId('passkey-error')
+      expect(error).toHaveTextContent(
+        'The passkey prompt was cancelled or not allowed. Please try again.',
+      )
+    })
+
+    it('shows the generic message when the rejection is null', async () => {
+      mockedEnrollPasskey.mockRejectedValue(null)
+
+      renderComponent()
+
+      await typePassword('wallet-password')
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Enable passkey unlock' }),
+      )
+
+      const error = await screen.findByTestId('passkey-error')
+      expect(error).toHaveTextContent('Something went wrong. Please try again.')
     })
   })
 

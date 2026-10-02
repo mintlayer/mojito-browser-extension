@@ -10,9 +10,9 @@ import { useFillOrder } from '@Hooks'
 
 import { MintlayerContext } from '@Contexts'
 
-import styles from './OrderDetails.module.css'
+import formatRate from '../formatRate'
 
-const formatRate = (rate) => new Decimal(rate).toDecimalPlaces(10).toString()
+import styles from './OrderDetails.module.css'
 
 const OrderDetailsItem = ({ title, content, copyContent }) => {
   return (
@@ -94,23 +94,24 @@ const OrderDetails = ({ order }) => {
     useContext(MintlayerContext)
   const fillOrder = useFillOrder()
   const [txErrorMessage, setTxErrorMessage] = useState(null)
+  const [txSuccessMessage, setTxSuccessMessage] = useState(null)
   const [loading, setLoading] = useState(false)
   const [amount, setAmount] = useState('')
   const [amountValidity, setAmountValidity] = useState(false)
   const [inputValidity, setInputValidity] = useState('')
 
-  const maxAmount = Number(order.ask_balance.decimal)
+  // Compare raw decimal strings: float math loses precision on 11-decimal
+  // coin amounts.
+  const maxAmount = new Decimal(order.ask_balance?.decimal || 0)
 
   const walletBalance =
     order.ask_currency.type === 'Coin'
-      ? balance
+      ? new Decimal(String(balance ?? 0))
       : tokenBalances[order.ask_currency.token_id]
-        ? Number(tokenBalances[order.ask_currency.token_id].balance)
-        : 0
-  console.log('Order ask balance:', order.ask_balance.decimal)
-  console.log('Wallet balance for token:', walletBalance)
-  console.log('Wallet balance:', balance)
-  console.log('Token balances:', tokenBalances)
+        ? new Decimal(
+            String(tokenBalances[order.ask_currency.token_id].balance),
+          )
+        : new Decimal(0)
 
   const handleValueChange = ({ value }) => {
     setAmount(value || '')
@@ -123,26 +124,35 @@ const OrderDetails = ({ order }) => {
   }
 
   const validateAmount = (value) => {
-    if (value > walletBalance) return 'Insufficient wallet balance.'
-    if (value > maxAmount) return 'Amount exceeds available order balance.'
+    const valueDecimal = new Decimal(String(value || 0))
+    if (valueDecimal.gt(walletBalance)) return 'Insufficient wallet balance.'
+    if (valueDecimal.gt(maxAmount))
+      return 'Amount exceeds available order balance.'
     return null
   }
 
   const handleSwapClick = async () => {
     setTxErrorMessage(null)
+    setTxSuccessMessage(null)
     if (!amountValidity) {
       setTxErrorMessage('Amount is invalid')
       return
     }
+    if (!unusedAddresses.receive) {
+      setTxErrorMessage('Destination address is not available yet.')
+      return
+    }
     try {
       setLoading(true)
-      if (order) {
-        await fillOrder({
-          order_id: order.order_id,
-          amount,
-          destination: unusedAddresses.receive,
-        })
-      }
+      await fillOrder({
+        order_id: order.order_id,
+        amount,
+        destination: unusedAddresses.receive,
+      })
+      setAmount('')
+      setAmountValidity(false)
+      setInputValidity('')
+      setTxSuccessMessage('Order filled successfully.')
     } catch (error) {
       const msg = typeof error === 'string' ? error : error?.message || ''
 
@@ -151,7 +161,7 @@ const OrderDetails = ({ order }) => {
         return
       }
 
-      if (msg.includes('Failed to fetch order')) {
+      if (msg.includes('Could not fetch order')) {
         setTxErrorMessage('Order not found or invalid order ID')
         return
       }
@@ -206,11 +216,11 @@ const OrderDetails = ({ order }) => {
 
           <div className={styles.exchangeRate}>
             <span>
-              Exchage rate:{' '}
+              Exchange rate:{' '}
               {` 1 ${order.ask_currency.ticker} ≈ ${formatRate(order.quote_rate)} ${order.give_currency.ticker}`}
             </span>
             <p className={styles.walletBalance}>
-              Available: {walletBalance} {placeholderTicker}
+              Available: {walletBalance.toString()} {placeholderTicker}
             </p>
           </div>
 
@@ -233,13 +243,16 @@ const OrderDetails = ({ order }) => {
             <Button
               extraStyleClasses={[styles.swapButton]}
               onClickHandle={handleSwapClick}
+              disabled={!unusedAddresses.receive || loading}
             >
               <IconArrowTopRight className={styles.swapButtonIcon} />
               Swap
             </Button>
-            {txErrorMessage && (
+            {txErrorMessage ? (
               <p className={styles.errorMessage}>{txErrorMessage}</p>
-            )}
+            ) : txSuccessMessage ? (
+              <p className={styles.successMessage}>{txSuccessMessage}</p>
+            ) : null}
           </div>
         </>
       )}

@@ -1,4 +1,5 @@
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
+import { useNavigate } from 'react-router'
 
 import { Wallet } from '@ContainerComponents'
 import { MintlayerContext, SettingsContext } from '@Contexts'
@@ -11,8 +12,10 @@ import {
   Sparkline,
   Button,
   ChainBadge,
+  Tooltip,
 } from '@BasicComponents'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
+import { ReactComponent as IconWarning } from '@Assets/images/icon-warning.svg'
 
 import styles from './StakePage.module.css'
 
@@ -38,12 +41,33 @@ const StakePage = () => {
     (mlDelegationsBalance || 0) - (contributed - withdrawn),
   )
 
+  const navigate = useNavigate()
+  const [tooltipVisible, setTooltipVisible] = useState(false)
+
   const confirmed = mlDelegationList.filter(
     (d) => d.type !== 'Unconfirmed' && d.balance?.decimal,
   )
   const activeCount = confirmed.filter((d) => !d.decommissioned).length
   const inactiveCount = confirmed.length - activeCount
   const delegationsLoading = fetchingDelegations && !mlDelegationList.length
+
+  // Delegations still holding funds in decommissioned pools: they no longer
+  // earn rewards, so the funds should be withdrawn and re-delegated.
+  const inactiveDelegations = confirmed.filter(
+    (d) => d.decommissioned && Number(d.balance?.decimal ?? 0) >= 1,
+  )
+
+  const createDelegation = () => {
+    navigate('/wallet/Mintlayer/staking/create-delegation')
+  }
+
+  const scrollToInactive = () => {
+    const poolId = inactiveDelegations[0]?.pool_id
+    if (!poolId) return
+    document
+      .querySelector(`[data-poolid="${poolId}"]`)
+      ?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   const poolListLink =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
@@ -100,7 +124,28 @@ const StakePage = () => {
         )}
 
         <div className={styles.section}>
-          <div className={styles.sectionTitle}>Delegations</div>
+          <div className={styles.sectionTitleRow}>
+            <div className={styles.sectionTitle}>Delegations</div>
+            {inactiveDelegations.length > 0 && (
+              <button
+                type="button"
+                className={styles.warningBadge}
+                data-testid="inactive-warning"
+                onClick={scrollToInactive}
+                onMouseEnter={() => setTooltipVisible(true)}
+                onMouseLeave={() => setTooltipVisible(false)}
+              >
+                <IconWarning className={styles.warningIcon} />
+                <Tooltip
+                  message={`${inactiveDelegations.length} pool${
+                    inactiveDelegations.length > 1 ? 's are' : ' is'
+                  } decommissioned — those funds no longer earn rewards.`}
+                  visible={tooltipVisible}
+                  position="top"
+                />
+              </button>
+            )}
+          </div>
           <Wallet.DelegationList
             delegationsList={mlDelegationList}
             delegationsLoading={delegationsLoading}
@@ -108,6 +153,13 @@ const StakePage = () => {
         </div>
 
         <div className={styles.actions}>
+          <Button
+            onClickHandle={createDelegation}
+            extraStyleClasses={[styles.actionButton]}
+            dataTestId="create-delegation"
+          >
+            Create new delegation
+          </Button>
           <a
             href={poolListLink}
             target="_blank"

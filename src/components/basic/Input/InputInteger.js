@@ -4,16 +4,24 @@ import Input from './Input'
 import { Expressions } from '@Constants'
 import { NumbersHelper } from '@Helpers'
 
+const toInteger = (value) => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : 0
+}
+
 const InputInteger = (props) => {
   const mask = Expressions.FIELDS.INTEGER
 
   const value = useMemo(() => {
-    if (!NumbersHelper.isInteger(props.value)) {
+    if (
+      !NumbersHelper.isInteger(props.value) &&
+      process.env.NODE_ENV !== 'production'
+    ) {
       console.warn(
         'A non-integer value was passed to InputInteger. It has been converted to integer.',
       )
     }
-    return ~~props.value
+    return toInteger(props.value)
   }, [props.value])
 
   const parseValue = ({ target: { value, matchedValue } }) => {

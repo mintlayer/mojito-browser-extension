@@ -21,20 +21,26 @@ const ELECTRUM_ENDPOINTS = {
   BATCH_ADDR_MEMPOOL_TRANSACTIONS: '/addresses/batch/txs/mempool',
 }
 
-const abortControllers = new Map()
+const REQUEST_TIMEOUT_MS = 15000
+
+const abortControllers = new Set()
 
 const requestElectrum = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
   const header = body ? { 'Content-Type': 'application/json' } : {}
   const controller = new AbortController()
-  abortControllers.set(`${method} ${url}`, controller)
+  abortControllers.add(controller)
 
   const options = {
     method: method,
     headers: header,
     body,
-    // Wire the signal so cancelAllRequests() actually cancels.
-    signal: controller.signal,
+    // Wire the signal so cancelAllRequests() actually cancels. The timeout
+    // releases hung connections so tryServers can advance to the next one.
+    signal: AbortSignal.any([
+      controller.signal,
+      AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    ]),
   }
 
   try {
@@ -48,7 +54,7 @@ const requestElectrum = async (url, body = null, request = fetch) => {
     if (!isAbortError(error)) console.error(error)
     throw error
   } finally {
-    abortControllers.delete(`${method} ${url}`)
+    abortControllers.delete(controller)
   }
 }
 
@@ -70,6 +76,8 @@ const tryServers = async (endpoint, body = null) => {
       )
       return response
     } catch (error) {
+      // A cancelled request must not be resurrected against the next server.
+      if (isAbortError(error)) throw error
       console.warn(
         `${combinedElectrumServers[i] + endpoint} request failed: `,
         error,
@@ -85,33 +93,59 @@ const getLastBlockHash = () =>
   tryServers(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HASH)
 
 const getTransactionData = (txid) =>
-  tryServers(ELECTRUM_ENDPOINTS.GET_TRANSACTION_DATA.replace(':txid', txid))
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_TRANSACTION_DATA.replace(
+      ':txid',
+      encodeURIComponent(txid),
+    ),
+  )
 
 const getTransactionHex = (txid) =>
-  tryServers(ELECTRUM_ENDPOINTS.GET_TRANSACTION_HEX.replace(':txid', txid))
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_TRANSACTION_HEX.replace(
+      ':txid',
+      encodeURIComponent(txid),
+    ),
+  )
 
 const getTransactionStatus = (txid) =>
-  tryServers(ELECTRUM_ENDPOINTS.GET_TRANSACTION_STATUS.replace(':txid', txid))
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_TRANSACTION_STATUS.replace(
+      ':txid',
+      encodeURIComponent(txid),
+    ),
+  )
 
 const getAddressTransactions = (address) =>
   tryServers(
-    ELECTRUM_ENDPOINTS.GET_ADDRESS_TRANSACTIONS.replace(':address', address),
+    ELECTRUM_ENDPOINTS.GET_ADDRESS_TRANSACTIONS.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
   )
 
 const getAddressMempoolTransactions = (address) =>
   tryServers(
     ELECTRUM_ENDPOINTS.GET_ADDRESS_MEMPOOL_TRANSACTIONS.replace(
       ':address',
-      address,
+      encodeURIComponent(address),
     ),
   )
 
 const getAddress = (address) =>
-  tryServers(ELECTRUM_ENDPOINTS.GET_ADDRESS.replace(':address', address))
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_ADDRESS.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
+  )
 
 const getAddressUtxo = (address) => {
   return tryServers(
-    ELECTRUM_ENDPOINTS.GET_ADDRESS_UTXO.replace(':address', address),
+    ELECTRUM_ENDPOINTS.GET_ADDRESS_UTXO.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
   )
 }
 
@@ -143,15 +177,6 @@ const broadcastTransaction = (transaction) =>
 const cancelAllRequests = () => {
   abortControllers.forEach((controller) => controller.abort())
   abortControllers.clear()
-}
-
-const getWalletAddressesInfo = async (addresses) => {
-  const results = await Promise.all(
-    addresses.map((address) => getAddress(address)),
-  )
-  return results.map((data) => {
-    return JSON.parse(data)
-  })
 }
 
 const getAddressBalancesBatch = async (addresses) => {
@@ -204,7 +229,6 @@ export {
   getFeesEstimates,
   broadcastTransaction,
   cancelAllRequests,
-  getWalletAddressesInfo,
   getAddressBalancesBatch,
   getAddressTransactionsBatch,
   getAddressMempoolTransactionsBatch,

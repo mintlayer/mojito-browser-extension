@@ -2,8 +2,10 @@ import { useMlWalletInfo } from '@Hooks'
 import './StakingWarning.css'
 import React from 'react'
 
-const StakingWarning = ({ addressList }) => {
-  const { mlDelegationList } = useMlWalletInfo(addressList)
+const MIN_DELEGATION_BALANCE = 1
+
+const StakingWarning = () => {
+  const { mlDelegationList } = useMlWalletInfo()
 
   if (!mlDelegationList) {
     return null
@@ -14,7 +16,9 @@ const StakingWarning = ({ addressList }) => {
   }
 
   const decommissionedPools = mlDelegationList.filter(
-    (delegation) => delegation.decommissioned && delegation.balance.length > 11,
+    (delegation) =>
+      delegation.decommissioned &&
+      Number(delegation.balance?.decimal ?? 0) >= MIN_DELEGATION_BALANCE,
   )
 
   if (decommissionedPools.length === 0) {
@@ -25,7 +29,7 @@ const StakingWarning = ({ addressList }) => {
     <div className="staking-warning">
       <div
         className="warning-icon"
-        title="you delegatied to inactive pool"
+        title="You delegated to an inactive pool"
       >
         !
       </div>

@@ -10,7 +10,7 @@ import styles from './NftList.module.css'
 const NftList = () => {
   const { nftData, fetchingNft } = useContext(MintlayerContext)
   const renderSkeletonLoaders = () => (
-    <div>
+    <div className={styles.skeletons}>
       {Array.from({ length: 6 }, (_, i) => (
         <SkeletonLoader key={i} />
       ))}
@@ -18,22 +18,18 @@ const NftList = () => {
   )
 
   return (
-    <VerticalGroup
-      bigGap
-      grow
-    >
-      <h1 className={styles.title}>Your current Nft</h1>
+    <VerticalGroup grow>
       {nftData.length === 0 && !fetchingNft && (
-        <EmptyListMessage message="No NFT in this wallet" />
+        <EmptyListMessage message="No NFTs in this wallet" />
       )}
       {fetchingNft ? (
         renderSkeletonLoaders()
       ) : (
         <ul className={styles.list}>
-          {nftData.map((nft, index) => {
+          {nftData.map((nft) => {
             return (
               <Nft
-                key={index}
+                key={nft.token_id}
                 nft={nft}
               />
             )

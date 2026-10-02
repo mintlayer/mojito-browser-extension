@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Toggle, PageWrapper } from '@BasicComponents'
 import { VerticalGroup } from '@LayoutComponents'
@@ -14,7 +14,7 @@ const OrderSwapPage = () => {
   const navigate = useNavigate()
   const [mode, setMode] = useState('basic') // 'basic' or 'advanced'
 
-  const sortedOrdersByRate = ordersPairInfo.sort((a, b) => {
+  const sortedOrdersByRate = [...ordersPairInfo].sort((a, b) => {
     return (b.quote_rate || 0) - (a.quote_rate || 0)
   })
 
@@ -22,10 +22,14 @@ const OrderSwapPage = () => {
     setMode((prevMode) => (prevMode === 'basic' ? 'advanced' : 'basic'))
   }
 
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
+
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/dashboard')
-    return
+    return null
   }
 
   return (
@@ -40,7 +44,7 @@ const OrderSwapPage = () => {
             <span className={styles.modeLabel}>Advanced Mode</span>
             <Toggle
               label={'Advanced Mode'}
-              toggled={mode === 'pro'}
+              toggled={mode === 'advanced'}
               onClick={toggleMode}
             />
           </div>

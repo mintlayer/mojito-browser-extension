@@ -19,9 +19,8 @@ const CreateDelegationPage = () => {
     chain: 'mintlayer',
   }
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.DELEGATION
-  const { addresses, accountID } = useContext(AccountContext)
+  const { accountID } = useContext(AccountContext)
   const { client, fetchDelegations } = useContext(MintlayerContext)
-  const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
@@ -36,6 +35,7 @@ const CreateDelegationPage = () => {
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
   const [feeLoading, setFeeLoading] = useState(false)
+  const [feeError, setFeeError] = useState('')
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const {
@@ -44,7 +44,7 @@ const CreateDelegationPage = () => {
     unusedAddresses,
     fetchingBalances,
     fetchingUtxos,
-  } = useMlWalletInfo(currentMlAddresses)
+  } = useMlWalletInfo()
 
   const preEnterAddress = state?.pool_id || ''
   const transaction_conditions =
@@ -69,6 +69,7 @@ const CreateDelegationPage = () => {
     const buildTransaction = async () => {
       if (transaction_conditions && transactionInformation?.to.length > 0) {
         setFeeLoading(true)
+        setFeeError('')
         try {
           const unusedReceivingAddress = unusedAddresses.receive
           const transaction = await buildDelegationTransaction({
@@ -78,6 +79,8 @@ const CreateDelegationPage = () => {
           setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
         } catch (e) {
           console.error('Failed to calculate delegation fee:', e)
+          setTotalFeeCrypto(0)
+          setFeeError(e.message || 'Fee calculation failed')
         } finally {
           setFeeLoading(false)
         }
@@ -91,10 +94,14 @@ const CreateDelegationPage = () => {
     unusedAddresses,
   ])
 
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
+
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/dashboard')
-    return
+    return null
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -131,6 +138,7 @@ const CreateDelegationPage = () => {
           <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}
             feeLoading={feeLoading}
+            feeError={feeError}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={mlBalance}
@@ -143,6 +151,7 @@ const CreateDelegationPage = () => {
             transactionMode={transactionMode}
             walletType={walletType}
           />
+          {feeError && <Error error={feeError} />}
           {!transaction_conditions && (
             <Error error="Insufficient funds for the fee. Please wait for the wallet to sync or add coins to the wallet." />
           )}

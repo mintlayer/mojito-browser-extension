@@ -17,4 +17,10 @@ describe('SkeletonLoader', () => {
     const cardBodies = screen.getAllByTestId('body-item')
     expect(cardBodies.length).toBe(2)
   })
+
+  it('renders 4 skeleton text elements in compact variant', () => {
+    render(<SkeletonLoader variant="compact" />)
+    const skeletonTextElements = screen.getAllByTestId('card-body')
+    expect(skeletonTextElements).toHaveLength(4)
+  })
 })

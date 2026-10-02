@@ -1,23 +1,24 @@
 const getNRandomElementsFromArray = (array, n) => {
-  const result = []
   const len = array.length
 
   if (n > len) {
     throw new RangeError('More elements requested than available')
   }
 
+  // Partial Fisher-Yates: samples distinct elements (no replacement).
+  const pool = [...array]
   for (let i = 0; i < n; i++) {
-    const randomIndex = Math.floor(Math.random() * len)
-    result.push(array[randomIndex])
+    const randomIndex = i + Math.floor(Math.random() * (len - i))
+    ;[pool[i], pool[randomIndex]] = [pool[randomIndex], pool[i]]
   }
 
-  return result
+  return pool.slice(0, n)
 }
 
-const removeDublicates = (arr) => {
+const removeDuplicates = (arr, getKey = (item) => item) => {
   const seen = new Set()
   return arr.filter((item) => {
-    const k = item
+    const k = getKey(item)
     return seen.has(k) ? false : seen.add(k)
   })
 }
@@ -47,7 +48,7 @@ const stringToBytes = (string) => {
 
 export {
   getNRandomElementsFromArray,
-  removeDublicates,
+  removeDuplicates,
   uint8ArrayToString,
   stringToUint8Array,
   stringToBytes,

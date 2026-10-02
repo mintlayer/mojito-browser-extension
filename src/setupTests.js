@@ -9,6 +9,10 @@ import 'jest-canvas-mock'
 import 'jest-webgl-canvas-mock'
 import { Buffer } from 'buffer'
 
+// Build-time version constant: in Vite builds it comes from wxt.config.ts
+// define; jest has no define step, so inject it here (matches src/version).
+global.__APP_VERSION__ = require('../package.json').version
+
 // Polyfills for crypto libraries
 import { TextEncoder, TextDecoder } from 'util'
 

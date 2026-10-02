@@ -49,7 +49,7 @@ const AddressList = ({ search }) => {
 
   const addressList =
     coinType === 'Bitcoin'
-      ? sortAddresses(btcFormatedAddresses)
+      ? sortAddresses([...btcFormatedAddresses])
       : sortAddresses(getFormatedMlAddresses(requiredAddresses))
 
   const filteredAddresses = addressList.filter((address) => {
@@ -86,7 +86,7 @@ const AddressList = ({ search }) => {
               </tr>
             </thead>
             <tbody>
-              {requiredAddresses && requiredAddresses.length > 0 ? (
+              {filteredAddresses && filteredAddresses.length > 0 ? (
                 filteredAddresses.map((address, index) => (
                   <AddressListItem
                     key={address.id || index}

@@ -4,7 +4,7 @@ const EmptyListMessage = ({ message }) => {
   return (
     <div
       className={styles.emptyList}
-      data-testid="transaction"
+      data-testid="empty-list"
     >
       {message}
     </div>

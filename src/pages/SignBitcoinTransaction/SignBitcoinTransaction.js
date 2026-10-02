@@ -1,11 +1,11 @@
 import { useLocation } from 'react-router'
 import { MOCKS } from './mocks'
-import { Button, PageWrapper, SiteBadge } from '@BasicComponents'
+import { Button, Error, PageWrapper, SiteBadge } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 
 import './SignBitcoinTransaction.css'
-import { useState, useContext, useMemo } from 'react'
+import { useState, useContext, useMemo, useEffect } from 'react'
 import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 import * as bitcoin from 'bitcoinjs-lib'
 import { Account } from '@Entities'
@@ -15,10 +15,16 @@ import { BTC as BTCHelpers, Secret } from '@Helpers'
 import { Electrum } from '@APIs'
 import { sendPopupResponse } from '@Browser'
 
+import { buildBtcSignRecap, parseSatoshiAmount } from './recap'
+
 const isDevelopment = process.env.NODE_ENV === 'development'
 
 // sat/vB used when the fee service is unreachable
 const FALLBACK_BTC_FEE_RATE = 10
+
+// bitcoinjs boundary helpers (the Buffer polyfill fails its exact
+// Uint8Array validation — see BTCTransaction.js).
+const u8FromHex = (hex) => new Uint8Array(Buffer.from(hex, 'hex'))
 
 const getBtcFeeRate = async () => {
   try {
@@ -34,8 +40,9 @@ const getBtcFeeRate = async () => {
 }
 
 function parseSecretHashFromRedeemScript(redeemScriptHex) {
-  // Decompile the redeem script hex into chunks
-  const chunks = bitcoin.script.decompile(Buffer.from(redeemScriptHex, 'hex'))
+  // Decompile the redeem script hex into chunks (plain Uint8Array input —
+  // this bitcoinjs build rejects the Buffer polyfill).
+  const chunks = bitcoin.script.decompile(u8FromHex(redeemScriptHex))
   if (!chunks) throw new Error('Invalid redeemScript')
 
   // HTLC script structure:
@@ -63,17 +70,17 @@ function parseSecretHashFromRedeemScript(redeemScriptHex) {
     )
   }
 
-  // The secret hash should be at index 2
+  // The secret hash should be at index 2 (this bitcoinjs build returns
+  // plain Uint8Array chunks — Buffer.isBuffer is always false here).
   const secretHashChunk = chunks[2]
 
-  if (!Buffer.isBuffer(secretHashChunk)) {
+  if (!ArrayBuffer.isView(secretHashChunk)) {
     throw new Error(
       'Secret hash not found at expected position in redeemScript',
     )
   }
 
-  // Convert the secret hash buffer to hex string
-  return secretHashChunk.toString('hex')
+  return Buffer.from(secretHashChunk).toString('hex')
 }
 
 export const SignBitcoinTransactionPage = () => {
@@ -85,7 +92,7 @@ export const SignBitcoinTransactionPage = () => {
   // Secret management state for HTLC transactions
   const [secretError, setSecretError] = useState('')
 
-  const [selectedMock, setSelectedMock] = useState('transfer')
+  const [selectedMock, setSelectedMock] = useState('createHtlc')
   const extraButtonStyles = ['buttonSignTransaction']
 
   const [isSigning, setIsSigning] = useState(false)
@@ -141,7 +148,7 @@ export const SignBitcoinTransactionPage = () => {
   const origin = state?.request?.origin
 
   const revealed_secret =
-    state?.request?.data?.txData?.JSONRepresentation.secret
+    state?.request?.data?.txData?.JSONRepresentation?.secret
 
   const { addresses, accountID } = useContext(AccountContext)
   const { btcUtxos, unusedAddresses: unusedBtcAddresses } =
@@ -150,12 +157,112 @@ export const SignBitcoinTransactionPage = () => {
 
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
+  // Pre-computed, password-free facts for the HTLC create recap: the escrow
+  // address (from the dApp's script params) and the fee estimate (from the
+  // fee service + the wallet's UTXO set). Whatever this effect computes is
+  // exactly what signing later uses — the displayed fee can't drift from
+  // the charged one.
+  const [escrowFeeInfo, setEscrowFeeInfo] = useState(null)
+  const requestJSON = state?.request?.data?.txData?.JSONRepresentation
+  const isCreateRequest = Boolean(requestJSON?.secretHash)
+
+  useEffect(() => {
+    let active = true
+    if (!isCreateRequest || !requestJSON) return undefined
+    ;(async () => {
+      try {
+        const htlc = await BTCTransaction.buildHTLCAndFundingAddress({
+          receiverPubKey: requestJSON.recipientPublicKey,
+          senderPubKey: requestJSON.refundPublicKey,
+          lock: requestJSON.timeoutBlocks,
+          secretHashHex: JSON.parse(requestJSON.secretHash).secret_hash_hex,
+          networkType,
+        })
+        const feeRate = await getBtcFeeRate()
+        let estimatedFee = null
+        try {
+          const currentAccount = await Account.getAccount(accountID)
+          const walletType =
+            currentAccount?.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
+          estimatedFee = await BTCTransaction.calculateBtcTransactionFee({
+            to: htlc.p2wshAddress,
+            amount: parseSatoshiAmount(requestJSON.amount),
+            utxos: btcUtxos || [],
+            feeRate,
+            walletType,
+          })
+        } catch {
+          estimatedFee = null
+        }
+        if (active) setEscrowFeeInfo({ htlc, feeRate, estimatedFee })
+      } catch {
+        // Malformed request data: the recap falls back to warnings and
+        // signing will fail with the same error.
+        if (active) setEscrowFeeInfo(null)
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [isCreateRequest, requestJSON, btcUtxos, accountID, networkType])
+
+  // Human-readable approval summary — parsed facts, not raw JSON.
+  const recap = buildBtcSignRecap({
+    json: requestJSON,
+    networkType,
+    escrowFeeInfo,
+  })
+
   // Helper functions to detect transaction types
   const isHTLCCreateTx =
     state?.request?.data?.txData?.JSONRepresentation?.secretHash
   const isHTLCSpendTx =
     state?.request?.data?.txData?.JSONRepresentation?.type === 'spendHtlc'
   // const isHTLCRefundTx = state?.request?.data?.txData?.JSONRepresentation?.type === 'refundHtlc'
+
+  // HTLC claim/refund proceeds must land in OUR wallet: the claim pays the
+  // swap output to the claimer, the refund returns to the funder. A dApp
+  // may not redirect them elsewhere.
+  const resolveHtlcDestination = (requestedTo, btcAddressData) => {
+    const walletAddresses = new Set([
+      ...(btcAddressData?.btcReceivingAddresses ?? []).map((a) => a.address),
+      ...(btcAddressData?.btcChangeAddresses ?? []).map((a) => a.address),
+    ])
+    if (requestedTo) {
+      if (!walletAddresses.has(requestedTo)) {
+        throw Object.assign(
+          new Error(
+            'HTLC destination must be one of your own wallet addresses.',
+          ),
+          { code: 'RECIPIENT_NOT_WALLET' },
+        )
+      }
+      return requestedTo
+    }
+    const fallback =
+      unusedBtcAddresses?.receivingAddress ||
+      btcAddressData?.btcReceivingAddresses?.[0]?.address
+    if (!fallback) throw new Error('Missing HTLC destination address')
+    return fallback
+  }
+
+  // Signs only when the redeem script actually binds a key from this
+  // wallet — otherwise our signature is meaningless and the request is
+  // either malformed or an attempt to abuse the signing oracle.
+  const requireWalletKeyFor = (redeemScriptHex, btcPrivateKeys) => {
+    const keyInfo = BTCTransaction.findWalletKeyForRedeemScript({
+      redeemScriptHex,
+      btcAddressData: btcPrivateKeys.btcAddressData,
+      btcHDWallet: btcPrivateKeys.btcHDWallet,
+    })
+    if (!keyInfo) {
+      throw Object.assign(
+        new Error('This HTLC script does not bind any key from this wallet.'),
+        { code: 'HTLC_SCRIPT_NOT_OURS' },
+      )
+    }
+    return keyInfo
+  }
 
   const handleApprove = () => {
     setSignError('')
@@ -228,11 +335,21 @@ export const SignBitcoinTransactionPage = () => {
       throw new Error('Missing BTC change address')
     }
 
+    // Strict integer parse: no silent truncation between the approved
+    // recap and the signed transaction.
+    const amountSatoshis = parseSatoshiAmount(
+      transactionJSONrepresentation.amount,
+    )
+
+    // Reuse the fee rate the recap displayed; only refetch when the
+    // pre-computation was unavailable.
+    const feeRate = escrowFeeInfo?.feeRate ?? (await getBtcFeeRate())
+
     const [tx, txHex] = await BTCTransaction.buildTransaction({
       to: address,
-      amount: parseInt(transactionJSONrepresentation.amount), // satoshis
+      amount: amountSatoshis, // satoshis
       utxos: btcUtxos || [],
-      feeRate: await getBtcFeeRate(),
+      feeRate,
       walletType: btcWalletType,
       changeAddress: getChangeAddress(),
       root: btcPrivateKeys,
@@ -299,7 +416,20 @@ export const SignBitcoinTransactionPage = () => {
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
 
-    const { WIF } = await Account.unlockAccount(accountID, pass)
+    const { btcPrivateKeys } = await Account.unlockAccount(accountID, pass, {
+      wallets: ['btc'],
+    })
+
+    // Sign ONLY with the wallet key the redeem script binds; reject
+    // scripts that bind foreign keys instead of feeding them our signer.
+    const keyInfo = requireWalletKeyFor(
+      transactionJSONrepresentation.redeemScriptHex,
+      btcPrivateKeys,
+    )
+    const toAddress = resolveHtlcDestination(
+      transactionJSONrepresentation.to,
+      btcPrivateKeys.btcAddressData,
+    )
 
     // Parse secret hash from redeem script as fallback
     const secretHashFromRedeemScript = parseSecretHashFromRedeemScript(
@@ -323,11 +453,9 @@ export const SignBitcoinTransactionPage = () => {
           password: pass,
           hash: secretHash,
         })
-      } catch (error) {
-        console.log(
-          'No saved secret found, will use manual input:',
-          error.message,
-        )
+      } catch {
+        // No saved secret for this hash — the user is prompted for manual
+        // input below, so this fallback is expected and stays silent.
       }
     }
 
@@ -336,10 +464,10 @@ export const SignBitcoinTransactionPage = () => {
     const tx = await BTCTransaction.buildHtlcClaimTx({
       network,
       utxo: transactionJSONrepresentation.utxo,
-      toAddress: transactionJSONrepresentation.to,
+      toAddress,
       redeemScriptHex: transactionJSONrepresentation.redeemScriptHex,
       secretHex: finalSecret,
-      wif: WIF,
+      wif: keyInfo.wif,
     })
 
     const requestId = state?.request?.requestId
@@ -378,14 +506,25 @@ export const SignBitcoinTransactionPage = () => {
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
 
-    const { WIF } = await Account.unlockAccount(accountID, pass)
+    const { btcPrivateKeys } = await Account.unlockAccount(accountID, pass, {
+      wallets: ['btc'],
+    })
+
+    const keyInfo = requireWalletKeyFor(
+      transactionJSONrepresentation.redeemScriptHex,
+      btcPrivateKeys,
+    )
+    const toAddress = resolveHtlcDestination(
+      transactionJSONrepresentation.to,
+      btcPrivateKeys.btcAddressData,
+    )
 
     const tx = await BTCTransaction.buildHtlcRefundTx({
       network,
       utxo: transactionJSONrepresentation.utxo,
-      toAddress: transactionJSONrepresentation.to,
+      toAddress,
       redeemScriptHex: transactionJSONrepresentation.redeemScriptHex,
-      wif: WIF,
+      wif: keyInfo.wif,
     })
 
     const requestId = state?.request?.requestId
@@ -434,21 +573,29 @@ export const SignBitcoinTransactionPage = () => {
         await submitSpend()
         return
       }
+      // Signing done: drop the password/secret from memory — the page stays
+      // mounted in the side panel after the response is returned.
+      setPassword('')
+      setSecret('')
     } catch (error) {
       console.error('Error during transaction signing:', error)
-      // If it's a secret validation error, keep the modal open
-      if (error.message && error.message.includes('secret')) {
-        setIsSigning(false)
-        return
+      // Keep the modal open without a message only for explicitly typed
+      // secret-validation failures; surface everything else.
+      const isSecretValidationError = error?.code === 'INVALID_SECRET'
+      if (!isSecretValidationError) {
+        setSignError(
+          error?.message ||
+            'Signing failed. Check your password and try again.',
+        )
       }
-      setSignError(
-        error?.message || 'Signing failed. Check your password and try again.',
-      )
       setIsSigning(false)
     }
   }
 
   const handleReject = () => {
+    // Drop signing material as soon as the request is over.
+    setPassword('')
+    setSecret('')
     sendPopupResponse({
       method: 'signTransaction_reject',
       requestId: state?.request?.requestId,
@@ -516,8 +663,40 @@ export const SignBitcoinTransactionPage = () => {
 
           {state?.request?.data?.txData?.JSONRepresentation && (
             <div className="transaction-preview-wrapper">
+              {recap && (
+                <div
+                  className="btc-recap"
+                  data-testid="btc-sign-recap"
+                >
+                  <h3>{recap.title}</h3>
+                  <dl>
+                    {recap.rows.map((r) => (
+                      <div
+                        className="btc-recap-row"
+                        key={r.label}
+                      >
+                        <dt>{r.label}</dt>
+                        <dd
+                          className={`${r.mono ? 'mono' : ''} ${
+                            r.warn ? 'warn' : ''
+                          }`}
+                        >
+                          {r.value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {recap.warning && (
+                    <p className="btc-recap-warning">⚠️ {recap.warning}</p>
+                  )}
+                </div>
+              )}
               <SignTransaction.JsonPreview data={state} />
             </div>
+          )}
+
+          {!state?.request?.data?.txData?.JSONRepresentation && (
+            <Error error="No pending sign request." />
           )}
 
           {/* HTLC Secret Information */}
@@ -573,6 +752,7 @@ export const SignBitcoinTransactionPage = () => {
           <Button
             onClickHandle={handleApprove}
             extraStyleClasses={extraButtonStyles}
+            disabled={!state?.request?.data?.txData?.JSONRepresentation}
           >
             Approve and return to page
           </Button>
@@ -613,7 +793,11 @@ export const SignBitcoinTransactionPage = () => {
               {signError && <div className="sign-error">{signError}</div>}
               <div className="modal-buttons">
                 <Button
-                  onClickHandle={() => setIsModalOpen(false)}
+                  onClickHandle={() => {
+                    setPassword('')
+                    setSecret('')
+                    setIsModalOpen(false)
+                  }}
                   extraStyleClasses={extraButtonStyles}
                   alternate
                 >

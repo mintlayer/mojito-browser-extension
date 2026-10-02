@@ -1,12 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { ReactComponent as CopyIcon } from '@Assets/images/icon-copy.svg'
 import { ReactComponent as SuccessIcon } from '@Assets/images/icon-success.svg'
 
 import styles from './CopyButton.module.css'
 
+const COPY_FEEDBACK_MS = 1200
+
 const CopyButton = ({ content }) => {
   const [copied, setCopied] = useState(false)
+  const timerRef = useRef(null)
+
+  useEffect(
+    () => () => {
+      clearTimeout(timerRef.current)
+    },
+    [],
+  )
 
   const handleCopy = () => {
     if (!content) return
@@ -14,8 +24,9 @@ const CopyButton = ({ content }) => {
     navigator.clipboard
       .writeText(content)
       .then(() => {
+        clearTimeout(timerRef.current)
         setCopied(true)
-        setTimeout(() => setCopied(false), 1200)
+        timerRef.current = setTimeout(() => setCopied(false), COPY_FEEDBACK_MS)
       })
       .catch(() => {
         // clipboard can be denied (unfocused document, permissions) — never

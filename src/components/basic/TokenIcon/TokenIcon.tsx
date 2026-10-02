@@ -10,6 +10,11 @@ interface TokenIconProps {
   // (fetched once from the ipfs gateways). On load failure the procedural
   // tile renders instead.
   iconUri?: string
+  // True ONLY for native chain assets (BTC/ML) rendered from wallet-owned
+  // data. A token's ticker is issuer-chosen, so the official chain logos and
+  // brand gradients are withheld unless this flag is set — an attacker token
+  // tickeried "ML"/"BTC" can never borrow the native branding.
+  native?: boolean
 }
 
 const MAP: Record<string, { c1: string; c2: string; g: string }> = {
@@ -39,10 +44,15 @@ const toRenderableUri = (uri: string) =>
 // Native BTC/ML assets get the real chain logos; tokens show their metadata
 // icon when available, otherwise the procedural design-system tile (unknown
 // symbols fall back to first letter).
-const TokenIcon = ({ symbol, size = 36, iconUri }: TokenIconProps) => {
+const TokenIcon = ({
+  symbol,
+  size = 36,
+  iconUri,
+  native = false,
+}: TokenIconProps) => {
   const [iconFailed, setIconFailed] = useState(false)
-  const logo = LOGOS[symbol]
-  const { c1, c2 } = GRADIENTS[symbol] ?? {
+  const logo = native ? LOGOS[symbol] : undefined
+  const { c1, c2 } = (native ? GRADIENTS[symbol] : undefined) ?? {
     c1: 'oklch(0.6 0.05 60)',
     c2: 'oklch(0.4 0.05 60)',
   }

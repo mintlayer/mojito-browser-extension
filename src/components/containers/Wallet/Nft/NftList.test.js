@@ -1,8 +1,11 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import NftList from './NftList'
-import { MintlayerContext } from '@Contexts'
+import { MintlayerContext, SettingsContext } from '@Contexts'
 import { BrowserRouter } from 'react-router'
+
+// The image resolver hits the network — mock it at the hook boundary.
+jest.mock('./useNftImage', () => jest.fn(() => null))
 
 const memoryRouterFeature = {
   v7_startTransition: true,
@@ -14,7 +17,9 @@ const renderWithContext = (ui, { providerProps, ...renderOptions }) => {
   return render(
     <BrowserRouter future={memoryRouterFeature}>
       <MintlayerContext.Provider {...providerProps}>
-        {ui}
+        <SettingsContext.Provider value={{ networkType: 'mainnet' }}>
+          {ui}
+        </SettingsContext.Provider>
       </MintlayerContext.Provider>
     </BrowserRouter>,
     renderOptions,
@@ -22,58 +27,56 @@ const renderWithContext = (ui, { providerProps, ...renderOptions }) => {
 }
 
 describe('NftList', () => {
-  const providerProps = {
-    value: {
-      nftData: [],
-      fetchingNft: false,
+  const NFT_SAMPLE = [
+    {
+      token_id: '1',
+      data: {
+        name: { string: 'Test NFT 1' },
+        icon_uri: { string: 'ipfs://test-icon' },
+        description: { string: 'Test Description' },
+        ticker: { string: 'TEST' },
+      },
+      destination: 'Test Address',
     },
-  }
+    {
+      token_id: '2',
+      data: {
+        name: { string: 'Test NFT 2' },
+        icon_uri: { string: 'ipfs://test-icon' },
+        description: { string: 'Test Description' },
+        ticker: { string: 'TEST' },
+      },
+      destination: 'Test Address',
+    },
+  ]
 
-  test('renders the NftList component', () => {
-    renderWithContext(<NftList />, { providerProps })
-
-    expect(screen.getByText('Your current Nft')).toBeInTheDocument()
+  // fresh provider props per test — no shared mutable state
+  const buildProviderProps = ({ nftData = [], fetchingNft = false } = {}) => ({
+    value: { nftData, fetchingNft },
   })
 
   test('displays empty list message when no NFTs are present', () => {
-    renderWithContext(<NftList />, { providerProps })
+    renderWithContext(<NftList />, { providerProps: buildProviderProps() })
 
-    expect(screen.getByText('No NFT in this wallet')).toBeInTheDocument()
+    expect(screen.getByTestId('empty-list')).toHaveTextContent(
+      'No NFTs in this wallet',
+    )
   })
 
   test('displays skeleton loaders when fetching NFTs', () => {
-    providerProps.value.fetchingNft = true
-    renderWithContext(<NftList />, { providerProps })
+    renderWithContext(<NftList />, {
+      providerProps: buildProviderProps({ fetchingNft: true }),
+    })
 
     expect(screen.getAllByTestId('card')).toHaveLength(6)
   })
 
-  test('displays NFTs when nftData is present', () => {
-    providerProps.value.nftData = [
-      {
-        token_id: '1',
-        data: {
-          name: { string: 'Test NFT 1' },
-          icon_uri: { string: 'ipfs://test-icon' },
-          description: { string: 'Test Description' },
-          ticker: { string: 'TEST' },
-        },
-        destination: 'Test Address',
-      },
-      {
-        token_id: '2',
-        data: {
-          name: { string: 'Test NFT 2' },
-          icon_uri: { string: 'ipfs://test-icon' },
-          description: { string: 'Test Description' },
-          ticker: { string: 'TEST' },
-        },
-        destination: 'Test Address',
-      },
-    ]
-    providerProps.value.fetchingNft = false
-    renderWithContext(<NftList />, { providerProps })
+  test('displays NFT tiles when nftData is present', () => {
+    renderWithContext(<NftList />, {
+      providerProps: buildProviderProps({ nftData: NFT_SAMPLE }),
+    })
 
+    expect(screen.getAllByTestId('nft-tile')).toHaveLength(2)
     expect(screen.getByText('Test NFT 1')).toBeInTheDocument()
     expect(screen.getByText('Test NFT 2')).toBeInTheDocument()
   })

@@ -21,9 +21,7 @@ const RestoreSeedField = ({ setFields, accountWordsValid }) => {
 
   const getCounterLabel = () => {
     if (wordCount === 0) return null
-    if (wordCount <= 12) return `${wordCount} / 12`
-    if (wordCount <= 24) return `${wordCount} / 24`
-    return `${wordCount} / 24`
+    return wordCount <= 12 ? `${wordCount} / 12` : `${wordCount} / 24`
   }
 
   const counterLabel = getCounterLabel()
@@ -36,6 +34,10 @@ const RestoreSeedField = ({ setFields, accountWordsValid }) => {
         id="restore-seed-textarea"
         size={textariaSize}
         validity={accountWordsValid}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
       />
       {counterLabel && (
         <p

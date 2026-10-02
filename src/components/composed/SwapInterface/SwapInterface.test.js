@@ -56,7 +56,7 @@ jest.mock('@Assets/images/icon-search.svg', () => ({
 
 const mockTokenBalances = {
   token1: {
-    balance: '100.5',
+    balance: 100.5,
     token_info: {
       number_of_decimals: 8,
       token_ticker: { string: 'TKN1' },
@@ -64,7 +64,7 @@ const mockTokenBalances = {
     },
   },
   token2: {
-    balance: '50.25',
+    balance: 50.25,
     token_info: {
       number_of_decimals: 6,
       token_ticker: { string: 'TKN2' },

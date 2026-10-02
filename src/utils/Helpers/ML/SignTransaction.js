@@ -85,10 +85,19 @@ function mergeUint8Arrays(arrays) {
   return result
 }
 
+// Defaults kept from the previous hardcoded values so existing call sites
+// behave identically; callers should pass the live chain tip and a fee
+// rate derived from network fee estimates.
+const DEFAULT_FEE_RATE_PER_KB = BigInt(Math.ceil(100000000000 / 1000))
+
 export function getTransactionBINrepresentation(
   transactionJSONrepresentation,
   _network,
   blockHeight,
+  {
+    chainTip = BigInt(blockHeight),
+    feeRatePerKb = DEFAULT_FEE_RATE_PER_KB,
+  } = {},
 ) {
   const network = _network
   const networkType = network === 1 ? 'testnet' : 'mainnet'
@@ -264,8 +273,6 @@ export function getTransactionBINrepresentation(
           total_supply,
         } = output
 
-        const chainTip = '517710'
-
         const is_token_freezable =
           is_freezable === true ? FreezableToken.Yes : FreezableToken.No
 
@@ -289,7 +296,7 @@ export function getTransactionBINrepresentation(
           total_supply_type, // ok
           supply_amount, // ok
           is_token_freezable, // ok
-          BigInt(chainTip), // ok
+          chainTip, // ok
           network,
         )
       }
@@ -361,7 +368,7 @@ export function getTransactionBINrepresentation(
       (input) =>
         input?.utxo?.destination ||
         input?.destination ||
-        input?.utxo?.htlc.refund_key,
+        input?.utxo?.htlc?.refund_key,
     )
 
   const transactionsize = estimate_transaction_size(
@@ -371,13 +378,11 @@ export function getTransactionBINrepresentation(
     network,
   )
 
-  const feeRate = BigInt(Math.ceil(100000000000 / 1000))
-
   return {
     inputs: inputsArray,
     outputs: outputsArray,
     transactionsize,
-    feeRate: feeRate.toString(),
+    feeRate: feeRatePerKb.toString(),
   }
 }
 
@@ -637,7 +642,6 @@ const OUTPUT_FLAGS = {
   IssueFungibleToken: 'isIssueToken',
   IssueNft: 'isIssueNft',
   CreateOrder: 'isCreateOrder',
-  BurnCoin: 'isBurnCoin',
   BurnToken: 'isBurnToken',
   DataDeposit: 'isDataDeposit',
   CreateDelegationId: 'isCreateDelegationId',
@@ -705,6 +709,13 @@ export const getTransactionType = (JSONRepresentation, intent) => {
   }
 
   if (inputs.some((input) => input.utxo?.type === 'Htlc')) return 'isSpendHtlc'
+
+  // Coin burns arrive as BurnToken with a Coin value (never as a
+  // 'BurnCoin' output type), so they need value-level discrimination.
+  const burnOutput = outputs.find((output) => output.type === 'BurnToken')
+  if (burnOutput) {
+    return burnOutput.value?.type === 'Coin' ? 'isBurnCoin' : 'isBurnToken'
+  }
 
   const outputType = outputTypes.find((type) => OUTPUT_FLAGS[type])
   if (outputType) return OUTPUT_FLAGS[outputType]

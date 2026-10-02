@@ -39,7 +39,11 @@ const LockedBalanceListItem = ({ utxo }) => {
       <div className={styles.progressBar}>
         <div
           className={styles.progressFill}
-          style={{ width: `${utxo.computed.progress * 100}%` }}
+          style={
+            utxo.computed.progress != null
+              ? { width: `${utxo.computed.progress * 100}%` }
+              : undefined
+          }
         />
       </div>
     </li>

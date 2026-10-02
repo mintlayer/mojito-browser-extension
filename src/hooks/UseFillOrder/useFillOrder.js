@@ -8,7 +8,19 @@ const useFillOrder = () => {
 
   const fillOrder = useCallback(
     async ({ order_id, amount, destination }) => {
-      const order_details = JSON.parse(await Mintlayer.getOrderById(order_id))
+      let raw
+      try {
+        raw = await Mintlayer.getOrderById(order_id)
+      } catch (e) {
+        throw new Error(`Could not fetch order ${order_id}: ${e.message}`)
+      }
+
+      let order_details
+      try {
+        order_details = JSON.parse(raw)
+      } catch {
+        throw new Error(`Malformed order details received for ${order_id}`)
+      }
 
       const [ask_token_details, give_token_details] = await Promise.all([
         order_details.ask_currency.type === 'Coin'

@@ -2,12 +2,7 @@ import React, { useRef, useEffect, useState } from 'react'
 
 import { Svg, Arc } from '@BasicComponents'
 
-const DATASAMPLE = [
-  { value: 35, asset: 'ASSET 1', color: 'orange' },
-  { value: 65, asset: 'ASSET 2', color: 'lightblue' },
-]
-
-const ArcChart = ({ data = DATASAMPLE, width = '200px', height = '100px' }) => {
+const ArcChart = ({ data = [], width = '200px', height = '100px' }) => {
   const container = useRef(null)
   const [pieGenerator] = useState(Arc.createPieGenerator)
   const [arcGenerator] = useState(Arc.createArcGenerator)

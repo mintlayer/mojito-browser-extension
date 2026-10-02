@@ -25,12 +25,14 @@ const base64ToBuffer = (base64) => {
   return bytes
 }
 
-export const isSupported = () =>
+export const isSupported = async () =>
   typeof window !== 'undefined' &&
   typeof window.PublicKeyCredential === 'function' &&
   typeof window.PublicKeyCredential
     ?.userVerifyingPlatformAuthenticatorAvailable === 'function' &&
-  window.PublicKeyCredential.userVerifyingPlatformAuthenticatorAvailable()
+  Boolean(
+    await window.PublicKeyCredential.userVerifyingPlatformAuthenticatorAvailable(),
+  )
 
 // The prf extension must be reported as enabled for our credential, and the
 // creation/get assertions must return the evaluated secret.
@@ -92,7 +94,7 @@ const importAesKey = async (prfSecret) =>
  *          base64-encoded blob to persist on the account.
  */
 export const enrollPasskeyCredential = async (password) => {
-  if (!isSupported()) throw new Error('PASSKEY_UNSUPPORTED')
+  if (!(await isSupported())) throw new Error('PASSKEY_UNSUPPORTED')
 
   const salt = crypto.getRandomValues(new Uint8Array(PRF_SALT_BYTES))
   const credential = await navigator.credentials.create({
@@ -124,7 +126,7 @@ export const enrollPasskeyCredential = async (password) => {
  * fields, or PRF mismatch.
  */
 export const unwrapPasswordWithPasskey = async (blob) => {
-  if (!isSupported()) throw new Error('PASSKEY_UNSUPPORTED')
+  if (!(await isSupported())) throw new Error('PASSKEY_UNSUPPORTED')
   if (!blob?.credentialId || !blob?.salt || !blob?.iv || !blob?.ciphertext) {
     throw new Error('PASSKEY_BLOB_INVALID')
   }
@@ -145,10 +147,3 @@ export const unwrapPasswordWithPasskey = async (blob) => {
   )
   return new TextDecoder().decode(plain)
 }
-
-/**
- * Evaluates the PRF secret for an enrolled passkey and returns the wrapped
- * password — used by flows that call unlockAccount directly.
- */
-export const unlockPasswordWithPasskey = async (blob) =>
-  unwrapPasswordWithPasskey(blob)

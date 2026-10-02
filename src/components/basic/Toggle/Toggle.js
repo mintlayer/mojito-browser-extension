@@ -1,28 +1,37 @@
-import { useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import './Toggle.css'
 
-const Toggle = ({ label, name = 'toggleInput', toggled = false, onClick }) => {
+const Toggle = ({ label, name, toggled = false, checked, onClick }) => {
   const [isToggled, toggle] = useState(toggled)
+  const isControlled = checked !== undefined
+  const generatedId = useId()
+  const inputId = name ?? generatedId
+
+  useEffect(() => {
+    toggle(toggled)
+  }, [toggled])
+
+  const isChecked = isControlled ? checked : isToggled
 
   const callback = () => {
-    toggle(!isToggled)
-    onClick && onClick(!isToggled)
+    if (!isControlled) toggle(!isToggled)
+    onClick && onClick(!isChecked)
   }
 
   return (
     <label
       className="toggleWrapper"
-      htmlFor={name}
+      htmlFor={inputId}
       data-testid="toggle"
     >
       <input
         className="toggleInput"
         type="checkbox"
-        checked={isToggled}
+        checked={isChecked}
         onChange={callback}
-        id={name}
+        id={inputId}
         role="switch"
-        aria-checked={isToggled}
+        aria-checked={isChecked}
         data-testid="toggle-input"
       />
       <span className="toggleMark" />

@@ -37,24 +37,23 @@ const getAddressGenerator = (walletType) => {
   return generators[walletType] || getNativeSegwitAddress
 }
 
+// Throws on API errors so a transient failure is never mistaken for
+// "addresses unused" (which would silently truncate address discovery).
+// The unchecked fallback for a missing API lives behind the
+// Electrum.checkApiAvailability() gate in getBtcWalletAddresses.
 const checkBtcAddressesUnused = async (addresses) => {
-  try {
-    if (!Array.isArray(addresses) || addresses.length === 0) return false
-    const toCheck = addresses.length > 3 ? addresses.slice(-3) : addresses
+  if (!Array.isArray(addresses) || addresses.length === 0) return false
+  const toCheck = addresses.length > 3 ? addresses.slice(-3) : addresses
 
-    const results = await Electrum.getAddressBalancesBatch(toCheck)
+  const results = await Electrum.getAddressBalancesBatch(toCheck)
 
-    return results.every((item) => {
-      const parsedData = item?.info
-      if (!parsedData) return false
-      const chainTx = parsedData?.chain_stats?.tx_count || 0
-      const memTx = parsedData?.mempool_stats?.tx_count || 0
-      return chainTx + memTx === 0
-    })
-  } catch (e) {
-    console.error('Bitcoin API error in checkBtcAddressesUnused:', e)
-    return true
-  }
+  return results.every((item) => {
+    const parsedData = item?.info
+    if (!parsedData) return false
+    const chainTx = parsedData?.chain_stats?.tx_count || 0
+    const memTx = parsedData?.mempool_stats?.tx_count || 0
+    return chainTx + memTx === 0
+  })
 }
 
 // TODO: generate addresses till last 3 are unused
@@ -97,9 +96,6 @@ export const getBtcWalletAddresses = async (
 
   if (!apiAvailable) {
     // If API is not available, just generate default batch of addresses
-    console.log(
-      'Bitcoin API not available, generating default addresses without checking usage',
-    )
     const btcReceivingAddresses = generateAddresses(false, batch, 0)
     const btcChangeAddresses = generateAddresses(true, batch, 0)
     return { btcReceivingAddresses, btcChangeAddresses, privateKeys }

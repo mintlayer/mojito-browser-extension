@@ -138,9 +138,6 @@ describe('BTCTransaction', () => {
     }
 
     test('should format legacy wallet type', async () => {
-      const mockRawTxHex = '0100000001...'
-      Electrum.getTransactionHex.mockResolvedValue(mockRawTxHex)
-
       const result = await getFormattedFeeUtxos([mockUtxo], 'legacy')
 
       expect(result).toHaveLength(1)
@@ -148,18 +145,20 @@ describe('BTCTransaction', () => {
         txId: mockUtxo.txid,
         vout: mockUtxo.vout,
         value: mockUtxo.value,
-        nonWitnessUtxo: Buffer.from(mockRawTxHex, 'hex'),
       })
-      expect(Electrum.getTransactionHex).toHaveBeenCalledWith(mockUtxo.txid)
+      // Fee estimation must not fetch raw transaction hex
+      expect(Electrum.getTransactionHex).not.toHaveBeenCalled()
     })
 
     test('should format p2sh wallet type', async () => {
-      const mockRawTxHex = '0100000001...'
-      Electrum.getTransactionHex.mockResolvedValue(mockRawTxHex)
-
       const result = await getFormattedFeeUtxos([mockUtxo], 'p2sh')
 
-      expect(result[0].nonWitnessUtxo).toEqual(Buffer.from(mockRawTxHex, 'hex'))
+      expect(result[0]).toEqual({
+        txId: mockUtxo.txid,
+        vout: mockUtxo.vout,
+        value: mockUtxo.value,
+      })
+      expect(Electrum.getTransactionHex).not.toHaveBeenCalled()
     })
 
     test('should format nativeSegwit wallet type', async () => {
@@ -178,14 +177,11 @@ describe('BTCTransaction', () => {
     })
 
     test('should handle multiple UTXOs', async () => {
-      const mockRawTxHex = '0100000001...'
-      Electrum.getTransactionHex.mockResolvedValue(mockRawTxHex)
-
       const utxos = [mockUtxo, { ...mockUtxo, txid: 'different' }]
       const result = await getFormattedFeeUtxos(utxos, 'legacy')
 
       expect(result).toHaveLength(2)
-      expect(Electrum.getTransactionHex).toHaveBeenCalledTimes(2)
+      expect(Electrum.getTransactionHex).not.toHaveBeenCalled()
     })
   })
 
@@ -230,7 +226,7 @@ describe('BTCTransaction', () => {
         vout: mockUtxo.vout,
         value: mockUtxo.value,
         bip32Derivation: expect.any(Array),
-        nonWitnessUtxo: expect.any(Buffer),
+        nonWitnessUtxo: expect.any(Uint8Array),
       })
       expect(result[0].bip32Derivation).toHaveLength(1)
     })
@@ -351,12 +347,12 @@ describe('BTCTransaction', () => {
       },
     }
 
-    test('should return undefined when coinSelect fails', async () => {
+    test('should throw InsufficientFundsError when coinSelect fails', async () => {
       coinSelect.mockReturnValue({ inputs: null, outputs: null, fee: 1000 })
 
-      const result = await buildTransaction(mockParams)
-
-      expect(result).toBeUndefined()
+      await expect(buildTransaction(mockParams)).rejects.toThrow(
+        'Insufficient funds to cover the transaction',
+      )
     })
 
     test('should build transaction successfully', async () => {
@@ -409,7 +405,7 @@ describe('BTCTransaction', () => {
       psbtSpy.mockRestore()
     })
 
-    test('should return undefined when fee is invalid', async () => {
+    test('should throw FeeTooHighError when fee is invalid', async () => {
       const mockInputs = [{ txId: 'a1b2c3d4', vout: 0 }]
       const mockOutputs = [{ address: mockParams.to, value: 5000 }]
 
@@ -431,9 +427,9 @@ describe('BTCTransaction', () => {
 
       BTC.checkFee = jest.fn(() => false)
 
-      const result = await buildTransaction(mockParams)
-
-      expect(result).toBeUndefined()
+      await expect(buildTransaction(mockParams)).rejects.toThrow(
+        'Transaction fee is too high: 1000',
+      )
       expect(BTC.checkFee).toHaveBeenCalledWith(
         expect.any(Object),
         1000,

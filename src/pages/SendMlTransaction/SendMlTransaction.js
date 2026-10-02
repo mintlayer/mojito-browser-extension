@@ -12,7 +12,7 @@ import { PageWrapper } from '@BasicComponents'
 import styles from './SendMlTransaction.module.css'
 
 const SendMlTransactionPage = () => {
-  const { addresses, accountID } = useContext(AccountContext)
+  const { accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
@@ -29,13 +29,12 @@ const SendMlTransactionPage = () => {
 
   const datahook = useMlWalletInfo
   const { client, utxos } = useContext(MintlayerContext)
-  const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [feeLoading, setFeeLoading] = useState(false)
   const [feeError, setFeeError] = useState('')
   const navigate = useNavigate()
 
-  const { balance, tokenBalances } = datahook(currentMlAddresses, coinType)
+  const { balance, tokenBalances } = datahook(coinType)
 
   const symbol = () => {
     if (walletType.name === 'Mintlayer') {
@@ -57,10 +56,13 @@ const SendMlTransactionPage = () => {
 
   const tokenName = symbol()
   const fiatName = 'USD'
-  const [transactionData] = useState({
-    fiatName,
-    tokenName,
-  })
+  const transactionData = useMemo(
+    () => ({
+      fiatName,
+      tokenName,
+    }),
+    [fiatName, tokenName],
+  )
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
@@ -122,10 +124,14 @@ const SendMlTransactionPage = () => {
     }
   }, [transactionInformation, buildMlTransaction, isFormValid])
 
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
+
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/dashboard')
-    return
+    return null
   }
 
   const createTransaction = async (transactionInfo) => {

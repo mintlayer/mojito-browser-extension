@@ -86,7 +86,9 @@ const VerifyMessage = () => {
       setIsVerified(isVerified)
     } catch (e) {
       console.error(e)
-      setIsVerified(false)
+      setErrorMessage(
+        'The signed message is malformed and could not be verified.',
+      )
       return
     }
   }
@@ -148,26 +150,6 @@ const VerifyMessage = () => {
           </div>
         </VerticalGroup>
 
-        {/* {step === 2 && (
-          <VerticalGroup>
-            {isVerified && (
-              <div className="verify-result">
-                <IconSuccess className="icon-verify-success" />
-                <p className="message-description">
-                  The message has been verified successfully.
-                </p>
-              </div>
-            )}
-            {!isVerified && (
-              <div className="verify-result">
-                <IconFailed className="icon-verify-failed" />
-                <p className="message-description">
-                  The message has not been verified.
-                </p>
-              </div>
-            )}
-          </VerticalGroup>
-        )} */}
         {isVerified !== undefined && isVerified && (
           <p className="message-success">
             The message has been verified successfully.

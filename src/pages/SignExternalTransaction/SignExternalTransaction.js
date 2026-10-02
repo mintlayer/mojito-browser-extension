@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers, Secret } from '@Helpers'
 import { MOCKS } from './mocks'
-import { Button, PageWrapper, SiteBadge } from '@BasicComponents'
+import { Button, Error, PageWrapper, SiteBadge } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 import { MintlayerContext } from '@Contexts'
@@ -21,6 +21,11 @@ export const SignTransactionPage = () => {
   const { state: external_state } = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
+
+  // Declared BEFORE the effects below: their dependency arrays are
+  // evaluated during render, and referencing `accountID` above its
+  // declaration is a temporal-dead-zone crash on every render.
+  const { addresses, accountID } = useContext(AccountContext)
 
   const [hasPasskey, setHasPasskey] = useState(false)
 
@@ -48,6 +53,11 @@ export const SignTransactionPage = () => {
   const [secretError, setSecretError] = useState('')
 
   const [isSigning, setIsSigning] = useState(false)
+  // SECURITY: a dApp-supplied `intent` is opaque bytes the wallet signs
+  // alongside the transaction. Signing requires the user to explicitly
+  // acknowledge them — the summary shows the full bytes, this gate makes
+  // the approval a conscious act instead of a habitual password entry.
+  const [intentAcknowledged, setIntentAcknowledged] = useState(false)
   const [signError, setSignError] = useState('')
 
   const [selectedMock, setSelectedMock] = useState('transfer')
@@ -62,11 +72,11 @@ export const SignTransactionPage = () => {
     (isDevelopment ? MOCKS[selectedMock] : null)
   const origin = state?.request?.origin
 
-  const { addresses, accountID } = useContext(AccountContext)
   const currentMlAddresses = addresses.mlAddresses
 
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
+  const hasIntent = Boolean(state?.request?.data?.txData?.intent)
   const isHTLCCreateTx =
     state?.request?.data?.txData?.JSONRepresentation?.outputs?.some(
       (output) => output?.type === 'Htlc',
@@ -94,8 +104,11 @@ export const SignTransactionPage = () => {
   }
 
   useEffect(() => {
-    // Initialize transaction state from external state or mocks
-    const initialState = external_state || MOCKS[selectedMock]
+    // Initialize transaction state from external state or mocks.
+    // Mocks are dev-only: in production a direct visit with no route state
+    // must bail to the "no pending request" state.
+    const initialState =
+      external_state || (isDevelopment ? MOCKS[selectedMock] : null)
 
     if (!transactionState && initialState) {
       setTransactionState(initialState)
@@ -106,7 +119,9 @@ export const SignTransactionPage = () => {
     // SECRET FOR HTLC
     // Check if this is a create HTLC transaction and if secret_hash needs to be filled in
     const currentState =
-      transactionState || external_state || MOCKS[selectedMock]
+      transactionState ||
+      external_state ||
+      (isDevelopment ? MOCKS[selectedMock] : null)
     const transactionJSON =
       currentState?.request?.data?.txData?.JSONRepresentation
 
@@ -180,6 +195,14 @@ export const SignTransactionPage = () => {
   const handleModalSubmit = async ({ usePasskey = false } = {}) => {
     if (isSigning) return
 
+    // Validate secret if it's an HTLC claim transaction
+    if (isHTLCClaim && secret && !Secret.validateSecretHex(secret.trim())) {
+      setSecretError(
+        'Invalid secret format. Please enter a valid 64-character hex string.',
+      )
+      return
+    }
+
     setIsSigning(true)
     setSignError('')
 
@@ -204,14 +227,6 @@ export const SignTransactionPage = () => {
     }
 
     try {
-      // Validate secret if it's an HTLC claim transaction
-      if (isHTLCClaim && secret && !Secret.validateSecretHex(secret.trim())) {
-        setSecretError(
-          'Invalid secret format. Please enter a valid 64-character hex string.',
-        )
-        return
-      }
-
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
 
@@ -239,13 +254,10 @@ export const SignTransactionPage = () => {
           ? mlPrivKeys.mlMainnetPrivateKey
           : mlPrivKeys.mlTestnetPrivateKey
 
-      const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
-
-      const walletPrivKeys = ML.getWalletPrivKeysList(
-        privKey,
-        networkType,
-        changeAddressesLength,
-      )
+      const walletPrivKeys = ML.getWalletPrivKeysList(privKey, networkType, [
+        ...currentMlAddresses.mlReceivingAddresses,
+        ...currentMlAddresses.mlChangeAddresses,
+      ])
 
       const keysList = {
         ...walletPrivKeys.mlReceivingPrivKeys,
@@ -387,6 +399,13 @@ export const SignTransactionPage = () => {
         origin,
         result,
       })
+
+      // Signing done: drop the password/secret from memory. The page stays
+      // mounted in the side panel — do not leave signing material in the
+      // React tree after the response has been returned.
+      setPassword('')
+      setSecret('')
+      setIntentAcknowledged(false)
     } catch (error) {
       console.error('Error during transaction signing:', error)
       setSignError(
@@ -397,6 +416,9 @@ export const SignTransactionPage = () => {
   }
 
   const handleReject = () => {
+    setPassword('')
+    setSecret('')
+    setIntentAcknowledged(false)
     sendPopupResponse({
       method: 'signTransaction_reject',
       requestId: state?.request?.requestId,
@@ -482,6 +504,10 @@ export const SignTransactionPage = () => {
             />
           )}
 
+          {!state?.request?.data?.txData?.JSONRepresentation && (
+            <Error error="No pending sign request." />
+          )}
+
           {/* HTLC Secret Information */}
           {isHTLCCreateTx && generatedSecret && (
             <div className="htlc-secret-section">
@@ -540,6 +566,7 @@ export const SignTransactionPage = () => {
           <Button
             onClickHandle={handleApprove}
             extraStyleClasses={extraButtonStyles}
+            disabled={!state?.request?.data?.txData?.JSONRepresentation}
           >
             Approve and return to page
           </Button>
@@ -555,7 +582,7 @@ export const SignTransactionPage = () => {
                       handleModalSubmit({ usePasskey: true })
                     }
                     extraStyleClasses={extraButtonStyles}
-                    disabled={isSigning}
+                    disabled={isSigning || (hasIntent && !intentAcknowledged)}
                   >
                     Confirm with passkey
                   </Button>
@@ -581,6 +608,21 @@ export const SignTransactionPage = () => {
                         )}
                       </div>
                     </>
+                  )}
+                  {hasIntent && (
+                    <label className="intent-ack">
+                      <input
+                        type="checkbox"
+                        checked={intentAcknowledged}
+                        onChange={(e) =>
+                          setIntentAcknowledged(e.target.checked)
+                        }
+                      />
+                      <span>
+                        I reviewed the attached intent data above and approve
+                        signing it.
+                      </span>
+                    </label>
                   )}
                   {signError && <div className="sign-error">{signError}</div>}
                 </>
@@ -610,10 +652,30 @@ export const SignTransactionPage = () => {
                       </div>
                     </>
                   )}
+                  {hasIntent && (
+                    <label className="intent-ack">
+                      <input
+                        type="checkbox"
+                        checked={intentAcknowledged}
+                        onChange={(e) =>
+                          setIntentAcknowledged(e.target.checked)
+                        }
+                      />
+                      <span>
+                        I reviewed the attached intent data above and approve
+                        signing it.
+                      </span>
+                    </label>
+                  )}
                   {signError && <div className="sign-error">{signError}</div>}
                   <div className="modal-buttons">
                     <Button
-                      onClickHandle={() => setIsModalOpen(false)}
+                      onClickHandle={() => {
+                        setPassword('')
+                        setSecret('')
+                        setIntentAcknowledged(false)
+                        setIsModalOpen(false)
+                      }}
                       extraStyleClasses={extraButtonStyles}
                       alternate
                     >

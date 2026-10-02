@@ -1,12 +1,18 @@
 const BTC_NETWORK = process.env.REACT_APP_BTC_NETWORK
 const USE_WEB_WORKERS = process.env.NODE_ENV !== 'test'
 const IS_PROD_ENV = process.env.NODE_ENV === 'production'
-const MAINNET_ELECTRUM_SERVERS = process.env.MAINNET_ELECTRUM_SERVERS.split(',')
-const TESTNET_ELECTRUM_SERVERS = process.env.TESTNET_ELECTRUM_SERVERS.split(',')
-const MAINNET_MINTLAYER_SERVERS =
-  process.env.MAINNET_MINTLAYER_SERVERS.split(',')
-const TESTNET_MINTLAYER_SERVERS =
-  process.env.TESTNET_MINTLAYER_SERVERS.split(',')
+const MAINNET_ELECTRUM_SERVERS = (process.env.MAINNET_ELECTRUM_SERVERS || '')
+  .split(',')
+  .filter(Boolean)
+const TESTNET_ELECTRUM_SERVERS = (process.env.TESTNET_ELECTRUM_SERVERS || '')
+  .split(',')
+  .filter(Boolean)
+const MAINNET_MINTLAYER_SERVERS = (process.env.MAINNET_MINTLAYER_SERVERS || '')
+  .split(',')
+  .filter(Boolean)
+const TESTNET_MINTLAYER_SERVERS = (process.env.TESTNET_MINTLAYER_SERVERS || '')
+  .split(',')
+  .filter(Boolean)
 const EXCHANGE_RATES_SERVER = process.env.EXCHANGE_RATES_SERVER
 const PRICE_FEED_SERVER = process.env.PRICE_FEED_SERVER
 

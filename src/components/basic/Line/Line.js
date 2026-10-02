@@ -2,18 +2,23 @@ import React from 'react'
 import { line, scaleLinear, curveMonotoneX } from 'd3'
 
 const Line = ({
-  points,
+  points = [],
   fill = 'none',
   stroke = '#999999',
   strokeWidth = '1px',
   height,
 }) => {
+  if (!points.length || !height) return null
+
   const min = Math.min(...points.map((item) => Number(item[1])))
   const max = Math.max(...points.map((item) => Number(item[1])))
 
+  // Widen a flat series (min === max) so the domain isn't degenerate
+  const hi = max === min ? min + 1 : max
+
   const padding = parseInt(strokeWidth) / 2
   const scale = scaleLinear()
-    .domain([min, max])
+    .domain([min, hi])
     .range([parseInt(height) - padding, padding])
 
   const lineGenerator = line()

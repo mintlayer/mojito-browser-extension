@@ -10,47 +10,21 @@ import { ReactComponent as SwapIcon } from '@Assets/images/icon-swap.svg'
 import { ML } from '@Helpers'
 import { PopUp } from '@ComposedComponents'
 import TransactionAmount from './TransactionAmount'
-import { useNavigate } from 'react-router'
 
 import TransactionDetails from './TransactionDetails'
 
 import styles from './Transaction.module.css'
-
-const Info = ({ transaction }) => {
-  const navigate = useNavigate()
-  return (
-    <li
-      className={styles.transaction}
-      data-testid="transaction"
-      onClick={() => navigate('/settings')}
-    >
-      <div
-        className={`${styles.logoType} ${styles.logoTypeInfo}`}
-        data-testid="transaction-icon"
-      >
-        !
-      </div>
-      <div className={styles.detail}>
-        <p
-          className={styles.idInfo}
-          data-testid="transaction-otherPart"
-        >
-          {transaction.otherPart && transaction.otherPart}
-        </p>
-      </div>
-    </li>
-  )
-}
 
 const Transaction = ({ transaction, getConfirmations }) => {
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
   const date = transaction.date
     ? format(new Date(transaction.date * 1000), 'dd/MM/yyyy HH:mm')
     : 'not confirmed'
+  const uniqueOtherParts = transaction.otherPart
+    ? new Set(transaction.otherPart)
+    : null
 
-  return transaction.direction === 'info' ? (
-    <Info transaction={transaction} />
-  ) : (
+  return (
     <li
       className={styles.transaction}
       data-testid="transaction"
@@ -93,8 +67,7 @@ const Transaction = ({ transaction, getConfirmations }) => {
       ) : (
         <></>
       )}
-      {transaction.sameWalletTransaction &&
-      !transaction.type === 'FillOrder' ? (
+      {transaction.sameWalletTransaction && transaction.type !== 'FillOrder' ? (
         <div
           className={`${styles.logoType} ${styles.logoTypeSame}`}
           data-testid="transaction-icon"
@@ -171,8 +144,8 @@ const Transaction = ({ transaction, getConfirmations }) => {
             transaction.to &&
             ML.formatAddress(transaction.to[0])}
           {transaction.otherPart &&
-            [...new Set(transaction.otherPart)].length > 1 &&
-            ` (+${transaction.otherPart.length - 1})`}
+            uniqueOtherParts.size > 1 &&
+            ` (+${uniqueOtherParts.size - 1})`}
           {transaction.destAddress && ML.formatAddress(transaction.destAddress)}
         </p>
         <div className={styles.dateAmount}>

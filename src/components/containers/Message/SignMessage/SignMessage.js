@@ -8,7 +8,6 @@ import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { ML } from '@Cryptos'
 import { ML as MlHelpers } from '@Helpers'
 import { Account } from '@Entities'
-import { AppInfo } from '@Constants'
 import { ArrayHelper } from '@Helpers'
 
 import './SignMessage.css'
@@ -27,7 +26,7 @@ const SignMessage = () => {
   const [passValidity, setPassValidity] = useState(true)
   const [passPristinity, setPassPristinity] = useState(true)
   const [passErrorMessage, setPassErrorMessage] = useState('')
-  const { accountID } = useContext(AccountContext)
+  const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
 
   useEffect(() => {
@@ -56,10 +55,12 @@ const SignMessage = () => {
   }
 
   const onMessageTextfieldChangeHandler = ({ target }) => {
+    setMessageValidity(true)
     setMessageValue(target.value)
   }
 
   const onAddressTextfieldChangeHandler = ({ target }) => {
+    setAddressValidity(true)
     setAddressValue(target.value)
   }
 
@@ -67,27 +68,18 @@ const SignMessage = () => {
     return message.length > 0
   }
 
-  const signMessageHandler = async (id, password) => {
-    const unlockedAccount = await Account.unlockAccount(id, password)
-    if (!pass || !unlockedAccount) {
-      setPassPristinity(false)
-      setPassValidity(false)
-      setLoading(false)
-      setPassErrorMessage('Password must be set.')
-      return
-    }
-
+  const signMessageHandler = (unlockedAccount) => {
     const mlPrivKeys = unlockedAccount.mlPrivKeys
     const privKey =
       networkType === 'mainnet'
         ? mlPrivKeys.mlMainnetPrivateKey
         : mlPrivKeys.mlTestnetPrivateKey
 
-    const walletPrivKeys = ML.getWalletPrivKeysList(
-      privKey,
-      networkType,
-      AppInfo.DEFAULT_ML_WALLET_OFFSET,
-    )
+    const currentMlAddresses = addresses?.mlAddresses
+    const walletPrivKeys = ML.getWalletPrivKeysList(privKey, networkType, [
+      ...(currentMlAddresses?.mlReceivingAddresses || []),
+      ...(currentMlAddresses?.mlChangeAddresses || []),
+    ])
 
     const addressprivKey = findPrivateKeyByAddress(walletPrivKeys, addressValue)
 
@@ -96,7 +88,7 @@ const SignMessage = () => {
       setPassValidity(false)
       setLoading(false)
       setPassErrorMessage('Address not found in the wallet.')
-      return
+      return null
     }
 
     const messageBytes = ArrayHelper.stringToBytes(messageValue)
@@ -139,13 +131,40 @@ const SignMessage = () => {
     setOpenConfiramtion(true)
   }
 
+  const handleUnlockFailure = () => {
+    setLoading(false)
+    setPassPristinity(false)
+    setPassValidity(false)
+    setPass('')
+    setPassErrorMessage('Incorrect password.')
+  }
+
   const onSubmitClick = async (event) => {
     event.preventDefault()
+    if (!pass) {
+      setPassPristinity(false)
+      setPassValidity(false)
+      setLoading(false)
+      setPassErrorMessage('Password must be set.')
+      return
+    }
+    setPassValidity(true)
+    setPassErrorMessage('')
+    setLoading(true)
+    let unlockedAccount
     try {
-      setPassValidity(true)
-      setPassErrorMessage('')
-      setLoading(true)
-      const response = await signMessageHandler(accountID, pass)
+      unlockedAccount = await Account.unlockAccount(accountID, pass)
+    } catch (e) {
+      console.error(e)
+      handleUnlockFailure()
+      return
+    }
+    if (!unlockedAccount) {
+      handleUnlockFailure()
+      return
+    }
+    try {
+      const response = signMessageHandler(unlockedAccount)
       if (response) {
         setPassValidity(true)
         setPassErrorMessage('')
@@ -156,10 +175,9 @@ const SignMessage = () => {
     } catch (e) {
       setLoading(false)
       console.error(e)
-      setPassPristinity(false)
-      setPassValidity(false)
-      setPass('')
-      setPassErrorMessage('Incorrect password.')
+      setPassErrorMessage(
+        e?.message || 'An error occurred while signing the message.',
+      )
     }
   }
 

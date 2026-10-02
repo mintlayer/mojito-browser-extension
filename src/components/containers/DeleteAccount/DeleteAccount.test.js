@@ -21,6 +21,10 @@ const memoryRouterFeature = {
 }
 
 describe('DeleteAccount', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   it('renders initial step correctly', () => {
     render(
       <BrowserRouter future={memoryRouterFeature}>

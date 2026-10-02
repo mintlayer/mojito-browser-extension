@@ -58,6 +58,9 @@ test('Render TextField component', () => {
 })
 
 test('Render TextField component fdf', async () => {
+  const mockSetAmountValidity = jest.fn()
+  const mockSetErrorMessage = jest.fn()
+
   render(
     <AccountProvider>
       <SettingsProvider>
@@ -70,8 +73,8 @@ test('Render TextField component fdf', async () => {
             transactionData={PROPSSAMPLE.transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueInToken}
-            setErrorMessage={() => {}}
-            setAmountValidity={() => {}}
+            setErrorMessage={mockSetErrorMessage}
+            setAmountValidity={mockSetAmountValidity}
             totalFeeInCrypto={totalFeeCrypto}
           />
         </TransactionProvider>
@@ -80,7 +83,15 @@ test('Render TextField component fdf', async () => {
   )
 
   const cryptoInput = screen.getByTestId('input')
+
+  // enter a value first so clearing it actually fires a change event
+  fireEvent.change(cryptoInput, { target: { value: '1' } })
   fireEvent.change(cryptoInput, { target: { value: '' } })
+
+  expect(mockSetAmountValidity).toHaveBeenLastCalledWith(false)
+  expect(mockSetErrorMessage).toHaveBeenLastCalledWith(
+    'Amount must be greater than 0.',
+  )
 })
 
 test('Render TextField when networkType is testnet', () => {

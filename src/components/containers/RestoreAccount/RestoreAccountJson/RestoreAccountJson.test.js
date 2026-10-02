@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import RestoreAccountJson from './RestoreAccountJson'
 import { AccountProvider, SettingsProvider } from '@Contexts'
+import { Account } from '@Entities'
 
 jest.mock('@Entities', () => ({
   Account: {
@@ -19,21 +20,21 @@ const toggleNetworkType = jest.fn()
 const validJson = JSON.stringify({
   id: 1,
   iv: {
-    btcIv: 'iv',
-    mlTestnetPrivKeyIv: 'iv',
-    mlMainnetPrivKeyIv: 'iv',
+    btcIv: 'a1b2c3d4e5f60718293a4b5c',
+    mlTestnetPrivKeyIv: 'b2c3d4e5f60718293a4b5c6d',
+    mlMainnetPrivKeyIv: 'c3d4e5f60718293a4b5c6d7e',
   },
   name: 'Test Wallet',
-  salt: 'salt',
+  salt: 'd4e5f60718293a4b5c6d7e8f9a0b1c2d',
   tag: {
-    btcTag: 'tag',
-    mlTestnetPrivKeyTag: 'tag',
-    mlMainnetPrivKeyTag: 'tag',
+    btcTag: 'e5f60718293a4b5c6d7e8f9a0b1c2d3e',
+    mlTestnetPrivKeyTag: 'f60718293a4b5c6d7e8f9a0b1c2d3e4f',
+    mlMainnetPrivKeyTag: '0718293a4b5c6d7e8f9a0b1c2d3e4f5a',
   },
   seed: {
-    btcEncryptedSeed: 'seed',
-    encryptedMlMainnetPrivateKey: 'key',
-    encryptedMlTestnetPrivateKey: 'key',
+    btcEncryptedSeed: '18293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f',
+    encryptedMlMainnetPrivateKey: '293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a',
+    encryptedMlTestnetPrivateKey: '3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b',
   },
   walletType: 'type',
   walletsToCreate: ['wallet1', 'wallet2'],
@@ -159,12 +160,55 @@ describe('RestoreAccountJson', () => {
     fireEvent.click(screen.getByText('Next'))
     fireEvent.click(screen.getByText('Restore wallet'))
 
-    expect(screen.getByText('Wallet restored!')).toBeInTheDocument()
+    expect(Account.restoreAccountFromJSON).toHaveBeenCalled()
+
+    await expect(
+      screen.findByText('Wallet restored!'),
+    ).resolves.toBeInTheDocument()
     expect(
       screen.getByText(
         'Your wallet has been successfully restored from the backup file.',
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('Go to login')).toBeInTheDocument()
+  })
+
+  test('renders error message when restoreAccountFromJSON rejects', async () => {
+    Account.restoreAccountFromJSON.mockRejectedValueOnce(
+      new Error('restore failed'),
+    )
+
+    render(
+      <MemoryRouter future={memoryRouterFeature}>
+        <AccountProvider>
+          <SettingsProvider
+            value={{ networkType: 'testnet', toggleNetworkType }}
+          >
+            <RestoreAccountJson />
+          </SettingsProvider>
+        </AccountProvider>
+      </MemoryRouter>,
+    )
+
+    const fileInput = screen.getByTestId('file-input')
+    const file = new File([validJson], 'valid.json', {
+      type: 'application/json',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    await expect(screen.findByText('valid.json')).resolves.toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Next'))
+    fireEvent.click(screen.getByText('Restore wallet'))
+
+    expect(Account.restoreAccountFromJSON).toHaveBeenCalled()
+
+    // the restore failed, so the wallet details view stays on step 2 with the error
+    await expect(
+      screen.findByText('Error restoring account from JSON file.'),
+    ).resolves.toBeInTheDocument()
+    expect(screen.getByText('Wallet Name')).toBeInTheDocument()
+    expect(screen.queryByText('Wallet restored!')).not.toBeInTheDocument()
   })
 })

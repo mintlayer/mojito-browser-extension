@@ -4,6 +4,66 @@ Review agents: security / code-quality / UI-UX / DRYness. This file records
 what was **deferred** (with enough context to implement correctly) and the
 **accepted risks**. Fixed-in-this-branch items are in git history + HANDOFF.md.
 
+## OCR pass 1 (2026-09-20, opencode code-reviewer over src/ in 15 batches)
+
+~235 findings (1 CRITICAL / 21 HIGH / 113 MEDIUM / ~100 LOW). All CRITICAL,
+HIGH and MEDIUM items were fixed in this branch; the LOW items were fixed
+unless listed below. Converged over 5 review passes (each pass re-reviewed
+only files whose hash changed since the previous one):
+
+- pass 1 → full src/ (15 batches): the findings above
+- pass 2 → 114 changed files: fixes verified, 13 follow-ups (1 HIGH
+  regression, 6 MEDIUM, rest LOW) — all fixed
+- pass 3 → 34 changed files: all verified, 3 LOW + 2 test-coverage asks —
+  all fixed
+- pass 4 → 3 changed files: fixes verified, 1 residual matcher drift found
+- pass 5 → 1 changed file: **CONVERGED — 0 findings**
+
+Final state: eslint clean · 140 jest suites, 906 tests passing, 0 failures ·
+chrome/firefox production builds green.
+
+Deliberately NOT fixed (do not re-report):
+
+- **Internal/External sign-preview shared-component extraction**
+  (~20 near-identical operation components duplicated across
+  `InternalTransactionPreview.js` / `ExternalTransactionPreview.js`):
+  deferred refactor; the divergent null-guards WERE aligned so both files
+  behave identically. Do it together with item 4 (hook extraction).
+- **Unused generic primitives kept intentionally**: `Timer`, `Carousel`,
+  `ArcChart`, `InputInteger` (+ `Textarea`) have no production consumers;
+  kept as basic/composed primitives for item 5 (design-system
+  consolidation). Removed from barrels where applicable (`Carousel`,
+  `ArcChart`, `PriceChart` deleted outright with its CSS). Their known
+  defects (Timer cleanup leak, Toggle desync, InputInteger `~~` wrap,
+  Carousel event bubbling) were fixed anyway.
+- **`src/version/version.js` imports package.json** — RESOLVED (wave 1,
+  2026-09-21): version now injected via `__APP_VERSION__` define in
+  wxt.config.ts; jest parity via setupTests.js; both chrome/firefox page
+  bundles verified free of package.json metadata.
+- **`Passkey.unlockPasswordWithPasskey` alias** — RESOLVED (wave 1,
+  2026-09-21): alias deleted; Account.js + both test files use
+  `unwrapPasswordWithPasskey` directly.
+- **jest `--runInBand --no-cache` required** — RESOLVED (wave 1,
+  2026-09-21): `cacheDirectory` pinned to `node_modules/.cache/jest`
+  (default /tmp cache hit the machine's quota); full suite runs parallel
+  with cache in ~13 s.
+- **Explorer verified-token registry integration** (noted 2026-09-21):
+  the Mintlayer explorer runs a token verification system with manual
+  approval. Once it exposes a queryable API, the wallet should check token
+  properties against it and (a) show a "Verified" badge on verified token
+  rows (AssetRow `authority`-style tag), (b) warn on unverified tokens whose
+  ticker/name mimics a native asset ("ML"/"BTC") or a well-known token.
+  Interim hardening shipped 2026-09-21: AssetRow's Token tag and TokenIcon's
+  native branding key off the wallet-owned `type`/`native` flags, never off
+  the issuer-chosen ticker — a token tickeried "ML" keeps its Token tag and
+  can no longer borrow the official ML/BTC logos (TokenIcon `native` prop;
+  SwapTokenLogo was already id-keyed).
+- **`Account.test.js` unlock/save coverage** is partially restored (worker
+  bridge + helpers covered via `runWorkerJob.test.js` /
+  `AccountHelpers.test.js`); the 3 commented-out tests
+  (creation/restoring, walletsToCreate default/custom) are slated for
+  restoration in wave 2; full wasm-path coverage remains open.
+
 ## Done in this branch (summary)
 
 - **P1 money correctness**: amount regex escaped (`/^\d+(\.\d+)?$/`, rejects
@@ -43,20 +103,23 @@ what was **deferred** (with enough context to implement correctly) and the
 
 ## Missing / deferred (implement in this order)
 
-1. **Real NFT data on the Dashboard NFTs tab** — mock grid deleted, tab shows
-   an empty state. `MintlayerContext.nftData` already holds
-   `[{ token_id, data }]` from `GET /nft/:id` (metadata + media links). Need:
-   tile component (image from IPFS gateway — DONE for token icons 2026-09-06:
-   manifest CSP `img-src` now allows `https:` and `TokenIcon` renders
-   `icon_uri` with a fallback tile; the same treatment applies to NFT media
-   when the NFT tab is implemented — privacy note: remote icon hosts see the
-   user's IP for held tokens, standard wallet trade-off), collection
-   grouping, and a detail sheet. Keep the empty state until then.
-2. **ML bech32 checksum validation** — `isMlAddressValid/isMlPoolIdValid/
-isMlDelegationIdValid` are charset regexes only; a 1-char typo still
-   passes and funds are lost. Decode via the vendored wasm lib's bech32
-   decoder (it exposes address decode) and verify checksum + HRP per network;
-   keep the regex as a fast pre-filter. Apply in AddressField + send flows.
+1. **Real NFT data on the Dashboard NFTs tab** — DONE 2026-09-06: the tab
+   renders `MintlayerContext.nftData` as a tile grid (shared `Nft`/`NftList`
+   containers, also reachable via "See all" → `/wallet/Mintlayer/nft`).
+   Images resolve through the explorer's first-party proxy
+   (`/api/ipfs-media/{cid}` on explorer.mintlayer.org / lovelace.…) with the
+   public-gateway race as fallback (`Mintlayer.resolveNftImage`, blob-cached);
+   issuer https urls are still refused. Detail popup + NFT send wired through
+   the pre-existing NftDetails/NftSend flow. Remaining (optional): collection
+   grouping (needs `additional_metadata_uri` resolution), media previews
+   beyond the proxy's 1 MB PNG/JPEG/WebP envelope.
+2. **ML bech32 checksum validation** — DONE 2026-09-29:
+   `bech32VerifyChecksum` (src/utils/Helpers/ML/bech32.js) verifies the
+   BIP-350 bech32m checksum + HRP for every ML identifier type (addresses
+   incl. multisig HRPs, pool, delegation, order ids); the charset regexes
+   remain as fast pre-filters. Wired into all four `isMl*Valid` validators
+   (AddressField + send/delegation/swap flows). Mintlayer uses bech32m —
+   verified against real on-chain/SDK samples; BIP-173 rejects them all.
 3. **Bitcoin dApp HTLC signing is broken** — `SignBitcoinTransaction.js`
    destructures `{ WIF }` from `Account.unlockAccount()` which never returns
    WIF (always `undefined` → `ECPair.fromWIF` throws), and `submitCreate`

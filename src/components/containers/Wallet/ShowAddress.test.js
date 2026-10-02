@@ -11,7 +11,6 @@ Object.defineProperty(navigator, 'clipboard', {
 
 const _data = {
   address: '2MyEpfT2SxQjVRipzTEzxSRPyerpoENmAom',
-  onCopy: jest.fn(),
   linearQr: '10',
 }
 

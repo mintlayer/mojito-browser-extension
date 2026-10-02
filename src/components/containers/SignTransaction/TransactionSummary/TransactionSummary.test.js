@@ -71,7 +71,9 @@ describe('TransactionSummary', () => {
     expect(screen.getByText(truncated(OWN_RECEIVING))).toBeInTheDocument()
     expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
     expect(screen.getByText('25 ML')).toBeInTheDocument()
-    expect(screen.getByText('0.01 ML')).toBeInTheDocument()
+    // SECURITY: the fee is COMPUTED from the encoded sums (100 in − 25 out),
+    // never taken from the dApp-supplied `fee` field (which claims 0.01).
+    expect(screen.getByText('75 ML')).toBeInTheDocument()
     expect(screen.getByText('Mainnet')).toBeInTheDocument()
 
     // one copy button next to From, one next to To
@@ -104,9 +106,10 @@ describe('TransactionSummary', () => {
     expect(screen.getByText('Bridge transaction')).toBeInTheDocument()
     expect(screen.getByText('Bridge', { exact: true })).toBeInTheDocument()
 
-    // the intent row renders with the (bounded) intent and its own copy button
+    // SECURITY: the intent is signed raw — it must render IN FULL, never
+    // truncated, and it gets its own copy button
     expect(screen.getByText('Bridge intent')).toBeInTheDocument()
-    expect(screen.getByText(`${intent.slice(0, 64)}…`)).toBeInTheDocument()
+    expect(screen.getByText(intent)).toBeInTheDocument()
     expect(screen.getAllByTestId('copy-btn')).toHaveLength(3)
   })
 
@@ -150,5 +153,91 @@ describe('TransactionSummary', () => {
     })
 
     expect(screen.getByText('25 MLUSDC')).toBeInTheDocument()
+  })
+
+  it('shows amount and recipient for a self-transfer back to the wallet', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input_type: 'UTXO',
+            utxo: { destination: OWN_CHANGE, value: coin('100') },
+          },
+        ],
+        outputs: [
+          // the payment goes to a receiving address of this same wallet…
+          { type: 'Transfer', destination: OWN_RECEIVING, value: coin('25') },
+          // …while the change only returns the unspent remainder
+          {
+            type: 'Transfer',
+            destination: OWN_CHANGE,
+            value: coin('74.99'),
+          },
+        ],
+        fee: { decimal: '0.01' },
+      },
+    })
+
+    expect(screen.getByText('Send')).toBeInTheDocument()
+    expect(screen.getByText('To (your address)')).toBeInTheDocument()
+
+    // From and To are the same address here
+    const occurrences = screen.getAllByText(truncated(OWN_RECEIVING))
+    expect(occurrences).toHaveLength(2)
+
+    // the payment amount is visible, the change is not counted
+    expect(screen.getByText('25 ML')).toBeInTheDocument()
+    expect(screen.queryByText('74.99 ML')).not.toBeInTheDocument()
+    expect(screen.getByText('0.01 ML')).toBeInTheDocument()
+  })
+
+  it('sums multiple approved outputs per asset', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('100') },
+          },
+        ],
+        outputs: [
+          { type: 'Transfer', destination: DESTINATION, value: coin('25') },
+          {
+            type: 'Transfer',
+            destination: 'mtc1qsecondrecipient0abcdefgh',
+            value: coin('10'),
+          },
+        ],
+        fee: { decimal: '0.01' },
+      },
+    })
+
+    expect(screen.getByText('35 ML')).toBeInTheDocument()
+  })
+
+  it('does not claim a self-transfer when only change addresses receive', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('100') },
+          },
+        ],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: OWN_CHANGE,
+            value: coin('99.99'),
+          },
+        ],
+        fee: { decimal: '0.01' },
+      },
+    })
+
+    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
+    // no Amount row: the only output is change, not a payment
+    expect(screen.queryByText('Amount')).not.toBeInTheDocument()
   })
 })

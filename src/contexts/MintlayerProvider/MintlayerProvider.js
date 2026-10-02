@@ -387,7 +387,19 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
       const newTokenMap = {}
 
-      const allNetworkTokensData = await Mintlayer.getAllTokensData(networkType)
+      // Degraded, not fatal: balances/transactions above are already
+      // computed — a dex_tokens failure must only lose the ticker map (UI
+      // falls back to 'Token' labels, swap list empty), never zero the
+      // wallet display.
+      const allNetworkTokensData = await Mintlayer.getAllTokensData(
+        networkType,
+      ).catch((error) => {
+        console.error(
+          'getAllTokensData failed — continuing without the token map:',
+          error,
+        )
+        return []
+      })
       allNetworkTokensData.forEach((token) => {
         newTokenMap[token.token_id] = token.symbol || ''
       })

@@ -2,7 +2,6 @@ import * as Arc from './Arc/Arc'
 import Button from './Button/Button.tsx'
 import Input from './Input/Input.tsx'
 import InputInteger from './Input/InputInteger'
-import InputFloat from './Input/InputFloat'
 import InputBTC from './Input/InputBTC'
 import Line from './Line/Line'
 import Svg from './Svg/Svg'
@@ -46,7 +45,6 @@ export {
   Line,
   Svg,
   InputInteger,
-  InputFloat,
   InputBTC,
   Error,
   Toggle,

@@ -275,3 +275,13 @@
   left: 0;
   bottom: 0;
 }
+
+.successMessage {
+  position: absolute;
+  margin: 0;
+  font-size: 13px;
+  color: rgba(var(--color-main-green), 1);
+  font-weight: 600;
+  left: 0;
+  bottom: 0;
+}

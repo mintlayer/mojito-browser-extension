@@ -1,9 +1,47 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import TokenIcon from './TokenIcon'
 
-test.each(['BTC', 'ML'])('renders the real chain logo svg for %s', (symbol) => {
-  const { getByTestId } = render(<TokenIcon symbol={symbol} />)
-  expect(getByTestId('token-icon').querySelector('svg')).toBeInTheDocument()
+test.each(['BTC', 'ML'])(
+  'renders the real chain logo svg for native %s',
+  (symbol) => {
+    const { getByTestId } = render(
+      <TokenIcon
+        symbol={symbol}
+        native
+      />,
+    )
+    expect(getByTestId('token-icon').querySelector('svg')).toBeInTheDocument()
+  },
+)
+
+test.each(['BTC', 'ML'])(
+  'withholds the chain logo from a non-native %s ticker (spoof regression)',
+  (symbol) => {
+    // A token's ticker is issuer-chosen, so an attacker token tickeried
+    // "ML"/"BTC" must never borrow the official chain logo.
+    const { getByTestId } = render(<TokenIcon symbol={symbol} />)
+    expect(
+      getByTestId('token-icon').querySelector('svg'),
+    ).not.toBeInTheDocument()
+    // The generic procedural tile renders instead (first-letter fallback).
+    expect(getByTestId('token-icon')).toHaveTextContent(symbol[0])
+  },
+)
+
+test('renders the metadata icon of an ML-tickered token without native (spoof regression)', () => {
+  // Previously the ML logo short-circuit suppressed the token's own icon;
+  // tokens must always render their metadata icon when available.
+  const iconUri = 'https://x/icon.png'
+  const { getByTestId, queryByTestId } = render(
+    <TokenIcon
+      symbol="ML"
+      iconUri={iconUri}
+    />,
+  )
+  expect(
+    queryByTestId('token-icon').querySelector('svg'),
+  ).not.toBeInTheDocument()
+  expect(getByTestId('token-icon-image')).toBeInTheDocument()
 })
 
 test('renders with the symbol glyph for known non-chain tokens', () => {

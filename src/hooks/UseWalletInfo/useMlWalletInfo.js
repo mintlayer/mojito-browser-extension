@@ -1,7 +1,7 @@
 import { useContext } from 'react'
 import { MintlayerContext } from '@Contexts'
 
-const useMlWalletInfo = (addresses, token) => {
+const useMlWalletInfo = (token) => {
   const {
     balance,
     lockedBalance,
@@ -33,11 +33,23 @@ const useMlWalletInfo = (addresses, token) => {
 
     return {
       transactions: transactions.filter((tx) => tx.token_id === token),
+      mlDelegationList,
       balance: tokenBalance,
+      lockedBalance,
+      tokenBalances,
       utxos,
+      nftInitialUtxos,
+      nftData,
+      fetchAllData,
       unusedAddresses,
       feerate,
-      tokenBalances,
+      currentHeight,
+
+      fetchingBalances,
+      fetchingUtxos,
+      fetchingTransactions,
+      fetchingDelegations,
+      fetchingTokens,
     }
   }
 

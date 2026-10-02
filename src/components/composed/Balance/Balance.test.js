@@ -56,13 +56,17 @@ test('Render account balance with BTC', () => {
 })
 
 test('renders balance with zero value when networkType is testnet', () => {
-  renderBalance({
+  const { container } = renderBalance({
     networkType: 'testnet',
     walletType: { name: 'Bitcoin', ticker: 'btc' },
   })
 
   const balanceCard = screen.getByTestId('current-balance')
   expect(balanceCard).toBeInTheDocument()
-  expect(balanceCard).toHaveTextContent('BTC')
-  expect(balanceCard).toHaveTextContent(String(BALANCE_SAMPLE))
+
+  const ticker = screen.getByText('TBTC')
+  expect(ticker).toBeInTheDocument()
+
+  const fiatValue = container.querySelector('.balance-fiat')
+  expect(fiatValue).toHaveTextContent('$0')
 })

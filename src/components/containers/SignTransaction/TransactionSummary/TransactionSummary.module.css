@@ -59,6 +59,18 @@
   white-space: nowrap;
 }
 
+/* Full raw intent bytes: the wallet signs this data, so the user must be
+   able to read all of it (scrollable, never truncated). */
+.intentValueFull {
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 96px;
+  overflow-y: auto;
+  font-family: var(--be-font-mono);
+  text-align: right;
+  flex: 1;
+}
+
 .detailsToggle {
   align-self: flex-start;
   background: none;

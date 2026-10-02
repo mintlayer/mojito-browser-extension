@@ -141,7 +141,15 @@ const ConfirmBtcTransactionPage = () => {
         await fetchAllData(true)
       }
     } catch (e) {
-      if (e.address === '') {
+      // Account.unlockAccount rejects with a sentinel object (not an Error)
+      // when the password is wrong. Prefer an explicitly typed flag when the
+      // entity ever grows one, then fall back to the known rejection shapes.
+      const isWrongPassword =
+        e?.wrongPassword === true ||
+        e?.code === 'WRONG_PASSWORD' ||
+        e?.name === '' ||
+        e?.address === ''
+      if (isWrongPassword) {
         setTxErrorMessage('Incorrect password')
         setPassword('')
       } else if (typeof e === 'string' && e.includes('Invalid amount')) {
@@ -164,8 +172,13 @@ const ConfirmBtcTransactionPage = () => {
     setPassword(value)
   }
 
+  useEffect(() => {
+    if (!state) {
+      navigate('/dashboard')
+    }
+  }, [state, navigate])
+
   if (!state) {
-    navigate('/dashboard')
     return null
   }
 

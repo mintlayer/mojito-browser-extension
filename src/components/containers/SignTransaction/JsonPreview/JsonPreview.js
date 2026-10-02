@@ -1,9 +1,11 @@
+import { boundedStringify } from '../TransactionBreakdown/TransactionBreakdown'
+
 import './JsonPreview.css'
 
 const JsonPreview = ({ data }) => {
   return (
     <div className="transactionRawWrapper">
-      {JSON.stringify(data?.request?.data?.txData?.JSONRepresentation, null, 2)}
+      {boundedStringify(data?.request?.data?.txData?.JSONRepresentation)}
     </div>
   )
 }

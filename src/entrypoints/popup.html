@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link
+      rel="icon"
+      href="/favicon.ico"
+    />
+    <meta
+      name="description"
+      content="Mojito - A Mintlayer Wallet"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="/logo192.png"
+    />
+    <title>Mojito - A Mintlayer Wallet</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!-- Same app as index.html: the approval-window fallback opens this page
+         (background opens runtime.getURL('popup.html')) and the wallet UI
+         reads its per-window pending request and shows the approval. -->
+    <script
+      type="module"
+      src="./sidepanel/main.jsx"
+    ></script>
+  </body>
+</html>

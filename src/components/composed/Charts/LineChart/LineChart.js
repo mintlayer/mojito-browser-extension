@@ -34,7 +34,7 @@ const LineChart = ({
   lineColor,
   lineWidth,
   points = POINTSSAMPLE,
-  height,
+  height = '100px',
   width = '100px',
 }) => {
   const size = useMemo(

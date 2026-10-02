@@ -14,8 +14,9 @@ const HelpTooltip = ({ message, link }) => {
     <div className="link-wrapper">
       {link ? (
         <a
-          href={link ? link : ''}
+          href={link}
           target="_blank"
+          rel="noopener noreferrer"
           className="help-link"
           onMouseEnter={toggleTooltip}
           onMouseLeave={toggleTooltip}

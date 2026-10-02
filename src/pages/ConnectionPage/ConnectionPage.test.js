@@ -100,22 +100,23 @@ describe('ConnectionPage', () => {
     expect(
       payload.result.addressesByChain.mintlayer.publicKeys.receiving,
     ).toEqual([])
-    expect(payload.result.addressesByChain.mintlayer.publicKeys.change).toEqual(
-      [],
-    )
+    // SECURITY: change addresses/pubkeys are no longer part of a grant.
+    expect(
+      payload.result.addressesByChain.mintlayer.publicKeys,
+    ).not.toHaveProperty('change')
 
     // Old store kept plain strings for BTC addresses; addresses are passed,
     // public keys are simply omitted (empty) instead of crashing.
     expect(payload.result.addressesByChain.bitcoin.receiving).toEqual([
       'bc1qold',
     ])
-    expect(payload.result.addressesByChain.bitcoin.change).toEqual([])
+    expect(payload.result.addressesByChain.bitcoin).not.toHaveProperty('change')
     expect(
       payload.result.addressesByChain.bitcoin.publicKeys.receiving,
     ).toEqual([])
-    expect(payload.result.addressesByChain.bitcoin.publicKeys.change).toEqual(
-      [],
-    )
+    expect(
+      payload.result.addressesByChain.bitcoin.publicKeys,
+    ).not.toHaveProperty('change')
   })
 
   it('connects with the new-store shape (object BTC entries and public keys)', () => {
@@ -141,19 +142,20 @@ describe('ConnectionPage', () => {
     expect(
       payload.result.addressesByChain.mintlayer.publicKeys.receiving,
     ).toEqual(['02', '04'])
-    expect(payload.result.addressesByChain.mintlayer.publicKeys.change).toEqual(
-      ['06'],
-    )
+    // SECURITY: change addresses/pubkeys are no longer part of a grant.
+    expect(
+      payload.result.addressesByChain.mintlayer.publicKeys,
+    ).not.toHaveProperty('change')
     expect(payload.result.addressesByChain.bitcoin.receiving).toEqual([
       'bc1qnew',
     ])
-    expect(payload.result.addressesByChain.bitcoin.change).toEqual(['bc1qnewc'])
+    expect(payload.result.addressesByChain.bitcoin).not.toHaveProperty('change')
     expect(
       payload.result.addressesByChain.bitcoin.publicKeys.receiving,
     ).toEqual(['02'])
-    expect(payload.result.addressesByChain.bitcoin.publicKeys.change).toEqual([
-      '04',
-    ])
+    expect(
+      payload.result.addressesByChain.bitcoin.publicKeys,
+    ).not.toHaveProperty('change')
   })
 
   it('omits the bitcoin block when the site never asked for the bitcoin permission', () => {

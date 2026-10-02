@@ -28,10 +28,7 @@ const AddressField = ({
 
   if (walletType.chain === 'bitcoin') {
     networkLabel = 'Bitcoin network'
-    placeholder =
-      networkType === AppInfo.NETWORK_TYPES.MAINNET
-        ? 'bc1q...  or  tb1q...'
-        : 'bc1q...  or  tb1q...'
+    placeholder = 'bc1q...  or  tb1q...'
     addressErrorMessage = 'This is not a valid BTC address.'
     validity = (val) => validate(val, 'btc', networkType)
   }
@@ -72,19 +69,16 @@ const AddressField = ({
 
   const changeHandle = (ev) => {
     setValue(ev.target.value)
-    setIsValid(validity(ev.target.value))
-    setAddressValidity(validity(ev.target.value))
-    if (!validity(ev.target.value)) {
-      setMessage(addressErrorMessage)
-    } else {
-      setMessage(undefined)
-    }
+    const isValueValid = validity(ev.target.value)
+    setIsValid(isValueValid)
+    setAddressValidity(isValueValid)
+    setMessage(isValueValid ? undefined : addressErrorMessage)
     addressChanged && addressChanged(ev)
   }
   useEffect(() => {
     preEnterAddress && changeHandle({ target: { value: preEnterAddress } })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [preEnterAddress])
 
   useEffect(() => {
     setMessage(errorMessage)

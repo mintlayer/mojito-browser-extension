@@ -350,7 +350,7 @@ describe('OrderDetails', () => {
     expect(
       screen.getByText(ML.formatAddress(mockTokenOrder.order_id, 36)),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Exchage rate:.*1 TKN ≈ 2 ML/)).toBeInTheDocument()
+    expect(screen.getByText(/Exchange rate:.*1 TKN ≈ 2 ML/)).toBeInTheDocument()
   })
 
   it('renders coin order correctly', () => {
@@ -366,16 +366,35 @@ describe('OrderDetails', () => {
     expect(screen.getByPlaceholderText('TKN amount')).toBeInTheDocument()
   })
 
-  it('validates amount input correctly', () => {
+  it('validates amount input correctly', async () => {
     renderWithContext(mockTokenOrder)
 
     const input = screen.getByRole('textbox')
 
+    // valid amount within both wallet and order balances
     fireEvent.change(input, { target: { value: '50' } })
     expect(input).toHaveValue('50')
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Insufficient wallet balance.'),
+      ).not.toBeInTheDocument()
+    })
 
+    // amount over the wallet balance (500) -> error outcome
+    fireEvent.change(input, { target: { value: '600' } })
+    await waitFor(() => {
+      expect(
+        screen.getByText('Insufficient wallet balance.'),
+      ).toBeInTheDocument()
+    })
+
+    // amount over the order balance (100.5) but under wallet balance -> error outcome
     fireEvent.change(input, { target: { value: '150' } })
-    expect(input).toHaveValue('150')
+    await waitFor(() => {
+      expect(
+        screen.getByText('Amount exceeds available order balance.'),
+      ).toBeInTheDocument()
+    })
   })
 
   it('calls fillOrder with correct parameters', async () => {
