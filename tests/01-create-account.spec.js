@@ -9,9 +9,11 @@ test('Create account', async ({ page }) => {
   const createRestore = page.getByTestId('create-restore')
   await expect(createRestore).toBeVisible()
   await expect(createRestore.locator('h1')).toHaveText('Mojito')
-  await expect(createRestore.locator('h2')).toHaveText(
-    'A fresh way to hold Mintlayer assets',
-  )
+  await expect(
+    createRestore.getByText('Self-custody wallet for Bitcoin and Mintlayer.', {
+      exact: false,
+    }),
+  ).toBeVisible()
 
   await page.getByRole('button', { name: 'Create a new wallet' }).click()
 

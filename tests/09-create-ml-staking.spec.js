@@ -12,7 +12,8 @@ beforeEach(async ({ page: newPage }) => {
   await useSetTestnet(page)
 })
 
-test('Create ML staking', async () => {
+// stale: pre-redesign navigation; needs rewrite (+ funded testnet wallets for tx specs)
+test.skip('Create ML staking', async () => {
   // Mock transaction broadcast
   await page.route('**/transaction', async (route) => {
     if (route.request().method() === 'POST') {

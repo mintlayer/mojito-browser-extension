@@ -5,7 +5,9 @@ export const useRestoreWallet = async (page, walletType) => {
   const wallet = walletType === 'sender' ? senderData : receiverData
   const walletName = wallet.WALLET_NAME
   await page.goto('http://127.0.0.1:8000')
-  await page.getByText('Import existing wallet').click()
+  await page
+    .getByRole('button', { name: 'I already have a recovery phrase' })
+    .click()
   await page.getByText('Seed Phrase').click()
   await page.fill('input[placeholder="Wallet Name"]', wallet.WALLET_NAME)
   await page.getByRole('button', { name: 'Continue' }).click()

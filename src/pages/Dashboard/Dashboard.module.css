@@ -231,3 +231,39 @@
 .addRow:hover {
   background: oklch(1 0 0 / 0.03);
 }
+
+/* ── Send chain chooser ───────────────────────────────────────────────── */
+.sendChainOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 8px;
+}
+
+.sendChainOption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.sendChainOption:hover {
+  border-color: var(--be-amber);
+}
+
+.sendChainName {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--be-text-0);
+}
+
+.sendChainHint {
+  font-size: 10px;
+  color: var(--be-text-2);
+}

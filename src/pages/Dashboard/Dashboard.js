@@ -2,7 +2,7 @@
 import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 
-import { PopUp, AddWallet, TxRow, AssetRow } from '@ComposedComponents'
+import { BeSheet, PopUp, AddWallet, TxRow, AssetRow } from '@ComposedComponents'
 import { Wallet } from '@ContainerComponents'
 import { AccountContext, MintlayerContext, SettingsContext } from '@Contexts'
 import { Account as AccountEntity } from '@Entities'
@@ -38,6 +38,9 @@ const DashboardPage = () => {
   const { networkType } = useContext(SettingsContext)
 
   const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
+  // REVIEW-PLAN #10: the Send quick action no longer hardcodes the ML flow —
+  // it opens a chain chooser (Bitcoin send uses its own BTC flow).
+  const [sendChainSheetOpen, setSendChainSheetOpen] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)
   const [account, setAccount] = useState(null)
   const [hideBalance, setHideBalance] = useState(false)
@@ -410,7 +413,8 @@ const DashboardPage = () => {
           {/* Quick actions */}
           <div className={styles.quickActions}>
             <button
-              onClick={() => navigate('/wallet/Mintlayer/send-ml-transaction')}
+              onClick={() => setSendChainSheetOpen(true)}
+              data-testid="quick-send"
             >
               <Icon
                 name="arrow_up"
@@ -550,6 +554,34 @@ const DashboardPage = () => {
           </PopUp>
         )}
       </div>
+      <BeSheet
+        open={sendChainSheetOpen}
+        onClose={() => setSendChainSheetOpen(false)}
+        title="Send"
+      >
+        <div className={styles.sendChainOptions}>
+          <button
+            className={styles.sendChainOption}
+            onClick={() => {
+              setSendChainSheetOpen(false)
+              navigate('/wallet/Mintlayer/send-ml-transaction')
+            }}
+          >
+            <span className={styles.sendChainName}>Mintlayer</span>
+            <span className={styles.sendChainHint}>ML and tokens</span>
+          </button>
+          <button
+            className={styles.sendChainOption}
+            onClick={() => {
+              setSendChainSheetOpen(false)
+              navigate('/wallet/Bitcoin/send-btc-transaction')
+            }}
+          >
+            <span className={styles.sendChainName}>Bitcoin</span>
+            <span className={styles.sendChainHint}>BTC</span>
+          </button>
+        </div>
+      </BeSheet>
     </PageWrapper>
   )
 }

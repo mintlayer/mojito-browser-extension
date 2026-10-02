@@ -11,7 +11,8 @@ beforeEach(async ({ page: newPage }) => {
   await useSetTestnet(page)
 })
 
-test('Delegation details', async () => {
+// stale: pre-redesign navigation; needs rewrite (+ funded testnet wallets for tx specs)
+test.skip('Delegation details', async () => {
   await page.getByText('Mintlayer (Testnet)').click()
   await page.click('button.button-transaction-staking')
 

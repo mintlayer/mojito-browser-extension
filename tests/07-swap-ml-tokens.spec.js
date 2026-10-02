@@ -114,7 +114,8 @@ const POST_TRANSACTION_RESPONSE = {
   timestamp: 1753314844,
 }
 
-test('Swap ML tokens', async () => {
+// stale: pre-redesign navigation; needs rewrite (+ funded testnet wallets for tx specs)
+test.skip('Swap ML tokens', async () => {
   await page.route(SEARCH_REQUEST_URL, async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({

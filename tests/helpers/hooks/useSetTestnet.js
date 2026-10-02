@@ -7,10 +7,8 @@ export const useSetTestnet = async (page) => {
   await page.getByRole('button', { name: 'Testnet' }).click()
   await useLogin(page)
 
-  await expect(page.getByText('Mintlayer (Testnet)')).toBeVisible({
+  await expect(page.getByText('Mintlayer (ML)', { exact: true })).toBeVisible({
     timeout: 30000,
   })
-  await expect(page.getByText('Bitcoin (Testnet)')).toBeVisible({
-    timeout: 30000,
-  })
+  await expect(page.getByText('Bitcoin (BTC)', { exact: true })).toBeVisible()
 }

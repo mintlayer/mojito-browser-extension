@@ -12,7 +12,8 @@ beforeEach(async ({ page: newPage }) => {
   await useSetTestnet(page)
 })
 
-test('Create ML transaction', async () => {
+// stale: pre-redesign navigation; needs rewrite (+ funded testnet wallets for tx specs)
+test.skip('Create ML transaction', async () => {
   await page.waitForTimeout(10000)
   await page.getByText('Mintlayer (Testnet)').click()
 

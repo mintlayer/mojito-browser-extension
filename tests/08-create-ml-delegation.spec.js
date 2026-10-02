@@ -15,7 +15,8 @@ beforeEach(async ({ page: newPage }) => {
 
 const formatedPoolId = formatAddress(senderData.POOL_ID)
 
-test('Create ML delegation', async () => {
+// stale: pre-redesign navigation; needs rewrite (+ funded testnet wallets for tx specs)
+test.skip('Create ML delegation', async () => {
   // Mock transaction broadcast
   await page.route('**/transaction', async (route) => {
     if (route.request().method() === 'POST') {

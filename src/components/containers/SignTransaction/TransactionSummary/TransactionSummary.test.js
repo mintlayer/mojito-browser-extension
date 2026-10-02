@@ -98,6 +98,25 @@ describe('TransactionSummary', () => {
     expect(screen.queryByTestId('technical-details')).not.toBeInTheDocument()
   })
 
+  it('falls back to the declared fee when amounts are unparseable (no crash)', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('not-a-number') },
+          },
+        ],
+        outputs: [
+          { type: 'Transfer', destination: DESTINATION, value: coin('25') },
+        ],
+        fee: { decimal: '0.01' },
+      },
+    })
+
+    expect(screen.getByText('0.01 ML')).toBeInTheDocument()
+  })
+
   it('labels a transaction with an intent as a bridge request', () => {
     const intent =
       'bridge::ml-to-mintlayer::destination-9876543210abcdefghijklmnopqrstuvwxyz'
