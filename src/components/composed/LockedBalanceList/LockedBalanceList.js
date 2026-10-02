@@ -54,13 +54,11 @@ const LockedBalanceList = () => {
 
       if (utxo.utxo.lock.type === 'UntilTime') {
         const timestamp = utxo.utxo.lock.content
-        const progress = 0.5
 
         return {
           ...utxo,
           computed: {
             timestamp,
-            progress,
           },
         }
       }

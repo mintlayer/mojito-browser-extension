@@ -30,7 +30,7 @@ jest.mock('@Hooks', () => {
         { direction: 'in', date: 1700000000, value: 1000, txid: 'h1' },
       ],
     }),
-    useMlWalletInfo: (_addresses, token) => {
+    useMlWalletInfo: (token) => {
       const nativecoins = ['Mintlayer', 'Bitcoin']
       if (token && !nativecoins.includes(token)) {
         return {

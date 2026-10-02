@@ -25,7 +25,7 @@ const TransactionsList = ({ transactionsList, getConfirmations }) => {
 
     return transactionsList.map((transaction, index) => (
       <Transaction
-        key={index}
+        key={transaction.txid || index}
         transaction={transaction}
         getConfirmations={getConfirmations}
       />

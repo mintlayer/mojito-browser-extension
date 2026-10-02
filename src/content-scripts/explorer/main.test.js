@@ -316,4 +316,63 @@ describe('session revocation relay', () => {
 
     expect(disconnects).toHaveLength(0)
   })
+
+  it('caps concurrent pending requests: the 11th gets TOO_MANY_REQUESTS', async () => {
+    setup({
+      sendMessageImpl: (_message, callback) => {
+        // never answer: requests stay pending
+      },
+    })
+
+    const responses = []
+    const collect = (id) => {
+      const p = new Promise((resolve) => {
+        const listener = (event) => {
+          if (
+            event.data?.type === 'MINTLAYER_RESPONSE' &&
+            event.data.requestId === id
+          ) {
+            window.removeEventListener('message', listener)
+            resolve(event.data)
+          }
+        }
+        window.addEventListener('message', listener)
+      })
+      responses.push(p)
+    }
+
+    // 10 requests fit under the cap and are all relayed to the background
+    for (let i = 0; i < 10; i += 1) {
+      collect(`slot-${i}`)
+      window.postMessage(
+        {
+          type: 'MINTLAYER_REQUEST',
+          requestId: `slot-${i}`,
+          method: 'checkConnection',
+        },
+        '*',
+      )
+    }
+    // window message events are macrotasks: let them dispatch
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    // 10 relayed + the load-time getSession probe
+    expect(sendMessageCalls).toHaveLength(11)
+
+    // the 11th is answered immediately with a structured error
+    const eleventh = nextMessage()
+    window.postMessage(
+      {
+        type: 'MINTLAYER_REQUEST',
+        requestId: 'over-the-cap',
+        method: 'checkConnection',
+      },
+      '*',
+    )
+    await expect(eleventh).resolves.toMatchObject({
+      requestId: 'over-the-cap',
+      error: { code: 'TOO_MANY_REQUESTS' },
+    })
+    // the rejected request never hit the background
+    expect(sendMessageCalls).toHaveLength(11)
+  })
 })

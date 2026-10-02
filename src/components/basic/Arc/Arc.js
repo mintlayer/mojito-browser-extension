@@ -1,11 +1,10 @@
-import * as d3 from 'd3'
+import { arc, pie, select } from 'd3'
 
 const createArcGenerator = () =>
-  d3.arc().innerRadius(96).outerRadius(100).cornerRadius(3)
+  arc().innerRadius(96).outerRadius(100).cornerRadius(3)
 
 const createPieGenerator = () =>
-  d3
-    .pie()
+  pie()
     .startAngle(-0.5 * Math.PI)
     .endAngle(0.5 * Math.PI)
     .value((item) => item.value)
@@ -13,10 +12,11 @@ const createPieGenerator = () =>
     .sort((a, b) => b.value - a.value)
 
 const buildArc = ({ container, pathData, arcGenerator }) => {
-  d3.select(container)
-    .selectAll('path')
+  select(container)
+    .selectAll('path.arc-segment')
     .data(pathData)
     .join('path')
+    .attr('class', 'arc-segment')
     .attr('d', arcGenerator)
     .attr('stroke', 'none')
     .attr('fill', (item) => item.data.color)

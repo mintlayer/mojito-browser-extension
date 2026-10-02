@@ -3,6 +3,7 @@ import { useState, useContext, useEffect } from 'react'
 import { Loading, TextField } from '@ComposedComponents'
 import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
+import { AppInfo } from '@Constants'
 import { ML as MlHelpers } from '@Helpers'
 import { useFillOrder } from '@Hooks'
 import { AccountContext, SettingsContext } from '@Contexts'
@@ -46,12 +47,6 @@ const ManualSwap = () => {
       return
     }
     setTxErrorMessage(null)
-    // isFormValid && client.createOrder({ conclude_destination: 'tmt1qxskh99uvaa8agqpdjt5psuq94fl5n6lg5dcd639', ask_token: 'tmltk1aa3vvztufv5m054klp960p6f6pf59ugxp394x7n42v0clgwhrw3q3mpcq3', ask_amount: 5, give_token: 'Coin', give_amount: 5 })
-    // isFormValid &&
-    //   client.transfer({
-    //     to: destinationAddress,
-    //     amount: amount,
-    //   })
     try {
       setLoading(true)
       if (isFormValid) {
@@ -63,21 +58,16 @@ const ManualSwap = () => {
       }
     } catch (error) {
       if (error?.message?.includes('Not enough token UTXOs')) {
-        setTxErrorMessage('Token blance is not enough to fill the order')
+        setTxErrorMessage('Token balance is not enough to fill the order')
         return
       }
 
-      if (error?.message?.includes('Failed to fetch order')) {
+      if (error?.message?.includes('Could not fetch order')) {
         setTxErrorMessage('Order not found or invalid order ID')
         return
       }
 
       if (error?.message?.includes('Invalid addressable')) {
-        setTxErrorMessage('Invalid destination address')
-        return
-      }
-
-      if (error.includes('Invalid addressable')) {
         setTxErrorMessage('Invalid destination address')
         return
       }
@@ -98,7 +88,8 @@ const ManualSwap = () => {
   }
 
   const amountChangeHandler = (value) => {
-    const isValid = value && !isNaN(value) && parseFloat(value) > 0
+    const isValid =
+      Boolean(value) && AppInfo.amountRegex.test(value) && parseFloat(value) > 0
     setAmountValidity(isValid)
     setAmount(value)
   }
@@ -112,9 +103,9 @@ const ManualSwap = () => {
   useEffect(() => {
     const isValid =
       orderIdValidity && amountValidity && destinationAddressValidity
+    setIsFormValid(isValid)
     if (isValid) {
       setTxErrorMessage(null)
-      setIsFormValid(isValid)
     }
   }, [orderIdValidity, amountValidity, destinationAddressValidity])
 

@@ -36,7 +36,8 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
     onClick && onClick(accounts[index])
   }
 
-  const handleDelete = (index) => {
+  const handleDelete = (event, index) => {
+    event.stopPropagation()
     setRemoveAccountPopupOpen(true)
     setDeletingAccount(accounts[index])
   }
@@ -84,7 +85,7 @@ const Carousel = ({ accounts = [], onClick, onPrevious, onNext }) => {
             >
               <button
                 className="delete-button"
-                onClick={() => handleDelete(index)}
+                onClick={(event) => handleDelete(event, index)}
               >
                 <IconClose className="icon-delete-button" />
               </button>

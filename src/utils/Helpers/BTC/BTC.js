@@ -21,6 +21,10 @@ const parseFeesEstimates = (allEstimates) => {
     .map(Number)
     .sort((a, b) => a - b)
 
+  // An empty/failed estimates object would otherwise produce undefined
+  // levels and Math.ceil(undefined) = NaN downstream.
+  if (availableKeys.length === 0) return {}
+
   const sortedLevels = Object.entries(blockLevels).sort(
     ([a], [b]) => Number(a) - Number(b),
   )
@@ -53,8 +57,7 @@ const calculateBalanceFromUtxoList = (list) => {
 }
 
 const getConfirmationsAmount = async (transaction) => {
-  if (!transaction)
-    return new Promise.reject('No transaction to check confirmations.')
+  if (!transaction) throw new Error('No transaction to check confirmations.')
   if (!transaction.blockHeight) return Promise.resolve(0)
 
   const lastBlockHeight = await Electrum.getLastBlockHeight()
@@ -203,25 +206,26 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
     total: totalYesterdayBalance,
   }
 
-  // null = "not computable" (yesterday rate unavailable) — consumers must
-  // treat null as "show nothing", never as 0.
+  // null = "not computable" (yesterday rate unavailable or yesterday
+  // balance zero) — consumers must treat null as "show nothing", never
+  // as 0. A 0 yesterday balance would otherwise divide by `|| 1` and
+  // render real gains as absurd percents.
+  const toProportion = (current, yesterday) =>
+    yesterday > 0
+      ? new Decimal(current || 0).div(new Decimal(yesterday)).toNumber()
+      : null
+
   const proportionDiffs = {
     btc: btcRateMissing
       ? null
-      : new Decimal(currentBalances.btc || 0)
-          .div(new Decimal(yesterdayBalances.btc || 1))
-          .toNumber(),
+      : toProportion(currentBalances.btc, btcYesterdayBalance),
     ml: mlRateMissing
       ? null
-      : new Decimal(currentBalances.ml || 0)
-          .div(new Decimal(yesterdayBalances.ml || 1))
-          .toNumber(),
+      : toProportion(currentBalances.ml, mlYesterdayBalance),
     total:
       btcRateMissing || mlRateMissing
         ? null
-        : new Decimal(currentBalances.total || 0)
-            .div(new Decimal(yesterdayBalances.total || 1))
-            .toNumber(),
+        : toProportion(currentBalances.total, yesterdayBalances.total),
   }
 
   const balanceDiffs = {
@@ -285,12 +289,12 @@ const combineTotalBalances = (balancesResult, tokenFiatTotal) => {
   const combinedYesterdayTotal =
     (yesterdayBalances?.total || 0) + tokenFiatTotal
   const combinedProportionDiffs =
-    proportionDiffs.total == null
-      ? proportionDiffs
+    proportionDiffs.total == null || !(combinedYesterdayTotal > 0)
+      ? { ...proportionDiffs, total: null }
       : {
           ...proportionDiffs,
           total: new Decimal(totalBalance || 0)
-            .div(new Decimal(combinedYesterdayTotal || 1))
+            .div(new Decimal(combinedYesterdayTotal))
             .toNumber(),
         }
 
@@ -355,13 +359,6 @@ const checkFee = (psbt, fee, maxFee, maxFeeRate) => {
       return false
     }
 
-    console.log(
-      'Fee looks safe:',
-      feeDec.toString(),
-      'sats ~',
-      feeRate.toFixed(2),
-      'sat/vB',
-    )
     return true
   } catch (err) {
     console.error('checkFee error:', err.message)
@@ -392,7 +389,8 @@ const getBtcTransactionLink = (txId, networkType) => {
 }
 
 const getBtcAddresses = (addresses) => {
-  if (!addresses || addresses.length === 0) return []
+  if (!addresses?.btcReceivingAddresses || !addresses?.btcChangeAddresses)
+    return { btcReceivingAddresses: [], btcChangeAddresses: [] }
   const btcReceivingAddresses = addresses.btcReceivingAddresses.map((item) => ({
     [item.address]: { pubkey: item.pubkey },
   }))

@@ -23,11 +23,12 @@ const FeeField = ({
   changeValueHandle,
   setFeeValidity,
 }) => {
-  const effectCalled = useRef(false)
+  const fetchingRef = useRef(false)
   const [options, setOptions] = useState([])
   const [estimatedFees, setEstimatedFees] = useState({})
   const [selectedKey, setSelectedKey] = useState('norm')
   const [inputValue, setInputValue] = useState(0)
+  const [feesError, setFeesError] = useState(false)
 
   const blocksToConfirm = useCallback(
     (value) => {
@@ -47,17 +48,16 @@ const FeeField = ({
         return
       }
 
-      setFeeValidity(Number(value) && value.toString())
+      setFeeValidity(true)
       setInputValue(Math.ceil(value))
     },
     [setFeeValidity],
   )
 
-  useEffect(() => {
-    if (effectCalled.current) return
-    effectCalled.current = true
-
-    const populateOptions = async () => {
+  const populateOptions = useCallback(async () => {
+    if (fetchingRef.current) return
+    fetchingRef.current = true
+    try {
       const btcFees = await Electrum.getFeesEstimates()
       const estimates = JSON.parse(btcFees)
       setEstimatedFees(estimates)
@@ -68,10 +68,18 @@ const FeeField = ({
         { key: 'norm', value: parsedFees.MEDIUM },
         { key: 'high', value: parsedFees.HIGH },
       ])
+      setFeesError(false)
+    } catch (error) {
+      console.error('Error fetching fee estimates:', error)
+      setFeesError(true)
+    } finally {
+      fetchingRef.current = false
     }
-
-    populateOptions()
   }, [])
+
+  useEffect(() => {
+    populateOptions()
+  }, [populateOptions])
 
   const parentValueRef = useRef(parentValue)
   parentValueRef.current = parentValue
@@ -96,6 +104,10 @@ const FeeField = ({
   }, [inputValue, changeValueHandle])
 
   const handleSelect = (tier) => {
+    if (feesError) {
+      populateOptions()
+      return
+    }
     setSelectedKey(tier.key)
     const option = options.find((o) => o.key === tier.key)
     if (option) changeInputValue(option.value)
@@ -110,8 +122,9 @@ const FeeField = ({
         const option = options.find((o) => o.key === tier.key)
         const isSelected = selectedKey === tier.key
         const blocks = option ? blocksToConfirm(option.value) : null
-        const time =
-          blocks != null
+        const time = feesError
+          ? '—'
+          : blocks != null
             ? formatTime(blocks * BTC.AVERAGE_MIN_PER_BLOCK)
             : '...'
         return (
@@ -128,7 +141,11 @@ const FeeField = ({
             </span>
             <span className={styles.tierTime}>{time}</span>
             <span className={styles.tierFee}>
-              {option ? `${option.value} sat/B` : '...'}
+              {feesError
+                ? 'Fee estimates unavailable — click to retry'
+                : option
+                  ? `${option.value} sat/B`
+                  : '...'}
             </span>
           </button>
         )

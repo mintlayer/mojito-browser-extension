@@ -289,3 +289,198 @@ describe('abort handling', () => {
     expect(warnSpy.mock.calls[0][0]).toContain('request failed')
   })
 })
+
+describe('getAllTokensData / batchRequestMintlayer regression', () => {
+  const { getAllTokensData, batchRequestMintlayer } = require('./Mintlayer.js')
+  const { EnvVars } = require('@Constants')
+
+  // setupTests.js installs a default global fetch mock — restore it after
+  // each test so its global beforeEach (fetch.mockClear) keeps working.
+  const defaultFetch = global.fetch
+
+  const originOf = (server) => new URL(server).origin
+
+  let errorSpy
+  let warnSpy
+
+  beforeEach(() => {
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+    global.fetch = defaultFetch
+    // leave the suite-wide 'testnet' default in place
+    LocalStorageService.setItem('networkType', 'testnet')
+  })
+
+  test("getAllTokensData('testnet') requests the proxy ROOT with network=1 and returns the parsed json", async () => {
+    expect(EnvVars.TESTNET_MINTLAYER_SERVERS.length).toBeGreaterThan(0)
+    const mockedJson = { token1: { symbol: 'T1', decimals: 11 } }
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue({ ok: true, json: async () => mockedJson })
+
+    await expect(getAllTokensData('testnet')).resolves.toEqual(mockedJson)
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchSpy.mock.calls[0]
+    expect(url).toBe(
+      `${originOf(EnvVars.TESTNET_MINTLAYER_SERVERS[0])}/batch/dex_tokens?network=1`,
+    )
+    expect(init.signal).toBeDefined()
+  })
+
+  test("getAllTokensData('mainnet') requests the proxy ROOT with network=0", async () => {
+    expect(EnvVars.MAINNET_MINTLAYER_SERVERS.length).toBeGreaterThan(0)
+    const mockedJson = []
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue({ ok: true, json: async () => mockedJson })
+
+    await expect(getAllTokensData('mainnet')).resolves.toEqual(mockedJson)
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      `${originOf(EnvVars.MAINNET_MINTLAYER_SERVERS[0])}/batch/dex_tokens?network=0`,
+    )
+  })
+
+  test('getAllTokensData rejects with the dedicated error when the response is not ok', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({ ok: false, status: 404 })
+
+    await expect(getAllTokensData('testnet')).rejects.toThrow(
+      'Failed to fetch all tokens data',
+    )
+    expect(errorSpy).toHaveBeenCalled()
+  })
+
+  test('getAllTokensData root-origin contract: no /mintlayer/ path segment even when the server path has one', async () => {
+    const server = EnvVars.TESTNET_MINTLAYER_SERVERS[0]
+    // Precondition: the configured server carries the network-prefixed path
+    // (/mintlayer/<network>/) that 404s for dex_tokens — the request must
+    // derive the origin instead of reusing that path.
+    expect(new URL(server).pathname).toContain('/mintlayer/')
+
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue({ ok: true, json: async () => ({}) })
+
+    await getAllTokensData('testnet')
+
+    const requested = new URL(fetchSpy.mock.calls[0][0])
+    expect(requested.pathname).toBe('/batch/dex_tokens')
+    expect(requested.pathname).not.toContain('/mintlayer/')
+    expect(requested.origin).toBe(originOf(server))
+    expect(requested.search).toBe('?network=1')
+  })
+
+  test('batchRequestMintlayer keeps URL and body network consistent when networkType is absent or null', async () => {
+    const responseText = JSON.stringify({ results: [[{ id: 'r1' }]] })
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue({ ok: true, text: async () => responseText })
+
+    const ids = ['id1', 'id2']
+    const type = 'Transfer'
+
+    // absent networkType
+    window.localStorage.removeItem('networkType')
+    await expect(batchRequestMintlayer({ ids, type })).resolves.toEqual([
+      { id: 'r1' },
+    ])
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchSpy.mock.calls[0]
+    // URL: the mainnet server
+    expect(url).toBe(`${EnvVars.MAINNET_MINTLAYER_SERVERS[0]}/batch`)
+    // body: network selector 0 — must agree with the URL's network
+    const body = JSON.parse(init.body)
+    expect(body.network).toBe(0)
+    expect(body.ids).toEqual(ids)
+    expect(body.type).toBe(type)
+
+    // explicit null behaves exactly like absent
+    window.localStorage.setItem('networkType', null)
+    fetchSpy.mockClear()
+    await batchRequestMintlayer({ ids, type })
+    const [urlNull, initNull] = fetchSpy.mock.calls[0]
+    expect(urlNull).toBe(`${EnvVars.MAINNET_MINTLAYER_SERVERS[0]}/batch`)
+    expect(JSON.parse(initNull.body).network).toBe(0)
+  })
+})
+
+describe('resolveNftImage', () => {
+  const { resolveNftImage } = require('./Mintlayer.js')
+
+  const okImage = () => ({
+    ok: true,
+    headers: { get: () => 'image/png' },
+    blob: async () => ({ size: 1024, type: 'image/png' }),
+  })
+
+  beforeAll(() => {
+    global.URL.createObjectURL = jest.fn(() => 'blob:mock-nft-image')
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it('resolves through the explorer proxy first and never touches public gateways', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (url) => {
+        if (String(url).includes('/api/ipfs-media/')) return okImage()
+        throw new Error(`unexpected url ${url}`)
+      })
+
+    const url = await resolveNftImage('ipfs://bafyicon/icon.png', 'testnet')
+
+    expect(url).toBe('blob:mock-nft-image')
+    const [proxyUrl] = fetchSpy.mock.calls[0]
+    expect(proxyUrl).toBe(
+      'https://lovelace.explorer.mintlayer.org/api/ipfs-media/bafyicon/icon.png',
+    )
+  })
+
+  it('falls back to the public gateway race when the proxy fails', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (url) => {
+        if (String(url).includes('/api/ipfs-media/')) {
+          return { ok: false, status: 404 }
+        }
+        // gateway race candidates answer with image bytes
+        return okImage()
+      })
+
+    const url = await resolveNftImage('ipfs://bafyfallback/pic.jpg', 'mainnet')
+
+    expect(url).toBe('blob:mock-nft-image')
+    // the proxy + the 3 raced public gateways
+    expect(fetchSpy).toHaveBeenCalledTimes(4)
+  })
+
+  it('returns null for non-ipfs uris without fetching anything', async () => {
+    const fetchSpy = jest.spyOn(global, 'fetch')
+
+    await expect(
+      resolveNftImage('https://evil.example/image.png', 'mainnet'),
+    ).resolves.toBeNull()
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('caches results — the second call does not refetch', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async () => okImage())
+
+    const uri = 'ipfs://bafycached/cover.png'
+    await resolveNftImage(uri, 'mainnet')
+    await resolveNftImage(uri, 'mainnet')
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+  })
+})

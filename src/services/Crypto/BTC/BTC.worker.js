@@ -1,3 +1,4 @@
+import '../workerSetup'
 import { generateMnemonic, getSeedFromMnemonic } from './BTC'
 
 const WalletWorkerEnum = {
@@ -15,13 +16,18 @@ const isValidJob = (choosenJob) => {
   return Object.hasOwn(WalletWorkerJobs, choosenJob)
 }
 
-self.onmessage = ({ data }) => {
+self.onmessage = async ({ data }) => {
   if (!isValidJob(data.job)) return false
 
-  const jobResult = WalletWorkerJobs[data.job](data.data)
-  postMessage(jobResult)
+  try {
+    const jobResult = await WalletWorkerJobs[data.job](data.data)
 
-  return true
+    postMessage(jobResult)
+
+    return true
+  } catch (error) {
+    postMessage({ error: error.message })
+  }
 }
 
 export { WalletWorkerEnum }

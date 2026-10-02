@@ -1,4 +1,5 @@
 import * as AppInfo from '../../Constants/AppInfo/AppInfoCore'
+import { bech32VerifyChecksum } from './bech32'
 import { ArrayHelper } from '@Helpers'
 import { LocalStorageService } from '@Storage'
 import Decimal from 'decimal.js'
@@ -119,7 +120,10 @@ const getParsedTransactions = (transactions, addresses) => {
   const unconfirmedTransactions = LocalStorageService.getItem(
     unconfirmedTransactionString,
   )
-  const filteredTransactions = ArrayHelper.removeDublicates(transactions)
+  const filteredTransactions = ArrayHelper.removeDuplicates(
+    transactions,
+    (transaction) => transaction.id || transaction.txid,
+  )
   const sortedTransactions = filteredTransactions.sort(
     (a, b) => b.timestamp - a.timestamp,
   )
@@ -196,6 +200,7 @@ const getParsedTransactions = (transactions, addresses) => {
     let value
     let sameWalletTransaction = false
     let delegationOwner
+    let swapDetails = null
 
     const token_id = transaction.outputs.find(
       (output) => output?.value?.token_id,
@@ -236,7 +241,8 @@ const getParsedTransactions = (transactions, addresses) => {
               (input) => input.input.command === 'FillOrder',
             )
             if (fillOrderInput && fillOrderInput.input?.fill_atoms?.atoms) {
-              return getSwapDetails(transaction)
+              swapDetails = getSwapDetails(transaction)
+              return acc
             }
           }
           if (output.type === 'Transfer') {
@@ -272,7 +278,8 @@ const getParsedTransactions = (transactions, addresses) => {
               (input) => input.input.command === 'FillOrder',
             )
             if (fillOrderInput && fillOrderInput.input?.fill_atoms?.atoms) {
-              return getSwapDetails(transaction)
+              swapDetails = getSwapDetails(transaction)
+              return acc
             }
           }
           if (output.type === 'CreateStakePool') {
@@ -295,7 +302,7 @@ const getParsedTransactions = (transactions, addresses) => {
         }
         return acc
       }, 0)
-      value = totalValue
+      value = swapDetails || totalValue
     }
 
     // inbound transaction
@@ -306,7 +313,8 @@ const getParsedTransactions = (transactions, addresses) => {
         .reduce((acc, output) => {
           if (token_id) {
             if (output.value.token_id === token_id) {
-              return acc + output.value.amount.decimal
+              // Number(): string concat would corrupt multi-output sums.
+              return acc + Number(output.value.amount.decimal)
             }
           } else {
             if (output.type === 'Transfer') {
@@ -390,54 +398,44 @@ const getParsedTransactions = (transactions, addresses) => {
   })
 }
 
-const getTokenBalances = (utxos) => {
-  const tokenBalances = {}
-  utxos.forEach((item) => {
-    if (item.utxo.value.token_id && item.utxo.value.type === 'TokenV1') {
-      const token = item.utxo.value.token_id
-      if (tokenBalances[token]) {
-        tokenBalances[token] += parseFloat(item.utxo.value.amount.decimal)
-      } else {
-        tokenBalances[token] = parseFloat(item.utxo.value.amount.decimal)
-      }
-    }
-  })
-
-  return tokenBalances
-}
-
 const isMlAddressValid = (address, network) => {
   // Pubkeyhash (mtc1/tmt1) AND multisig (mmtc1/tmtc1) bech32 addresses —
   // mmtc1… was rejected before, breaking sends to multisig destinations.
   const mainnetRegex = /^(mtc1|mmtc1)[a-z0-9]{30,}$/
   const testnetRegex = /^(tmt1|tmtc1)[a-z0-9]{30,}$/
+  // Regex pre-filter (charset/shape), then the BIP-173 checksum + HRP
+  // check: a single-character typo must never pass validation.
   return network === AppInfo.NETWORK_TYPES.MAINNET
-    ? mainnetRegex.test(address)
-    : testnetRegex.test(address)
+    ? mainnetRegex.test(address) &&
+        bech32VerifyChecksum(address, ['mtc', 'mmtc'])
+    : testnetRegex.test(address) &&
+        bech32VerifyChecksum(address, ['tmt', 'tmtc'])
 }
 
 const isMlPoolIdValid = (poolId, network) => {
   const mainnetRegex = /^mpool[a-z0-9]{30,}$/
   const testnetRegex = /^tpool[a-z0-9]{30,}$/
   return network === AppInfo.NETWORK_TYPES.MAINNET
-    ? mainnetRegex.test(poolId)
-    : testnetRegex.test(poolId)
+    ? mainnetRegex.test(poolId) && bech32VerifyChecksum(poolId, ['mpool'])
+    : testnetRegex.test(poolId) && bech32VerifyChecksum(poolId, ['tpool'])
 }
 
 const isMlDelegationIdValid = (delegationId, network) => {
   const mainnetRegex = /^mdelg[a-z0-9]{30,}$/
   const testnetRegex = /^tdelg[a-z0-9]{30,}$/
   return network === AppInfo.NETWORK_TYPES.MAINNET
-    ? mainnetRegex.test(delegationId)
-    : testnetRegex.test(delegationId)
+    ? mainnetRegex.test(delegationId) &&
+        bech32VerifyChecksum(delegationId, ['mdelg'])
+    : testnetRegex.test(delegationId) &&
+        bech32VerifyChecksum(delegationId, ['tdelg'])
 }
 
 const isMlOrderIdValid = (orderId, network) => {
   const mainnetRegex = /^mordr[a-z0-9]{30,}$/
   const testnetRegex = /^tordr[a-z0-9]{30,}$/
   return network === AppInfo.NETWORK_TYPES.MAINNET
-    ? mainnetRegex.test(orderId)
-    : testnetRegex.test(orderId)
+    ? mainnetRegex.test(orderId) && bech32VerifyChecksum(orderId, ['mordr'])
+    : testnetRegex.test(orderId) && bech32VerifyChecksum(orderId, ['tordr'])
 }
 
 const formatAddress = (address, limitSize = 24) => {
@@ -556,7 +554,6 @@ export {
   isMlAddressValid,
   isMlPoolIdValid,
   isMlDelegationIdValid,
-  getTokenBalances,
   formatAddress,
   isMlOrderIdValid,
   calculateExchangeRate,

@@ -1,16 +1,16 @@
-.title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  min-height: max-content;
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
 }
 
-.list {
-  height: 30rem;
-  overflow: auto;
-  padding: 7px;
-
-  @media screen and (min-width: 901px) {
-    padding: 10px;
-    flex-grow: 1;
-  }
+.skeletons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  width: 100%;
 }

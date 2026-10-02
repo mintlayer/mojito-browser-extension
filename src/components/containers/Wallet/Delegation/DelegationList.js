@@ -18,11 +18,19 @@ const DelegationList = ({ delegationsList, delegationsLoading }) => {
       )
     }
 
-    delegationsList.sort((a, b) => b.creation_time - a.creation_time)
+    const sortedDelegations = [...delegationsList].sort(
+      (a, b) => (b.creation_time || 0) - (a.creation_time || 0),
+    )
 
-    return delegationsList.map((delegation, index) => (
+    return sortedDelegations.map((delegation) => (
       <Delegation
-        key={index}
+        key={
+          delegation.delegation_id ||
+          delegation.delegationId ||
+          delegation.poolId ||
+          delegation.pool_id ||
+          delegation.txid
+        }
         delegation={delegation}
       />
     ))

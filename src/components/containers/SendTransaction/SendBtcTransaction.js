@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react'
 import { useNavigate } from 'react-router'
+import Decimal from 'decimal.js'
 import { ReactComponent as BtcLogo } from '@Assets/images/btc-logo.svg'
 
 import { Button } from '@BasicComponents'
@@ -17,7 +18,6 @@ import styles from './SendBtcTransaction.module.css'
 import { Error } from '@BasicComponents'
 
 const SendBtcTransaction = ({
-  totalFeeFiat,
   totalFeeCrypto,
   transactionData,
   exchangeRate = 0,
@@ -44,28 +44,39 @@ const SendBtcTransaction = ({
   const [feeValidity, setFeeValidity] = useState(false)
   const [passErrorMessage, setPassErrorMessage] = useState('')
   const [txErrorMessage, setTxErrorMessage] = useState('')
+  const [sendingTransaction, setSendingTransaction] = useState(false)
   const navigate = useNavigate()
 
   const openConfirmation = async () => {
-    if (!isFormValid) return
+    if (!isFormValid || sendingTransaction) return
+    setSendingTransaction(true)
     setTxErrorMessage('')
 
-    const amount = NumbersHelper.floatStringToNumber(amountInCrypto)
-    onSendTransaction &&
-      (await onSendTransaction({ to: addressTo, amount, fee }))
+    try {
+      const amount = NumbersHelper.floatStringToNumber(amountInCrypto)
+      const fees =
+        onSendTransaction &&
+        (await onSendTransaction({ to: addressTo, amount, fee }))
 
-    navigate('confirm', {
-      state: {
-        address: addressTo,
-        amountInCrypto,
-        amountInFiat,
-        fee,
-        totalFeeFiat,
-        totalFeeCrypto,
-        walletType,
-        transactionAmount: amount,
-      },
-    })
+      if (!fees) return
+
+      navigate('confirm', {
+        state: {
+          address: addressTo,
+          amountInCrypto,
+          amountInFiat,
+          fee,
+          totalFeeFiat: fees.totalFeeFiat,
+          totalFeeCrypto: fees.totalFeeCrypto,
+          walletType,
+          transactionAmount: amount,
+        },
+      })
+    } catch (e) {
+      setTxErrorMessage(e?.message || String(e))
+    } finally {
+      setSendingTransaction(false)
+    }
   }
 
   const feeChanged = (value) => setFee(value)
@@ -76,13 +87,20 @@ const SendBtcTransaction = ({
       fee,
     })
 
+    const exchangeRateDecimal = new Decimal(exchangeRate || 0)
+    if (!exchangeRateDecimal.gt(0)) {
+      setPassErrorMessage('Exchange rate is unavailable. Please try again.')
+      return
+    }
+
     if (amount.currency === transactionData.tokenName) {
       setOriginalAmount(amount.value)
       setAmountInCrypto(amount.value ? Format.BTCValue(amount.value) : '0,00')
       setAmountInFiat(
         Format.fiatValue(
-          NumbersHelper.floatStringToNumber(amount.value) *
-            exchangeRate.toFixed(2),
+          exchangeRateDecimal
+            .times(NumbersHelper.floatStringToNumber(amount.value) || 0)
+            .toString(),
         ),
       )
       return
@@ -92,7 +110,9 @@ const SendBtcTransaction = ({
     setAmountInFiat(Format.fiatValue(amount.value))
     setAmountInCrypto(
       Format.BTCValue(
-        NumbersHelper.floatStringToNumber(amount.value) / exchangeRate,
+        new Decimal(NumbersHelper.floatStringToNumber(amount.value) || 0)
+          .div(exchangeRateDecimal)
+          .toString(),
       ),
     )
   }
@@ -129,22 +149,26 @@ const SendBtcTransaction = ({
 
   useEffect(() => {
     const validity = originalAmount && AppInfo.amountRegex.test(originalAmount)
-    const maxValue = BTC.convertBtcToSatoshi(
-      NumbersHelper.floatStringToNumber(maxValueInToken),
+    const maxValue = new Decimal(
+      BTC.convertBtcToSatoshi(
+        NumbersHelper.floatStringToNumber(maxValueInToken) || 0,
+      ),
     )
-    const amount = BTC.convertBtcToSatoshi(
-      NumbersHelper.floatStringToNumber(amountInCrypto),
+    const amount = new Decimal(
+      BTC.convertBtcToSatoshi(
+        NumbersHelper.floatStringToNumber(amountInCrypto) || 0,
+      ),
     )
-    const totalFee = BTC.convertBtcToSatoshi(totalFeeCrypto)
-    if (!validity || amount <= 0) {
+    const totalFee = new Decimal(BTC.convertBtcToSatoshi(totalFeeCrypto || 0))
+    if (!validity || amount.lte(0)) {
       setAmountValidity(false)
       return
     }
-    // TODO with 22-digit numbers, this is not working
-    if (amount + totalFee > maxValue || !validity) {
+    const totalAmount = amount.plus(totalFee)
+    if (totalAmount.gt(maxValue)) {
       setAmountValidity(false)
       setPassErrorMessage('Insufficient funds')
-    } else if (amount + totalFee <= maxValue && validity) {
+    } else if (totalAmount.lte(maxValue) && validity) {
       setAmountValidity(true)
       setPassErrorMessage('')
     }
@@ -214,7 +238,7 @@ const SendBtcTransaction = ({
             <Button
               extraStyleClasses={[styles.sendTransactionButton]}
               onClickHandle={openConfirmation}
-              disabled={!isFormValid}
+              disabled={!isFormValid || sendingTransaction}
             >
               {sendTransactionButtonTitle}
             </Button>

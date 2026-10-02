@@ -33,6 +33,10 @@ jobs:
         run: npm test -- --watchAll=false
       - name: Build
         run: npm run build --if-present
+      # fails when a runtime-referenced page (popup.html etc.) dropped out of
+      # the build — the WXT migration silently lost popup.html that way
+      - name: Check build output
+        run: npm run check:build-output
       # Run E2E tests with Playwright
       # - name: Install Playwright Browsers
       #   run: npx playwright install --with-deps

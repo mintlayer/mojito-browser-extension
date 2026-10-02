@@ -3,7 +3,6 @@ import {
   isSupported,
   enrollPasskeyCredential,
   unwrapPasswordWithPasskey,
-  unlockPasswordWithPasskey,
 } from './Passkey'
 
 // jsdom has no WebAuthn implementation and its crypto object may lack
@@ -100,21 +99,21 @@ test('Passkey - isSupported is true when a platform authenticator is available',
   expect(mockUVPAA).toHaveBeenCalled()
 })
 
-test('Passkey - isSupported is false when PublicKeyCredential is missing', () => {
+test('Passkey - isSupported is false when PublicKeyCredential is missing', async () => {
   removePublicKeyCredential()
 
-  expect(isSupported()).toBe(false)
+  await expect(isSupported()).resolves.toBe(false)
 
   installPublicKeyCredential(mockUVPAA)
 })
 
-test('Passkey - isSupported is false when userVerifyingPlatformAuthenticatorAvailable is missing', () => {
+test('Passkey - isSupported is false when userVerifyingPlatformAuthenticatorAvailable is missing', async () => {
   Object.defineProperty(window, 'PublicKeyCredential', {
     value: jest.fn(),
     configurable: true,
   })
 
-  expect(isSupported()).toBe(false)
+  await expect(isSupported()).resolves.toBe(false)
 
   installPublicKeyCredential(mockUVPAA)
 })
@@ -222,15 +221,6 @@ test('Passkey - enroll and unwrap reject with PASSKEY_UNSUPPORTED when unsupport
   )
 
   installPublicKeyCredential(mockUVPAA)
-})
-
-test('Passkey - unlockPasswordWithPasskey aliases unwrapPasswordWithPasskey', async () => {
-  const blob = await enrollPasskeyCredential(PASSWORD)
-
-  await expect(unlockPasswordWithPasskey(blob)).resolves.toBe(PASSWORD)
-  await expect(unlockPasswordWithPasskey(null)).rejects.toThrow(
-    'PASSKEY_BLOB_INVALID',
-  )
 })
 
 test('Passkey - enroll rejects with PRF_NOT_SUPPORTED when creation lacks prf results', async () => {

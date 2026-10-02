@@ -79,8 +79,23 @@ const CreateRestorePage = () => {
             I already have a recovery phrase
           </Button>
           <p className={styles.terms}>
-            By continuing you agree to the <a href="#terms">Terms</a> and{' '}
-            <a href="#privacy">Privacy policy</a>.
+            By continuing you agree to the{' '}
+            <a
+              href="https://mintlayer.com"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Terms
+            </a>{' '}
+            and{' '}
+            <a
+              href="https://mintlayer.com"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Privacy policy
+            </a>
+            .
           </p>
         </div>
       </div>

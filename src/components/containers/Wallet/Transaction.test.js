@@ -67,6 +67,9 @@ test('Render transaction component', async () => {
   expect(transactionIcon).not.toHaveClass(styles.logoOut)
 
   await act(async () => fireEvent.click(transaction))
+
+  // the row click opens the details popup
+  expect(screen.getByTestId('transaction-details')).toBeInTheDocument()
 })
 
 test('Render transaction out component', async () => {

@@ -3,6 +3,7 @@ import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 
 import { PopUp, AddWallet, TxRow, AssetRow } from '@ComposedComponents'
+import { Wallet } from '@ContainerComponents'
 import { AccountContext, MintlayerContext, SettingsContext } from '@Contexts'
 import { Account as AccountEntity } from '@Entities'
 
@@ -258,6 +259,9 @@ const DashboardPage = () => {
       id: c.id,
       name: c.name,
       symbol: c.symbol,
+      // Wallet-owned classification — AssetRow's Token tag and native
+      // branding key off this, never off the issuer-chosen ticker.
+      type: 'coin',
       chain: c.network === 'bitcoin' ? 'Bitcoin' : 'Mintlayer',
       amount: c.balance || 0,
       price: c.exchangeRate,
@@ -279,7 +283,17 @@ const DashboardPage = () => {
   }
 
   useEffect(() => {
-    getCurrentAccount(accountID).then((account) => setAccount(account))
+    let cancelled = false
+    getCurrentAccount(accountID)
+      .then((account) => {
+        if (!cancelled) {
+          setAccount(account)
+        }
+      })
+      .catch((e) => console.error('Failed to load current account:', e))
+    return () => {
+      cancelled = true
+    }
   }, [accountID])
 
   // Recent activity: BTC + ML coin + token transactions (token tickers
@@ -437,6 +451,15 @@ const DashboardPage = () => {
                 options={['Tokens', 'NFTs']}
                 onChange={setTab}
               />
+              {tab === 'NFTs' && (
+                <span
+                  className={styles.seeAll}
+                  onClick={() => navigate('/wallet/Mintlayer/nft')}
+                  data-testid="nft-see-all"
+                >
+                  See all →
+                </span>
+              )}
             </div>
             {tab === 'Tokens' ? (
               <div
@@ -451,6 +474,7 @@ const DashboardPage = () => {
                       id: c.id,
                       name: c.name,
                       symbol: c.symbol,
+                      type: 'token',
                       chain: 'Mintlayer',
                       amount: c.balance || 0,
                       price: c.exchangeRate,
@@ -480,13 +504,7 @@ const DashboardPage = () => {
                 ))}
               </div>
             ) : (
-              <div className={styles.nftGrid}>
-                {/* Real NFT rendering is a pending follow-up (see
-                    REVIEW-PLAN.md): the provider exposes `nftData`. */}
-                <div className={styles.empty}>
-                  No NFTs yet — NFTs owned by this wallet will show here.
-                </div>
-              </div>
+              <Wallet.NftList />
             )}
           </div>
 

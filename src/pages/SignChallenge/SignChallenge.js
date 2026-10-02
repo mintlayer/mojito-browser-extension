@@ -22,7 +22,7 @@ export const SignChallengePage = () => {
   const [isSigning, setIsSigning] = useState(false)
   const [signError, setSignError] = useState('')
 
-  const [selectedMock, setSelectedMock] = useState('transfer')
+  const [selectedMock, setSelectedMock] = useState('longmessage')
   const extraButtonStyles = ['buttonSignTransaction']
 
   const state = external_state || (isDevelopment ? MOCKS[selectedMock] : null)
@@ -79,13 +79,10 @@ export const SignChallengePage = () => {
           ? mlPrivKeys.mlMainnetPrivateKey
           : mlPrivKeys.mlTestnetPrivateKey
 
-      const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
-
-      const walletPrivKeys = ML.getWalletPrivKeysList(
-        privKey,
-        networkType,
-        changeAddressesLength,
-      )
+      const walletPrivKeys = ML.getWalletPrivKeysList(privKey, networkType, [
+        ...currentMlAddresses.mlReceivingAddresses,
+        ...currentMlAddresses.mlChangeAddresses,
+      ])
 
       const keysList = {
         ...walletPrivKeys.mlReceivingPrivKeys,
@@ -109,6 +106,10 @@ export const SignChallengePage = () => {
           signature: signatureHex,
         },
       })
+
+      // Signing done: drop the password from memory — the page stays
+      // mounted in the side panel after the response is returned.
+      setPassword('')
     } catch (error) {
       console.error('Error during challenge signing:', error)
       setSignError(
@@ -119,6 +120,7 @@ export const SignChallengePage = () => {
   }
 
   const handleReject = () => {
+    setPassword('')
     sendPopupResponse({
       method: 'signChallenge_reject',
       requestId: state?.request?.requestId,

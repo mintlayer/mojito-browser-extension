@@ -20,10 +20,9 @@ const DelegationWithdrawPage = () => {
     chain: 'mintlayer',
   }
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.WITHDRAW
-  const { addresses, accountID } = useContext(AccountContext)
+  const { accountID } = useContext(AccountContext)
   const { client, mlDelegationList } = useContext(MintlayerContext)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
-  const currentMlAddresses = addresses.mlAddresses
   const navigate = useNavigate()
   const tokenName = 'ML'
   const fiatName = 'USD'
@@ -39,6 +38,7 @@ const DelegationWithdrawPage = () => {
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
   const [feeLoading, setFeeLoading] = useState(false)
+  const [feeError, setFeeError] = useState('')
   const currentDelegationInfo = mlDelegationList.find(
     (d) => d.delegation_id === delegationId,
   )
@@ -50,8 +50,8 @@ const DelegationWithdrawPage = () => {
     unusedAddresses,
     fetchingBalances,
     fetchingUtxos,
-  } = useMlWalletInfo(currentMlAddresses)
-  const maxValueToken = currentDelegationInfo?.balance.decimal || 0
+  } = useMlWalletInfo()
+  const maxValueToken = currentDelegationInfo?.balance?.decimal || 0
 
   const transaction_conditions =
     utxos.length > 0 &&
@@ -84,12 +84,20 @@ const DelegationWithdrawPage = () => {
         transactionInformation?.amount > 0
       ) {
         setFeeLoading(true)
-        const transaction = await buildWithdrawTransaction({
-          amount: transactionInformation.amount,
-          delegation_id: transactionInformation.to,
-        })
-        setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
-        setFeeLoading(false)
+        setFeeError('')
+        try {
+          const transaction = await buildWithdrawTransaction({
+            amount: transactionInformation.amount,
+            delegation_id: transactionInformation.to,
+          })
+          setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
+        } catch (error) {
+          console.error('Fee calculation failed:', error)
+          setTotalFeeCrypto(0)
+          setFeeError(error.message || 'Fee calculation failed')
+        } finally {
+          setFeeLoading(false)
+        }
       }
     }
     buildTransaction()
@@ -101,10 +109,14 @@ const DelegationWithdrawPage = () => {
     delegationId,
   ])
 
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
+
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/dashboard')
-    return
+    return null
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -134,6 +146,7 @@ const DelegationWithdrawPage = () => {
           <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}
             feeLoading={feeLoading}
+            feeError={feeError}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueToken}

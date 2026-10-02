@@ -17,6 +17,7 @@ import {
 } from '@ComposedComponents'
 import { BrandPanel, ErrorBoundary } from '@BasicComponents'
 import { DeleteAccount } from '@ContainerComponents'
+import { isAbortError } from 'src/utils/Helpers/AbortError/AbortError'
 import { Client, MintlayerApiProvider } from '@mintlayer/sdk'
 
 import {
@@ -117,6 +118,11 @@ const App = () => {
       )
       return !!mintlayerResponse && !!exchangeResponse
     } catch (error) {
+      // A network switch calls cancelAllRequests(), which aborts this
+      // check's in-flight getChainTip — supersession, not an outage. The
+      // next route change re-runs the check; aborts must never lock the
+      // wallet out.
+      if (isAbortError(error)) return
       if (accountUnlocked) {
         console.error('Connection check failed:', error)
         setErrorPopupOpen(true)
@@ -226,10 +232,6 @@ const App = () => {
     return () => storage.onChanged.removeListener(listener)
   }, [])
 
-  // keep a stable handle for listeners registered once
-  const handlePendingRequestRef = useRef()
-  handlePendingRequestRef.current = handlePendingRequest
-
   const handledRequestIds = useRef(new Set())
 
   const handlePendingRequest = (pendingRequest) => {
@@ -242,14 +244,30 @@ const App = () => {
 
     const { action, origin, requestId } = pendingRequest
 
-    // Acknowledge ownership: the background cancels its 2s popup-fallback
+    // Live lock-state check, NOT the render's `unlocked` snapshot: this
+    // handler often fires on the very first render pass (the popup fallback
+    // writes the request while the app is still mounting), before the
+    // unlock effect has re-rendered. Trusting the snapshot there would
+    // queue `nextAfterUnlock` for an account that is already unlocked and
+    // nothing would ever navigate — the surface just sits on the dashboard.
+    const accountUnlocked = isAccountUnlocked(true)
+
+    // Acknowledge ownership: the background cancels its popup-fallback
     // timer for this requestId once the approval surface has taken the
     // request (locked → the panel shows unlock first, the approval follows
     // here — either way the panel owns it, no popup window is needed).
-    Browser.notifyApprovalDisplayed(requestId)
+    // The surface's own window id rides along so the background can
+    // arbitrate when both a panel and a popup are showing the request.
+    const ackDisplayed = (winId) =>
+      Browser.notifyApprovalDisplayed(requestId, winId)
+    if (windows?.getCurrent) {
+      windows.getCurrent((win) => ackDisplayed(win?.id ?? null))
+    } else {
+      ackDisplayed(null)
+    }
 
     if (action === 'connect') {
-      if (!unlocked) {
+      if (!accountUnlocked) {
         setNextAfterUnlock({
           route: '/connect',
           state: {
@@ -274,7 +292,7 @@ const App = () => {
 
     if (action === 'signTransaction') {
       if (pendingRequest.data.chain === 'bitcoin') {
-        if (!unlocked) {
+        if (!accountUnlocked) {
           setNextAfterUnlock({
             route: '/wallet/Bitcoin/sign-transaction',
             state: { action: 'signTransaction', request: pendingRequest },
@@ -285,7 +303,7 @@ const App = () => {
           state: { action: 'signTransaction', request: pendingRequest },
         })
       } else {
-        if (!unlocked) {
+        if (!accountUnlocked) {
           setNextAfterUnlock({
             route: '/wallet/Mintlayer/sign-external-transaction',
             state: { action: 'signTransaction', request: pendingRequest },
@@ -299,7 +317,7 @@ const App = () => {
     }
 
     if (action === 'signChallenge') {
-      if (!unlocked) {
+      if (!accountUnlocked) {
         setNextAfterUnlock({
           route: '/wallet/Mintlayer/sign-challenge',
           state: { action: 'signChallenge', request: pendingRequest },
@@ -312,7 +330,7 @@ const App = () => {
     }
 
     if (action === 'createDelegate') {
-      if (!unlocked) {
+      if (!accountUnlocked) {
         setNextAfterUnlock({
           route: '/wallet/Mintlayer/staking/create-delegation',
           state: {
@@ -349,6 +367,13 @@ const App = () => {
       })
     }
   }
+
+  // keep a stable handle for listeners registered once
+  // NOTE: assigned AFTER handlePendingRequest is declared — assigning above
+  // the function declaration hits the temporal dead zone and crashes the
+  // panel on every render.
+  const handlePendingRequestRef = useRef()
+  handlePendingRequestRef.current = handlePendingRequest
 
   useEffect(() => {
     const extendPath = LocalStorageService.getItem('extendPath')

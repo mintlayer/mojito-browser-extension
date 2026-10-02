@@ -14,6 +14,6 @@ describe('BrandPanel', () => {
     const { container } = render(<BrandPanel />)
 
     const svgs = container.querySelectorAll('svg')
-    expect(svgs.length).toBeGreaterThanOrEqual(1)
+    expect(svgs.length).toBe(2)
   })
 })

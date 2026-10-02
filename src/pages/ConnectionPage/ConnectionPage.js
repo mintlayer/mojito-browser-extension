@@ -72,6 +72,11 @@ export const ConnectionPage = () => {
     // under both network keys would hand a dApp testnet addresses labeled
     // mainnet (or vice versa). `network` records the grant's network so the
     // sign flow can reject a wrong-chain request.
+    //
+    // PRIVACY: the grant shares RECEIVING addresses/keys only. Change
+    // addresses would let the dApp (and chain analyzers it feeds) link the
+    // victim's change outputs across transactions; pubkeys of unused change
+    // paths add clustering surface with zero dApp utility.
     const sessionData = {
       origin,
       connected: true,
@@ -79,16 +84,13 @@ export const ConnectionPage = () => {
       address: {
         [networkType]: {
           receiving: ml.mlReceivingAddresses,
-          change: ml.mlChangeAddresses,
         },
       },
       addressesByChain: {
         mintlayer: {
           receiving: ml.mlReceivingAddresses,
-          change: ml.mlChangeAddresses,
           publicKeys: {
             receiving: ml.mlReceivingPublicKeys?.map(toHexString) ?? [],
-            change: ml.mlChangePublicKeys?.map(toHexString) ?? [],
           },
         },
         ...(includeBitcoin && {
@@ -96,10 +98,8 @@ export const ConnectionPage = () => {
             receiving: btcReceiving
               .map(BTC.getBtcAddressString)
               .filter(Boolean),
-            change: btcChange.map(BTC.getBtcAddressString).filter(Boolean),
             publicKeys: {
               receiving: btcReceiving.map(btcPubKeyOf).filter(Boolean),
-              change: btcChange.map(btcPubKeyOf).filter(Boolean),
             },
           },
         }),

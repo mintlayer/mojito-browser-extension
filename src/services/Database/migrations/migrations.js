@@ -1,51 +1,45 @@
-import { IndexedDB } from '@Databases'
+const accountsMigration_01_add_mlwallet_private_keys = (account) => ({
+  ...account,
+  iv: { btcIv: account.iv },
+  tag: { btcTag: account.tag },
+  seed: { btcEncryptedSeed: account.seed },
+})
 
-const accountsMigration_01_add_mlwallet_private_keys = async () => {
-  // Load the old accounts
-  const store = await IndexedDB.loadAccounts()
-  const accounts = await IndexedDB.getAll(store)
+const accountsMigration_02_add_htls_secrets_field = (account) => {
+  const hasSecrets =
+    typeof account.htlsSecrets === 'object' && account.htlsSecrets !== null
 
-  // Transform the old accounts to the new structure
-  if (!accounts || accounts.length <= 0) return
-  const newAccounts = accounts.map((account) => {
-    // Add the encrypted private keys to the account
-    return {
-      ...account,
-      iv: { btcIv: account.iv },
-      tag: { btcTag: account.tag },
-      seed: { btcEncryptedSeed: account.seed },
-    }
-  })
-
-  await IndexedDB.saveAccounts(newAccounts)
+  return hasSecrets ? account : { ...account, htlsSecrets: {} }
 }
 
-const accountsMigration_02_add_htls_secrets_field = async () => {
-  const store = await IndexedDB.loadAccounts()
-  const accounts = await IndexedDB.getAll(store)
+const unnest = (field, key) =>
+  field && typeof field[key] === 'object' && field[key] !== null
+    ? field[key]
+    : field
 
-  if (!accounts || accounts.length <= 0) return
+const accountsMigration_03_repair_double_nesting = (account) => ({
+  ...account,
+  iv: unnest(account.iv, 'btcIv'),
+  tag: unnest(account.tag, 'btcTag'),
+  seed: unnest(account.seed, 'btcEncryptedSeed'),
+})
 
-  const needsUpdate = accounts.some(
-    (account) =>
-      account.htlsSecrets === undefined || account.htlsSecrets === null,
+const ACCOUNT_MIGRATIONS = [
+  accountsMigration_01_add_mlwallet_private_keys,
+  accountsMigration_02_add_htls_secrets_field,
+  accountsMigration_03_repair_double_nesting,
+]
+
+const migrateAccount = (account, oldVersion) =>
+  ACCOUNT_MIGRATIONS.slice(oldVersion - 1).reduce(
+    (migrated, migrate) => migrate(migrated),
+    account,
   )
-  if (!needsUpdate) return
-
-  const newAccounts = accounts.map((account) => ({
-    ...account,
-    htlsSecrets:
-      account &&
-      typeof account.htlsSecrets === 'object' &&
-      account.htlsSecrets !== null
-        ? account.htlsSecrets
-        : {},
-  }))
-
-  await IndexedDB.saveAccounts(newAccounts)
-}
 
 export {
   accountsMigration_01_add_mlwallet_private_keys,
   accountsMigration_02_add_htls_secrets_field,
+  accountsMigration_03_repair_double_nesting,
+  ACCOUNT_MIGRATIONS,
+  migrateAccount,
 }

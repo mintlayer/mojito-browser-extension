@@ -94,6 +94,38 @@
   margin-top: 4px;
 }
 
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionTitleRow .sectionTitle {
+  margin-bottom: 0;
+}
+
+.warningBadge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 8px;
+  background: var(--be-amber-soft);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.warningBadge:hover {
+  background: oklch(0.82 0.16 70 / 0.28);
+}
+
+.warningIcon {
+  width: 14px;
+  height: 14px;
+}
+
 .sectionTitle {
   font-size: var(--font-size-sm);
   font-weight: 700;

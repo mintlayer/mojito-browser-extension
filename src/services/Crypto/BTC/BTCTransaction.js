@@ -8,19 +8,52 @@ import * as ecc from '@bitcoinerlab/secp256k1'
 import { witnessStackToScriptWitness } from 'bitcoinjs-lib/src/psbt/psbtutils'
 import { BTC } from '@Helpers'
 
+// ── bitcoinjs boundary normalization ──────────────────────────────────────
+// This bitcoinjs build validates every byte input with an exact
+// Uint8Array check and the Buffer polyfill FAILS it (production throws,
+// not just tests). Never hand bitcoinjs a Buffer: convert at the
+// boundary. Outputs come back as plain Uint8Array — convert to Buffer
+// only for hex/serialization where Buffer semantics are needed.
+const toU8 = (bytes) => new Uint8Array(bytes)
+const u8FromHex = (hex) => new Uint8Array(Buffer.from(hex, 'hex'))
+const toBuffer = (bytes) => Buffer.from(bytes)
+// Realm-safe: `instanceof Uint8Array` fails across vm/realms (jest jsdom),
+// ArrayBuffer.isView does not.
+const isBytes = (bytes) => ArrayBuffer.isView(bytes)
+
 const getMasterFingerprint = (node) => {
-  if (node?.fingerprint) {
-    if (Buffer.isBuffer(node.fingerprint)) return node.fingerprint
-    if (Number.isInteger(node.fingerprint)) {
-      const b = Buffer.alloc(4)
-      b.writeUInt32BE(node.fingerprint >>> 0, 0)
-      return b
-    }
+  if (isBytes(node?.fingerprint)) return toBuffer(node.fingerprint)
+  if (node?.fingerprint && Number.isInteger(node.fingerprint)) {
+    const b = Buffer.alloc(4)
+    b.writeUInt32BE(node.fingerprint >>> 0, 0)
+    return b
   }
-  const h160 = bitcoin.crypto.hash160(node.publicKey)
+  // This bitcoinjs build normalizes to plain Uint8Array — hash160 accepts it.
+  const h160 = bitcoin.crypto.hash160(toU8(node.publicKey))
   return Buffer.from(h160.subarray(0, 4))
 }
 
+class InsufficientFundsError extends Error {
+  constructor(message = 'Insufficient funds to cover the transaction') {
+    super(message)
+    this.name = 'InsufficientFundsError'
+  }
+}
+
+class FeeTooHighError extends Error {
+  constructor(fee) {
+    super(`Transaction fee is too high: ${fee}`)
+    this.name = 'FeeTooHighError'
+  }
+}
+
+// Fixed miner fee for HTLC claim transactions (satoshis). The claim pays
+// from the HTLC output itself, so the fee comes off the claimed value.
+const HTLC_CLAIM_FEE_SATOSHIS = 500
+
+// Fee estimation only needs txId/vout/value (plus the witness script for
+// nativeSegwit); the full raw preimage is only fetched in getFormattedUtxos
+// for signing, so estimation does not do one network round-trip per UTXO.
 const getFormattedFeeUtxos = async (walletUtxo, walletType) => {
   const results = []
 
@@ -31,10 +64,7 @@ const getFormattedFeeUtxos = async (walletUtxo, walletType) => {
       value: utxo.value,
     }
 
-    if (walletType === 'legacy' || walletType === 'p2sh') {
-      const rawTxHex = await Electrum.getTransactionHex(utxo.txid)
-      formatted.nonWitnessUtxo = Buffer.from(rawTxHex, 'hex')
-    } else if (walletType === 'nativeSegwit') {
+    if (walletType === 'nativeSegwit') {
       const scriptBuf = bitcoin.address.toOutputScript(
         utxo.address,
         BTC.getNetwork(),
@@ -43,7 +73,7 @@ const getFormattedFeeUtxos = async (walletUtxo, walletType) => {
         script: new Uint8Array(scriptBuf),
         value: BigInt(utxo.value),
       }
-    } else {
+    } else if (walletType !== 'legacy' && walletType !== 'p2sh') {
       throw new Error(`Unknown wallet type: ${walletType}`)
     }
 
@@ -68,14 +98,19 @@ const getFormattedUtxos = async (
 
   for (const utxo of walletUtxo) {
     const addrData = allAddresses.find((a) => a.address === utxo.address)
-    const pubkey = Buffer.isBuffer(addrData.pubkey)
-      ? addrData.pubkey
+    if (!addrData) {
+      throw new Error(
+        `UTXO address ${utxo.address} not derived from this wallet`,
+      )
+    }
+    const pubkey = isBytes(addrData.pubkey)
+      ? toBuffer(addrData.pubkey)
       : Buffer.from(addrData.pubkey, 'hex')
     const bip32Derivation = [
       {
-        masterFingerprint: getMasterFingerprint(hdWallet),
+        masterFingerprint: toU8(getMasterFingerprint(hdWallet)),
         path: addrData.derivationPath,
-        pubkey: pubkey,
+        pubkey: toU8(pubkey),
       },
     ]
     const formatted = {
@@ -87,7 +122,7 @@ const getFormattedUtxos = async (
 
     if (walletType === 'legacy' || walletType === 'p2sh') {
       const rawTxHex = await Electrum.getTransactionHex(utxo.txid)
-      formatted.nonWitnessUtxo = Buffer.from(rawTxHex, 'hex')
+      formatted.nonWitnessUtxo = u8FromHex(rawTxHex)
     } else if (walletType === 'nativeSegwit') {
       const scriptBuf = bitcoin.address.toOutputScript(
         utxo.address,
@@ -105,6 +140,91 @@ const getFormattedUtxos = async (
   }
 
   return results
+}
+
+/**
+ * Finds the wallet key that a redeem script binds, so HTLC spend/refund
+ * requests can be signed with OUR key (and only ours).
+ *
+ * Walks the script chunks, collects pubkey-sized pushes (32/33 bytes —
+ * compressed pubkeys; the 20-byte OP_HASH160 digest is excluded), and
+ * matches them against the wallet's derived addresses. Prefers the WIF
+ * stored on the address entry, falls back to re-deriving the child node
+ * from the HD root via the entry's derivation path.
+ *
+ * Returns { wif, address, derivationPath } or null when the script binds
+ * no key from this wallet — callers must treat null as reject-signing.
+ */
+const findWalletKeyForRedeemScript = ({
+  redeemScriptHex,
+  btcAddressData,
+  btcHDWallet,
+}) => {
+  try {
+    if (!redeemScriptHex || typeof redeemScriptHex !== 'string') return null
+    const chunks = bitcoin.script.decompile(u8FromHex(redeemScriptHex))
+    if (!chunks) return null
+
+    const scriptPubkeys = chunks
+      .filter(
+        (chunk) =>
+          isBytes(chunk) && (chunk.length === 33 || chunk.length === 32),
+      )
+      .map((chunk) => Buffer.from(chunk).toString('hex'))
+    if (scriptPubkeys.length === 0) return null
+
+    const entries = [
+      ...(btcAddressData?.btcReceivingAddresses ?? []),
+      ...(btcAddressData?.btcChangeAddresses ?? []),
+    ]
+    const toPubkeyHex = (entry) => {
+      if (isBytes(entry?.pubkey)) return toBuffer(entry.pubkey).toString('hex')
+      return typeof entry?.pubkey === 'string' ? entry.pubkey : ''
+    }
+
+    const match = entries.find((entry) =>
+      scriptPubkeys.includes(toPubkeyHex(entry)),
+    )
+    if (match) {
+      if (match.privateKey) {
+        return {
+          wif: match.privateKey,
+          address: match.address,
+          derivationPath: match.derivationPath,
+        }
+      }
+      if (btcHDWallet && match.derivationPath) {
+        const child = btcHDWallet.derivePath(match.derivationPath)
+        return {
+          wif: child.toWIF(),
+          address: match.address,
+          derivationPath: match.derivationPath,
+        }
+      }
+      return null
+    }
+
+    // No entry matched by stored pubkey: re-derive every known path and
+    // compare the derived pubkeys (covers store blobs without pubkeys).
+    const derivableEntries = btcHDWallet
+      ? entries.filter((entry) => entry?.derivationPath)
+      : []
+    for (const entry of derivableEntries) {
+      const child = btcHDWallet.derivePath(entry.derivationPath)
+      if (scriptPubkeys.includes(toBuffer(child.publicKey).toString('hex'))) {
+        return {
+          wif: child.toWIF(),
+          address: entry.address,
+          derivationPath: entry.derivationPath,
+        }
+      }
+    }
+
+    return null
+  } catch {
+    // Malformed script/hex: not signable by us.
+    return null
+  }
 }
 
 const calculateBtcTransactionFee = async ({
@@ -148,7 +268,9 @@ const buildTransaction = async ({
     root.btcHDWallet,
   )
   const { inputs, outputs, fee } = coinSelect(formatedUtxos, targets, feeRate)
-  if (!inputs || !outputs) return
+  if (!inputs || !outputs) {
+    throw new InsufficientFundsError()
+  }
 
   const transactionBuilder = new bitcoin.Psbt({
     network: BTC.getNetwork(),
@@ -158,11 +280,15 @@ const buildTransaction = async ({
     const psbtInput = {
       hash: input.txId || input.txid,
       index: input.vout,
-      bip32Derivation: input.bip32Derivation,
+      bip32Derivation: input.bip32Derivation?.map((d) => ({
+        ...d,
+        masterFingerprint: toU8(d.masterFingerprint),
+        pubkey: toU8(d.pubkey),
+      })),
     }
 
     if (input.nonWitnessUtxo) {
-      psbtInput.nonWitnessUtxo = input.nonWitnessUtxo
+      psbtInput.nonWitnessUtxo = toU8(input.nonWitnessUtxo)
     } else if (input.witnessUtxo) {
       psbtInput.witnessUtxo = input.witnessUtxo
     }
@@ -192,8 +318,7 @@ const buildTransaction = async ({
   )
 
   if (!feeValidity) {
-    console.error('Transaction fee is not valid:', feeValidity)
-    return
+    throw new FeeTooHighError(fee)
   }
 
   return [
@@ -213,33 +338,37 @@ const buildHTLCAndFundingAddress = async (input) => {
 
   const network = bitcoin.networks[networkType]
 
-  const redeemScript = bitcoin.script.compile([
-    bitcoin.opcodes.OP_IF,
-    bitcoin.opcodes.OP_HASH160,
-    Buffer.from(secretHashHex, 'hex'),
-    bitcoin.opcodes.OP_EQUALVERIFY,
-    Buffer.from(receiverPubKey, 'hex'),
-    bitcoin.opcodes.OP_ELSE,
-    bitcoin.script.number.encode(parseInt(lockBlockCount)),
-    bitcoin.opcodes.OP_CHECKSEQUENCEVERIFY,
-    bitcoin.opcodes.OP_DROP,
-    Buffer.from(senderPubKey, 'hex'),
-    bitcoin.opcodes.OP_ENDIF,
-    bitcoin.opcodes.OP_CHECKSIG,
-  ])
+  const redeemScript = toBuffer(
+    bitcoin.script.compile([
+      bitcoin.opcodes.OP_IF,
+      bitcoin.opcodes.OP_HASH160,
+      u8FromHex(secretHashHex),
+      bitcoin.opcodes.OP_EQUALVERIFY,
+      u8FromHex(receiverPubKey),
+      bitcoin.opcodes.OP_ELSE,
+      bitcoin.script.number.encode(parseInt(lockBlockCount)),
+      bitcoin.opcodes.OP_CHECKSEQUENCEVERIFY,
+      bitcoin.opcodes.OP_DROP,
+      u8FromHex(senderPubKey),
+      bitcoin.opcodes.OP_ENDIF,
+      bitcoin.opcodes.OP_CHECKSIG,
+    ]),
+  )
 
   const p2wsh = bitcoin.payments.p2wsh({
     redeem: { output: redeemScript },
     network,
   })
+  // payments outputs come back as plain Uint8Array in this build.
+  const p2wshOutput = Buffer.from(p2wsh.output)
 
   return {
     redeemScript,
     redeemScriptHex: redeemScript.toString('hex'),
     redeemScriptAsm: bitcoin.script.toASM(redeemScript),
     witnessScript: redeemScript,
-    p2wshOutput: p2wsh.output,
-    scriptPubKeyHex: p2wsh.output.toString('hex'),
+    p2wshOutput,
+    scriptPubKeyHex: p2wshOutput.toString('hex'),
     p2wshAddress: p2wsh.address,
   }
 }
@@ -254,10 +383,37 @@ const buildHtlcClaimTx = async (params) => {
     secretHex,
   } = params
 
+  // Same validation contract as buildHtlcRefundTx: a malformed request must
+  // fail here, loudly, before any key material is used.
+  if (!utxo?.txid || !Number.isInteger(utxo.vout)) {
+    throw new Error('Invalid UTXO: txid or vout missing/invalid')
+  }
+  if (!Number.isSafeInteger(utxo.value) || utxo.value <= 0) {
+    throw new Error('Invalid UTXO: value must be a positive integer')
+  }
+  if (!redeemScriptHex || !/^[0-9a-fA-F]+$/.test(redeemScriptHex)) {
+    throw new Error('Invalid redeemScriptHex: must be a valid hex string')
+  }
+  if (redeemScriptHex.length % 2 !== 0) {
+    throw new Error('Invalid redeemScriptHex: must be a valid hex string')
+  }
+  if (!toAddress) {
+    throw new Error('toAddress missing')
+  }
+  if (!wif) {
+    throw new Error('wif missing')
+  }
+  if (!secretHex || !/^[0-9a-fA-F]{64}$/.test(secretHex)) {
+    throw new Error('Invalid secret: must be a 64-character hex string')
+  }
+  if (utxo.value <= HTLC_CLAIM_FEE_SATOSHIS) {
+    throw new Error('UTXO amount too low to cover fee')
+  }
+
   const network = bitcoin.networks[networkType]
 
   const psbt = new bitcoin.Psbt({ network })
-  const redeemScript = Buffer.from(redeemScriptHex, 'hex')
+  const redeemScript = u8FromHex(redeemScriptHex)
 
   psbt.addInput({
     hash: utxo.txid,
@@ -274,7 +430,7 @@ const buildHtlcClaimTx = async (params) => {
 
   psbt.addOutput({
     address: toAddress,
-    value: utxo.value - 500, // fee
+    value: utxo.value - HTLC_CLAIM_FEE_SATOSHIS, // fee
   })
 
   const ECPair = ECPairFactory(ecc)
@@ -285,10 +441,10 @@ const buildHtlcClaimTx = async (params) => {
   psbt.finalizeInput(0, (_, input) => {
     const sig = input.partialSig[0].signature
     const witness = witnessStackToScriptWitness([
-      sig,
-      Buffer.from(secretHex, 'hex'),
-      Buffer.from([0x01]),
-      redeemScript,
+      toU8(sig),
+      u8FromHex(secretHex),
+      Uint8Array.of(0x01),
+      toU8(redeemScript),
     ])
     return { finalScriptWitness: witness }
   })
@@ -320,10 +476,10 @@ const buildHtlcRefundTx = async (params) => {
 
   const network = bitcoin.networks[networkType]
 
-  // Parse redeemScript
+  // Parse redeemScript (normalized to plain Uint8Array for bitcoinjs)
   let redeemScript
   try {
-    redeemScript = Buffer.from(redeemScriptHex, 'hex')
+    redeemScript = u8FromHex(redeemScriptHex)
   } catch (e) {
     throw new Error(`Failed to parse redeemScriptHex: ${e.message}`)
   }
@@ -345,9 +501,9 @@ const buildHtlcRefundTx = async (params) => {
     throw new Error(`Failed to create P2WSH output: ${e.message}`)
   }
 
-  // Validate that p2wshOutput is a Buffer
-  if (!Buffer.isBuffer(p2wshOutput)) {
-    throw new Error('P2WSH output is not a Buffer')
+  // Validate the output script shape (this build returns plain Uint8Array).
+  if (!isBytes(p2wshOutput)) {
+    throw new Error('Failed to create P2WSH output: invalid output script')
   }
 
   const psbt = new bitcoin.Psbt({ network })
@@ -397,9 +553,9 @@ const buildHtlcRefundTx = async (params) => {
     psbt.finalizeInput(0, (_, input) => {
       const sig = input.partialSig[0].signature
       const witness = witnessStackToScriptWitness([
-        sig,
-        Buffer.from([]), // OP_FALSE for refund path
-        redeemScript,
+        toU8(sig),
+        new Uint8Array(0), // OP_FALSE for refund path
+        toU8(redeemScript),
       ])
       return { finalScriptWitness: witness }
     })
@@ -416,7 +572,7 @@ const buildHtlcRefundTx = async (params) => {
 }
 
 const parseLockBlockCount = (redeemScriptHex) => {
-  const chunks = bitcoin.script.decompile(Buffer.from(redeemScriptHex, 'hex'))
+  const chunks = bitcoin.script.decompile(u8FromHex(redeemScriptHex))
   if (!chunks) throw new Error('Invalid redeemScript')
 
   const csvIndex = chunks.findIndex(
@@ -428,8 +584,8 @@ const parseLockBlockCount = (redeemScriptHex) => {
   if (typeof lockChunk === 'number') {
     // OP_1 … OP_16
     return lockChunk - bitcoin.opcodes.OP_RESERVED // OP_0 = 0x00
-  } else if (Buffer.isBuffer(lockChunk)) {
-    return bitcoin.script.number.decode(lockChunk)
+  } else if (isBytes(lockChunk)) {
+    return bitcoin.script.number.decode(toBuffer(lockChunk))
   } else {
     throw new Error('LockBlockCount not found before CHECKSEQUENCEVERIFY')
   }
@@ -445,4 +601,6 @@ export {
   buildHtlcClaimTx,
   buildHtlcRefundTx,
   parseLockBlockCount,
+  findWalletKeyForRedeemScript,
+  HTLC_CLAIM_FEE_SATOSHIS,
 }

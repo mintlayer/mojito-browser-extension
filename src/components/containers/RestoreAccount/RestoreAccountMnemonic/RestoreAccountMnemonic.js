@@ -138,17 +138,6 @@ const RestoreAccountMnemonic = ({
 
   const genButtonTitle = (currentStep) => titles[currentStep] || 'Continue'
 
-  const handleError = (step) => {
-    if (step === 6) alert('Please select a wallet type')
-    if (step === 5) alert('You must select at least one wallet')
-    if (step < 5) return
-  }
-
-  const isMnemonicValid = () => {
-    const inputMnemonic = getMnemonics()
-    return validateMnemonicFn(inputMnemonic)
-  }
-
   const handleSubmit = (e) => {
     e.preventDefault()
 
@@ -156,10 +145,7 @@ const RestoreAccountMnemonic = ({
     if (step === 2) setAccountPasswordPristinity(false)
     if (step === 4) setSeedPristinity(false)
 
-    let validForm = stepsValidations[step]
-    if (step === 4) validForm = validForm && isMnemonicValid()
-
-    validForm ? goToNextStep() : handleError(step)
+    if (stepsValidations[step]) goToNextStep()
   }
 
   return (
@@ -167,15 +153,15 @@ const RestoreAccountMnemonic = ({
       <ProgressTracker steps={steps} />
       <form
         className={`account-form ${
-          (step === 4 || step === 5) && 'account-form-words'
-        } ${step === 3 && 'account-form-description'} ${step === 6 && 'account-form-address-type'}`}
+          step === 4 && 'account-form-words'
+        } ${step === 3 && 'account-form-description'}`}
         method="POST"
         data-testid="restore-account-form"
         onSubmit={handleSubmit}
       >
         <VerticalGroup
           data-step={step}
-          bigGap={step !== 4 && step !== 5 && step !== 6}
+          bigGap={step !== 4}
           fullWidth={true}
           center
         >

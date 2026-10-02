@@ -1,6 +1,6 @@
-import { useContext } from 'react'
+import { useState, useContext } from 'react'
 
-import { Button } from '@BasicComponents'
+import { Button, Error } from '@BasicComponents'
 import { VerticalGroup } from '@LayoutComponents'
 
 import { ReactComponent as JsonIcon } from '@Assets/images/icon-json.svg'
@@ -12,14 +12,29 @@ import './SettingsBackup.css'
 const SettingsBackup = () => {
   const buttonExtraClasses = ['settings-backup-button']
   const { accountID, accountName } = useContext(AccountContext)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const accountObj = {
     id: accountID,
     name: accountName,
   }
 
-  const onBackupWallet = (account) => {
-    Account.backupAccountToJSON(account)
+  const onBackupWallet = async (account) => {
+    setErrorMessage('')
+    if (!account.id) {
+      setErrorMessage('No wallet is available to back up.')
+      return
+    }
+    try {
+      await Account.backupAccountToJSON(account)
+    } catch (error) {
+      console.error(error)
+      setErrorMessage(
+        error?.code === 'ENCRYPTION_OUTDATED'
+          ? error.message
+          : 'Backup failed. Please try again.',
+      )
+    }
   }
 
   return (
@@ -35,6 +50,7 @@ const SettingsBackup = () => {
             information needed to restore your wallet. Keep it safe and secure.
             To restore your wallet, you will need this file and your password.
           </p>
+          {errorMessage && <Error error={errorMessage} />}
         </VerticalGroup>
       </div>
       <Button

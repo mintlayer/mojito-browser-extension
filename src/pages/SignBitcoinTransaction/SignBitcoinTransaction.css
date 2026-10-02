@@ -246,3 +246,61 @@
   border-radius: 4px;
   padding: 6px 8px;
 }
+
+/* ── Parsed sign recap (BTC) ────────────────────────────────────────────
+   Human-readable facts above the raw JSON preview: what moves, where to,
+   at which fee. Values the user must double-check render in amber. */
+.btc-recap {
+  border: 1px solid var(--be-line-soft);
+  background: var(--be-bg-1);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.btc-recap h3 {
+  margin: 0 0 8px;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--be-text-0);
+}
+
+.btc-recap dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btc-recap-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.btc-recap-row dt {
+  color: var(--be-text-2);
+  flex-shrink: 0;
+}
+
+.btc-recap-row dd {
+  margin: 0;
+  text-align: right;
+  word-break: break-all;
+  color: var(--be-text-0);
+}
+
+.btc-recap-row dd.mono {
+  font-family: var(--be-font-mono);
+}
+
+.btc-recap-row dd.warn {
+  color: var(--be-amber);
+}
+
+.btc-recap-warning {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--be-amber);
+}

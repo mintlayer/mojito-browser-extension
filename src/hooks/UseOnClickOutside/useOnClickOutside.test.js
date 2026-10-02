@@ -73,12 +73,19 @@ test('doesnt calls handler when click is within element', async () => {
   })
 })
 
-test('doesnt calls handler when click is without ref', () => {
-  render(<div data-testid="element"></div>)
-  const element = screen.getByTestId('element')
-  expect(element).toBeInTheDocument()
+test('doesnt calls handler when ref has no current element', () => {
+  const handler = jest.fn()
 
-  renderHook(() => useOnClickOutside())
-  fireEvent.click(element)
-  expect(useOnClickOutside).toThrow(undefined)
+  const TestComponent = () => {
+    const ref = createRef()
+    useOnClickOutside(ref, handler)
+
+    return <div data-testid="element">Hello</div>
+  }
+
+  render(<TestComponent />)
+
+  fireEvent.mouseDown(document.body)
+
+  expect(handler).not.toHaveBeenCalled()
 })

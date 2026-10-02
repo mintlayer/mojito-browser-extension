@@ -8,9 +8,11 @@ import styles from './FeeField.module.css'
 const FeeFieldML = ({ value: parentValue, id, loading }) => {
   const { feerate } = useContext(MintlayerContext)
   const timeToFirstConfirmations = '~2 minutes'
-  const feeValue = parentValue
-    ? parentValue
-    : MLHelpers.getAmountInCoins(Number(feerate / 1000))
+  const feeValue = loading
+    ? null
+    : parentValue
+      ? parentValue
+      : MLHelpers.getAmountInCoins(Number(feerate / 1000))
 
   return (
     <div
@@ -26,7 +28,9 @@ const FeeFieldML = ({ value: parentValue, id, loading }) => {
           Network fee
         </span>
         <span className={styles.tierTime}>{timeToFirstConfirmations}</span>
-        <span className={styles.tierFee}>{feeValue} ML</span>
+        <span className={styles.tierFee}>
+          {loading ? 'calculating...' : `${feeValue} ML`}
+        </span>
       </button>
     </div>
   )

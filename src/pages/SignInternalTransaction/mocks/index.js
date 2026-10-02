@@ -857,76 +857,88 @@ export const MOCKS = {
     },
   },
   concludeorder: {
-    inputs: [
-      {
-        input: {
-          command: 'ConcludeOrder',
-          destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
-          input_type: 'AccountCommand',
-          nonce: 1,
-          order_id:
-            'tordr1thu5ykcdl0uj30g97wqkam7kart50lgzaq60edh8nq6zrn366lmql50gnu',
-        },
-        utxo: null,
-      },
-      {
-        input: {
-          index: 1,
-          input_type: 'UTXO',
-          source_id:
-            '0b9844f148f6ce71f0ec3741b9ed40ba1a709f1bdf2dc3144ff31d7b49c9be07',
-          source_type: 'Transaction',
-        },
-        utxo: {
-          destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
-          type: 'Transfer',
-          value: {
-            amount: {
-              atoms: '1701905604300000',
-              decimal: '17019.056043',
-            },
-            type: 'Coin',
+    action: 'signTransaction',
+    request: {
+      action: 'signTransaction',
+      data: {
+        txData: {
+          JSONRepresentation: {
+            inputs: [
+              {
+                input: {
+                  command: 'ConcludeOrder',
+                  destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
+                  input_type: 'AccountCommand',
+                  nonce: 1,
+                  order_id:
+                    'tordr1thu5ykcdl0uj30g97wqkam7kart50lgzaq60edh8nq6zrn366lmql50gnu',
+                },
+                utxo: null,
+              },
+              {
+                input: {
+                  index: 1,
+                  input_type: 'UTXO',
+                  source_id:
+                    '0b9844f148f6ce71f0ec3741b9ed40ba1a709f1bdf2dc3144ff31d7b49c9be07',
+                  source_type: 'Transaction',
+                },
+                utxo: {
+                  destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                  type: 'Transfer',
+                  value: {
+                    amount: {
+                      atoms: '1701905604300000',
+                      decimal: '17019.056043',
+                    },
+                    type: 'Coin',
+                  },
+                },
+              },
+            ],
+            outputs: [
+              {
+                destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '900000000000',
+                    decimal: '9',
+                  },
+                  type: 'Coin',
+                },
+              },
+              {
+                destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1000000000000',
+                    decimal: '10',
+                  },
+                  token_id:
+                    'tmltk17jgtcm3gc8fne3su8s96gwj0yw8k2khx3fglfe8mz72jhygemgnqm57l7l',
+                  type: 'TokenV1',
+                },
+              },
+              {
+                destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
+                type: 'Transfer',
+                value: {
+                  amount: {
+                    atoms: '1701705604300000',
+                    decimal: '17017.056043',
+                  },
+                  type: 'Coin',
+                },
+              },
+            ],
           },
         },
       },
-    ],
-    outputs: [
-      {
-        destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
-        type: 'Transfer',
-        value: {
-          amount: {
-            atoms: '900000000000',
-            decimal: '9',
-          },
-          type: 'Coin',
-        },
-      },
-      {
-        destination: 'tmt1qxf50ffxunjw557a9zf2et0vywkwjszyxyppa0py',
-        type: 'Transfer',
-        value: {
-          amount: {
-            atoms: '1000000000000',
-            decimal: '10',
-          },
-          token_id:
-            'tmltk17jgtcm3gc8fne3su8s96gwj0yw8k2khx3fglfe8mz72jhygemgnqm57l7l',
-          type: 'TokenV1',
-        },
-      },
-      {
-        destination: 'tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6',
-        type: 'Transfer',
-        value: {
-          amount: {
-            atoms: '1701705604300000',
-            decimal: '17017.056043',
-          },
-          type: 'Coin',
-        },
-      },
-    ],
+      origin: 'http://localhost:8080',
+      requestId: 'wymzne7u81',
+    },
   },
   burnCoin: {
     action: 'signTransaction',

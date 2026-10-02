@@ -1,7 +1,7 @@
 import {
-  accountsMigration_01_add_mlwallet_private_keys,
-  accountsMigration_02_add_htls_secrets_field,
-} from '../migrations/migrations'
+  ACCOUNT_MIGRATIONS,
+  migrateAccount,
+} from 'src/services/Database/migrations/migrations'
 
 const glob = typeof window !== 'undefined' ? window : self
 /* istanbul ignore next */
@@ -11,12 +11,13 @@ const IDB =
   glob.webkitIndexedDB ||
   glob.msIndexedDB
 
-const SCHEMAVERSION = 3
+const SCHEMAVERSION = ACCOUNT_MIGRATIONS.length + 1
 const DATABASENAME = 'mojito'
 const ACCOUNTSSTORENAME = 'accounts'
 
 const createOrUpdateDatabase = (event) => {
   const db = event.target.result
+  const { oldVersion } = event
 
   if (!db.objectStoreNames.contains(ACCOUNTSSTORENAME)) {
     const objectStore = db.createObjectStore(ACCOUNTSSTORENAME, {
@@ -27,16 +28,32 @@ const createOrUpdateDatabase = (event) => {
     // Create an index on the 'name' property
     objectStore.createIndex('name', 'name', { unique: false })
   }
-  // Apply migrations here
-  accountsMigration_01_add_mlwallet_private_keys()
-  accountsMigration_02_add_htls_secrets_field()
+
+  if (oldVersion === 0) return
+
+  // Apply migrations here, inside the upgrade transaction
+  const store = event.target.transaction.objectStore(ACCOUNTSSTORENAME)
+  const request = store.getAll()
+
+  request.onsuccess = () => {
+    request.result.forEach((account) => {
+      const migrated = migrateAccount(account, oldVersion)
+
+      if (migrated !== account) store.put(migrated)
+    })
+  }
 }
 
 const openDatabase = (DB = IDB) => {
   return new Promise((resolve, reject) => {
     const request = DB.open(DATABASENAME, SCHEMAVERSION)
 
-    request.onerror = (event) => reject(event)
+    // Reject with the underlying error, not the raw event.
+    request.onerror = (event) => reject(event?.target?.error ?? event)
+    // With popup + sidepanel + tab contexts sharing the DB, a version
+    // upgrade can stall forever on a connection that never closes.
+    request.onblocked = () =>
+      reject(new Error('Database upgrade blocked by another connection'))
     request.onupgradeneeded = createOrUpdateDatabase
     request.onsuccess = (event) => resolve(event.target.result)
   })
@@ -60,7 +77,7 @@ const loadAccounts = async (onError, DB = IDB) => {
     db.close()
     return store
   } catch (error) {
-    onError(error)
+    onError?.(error)
   }
 }
 
@@ -86,13 +103,7 @@ const clearDatabase = async (onError, DB = IDB) => {
     const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
     const store = transaction.objectStore(ACCOUNTSSTORENAME)
 
-    const request = store.clear()
-    request.onsuccess = function () {
-      console.log('All records have been removed from the store.')
-    }
-    request.onerror = function (event) {
-      console.error('Failed to clear object store:', event.target.errorCode)
-    }
+    await clear(store)
 
     db.close()
   } catch (error) {
@@ -133,19 +144,29 @@ const update = (store, entity) => {
   })
 }
 
+const remove = (store, key) => {
+  return new Promise((resolve, reject) => {
+    const dbOperation = store.delete(key)
+    dbOperation.onsuccess = ({ target: { result } }) => resolve(result)
+    dbOperation.onerror = (error) => reject(error)
+  })
+}
+
+const clear = (store) => {
+  return new Promise((resolve, reject) => {
+    const dbOperation = store.clear()
+    dbOperation.onsuccess = ({ target: { result } }) => resolve(result)
+    dbOperation.onerror = (error) => reject(error)
+  })
+}
+
 const deleteAccount = async (accountId, onError, DB = IDB) => {
   try {
     const db = await openDatabase(DB)
     const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
     const store = transaction.objectStore(ACCOUNTSSTORENAME)
 
-    const request = store.delete(accountId)
-    request.onsuccess = function () {
-      console.log('Account has been removed from the store.')
-    }
-    request.onerror = function (event) {
-      console.error('Failed to remove account:', event.target.errorCode)
-    }
+    await remove(store, accountId)
 
     db.close()
   } catch (error) {
@@ -200,45 +221,55 @@ const restoreAccountFromJSON = async (json, onError, DB = IDB) => {
     const accounts = await getAll(store)
     const accountsIds = accounts.map((account) => account.id)
 
-    const restoringAccount = json
+    // Validate the shape BEFORE computing the collision-free id.
+    if (
+      !json ||
+      typeof json !== 'object' ||
+      !Object.prototype.hasOwnProperty.call(json, 'id') ||
+      typeof json.id !== 'number' ||
+      !Number.isFinite(json.id)
+    ) {
+      throw new Error(
+        'The JSON object does not contain a valid numeric "id" property.',
+      )
+    }
+
+    const restoringAccount = { ...json }
 
     // Check if restoring account id already exists
     if (accountsIds.includes(restoringAccount.id)) {
       // Generate a new id for the restoring account
-      restoringAccount.id = Math.max(...accountsIds) + 1
-    }
-
-    // Ensure the JSON object has the required key property
-    if (!Object.prototype.hasOwnProperty.call(json, 'id')) {
-      throw new Error(
-        'The JSON object does not contain the required "id" property.',
+      const maxId = accountsIds.reduce(
+        (max, id) => (typeof id === 'number' && id > max ? id : max),
+        0,
       )
+      restoringAccount.id = maxId + 1
     }
 
-    const request = store.add(restoringAccount)
+    // Await the write: a failed restore must reject so the caller never
+    // reports success on a backup the user may have just discarded.
+    await new Promise((resolve, reject) => {
+      const request = store.add(restoringAccount)
 
-    request.onsuccess = () => {
-      console.log('Account successfully added to the store.')
-    }
+      request.onsuccess = () => {
+        console.log('Account successfully added to the store.')
+        resolve()
+      }
+      request.onerror = () => {
+        const error = request.error ?? new Error('Failed to add account')
+        reject(error)
+      }
+      transaction.onerror = () => {
+        const error = transaction.error ?? new Error('Transaction error')
+        reject(error)
+      }
+    })
 
-    request.onerror = (event) => {
-      const error = event.target.error
-      onError && onError(error)
-      console.error('Error adding account to the store:', error)
-    }
-
-    transaction.oncomplete = () => {
-      db.close()
-    }
-
-    transaction.onerror = (event) => {
-      const error = event.target.error
-      onError && onError(error)
-      console.error('Transaction error:', error)
-    }
+    db.close()
   } catch (error) {
     onError && onError(error)
-    console.error('Unexpected error:', error)
+    console.error('Error restoring account from JSON:', error)
+    throw error
   }
 }
 

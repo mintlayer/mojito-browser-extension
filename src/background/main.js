@@ -22,14 +22,21 @@ export const initBackground = () => {
   const api = typeof browser !== 'undefined' ? browser : chrome
 
   // One slot tracks the state of each approval surface: connect vs signing.
-  // Approvals open either in the browser side panel (panelMode) or, when the
-  // panel cannot be opened, in a popup window — each slot remembers which.
+  // Approvals open in the browser side panel (panelMode) or, when the panel
+  // cannot be opened/displayed, in a popup window — and while a panel
+  // approval is pending a popup may open as a SECOND surface (popupWindowId):
+  // the first surface to display or answer the request owns it, the loser
+  // is dismissed. Each slot remembers which surfaces are live.
   const createApprovalSlot = () => ({
     id: false,
     opening: false,
     requestId: null,
     panelMode: false,
     windowId: null,
+    // overlap fallback popup while a panel approval is still pending
+    popupWindowId: null,
+    // the panel confirmed it displayed the request (owns the approval)
+    panelAcked: false,
   })
 
   const popupSlot = createApprovalSlot()
@@ -127,6 +134,14 @@ export const initBackground = () => {
   // already-connected sites they are NOT_CONNECTED.
   let connectedSitesLoaded = false
   const messageQueue = []
+  const drainMessageQueue = () => {
+    if (connectedSitesLoaded) return
+    connectedSitesLoaded = true
+    for (const [queuedMessage, queuedSender, queuedResponse] of messageQueue) {
+      processMessage(queuedMessage, queuedSender, queuedResponse)
+    }
+    messageQueue.length = 0
+  }
   api.storage.local.get(['connectedSites'], (data) => {
     if (api.runtime.lastError) {
       console.error('[Mintlayer] Storage get error:', api.runtime.lastError)
@@ -135,11 +150,37 @@ export const initBackground = () => {
     }
     // one-time cleanup of the pre-window-keyed pending request
     api.storage.local.remove('pendingRequest')
-    connectedSitesLoaded = true
-    for (const [queuedMessage, queuedSender, queuedResponse] of messageQueue) {
-      processMessage(queuedMessage, queuedSender, queuedResponse)
+    // Sweep orphan `pendingRequest:<windowId>` keys left behind when the
+    // service worker was killed before an approval resolved. The key list
+    // is snapshotted BEFORE the queued messages drain, so a live approval
+    // (which can only start after the drain) can never be swept.
+    if (typeof api.storage.local.getKeys === 'function') {
+      api.storage.local.getKeys((keys) => {
+        if (api.runtime.lastError) {
+          console.error(
+            '[Mintlayer] Storage getKeys error:',
+            api.runtime.lastError,
+          )
+        } else {
+          const orphanKeys = keys.filter((key) =>
+            key.startsWith('pendingRequest:'),
+          )
+          if (orphanKeys.length) {
+            api.storage.local.remove(orphanKeys, () => {
+              if (api.runtime.lastError) {
+                console.error(
+                  '[Mintlayer] Storage remove error:',
+                  api.runtime.lastError,
+                )
+              }
+            })
+          }
+        }
+        drainMessageQueue()
+      })
+    } else {
+      drainMessageQueue()
     }
-    messageQueue.length = 0
   })
 
   const pendingRequestKeyFor = (windowId) => `pendingRequest:${windowId}`
@@ -172,11 +213,13 @@ export const initBackground = () => {
   // "install the wallet" hint when an error message matches /mojito/i.
   const errorOf = (code, message) => ({ code, message })
 
-  // Side-panel approvals wait a short moment for the panel to confirm it
-  // actually rendered the request. Chrome silently no-ops sidePanel.open()
-  // when it is called without a user gesture — without this ack-or-fallback
-  // the dApp would hang with NO approval surface at all.
-  const PANEL_ACK_TIMEOUT_MS = 2000
+  // Side-panel approvals wait for the panel to confirm it actually rendered
+  // the request. Chrome silently no-ops sidePanel.open() when it is called
+  // without a user gesture, and a cold panel load can take several seconds
+  // — without this ack-or-fallback the dApp would hang with NO approval
+  // surface at all. The budget is generous (full React bundle + wasm init
+  // on first panel open); while it runs, the panel keeps priority.
+  const PANEL_ACK_TIMEOUT_MS = 8000
   const approvalAcks = new Map() // requestId -> timeout id
 
   // Revocation must reach open dApp tabs: broadcast to every tab, the
@@ -214,12 +257,30 @@ export const initBackground = () => {
     })
   }
 
+  // Closes and unregisters the overlap popup (if any) that was opened while
+  // a panel approval is pending. Safe to call repeatedly.
+  const closeOverlapPopup = (slot) => {
+    if (typeof slot.popupWindowId !== 'number') return
+    clearPendingRequest(slot.popupWindowId)
+    if (api.windows?.remove) {
+      api.windows.remove(slot.popupWindowId, () => {
+        // already closed is fine
+        void api.runtime.lastError
+      })
+    }
+    slot.popupWindowId = null
+  }
+
   // Fails a pending approval: clears the slot and answers the waiting dApp.
   const failSlot = (slot, error) => {
     const windowId = slot.panelMode ? slot.windowId : slot.id
     slot.id = false
     slot.opening = false
     slot.panelMode = false
+    slot.panelAcked = false
+    // an overlap popup must not linger showing an approval the dApp no
+    // longer waits for
+    closeOverlapPopup(slot)
 
     if (!slot.requestId) return
 
@@ -246,75 +307,91 @@ export const initBackground = () => {
     slot.windowId = windowId
     slot.opening = true
     slot.requestId = request.requestId
+    slot.panelAcked = false
     pendingResponses.set(request.requestId, sendResponse)
 
-    api.storage.local.set(
-      { [pendingRequestKeyFor(windowId)]: { ...request, windowId } },
-      () => {
-        if (api.runtime.lastError) {
-          console.error('[Mintlayer] Storage set error:', api.runtime.lastError)
-          failSlot(
-            slot,
-            errorOf(
-              'STORAGE_ERROR',
-              'Could not create the wallet request. Please try again.',
-            ),
-          )
-          return
-        }
+    // Chrome silently no-ops sidePanel.open() without a user gesture — and
+    // the gesture that produced this dApp request can expire across async
+    // hops (e.g. a storage round-trip). Open the panel FIRST, while the
+    // activation is still live, and persist the request only afterwards:
+    // the panel picks it up either on mount or via its storage.onChanged
+    // listener, so a late write is fine. The reverse (an open that silently
+    // did nothing) is what the ack timer below guards against.
+    api.sidePanel
+      .open({ tabId: sender.tab.id })
+      .then(() => {
+        slot.opening = false
+        api.storage.local.set(
+          { [pendingRequestKeyFor(windowId)]: { ...request, windowId } },
+          () => {
+            if (api.runtime.lastError) {
+              console.error(
+                '[Mintlayer] Storage set error:',
+                api.runtime.lastError,
+              )
+              failSlot(
+                slot,
+                errorOf(
+                  'STORAGE_ERROR',
+                  'Could not create the wallet request. Please try again.',
+                ),
+              )
+              return
+            }
 
-        // Chrome silently no-ops sidePanel.open() without a user gesture:
-        // the promise resolves but nothing opens. If the panel does not
-        // confirm it rendered the approval within the timeout, fall back to
-        // a popup window so the dApp always gets an approval surface.
-        const ackTimer = setTimeout(() => {
-          approvalAcks.delete(request.requestId)
-          console.error(
-            '[Mojito] side panel did not display the approval — using a popup window',
-          )
-          pendingResponses.delete(request.requestId)
-          slot.requestId = null
-          slot.panelMode = false
-          slot.windowId = null
-          api.storage.local.remove(pendingRequestKeyFor(windowId))
-          onFallback()
-        }, PANEL_ACK_TIMEOUT_MS)
-        approvalAcks.set(request.requestId, ackTimer)
-
-        api.sidePanel
-          .open({ tabId: sender.tab.id })
-          .then(() => {
-            // the panel displayed the approval; keep the slot open until
-            // the response arrives
-            slot.opening = false
-          })
-          .catch((error) => {
-            console.error(
-              '[Mojito] sidePanel.open failed, using a popup window:',
-              error,
-            )
-            clearTimeout(approvalAcks.get(request.requestId))
-            approvalAcks.delete(request.requestId)
-            // roll back the panel registration and use a popup instead
-            pendingResponses.delete(request.requestId)
-            slot.requestId = null
-            slot.panelMode = false
-            slot.windowId = null
-            // the popup fallback re-opens the slot: without this reset the
-            // fallback hits openPopupApproval's busy guard and the dApp is
-            // answered REQUEST_IN_PROGRESS instead of getting a window
-            slot.opening = false
-            api.storage.local.remove(pendingRequestKeyFor(windowId))
-            onFallback()
-          })
-      },
-    )
+            // The panel must confirm it rendered the approval. When no ack
+            // arrives within the budget, open a popup as a SECOND surface
+            // (never as a replacement): first surface to display or answer
+            // owns the request, the other is dismissed — the dApp always
+            // gets an approval without a fast panel load stealing the show
+            // from a slow one.
+            const ackTimer = setTimeout(() => {
+              approvalAcks.delete(request.requestId)
+              if (slot.requestId !== request.requestId) return // answered meanwhile
+              console.error(
+                '[Mojito] side panel did not display the approval — opening a popup as a second surface',
+              )
+              openOverlapPopup(slot, request)
+            }, PANEL_ACK_TIMEOUT_MS)
+            approvalAcks.set(request.requestId, ackTimer)
+          },
+        )
+      })
+      .catch((error) => {
+        console.error(
+          '[Mojito] sidePanel.open failed, using a popup window:',
+          error,
+        )
+        // roll back the panel registration and use a popup instead — the
+        // popup fallback re-opens the slot: without this reset the fallback
+        // hits openPopupApproval's busy guard and the dApp is answered
+        // REQUEST_IN_PROGRESS instead of getting a window
+        pendingResponses.delete(request.requestId)
+        slot.requestId = null
+        slot.panelMode = false
+        slot.windowId = null
+        slot.opening = false
+        onFallback()
+      })
   }
 
   // Chooses the approval surface: side panel for the dApp's window when the
   // browser supports it, popup window otherwise. Returns true while the
   // dApp's message channel stays open.
   const openApprovalTarget = (slot, request, sendResponse, sender) => {
+    // SECURITY: route the approval by a background-generated opaque id, never
+    // by the dApp-supplied requestId. Page request ids share one
+    // attacker-chosen namespace across all origins: routing by them let a
+    // page overwrite another page's pending reply channel and capture its
+    // approval result (signed transaction / addresses). The dApp-facing id
+    // is irrelevant for routing anyway — the content script tags responses
+    // with its own page-local id.
+    request.requestId =
+      globalThis.crypto?.randomUUID?.() ||
+      Array.from(globalThis.crypto.getRandomValues(new Uint8Array(16)), (b) =>
+        b.toString(16).padStart(2, '0'),
+      ).join('')
+
     const canUsePanel =
       Boolean(api.sidePanel?.open) &&
       sender?.tab?.id != null &&
@@ -345,6 +422,70 @@ export const initBackground = () => {
       openPopupApproval(slot, request, sendResponse)
     })
     return true
+  }
+
+  // Opens a popup window as a SECOND approval surface while a side-panel
+  // approval is still pending (the panel never acked — it may still be
+  // loading). Neither surface steals from the other: the first to display
+  // (approvalDisplayed ack) or answer (popupResponse) owns the request, the
+  // loser is dismissed. The dApp's channel registration (pendingResponses)
+  // stays untouched — the panel slot remains its owner of record.
+  const openOverlapPopup = (slot, request) => {
+    api.windows.create(
+      {
+        url: api.runtime.getURL('popup.html'),
+        type: 'popup',
+        width: 800,
+        height: 600,
+        focused: true,
+      },
+      (win) => {
+        // answered/released while the window was opening — never show it
+        if (slot.requestId !== request.requestId) {
+          if (typeof win?.id === 'number') {
+            api.windows.remove(win.id, () => {
+              void api.runtime.lastError
+            })
+          }
+          return
+        }
+        if (typeof win?.id !== 'number') return // no window — the panel may still claim it
+        slot.popupWindowId = win.id
+
+        // The window may have been closed while it was being created, in
+        // which case onRemoved fired before the id was tracked.
+        api.windows.get(win.id, (existing) => {
+          if (api.runtime.lastError || !existing) {
+            if (slot.popupWindowId === win.id) {
+              slot.popupWindowId = null
+              if (!slot.panelAcked) {
+                // no live surface left — do not hang the dApp forever
+                failSlot(
+                  slot,
+                  errorOf('REQUEST_CANCELLED', 'Request cancelled'),
+                )
+              }
+            }
+            return
+          }
+
+          // Keyed by window id: the popup approves what ITS window was
+          // opened for. Kept ALONGSIDE — never instead of — the panel's
+          // key so a late-loading panel can still claim the request.
+          api.storage.local.set(
+            { [pendingRequestKeyFor(win.id)]: request },
+            () => {
+              if (api.runtime.lastError) {
+                console.error(
+                  '[Mintlayer] Storage set error:',
+                  api.runtime.lastError,
+                )
+              }
+            },
+          )
+        })
+      },
+    )
   }
 
   // Popup fallback: opens one approval window for the request and keeps the
@@ -420,22 +561,75 @@ export const initBackground = () => {
     return true
   }
 
+  // Overlap resolution when a surface ANSWERS: the answering surface wins.
+  // Withdraw the other surface so no second prompt survives the decision.
+  const releaseOverlapOnAnswer = (slot, answeredWindowId) => {
+    if (!slot.panelMode || typeof slot.popupWindowId !== 'number') return
+    if (answeredWindowId === slot.popupWindowId) {
+      // the popup answered: withdraw the panel's pending request too
+      if (typeof slot.windowId === 'number') {
+        clearPendingRequest(slot.windowId)
+      }
+    } else {
+      // the panel answered: dismiss the overlap popup
+      closeOverlapPopup(slot)
+    }
+  }
+
+  // Overlap resolution when a surface DISPLAYS the request (ack): the first
+  // surface to display owns the request, the loser is dismissed. The ack
+  // carries the acking surface's own window id (Browser.notifyApprovalDisplayed);
+  // a missing id (older UI build) is treated as the panel's.
+  const resolveOverlapOnAck = (slot, ackWindowId) => {
+    const isPopupAck =
+      typeof ackWindowId === 'number' && ackWindowId === slot.popupWindowId
+
+    if (isPopupAck) {
+      // the popup displayed first: it becomes the sole owner and the
+      // panel's pending request is withdrawn, so a late-loading panel
+      // will not prompt for an already-claimed request
+      if (typeof slot.windowId === 'number') {
+        clearPendingRequest(slot.windowId)
+      }
+      slot.id = slot.popupWindowId
+      slot.panelMode = false
+      slot.windowId = null
+      slot.popupWindowId = null
+      slot.opening = false
+      slot.panelAcked = false
+    } else {
+      // the panel displayed: it owns the request; dismiss the popup
+      slot.panelAcked = true
+      closeOverlapPopup(slot)
+    }
+  }
+
   // Handle popup responses from the wallet UI
   const handlePopupResponse = (message) => {
     const { requestId, origin, result, error, method, windowId } = message
     const respond = pendingResponses.get(requestId)
     pendingResponses.delete(requestId)
+    // stop a still-running ack timer for this request — the decision is in
+    const timer = approvalAcks.get(requestId)
+    if (timer) {
+      clearTimeout(timer)
+      approvalAcks.delete(requestId)
+    }
     clearPendingRequest(windowId)
 
     // release the owning approval slot (panel-mode slots have no
     // window-removed event to reset them)
     for (const slot of [connectSlot, popupSlot]) {
-      if (slot.requestId === requestId) {
-        slot.id = false
-        slot.opening = false
-        slot.panelMode = false
-        slot.requestId = null
-      }
+      if (slot.requestId !== requestId) continue
+
+      releaseOverlapOnAnswer(slot, windowId)
+
+      slot.id = false
+      slot.opening = false
+      slot.panelMode = false
+      slot.requestId = null
+      slot.popupWindowId = null
+      slot.panelAcked = false
     }
 
     if (!respond) {
@@ -497,8 +691,8 @@ export const initBackground = () => {
     }
 
     if (message.action === 'approvalDisplayed') {
-      // the panel confirmed it rendered the request: cancel the popup
-      // fallback for that request
+      // an approval surface (side panel or popup) confirmed it rendered the
+      // request: cancel the popup-fallback timer for that request
       if (!isFromExtensionPage(sender)) return false
       const timer = approvalAcks.get(message.requestId)
       if (timer) {
@@ -506,7 +700,12 @@ export const initBackground = () => {
         approvalAcks.delete(message.requestId)
       }
       for (const slot of [connectSlot, popupSlot]) {
-        if (slot.requestId === message.requestId) slot.opening = false
+        if (slot.requestId !== message.requestId) continue
+        if (!slot.panelMode) continue // popup-owned — nothing to arbitrate
+
+        // During an overlap (panel pending + fallback popup open) the FIRST
+        // surface to display owns the request (see resolveOverlapOnAck).
+        resolveOverlapOnAck(slot, message.windowId)
       }
       return false
     }
@@ -535,6 +734,14 @@ export const initBackground = () => {
     }
 
     if (!message.method) return false
+
+    // A sender id different from ours can only be ANOTHER extension's page
+    // (the browser sets both fields): ignore it instead of letting a
+    // foreign extension drive approval flows. Content-script relays and
+    // wallet pages always carry this extension's own runtime id.
+    if (sender.id !== api.runtime.id && origin.startsWith('chrome-extension')) {
+      return false
+    }
 
     // Handle requests from content.js
     if (message.method === 'checkConnection') {
@@ -678,13 +885,22 @@ export const initBackground = () => {
   // Clean up window state and answer waiting dApps when an approval window
   // is closed without a decision.
   api.windows.onRemoved.addListener((winId) => {
-    if (popupSlot.id === winId) {
-      failSlot(popupSlot, errorOf('REQUEST_CANCELLED', 'Request cancelled'))
-    }
-    if (connectSlot.id === winId) {
-      failSlot(connectSlot, errorOf('REQUEST_CANCELLED', 'Request cancelled'))
+    for (const slot of [popupSlot, connectSlot]) {
+      if (slot.id === winId) {
+        failSlot(slot, errorOf('REQUEST_CANCELLED', 'Request cancelled'))
+        return
+      }
+      // an overlap popup closed without deciding: if the panel already
+      // displayed the request it owns it and keeps going — otherwise no
+      // live surface is left and the dApp must not hang forever
+      if (slot.popupWindowId === winId) {
+        slot.popupWindowId = null
+        clearPendingRequest(winId)
+        if (!slot.panelAcked) {
+          failSlot(slot, errorOf('REQUEST_CANCELLED', 'Request cancelled'))
+        }
+        return
+      }
     }
   })
-
-  console.log('[Mintlayer Extension] Background script loaded')
 }

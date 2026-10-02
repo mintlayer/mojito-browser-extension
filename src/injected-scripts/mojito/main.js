@@ -12,6 +12,26 @@ export const initMojito = (appVersion) => {
     testnet: 'testnet',
   }
 
+  // Client-side budget for the wallet to answer. Without it, a missing or
+  // wedged content script would leave the dApp's promise pending forever.
+  // Approval-carrying methods get the same budget as the content script's
+  // approval popup (5 min); a short budget there would turn a slow user
+  // approval into a misleading WALLET_NOT_FOUND rejection. Cheap methods
+  // still fail fast.
+  const REQUEST_TIMEOUT_MS = 60000
+  // Strictly greater than the content script's RESPONSE_TIMEOUT_MS (5 min):
+  // this timer starts a hop earlier, so on the equality boundary it would
+  // fire first and mask the content script's precise TIMEOUT code.
+  const APPROVAL_TIMEOUT_MS = 5 * 60 * 1000 + 5000
+  const APPROVAL_METHODS = new Set([
+    'connect',
+    'signTransaction',
+    'signChallenge',
+    'disconnect',
+  ])
+  const timeoutForMethod = (method) =>
+    APPROVAL_METHODS.has(method) ? APPROVAL_TIMEOUT_MS : REQUEST_TIMEOUT_MS
+
   const mojito = {
     isExtension: true,
     version: appVersion,
@@ -24,7 +44,13 @@ export const initMojito = (appVersion) => {
 
     async request(method, params = {}) {
       return new Promise((resolve, reject) => {
-        const requestId = Math.random().toString(36).substring(2)
+        // CSPRNG ids: unguessable, so another script in this page cannot
+        // forge or collide a response for an in-flight request.
+        const requestId =
+          globalThis.crypto?.randomUUID?.() ||
+          Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) =>
+            b.toString(16).padStart(2, '0'),
+          ).join('')
 
         function handle(event) {
           if (event.source !== window) return
@@ -34,6 +60,7 @@ export const initMojito = (appVersion) => {
             data.requestId === requestId
           ) {
             window.removeEventListener('message', handle)
+            clearTimeout(timeout)
             if (data.error) {
               // Errors are `{ code, message }` (or a legacy plain string) so
               // callers can distinguish rejected / locked / cancelled /
@@ -49,6 +76,19 @@ export const initMojito = (appVersion) => {
             }
           }
         }
+
+        const timeoutMs = timeoutForMethod(method)
+
+        const timeout = setTimeout(() => {
+          window.removeEventListener('message', handle)
+          const err = new Error(
+            `The wallet did not respond to "${method}" within ${
+              timeoutMs / 1000
+            }s — is the wallet extension installed and enabled?`,
+          )
+          err.code = 'WALLET_NOT_FOUND'
+          reject(err)
+        }, timeoutMs)
 
         window.addEventListener('message', handle)
         window.postMessage(
@@ -96,7 +136,7 @@ export const initMojito = (appVersion) => {
     },
 
     async restore() {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const origin = window.location.origin
         // Unique per call: a fixed id would make a second concurrent restore
         // be swallowed by the content script's duplicate-request guard and
@@ -122,6 +162,7 @@ export const initMojito = (appVersion) => {
             data.requestId === requestId
           ) {
             window.removeEventListener('message', handler)
+            clearTimeout(timeout)
 
             const session = data.result
             if (session?.addressesByChain) {
@@ -141,18 +182,32 @@ export const initMojito = (appVersion) => {
         }
 
         window.addEventListener('message', handler)
+
+        const timeout = setTimeout(() => {
+          window.removeEventListener('message', handler)
+          const err = new Error(
+            `The wallet did not respond to the session restore within ${
+              REQUEST_TIMEOUT_MS / 1000
+            }s — is the wallet extension installed and enabled?`,
+          )
+          err.code = 'WALLET_NOT_FOUND'
+          reject(err)
+        }, REQUEST_TIMEOUT_MS)
       })
     },
 
     on(event, callback) {
-      window.addEventListener('message', (eventObj) => {
+      const listener = (eventObj) => {
+        if (eventObj.source !== window) return
         if (
           eventObj.data?.type === 'MINTLAYER_EVENT' &&
           eventObj.data.event === event
         ) {
           callback(eventObj.data.data)
         }
-      })
+      }
+      window.addEventListener('message', listener)
+      return () => window.removeEventListener('message', listener)
     },
 
     async disconnect() {

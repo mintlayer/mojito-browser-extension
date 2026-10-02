@@ -104,10 +104,14 @@ const DelegationDetails = ({ delegation, onAddFunds, onWithdraw }) => {
         <DelegationDetailsItem
           title="Delegation id"
           content={
-            <>
-              {ML.formatAddress(delegation.delegation_id, 16)}
-              <CopyButton content={delegation.delegation_id} />
-            </>
+            delegation.delegation_id ? (
+              <>
+                {ML.formatAddress(delegation.delegation_id, 16)}
+                <CopyButton content={delegation.delegation_id} />
+              </>
+            ) : (
+              'Not confirmed'
+            )
           }
         />
       </div>
@@ -130,19 +134,21 @@ const DelegationDetails = ({ delegation, onAddFunds, onWithdraw }) => {
         </div>
       )}
 
-      <a
-        href={explorerLink}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <Button
-          extraStyleClasses={[styles.explorerButton]}
-          alternate
+      {delegation?.delegation_id && (
+        <a
+          href={explorerLink}
+          target="_blank"
+          rel="noreferrer"
         >
-          <IconArrowTopRight />
-          Open in Block Explorer
-        </Button>
-      </a>
+          <Button
+            extraStyleClasses={[styles.explorerButton]}
+            alternate
+          >
+            <IconArrowTopRight />
+            Open in Block Explorer
+          </Button>
+        </a>
+      )}
     </div>
   )
 }

@@ -6,7 +6,6 @@ import { BTC, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 import { AccountContext } from '@Contexts'
 import { Account, AccountHelpers } from '@Entities'
 import { useNavigate } from 'react-router'
-import { wordlists } from 'bip39'
 
 const AddWallet = ({
   account,
@@ -36,8 +35,14 @@ const AddWallet = ({
 
   const connectWalletHandle = async (id, walletType, mnemonic) => {
     //TODO: refactor this
+    if (!pass) {
+      setPassPristinity(false)
+      setPassValidity(false)
+      setPassErrorMessage('Password must be set.')
+      return
+    }
     const unlockedAccount = await Account.unlockAccount(id, pass)
-    if (!pass || !unlockedAccount) {
+    if (!unlockedAccount) {
       setPassPristinity(false)
       setPassValidity(false)
       setPassErrorMessage('Password must be set.')
@@ -106,7 +111,7 @@ const AddWallet = ({
       const isValid = BTC.validateMnemonic(mnemonic)
       if (!isValid) {
         console.error('Invalid mnemonic')
-        setMnemonicErrorMessage('Invalid Seed Pharse, please try again')
+        setMnemonicErrorMessage('Invalid Seed Phrase, please try again')
         return
       }
       setMnemonicErrorMessage('')
@@ -115,7 +120,7 @@ const AddWallet = ({
     }
     try {
       setAllowClosing(false)
-      const mnemonic = getMnemonics(wordlists)
+      const mnemonic = getMnemonics()
       const response = await connectWalletHandle(
         accountID,
         walletType,
@@ -158,7 +163,7 @@ const AddWallet = ({
                 className="words-description"
                 data-testid="description-paragraph"
               >
-                We strongly recomend you to write down the same words you used
+                We strongly recommend you to write down the same words you used
                 to create the account.
               </p>
             </VerticalGroup>

@@ -17,14 +17,18 @@ const memoryRouterFeature = {
 describe('DelegationList', () => {
   const mockDelegationsList = [
     {
-      date: 1645113600,
-      balance: 100000000,
+      creation_time: 1645113600,
+      balance: { decimal: '100', atoms: '10000000000' },
       delegation_id: 'test_id1',
+      pool_id: 'pool_id1',
+      type: 'Confirmed',
     },
     {
-      date: 1645113600,
-      balance: 200000000,
+      creation_time: 1645113600,
+      balance: { decimal: '200', atoms: '20000000000' },
       delegation_id: 'test_id2',
+      pool_id: 'pool_id2',
+      type: 'Confirmed',
     },
   ]
 
@@ -86,5 +90,10 @@ describe('DelegationList', () => {
 
     expect(screen.getByTestId('delegation-list')).toBeInTheDocument()
     expect(screen.getAllByTestId('delegation')).toHaveLength(2)
+
+    const amounts = screen.getAllByTestId('delegation-amount')
+    expect(amounts).toHaveLength(2)
+    expect(amounts[0]).toHaveTextContent('100')
+    expect(amounts[1]).toHaveTextContent('200')
   })
 })

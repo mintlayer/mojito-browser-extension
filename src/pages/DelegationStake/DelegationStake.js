@@ -19,9 +19,8 @@ const DelegationStakePage = () => {
     chain: 'mintlayer',
   }
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.STAKING
-  const { addresses, accountID } = useContext(AccountContext)
+  const { accountID } = useContext(AccountContext)
   const { client } = useContext(MintlayerContext)
-  const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
@@ -38,6 +37,7 @@ const DelegationStakePage = () => {
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
   const [feeLoading, setFeeLoading] = useState(false)
+  const [feeError, setFeeError] = useState('')
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const {
@@ -46,7 +46,7 @@ const DelegationStakePage = () => {
     unusedAddresses,
     fetchingBalances,
     fetchingUtxos,
-  } = useMlWalletInfo(currentMlAddresses)
+  } = useMlWalletInfo()
   const maxValueToken = mlBalance
 
   const transaction_conditions =
@@ -75,6 +75,7 @@ const DelegationStakePage = () => {
         transactionInformation?.amount > 0
       ) {
         setFeeLoading(true)
+        setFeeError('')
         try {
           const transaction = await buildStakeTransaction({
             amount: transactionInformation.amount,
@@ -83,6 +84,8 @@ const DelegationStakePage = () => {
           setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
         } catch (e) {
           console.error('Failed to calculate staking fee:', e)
+          setTotalFeeCrypto(0)
+          setFeeError(e.message || 'Fee calculation failed')
         } finally {
           setFeeLoading(false)
         }
@@ -97,10 +100,14 @@ const DelegationStakePage = () => {
     delegationId,
   ])
 
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
+
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/dashboard')
-    return
+    return null
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -130,6 +137,7 @@ const DelegationStakePage = () => {
           <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}
             feeLoading={feeLoading}
+            feeError={feeError}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueToken}

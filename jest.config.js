@@ -2,6 +2,10 @@ require('dotenv').config()
 
 module.exports = {
   testEnvironment: 'jsdom',
+  // Jest's default cache lives in /tmp, whose per-user quota this machine
+  // exhausts — pin the cache next to the repo so parallel workers and the
+  // transform cache always work (node_modules is gitignored).
+  cacheDirectory: '<rootDir>/node_modules/.cache/jest',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   testPathIgnorePatterns: [
     '/node_modules/',

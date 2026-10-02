@@ -30,7 +30,7 @@
   "scripts": {
     "start": "wxt",
     "build:staging": "wxt build --mode staging",
-    "build": "wxt build",
+    "build": "wxt build && npm run check:build-output",
     "test": "NODE_ENV=test jest",
     "coverage": "npm test -- --coverage ",
     "e2e": "npx playwright test",
@@ -43,6 +43,7 @@
     "pretty-quick-check-branch": "pretty-quick --check --branch main",
     "prepare": "husky install",
     "audit:imports": "node scripts/audit-imports.js",
+    "check:build-output": "node scripts/check-build-output.js",
     "start:firefox": "wxt -b firefox",
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",

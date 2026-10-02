@@ -29,6 +29,9 @@ export const sendPopupResponse = ({
   // processes this response (keyed by THIS window's id, passed along so a
   // response can only ever clear its own request).
   const cleanup = () => {
+    // Swallow the unchecked lastError (the background may be gone when the
+    // response lands) to avoid Chrome's console noise.
+    void runtime.lastError
     window.close()
     // Fallback for contexts where window.close() is ignored (e.g. the
     // approval page opened as a tab in dev): go back to the wallet.
@@ -66,14 +69,24 @@ export const sendPopupResponse = ({
 // the request: it cancels the popup-fallback timer for that requestId.
 // Without this ack the background assumes the panel did not display the
 // request and opens a new popup window for every approval.
-export const notifyApprovalDisplayed = (requestId) => {
+// windowId (optional, this surface's own browser window) lets the
+// background arbitrate when BOTH surfaces are showing the same request:
+// the first to display owns it.
+export const notifyApprovalDisplayed = (requestId, windowId) => {
   if (!runtime || !requestId) return
   try {
-    runtime.sendMessage({ action: 'approvalDisplayed', requestId }, () => {
-      // Fire-and-forget: swallow the unchecked lastError (no responder
-      // is expected for this message).
-      void runtime.lastError
-    })
+    runtime.sendMessage(
+      {
+        action: 'approvalDisplayed',
+        requestId,
+        ...(typeof windowId === 'number' ? { windowId } : {}),
+      },
+      () => {
+        // Fire-and-forget: swallow the unchecked lastError (no responder
+        // is expected for this message).
+        void runtime.lastError
+      },
+    )
   } catch {
     /* messaging unavailable — the popup fallback then guarantees an
        approval surface, which is the safe outcome */

@@ -102,6 +102,21 @@ export const initExplorerContentScript = () => {
     // Guard against duplicate requests and answer stale ids at once.
     if (pendingRequests.has(requestId)) return
 
+    // Cap concurrent pending requests: a hostile page must not be able to
+    // grow unbounded timer/background pressure in its own tab.
+    const MAX_PENDING_REQUESTS = 10
+    if (pendingRequests.size >= MAX_PENDING_REQUESTS) {
+      postToPage({
+        type: 'MINTLAYER_RESPONSE',
+        requestId,
+        error: {
+          code: 'TOO_MANY_REQUESTS',
+          message: 'Too many pending wallet requests. Complete or wait.',
+        },
+      })
+      return
+    }
+
     // Extension was reloaded/updated/disabled while this page stayed open:
     // the runtime channel is gone, so fail fast instead of hanging the
     // page's promise until the timeout.

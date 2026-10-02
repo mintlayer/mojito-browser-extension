@@ -186,7 +186,12 @@ export default defineConfig({
         protocolImports: true,
       }),
     ],
-    define: envDefine(env.mode),
+    define: {
+      ...envDefine(env.mode),
+      // The page-world bundle (mojito.js) must not carry package.json
+      // metadata (name/scripts/dependency list) just to read the version.
+      __APP_VERSION__: JSON.stringify(pkgVersion()),
+    },
     // Worker bundles run through their own plugin pipeline.
     worker: {
       format: 'es',

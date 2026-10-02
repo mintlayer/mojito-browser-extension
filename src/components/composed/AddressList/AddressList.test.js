@@ -44,25 +44,30 @@ describe('AddressList', () => {
     const mlAddresses = [
       {
         id: 'tmt1qAAA',
-        coin_balance: { decimal: 0.5 },
-        locked_coin_balance: { decimal: 0.1 },
-        tokens: [{ token_id: 'token-1', amount: { decimal: 1 } }],
+        coin_balance: { atoms: '50000000', decimal: '0.5' },
+        locked_coin_balance: { atoms: '10000000', decimal: '0.1' },
+        tokens: [
+          { token_id: 'token-1', amount: { atoms: '100000000', decimal: '1' } },
+        ],
         transaction_history: [], // used = false
       },
       {
         id: 'tmt1qBBB',
-        coin_balance: { decimal: 1.2 },
-        locked_coin_balance: { decimal: 0 },
+        coin_balance: { atoms: '120000000', decimal: '1.2' },
+        locked_coin_balance: { atoms: '0', decimal: '0' },
         tokens: [],
         transaction_history: [1], // used = true
       },
       {
         id: 'tmt1qCCC',
-        coin_balance: { decimal: 1.2 },
-        locked_coin_balance: { decimal: 0.5 },
+        coin_balance: { atoms: '120000000', decimal: '1.2' },
+        locked_coin_balance: { atoms: '50000000', decimal: '0.5' },
         tokens: [
-          { token_id: 'token-2', amount: { decimal: 5 } },
-          { token_id: 'token-3', amount: { decimal: 10 } },
+          { token_id: 'token-2', amount: { atoms: '500000000', decimal: '5' } },
+          {
+            token_id: 'token-3',
+            amount: { atoms: '1000000000', decimal: '10' },
+          },
         ],
         transaction_history: [], // used = false
       },
@@ -88,19 +93,21 @@ describe('AddressList', () => {
     const mlAddresses = [
       {
         id: 'tmt1qADDR1',
-        coin_balance: { decimal: 0.1 },
-        locked_coin_balance: { decimal: 0 },
+        coin_balance: { atoms: '10000000', decimal: '0.1' },
+        locked_coin_balance: { atoms: '0', decimal: '0' },
         tokens: [
-          { token_id: 'ABC123', amount: { decimal: 1 } },
-          { token_id: 'XYZ999', amount: { decimal: 2 } },
+          { token_id: 'ABC123', amount: { atoms: '100000000', decimal: '1' } },
+          { token_id: 'XYZ999', amount: { atoms: '200000000', decimal: '2' } },
         ],
         transaction_history: [],
       },
       {
         id: 'tmt1qADDR2',
-        coin_balance: { decimal: 0.2 },
-        locked_coin_balance: { decimal: 0 },
-        tokens: [{ token_id: 'LMN000', amount: { decimal: 3 } }],
+        coin_balance: { atoms: '20000000', decimal: '0.2' },
+        locked_coin_balance: { atoms: '0', decimal: '0' },
+        tokens: [
+          { token_id: 'LMN000', amount: { atoms: '300000000', decimal: '3' } },
+        ],
         transaction_history: [],
       },
     ]

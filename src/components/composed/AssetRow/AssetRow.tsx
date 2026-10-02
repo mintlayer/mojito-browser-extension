@@ -10,6 +10,10 @@ export interface DesignAsset {
   symbol: string
   chain: string
   amount: number
+  // Wallet-owned coin/token classification (never derivable from the
+  // issuer-chosen name/symbol — an attacker token tickeried "ML" must keep
+  // its Token tag). Absent type renders untagged: the fail-safe direction.
+  type?: 'coin' | 'token'
   price?: number
   change24h?: number
   spark?: number[]
@@ -24,6 +28,7 @@ export interface DesignAsset {
 // Design-system asset row (doc/ be-home.jsx token list row).
 const AssetRow = ({ a }: { a: DesignAsset }) => {
   const fiat = a.price != null ? a.amount * a.price : undefined
+  const isNativeCoin = a.type === 'coin'
   return (
     <div
       className={`${styles.row} ${a.disabled ? styles.disabled : ''}`}
@@ -33,15 +38,14 @@ const AssetRow = ({ a }: { a: DesignAsset }) => {
       <TokenIcon
         symbol={a.symbol}
         iconUri={a.iconUri}
+        native={isNativeCoin}
       />
       <div className={styles.detail}>
         <div className={styles.titleLine}>
           <span className={styles.title}>
             {a.name} ({a.symbol})
           </span>
-          {a.chain === 'Mintlayer' && a.id !== 'ml' && (
-            <Tag c="teal">Token</Tag>
-          )}
+          {a.type === 'token' && <Tag c="teal">Token</Tag>}
           {a.authority && <Tag c="violet">Issuer</Tag>}
           {a.disabled && <Tag c="grey">Sync issue</Tag>}
           {a.mock && <Tag c="amber">Demo</Tag>}

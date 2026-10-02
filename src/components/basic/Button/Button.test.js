@@ -2,12 +2,14 @@ import { render, screen } from '@testing-library/react'
 import Button from './Button.tsx'
 
 test('Button component', () => {
-  render(<Button />)
+  const mockHandleClickFn = jest.fn()
+  render(<Button onClickHandle={mockHandleClickFn} />)
   const buttonComponent = screen.getByTestId('button')
   buttonComponent.click()
 
   expect(buttonComponent).toBeInTheDocument()
   expect(buttonComponent).toHaveClass('btn')
+  expect(mockHandleClickFn).toHaveBeenCalledTimes(1)
 })
 
 test('Button component with alternate style', () => {

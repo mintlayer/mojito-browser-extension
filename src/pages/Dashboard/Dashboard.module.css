@@ -231,35 +231,3 @@
 .addRow:hover {
   background: oklch(1 0 0 / 0.03);
 }
-
-/* ── NFT grid ────────────────────────────────────────────── */
-.nftGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.nftTile {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: 16px;
-  border: 1px solid var(--be-line-soft);
-  overflow: hidden;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  cursor: pointer;
-  animation: be-slide-up 400ms both;
-}
-
-.nftName {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--be-text-0);
-}
-
-.nftCollection {
-  font-size: 10px;
-  color: var(--be-text-2);
-}

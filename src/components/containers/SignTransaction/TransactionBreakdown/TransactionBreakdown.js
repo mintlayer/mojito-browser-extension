@@ -312,4 +312,6 @@ const TransactionBreakdown = ({
   )
 }
 
+export { boundedStringify }
+
 export default TransactionBreakdown

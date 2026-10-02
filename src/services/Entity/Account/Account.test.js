@@ -11,6 +11,7 @@ import {
   removePasskey,
   getPasskeyBlob,
   unlockAccountWithPasskey,
+  backupAccountToJSON,
 } from './Account'
 
 // TODO: The tests had been disabled to avoid the error from wasm-crypto on the JEST environment, need to be fixed later
@@ -22,6 +23,7 @@ jest.mock('@Databases', () => ({
     get: jest.fn(),
     update: jest.fn(),
     deleteAccount: jest.fn(),
+    getAccountJSON: jest.fn(),
   },
 }))
 
@@ -52,7 +54,7 @@ jest.mock('./loadWorkers', () => {
 jest.mock('../../Crypto/Passkey/Passkey', () => ({
   isSupported: jest.fn(),
   enrollPasskeyCredential: jest.fn(),
-  unlockPasswordWithPasskey: jest.fn(),
+  unwrapPasswordWithPasskey: jest.fn(),
 }))
 
 jest.mock('../../Crypto/Cipher/Cipher', () => ({
@@ -312,7 +314,7 @@ describe('Account passkey management', () => {
       )
       expect(await getPasskeyBlob(accountId)).toBeNull()
       expect(Passkey.enrollPasskeyCredential).not.toHaveBeenCalled()
-      expect(Passkey.unlockPasswordWithPasskey).not.toHaveBeenCalled()
+      expect(Passkey.unwrapPasswordWithPasskey).not.toHaveBeenCalled()
     })
   })
 
@@ -331,12 +333,12 @@ describe('Account passkey management', () => {
   describe('unlockAccountWithPasskey', () => {
     it('unwraps the password, unlocks the account and returns its result', async () => {
       seedDb([{ ...baseAccount, passkeyBlob }])
-      Passkey.unlockPasswordWithPasskey.mockResolvedValue(unwrappedPassword)
+      Passkey.unwrapPasswordWithPasskey.mockResolvedValue(unwrappedPassword)
 
       const result = await unlockAccountWithPasskey(accountId, { wallets: [] })
 
-      expect(Passkey.unlockPasswordWithPasskey).toHaveBeenCalledTimes(1)
-      expect(Passkey.unlockPasswordWithPasskey).toHaveBeenCalledWith(
+      expect(Passkey.unwrapPasswordWithPasskey).toHaveBeenCalledTimes(1)
+      expect(Passkey.unwrapPasswordWithPasskey).toHaveBeenCalledWith(
         passkeyBlob,
       )
 
@@ -369,7 +371,7 @@ describe('Account passkey management', () => {
         unlockAccountWithPasskey(accountId, { wallets: [] }),
       ).rejects.toThrow('PASSKEY_NOT_ENROLLED')
 
-      expect(Passkey.unlockPasswordWithPasskey).not.toHaveBeenCalled()
+      expect(Passkey.unwrapPasswordWithPasskey).not.toHaveBeenCalled()
       // unlockAccount is never invoked (its first statement reads storage
       // through LocalStorageService; the crypto subroutines are only ever
       // reached from inside unlockAccount)
@@ -378,5 +380,55 @@ describe('Account passkey management', () => {
       expect(decryptSeed).not.toHaveBeenCalled()
       expect(IndexedDB.update).not.toHaveBeenCalled()
     })
+  })
+})
+
+// ── Backup export (backupAccountToJSON) ─────────────────────────────────────
+
+describe('backupAccountToJSON', () => {
+  it('throws when the account JSON cannot be read from storage', async () => {
+    IndexedDB.loadAccounts.mockResolvedValue({})
+    IndexedDB.get.mockResolvedValue(undefined)
+
+    await expect(
+      backupAccountToJSON({ id: accountId, name: accountName }),
+    ).rejects.toThrow(
+      'Failed to export account: account data could not be read.',
+    )
+  })
+
+  it('refuses to export accounts still on legacy encryption', async () => {
+    IndexedDB.loadAccounts.mockResolvedValue({})
+    IndexedDB.get.mockResolvedValue({ id: accountId, encryptionVersion: 1 })
+
+    await expect(
+      backupAccountToJSON({ id: accountId, name: accountName }),
+    ).rejects.toThrow(
+      'This account still uses outdated encryption. Unlock the wallet once (make any transaction or log out and back in) to upgrade it, then back up again.',
+    )
+
+    // The typed code drives the Settings UI message.
+    await expect(
+      backupAccountToJSON({ id: accountId, name: accountName }),
+    ).rejects.toMatchObject({ code: 'ENCRYPTION_OUTDATED' })
+    // The outdated record is never serialized for download.
+    expect(IndexedDB.getAccountJSON).not.toHaveBeenCalled()
+  })
+
+  it('exports current-version accounts', async () => {
+    IndexedDB.loadAccounts.mockResolvedValue({})
+    IndexedDB.get.mockResolvedValue({
+      id: accountId,
+      encryptionVersion: 3,
+      name: accountName,
+    })
+    IndexedDB.getAccountJSON.mockResolvedValue('{"id":1}')
+    global.URL.createObjectURL = jest.fn(() => 'blob:mock-backup')
+    global.URL.revokeObjectURL = jest.fn()
+
+    await expect(
+      backupAccountToJSON({ id: accountId, name: accountName }),
+    ).resolves.toBeUndefined()
+    expect(IndexedDB.getAccountJSON).toHaveBeenCalledWith(accountId)
   })
 })

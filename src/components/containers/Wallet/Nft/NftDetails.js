@@ -7,6 +7,8 @@ import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-r
 
 import { SettingsContext } from '@Contexts'
 
+import useNftImage from './useNftImage'
+
 import styles from './NftDetails.module.css'
 
 const NftDetailsItem = ({ title, content }) => {
@@ -36,14 +38,10 @@ const NftDetails = ({ nft, handleSend }) => {
     isTestnet ? 'lovelace.' : ''
   }explorer.mintlayer.org/nft/${nft?.token_id}`
 
-  const getImageLink = () => {
-    const rawImageLink = nft?.data?.icon_uri?.string || 'NFT'
-    // Replace 'ipfs://' with a public IPFS gateway URL
-    if (rawImageLink.startsWith('ipfs://')) {
-      return rawImageLink.replace('ipfs://', 'https://ipfs.io/ipfs/')
-    }
-    return rawImageLink
-  }
+  // The full artwork for the detail view; icon_uri is only the fallback.
+  const imageSrc = useNftImage(
+    nft?.data?.media_uri?.string || nft?.data?.icon_uri?.string,
+  )
 
   const addFundsClickHandle = () => {
     handleSend && handleSend()
@@ -56,26 +54,32 @@ const NftDetails = ({ nft, handleSend }) => {
     >
       <div className={styles.nftDetailsItemsWrapper}>
         <div className={styles.nftImage}>
-          <img
-            src={getImageLink()}
-            alt="NFT"
-          />
+          {imageSrc ? (
+            <img
+              src={imageSrc}
+              alt={nft?.data?.name?.string || 'NFT'}
+            />
+          ) : (
+            <div className={styles.nftImagePlaceholder}>
+              {(nft?.data?.name?.string || 'NFT').charAt(0)}
+            </div>
+          )}
         </div>
         <NftDetailsItem
           title={'Token id:'}
-          content={nft.token_id}
+          content={nft?.token_id}
         />
         <NftDetailsItem
           title={'Name:'}
-          content={nft.data.name.string}
+          content={nft?.data?.name?.string || 'N/A'}
         />
         <NftDetailsItem
           title={'Description:'}
-          content={nft.data.description.string}
+          content={nft?.data?.description?.string || 'N/A'}
         />
         <NftDetailsItem
           title={'Ticker:'}
-          content={nft.data.ticker.string}
+          content={nft?.data?.ticker?.string || 'N/A'}
         />
         <NftDetailsItem
           title={'Address:'}

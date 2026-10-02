@@ -7,19 +7,23 @@ afterAll(() => {
   warnSpy.mockRestore()
 })
 
-test('InputInteger component', () => {
-  render(<InputInteger />)
+test('InputInteger warns and coerces a non-integer initial value', () => {
+  render(<InputInteger value={1.23} />)
   const inputComponent = screen.getByTestId('input')
-  const value = 1.23
-  const warnMessage =
-    'A non-integer value was passed to InputInteger. It has been converted to integer.'
 
   expect(inputComponent).toBeInTheDocument()
-  expect(inputComponent).toHaveClass('input')
+  expect(inputComponent).toHaveValue('1')
 
-  fireEvent.change(inputComponent, { target: { value: value } })
-  expect(inputComponent).toHaveValue(parseInt(value).toString())
+  expect(console.warn).toHaveBeenCalledWith(
+    'A non-integer value was passed to InputInteger. It has been converted to integer.',
+  )
+})
 
-  expect(console.warn).toHaveBeenCalledTimes(1)
-  expect(console.warn).toHaveBeenCalledWith(warnMessage)
+test('InputInteger mask pipeline keeps only the integer part on change', () => {
+  render(<InputInteger />)
+  const inputComponent = screen.getByTestId('input')
+
+  fireEvent.change(inputComponent, { target: { value: 1.23 } })
+
+  expect(inputComponent).toHaveValue('1')
 })

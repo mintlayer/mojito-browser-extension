@@ -29,3 +29,10 @@ test('Renders with multiple error message', () => {
     expect(messages[index]).toHaveTextContent(message)
   })
 })
+
+test('Renders nothing when error is null', () => {
+  const { container } = render(<Error error={null} />)
+
+  expect(screen.queryByTestId('error')).not.toBeInTheDocument()
+  expect(container).toBeEmptyDOMElement()
+})

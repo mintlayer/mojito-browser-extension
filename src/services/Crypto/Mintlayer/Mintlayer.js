@@ -40,12 +40,20 @@ const NETWORKS = {
   signet: 3,
 }
 
+const getNetworkIndex = (networkType) => {
+  const networkIndex = NETWORKS[networkType]
+  if (networkIndex === undefined) {
+    throw new Error(`Unknown Mintlayer network type: ${networkType}`)
+  }
+  return networkIndex
+}
+
 export const initWasm = async () => {
   await init()
 }
 
 export const getPrivateKeyFromMnemonic = (mnemonic, networkType) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
   return make_default_account_privkey(mnemonic, networkIndex)
 }
 
@@ -66,13 +74,25 @@ export const getPubKeyString = (pubkey, network) => {
 }
 
 export const getAddressFromPubKey = (pubKey, networkType) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
   return getPubKeyString(pubKey, networkIndex)
 }
 
-export const getWalletPrivKeysList = (mlPrivateKey, network, offset = 21) => {
+// The third argument is a COUNT of the addresses to cover (not an offset):
+// it must match how many addresses were generated/discovered for the wallet,
+// otherwise inputs on higher indices find no private key. An address list may
+// be passed instead of a number, in which case its length is used.
+export const getWalletPrivKeysList = (
+  mlPrivateKey,
+  network,
+  countOrAddresses = 21,
+) => {
+  const count = Array.isArray(countOrAddresses)
+    ? countOrAddresses.length
+    : countOrAddresses
+
   const generatePrivKeys = (addressGenerator) => {
-    const privKeys = Array.from({ length: offset }, (_, i) =>
+    const privKeys = Array.from({ length: count }, (_, i) =>
       addressGenerator(mlPrivateKey, i),
     )
 
@@ -108,12 +128,13 @@ const checkIfAddressesUsed = async (addresses) => {
     ids: addresses,
     type: '/address/:address',
   })
-  return data.map((item) => {
+  // A per-item error is the server's normal "address unused" signal (it maps
+  // to unused:true in MintlayerProvider); only request-level failures reject.
+  return (data || []).map((item) => {
     if (item.error) {
       return false
     }
-    const parsedData = item
-    return parsedData.transaction_history.length > 0
+    return item?.transaction_history?.length > 0
   })
 }
 
@@ -140,9 +161,9 @@ export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
       batch,
       0,
     )
-    let allUsed = await checkIfAddressesUsed(addresses, network)
+    let allUsed = await checkIfAddressesUsed(addresses)
 
-    while (allUsed.every((used) => used)) {
+    while (allUsed.length > 0 && allUsed.every((used) => used)) {
       const newData = generateAddresses(
         addressGenerator,
         batch,
@@ -150,7 +171,7 @@ export const getWalletAddresses = async (mlPrivateKey, network, batch = 20) => {
       )
       addresses.push(...newData.addresses)
       publicKeys.push(...newData.publicKeys)
-      allUsed = await checkIfAddressesUsed(addresses, network)
+      allUsed = await checkIfAddressesUsed(newData.addresses)
     }
 
     return { addresses, publicKeys }
@@ -191,9 +212,28 @@ export const getOutputs = ({
     throw new Error('LockThenTransfer requires a lock')
   }
 
+  const networkIndex = getNetworkIndex(networkType)
+
+  const outputTypes = [
+    'Transfer',
+    'LockThenTransfer',
+    'spendFromDelegation',
+    'IssueNft',
+  ]
+  if (!outputTypes.includes(type)) {
+    throw new Error(`Unknown output type: ${type}`)
+  }
+
+  if (
+    type === 'LockThenTransfer' &&
+    lock.type !== 'UntilTime' &&
+    lock.type !== 'ForBlockCount'
+  ) {
+    throw new Error(`Unknown lock type: ${lock.type}`)
+  }
+
   const amountInstace = amount ? Amount.from_atoms(amount) : undefined
 
-  const networkIndex = NETWORKS[networkType]
   if (type === 'Transfer') {
     if (tokenId) {
       return encode_output_token_transfer(
@@ -273,7 +313,7 @@ export const getEncodedWitness = (
   index,
   networkType,
 ) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
   return encode_witness(
     SignatureHashType.ALL,
     privateKey,
@@ -295,7 +335,7 @@ export const getEstimatetransactionSize = (
   outputs,
   networkType,
 ) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
   return estimate_transaction_size(
     inputs,
     inputAddresses,
@@ -305,12 +345,12 @@ export const getEstimatetransactionSize = (
 }
 
 export const getDelegationOutput = (poolId, address, networkType) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
   return encode_output_create_delegation(poolId, address, networkIndex)
 }
 
 export const getStakingOutput = (amount, delegationId, networkType) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
   const amountInstace = Amount.from_atoms(amount)
   return encode_output_delegate_staking(
     amountInstace,
@@ -320,7 +360,7 @@ export const getStakingOutput = (amount, delegationId, networkType) => {
 }
 
 export const getStakingMaturity = (blockHeight, networkType) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
   return staking_pool_spend_maturity_block_count(
     BigInt(Number(blockHeight)),
     networkIndex,
@@ -331,9 +371,9 @@ export const getAccountOutpointInput = (
   delegationId,
   amount,
   nonce,
-  networType,
+  networkType,
 ) => {
-  const networkIndex = NETWORKS[networType]
+  const networkIndex = getNetworkIndex(networkType)
   const amountInstace = Amount.from_atoms(amount)
   return encode_input_for_withdraw_from_delegation(
     delegationId,
@@ -361,7 +401,7 @@ export const verifyChallenge = (
   signedChallenge,
   message,
 ) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
   return verify_challenge(address, networkIndex, signedChallenge, message)
 }
 
@@ -379,7 +419,7 @@ export const getOutputIssueNft = (
   currentBlockHeight,
   networkType,
 ) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
   return encode_output_issue_nft(
     tokenId,
     address,
@@ -397,7 +437,7 @@ export const getOutputIssueNft = (
 }
 
 export const getTokenId = (inputs, networkType) => {
-  const networkIndex = NETWORKS[networkType]
+  const networkIndex = getNetworkIndex(networkType)
 
   return get_token_id(inputs, networkIndex)
 }

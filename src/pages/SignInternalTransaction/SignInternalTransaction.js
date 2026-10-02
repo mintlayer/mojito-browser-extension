@@ -33,10 +33,66 @@ const TxResult = ({ transactionTxid }) => {
   )
 }
 
+// Optimistic local bookkeeping after a successful broadcast: a failure here
+// must never make an already-sent transaction look like a failure to the user.
+const recordUnconfirmedTransaction = ({
+  txPreviewInfo,
+  broadcastResult,
+  transactionJSONrepresentation,
+  networkName,
+}) => {
+  try {
+    const account = LocalStorageService.getItem('unlockedAccount')
+
+    if (!account?.name) {
+      return
+    }
+
+    const unconfirmedTransactionString = MLHelpers.getUnconfirmedTransactionKey(
+      account.name,
+      networkName,
+    )
+    const unconfirmedTransactions =
+      LocalStorageService.getItem(unconfirmedTransactionString) || []
+
+    unconfirmedTransactions.push({
+      direction: 'out',
+      type: 'Unconfirmed',
+      destAddress: txPreviewInfo.destination || broadcastResult.tx_id,
+      value: txPreviewInfo.amount || 0,
+      confirmations: 0,
+      date: '',
+      txid: broadcastResult.tx_id,
+      fee: txPreviewInfo.fee || '',
+      isConfirmed: false,
+      mode: txPreviewInfo.action || 'transfer',
+      poolId: '',
+      delegationId: '',
+      usedUtxosOutpoints: transactionJSONrepresentation.inputs
+        .filter(({ input }) => input.input_type === 'UTXO')
+        .map(({ input: { index, source_id } }) => ({ index, source_id })),
+    })
+    LocalStorageService.setItem(
+      unconfirmedTransactionString,
+      unconfirmedTransactions,
+    )
+  } catch (bookkeepingError) {
+    console.error(
+      'Failed to record the unconfirmed transaction locally:',
+      bookkeepingError,
+    )
+  }
+}
+
 export const SignTransactionPage = () => {
   const { state: external_state } = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
+
+  // Declared BEFORE the effects below: their dependency arrays are
+  // evaluated during render, and referencing `accountID` above its
+  // declaration is a temporal-dead-zone crash on every render.
+  const { addresses, accountID } = useContext(AccountContext)
 
   const [hasPasskey, setHasPasskey] = useState(false)
 
@@ -60,9 +116,10 @@ export const SignTransactionPage = () => {
   const [selectedMock, setSelectedMock] = useState('transfer')
   const extraButtonStyles = [styles.buttonSignTransaction]
 
-  const state = external_state || MOCKS[selectedMock]
+  const state =
+    external_state ||
+    (process.env.NODE_ENV === 'development' ? MOCKS[selectedMock] : null)
 
-  const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const { txPreviewInfo, fetchAllData, fetchDelegations, currentHeight } =
     useContext(MintlayerContext)
@@ -127,12 +184,10 @@ export const SignTransactionPage = () => {
           ? mlPrivKeys.mlMainnetPrivateKey
           : mlPrivKeys.mlTestnetPrivateKey
 
-      const changeAddressesLength = currentMlAddresses.mlChangeAddresses.length
-      const walletPrivKeys = ML.getWalletPrivKeysList(
-        privKey,
-        networkType,
-        changeAddressesLength,
-      )
+      const walletPrivKeys = ML.getWalletPrivKeysList(privKey, networkType, [
+        ...currentMlAddresses.mlReceivingAddresses,
+        ...currentMlAddresses.mlChangeAddresses,
+      ])
       const keysList = {
         ...walletPrivKeys.mlReceivingPrivKeys,
         ...walletPrivKeys.mlChangePrivKeys,
@@ -140,15 +195,13 @@ export const SignTransactionPage = () => {
 
       const order_info = {}
 
-      // if fill order then check for order id and fetch data
-      if (
-        transactionJSONrepresentation.inputs.find(
-          (input) => input.input.command === 'FillOrder',
-        )
-      ) {
-        const order_id = transactionJSONrepresentation.inputs.find(
-          (input) => input.input.command === 'FillOrder',
-        ).input.order_id
+      // if fill/conclude order then check for order id and fetch data
+      const orderInput = transactionJSONrepresentation.inputs.find((input) =>
+        ['FillOrder', 'ConcludeOrder'].includes(input.input.command),
+      )
+
+      if (orderInput) {
+        const order_id = orderInput.input.order_id
         const orderdata = JSON.parse(await Mintlayer.getOrderById(order_id))
 
         order_info[order_id] = {
@@ -212,34 +265,12 @@ export const SignTransactionPage = () => {
       handleUpodateInfo()
 
       if (txPreviewInfo) {
-        const account = LocalStorageService.getItem('unlockedAccount')
-        const accountName = account.name
-        const unconfirmedTransactionString =
-          MLHelpers.getUnconfirmedTransactionKey(accountName, networkName)
-        const unconfirmedTransactions =
-          LocalStorageService.getItem(unconfirmedTransactionString) || []
-
-        unconfirmedTransactions.push({
-          direction: 'out',
-          type: 'Unconfirmed',
-          destAddress: txPreviewInfo.destination || JSON.parse(result).tx_id,
-          value: txPreviewInfo.amount || 0,
-          confirmations: 0,
-          date: '',
-          txid: JSON.parse(result).tx_id,
-          fee: txPreviewInfo.fee || '',
-          isConfirmed: false,
-          mode: txPreviewInfo.action || 'transfer',
-          poolId: '',
-          delegationId: '',
-          usedUtxosOutpoints: transactionJSONrepresentation.inputs
-            .filter(({ input }) => input.input_type === 'UTXO')
-            .map(({ input: { index, source_id } }) => ({ index, source_id })),
+        recordUnconfirmedTransaction({
+          txPreviewInfo,
+          broadcastResult: JSON.parse(result),
+          transactionJSONrepresentation,
+          networkName,
         })
-        LocalStorageService.setItem(
-          unconfirmedTransactionString,
-          unconfirmedTransactions,
-        )
       }
     } catch (error) {
       SignTxHelpers.handleTxError(error, setTxErrorMessage, setPassword)
@@ -306,6 +337,10 @@ export const SignTransactionPage = () => {
               rawJsonNode={<SignTransaction.JsonPreview data={state} />}
             />
           )}
+
+          {!state?.request?.data?.txData?.JSONRepresentation && (
+            <Error error="No pending transaction to sign." />
+          )}
         </div>
 
         <div className={styles.footer}>
@@ -319,6 +354,7 @@ export const SignTransactionPage = () => {
           <Button
             onClickHandle={handleApprove}
             extraStyleClasses={extraButtonStyles}
+            disabled={!state?.request?.data?.txData?.JSONRepresentation}
           >
             Approve and return to page
           </Button>

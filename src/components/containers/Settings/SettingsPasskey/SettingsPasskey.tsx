@@ -14,6 +14,43 @@ import styles from './SettingsPasskey.module.css'
  * transaction can then be done with the device biometrics instead of
  * typing the password. The password remains the fallback everywhere.
  */
+// Map enrollment/unlock rejections to user-facing text. unlockAccount
+// rejects a PLAIN OBJECT ({ name: '', error }) — it has no .message, so a
+// wrong password would otherwise surface as the generic fallback.
+const friendlyError = (e: unknown): string => {
+  if (!e) return 'Something went wrong. Please try again.'
+  // Unlock-shaped rejection: the typed password failed to unlock the
+  // account (by far the most common enrollment failure).
+  if (
+    typeof e === 'object' &&
+    !('message' in e && (e as { message?: string }).message) &&
+    'error' in e &&
+    typeof (e as { error?: unknown }).error === 'string'
+  ) {
+    return 'Incorrect password. Please try again.'
+  }
+  const error = e as { message?: string; name?: string }
+  const mapped: Record<string, string> = {
+    PASSKEY_UNSUPPORTED:
+      'This device or browser does not support passkey unlock.',
+    PRF_NOT_SUPPORTED:
+      'This authenticator does not support the passkey unlock (PRF) feature.',
+    PASSKEY_BLOB_INVALID:
+      'Stored passkey data is invalid. Remove the passkey and set it up again.',
+  }
+  if (error.message) {
+    if (mapped[error.message]) return mapped[error.message]
+    if (error.name === 'NotAllowedError') {
+      return 'The passkey prompt was cancelled or not allowed. Please try again.'
+    }
+    if (error.name === 'InvalidStateError') {
+      return 'This device already has a passkey registered for the wallet.'
+    }
+    return error.message
+  }
+  return 'Something went wrong. Please try again.'
+}
+
 const SettingsPasskey = () => {
   const { accountID } = useContext(AccountContext)
   const [supported, setSupported] = useState(null)
@@ -45,7 +82,7 @@ const SettingsPasskey = () => {
       await action()
       setPassword('')
     } catch (e) {
-      setError(e?.message || 'Something went wrong. Please try again.')
+      setError(friendlyError(e))
     } finally {
       setBusy(false)
     }

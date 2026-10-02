@@ -1,14 +1,12 @@
 import { useState } from 'react'
-import Decimal from 'decimal.js'
 
 import { PopUp } from '@ComposedComponents'
 import { ML } from '@Helpers'
 
 import OrderDetails from '../OrderDetails/OrderDetails'
+import formatRate from '../formatRate'
 
 import styles from './OrderItem.module.css'
-
-const formatRate = (rate) => new Decimal(rate).toDecimalPlaces(10).toString()
 
 const OrderItem = ({ order }) => {
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)

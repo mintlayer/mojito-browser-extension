@@ -45,11 +45,38 @@ const validateKeys = (json, required) => {
     }
 
     if (valueType === 'object' && !Array.isArray(json[key])) {
+      if (!json[key]) return false
       return validateKeys(json[key], requiredType)
     }
 
     return valueType === requiredType
   })
+}
+
+// Encrypted material is hex or base64; enforce only plausibility so legacy
+// backups with missing/extra fields are not rejected.
+const MIN_SECRET_LENGTH = 16
+const MAX_SECRET_LENGTH = 4096
+const SECRET_PATTERN = /^[0-9a-zA-Z+/=]+$/
+
+const isPlausibleSecret = (value) =>
+  typeof value === 'string' &&
+  value.length >= MIN_SECRET_LENGTH &&
+  value.length <= MAX_SECRET_LENGTH &&
+  SECRET_PATTERN.test(value)
+
+const SECRET_GROUPS = ['iv', 'tag', 'seed']
+
+const validateContent = (json) => {
+  if (json.salt !== undefined && !isPlausibleSecret(json.salt)) return false
+  for (const groupName of SECRET_GROUPS) {
+    const group = json[groupName]
+    if (!group) continue
+    for (const value of Object.values(group)) {
+      if (!isPlausibleSecret(value)) return false
+    }
+  }
+  return true
 }
 
 const FileUpload = ({
@@ -73,7 +100,11 @@ const FileUpload = ({
       try {
         const content = e.target.result
         const json = JSON.parse(content)
-        const isValid = validateKeys(json, requiredKeys)
+        const isValid =
+          json &&
+          typeof json === 'object' &&
+          validateKeys(json, requiredKeys) &&
+          validateContent(json)
 
         if (isValid) {
           setFileContent(json)
@@ -86,6 +117,12 @@ const FileUpload = ({
       } catch {
         setErrorMessage('Invalid JSON file.')
       }
+    }
+    reader.onerror = () => {
+      setErrorMessage('Error reading the file. Please try again.')
+    }
+    reader.onabort = () => {
+      setErrorMessage('File reading was aborted. Please try again.')
     }
     reader.readAsText(file)
   }

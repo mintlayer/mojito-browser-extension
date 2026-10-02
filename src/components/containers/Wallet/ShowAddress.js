@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import QRCode from 'react-qr-code'
 
 import { Button } from '@BasicComponents'
@@ -11,15 +11,30 @@ const ShowAddress = ({ address }) => {
   const copiedTimeoutInMs = 2000
   const [label, setLabel] = useState(toCopyLabel)
   const [disabled, setDisabled] = useState(false)
+  const resetTimerRef = useRef(null)
+
+  useEffect(
+    () => () => {
+      clearTimeout(resetTimerRef.current)
+    },
+    [],
+  )
 
   const copyAddress = () => {
     setDisabled(true)
-    navigator.clipboard.writeText(address)
-    setLabel(afterCopyLabel)
-    setTimeout(() => {
-      setLabel(toCopyLabel)
-      setDisabled(false)
-    }, copiedTimeoutInMs)
+    Promise.resolve(navigator.clipboard.writeText(address))
+      .then(() => {
+        setLabel(afterCopyLabel)
+      })
+      .catch((error) => {
+        console.error('Failed to copy the address.', error)
+      })
+      .finally(() => {
+        resetTimerRef.current = setTimeout(() => {
+          setLabel(toCopyLabel)
+          setDisabled(false)
+        }, copiedTimeoutInMs)
+      })
   }
 
   return (

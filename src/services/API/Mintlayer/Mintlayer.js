@@ -18,12 +18,15 @@ const MINTLAYER_ENDPOINTS = {
   GET_POOL_DATA: '/pool/:address',
   GET_NFT: '/nft/:tokenId',
   GET_ORDER_DATA: '/order/:hash',
-  GET_ORDERS_LIST: '/order',
   GET_TOKEN: '/token/:tokenId',
   GET_ORDERS_PAIR: '/order/pair/:pair',
+  POST_BATCH: '/batch',
+  GET_BATCH_DEX_TOKENS: '/batch/dex_tokens',
 }
 
-const abortControllers = new Map()
+const REQUEST_TIMEOUT_MS = 15000
+
+const abortControllers = new Set()
 
 // Server fallback chain for the active network. Deliberately does NOT honor
 // any localStorage 'customAPIServers' override: an unvalidated entry would
@@ -34,24 +37,43 @@ const getMintlayerServers = (networkType) =>
     ? EnvVars.TESTNET_MINTLAYER_SERVERS
     : EnvVars.MAINNET_MINTLAYER_SERVERS
 
-const requestMintlayer = async (url, body = null, request = fetch) => {
+const requestMintlayer = async (
+  url,
+  body = null,
+  request = fetch,
+  headers = {},
+) => {
   const method = body ? 'POST' : 'GET'
   const controller = new AbortController()
-  // Keyed by url+method: concurrent requests to the same url must not
-  // clobber each other's controllers.
-  abortControllers.set(`${method} ${url}`, controller)
+  abortControllers.add(controller)
 
   try {
     const result = await request(url, {
       method,
       body,
+      headers,
       // Wire the signal: without it cancelAllRequests() aborts nothing and
-      // stale responses land after a network switch.
-      signal: controller.signal,
+      // stale responses land after a network switch. The timeout releases
+      // hung connections so tryServers can advance to the next server.
+      signal: AbortSignal.any([
+        controller.signal,
+        AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      ]),
     })
     if (!result.ok) {
-      const error = await result.json()
-      if (error.error === 'Address not found') {
+      // The error body is not guaranteed to be JSON with a string `error`
+      // field (502 HTML pages, etc.) — never let the parser mask the HTTP
+      // failure.
+      let errorBody = null
+      try {
+        errorBody = await result.json()
+      } catch {
+        errorBody = null
+      }
+      const message =
+        typeof errorBody?.error === 'string' ? errorBody.error : ''
+
+      if (message === 'Address not found') {
         return Promise.resolve(
           JSON.stringify({
             unused: true,
@@ -63,11 +85,11 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
 
       // handle RPC error
       if (
-        error.error.includes(
+        message.includes(
           'Mempool error: Transaction does not pay sufficient fees to be relayed',
         )
       ) {
-        const errorMessage = error.error
+        const errorMessage = message
           .split('Mempool error: ')[1]
           .split(')')[0]
           .replace('(tx_fee:', '. estimated fee')
@@ -76,10 +98,8 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
       }
 
       // handle RPC error
-      if (error.error.includes('Mempool error:')) {
-        const errorMessage = error.error
-          .split('Mempool error: ')[1]
-          .split('(')[0]
+      if (message.includes('Mempool error:')) {
+        const errorMessage = message.split('Mempool error: ')[1].split('(')[0]
         throw new Error(errorMessage)
       }
 
@@ -93,7 +113,7 @@ const requestMintlayer = async (url, body = null, request = fetch) => {
     if (!isAbortError(error)) console.error(error)
     throw error
   } finally {
-    abortControllers.delete(`${method} ${url}`)
+    abortControllers.delete(controller)
   }
 }
 
@@ -102,32 +122,40 @@ export const batchRequestMintlayer = async ({ ids, type }) => {
     return [] // if no ids provided, return empty array
   }
 
-  const networkType = LocalStorageService.getItem('networkType')
-  const combinedMintlayerServers = getMintlayerServers(networkType)
+  // Same normalization as tryServers: a missing/unparsable networkType must
+  // resolve identically for the URL path AND the batch body's network
+  // selector, otherwise the request is split across two networks.
+  const networkType =
+    LocalStorageService.getItem('networkType') || AppInfo.NETWORK_TYPES.MAINNET
 
-  const res = await fetch(combinedMintlayerServers[0] + '/batch', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+  const response = await tryServers(
+    MINTLAYER_ENDPOINTS.POST_BATCH,
+    JSON.stringify({
       ids,
       type,
-      network: networkType === 'mainnet' ? 0 : 1,
+      network: networkType === AppInfo.NETWORK_TYPES.MAINNET ? 0 : 1,
     }),
-  })
+    null,
+    { 'Content-Type': 'application/json' },
+  )
 
-  const json = await res.json()
-  if (!res.ok) {
-    console.error('Batch request failed:', json)
-    throw new Error('Batch request failed')
-  }
+  const json = JSON.parse(response)
   const results = (json.results ?? []).flat()
   return results
 }
 
-const tryServers = async (endpoint, body = null, forceNetwork) => {
-  const networkType = forceNetwork || LocalStorageService.getItem('networkType')
+const tryServers = async (
+  endpoint,
+  body = null,
+  forceNetwork,
+  headers = {},
+) => {
+  // Explicit mainnet default (matches NetworkTypeEntity.get()): a missing or
+  // unparsable stored value must not silently differ between call sites.
+  const networkType =
+    forceNetwork ||
+    LocalStorageService.getItem('networkType') ||
+    AppInfo.NETWORK_TYPES.MAINNET
   const combinedMintlayerServers = getMintlayerServers(networkType)
 
   for (let i = 0; i < combinedMintlayerServers.length; i++) {
@@ -135,15 +163,17 @@ const tryServers = async (endpoint, body = null, forceNetwork) => {
       const response = await requestMintlayer(
         combinedMintlayerServers[i] + endpoint,
         body,
+        fetch,
+        headers,
       )
       return response
     } catch (error) {
-      if (!isAbortError(error)) {
-        console.warn(
-          `${combinedMintlayerServers[i] + endpoint} request failed: `,
-          error,
-        )
-      }
+      // A cancelled request must not be resurrected against the next server.
+      if (isAbortError(error)) throw error
+      console.warn(
+        `${combinedMintlayerServers[i] + endpoint} request failed: `,
+        error,
+      )
       if (i === combinedMintlayerServers.length - 1) {
         throw error
       }
@@ -153,73 +183,66 @@ const tryServers = async (endpoint, body = null, forceNetwork) => {
 
 const getAddressData = (address, network) => {
   const data = tryServers(
-    MINTLAYER_ENDPOINTS.GET_ADDRESS_DATA.replace(':address', address),
+    MINTLAYER_ENDPOINTS.GET_ADDRESS_DATA.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
     null,
     network,
   )
   return data
 }
 
+// Failures are rethrown: an offline wallet must surface fetchError in the
+// provider instead of rendering a 0.00 balance that reads as "funds gone".
 const getAddressBalance = async (address) => {
-  try {
-    const response = await getAddressData(address)
-    const data = JSON.parse(response)
-    const balance = {
-      balanceInAtoms:
-        data && data.coin_balance && data.coin_balance.atoms
-          ? data.coin_balance.atoms
-          : 0,
-    }
-    const balanceLocked = {
-      balanceInAtoms:
-        data && data.locked_coin_balance && data.locked_coin_balance.atoms
-          ? data.locked_coin_balance.atoms
-          : 0,
-    }
-    return { balance, balanceLocked }
-  } catch (error) {
-    console.warn(`Failed to get balance for address ${address}: `, error)
-    return {
-      balance: { balanceInAtoms: 0 },
-      balanceLocked: { balanceInAtoms: 0 },
-    }
+  const response = await getAddressData(address)
+  const data = JSON.parse(response)
+  const balance = {
+    balanceInAtoms:
+      data && data.coin_balance && data.coin_balance.atoms
+        ? data.coin_balance.atoms
+        : 0,
   }
+  const balanceLocked = {
+    balanceInAtoms:
+      data && data.locked_coin_balance && data.locked_coin_balance.atoms
+        ? data.locked_coin_balance.atoms
+        : 0,
+  }
+  return { balance, balanceLocked }
 }
+
+// Sums atom strings with BigInt math: values above 2^53 keep their
+// precision and non-numeric atom strings cannot poison the total.
+const sumAtomStrings = (values) =>
+  values.reduce((total, value) => {
+    const atoms = String(value ?? '').trim()
+    return /^-?\d+$/.test(atoms) ? total + BigInt(atoms) : total
+  }, 0n)
 
 export const getWalletBalance = async (addresses) => {
   const balancePromises = addresses.map((address) => getAddressBalance(address))
   const balances = await Promise.all(balancePromises)
-  const totalBalance = balances.reduce(
-    (acc, curr) => {
-      return {
-        balanceInAtoms:
-          +parseInt(acc.balanceInAtoms) + parseInt(curr.balance.balanceInAtoms),
-      }
-    },
-    { balanceInAtoms: 0 },
-  )
-  const lockedBalance = balances.reduce(
-    (acc, curr) => {
-      return {
-        balanceInAtoms:
-          +parseInt(acc.balanceInAtoms) +
-          parseInt(curr.balanceLocked.balanceInAtoms),
-      }
-    },
-    { balanceInAtoms: 0 },
-  )
+  const totalBalance = {
+    balanceInAtoms: Number(
+      sumAtomStrings(balances.map((entry) => entry.balance.balanceInAtoms)),
+    ),
+  }
+  const lockedBalance = {
+    balanceInAtoms: Number(
+      sumAtomStrings(
+        balances.map((entry) => entry.balanceLocked.balanceInAtoms),
+      ),
+    ),
+  }
   return { totalBalance, lockedBalance }
 }
 
 const getAddressTransactionIds = async (address) => {
-  try {
-    const response = await getAddressData(address)
-    const data = JSON.parse(response)
-    return data.transaction_history
-  } catch (error) {
-    console.warn(`Failed to get balance for address ${address}: `, error)
-    return []
-  }
+  const response = await getAddressData(address)
+  const data = JSON.parse(response)
+  return data.transaction_history
 }
 
 const getWalletTransactionIds = async (addresses) => {
@@ -240,7 +263,10 @@ const getWalletTransactions = async (addresses) => {
 const getTransactionData = async (txid) => {
   try {
     const responce = await tryServers(
-      MINTLAYER_ENDPOINTS.GET_TRANSACTION_DATA.replace(':txid', txid),
+      MINTLAYER_ENDPOINTS.GET_TRANSACTION_DATA.replace(
+        ':txid',
+        encodeURIComponent(txid),
+      ),
     )
     const data = JSON.parse(responce)
     return { txid, ...data }
@@ -263,7 +289,12 @@ const getAddressTransactions = async (address) => {
 }
 
 const getAddressUtxo = (address) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_ADDRESS_UTXO.replace(':address', address))
+  tryServers(
+    MINTLAYER_ENDPOINTS.GET_ADDRESS_UTXO.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
+  )
 
 const getWalletUtxos = (addresses) => {
   const utxosPromises = addresses.map((address) => getAddressUtxo(address))
@@ -272,7 +303,10 @@ const getWalletUtxos = (addresses) => {
 
 const getAddressSpendableUtxo = (address) =>
   tryServers(
-    MINTLAYER_ENDPOINTS.GET_ADDRESS_SPENDABLE_UTXO.replace(':address', address),
+    MINTLAYER_ENDPOINTS.GET_ADDRESS_SPENDABLE_UTXO.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
   )
 
 const getWalletSpendableUtxos = (addresses) => {
@@ -285,7 +319,10 @@ const getWalletSpendableUtxos = (addresses) => {
 const getTokenById = async (tokenId) => {
   try {
     const response = await tryServers(
-      MINTLAYER_ENDPOINTS.GET_TOKEN.replace(':tokenId', tokenId),
+      MINTLAYER_ENDPOINTS.GET_TOKEN.replace(
+        ':tokenId',
+        encodeURIComponent(tokenId),
+      ),
     )
     return JSON.parse(response)
   } catch (error) {
@@ -302,7 +339,7 @@ const getTokensData = async (tokens) => {
 
   const tokensPromises = tokens.map(async (token) => {
     try {
-      const text = await tryServers(`/token/${token}`)
+      const text = await tryServers(`/token/${encodeURIComponent(token)}`)
       const data = await JSON.parse(text)
       tokensData[token] = data
     } catch (error) {
@@ -323,7 +360,7 @@ const getNftsData = async (tokens) => {
 
   const tokensPromises = tokens.map(async (token) => {
     try {
-      const text = await tryServers(`/nft/${token}`)
+      const text = await tryServers(`/nft/${encodeURIComponent(token)}`)
       const data = await JSON.parse(text)
       tokensData[token] = data
     } catch (error) {
@@ -487,32 +524,132 @@ const resolveTokenIcon = async (metadataUri) => {
   return undefined
 }
 
+// ── NFT media ─────────────────────────────────────────────────────────────
+// NFT icon_uri/media_uri point at ipfs:// content. Images resolve through
+// the explorer's first-party proxy first (GET /api/ipfs-media/{cid}: the
+// explorer does the fetching, so gateway hosts never see the user's IP;
+// responses are PNG/JPEG/WebP ≤1MB, immutably cached), falling back to the
+// public gateway race the token icons use. Only ipfs:// uris are resolved —
+// issuer-controlled https urls stay a request-forgery vector.
+const EXPLORER_IPFS_PROXY_HOSTS = {
+  [AppInfo.NETWORK_TYPES.MAINNET]: 'https://explorer.mintlayer.org',
+  [AppInfo.NETWORK_TYPES.TESTNET]: 'https://lovelace.explorer.mintlayer.org',
+}
+
+// Same shape the explorer proxy allow-lists (CID + optional filename, no
+// '..'): reject anything else instead of building a junk url.
+const isSafeCidPath = (path) =>
+  path.length <= 256 &&
+  /^[A-Za-z0-9][A-Za-z0-9._-]*(\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(path)
+
+const explorerIpfsMediaUrl = (ipfsUri, networkType) => {
+  if (!isAllowedIpfsUri(ipfsUri)) return null
+  const cidPath = ipfsUri.slice('ipfs://'.length)
+  if (!isSafeCidPath(cidPath)) return null
+  const host =
+    EXPLORER_IPFS_PROXY_HOSTS[networkType] ||
+    EXPLORER_IPFS_PROXY_HOSTS[AppInfo.NETWORK_TYPES.MAINNET]
+  return `${host}/api/ipfs-media/${cidPath}`
+}
+
+// uri+network -> { value: blobUrl | null, expires? } (negative entries TTL)
+const nftImageCache = new Map()
+
+const resolveNftImage = async (ipfsUri, networkType) => {
+  if (!isAllowedIpfsUri(ipfsUri)) return null
+
+  const cacheKey = `${networkType || AppInfo.NETWORK_TYPES.MAINNET}|${ipfsUri}`
+  const cached = nftImageCache.get(cacheKey)
+  if (cached) {
+    if (cached.value === null && cached.expires < Date.now()) {
+      nftImageCache.delete(cacheKey)
+    } else {
+      return cached.value
+    }
+  }
+
+  const proxyUrl = explorerIpfsMediaUrl(ipfsUri, networkType)
+  const viaProxy = proxyUrl
+    ? fetch(proxyUrl, { signal: AbortSignal.timeout(10000) }).then(
+        async (response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          const type = (response.headers?.get?.('content-type') || '')
+            .split(';')[0]
+            .trim()
+          if (type && !type.startsWith('image/')) {
+            throw new Error(`Not an image: ${type}`)
+          }
+          const blob = await response.blob()
+          if (blob.size > ICON_MAX_BYTES) throw new Error('Image too large')
+          return URL.createObjectURL(blob)
+        },
+      )
+    : Promise.reject(new Error('no proxy url'))
+
+  const blobUrl = await viaProxy.catch(() => fetchIconBlobUrl(ipfsUri))
+
+  if (blobUrl) {
+    // Content-addressed: a resolved image never needs fetching again.
+    nftImageCache.set(cacheKey, { value: blobUrl })
+  } else {
+    // Unreachable right now: negative-cache with a TTL so grid renders
+    // don't hammer the proxy on every refresh; retried after it expires.
+    nftImageCache.set(cacheKey, {
+      value: null,
+      expires: Date.now() + NEGATIVE_CACHE_TTL_MS,
+    })
+  }
+  return blobUrl
+}
+
 const getAddressDelegations = (address) =>
   tryServers(
-    MINTLAYER_ENDPOINTS.GET_ADDRESS_DELEGATIONS.replace(':address', address),
+    MINTLAYER_ENDPOINTS.GET_ADDRESS_DELEGATIONS.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
   )
 
 const getDelegation = (delegation) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(':address', delegation))
+  tryServers(
+    MINTLAYER_ENDPOINTS.GET_DELEGATION.replace(
+      ':address',
+      encodeURIComponent(delegation),
+    ),
+  )
 
 const getPool = (pool) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_POOL_DATA.replace(':address', pool))
+  tryServers(
+    MINTLAYER_ENDPOINTS.GET_POOL_DATA.replace(
+      ':address',
+      encodeURIComponent(pool),
+    ),
+  )
 
 const getBlockDataByHeight = (height) => {
   return tryServers(
-    MINTLAYER_ENDPOINTS.GET_BLOCK_HASH.replace(':address', height),
+    MINTLAYER_ENDPOINTS.GET_BLOCK_HASH.replace(
+      ':address',
+      encodeURIComponent(height),
+    ),
   )
     .then(JSON.parse)
     .then((response) => {
       return tryServers(
-        MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':address', response),
+        MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(
+          ':address',
+          encodeURIComponent(response),
+        ),
       )
     })
 }
 
 const getBlockDataByHash = (hash) => {
   return tryServers(
-    MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(':address', hash),
+    MINTLAYER_ENDPOINTS.GET_BLOCK_DATA.replace(
+      ':address',
+      encodeURIComponent(hash),
+    ),
   )
 }
 
@@ -555,11 +692,12 @@ const getFeesEstimates = async () => {
 }
 
 const getOrderById = (orderHash) =>
-  tryServers(MINTLAYER_ENDPOINTS.GET_ORDER_DATA.replace(':hash', orderHash))
-
-const getOrdersList = async () => {
-  return tryServers(MINTLAYER_ENDPOINTS.GET_ORDERS_LIST)
-}
+  tryServers(
+    MINTLAYER_ENDPOINTS.GET_ORDER_DATA.replace(
+      ':hash',
+      encodeURIComponent(orderHash),
+    ),
+  )
 
 const broadcastTransaction = (transaction) =>
   tryServers(MINTLAYER_ENDPOINTS.POST_TRANSACTION, transaction)
@@ -571,9 +709,16 @@ const cancelAllRequests = () => {
 
 const getAllTokensData = async (networkType) => {
   try {
-    const network = networkType === 'mainnet' ? 0 : 1
+    const network = networkType === AppInfo.NETWORK_TYPES.MAINNET ? 0 : 1
+    // The dex_tokens route lives at the proxy ROOT with a `network` query
+    // selector (network=0 mainnet / 1 testnet) — it is NOT served under
+    // /mintlayer/<network>/ (404), so derive the origin from the configured
+    // server instead of reusing its network-prefixed path.
+    const server = getMintlayerServers(networkType)[0]
+    const root = new URL(server).origin
     const response = await fetch(
-      `https://mojito-api.mintlayer.org/batch/dex_tokens?network=${network}`,
+      `${root}${MINTLAYER_ENDPOINTS.GET_BATCH_DEX_TOKENS}?network=${network}`,
+      { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) },
     )
     if (!response.ok) {
       throw new Error('Failed to fetch all tokens data')
@@ -589,7 +734,10 @@ const getAllTokensData = async (networkType) => {
 const getOrdersListByPair = async (pair) => {
   try {
     const response = await tryServers(
-      MINTLAYER_ENDPOINTS.GET_ORDERS_PAIR.replace(':pair', pair),
+      MINTLAYER_ENDPOINTS.GET_ORDERS_PAIR.replace(
+        ':pair',
+        encodeURIComponent(pair),
+      ),
     )
     return JSON.parse(response)
   } catch (error) {
@@ -622,13 +770,14 @@ export {
   getTokenById,
   getTokensData,
   resolveTokenIcon,
+  explorerIpfsMediaUrl,
+  resolveNftImage,
   getPoolsData,
   getNftsData,
   getOrderById,
   MINTLAYER_ENDPOINTS,
   abortControllers,
   cancelAllRequests,
-  getOrdersList,
   getAllTokensData,
   getOrdersListByPair,
 }
