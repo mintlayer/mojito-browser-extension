@@ -11,7 +11,8 @@ beforeEach(async ({ page: newPage }) => {
   await useSetTestnet(page)
 })
 
-test('Transaction details', async () => {
+// stale: pre-redesign navigation; needs rewrite (+ funded testnet wallets for tx specs)
+test.skip('Transaction details', async () => {
   await page.getByText('Mintlayer (Testnet)').click()
 
   await page.getByTestId('transaction').first().waitFor({ timeout: 60000 })

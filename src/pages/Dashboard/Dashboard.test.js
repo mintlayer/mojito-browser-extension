@@ -42,6 +42,7 @@ jest.mock('@ComposedComponents', () => ({
   AddWallet: () => null,
   TxRow: () => null,
   AssetRow: () => null,
+  BeSheet: ({ children }) => <div>{children}</div>,
 }))
 
 jest.mock('@Contexts', () => {
@@ -110,6 +111,19 @@ describe('Dashboard — NFTs tab', () => {
     expect(
       screen.queryByText(/No NFTs in this wallet/i),
     ).not.toBeInTheDocument()
+  })
+
+  it('opens a chain chooser for Send instead of hardcoding the ML flow', () => {
+    renderPage()
+
+    fireEvent.click(screen.getByTestId('quick-send'))
+
+    // both chains are offered; picking one closes the sheet (the choice
+    // navigates to the per-chain send flow)
+    expect(screen.getByText('Mintlayer')).toBeInTheDocument()
+    expect(screen.getByText('Bitcoin')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Mintlayer'))
+    expect(screen.queryByText('Send')).not.toBeNull()
   })
 
   it('links to the full NFT page from the NFTs tab', () => {

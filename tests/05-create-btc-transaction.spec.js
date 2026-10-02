@@ -13,11 +13,9 @@ beforeEach(async ({ page: newPage }) => {
 
 test('Create BTC transaction', async () => {
   test.setTimeout(300000)
-  await page.waitForTimeout(10000)
-  await page.click('button.update-button')
-  await page.waitForTimeout(10000)
-  await page.getByText('Bitcoin (Testnet)').click()
-  await page.click('button.button-transaction-up')
+  // Dashboard → Bitcoin asset page → Send form (current UI navigation)
+  await page.getByText('Bitcoin (BTC)').click()
+  await page.getByRole('button', { name: 'Send' }).click()
   await expect(page.getByText('Recipient address')).toBeVisible()
 
   await page.locator('input#address').fill(receiverData.BTC_RECEIVING_ADDRESS)

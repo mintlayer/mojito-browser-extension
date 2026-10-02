@@ -156,13 +156,13 @@ password)` on the Account entity), align call-site params, add an E2E test
    "No transactions" while loading); `fetchError` (added this branch) is not
    yet surfaced with a retry UI; `btcApiAvailable=false` has no visual state on
    Dashboard rows (`disabled` flag is dead data in AssetRow).
-9. **Token Send from AssetPage** — Send is hidden for tokens because the send
-   route never receives the `tokenId` (Wallet page built `walletType.tokenId`
-   which is now deleted; route param `/wallet/:coinType/send-ml-transaction`
-   can carry the token id as `coinType` — needs wiring in SendMlTransaction).
-10. **Dashboard Send chain chooser** — quick action hardcodes the ML send
-    flow; BTC send requires going via the BTC asset page. Small BeSheet with
-    Bitcoin/Mintlayer.
+9. **Token Send from AssetPage** — DONE/verified 2026-09-29: AssetPage builds
+   `/wallet/${id}/send-ml-transaction` for tokens and SendMlTransaction wires
+   `walletType.tokenId` from the `coinType` param (balance + decimals come
+   from tokenBalances). No further wiring needed.
+10. **Dashboard Send chain chooser** — DONE 2026-09-29: the Send quick action
+    opens a BeSheet chooser (Mintlayer → ML/token send flow, Bitcoin → BTC
+    send flow) instead of hardcoding the ML route.
 11. **Provider plumbing consolidation (DRY)** — `usePolling(fetcher,
 interval)` + `useNetworkSync()` shared by Mintlayer/Bitcoin/ExchangeRates
     providers; `createAbortRegistry()` (note: `requestMintlayer` registers

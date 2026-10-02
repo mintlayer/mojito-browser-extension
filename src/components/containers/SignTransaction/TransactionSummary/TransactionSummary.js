@@ -181,16 +181,35 @@ const TransactionSummary = ({
     value?.type === 'Coin'
       ? (value?.amount?.decimal ?? value?.decimal ?? null)
       : null
-  const sumCoinSide = (items) =>
-    items.reduce((acc, item) => {
+  // A malformed dApp-supplied decimal must never crash the approval UI:
+  // any parse failure falls back to the declared fee (never partial sums).
+  const sumCoinSide = (items) => {
+    let acc = new Amount(0)
+    for (const item of items) {
       const decimal = coinDecimal(item?.utxo?.value ?? item?.value)
-      return decimal != null ? acc.plus(new Amount(decimal)) : acc
-    }, new Amount(0))
-  const inputsCoinSum = sumCoinSide(inputs)
-  const outputsCoinSum = sumCoinSide(outputs)
-  const computedFee = inputsCoinSum.gt(0)
-    ? inputsCoinSum.minus(outputsCoinSum)
-    : null
+      if (decimal == null) continue
+      try {
+        acc = acc.plus(new Amount(decimal))
+      } catch {
+        return null // unparseable: refuse to compute from partial data
+      }
+    }
+    return acc
+  }
+  let computedFee = null
+  try {
+    const inputsCoinSum = sumCoinSide(inputs)
+    const outputsCoinSum = sumCoinSide(outputs)
+    if (
+      inputsCoinSum != null &&
+      outputsCoinSum != null &&
+      inputsCoinSum.gt(0)
+    ) {
+      computedFee = inputsCoinSum.minus(outputsCoinSum)
+    }
+  } catch {
+    computedFee = null
+  }
   const declaredFee = jsonRepresentation?.fee?.decimal ?? null
   const fee =
     computedFee != null && computedFee.gt(0)
