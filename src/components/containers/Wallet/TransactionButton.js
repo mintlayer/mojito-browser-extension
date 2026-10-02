@@ -2,7 +2,7 @@ import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ReactComponent as DelegationIcon } from '@Assets/images/icon-delegation.svg'
 import { ReactComponent as SignIcon } from '@Assets/images/icon-sign.svg'
 import { ReactComponent as NftIcon } from '@Assets/images/icon-nft.svg'
-import { ReactComponent as SwapIcon } from '@Assets/images/icon-arrow-swap.svg'
+import { ReactComponent as SwapIcon } from '@Assets/images/icon-loop.svg'
 import { ReactComponent as AddressesIcon } from '@Assets/images/icon-inbox.svg'
 
 import { Button } from '@BasicComponents'

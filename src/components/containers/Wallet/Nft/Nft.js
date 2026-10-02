@@ -1,62 +1,57 @@
 import { useState } from 'react'
-
 import { PopUp } from '@ComposedComponents'
 import NftDetails from './NftDetails'
+import useNftImage from './useNftImage'
 import { useNavigate } from 'react-router'
 import styles from './Nft.module.css'
 
 const NftItem = ({ nft }) => {
   const navigate = useNavigate()
   const [detailPopupOpen, setDetailPopupOpen] = useState(false)
+
   const name = nft?.data?.name?.string || 'NFT'
-  const getImageLink = () => {
-    const rawImageLink = nft?.data?.icon_uri?.string || 'NFT'
-    if (rawImageLink.startsWith('ipfs://')) {
-      return rawImageLink.replace('ipfs://', 'https://gateway.ipfs.io/ipfs/')
-    }
-    return rawImageLink
-  }
+  const ticker = nft?.data?.ticker?.string || 'N/A'
+  const imageSrc = useNftImage(
+    nft?.data?.icon_uri?.string || nft?.data?.media_uri?.string,
+  )
 
   const handleSend = () => {
-    navigate('/wallet/mintlayer/nft/' + nft.token_id + '/send')
+    navigate('/wallet/Mintlayer/nft/' + nft.token_id + '/send')
   }
 
   return (
     <li
-      className={styles.transaction}
-      data-testid="transaction"
+      className={styles.tile}
+      data-testid="nft-tile"
       onClick={() => setDetailPopupOpen(true)}
     >
       <div
-        className={styles.transactionLogoType}
-        data-testid="transaction-icon"
+        className={styles.tileImage}
+        data-testid="nft-image"
       >
-        <img
-          src={getImageLink()}
-          alt="NFT"
-        />
+        {imageSrc ? (
+          <img
+            src={imageSrc}
+            alt={name}
+            loading="lazy"
+          />
+        ) : (
+          <span className={styles.tileFallback}>{name.charAt(0)}</span>
+        )}
       </div>
-      <div className={styles.transactionDetail}>
-        <p
-          className={styles.transactionId}
-          data-testid="transaction-otherPart"
+      <div className={styles.tileCaption}>
+        <span
+          className={styles.tileName}
+          data-testid="nft-name"
         >
           {name}
-        </p>
-        <div className={styles.transactionDateAmount}>
-          <p
-            className={styles.transactionDate}
-            data-testid="transaction-date"
-          >
-            {nft?.data?.description?.string}
-          </p>
-          <p
-            className={styles.transactionAmount}
-            data-testid="transaction-amount"
-          >
-            Tiker: <span>{nft?.data?.ticker.string}</span>
-          </p>
-        </div>
+        </span>
+        <span
+          className={styles.tileTicker}
+          data-testid="nft-ticker"
+        >
+          {ticker}
+        </span>
       </div>
       {detailPopupOpen && (
         <PopUp setOpen={setDetailPopupOpen}>

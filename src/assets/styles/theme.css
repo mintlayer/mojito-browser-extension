@@ -1,0 +1,126 @@
+/* Mojito BE — dark visual system (from doc/ design import).
+   Additive to the legacy light tokens in constants.css: existing pages keep
+   working; refactored pages use these tokens. */
+
+:root {
+  /* Surfaces */
+  --be-bg-0: oklch(0.14 0.012 60);
+  --be-bg-1: oklch(0.18 0.014 60);
+  --be-bg-2: oklch(0.22 0.014 60);
+  --be-bg-3: oklch(0.26 0.014 60);
+  --be-line: oklch(0.32 0.012 60);
+  --be-line-soft: oklch(0.28 0.01 60 / 0.6);
+
+  /* Text */
+  --be-text-0: oklch(0.98 0.005 80);
+  --be-text-1: oklch(0.82 0.008 70);
+  --be-text-2: oklch(0.6 0.01 70);
+  --be-text-3: oklch(0.45 0.012 70);
+
+  /* Accents */
+  --be-amber: oklch(0.82 0.16 70);
+  --be-amber-soft: oklch(0.82 0.16 70 / 0.14);
+  --be-teal: oklch(0.82 0.12 195);
+  --be-teal-soft: oklch(0.82 0.12 195 / 0.14);
+  --be-violet: oklch(0.74 0.16 290);
+  --be-violet-soft: oklch(0.74 0.16 290 / 0.14);
+  --be-green: oklch(0.78 0.16 150);
+  --be-red: oklch(0.7 0.2 25);
+
+  /* Ambient canvas gradient (page background) */
+  --be-canvas:
+    radial-gradient(
+      120% 60% at 50% -10%,
+      oklch(0.82 0.16 70 / 0.16),
+      transparent 60%
+    ),
+    radial-gradient(
+      80% 50% at 100% 100%,
+      oklch(0.74 0.16 290 / 0.1),
+      transparent 60%
+    ),
+    radial-gradient(
+      80% 50% at 0% 100%,
+      oklch(0.82 0.12 195 / 0.08),
+      transparent 60%
+    ),
+    var(--be-bg-0);
+
+  --be-radius-card: 22px;
+  --be-radius-input: 14px;
+  --be-font-mono:
+    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+/* Animations from the design system */
+@keyframes be-float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes be-pulse-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes be-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes be-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes be-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes be-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes be-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+:root {
+  --be-green-soft: oklch(0.78 0.16 150 / 0.14);
+}

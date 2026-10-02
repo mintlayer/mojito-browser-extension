@@ -4,12 +4,10 @@ import HomePage from './Home/Home'
 import LoginPage from './Login/Login.tsx'
 import SetAccountPasswordPage from './Login/SetAccountPassword.tsx'
 import RestoreAccountPage from './RestoreAccount/RestoreAccount.tsx'
-import WalletPage from './Wallet/Wallet'
 import SendBtcTransactionPage from './SendBtcTransaction/SendBtcTransaction'
 import SendMlTransactionPage from './SendMlTransaction/SendMlTransaction'
 import DashboardPage from './Dashboard/Dashboard'
 import SettingsPage from './Settings/Settings.tsx'
-import StakingPage from './Staking/Staking'
 import ConnectionPage from './ConnectionPage/ConnectionPage'
 import CreateDelegationPage from './CreateDelegation/CreateDelegation'
 import DelegationStakePage from './DelegationStake/DelegationStake'
@@ -25,6 +23,10 @@ import OrderSwapPage from './OrderSwap/OrderSwap'
 import SignBitcoinTransactionPage from './SignBitcoinTransaction/SignBitcoinTransaction'
 import ConfirmBtcTransactionPage from './ConfirmBtcTransaction/ConfirmBtcTransaction'
 import AddressPage from './AddressPage/AddressPage'
+import AssetPage from './AssetPage/AssetPage'
+import ActivityPage from './ActivityPage/ActivityPage'
+import ReceivePage from './ReceivePage/ReceivePage'
+import StakePage from './StakePage/StakePage'
 
 export {
   CreateAccountPage,
@@ -33,12 +35,10 @@ export {
   LoginPage,
   SetAccountPasswordPage,
   RestoreAccountPage,
-  WalletPage,
   SendBtcTransactionPage,
   SendMlTransactionPage,
   DashboardPage,
   SettingsPage,
-  StakingPage,
   ConnectionPage,
   CreateDelegationPage,
   DelegationStakePage,
@@ -54,4 +54,8 @@ export {
   SignBitcoinTransactionPage,
   ConfirmBtcTransactionPage,
   AddressPage,
+  AssetPage,
+  ActivityPage,
+  ReceivePage,
+  StakePage,
 }

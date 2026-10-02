@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router'
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { Button, Error, PageWrapper } from '@BasicComponents'
 import { PopUp, TextField, Loading } from '@ComposedComponents'
 import { AccountContext, BitcoinContext, SettingsContext } from '@Contexts'
@@ -26,6 +26,17 @@ const ConfirmBtcTransactionPage = () => {
   const extraButtonStyles = [styles.buttonSignTransaction]
 
   const { accountID, addresses } = useContext(AccountContext)
+  const [hasPasskey, setHasPasskey] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    Account.hasPasskey(accountID).then((has) => {
+      if (!cancelled) setHasPasskey(has)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [accountID])
   const {
     btcUtxos,
     unusedAddresses: unusedBtcAddresses,
@@ -92,9 +103,12 @@ const ConfirmBtcTransactionPage = () => {
 
     setSendingTransaction(true)
     try {
+      const unwrappedPassword = hasPasskey
+        ? await Account.getPasswordWithPasskey(accountID)
+        : password
       const { btcPrivateKeys } = await Account.unlockAccount(
         accountID,
-        password,
+        unwrappedPassword,
         { wallets: ['btc'] },
       )
 
@@ -127,7 +141,15 @@ const ConfirmBtcTransactionPage = () => {
         await fetchAllData(true)
       }
     } catch (e) {
-      if (e.address === '') {
+      // Account.unlockAccount rejects with a sentinel object (not an Error)
+      // when the password is wrong. Prefer an explicitly typed flag when the
+      // entity ever grows one, then fall back to the known rejection shapes.
+      const isWrongPassword =
+        e?.wrongPassword === true ||
+        e?.code === 'WRONG_PASSWORD' ||
+        e?.name === '' ||
+        e?.address === ''
+      if (isWrongPassword) {
         setTxErrorMessage('Incorrect password')
         setPassword('')
       } else if (typeof e === 'string' && e.includes('Invalid amount')) {
@@ -143,15 +165,20 @@ const ConfirmBtcTransactionPage = () => {
   }
 
   const goBackToWallet = async () => {
-    navigate('/wallet/Bitcoin')
+    navigate('/dashboard')
   }
 
   const passwordChangeHandler = (value) => {
     setPassword(value)
   }
 
+  useEffect(() => {
+    if (!state) {
+      navigate('/dashboard')
+    }
+  }, [state, navigate])
+
   if (!state) {
-    navigate('/wallet/Bitcoin')
     return null
   }
 

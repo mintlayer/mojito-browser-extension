@@ -5,7 +5,7 @@
 .title {
   font-size: 22px;
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   margin: 0;
 
   @media screen and (min-width: 901px) {
@@ -24,6 +24,6 @@
 
 .subtitle {
   font-size: 13px;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
   margin: 4px 0 0;
 }

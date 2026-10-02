@@ -15,7 +15,7 @@ const Tooltip = ({ message, visible, position }) => {
     <span
       className={`tooltip ${
         orientation.includes(position) ? position : 'bottom'
-      } ${!visible && 'hidden'}`}
+      } ${visible ? '' : 'hidden'}`}
       data-testid="tooltip"
     >
       {message}

@@ -1,6 +1,7 @@
 import { EnvVars } from '@Constants'
 import { AppInfo } from '@Constants'
 import { LocalStorageService } from '@Storage'
+import { isAbortError } from 'src/utils/Helpers/AbortError/AbortError'
 
 const ELECTRUM_ENDPOINTS = {
   GET_LAST_BLOCK_HASH: '/blocks/tip/hash',
@@ -20,18 +21,26 @@ const ELECTRUM_ENDPOINTS = {
   BATCH_ADDR_MEMPOOL_TRANSACTIONS: '/addresses/batch/txs/mempool',
 }
 
-const abortControllers = new Map()
+const REQUEST_TIMEOUT_MS = 15000
+
+const abortControllers = new Set()
 
 const requestElectrum = async (url, body = null, request = fetch) => {
   const method = body ? 'POST' : 'GET'
   const header = body ? { 'Content-Type': 'application/json' } : {}
   const controller = new AbortController()
-  abortControllers.set(url, controller)
+  abortControllers.add(controller)
 
   const options = {
     method: method,
     headers: header,
     body,
+    // Wire the signal so cancelAllRequests() actually cancels. The timeout
+    // releases hung connections so tryServers can advance to the next one.
+    signal: AbortSignal.any([
+      controller.signal,
+      AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    ]),
   }
 
   try {
@@ -40,33 +49,24 @@ const requestElectrum = async (url, body = null, request = fetch) => {
     const content = await result.text()
     return Promise.resolve(content)
   } catch (error) {
-    console.error(error)
+    // Superseded requests (network switch, refresh) abort by design —
+    // not an API failure. Callers still receive the throw and decide.
+    if (!isAbortError(error)) console.error(error)
     throw error
   } finally {
-    abortControllers.delete(url)
+    abortControllers.delete(controller)
   }
 }
 
 const tryServers = async (endpoint, body = null) => {
   const networkType = LocalStorageService.getItem('networkType')
-  const customElectrumServerList = LocalStorageService.getItem(
-    AppInfo.APP_LOCAL_STORAGE_CUSTOM_SERVERS,
-  )
 
-  const customServer = customElectrumServerList
-    ? networkType === AppInfo.NETWORK_TYPES.TESTNET
-      ? customElectrumServerList.bitcoin_testnet
-      : customElectrumServerList.bitcoin_mainnet
-    : null
-
-  const defaultElectrumServes =
+  // No localStorage custom-server override: an unvalidated entry would
+  // silently redirect all Bitcoin data (and broadcasts) elsewhere.
+  const combinedElectrumServers =
     networkType === AppInfo.NETWORK_TYPES.TESTNET
       ? EnvVars.TESTNET_ELECTRUM_SERVERS
       : EnvVars.MAINNET_ELECTRUM_SERVERS
-
-  const combinedElectrumServers = customServer
-    ? [customServer, ...defaultElectrumServes]
-    : [...defaultElectrumServes]
 
   for (let i = 0; i < combinedElectrumServers.length; i++) {
     try {
@@ -76,6 +76,8 @@ const tryServers = async (endpoint, body = null) => {
       )
       return response
     } catch (error) {
+      // A cancelled request must not be resurrected against the next server.
+      if (isAbortError(error)) throw error
       console.warn(
         `${combinedElectrumServers[i] + endpoint} request failed: `,
         error,
@@ -91,33 +93,59 @@ const getLastBlockHash = () =>
   tryServers(ELECTRUM_ENDPOINTS.GET_LAST_BLOCK_HASH)
 
 const getTransactionData = (txid) =>
-  tryServers(ELECTRUM_ENDPOINTS.GET_TRANSACTION_DATA.replace(':txid', txid))
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_TRANSACTION_DATA.replace(
+      ':txid',
+      encodeURIComponent(txid),
+    ),
+  )
 
 const getTransactionHex = (txid) =>
-  tryServers(ELECTRUM_ENDPOINTS.GET_TRANSACTION_HEX.replace(':txid', txid))
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_TRANSACTION_HEX.replace(
+      ':txid',
+      encodeURIComponent(txid),
+    ),
+  )
 
 const getTransactionStatus = (txid) =>
-  tryServers(ELECTRUM_ENDPOINTS.GET_TRANSACTION_STATUS.replace(':txid', txid))
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_TRANSACTION_STATUS.replace(
+      ':txid',
+      encodeURIComponent(txid),
+    ),
+  )
 
 const getAddressTransactions = (address) =>
   tryServers(
-    ELECTRUM_ENDPOINTS.GET_ADDRESS_TRANSACTIONS.replace(':address', address),
+    ELECTRUM_ENDPOINTS.GET_ADDRESS_TRANSACTIONS.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
   )
 
 const getAddressMempoolTransactions = (address) =>
   tryServers(
     ELECTRUM_ENDPOINTS.GET_ADDRESS_MEMPOOL_TRANSACTIONS.replace(
       ':address',
-      address,
+      encodeURIComponent(address),
     ),
   )
 
 const getAddress = (address) =>
-  tryServers(ELECTRUM_ENDPOINTS.GET_ADDRESS.replace(':address', address))
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_ADDRESS.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
+  )
 
 const getAddressUtxo = (address) => {
   return tryServers(
-    ELECTRUM_ENDPOINTS.GET_ADDRESS_UTXO.replace(':address', address),
+    ELECTRUM_ENDPOINTS.GET_ADDRESS_UTXO.replace(
+      ':address',
+      encodeURIComponent(address),
+    ),
   )
 }
 
@@ -149,15 +177,6 @@ const broadcastTransaction = (transaction) =>
 const cancelAllRequests = () => {
   abortControllers.forEach((controller) => controller.abort())
   abortControllers.clear()
-}
-
-const getWalletAddressesInfo = async (addresses) => {
-  const results = await Promise.all(
-    addresses.map((address) => getAddress(address)),
-  )
-  return results.map((data) => {
-    return JSON.parse(data)
-  })
 }
 
 const getAddressBalancesBatch = async (addresses) => {
@@ -210,7 +229,6 @@ export {
   getFeesEstimates,
   broadcastTransaction,
   cancelAllRequests,
-  getWalletAddressesInfo,
   getAddressBalancesBatch,
   getAddressTransactionsBatch,
   getAddressMempoolTransactionsBatch,

@@ -1,7 +1,8 @@
 import React, { useState, useContext } from 'react'
-import { Button } from '@BasicComponents'
+import { Button, Error } from '@BasicComponents'
 import { PopUp } from '@ComposedComponents'
 import { MintlayerContext, SettingsContext } from '@Contexts'
+import { AppInfo } from '@Constants'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ReactComponent as SearchIcon } from '@Assets/images/icon-search.svg'
 
@@ -32,7 +33,11 @@ const SwapInterface = () => {
   }))
 
   const [fromToken, setFromToken] = useState(coinData)
-  const [toToken, setToToken] = useState(allNetworkTokensData[0])
+  const [toToken, setToToken] = useState(undefined)
+  const [amountError, setAmountError] = useState(false)
+
+  // Tokens load async into the provider — fall back to the first available one
+  const activeToToken = toToken ?? allNetworkTokensData[0]
 
   const handleToTokenClick = () => {
     setTokenToPopupOpen(true)
@@ -51,35 +56,44 @@ const SwapInterface = () => {
     const value = e.target.value
     if (/^\d*\.?\d*$/.test(value)) {
       setAmount(value)
+      setAmountError(Boolean(value) && !AppInfo.amountRegex.test(value))
     }
   }
 
-  const handleToTockenChange = (token) => {
+  const handleToTokenChange = (token) => {
     setToToken(token)
     setTokenToPopupOpen(false)
   }
 
+  const handleSwapDirection = () => {
+    if (!activeToToken) return
+    setFromToken(activeToToken)
+    setToToken(fromToken)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+    if (amount && !AppInfo.amountRegex.test(amount)) {
+      setAmountError(true)
       console.error('Invalid amount')
       return
     }
-    if (fromToken.type === 'Coin' && toToken.type === 'Coin') {
+    if (!activeToToken) return
+    if (fromToken.type === 'Coin' && activeToToken.type === 'Coin') {
       console.error('Cannot swap between coins directly')
       return
     }
-    if (fromToken.token_id === toToken.token_id) {
+    if (fromToken.token_id === activeToToken.token_id) {
       console.error('Cannot swap the same token')
       return
     }
 
-    let pair = `${fromToken.token_id}_${toToken.token_id}`
+    let pair = `${fromToken.token_id}_${activeToToken.token_id}`
     if (fromToken.type === 'Coin') {
-      pair = `${coinTicker}_${toToken.token_id}`
+      pair = `${coinTicker}_${activeToToken.token_id}`
     }
 
-    if (toToken.type === 'Coin') {
+    if (activeToToken.type === 'Coin') {
       pair = `${fromToken.token_id}_${coinTicker}`
     }
 
@@ -114,25 +128,34 @@ const SwapInterface = () => {
           />
         </div>
         <p className={styles.balance}>
-          Balance: {fromToken.balance} {fromToken.token_ticker}
+          Balance: {fromToken.balance}{' '}
+          {fromToken.symbol || (fromToken.type === 'Coin' ? coinTicker : '')}
         </p>
+        {amountError && (
+          <Error error="Amount format is invalid. Use 0.00 instead." />
+        )}
       </div>
 
       <div className={styles.arrowRow}>
-        <Button extraStyleClasses={[styles.arrowButton]}>
+        <Button
+          extraStyleClasses={[styles.arrowButton]}
+          onClickHandle={handleSwapDirection}
+        >
           <ArrowIcon className={styles.arrowIcon} />
         </Button>
       </div>
       <div className={styles.row}>
         <h3 className={styles.label}>Swap To</h3>
         <div className={styles.inputsWrapper}>
-          <SelectTokenSwap
-            token={toToken}
-            onClick={handleToTokenClick}
-          />
+          {activeToToken && (
+            <SelectTokenSwap
+              token={activeToToken}
+              onClick={handleToTokenClick}
+            />
+          )}
           <Button
             onClickHandle={handleSubmit}
-            disabled={!amount}
+            disabled={!fromToken || !activeToToken}
             extraStyleClasses={[styles.findButton]}
           >
             <SearchIcon className={styles.findOrderIcon} />
@@ -156,7 +179,7 @@ const SwapInterface = () => {
           <SwapPopupContent
             coin={coinData}
             tokens={allNetworkTokensData}
-            handleTokenChange={handleToTockenChange}
+            handleTokenChange={handleToTokenChange}
             mode="to"
           />
         </PopUp>

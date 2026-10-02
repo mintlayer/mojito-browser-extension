@@ -44,6 +44,7 @@ test('IndexedDB basic functions - createOrUpdateDatabase', async () => {
   })
 
   const event = {
+    oldVersion: 0,
     target: {
       result: {
         createObjectStore,
@@ -55,6 +56,56 @@ test('IndexedDB basic functions - createOrUpdateDatabase', async () => {
   }
 
   createOrUpdateDatabase(event)
+
+  expect(createObjectStore).toHaveBeenCalled()
+  expect(createIndex).toHaveBeenCalled()
+})
+
+test('IndexedDB basic functions - createOrUpdateDatabase skips migrations on a new database', () => {
+  const objectStore = jest.fn()
+
+  createOrUpdateDatabase({
+    oldVersion: 0,
+    target: {
+      result: {
+        createObjectStore: jest.fn(() => ({ createIndex: jest.fn() })),
+        objectStoreNames: { contains: jest.fn().mockReturnValue(false) },
+      },
+      transaction: { objectStore },
+    },
+  })
+
+  expect(objectStore).not.toHaveBeenCalled()
+})
+
+test('IndexedDB basic functions - createOrUpdateDatabase migrates an existing database', () => {
+  const request = {}
+  const put = jest.fn()
+  const getAll = jest.fn(() => request)
+
+  createOrUpdateDatabase({
+    oldVersion: 1,
+    target: {
+      result: {
+        createObjectStore: jest.fn(),
+        objectStoreNames: { contains: jest.fn().mockReturnValue(true) },
+      },
+      transaction: { objectStore: jest.fn(() => ({ getAll, put })) },
+    },
+  })
+
+  expect(getAll).toHaveBeenCalled()
+
+  request.result = [{ id: 1, iv: 'iv', tag: 'tag', seed: 'seed' }]
+  request.onsuccess()
+
+  expect(put).toHaveBeenCalledWith({
+    id: 1,
+    iv: { btcIv: 'iv' },
+    tag: { btcTag: 'tag' },
+    seed: { btcEncryptedSeed: 'seed' },
+    htlsSecrets: {},
+  })
 })
 
 test('IndexedDB basic functions - openDatabase', async () => {

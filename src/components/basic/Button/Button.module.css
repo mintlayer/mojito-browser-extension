@@ -50,7 +50,7 @@
 
 .btn.alternate:hover,
 .btn.alternate:focus {
-  background: rgb(var(--mojito-green-soft));
+  background: rgba(var(--mojito-green), 0.12);
   transition: 0.3s ease-in-out;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .btn.dark {
-  background-color: rgb(var(--color-black));
+  background-color: var(--be-text-0);
   border: 2px solid transparent;
   color: rgb(var(--color-white));
   transition:

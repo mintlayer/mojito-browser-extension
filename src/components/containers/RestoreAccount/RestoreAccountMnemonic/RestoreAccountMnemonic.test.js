@@ -5,7 +5,7 @@ import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import RestoreAccountMnemonic from './RestoreAccountMnemonic'
 import { AccountProvider, SettingsProvider } from '@Contexts'
 import { AccountContext } from '@Contexts'
-import { BTC } from '@Cryptos'
+import { BTC, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 
 const SETSTEPSAMPLE = jest.fn()
 const WORDSSAMPLE = ['car', 'house', 'cat']
@@ -170,10 +170,7 @@ test('Renders set account page with step 3', () => {
 })
 
 test('Renders restore account page with step 4', () => {
-  jest.spyOn(window, 'alert').mockImplementation((message) => {
-    expect(typeof message).toBe('string')
-    window.alert.mockRestore()
-  })
+  const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
 
   const onStepsFinishedFn = jest.fn()
   const validateMnemonicMock = jest.fn().mockReturnValue(true)
@@ -226,9 +223,17 @@ test('Renders restore account page with step 4', () => {
     fireEvent.submit(restoreAccountForm)
   })
 
-  act(() => {
-    fireEvent.submit(restoreAccountForm)
-  })
+  // the valid seed finishes the restore flow with the collected values
+  expect(onStepsFinishedFn).toHaveBeenCalledTimes(1)
+  expect(onStepsFinishedFn).toHaveBeenCalledWith(
+    '',
+    '',
+    SAMPLE_MNEMONIC,
+    BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT,
+    ['btc', 'ml'],
+  )
+
+  alertSpy.mockRestore()
 })
 
 test('Checks back button behavior in a internal navigation component - first step', () => {

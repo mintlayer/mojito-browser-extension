@@ -1,0 +1,8 @@
+.tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px oklch(0 0 0 / 0.3);
+}

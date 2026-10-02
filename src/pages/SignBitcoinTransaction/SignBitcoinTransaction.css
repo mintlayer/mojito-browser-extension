@@ -1,8 +1,10 @@
 /* SignTransaction.css */
 .SignTransaction {
-  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--be-bg-1);
   margin: 0 auto;
-  font-family: 'Arial', sans-serif;
+
   overflow: scroll;
   width: 100%;
   height: 100%;
@@ -11,12 +13,17 @@
   border-radius: 10px;
 }
 
+.SignTransaction > * {
+  flex-shrink: 0;
+}
+
 .SignTransaction .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 1.5rem;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .signTxTitle {
@@ -28,7 +35,7 @@
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  height: 70%;
+  flex-grow: 1;
 }
 
 .SignTransaction .mock_selector {
@@ -49,7 +56,7 @@
 }
 
 .SignTransaction .mock_selector div {
-  background-color: #f3f4f6;
+  background-color: var(--be-bg-2);
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 14px;
@@ -59,7 +66,7 @@
 }
 
 .SignTransaction .mock_selector div:hover {
-  background-color: #e5e7eb;
+  background-color: var(--be-bg-3);
 }
 
 .SignTransaction .transaction-preview-wrapper {
@@ -69,12 +76,12 @@
 }
 
 .SignTransaction .transaction-raw-wrapper {
-  background-color: #f9fafb;
+  background-color: var(--be-bg-2);
   padding: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--be-line-soft);
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--be-text-1);
   word-break: break-all;
   unicode-bidi: embed;
   font-family: monospace;
@@ -89,6 +96,7 @@
   justify-content: center;
   gap: 12px;
   bottom: 18px;
+  flex-shrink: 0;
 }
 
 .modal {
@@ -109,7 +117,7 @@
   flex-direction: column;
   align-items: center;
   gap: 40px;
-  background-color: #ffffff;
+  background-color: var(--be-bg-1);
   padding: 20px;
   border-radius: 8px;
   text-align: center;
@@ -129,8 +137,8 @@
 
 /* HTLC Secret Management Styles */
 .htlc-secret-section {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: var(--be-bg-2);
+  border: 1px solid var(--be-line-soft);
   border-radius: 8px;
   padding: 16px;
   margin: 16px 0;
@@ -138,7 +146,7 @@
 
 .htlc-secret-section h3 {
   margin: 0 0 12px 0;
-  color: #1e293b;
+  color: var(--be-text-0);
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -157,7 +165,7 @@
 
 .secret-item label {
   font-weight: 500;
-  color: #475569;
+  color: var(--be-text-2);
   font-size: 0.875rem;
 }
 
@@ -165,8 +173,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
+  background-color: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
   border-radius: 4px;
   padding: 8px;
   font-family: monospace;
@@ -176,7 +184,7 @@
 
 .secret-value span {
   flex: 1;
-  color: #374151;
+  color: var(--be-text-1);
 }
 
 .secret-value button {
@@ -189,16 +197,16 @@
 }
 
 .secret-value button:hover {
-  background-color: #f3f4f6;
+  background-color: var(--be-bg-2);
 }
 
 .secret-warning {
   margin-top: 12px;
   padding: 12px;
-  background-color: #fef3c7;
-  border: 1px solid #f59e0b;
+  background-color: var(--be-amber-soft);
+  border: 1px solid var(--be-amber);
   border-radius: 6px;
-  color: #92400e;
+  color: var(--be-amber);
   font-size: 0.875rem;
 }
 
@@ -211,11 +219,11 @@
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #374151;
+  color: var(--be-text-1);
 }
 
 .secret-error {
-  color: #dc2626;
+  color: rgb(var(--color-red));
   font-size: 0.875rem;
   margin-top: 4px;
   padding: 4px 0;
@@ -223,5 +231,76 @@
 
 .secret-hint {
   margin-top: 4px;
-  color: #6b7280;
+  color: var(--be-text-2);
+}
+
+.requestOrigin {
+  margin-bottom: 20px;
+}
+
+.sign-error {
+  color: rgb(var(--color-red));
+  font-size: 0.75rem;
+  background-color: rgba(235, 87, 87, 0.12);
+  border: 1px solid rgba(235, 87, 87, 0.45);
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+
+/* ── Parsed sign recap (BTC) ────────────────────────────────────────────
+   Human-readable facts above the raw JSON preview: what moves, where to,
+   at which fee. Values the user must double-check render in amber. */
+.btc-recap {
+  border: 1px solid var(--be-line-soft);
+  background: var(--be-bg-1);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.btc-recap h3 {
+  margin: 0 0 8px;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--be-text-0);
+}
+
+.btc-recap dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btc-recap-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.btc-recap-row dt {
+  color: var(--be-text-2);
+  flex-shrink: 0;
+}
+
+.btc-recap-row dd {
+  margin: 0;
+  text-align: right;
+  word-break: break-all;
+  color: var(--be-text-0);
+}
+
+.btc-recap-row dd.mono {
+  font-family: var(--be-font-mono);
+}
+
+.btc-recap-row dd.warn {
+  color: var(--be-amber);
+}
+
+.btc-recap-warning {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--be-amber);
 }

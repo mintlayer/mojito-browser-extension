@@ -5,7 +5,7 @@
   width: 100%;
   min-height: max-content;
   margin: 2rem 0;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .step {

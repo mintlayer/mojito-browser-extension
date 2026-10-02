@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendBtcTransaction } from '@ContainerComponents'
@@ -12,11 +12,11 @@ import { BTC as BTCHelper, Format } from '@Helpers'
 import { BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
 import { AppInfo } from '@Constants'
 
-import { PageWrapper } from '@BasicComponents'
+import { Error, PageWrapper } from '@BasicComponents'
 import styles from './SendBtcTransaction.module.css'
 
 const SendBtcTransactionPage = () => {
-  const { addresses, accountID } = useContext(AccountContext)
+  const { accountID } = useContext(AccountContext)
   const { btcUtxos } = useContext(BitcoinContext)
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
@@ -29,12 +29,12 @@ const SendBtcTransactionPage = () => {
     tokenId: ['Mintlayer', 'Bitcoin'].includes(coinType) ? null : coinType,
   }
 
-  const currentBtcAddress = addresses.btcAddresses.btcReceivingAddresses[0]
   const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
+  const [feeError, setFeeError] = useState('')
   const navigate = useNavigate()
 
-  const { balance } = useBtcWalletInfo(currentBtcAddress, coinType)
+  const { balance } = useBtcWalletInfo()
 
   const tokenName = 'BTC'
   const fiatName = 'USD'
@@ -48,33 +48,51 @@ const SendBtcTransactionPage = () => {
 
   const maxValueToken = balance
 
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
+
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/wallet')
-    return
+    return null
   }
 
   const calculateBtcTotalFee = async (transactionInfo) => {
-    const currentAccount = await Account.getAccount(accountID)
-    const btcWalletType =
-      currentAccount.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
+    try {
+      const currentAccount = await Account.getAccount(accountID)
+      const btcWalletType =
+        currentAccount.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
 
-    const totalFee = await BTCTransaction.calculateBtcTransactionFee({
-      to: transactionInfo.to,
-      amount: BTCHelper.convertBtcToSatoshi(transactionInfo.amount),
-      utxos: btcUtxos || [],
-      feeRate: transactionInfo.fee,
-      walletType: btcWalletType,
-    })
+      const totalFee = await BTCTransaction.calculateBtcTransactionFee({
+        to: transactionInfo.to,
+        amount: BTCHelper.convertBtcToSatoshi(transactionInfo.amount),
+        utxos: btcUtxos || [],
+        feeRate: transactionInfo.fee,
+        walletType: btcWalletType,
+      })
 
-    const formatedFee = Format.BTCValue(BTCHelper.convertSatoshiToBtc(totalFee))
+      const formatedFee = Format.BTCValue(
+        BTCHelper.convertSatoshiToBtc(totalFee),
+      )
+      const freshTotalFeeFiat = Format.fiatValue(formatedFee * exchangeRate)
 
-    setTotalFeeFiat(Format.fiatValue(formatedFee * exchangeRate))
-    setTotalFeeCrypto(formatedFee)
+      setTotalFeeFiat(freshTotalFeeFiat)
+      setTotalFeeCrypto(formatedFee)
+      setFeeError('')
+
+      return { totalFeeFiat: freshTotalFeeFiat, totalFeeCrypto: formatedFee }
+    } catch (e) {
+      console.error('Failed to calculate BTC transaction fee:', e)
+      setTotalFeeFiat(0)
+      setTotalFeeCrypto(0)
+      setFeeError(e?.message || 'Failed to calculate the transaction fee')
+      return null
+    }
   }
 
   const createTransaction = async (transactionInfo) => {
-    await calculateBtcTotalFee(transactionInfo)
+    return calculateBtcTotalFee(transactionInfo)
   }
 
   return (
@@ -99,6 +117,7 @@ const SendBtcTransactionPage = () => {
             isFormValid={isFormValid}
             walletType={walletType}
           />
+          {feeError && <Error error={feeError} />}
         </VerticalGroup>
       </div>
     </PageWrapper>

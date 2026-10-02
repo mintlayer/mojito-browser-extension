@@ -1,4 +1,4 @@
-import { useEffect, useContext, useState } from 'react'
+import { useCallback, useEffect, useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
@@ -19,9 +19,8 @@ const DelegationStakePage = () => {
     chain: 'mintlayer',
   }
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.STAKING
-  const { addresses, accountID } = useContext(AccountContext)
+  const { accountID } = useContext(AccountContext)
   const { client } = useContext(MintlayerContext)
-  const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
@@ -32,12 +31,13 @@ const DelegationStakePage = () => {
   })
   const goBackToWallet = () => {
     setDelegationStep(1)
-    navigate('/wallet/' + walletType.name + '/staking')
+    navigate('/staking')
   }
   const { setDelegationStep } = useContext(TransactionContext)
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
   const [feeLoading, setFeeLoading] = useState(false)
+  const [feeError, setFeeError] = useState('')
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const {
@@ -46,7 +46,7 @@ const DelegationStakePage = () => {
     unusedAddresses,
     fetchingBalances,
     fetchingUtxos,
-  } = useMlWalletInfo(currentMlAddresses)
+  } = useMlWalletInfo()
   const maxValueToken = mlBalance
 
   const transaction_conditions =
@@ -57,6 +57,16 @@ const DelegationStakePage = () => {
 
   const loading = fetchingBalances || fetchingUtxos
 
+  const buildStakeTransaction = useCallback(
+    ({ amount, delegation_id }) =>
+      client.buildTransaction({
+        type: 'DelegateStaking',
+        params: { delegation_id, amount },
+        ...(utxos.length ? { opts: { withUTXO: utxos } } : {}),
+      }),
+    [client, utxos],
+  )
+
   useEffect(() => {
     const buildTransaction = async () => {
       if (
@@ -65,14 +75,17 @@ const DelegationStakePage = () => {
         transactionInformation?.amount > 0
       ) {
         setFeeLoading(true)
+        setFeeError('')
         try {
-          const transaction = await client.buildDelegationStake({
+          const transaction = await buildStakeTransaction({
             amount: transactionInformation.amount,
             delegation_id: transactionInformation.to,
           })
           setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
         } catch (e) {
           console.error('Failed to calculate staking fee:', e)
+          setTotalFeeCrypto(0)
+          setFeeError(e.message || 'Fee calculation failed')
         } finally {
           setFeeLoading(false)
         }
@@ -82,15 +95,19 @@ const DelegationStakePage = () => {
   }, [
     transaction_conditions,
     transactionInformation,
-    client,
+    buildStakeTransaction,
     unusedAddresses,
     delegationId,
   ])
 
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
+
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/wallet')
-    return
+    return null
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -98,10 +115,11 @@ const DelegationStakePage = () => {
   }
 
   const confirmMlTransaction = async () => {
-    const result = await client.delegationStake({
+    const transaction = await buildStakeTransaction({
       amount: transactionInformation.amount,
       delegation_id: transactionInformation.to,
     })
+    const result = await client.signTransaction(transaction)
     return result
   }
 
@@ -119,6 +137,7 @@ const DelegationStakePage = () => {
           <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}
             feeLoading={feeLoading}
+            feeError={feeError}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueToken}

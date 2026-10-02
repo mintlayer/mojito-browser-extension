@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import './Textarea.css'
 
 const Textarea = ({
@@ -6,15 +6,18 @@ const Textarea = ({
   onChange,
   extraClasses,
   id,
-  size,
+  size = { cols: 20, rows: 2 },
   validity = true,
   disabled,
+  ...rest
 }) => {
-  const [textareaVakue, setTextareaValue] = useState(value ? value : '')
+  const [textareaValue, setTextareaValue] = useState(value ? value : '')
+  const [prevValue, setPrevValue] = useState(value)
 
-  useEffect(() => {
-    setTextareaValue(value)
-  }, [value])
+  if (value !== prevValue) {
+    setPrevValue(value)
+    setTextareaValue(value ?? '')
+  }
 
   const getExtraClasses = () => {
     if (value && validity) {
@@ -29,13 +32,12 @@ const Textarea = ({
     const newValue = event.target.value
     setTextareaValue(newValue)
     onChange && onChange({ target: { value: newValue } })
-    getExtraClasses()
   }
 
   return (
     <textarea
       data-testid={id}
-      value={textareaVakue}
+      value={textareaValue}
       onChange={onChangeHandler}
       className={`textarea ${getExtraClasses()} ${extraClasses ? extraClasses : ''}`}
       name={id}
@@ -43,6 +45,7 @@ const Textarea = ({
       cols={size.cols}
       rows={size.rows}
       readOnly={disabled}
+      {...rest}
     />
   )
 }

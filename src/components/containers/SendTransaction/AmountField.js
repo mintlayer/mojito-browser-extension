@@ -15,6 +15,7 @@ const AmountField = ({
   inputValue,
   placeholder,
   validate,
+  decimals,
   label = 'Amount',
   children,
 }) => {
@@ -44,6 +45,7 @@ const AmountField = ({
         totalFeeInCrypto={totalFeeInCrypto}
         transactionMode={transactionMode}
         validate={validate}
+        decimals={decimals}
       />
       {children}
       {(localMessage || errorMessage) && (

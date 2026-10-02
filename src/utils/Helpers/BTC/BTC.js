@@ -1,8 +1,9 @@
 import { Electrum } from '@APIs'
 import * as bitcoin from 'bitcoinjs-lib'
-import { AppInfo } from '@Constants'
+import * as AppInfo from '../../Constants/AppInfo/AppInfoCore'
 import { LocalStorageService } from '@Storage'
 import Decimal from 'decimal.js'
+import { floatStringToNumber } from '../Number/Number'
 
 const AVERAGE_MIN_PER_BLOCK = 15
 const SATOSHI_BTC_CONVERSION_FACTOR = 100000000
@@ -19,6 +20,10 @@ const parseFeesEstimates = (allEstimates) => {
   const availableKeys = Object.keys(allEstimates)
     .map(Number)
     .sort((a, b) => a - b)
+
+  // An empty/failed estimates object would otherwise produce undefined
+  // levels and Math.ceil(undefined) = NaN downstream.
+  if (availableKeys.length === 0) return {}
 
   const sortedLevels = Object.entries(blockLevels).sort(
     ([a], [b]) => Number(a) - Number(b),
@@ -52,8 +57,7 @@ const calculateBalanceFromUtxoList = (list) => {
 }
 
 const getConfirmationsAmount = async (transaction) => {
-  if (!transaction)
-    return new Promise.reject('No transaction to check confirmations.')
+  if (!transaction) throw new Error('No transaction to check confirmations.')
   if (!transaction.blockHeight) return Promise.resolve(0)
 
   const lastBlockHeight = await Electrum.getLastBlockHeight()
@@ -117,21 +121,36 @@ const getYesterdayFiatBalances = (cryptos, yesterdayExchangeRateList) => {
   const btcCrypto = cryptos.find((crypto) => crypto.symbol === 'BTC')
   const mlCrypto = cryptos.find((crypto) => crypto.symbol === 'ML')
 
-  const btcYesterdayBalance = btcCrypto
-    ? new Decimal(btcCrypto.balance || 0)
-        .times(new Decimal(yesterdayExchangeRateList.btc || 0))
-        .toNumber()
-    : 0
-  const mlYesterdayBalance = mlCrypto
-    ? new Decimal(mlCrypto.balance || 0)
-        .times(new Decimal(yesterdayExchangeRateList.ml || 0))
-        .toNumber()
-    : 0
+  // A missing/zero yesterday rate must be distinguishable from a real 0
+  // balance, otherwise 24h diffs explode (current/0-fallback).
+  const btcRateMissing =
+    !btcCrypto || !(Number(yesterdayExchangeRateList?.btc) > 0)
+  const mlRateMissing =
+    !mlCrypto || !(Number(yesterdayExchangeRateList?.ml) > 0)
+
+  const btcYesterdayBalance =
+    btcCrypto && !btcRateMissing
+      ? new Decimal(btcCrypto.balance || 0)
+          .times(new Decimal(yesterdayExchangeRateList.btc))
+          .toNumber()
+      : 0
+  const mlYesterdayBalance =
+    mlCrypto && !mlRateMissing
+      ? new Decimal(mlCrypto.balance || 0)
+          .times(new Decimal(yesterdayExchangeRateList.ml))
+          .toNumber()
+      : 0
   const totalYesterdayBalance = new Decimal(btcYesterdayBalance)
     .plus(new Decimal(mlYesterdayBalance))
     .toNumber()
 
-  return { btcYesterdayBalance, mlYesterdayBalance, totalYesterdayBalance }
+  return {
+    btcYesterdayBalance,
+    mlYesterdayBalance,
+    totalYesterdayBalance,
+    btcRateMissing,
+    mlRateMissing,
+  }
 }
 
 const getCurrentFiatBalances = (cryptos) => {
@@ -164,8 +183,13 @@ const getCurrentFiatBalances = (cryptos) => {
 }
 
 const calculateBalances = (cryptos, yesterdayExchangeRates) => {
-  const { btcYesterdayBalance, mlYesterdayBalance, totalYesterdayBalance } =
-    getYesterdayFiatBalances(cryptos, yesterdayExchangeRates)
+  const {
+    btcYesterdayBalance,
+    mlYesterdayBalance,
+    totalYesterdayBalance,
+    btcRateMissing,
+    mlRateMissing,
+  } = getYesterdayFiatBalances(cryptos, yesterdayExchangeRates)
 
   const { btcCurrentBalance, mlCurrentBalance, totalCurrentBalance } =
     getCurrentFiatBalances(cryptos)
@@ -182,43 +206,115 @@ const calculateBalances = (cryptos, yesterdayExchangeRates) => {
     total: totalYesterdayBalance,
   }
 
+  // null = "not computable" (yesterday rate unavailable or yesterday
+  // balance zero) — consumers must treat null as "show nothing", never
+  // as 0. A 0 yesterday balance would otherwise divide by `|| 1` and
+  // render real gains as absurd percents.
+  const toProportion = (current, yesterday) =>
+    yesterday > 0
+      ? new Decimal(current || 0).div(new Decimal(yesterday)).toNumber()
+      : null
+
   const proportionDiffs = {
-    btc: new Decimal(currentBalances.btc || 0)
-      .div(new Decimal(yesterdayBalances.btc || 1))
-      .toNumber(),
-    ml: new Decimal(currentBalances.ml || 0)
-      .div(new Decimal(yesterdayBalances.ml || 1))
-      .toNumber(),
-    total: new Decimal(currentBalances.total || 0)
-      .div(new Decimal(yesterdayBalances.total || 1))
-      .toNumber(),
+    btc: btcRateMissing
+      ? null
+      : toProportion(currentBalances.btc, btcYesterdayBalance),
+    ml: mlRateMissing
+      ? null
+      : toProportion(currentBalances.ml, mlYesterdayBalance),
+    total:
+      btcRateMissing || mlRateMissing
+        ? null
+        : toProportion(currentBalances.total, yesterdayBalances.total),
   }
 
   const balanceDiffs = {
-    btc: new Decimal(currentBalances.btc || 0)
-      .minus(new Decimal(btcYesterdayBalance || 0))
-      .toNumber(),
-    ml: new Decimal(currentBalances.ml || 0)
-      .minus(new Decimal(mlYesterdayBalance || 0))
-      .toNumber(),
-    total: new Decimal(currentBalances.total || 0)
-      .minus(new Decimal(yesterdayBalances.total || 0))
-      .toNumber(),
+    btc: btcRateMissing
+      ? null
+      : new Decimal(currentBalances.btc || 0)
+          .minus(new Decimal(btcYesterdayBalance || 0))
+          .toNumber(),
+    ml: mlRateMissing
+      ? null
+      : new Decimal(currentBalances.ml || 0)
+          .minus(new Decimal(mlYesterdayBalance || 0))
+          .toNumber(),
+    total:
+      btcRateMissing || mlRateMissing
+        ? null
+        : new Decimal(currentBalances.total || 0)
+            .minus(new Decimal(yesterdayBalances.total || 0))
+            .toNumber(),
   }
 
   return { currentBalances, yesterdayBalances, proportionDiffs, balanceDiffs }
 }
 
+/**
+ * Total USD fiat value of all priced token balances.
+ *
+ * tokenBalances is the MintlayerProvider map (token id -> {balance, ...});
+ * resolvePrice maps an on-chain token ticker to its USD price (from the
+ * price feed) or returns undefined for tokens without coverage. Unpriced
+ * tokens contribute nothing; the result is always a plain number.
+ */
+const getTokenFiatTotal = (tokenBalances, resolvePrice) => {
+  return Object.values(tokenBalances || {})
+    .reduce((acc, tb) => {
+      const price = resolvePrice(tb.token_info.token_ticker.string)
+      return price != null
+        ? acc.plus(
+            new Decimal(floatStringToNumber(tb.balance || 0)).times(
+              new Decimal(price),
+            ),
+          )
+        : acc
+    }, new Decimal(0))
+    .toNumber()
+}
+
+/**
+ * Folds the token fiat value into the coin totals from calculateBalances:
+ * the displayed total grows by the token value, and the 24h percent's base
+ * grows with it — but tokens contribute ZERO to the 24h fiat diff (the
+ * feed is current-only, there is no yesterday snapshot, so their
+ * contribution cancels between today and yesterday).
+ *
+ * Always returns plain numbers (toNumber()-ed), never Decimal instances.
+ */
+const combineTotalBalances = (balancesResult, tokenFiatTotal) => {
+  const { currentBalances, yesterdayBalances, proportionDiffs } = balancesResult
+
+  const totalBalance = currentBalances.total + tokenFiatTotal
+  const combinedYesterdayTotal =
+    (yesterdayBalances?.total || 0) + tokenFiatTotal
+  const combinedProportionDiffs =
+    proportionDiffs.total == null || !(combinedYesterdayTotal > 0)
+      ? { ...proportionDiffs, total: null }
+      : {
+          ...proportionDiffs,
+          total: new Decimal(totalBalance || 0)
+            .div(new Decimal(combinedYesterdayTotal))
+            .toNumber(),
+        }
+
+  return { totalBalance, combinedProportionDiffs }
+}
+
 const getStats = (proportionDiffs, balanceDiffs, networkType) => {
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
-  const hasBalance = proportionDiffs.total !== 0
+  // null = rates missing (show nothing); 0 = real zero balance (an empty
+  // wallet must not render as "-100%").
+  const hasBalance =
+    proportionDiffs.total != null && proportionDiffs.total !== 0
   const percentValue =
     isTestnet || !hasBalance
       ? 0
       : new Decimal(proportionDiffs.total || 0).minus(1).times(100).toFixed(2)
-  const fiatValue = isTestnet
-    ? 0
-    : new Decimal(balanceDiffs.total || 0).toFixed(2)
+  const fiatValue =
+    isTestnet || balanceDiffs.total == null
+      ? 0
+      : new Decimal(balanceDiffs.total || 0).toFixed(2)
   return [
     {
       name: '24h percent',
@@ -263,13 +359,6 @@ const checkFee = (psbt, fee, maxFee, maxFeeRate) => {
       return false
     }
 
-    console.log(
-      'Fee looks safe:',
-      feeDec.toString(),
-      'sats ~',
-      feeRate.toFixed(2),
-      'sat/vB',
-    )
     return true
   } catch (err) {
     console.error('checkFee error:', err.message)
@@ -300,7 +389,8 @@ const getBtcTransactionLink = (txId, networkType) => {
 }
 
 const getBtcAddresses = (addresses) => {
-  if (!addresses || addresses.length === 0) return []
+  if (!addresses?.btcReceivingAddresses || !addresses?.btcChangeAddresses)
+    return { btcReceivingAddresses: [], btcChangeAddresses: [] }
   const btcReceivingAddresses = addresses.btcReceivingAddresses.map((item) => ({
     [item.address]: { pubkey: item.pubkey },
   }))
@@ -308,6 +398,13 @@ const getBtcAddresses = (addresses) => {
     [item.address]: { pubkey: item.pubkey },
   }))
   return { btcChangeAddresses, btcReceivingAddresses }
+}
+
+// Stored BTC address entries are plain strings (old store blobs) or
+// { [address]: { pubkey } } objects (new store). Returns the address string.
+const getBtcAddressString = (entry) => {
+  if (typeof entry === 'string') return entry
+  return entry ? Object.keys(entry)[0] : undefined
 }
 
 const getBatchData = async (ids, networkRequest) => {
@@ -341,11 +438,14 @@ export {
   getYesterdayFiatBalances,
   calculateBalances,
   getStats,
+  getTokenFiatTotal,
+  combineTotalBalances,
   getNetwork,
   checkFee,
   getBtcAddressLink,
   getBtcTransactionLink,
   getBtcAddresses,
+  getBtcAddressString,
   getBatchData,
   AVERAGE_MIN_PER_BLOCK,
   MAX_BTC_IN_SATOSHIS,

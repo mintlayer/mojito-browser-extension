@@ -15,18 +15,24 @@ const CryptoFiatField = ({
   changeValueHandle,
   setErrorMessage,
   maxValueInToken,
-  setAmountValidity,
+  setAmountValidity = () => {},
   totalFeeInCrypto,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
   validate,
+  decimals,
   extraStyleClasses = [],
 }) => {
   const isDelegationWithdraw =
     transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
-  const parsedValueInToken = NumbersHelper.floatStringToNumber(maxValueInToken)
-  const finalMaxValue = isDelegationWithdraw
+  const parsedValueInTokenRaw =
+    NumbersHelper.floatStringToNumber(maxValueInToken)
+  const parsedValueInToken = Number.isFinite(parsedValueInTokenRaw)
+    ? parsedValueInTokenRaw
+    : 0
+  const rawMaxValue = isDelegationWithdraw
     ? parsedValueInToken
     : parsedValueInToken - totalFeeInCrypto
+  const finalMaxValue = Number.isFinite(rawMaxValue) ? rawMaxValue : 0
   const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
   const { coinType } = useParams()
 
@@ -69,18 +75,20 @@ const CryptoFiatField = ({
     if (parsedValue > 0 && !validity) {
       setValidity('invalid')
       setAmountValidity(false)
-      setErrorMessage(amountFormatErrorMessage)
+      setErrorMessage && setErrorMessage(amountFormatErrorMessage)
       return
     }
 
     if (parsedValue <= 0 || !parsedValue) {
       setValidity('invalid')
       setAmountValidity(false)
-      setErrorMessage(zeroErrorMessage)
+      setErrorMessage && setErrorMessage(zeroErrorMessage)
       return
     }
 
-    let isValid = parsedValue < BTC.MAX_BTC
+    // 21M supply cap applies to Bitcoin only
+    const isBtc = tokenName === 'BTC'
+    let isValid = isBtc ? parsedValue < BTC.MAX_BTC : true
     setValidity(isValid ? 'valid' : 'invalid')
     setAmountValidity && setAmountValidity(isValid)
     setErrorMessage && setErrorMessage(isValid ? undefined : amountErrorMessage)
@@ -109,9 +117,10 @@ const CryptoFiatField = ({
     if (isDelegationWithdraw) {
       return value
     }
-    const result = value - totalFeeInCrypto - 0.5
+    const fee = Number.isFinite(totalFeeInCrypto) ? totalFeeInCrypto : 0
+    const result = value - fee
     if (result < 0) {
-      return 0
+      return '0.00'
     }
     return result.toFixed(5)
   }
@@ -124,6 +133,7 @@ const CryptoFiatField = ({
       <div className={styles.inputWrapper}>
         <InputBTC
           id={id}
+          decimals={decimals}
           extraStyleClasses={inputExtraClasses}
           placeholder={placeholder || Format.BTCValue(0)}
           value={value}

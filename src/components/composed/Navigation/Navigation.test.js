@@ -92,6 +92,18 @@ describe('Navigation Component', () => {
     expect(screen.queryByTestId('navigation-logout')).not.toBeInTheDocument()
   })
 
+  test('does not render the old Bitcoin/Mintlayer wallet menu entries', () => {
+    mockIsAccountUnlocked.mockReturnValue(true)
+
+    renderWithProviders(<Navigation />, {
+      providerProps,
+      mintlayerProviderProps,
+    })
+
+    expect(screen.queryByText('Bitcoin Wallet')).not.toBeInTheDocument()
+    expect(screen.queryByText('Mintlayer Wallet')).not.toBeInTheDocument()
+  })
+
   test('clicking on Dashboard navigates to /dashboard', () => {
     mockIsAccountUnlocked.mockReturnValue(true)
 

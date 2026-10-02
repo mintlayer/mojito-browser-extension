@@ -8,7 +8,7 @@ describe('CopyButton', () => {
   beforeEach(() => {
     Object.assign(navigator, {
       clipboard: {
-        writeText: jest.fn(),
+        writeText: jest.fn().mockResolvedValue(undefined),
       },
     })
   })
@@ -29,15 +29,17 @@ describe('CopyButton', () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('test content')
   })
 
-  it('shows success icon after copying', () => {
+  it('shows success icon after copying', async () => {
     render(<CopyButton content="test content" />)
     fireEvent.click(screen.getByTestId('copy-btn'))
+    await act(async () => {}) // flush the clipboard promise
     expect(screen.getByTestId('success-icon')).toBeInTheDocument()
   })
 
-  it('resets copied state after timeout', () => {
+  it('resets copied state after timeout', async () => {
     render(<CopyButton content="test content" />)
     fireEvent.click(screen.getByTestId('copy-btn'))
+    await act(async () => {}) // flush the clipboard promise
     expect(screen.getByTestId('success-icon')).toBeInTheDocument()
     act(() => {
       jest.advanceTimersByTime(1200)
@@ -49,5 +51,22 @@ describe('CopyButton', () => {
     render(<CopyButton content="" />)
     fireEvent.click(screen.getByTestId('copy-btn'))
     expect(navigator.clipboard.writeText).not.toHaveBeenCalled()
+  })
+})
+
+describe('CopyButton clipboard failures', () => {
+  it('never shows the success icon when the clipboard write rejects', async () => {
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: jest.fn().mockRejectedValue(new Error('denied')),
+      },
+    })
+    jest.useRealTimers()
+    render(<CopyButton content="test content" />)
+    fireEvent.click(screen.getByTestId('copy-btn'))
+    await act(async () => {})
+    expect(screen.queryByTestId('success-icon')).not.toBeInTheDocument()
+    expect(screen.getByTestId('copy-icon')).toBeInTheDocument()
+    jest.useFakeTimers()
   })
 })

@@ -12,7 +12,14 @@ const getEncryptedPrivateKeys = async (password, salt, mnemonic) => {
   const seed = await generateSeed(mnemonic)
 
   const encryptData = async (data) => {
-    const { encryptedData, iv, tag } = await encryptSeed({ data, key })
+    const payload = await encryptSeed({ data, key })
+    if (payload?.error) {
+      throw new Error(payload.error)
+    }
+    const { encryptedData, iv, tag } = payload ?? {}
+    if (!encryptedData || !iv || !tag) {
+      throw new Error('Encryption returned an incomplete cipher payload')
+    }
     return { encryptedData, iv, tag }
   }
 
@@ -61,11 +68,18 @@ const getEncryptedHtlsSecret = async (password, salt, secret, version) => {
   const { generateEncryptionKey, encryptSeed } = await loadAccountSubRoutines()
   const { key } = await generateEncryptionKey({ password, salt, version })
 
+  const payload = await encryptSeed({ data: secret, key })
+  if (payload?.error) {
+    throw new Error(payload.error)
+  }
   const {
     encryptedData: encryptedHtlsSecret,
     iv: htlsIv,
     tag: htlsTag,
-  } = await encryptSeed({ data: secret, key })
+  } = payload ?? {}
+  if (!encryptedHtlsSecret || !htlsIv || !htlsTag) {
+    throw new Error('Encryption returned an incomplete cipher payload')
+  }
 
   return { encryptedHtlsSecret, htlsIv, htlsTag }
 }

@@ -14,22 +14,22 @@
 .press:active {
   position: relative;
   top: 1px;
-  background-color: rgb(var(--color-dark-gray));
+  background-color: var(--be-bg-2);
 }
 
 .show-unused {
   cursor: pointer;
-  background: rgb(var(--color-main-green));
+  background: var(--be-amber);
   padding: 2px 5px;
   border-radius: 5px;
-  color: rgb(var(--color-white));
+  color: oklch(0.18 0.02 70);
 }
 
 .used-address {
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-3);
 }
 
 .unused-address {
-  color: rgb(var(--color-green));
+  color: var(--be-green);
   font-weight: bold;
 }

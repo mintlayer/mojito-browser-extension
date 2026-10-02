@@ -1,4 +1,4 @@
-import { render, fireEvent, screen } from '@testing-library/react'
+import { render, fireEvent, screen, waitFor } from '@testing-library/react'
 import Delegation from './Delegation'
 import {
   AccountProvider,
@@ -54,7 +54,7 @@ describe('Delegation', () => {
     )
   })
 
-  it('opens and closes the detail popup correctly', () => {
+  it('opens and closes the detail popup correctly', async () => {
     render(
       <AccountProvider>
         <SettingsProvider>
@@ -68,12 +68,19 @@ describe('Delegation', () => {
     )
 
     fireEvent.click(screen.getByTestId('delegation'))
-    // Replace 'delegation-details' with the actual text or label used in your DelegationDetails component
     expect(screen.getByTestId('delegation-details')).toBeInTheDocument()
 
-    // // Replace 'Close' with the actual text or label used in your PopUp component
-    // fireEvent.click(screen.getByText('Close'))
-    // // Replace 'delegation-details' with the actual text or label used in your DelegationDetails component
-    // expect(screen.queryByTestId('delegation-details')).not.toBeInTheDocument()
+    // close via the popup's close button (first button inside the popup)
+    fireEvent.click(screen.getAllByTestId('button')[0])
+
+    // the popup unmounts after its closing animation
+    await waitFor(
+      () => {
+        expect(
+          screen.queryByTestId('delegation-details'),
+        ).not.toBeInTheDocument()
+      },
+      { timeout: 1500 },
+    )
   })
 })

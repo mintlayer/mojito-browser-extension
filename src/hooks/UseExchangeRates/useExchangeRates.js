@@ -1,11 +1,12 @@
 import { useContext } from 'react'
 import { ExchangeRatesContext } from '@Contexts'
+import exchangeRateKey from '../etc/exchangeRateKey'
 
 const useExchangeRates = (crypto, fiat) => {
   const { exchangeRate } = useContext(ExchangeRatesContext)
 
   return {
-    exchangeRate: exchangeRate[`${crypto.toLowerCase()}-${fiat.toLowerCase()}`],
+    exchangeRate: exchangeRate[exchangeRateKey(crypto, fiat)],
   }
 }
 

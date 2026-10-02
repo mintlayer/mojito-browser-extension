@@ -1,0 +1,43 @@
+/* Rendered directly inside SettingsSection's card (no .item wrapper), so
+   carry the same inset here — without it the text sits flush on the card
+   border and overflow:hidden clips it at the rounded corners. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+}
+
+.description {
+  font-size: var(--font-size-sm);
+  color: var(--be-text-2);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.status {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--be-text-0);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.row > :first-child {
+  flex: 1;
+}
+
+.error {
+  font-size: var(--font-size-sm);
+  color: rgb(var(--color-red));
+}
+
+.message {
+  font-size: var(--font-size-sm);
+  color: var(--be-teal);
+}

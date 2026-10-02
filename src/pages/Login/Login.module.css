@@ -1,5 +1,6 @@
 .pageWrapper {
-  background: rgb(var(--color-white));
+  background: var(--be-canvas);
+  color: var(--be-text-0);
   flex-direction: row;
   padding: 0;
 
@@ -11,7 +12,9 @@
 .page {
   display: flex;
   flex: 1;
+  flex-direction: column;
   padding: var(--space-lg);
+  animation: be-fade-in 400ms ease both;
 
   @media screen and (min-width: 901px) {
     padding: var(--space-4xl);

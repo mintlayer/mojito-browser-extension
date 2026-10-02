@@ -31,3 +31,10 @@ yarn-error.log*
 
 # llm
 .claude
+
+# local manifest key for unpacked builds
+/manifest-key.txt
+/HANDOFF.md
+.output/
+.wxt/
+releases/

@@ -7,28 +7,28 @@ describe('EmptyListMessage', () => {
     const testMessage = 'No items found'
     render(<EmptyListMessage message={testMessage} />)
 
-    expect(screen.getByTestId('transaction')).toBeInTheDocument()
+    expect(screen.getByTestId('empty-list')).toBeInTheDocument()
     expect(screen.getByText('No items found')).toBeInTheDocument()
   })
 
   it('renders empty when no message provided', () => {
     render(<EmptyListMessage />)
 
-    expect(screen.getByTestId('transaction')).toBeInTheDocument()
-    expect(screen.getByTestId('transaction')).toBeEmptyDOMElement()
+    expect(screen.getByTestId('empty-list')).toBeInTheDocument()
+    expect(screen.getByTestId('empty-list')).toBeEmptyDOMElement()
   })
 
   it('renders with empty string message', () => {
     render(<EmptyListMessage message="" />)
 
-    expect(screen.getByTestId('transaction')).toBeInTheDocument()
-    expect(screen.getByTestId('transaction')).toBeEmptyDOMElement()
+    expect(screen.getByTestId('empty-list')).toBeInTheDocument()
+    expect(screen.getByTestId('empty-list')).toBeEmptyDOMElement()
   })
 
   it('applies correct CSS class', () => {
     render(<EmptyListMessage message="Test" />)
 
-    const element = screen.getByTestId('transaction')
+    const element = screen.getByTestId('empty-list')
     expect(element).toHaveClass('emptyList')
   })
 

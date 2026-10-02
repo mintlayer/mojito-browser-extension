@@ -1,10 +1,10 @@
-import { useEffect, useState, createContext, useContext } from 'react'
+import { useEffect, useRef, useState, createContext, useContext } from 'react'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { LocalStorageService } from '@Storage'
 import { AppInfo } from '@Constants'
 
 import { Electrum } from '@APIs'
-import { BTC, Format } from '@Helpers'
+import { BTC, Format, isAbortError } from '@Helpers'
 import Decimal from 'decimal.js'
 
 const BitcoinContext = createContext()
@@ -72,13 +72,12 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     setCurrentNetworkType(networkType)
     setCurrentAccountId(accountID)
 
-    const receivingAddresses =
-      addresses.btcAddresses.btcReceivingAddresses.flatMap((addr) =>
-        Object.keys(addr),
-      )
-    const changeAddresses = addresses.btcAddresses.btcChangeAddresses.flatMap(
-      (addr) => Object.keys(addr),
-    )
+    const receivingAddresses = addresses.btcAddresses.btcReceivingAddresses
+      .map(BTC.getBtcAddressString)
+      .filter(Boolean)
+    const changeAddresses = addresses.btcAddresses.btcChangeAddresses
+      .map(BTC.getBtcAddressString)
+      .filter(Boolean)
 
     const allAddresses = changeAddresses.concat(receivingAddresses)
 
@@ -104,7 +103,8 @@ const BitcoinProvider = ({ value: propValue, children }) => {
           )
           allTransactions.push(...parsedTransactions)
         } catch (error) {
-          console.error('Error fetching transactions:', error)
+          if (!isAbortError(error))
+            console.error('Error fetching transactions:', error)
         }
 
         const uniqueTransactions = allTransactions
@@ -123,7 +123,8 @@ const BitcoinProvider = ({ value: propValue, children }) => {
         setBtcTransactions(uniqueTransactions)
         setFetchingTransactions(false)
       } catch (error) {
-        console.error('Error fetching transactions:', error)
+        if (!isAbortError(error))
+          console.error('Error fetching transactions:', error)
         setFetchingTransactions(false)
       }
     }
@@ -240,12 +241,14 @@ const BitcoinProvider = ({ value: propValue, children }) => {
       } catch (error) {
         console.error('Error in getWalletUtxos:', error)
         setFetchingUtxos(false)
+        // Never undefined: consumers map/filter the utxo list.
+        return []
       }
     }
 
     const getBalance = async (utxos) => {
       try {
-        const satoshiBalance = BTC.calculateBalanceFromUtxoList(utxos)
+        const satoshiBalance = BTC.calculateBalanceFromUtxoList(utxos || [])
         const balanceConvertedToBTC = BTC.convertSatoshiToBtc(satoshiBalance)
         const formattedBalance = Format.BTCValue(balanceConvertedToBTC)
         setBtcBalance(formattedBalance)
@@ -257,13 +260,22 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     }
     await getTransactions()
     const fetchedUtxos = await getWalletUtxos()
-    setBtcUtxos(fetchedUtxos)
     await getBalance(fetchedUtxos)
     getBalanceFromAddressInfo()
   }
 
+  const previousIdentityRef = useRef()
   useEffect(() => {
-    Electrum.cancelAllRequests()
+    // Cancel in-flight requests only when the wallet or network actually
+    // changed. This effect also re-runs on every onlineHeight/addresses
+    // update; a blanket cancel there would abort the fetches it just
+    // started (AbortError storm on every block-height poll).
+    const identity = `${accountID}-${networkType}`
+    const identityChanged = previousIdentityRef.current !== identity
+    previousIdentityRef.current = identity
+    if (identityChanged) {
+      Electrum.cancelAllRequests()
+    }
     setCurrentBlockHeight(onlineHeight)
     const getData = async () => {
       await fetchAllData()
@@ -279,6 +291,9 @@ const BitcoinProvider = ({ value: propValue, children }) => {
         setOnlineHeight(result)
         setBtcApiAvailable(true)
       } catch (error) {
+        // An aborted height check means a superseding effect took over —
+        // not an outage. Only real failures mark the API unavailable.
+        if (isAbortError(error)) return
         console.error('Bitcoin API is not available:', error)
         setBtcApiAvailable(false)
       }
@@ -293,7 +308,10 @@ const BitcoinProvider = ({ value: propValue, children }) => {
     if (networkType !== currentNetworkType) {
       fetchAllData(true)
     }
-  })
+    // Only re-run on actual network changes; a dependency-less effect would
+    // re-fire on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [networkType])
 
   const value = {
     btcBalance,

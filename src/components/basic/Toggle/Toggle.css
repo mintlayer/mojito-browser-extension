@@ -18,7 +18,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: #2c3e50;
+  background: var(--be-line);
   transition: 0.3s;
   border-radius: 30px;
 }
@@ -36,11 +36,11 @@
 }
 
 .toggleInput:checked + .toggleMark {
-  background-color: rgb(var(--color-main-green));
+  background-color: var(--be-amber);
 }
 
 .toggleInput:checked + .toggleMark:before {
-  background-color: rgb(var(--color-white));
+  background-color: var(--be-bg-1);
   transform: translateX(29px);
 }
 

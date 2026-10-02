@@ -5,7 +5,7 @@ import { ReactComponent as MlLogo } from '@Assets/images/logo.svg'
 import { Button } from '@BasicComponents'
 import { Loading, WalletCard } from '@ComposedComponents'
 import { CenteredLayout } from '@LayoutComponents'
-import { Format, NumbersHelper } from '@Helpers'
+import { Format, NumbersHelper, ML } from '@Helpers'
 import { AccountContext, SettingsContext } from '@Contexts'
 import { AppInfo } from '@Constants'
 import FeesField from './FeesField'
@@ -29,6 +29,7 @@ const SendMlTransaction = ({
   preEnterAddress,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
   walletType,
+  decimals = AppInfo.ML_DECIMALS,
 }) => {
   const { balanceLoading } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
@@ -51,7 +52,7 @@ const SendMlTransaction = ({
     try {
       await confirmTransaction()
     } catch (e) {
-      setTxErrorMessage(e.message)
+      setTxErrorMessage(e?.message || String(e))
     } finally {
       setSendingTransaction(false)
     }
@@ -82,9 +83,16 @@ const SendMlTransaction = ({
   useEffect(() => {
     if (preEnterAddress) {
       setAddressTo(preEnterAddress)
-      setAddressValidity(true)
+      const validity =
+        transactionMode === AppInfo.ML_TRANSACTION_MODES.DELEGATION
+          ? ML.isMlPoolIdValid(preEnterAddress, networkType)
+          : transactionMode === AppInfo.ML_TRANSACTION_MODES.STAKING ||
+              transactionMode === AppInfo.ML_TRANSACTION_MODES.WITHDRAW
+            ? ML.isMlDelegationIdValid(preEnterAddress, networkType)
+            : ML.isMlAddressValid(preEnterAddress, networkType)
+      setAddressValidity(validity)
     }
-  }, [preEnterAddress, transactionMode])
+  }, [preEnterAddress, transactionMode, networkType])
 
   useEffect(() => {
     setFeeValidity(true)
@@ -128,6 +136,13 @@ const SendMlTransaction = ({
         setPassErrorMessage('Insufficient delegation balance')
         return
       }
+      if (!validity || amountDecimal.lte(0)) {
+        setAmountValidity(false)
+        return
+      }
+      setAmountValidity(true)
+      setPassErrorMessage('')
+      return
     }
     if (!validity || amountDecimal.lte(0)) {
       setAmountValidity(false)
@@ -157,6 +172,13 @@ const SendMlTransaction = ({
     const amountDecimal = new Decimal(
       NumbersHelper.floatStringToNumber(amountInCrypto) || 0,
     )
+    if (
+      !addressTo ||
+      (transactionMode !== AppInfo.ML_TRANSACTION_MODES.DELEGATION &&
+        transactionMode !== AppInfo.ML_TRANSACTION_MODES.NFT_SEND &&
+        amountDecimal.lte(0))
+    )
+      return
 
     onSendTransaction({
       to: addressTo,
@@ -215,6 +237,7 @@ const SendMlTransaction = ({
                 errorMessage={feeError || passErrorMessage}
                 totalFeeInCrypto={totalFeeCrypto}
                 transactionMode={transactionMode}
+                decimals={decimals}
               />
             )}
 
@@ -235,7 +258,7 @@ const SendMlTransaction = ({
 
           <CenteredLayout>
             <Button
-              extraStyleClasses={['send-transaction-button']}
+              extraStyleClasses={[styles.sendTransactionButton]}
               onClickHandle={sendTransaction}
               disabled={!isFormValid || feeLoading}
             >

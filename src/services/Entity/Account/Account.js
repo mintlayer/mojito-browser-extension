@@ -7,8 +7,9 @@ import {
 } from './AccountHelpers'
 import { BTC as BtcHelpers } from '@Helpers'
 import loadAccountSubRoutines from './loadWorkers'
-import { LocalStorageService } from '@Storage'
+import NetworkTypeEntity from '../NetworkType/NetworkType'
 import { CURRENT_ENCRYPTION_VERSION } from '../../Crypto/Cipher/Cipher'
+import * as Passkey from '../../Crypto/Passkey/Passkey'
 
 const getAccountVersion = (account) => account.encryptionVersion || 1
 
@@ -67,13 +68,33 @@ const deleteAccount = async (id) => {
 }
 
 const backupAccountToJSON = async (account) => {
+  const record = await getAccount(account.id)
+  if (!record)
+    throw new Error('Failed to export account: account data could not be read.')
+
+  // Never export an account still on legacy KDF parameters: the backup file
+  // outlives the wallet, and a pre-V3 record (PBKDF2-SHA512 10k / AES-128)
+  // stays offline-brute-forceable forever. Unlocking once migrates the
+  // record to the current version.
+  if (getAccountVersion(record) < CURRENT_ENCRYPTION_VERSION) {
+    throw Object.assign(
+      new Error(
+        'This account still uses outdated encryption. Unlock the wallet once (make any transaction or log out and back in) to upgrade it, then back up again.',
+      ),
+      { code: 'ENCRYPTION_OUTDATED' },
+    )
+  }
+
   const accountJson = await IndexedDB.getAccountJSON(account.id)
+  if (!accountJson)
+    throw new Error('Failed to export account: account data could not be read.')
   const blob = new Blob([accountJson], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `mojito_${account.name}.json`
   a.click()
+  URL.revokeObjectURL(url)
 }
 
 const restoreAccountFromJSON = async (json) => {
@@ -235,17 +256,25 @@ const reEncryptAccount = async (id, password, account, decryptedSeeds) => {
 }
 
 const unlockAccount = async (id, password, { wallets } = {}) => {
-  const storedNetworkType = LocalStorageService.getItem('networkType')
+  // Same lookup (and mainnet default) the rest of the app uses, so a
+  // missing storage key can no longer skip both network branches below.
+  const networkType = NetworkTypeEntity.get()
 
   const { generateEncryptionKey, decryptSeed } = await loadAccountSubRoutines()
   const addresses = {}
 
   try {
     const account = await getAccount(id)
-    const walletsToCreate = AppInfo.DEFAULT_WALLETS_TO_CREATE
 
     if (!account.walletsToCreate)
-      updateAccount(id, { walletsToCreate: AppInfo.DEFAULT_WALLETS_TO_CREATE })
+      updateAccount(id, {
+        walletsToCreate: AppInfo.DEFAULT_WALLETS_TO_CREATE,
+      }).catch((migrationError) =>
+        console.error(
+          'Failed to persist walletsToCreate on the account:',
+          migrationError,
+        ),
+      )
 
     const accountVersion = getAccountVersion(account)
 
@@ -260,6 +289,12 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
       iv: account.iv.btcIv,
       tag: account.tag.btcTag,
       key,
+    }).catch((decryptError) => {
+      console.error(
+        '[Account] decryptSeed failed — password/key mismatch or corrupted data:',
+        decryptError,
+      )
+      throw decryptError
     })
 
     const mlTestnetPrivateKey = await decryptSeed({
@@ -281,15 +316,14 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
       account.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
     if (seed.error) throw new Error(seed.error)
 
-    const walletsToUnlock = wallets || walletsToCreate
+    const walletsToUnlock =
+      wallets || account.walletsToCreate || AppInfo.DEFAULT_WALLETS_TO_CREATE
 
     let btcHDWallet = null
     let btcAddressData = null
     if (walletsToUnlock.includes('btc')) {
       btcHDWallet = BTC.getHDWalletFromSeed(Buffer.from(seed))
-      btcAddressData = await BTC_ADDRESS_TYPE_MAP[
-        account.walletType
-      ].getAddresses(
+      btcAddressData = await BTC_ADDRESS_TYPE_MAP[btcAddressType].getAddresses(
         btcHDWallet,
         BtcHelpers.getNetwork(),
         AppInfo.BTC_DEFAULT_ADDRESSES_BATCH,
@@ -300,7 +334,7 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
     }
 
     if (walletsToUnlock.includes('ml')) {
-      if (storedNetworkType === 'testnet') {
+      if (networkType === AppInfo.NETWORK_TYPES.TESTNET) {
         const mlTestnetWalletAddresses = await ML.getWalletAddresses(
           mlTestnetPrivateKey,
           AppInfo.NETWORK_TYPES.TESTNET,
@@ -309,7 +343,7 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
         addresses.mlAddresses = mlTestnetWalletAddresses
       }
 
-      if (storedNetworkType === 'mainnet') {
+      if (networkType === AppInfo.NETWORK_TYPES.MAINNET) {
         const mlMainnetWalletAddresses = await ML.getWalletAddresses(
           mlMainnetPrivateKey,
           AppInfo.NETWORK_TYPES.MAINNET,
@@ -341,13 +375,64 @@ const unlockAccount = async (id, password, { wallets } = {}) => {
       btcPrivateKeys: { btcHDWallet: null, btcAddressData: null },
       name: '',
       mlPrivKeys: { mlMainnetPrivateKey: '', mlTestnetPrivateKey: '' },
+      error: e?.message ?? String(e),
     })
   }
+}
+
+// ── Passkey unlock (Chromium only; password remains the fallback) ────────
+// SECURITY: the passkey wraps the account password via the WebAuthn PRF
+// extension — the wrapped blob is stored on the account, the PRF secret
+// never leaves memory, and the password itself is never persisted. Enroll
+// and remove both verify the password first.
+
+const enrollPasskey = async (id, password) => {
+  // verify the password by unlocking before binding the passkey to it
+  // (wallets: [] → verification only, no address derivation)
+  await unlockAccount(id, password, { wallets: [] })
+  const blob = await Passkey.enrollPasskeyCredential(password)
+  await updateAccount(id, { passkeyBlob: blob })
+  return blob
+}
+
+const removePasskey = async (id, password) => {
+  await unlockAccount(id, password, { wallets: [] })
+  await updateAccount(id, { passkeyBlob: null })
+}
+
+const getPasskeyBlob = async (id) => {
+  const account = await getAccount(id)
+  return account?.passkeyBlob ?? null
+}
+
+const hasPasskey = async (id) => Boolean(await getPasskeyBlob(id))
+
+// Evaluates the PRF secret and returns the account password IN MEMORY ONLY
+// (identical trust level to the user typing it). Never persisted anywhere.
+const getPasswordWithPasskey = async (id) => {
+  const blob = await getPasskeyBlob(id)
+  if (!blob) throw new Error('PASSKEY_NOT_ENROLLED')
+  return Passkey.unwrapPasswordWithPasskey(blob)
+}
+
+// Unlocks with the passkey-wrapped password: returns the same unlocked
+// account the password path returns.
+const unlockAccountWithPasskey = async (id, { wallets } = {}) => {
+  const blob = await getPasskeyBlob(id)
+  if (!blob) throw new Error('PASSKEY_NOT_ENROLLED')
+  const password = await Passkey.unwrapPasswordWithPasskey(blob)
+  return unlockAccount(id, password, { wallets })
 }
 
 export {
   saveAccount,
   unlockAccount,
+  enrollPasskey,
+  removePasskey,
+  getPasskeyBlob,
+  hasPasskey,
+  getPasswordWithPasskey,
+  unlockAccountWithPasskey,
   updateAccount,
   getAccount,
   deleteAccount,

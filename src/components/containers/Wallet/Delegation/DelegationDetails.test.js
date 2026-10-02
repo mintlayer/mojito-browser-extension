@@ -54,9 +54,10 @@ describe('DelegationDetails', () => {
 
   const mockDelegation = {
     creation_time: 1645113600,
-    balance: 100000000,
+    balance: { decimal: '100', atoms: '10000000000' },
     spend_destination: 'test_address',
     delegation_id: 'test_id',
+    type: 'Confirmed',
   }
 
   it('renders correctly', () => {
@@ -74,6 +75,7 @@ describe('DelegationDetails', () => {
     )
 
     expect(screen.getByTestId('delegation-details')).toBeInTheDocument()
+    expect(screen.getByText('100 ML')).toBeInTheDocument()
   })
 
   it('calls correct functions on button click', () => {

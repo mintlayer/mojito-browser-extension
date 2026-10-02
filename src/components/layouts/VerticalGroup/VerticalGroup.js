@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 
 import './VerticalGroup.css'
 
@@ -10,22 +10,36 @@ const VerticalGroup = ({
   fullWidth = false,
   grow = false,
   center = false,
+  className,
+  ...rest
 }) => {
-  const styleClasses = useMemo(() => {
-    const classes = ['v-group']
-    if (bigGap) classes.push('bigGap')
-    if (midGap) classes.push('midGap')
-    if (smallGap) classes.push('smallGap')
-    if (fullWidth) classes.push('fullWidth')
-    if (grow) classes.push('grow')
-    if (center) classes.push('center')
-    return classes.join(' ')
-  }, [bigGap, midGap, smallGap, fullWidth, grow, center])
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    [bigGap, midGap, smallGap].filter(Boolean).length > 1
+  ) {
+    console.warn(
+      'VerticalGroup: bigGap, midGap and smallGap are mutually exclusive; CSS source order decides the winner.',
+    )
+  }
+
+  const styleClasses = [
+    'v-group',
+    bigGap && 'bigGap',
+    midGap && 'midGap',
+    smallGap && 'smallGap',
+    fullWidth && 'fullWidth',
+    grow && 'grow',
+    center && 'center',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <div
       className={styleClasses}
       data-testid="vertical-group-container"
+      {...rest}
     >
       {children}
     </div>

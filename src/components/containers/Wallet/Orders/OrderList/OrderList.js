@@ -9,6 +9,14 @@ const SKELETON_ROWS = 6
 
 const OrderList = ({ orderList, ordersLoading }) => {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [prevOrderList, setPrevOrderList] = useState(orderList)
+
+  // Reset pagination whenever the order list itself changes (pair switch).
+  if (prevOrderList !== orderList) {
+    setPrevOrderList(orderList)
+    setVisibleCount(PAGE_SIZE)
+  }
+
   const showedOrders = orderList ? orderList.slice(0, visibleCount) : []
 
   const renderSkeletonRows = () =>
@@ -33,9 +41,9 @@ const OrderList = ({ orderList, ordersLoading }) => {
       )
     }
 
-    return showedOrders.map((order, index) => (
+    return showedOrders.map((order) => (
       <OrderItem
-        key={index}
+        key={order.order_id}
         order={order}
       />
     ))

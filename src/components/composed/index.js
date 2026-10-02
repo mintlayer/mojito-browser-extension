@@ -1,6 +1,4 @@
 import Balance from './Balance/Balance'
-import Carousel from './Carousel/Carousel'
-import ArcChart from './Charts/ArcChart/ArcChart'
 import LineChart from './Charts/LineChart/LineChart'
 import OptionButtons from './OptionButtons/OptionButtons'
 import Header from './Header/Header.tsx'
@@ -16,7 +14,6 @@ import FeeFieldML from './FeeField/FeeFieldML'
 import ConnectionErrorPopup from './ConnectionErrorPopup/ConnectionErrorPopup'
 import WalletList from './WalletList/WalletList'
 import AddWallet from './AddWallet/AddWallet'
-import CurrentStaking from './CurrentStaking/CurrentStaking'
 import HelpTooltip from './HelpTooltip/HelpTooltip'
 import RestoreSeedField from './RestoreSeedField/RestoreSeedField'
 import UpdateButton from './UpdateButton/UpdateButton'
@@ -28,16 +25,16 @@ import SwapInterface from './SwapInterface/SwapInterface'
 import CopyButton from './CopyButton/CopyButton'
 import StakingWarning from './StakingWarning/StakingWarning'
 import AddressList from './AddressList/AddressList'
-import PriceChart from './PriceChart/PriceChart'
 import WalletHeader from './WalletHeader/WalletHeader'
 import Sidebar from './Sidebar/Sidebar.tsx'
 import SendPageHeader from './SendPageHeader/SendPageHeader'
 import WalletCard from './WalletCard/WalletCard'
+import BeSheet from './BeSheet/BeSheet'
+import TxRow from './TxRow/TxRow'
+import AssetRow from './AssetRow/AssetRow'
 
 export {
   Balance,
-  Carousel,
-  ArcChart,
   LineChart,
   OptionButtons,
   Header,
@@ -53,7 +50,6 @@ export {
   ConnectionErrorPopup,
   WalletList,
   AddWallet,
-  CurrentStaking,
   HelpTooltip,
   RestoreSeedField,
   UpdateButton,
@@ -65,9 +61,11 @@ export {
   CopyButton,
   StakingWarning,
   AddressList,
-  PriceChart,
   WalletHeader,
   Sidebar,
   SendPageHeader,
   WalletCard,
+  BeSheet,
+  TxRow,
+  AssetRow,
 }

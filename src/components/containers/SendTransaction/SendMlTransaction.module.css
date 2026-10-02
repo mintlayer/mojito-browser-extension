@@ -44,3 +44,11 @@
   left: 50%;
   transform: translate(-50%, -50%);
 }
+
+.sendTransactionButton {
+  width: 100%;
+
+  @media screen and (min-width: 901px) {
+    width: 40%;
+  }
+}

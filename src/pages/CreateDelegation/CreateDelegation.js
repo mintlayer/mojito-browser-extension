@@ -1,4 +1,4 @@
-import { useEffect, useContext, useState } from 'react'
+import { useCallback, useEffect, useContext, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
@@ -19,9 +19,8 @@ const CreateDelegationPage = () => {
     chain: 'mintlayer',
   }
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.DELEGATION
-  const { addresses, accountID } = useContext(AccountContext)
+  const { accountID } = useContext(AccountContext)
   const { client, fetchDelegations } = useContext(MintlayerContext)
-  const currentMlAddresses = addresses.mlAddresses
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
@@ -31,11 +30,12 @@ const CreateDelegationPage = () => {
     tokenName,
   })
   const goBackToWallet = () => {
-    navigate('/wallet/' + walletType.name + '/staking')
+    navigate('/staking')
   }
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
   const [feeLoading, setFeeLoading] = useState(false)
+  const [feeError, setFeeError] = useState('')
 
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
   const {
@@ -44,7 +44,7 @@ const CreateDelegationPage = () => {
     unusedAddresses,
     fetchingBalances,
     fetchingUtxos,
-  } = useMlWalletInfo(currentMlAddresses)
+  } = useMlWalletInfo()
 
   const preEnterAddress = state?.pool_id || ''
   const transaction_conditions =
@@ -55,31 +55,53 @@ const CreateDelegationPage = () => {
 
   const loading = preEnterAddress && (fetchingBalances || fetchingUtxos)
 
+  const buildDelegationTransaction = useCallback(
+    ({ pool_id, destination }) =>
+      client.buildTransaction({
+        type: 'CreateDelegationId',
+        params: { pool_id, destination },
+        ...(utxos.length ? { opts: { withUTXO: utxos } } : {}),
+      }),
+    [client, utxos],
+  )
+
   useEffect(() => {
     const buildTransaction = async () => {
       if (transaction_conditions && transactionInformation?.to.length > 0) {
         setFeeLoading(true)
+        setFeeError('')
         try {
           const unusedReceivingAddress = unusedAddresses.receive
-          const transaction = await client.buildDelegationCreate({
+          const transaction = await buildDelegationTransaction({
             pool_id: transactionInformation.to,
             destination: unusedReceivingAddress,
           })
           setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
         } catch (e) {
           console.error('Failed to calculate delegation fee:', e)
+          setTotalFeeCrypto(0)
+          setFeeError(e.message || 'Fee calculation failed')
         } finally {
           setFeeLoading(false)
         }
       }
     }
     buildTransaction()
-  }, [transaction_conditions, transactionInformation, client, unusedAddresses])
+  }, [
+    transaction_conditions,
+    transactionInformation,
+    buildDelegationTransaction,
+    unusedAddresses,
+  ])
+
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
 
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/wallet')
-    return
+    return null
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -89,10 +111,11 @@ const CreateDelegationPage = () => {
   const confirmMlTransaction = async () => {
     const unusedReceivingAddress = unusedAddresses.receive
 
-    const result = await client.delegationCreate({
+    const transaction = await buildDelegationTransaction({
       pool_id: transactionInformation.to,
       destination: unusedReceivingAddress,
     })
+    const result = await client.signTransaction(transaction)
 
     if (result) {
       await fetchDelegations()
@@ -115,6 +138,7 @@ const CreateDelegationPage = () => {
           <SendMlTransaction
             totalFeeCrypto={totalFeeCrypto}
             feeLoading={feeLoading}
+            feeError={feeError}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={mlBalance}
@@ -127,6 +151,7 @@ const CreateDelegationPage = () => {
             transactionMode={transactionMode}
             walletType={walletType}
           />
+          {feeError && <Error error={feeError} />}
           {!transaction_conditions && (
             <Error error="Insufficient funds for the fee. Please wait for the wallet to sync or add coins to the wallet." />
           )}

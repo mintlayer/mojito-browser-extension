@@ -3,13 +3,13 @@
   font-size: var(--font-size-4xl);
   font-weight: 700;
   text-align: center;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .subtitle {
   font-size: var(--font-size-lg);
   text-align: center;
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   margin-bottom: var(--space-2xl);
 }
 
@@ -24,7 +24,7 @@
   padding: var(--space-5xl) var(--space-4xl);
   border: 2px dashed rgb(var(--color-light-gray));
   border-radius: 16px;
-  background: rgb(var(--color-gray));
+  background: var(--be-bg-1);
   cursor: pointer;
   transition:
     border-color 0.2s,
@@ -63,26 +63,26 @@
 .uploadIcon {
   width: 24px;
   height: 24px;
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
 }
 
 .dropzoneText {
   font-size: var(--font-size-lg);
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   text-align: center;
 }
 
 .dropzoneHint {
   font-size: var(--font-size-md);
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   text-align: center;
 }
 
 .uploadedFileName {
   font-size: var(--font-size-lg);
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   text-align: center;
 }
 
@@ -95,7 +95,7 @@
 
 .uploadedChange {
   font-size: var(--font-size-sm);
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   text-align: center;
 }
 

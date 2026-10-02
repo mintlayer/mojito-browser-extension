@@ -27,7 +27,7 @@ const SettingsDelete = () => {
   return (
     <div
       className="settings-delete"
-      data-testid="settings-testnet"
+      data-testid="settings-delete"
     >
       <div className="delete-description">
         <VerticalGroup>

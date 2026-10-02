@@ -6,6 +6,7 @@ const NftPage = () => {
   return (
     <PageWrapper>
       <div className={styles.nftPage}>
+        <h1 className={styles.pageTitle}>NFTs</h1>
         <Wallet.NftList />
       </div>
     </PageWrapper>

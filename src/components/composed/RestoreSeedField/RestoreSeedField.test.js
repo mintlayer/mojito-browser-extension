@@ -96,10 +96,16 @@ describe('RestoreSeedField', () => {
       />,
     )
 
-    // Test with invalid state
-    expect(screen.getByRole('textbox')).toBeInTheDocument()
+    const textarea = screen.getByRole('textbox')
+    fireEvent.change(textarea, {
+      target: { value: 'word1 word2' },
+    })
 
-    // Test with valid state
+    // invalid state -> textarea gets the invalid class
+    expect(textarea).toHaveClass('textarea-invalid')
+    expect(textarea).not.toHaveClass('textarea-valid')
+
+    // valid state -> textarea gets the valid class
     rerender(
       <RestoreSeedField
         setFields={mockSetFields}
@@ -107,7 +113,8 @@ describe('RestoreSeedField', () => {
       />,
     )
 
-    expect(screen.getByRole('textbox')).toBeInTheDocument()
+    expect(textarea).toHaveClass('textarea-valid')
+    expect(textarea).not.toHaveClass('textarea-invalid')
   })
 
   it('handles multiple spaces between words', () => {

@@ -1,5 +1,5 @@
 .card {
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   overflow: hidden;
@@ -23,14 +23,14 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   text-align: left;
   padding: 14px 20px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: rgba(var(--color-black), 0.4);
-  border-bottom: 1px solid rgba(var(--color-black), 0.06);
+  color: var(--be-text-3);
+  border-bottom: 1px solid var(--be-line-soft);
   user-select: none;
 }
 
@@ -64,7 +64,7 @@
 .noAddresses {
   text-align: center;
   padding: 2rem;
-  color: rgba(var(--color-black), 0.4);
+  color: var(--be-text-3);
 }
 
 .tableScroll::-webkit-scrollbar {
@@ -77,10 +77,10 @@
 }
 
 .tableScroll::-webkit-scrollbar-thumb {
-  background: rgba(var(--color-black), 0.1);
+  background: oklch(1 0 0 / 0.1);
   border-radius: 2px;
 }
 
 .tableScroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--color-black), 0.2);
+  background: oklch(1 0 0 / 0.2);
 }

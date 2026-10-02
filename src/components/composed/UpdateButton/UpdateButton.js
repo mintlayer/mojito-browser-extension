@@ -42,7 +42,6 @@ const UpdateButton = () => {
   return (
     <Button
       onClickHandle={handleClick}
-      className="update-button"
       extraStyleClasses={['update-button']}
     >
       {(loading || allDataFetching) && (

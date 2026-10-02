@@ -1,10 +1,11 @@
 import { useEffect, useState, useContext } from 'react'
 import { format } from 'date-fns'
+import Decimal from 'decimal.js'
 
 import { Button } from '@BasicComponents'
 import { Loading, CopyButton } from '@ComposedComponents'
 import { SettingsContext, MintlayerContext } from '@Contexts'
-import { ML, BTC, Format } from '@Helpers'
+import { ML, BTC } from '@Helpers'
 import { ReactComponent as ArrowIcon } from '@Assets/images/icon-arrow-down.svg'
 import { ReactComponent as SwapIcon } from '@Assets/images/icon-swap.svg'
 import { ReactComponent as IconArrowTopRight } from '@Assets/images/icon-arrow-right-top.svg'
@@ -29,6 +30,14 @@ const getAddress = (tx) =>
   tx.direction === 'out'
     ? tx.destAddress || tx.to?.[0] || 'N/A'
     : tx.destAddress || tx.from?.[0] || 'N/A'
+
+// ML carries 11 decimals; an 8-decimal truncation would lose precision and
+// collapse dust into exponent notation.
+const formatAmount = (value) =>
+  new Decimal(String(value))
+    .toFixed(11)
+    .replace(/(\.\d*?)0+$/, '$1')
+    .replace(/\.$/, '')
 
 const TransactionDetailsItem = ({ title, content }) => {
   return (
@@ -98,7 +107,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
     transaction.type === 'FillOrder' || transaction.type === 'CreateOrder'
   const amountSign = isReceive ? '+' : '-'
   const formattedValue = transaction.value
-    ? Format.BTCValue(transaction.value)
+    ? formatAmount(transaction.value)
     : '0'
 
   const externalBtcLink = BTC.getBtcTransactionLink(
@@ -111,7 +120,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
   const explorerName =
     walletType.name === 'Bitcoin' ? 'Block Explorer' : 'Mintlayer Explorer'
 
-  const isConfirmed = confirmations !== null && confirmations !== 0
+  const isConfirmed = confirmations !== null && confirmations > 0
 
   useEffect(() => {
     const getConfirmationAmount = async () => {
@@ -149,7 +158,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
                 {transaction.value?.from?.amount || '0'}
               </span>
               <span className={styles.bannerTicker}>
-                {tokenMap[transaction.value?.from?.token_id] || 'ML'}
+                {tokenMap[transaction.value?.from?.token_id] || 'Token'}
               </span>
             </div>
             <SwapIcon className={styles.bannerSwapArrow} />
@@ -158,7 +167,7 @@ const TransactionDetails = ({ transaction, getConfirmations }) => {
                 {transaction.value?.to?.amount || '0'}
               </span>
               <span className={styles.bannerTicker}>
-                {tokenMap[transaction.value?.to?.token_id] || 'ML'}
+                {tokenMap[transaction.value?.to?.token_id] || 'Token'}
               </span>
             </div>
           </div>

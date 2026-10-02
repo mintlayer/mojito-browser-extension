@@ -1,7 +1,9 @@
 .signTransaction {
-  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--be-bg-1);
   margin: 0 auto;
-  font-family: 'Arial', sans-serif;
+
   overflow: scroll;
   width: 100%;
   height: 100%;
@@ -10,12 +12,17 @@
   border-radius: 10px;
 }
 
+.signTransaction > * {
+  flex-shrink: 0;
+}
+
 .signTransaction .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 1.5rem;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .signTxTitle {
@@ -27,7 +34,7 @@
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  height: 70%;
+  flex-grow: 1;
 
   @media screen and (min-width: 901px) {
     height: 80%;
@@ -52,7 +59,7 @@
 }
 
 .signTransaction .mockSelector div {
-  background-color: #f3f4f6;
+  background-color: var(--be-bg-2);
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 14px;
@@ -62,7 +69,7 @@
 }
 
 .signTransaction .mockSelector div:hover {
-  background-color: #e5e7eb;
+  background-color: var(--be-bg-3);
 }
 
 .signTransaction .transactionPreviewWrapper {
@@ -72,12 +79,12 @@
 }
 
 .signTransaction .transactionRawWrapper {
-  background-color: #f9fafb;
+  background-color: var(--be-bg-2);
   padding: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--be-line-soft);
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--be-text-1);
   word-break: break-all;
   unicode-bidi: embed;
   font-family: monospace;
@@ -93,6 +100,7 @@
   justify-content: center;
   gap: 12px;
   bottom: 0;
+  flex-shrink: 0;
 }
 
 .modal {
@@ -117,7 +125,7 @@
   flex-direction: column;
   align-items: center;
   gap: 40px;
-  background-color: #ffffff;
+  background-color: var(--be-bg-1);
   border-radius: 8px;
   text-align: center;
 }
@@ -136,4 +144,9 @@
 
 .result-title {
   word-break: break-all;
+}
+
+.passkeyHint {
+  font-size: var(--font-size-sm);
+  color: var(--be-text-2);
 }

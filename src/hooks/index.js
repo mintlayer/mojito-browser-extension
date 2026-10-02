@@ -4,7 +4,10 @@ import useBtcWalletInfo from './UseWalletInfo/useBtcWalletInfo'
 import useMlWalletInfo from './UseWalletInfo/useMlWalletInfo'
 import useExchangeRates from './UseExchangeRates/useExchangeRates'
 import useOneDayAgoExchangeRates from './UseOneDayAgoExchangeRates/useOneDayAgoExchangeRates'
+import useOneDayAgoHist from './UseOneDayAgoHist/useOneDayAgoHist'
 import useMediaQuery from './useMediaQuery/useMediaQuery'
+import useFillOrder from './UseFillOrder/useFillOrder'
+import useTokenPrices from './UseTokenPrices/useTokenPrices'
 
 export {
   useStyleClasses,
@@ -13,5 +16,8 @@ export {
   useMlWalletInfo,
   useExchangeRates,
   useOneDayAgoExchangeRates,
+  useOneDayAgoHist,
   useMediaQuery,
+  useFillOrder,
+  useTokenPrices,
 }

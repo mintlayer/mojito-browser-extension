@@ -41,6 +41,8 @@ describe('AddWallet', () => {
         </BrowserRouter>
       </AccountContext.Provider>,
     )
+
+    expect(screen.getByText('Next')).toBeInTheDocument()
   })
 
   test('renders description paragraphs when step is 1', () => {
@@ -120,12 +122,16 @@ describe('AddWallet', () => {
       </AccountContext.Provider>,
     )
 
+    expect(screen.getAllByTestId('description-paragraph')).toHaveLength(2)
+
     const submitButton = screen.getByText('Next')
     fireEvent.click(submitButton)
 
-    expect(submitButton).toBeInTheDocument()
-
-    const inputList = screen.getByTestId('inputs-list')
-    expect(inputList).toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        'In order to add the wallet, we will ask you to enter your Seed Phrase and password again.',
+      ),
+    ).not.toBeInTheDocument()
+    expect(screen.getByTestId('inputs-list')).toBeInTheDocument()
   })
 })

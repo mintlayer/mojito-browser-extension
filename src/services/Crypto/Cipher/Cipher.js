@@ -17,7 +17,13 @@ const IVSIZE = 12
 const SALTSIZE = 16
 
 const hexToBytes = (hexString) => {
-  const pairs = hexString?.match(/.{1,2}/g)
+  if (typeof hexString !== 'string' || !/^[0-9a-fA-F]*$/.test(hexString)) {
+    throw new Error('Invalid hex string')
+  }
+  if (hexString.length % 2 !== 0) {
+    throw new Error('Hex string must have an even number of characters')
+  }
+  const pairs = hexString.match(/.{1,2}/g)
   if (!pairs) return new Uint8Array()
   return Uint8Array.from(pairs.map((byte) => parseInt(byte, 16)))
 }
@@ -25,7 +31,19 @@ const hexToBytes = (hexString) => {
 const binaryStringToBytes = (str) =>
   new Uint8Array([...str].map((c) => c.charCodeAt(0)))
 
-const bytesToBinaryString = (bytes) => String.fromCharCode(...bytes)
+// String.fromCharCode spread is applied in chunks: spreading the whole
+// Uint8Array at once exceeds the ~65k argument limit on large payloads.
+const BINARY_STRING_CHUNK_SIZE = 8192
+
+const bytesToBinaryString = (bytes) => {
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += BINARY_STRING_CHUNK_SIZE) {
+    binary += String.fromCharCode(
+      ...bytes.subarray(i, i + BINARY_STRING_CHUNK_SIZE),
+    )
+  }
+  return binary
+}
 
 const generateSalt = async (bytesAmount) => {
   const bytes = new Uint8Array(bytesAmount)

@@ -24,9 +24,10 @@ const Delegation = ({ delegation }) => {
 
   if (delegation.type === 'Unconfirmed') {
     delegationOject = {
-      balance: delegation.value,
+      type: delegation.type,
+      balance: { decimal: delegation.value },
       pool_id: delegation.poolId,
-      delegation_id: 'Not confirmed',
+      delegation_id: delegation.delegationId || null,
       spend_destination: 'Not confirmed',
     }
   }
@@ -38,7 +39,7 @@ const Delegation = ({ delegation }) => {
       '/wallet/' +
         walletType.name +
         '/staking/' +
-        delegation.delegation_id +
+        delegationOject.delegation_id +
         '/add-funds',
     )
   }
@@ -48,7 +49,7 @@ const Delegation = ({ delegation }) => {
       '/wallet/' +
         walletType.name +
         '/staking/' +
-        delegation.delegation_id +
+        delegationOject.delegation_id +
         '/withdraw',
     )
   }
@@ -64,8 +65,7 @@ const Delegation = ({ delegation }) => {
   const isDecommissioned = delegationOject.decommissioned
   const isUnconfirmed =
     delegation.type === 'Unconfirmed' && delegation.mode === 'delegation'
-  const hasBalance =
-    delegationOject.balance && delegationOject.balance.length > 11
+  const hasBalance = Number(delegationOject.balance?.decimal) > 0
 
   const cardClasses = [
     styles.card,

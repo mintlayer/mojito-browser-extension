@@ -1,5 +1,4 @@
-import { AppInfo } from '@Constants'
-import { getNumber } from './Format'
+import * as AppInfo from '../../Constants/AppInfo/AppInfoCore'
 const INTEGER_LENGHT_THRESHOLD = 2
 const SAFE_INTEGER_LENGTH =
   Number.MAX_SAFE_INTEGER.toString().length - INTEGER_LENGHT_THRESHOLD
@@ -15,6 +14,9 @@ const floatStringToNumber = (value = '') => {
   return parseFloat(parsedValue)
 }
 
+const getNumber = (value) =>
+  typeof value === 'number' ? value : floatStringToNumber(value)
+
 const getDecimalNumber = (value) => {
   const num = getNumber(value)
   if (num >= 0.01) return num.toFixed(2)
@@ -23,12 +25,13 @@ const getDecimalNumber = (value) => {
   return num.toPrecision(significantDigits)
 }
 
-const isInteger = (number) => number === ~~number
+const isInteger = (number) => Number.isInteger(number)
 
 export {
   getSafeIntegerPart,
   SAFE_INTEGER_LENGTH,
   floatStringToNumber,
+  getNumber,
   getDecimalNumber,
   isInteger,
 }

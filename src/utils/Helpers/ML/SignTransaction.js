@@ -85,10 +85,19 @@ function mergeUint8Arrays(arrays) {
   return result
 }
 
+// Defaults kept from the previous hardcoded values so existing call sites
+// behave identically; callers should pass the live chain tip and a fee
+// rate derived from network fee estimates.
+const DEFAULT_FEE_RATE_PER_KB = BigInt(Math.ceil(100000000000 / 1000))
+
 export function getTransactionBINrepresentation(
   transactionJSONrepresentation,
   _network,
   blockHeight,
+  {
+    chainTip = BigInt(blockHeight),
+    feeRatePerKb = DEFAULT_FEE_RATE_PER_KB,
+  } = {},
 ) {
   const network = _network
   const networkType = network === 1 ? 'testnet' : 'mainnet'
@@ -264,8 +273,6 @@ export function getTransactionBINrepresentation(
           total_supply,
         } = output
 
-        const chainTip = '517710'
-
         const is_token_freezable =
           is_freezable === true ? FreezableToken.Yes : FreezableToken.No
 
@@ -289,7 +296,7 @@ export function getTransactionBINrepresentation(
           total_supply_type, // ok
           supply_amount, // ok
           is_token_freezable, // ok
-          BigInt(chainTip), // ok
+          chainTip, // ok
           network,
         )
       }
@@ -361,7 +368,7 @@ export function getTransactionBINrepresentation(
       (input) =>
         input?.utxo?.destination ||
         input?.destination ||
-        input?.utxo?.htlc.refund_key,
+        input?.utxo?.htlc?.refund_key,
     )
 
   const transactionsize = estimate_transaction_size(
@@ -371,13 +378,11 @@ export function getTransactionBINrepresentation(
     network,
   )
 
-  const feeRate = BigInt(Math.ceil(100000000000 / 1000))
-
   return {
     inputs: inputsArray,
     outputs: outputsArray,
     transactionsize,
-    feeRate: feeRate.toString(),
+    feeRate: feeRatePerKb.toString(),
   }
 }
 
@@ -621,131 +626,126 @@ export function getTransactionIntent({
   return encodedIntentHash
 }
 
+const ACCOUNT_COMMAND_FLAGS = {
+  MintTokens: 'isTokenMint',
+  UnmintTokens: 'isTokenUnmint',
+  LockTokenSupply: 'isLockTokenSupply',
+  ChangeTokenAuthority: 'isChangeTokenAuthority',
+  ChangeMetadataUri: 'isChangeTokenMetadata',
+  FreezeToken: 'isFreezeToken',
+  UnfreezeToken: 'isUnfreezeToken',
+  FillOrder: 'isFillOrder',
+  ConcludeOrder: 'isConcludeOrder',
+}
+
+const OUTPUT_FLAGS = {
+  IssueFungibleToken: 'isIssueToken',
+  IssueNft: 'isIssueNft',
+  CreateOrder: 'isCreateOrder',
+  BurnToken: 'isBurnToken',
+  DataDeposit: 'isDataDeposit',
+  CreateDelegationId: 'isCreateDelegationId',
+  DelegateStaking: 'isDelegateStaking',
+  Htlc: 'isCreateHtlc',
+  CreateHtlc: 'isCreateHtlc',
+}
+
+const TRANSFER_OUTPUTS = ['Transfer', 'LockThenTransfer']
+
+const FLAG_NAMES = [
+  'isTransfer',
+  'isBridgeRequest',
+  'isTokenMint',
+  'isTokenUnmint',
+  'isTokenMintWithLock',
+  'isIssueToken',
+  'isIssueNft',
+  'isCreateOrder',
+  'isFillOrder',
+  'isConcludeOrder',
+  'isBurnCoin',
+  'isBurnToken',
+  'isLockTokenSupply',
+  'isChangeTokenAuthority',
+  'isChangeTokenMetadata',
+  'isFreezeToken',
+  'isUnfreezeToken',
+  'isCreateHtlc',
+  'isSpendHtlc',
+  'isDataDeposit',
+  'isCreateDelegationId',
+  'isDelegateStaking',
+  'isDelegateWithdraw',
+  'isUnknown',
+]
+
+/**
+ * Picks the single operation a transaction represents. The order matters:
+ * an account command describes the transaction better than the outputs it
+ * produces, and a burn or an issuance better than the transfer next to it.
+ */
+export const getTransactionType = (JSONRepresentation, intent) => {
+  const inputs = JSONRepresentation?.inputs || []
+  const outputs = JSONRepresentation?.outputs || []
+
+  const outputTypes = outputs.map((output) => output.type)
+  const hasOutput = (type) => outputTypes.includes(type)
+
+  if (intent) return 'isBridgeRequest'
+
+  const command = inputs
+    .map((input) => input.input?.command)
+    .find((name) => ACCOUNT_COMMAND_FLAGS[name])
+
+  if (command === 'MintTokens' && hasOutput('LockThenTransfer')) {
+    return 'isTokenMintWithLock'
+  }
+  if (command) return ACCOUNT_COMMAND_FLAGS[command]
+
+  if (
+    inputs.some((input) => input.input?.account_type === 'DelegationBalance')
+  ) {
+    return 'isDelegateWithdraw'
+  }
+
+  if (inputs.some((input) => input.utxo?.type === 'Htlc')) return 'isSpendHtlc'
+
+  // Coin burns arrive as BurnToken with a Coin value (never as a
+  // 'BurnCoin' output type), so they need value-level discrimination.
+  const burnOutput = outputs.find((output) => output.type === 'BurnToken')
+  if (burnOutput) {
+    return burnOutput.value?.type === 'Coin' ? 'isBurnCoin' : 'isBurnToken'
+  }
+
+  const outputType = outputTypes.find((type) => OUTPUT_FLAGS[type])
+  if (outputType) return OUTPUT_FLAGS[outputType]
+
+  if (
+    outputs.length > 0 &&
+    outputTypes.every((type) => TRANSFER_OUTPUTS.includes(type))
+  ) {
+    return 'isTransfer'
+  }
+
+  return 'isUnknown'
+}
+
 export const getTransactionDetails = (transaction) => {
   const { txData } = transaction.request.data
-
-  const flags = {
-    isTransfer: false,
-    isBridgeRequest: false,
-    isTokenMint: false,
-    isTokenUnmint: false,
-    isTokenMintWithLock: false,
-    isIssueToken: false,
-    isCreateOrder: false,
-    isFillOrder: false,
-    isConcludeOrder: false,
-    isBurnCoin: false,
-    isBurnToken: false,
-    isLockTokenSupply: false,
-    isChangeTokenAuthority: false,
-    isChangeTokenMetadata: false,
-    isFreezeToken: false,
-    isUnfreezeToken: false,
-    isCreateHtlc: false,
-    isSpendHtlc: false,
-    isDelegateWithdraw: false,
-  }
-
   const { JSONRepresentation, intent } = txData
 
-  if (intent) {
-    flags.isBridgeRequest = true
-  }
+  const type = getTransactionType(JSONRepresentation, intent)
 
-  if (
-    JSONRepresentation?.inputs?.some((input) => input?.utxo?.type === 'Htlc')
-  ) {
-    flags.isSpendHtlc = true
-  }
-
-  JSONRepresentation?.inputs?.forEach((input) => {
-    if (input.input.account_type === 'DelegationBalance') {
-      flags.isDelegateWithdraw = true
-      return
-    }
-
-    switch (input.input?.command) {
-      case 'MintTokens':
-        flags.isTokenMint = true
-        break
-      case 'UnmintTokens':
-        flags.isTokenUnmint = true
-        break
-      case 'LockTokenSupply':
-        flags.isLockTokenSupply = true
-        break
-      case 'ChangeTokenAuthority':
-        flags.isChangeTokenAuthority = true
-        break
-      case 'ChangeMetadataUri':
-        flags.isChangeTokenMetadata = true
-        break
-      case 'FreezeToken':
-        flags.isFreezeToken = true
-        break
-      case 'UnfreezeToken':
-        flags.isUnfreezeToken = true
-        break
-      case 'FillOrder':
-        flags.isFillOrder = true
-        break
-      case 'ConcludeOrder':
-        flags.isConcludeOrder = true
-        break
-      default:
-        break
-    }
-  })
-
-  JSONRepresentation?.outputs?.forEach((output) => {
-    switch (output.type) {
-      case 'LockThenTransfer':
-        flags.isTokenMintWithLock = true
-        break
-      case 'IssueFungibleToken':
-        flags.isIssueToken = true
-        break
-      case 'IssueNft':
-        flags.isIssueNft = true
-        break
-      case 'CreateOrder':
-        flags.isCreateOrder = true
-        break
-      case 'BurnCoin':
-        flags.isBurnCoin = true
-        break
-      case 'BurnToken':
-        flags.isBurnToken = true
-        break
-      case 'DataDeposit':
-        flags.isDataDeposit = true
-        break
-      case 'CreateDelegationId':
-        flags.isCreateDelegationId = true
-        break
-      case 'DelegateStaking':
-        flags.isDelegateStaking = true
-        break
-      case 'Htlc':
-        flags.isCreateHtlc = true
-        break
-      default:
-        break
-    }
-  })
-
-  if (
-    !Object.values(flags).some(
-      (flag, key) => key !== 'isTransfer' && flag === true,
-    )
-  ) {
-    flags.isTransfer = true
-  }
+  const flags = FLAG_NAMES.reduce(
+    (acc, name) => ({ ...acc, [name]: name === type }),
+    {},
+  )
 
   const transactionData = transaction.request
 
   return {
     flags,
+    type,
     transactionData,
   }
 }

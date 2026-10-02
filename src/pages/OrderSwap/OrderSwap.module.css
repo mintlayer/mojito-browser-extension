@@ -19,7 +19,7 @@
 .modeLabel {
   font-weight: 500;
   font-size: var(--font-size-md);
-  color: rgba(var(--color-black), 0.6);
+  color: var(--be-text-2);
 }
 
 .content {

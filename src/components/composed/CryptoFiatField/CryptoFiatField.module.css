@@ -26,20 +26,20 @@
   right: 16px;
   font-size: 15px;
   font-weight: 600;
-  color: rgba(var(--color-black), 0.4);
+  color: var(--be-text-3);
   pointer-events: none;
 }
 
 .bottomNote {
   font-size: 13px;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
 }
 
 .bottomNote strong {
   font-weight: 700;
-  color: rgba(var(--color-black), 0.7);
+  color: var(--be-text-2);
 }
 
 .separator {
-  color: rgba(var(--color-black), 0.25);
+  color: var(--be-text-3);
 }

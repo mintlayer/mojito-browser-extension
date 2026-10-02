@@ -9,9 +9,14 @@ const EXCHANGE_RATES_SERVER_ENDPOINTS = {
   GET_THIRTY_DAYS_HIST: '/getThirtyDaysHist/:crypto/:fiat',
 }
 
+const REQUEST_TIMEOUT_MS = 10000
+
 const requestExchangeRates = async (endpoint, request = fetch) => {
   try {
-    const result = await request(EXCHANGE_RATES_SERVER_URL + endpoint)
+    const result = await request(EXCHANGE_RATES_SERVER_URL + endpoint, {
+      // A hung rates server must never leave fiat displays stuck loading.
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
     if (!result.ok) throw new Error('Request not successful')
     const content = await result.text()
     return Promise.resolve(content)
@@ -23,34 +28,34 @@ const requestExchangeRates = async (endpoint, request = fetch) => {
 
 const getRate = (crypto, fiat) =>
   requestExchangeRates(
-    EXCHANGE_RATES_SERVER_ENDPOINTS.GET_RATE.replace(':crypto', crypto).replace(
-      ':fiat',
-      fiat,
-    ),
+    EXCHANGE_RATES_SERVER_ENDPOINTS.GET_RATE.replace(
+      ':crypto',
+      encodeURIComponent(crypto),
+    ).replace(':fiat', encodeURIComponent(fiat)),
   )
 
 const getOneDayAgoRate = (crypto, fiat) =>
   requestExchangeRates(
     EXCHANGE_RATES_SERVER_ENDPOINTS.GET_OLD_RATE.replace(
       ':crypto',
-      crypto,
-    ).replace(':fiat', fiat),
+      encodeURIComponent(crypto),
+    ).replace(':fiat', encodeURIComponent(fiat)),
   )
 
 const getOneDayAgoHist = (crypto, fiat) =>
   requestExchangeRates(
-    EXCHANGE_RATES_SERVER_ENDPOINTS.GET_HIST.replace(':crypto', crypto).replace(
-      ':fiat',
-      fiat,
-    ),
+    EXCHANGE_RATES_SERVER_ENDPOINTS.GET_HIST.replace(
+      ':crypto',
+      encodeURIComponent(crypto),
+    ).replace(':fiat', encodeURIComponent(fiat)),
   )
 
 const getThirtyDaysHist = (crypto, fiat) =>
   requestExchangeRates(
     EXCHANGE_RATES_SERVER_ENDPOINTS.GET_THIRTY_DAYS_HIST.replace(
       ':crypto',
-      crypto,
-    ).replace(':fiat', fiat),
+      encodeURIComponent(crypto),
+    ).replace(':fiat', encodeURIComponent(fiat)),
   )
 
 export { getRate, getOneDayAgoRate, getOneDayAgoHist, getThirtyDaysHist }

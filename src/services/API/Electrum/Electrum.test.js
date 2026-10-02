@@ -115,3 +115,43 @@ describe.skip('Integration tests (require network)', () => {
     expect(Object.keys(fees).length).toBe(28)
   })
 })
+
+describe('abort handling', () => {
+  // setupTests.js installs a default global fetch mock — restore it after
+  // each test so its global beforeEach (fetch.mockClear) keeps working.
+  const defaultFetch = global.fetch
+
+  beforeEach(() => {
+    warnSpy.mockClear()
+    errorSpy.mockClear()
+  })
+
+  afterEach(() => {
+    global.fetch = defaultFetch
+  })
+
+  test('aborted requests are silent but still reject', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.reject(
+        new DOMException('The operation has been aborted.', 'AbortError'),
+      ),
+    )
+
+    await expect(getLastBlockHeight()).rejects.toThrow()
+
+    // requestElectrum must not report an abort as an API failure — no
+    // console.error carrying the AbortError may reach the console.
+    const loggedAbortErrors = errorSpy.mock.calls.filter(
+      ([error]) => error?.name === 'AbortError',
+    )
+    expect(loggedAbortErrors).toHaveLength(0)
+  })
+
+  test('real failures still log', async () => {
+    global.fetch = jest.fn(() => Promise.reject(new Error('network down')))
+
+    await expect(getLastBlockHeight()).rejects.toThrow('network down')
+
+    expect(errorSpy).toHaveBeenCalled()
+  })
+})

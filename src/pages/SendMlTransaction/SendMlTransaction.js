@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useMemo } from 'react'
+import { useCallback, useContext, useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendMlTransaction } from '@ContainerComponents'
@@ -12,7 +12,7 @@ import { PageWrapper } from '@BasicComponents'
 import styles from './SendMlTransaction.module.css'
 
 const SendMlTransactionPage = () => {
-  const { addresses, accountID } = useContext(AccountContext)
+  const { accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
@@ -28,14 +28,13 @@ const SendMlTransactionPage = () => {
   )
 
   const datahook = useMlWalletInfo
-  const { client } = useContext(MintlayerContext)
-  const currentMlAddresses = addresses.mlAddresses
+  const { client, utxos } = useContext(MintlayerContext)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [feeLoading, setFeeLoading] = useState(false)
   const [feeError, setFeeError] = useState('')
   const navigate = useNavigate()
 
-  const { balance, tokenBalances } = datahook(currentMlAddresses, coinType)
+  const { balance, tokenBalances } = datahook(coinType)
 
   const symbol = () => {
     if (walletType.name === 'Mintlayer') {
@@ -51,15 +50,41 @@ const SendMlTransactionPage = () => {
     return tokenBalances[walletType.name].token_info.token_ticker.string
   }
 
+  const tokenDecimals =
+    walletType.tokenId &&
+    tokenBalances?.[walletType.name]?.token_info?.number_of_decimals
+
   const tokenName = symbol()
   const fiatName = 'USD'
-  const [transactionData] = useState({
-    fiatName,
-    tokenName,
-  })
+  const transactionData = useMemo(
+    () => ({
+      fiatName,
+      tokenName,
+    }),
+    [fiatName, tokenName],
+  )
   const [isFormValid, setFormValid] = useState(false)
   const [transactionInformation, setTransactionInformation] = useState(null)
   const { exchangeRate } = useExchangeRates(tokenName, fiatName)
+
+  const buildMlTransaction = useCallback(
+    ({ to, amount }) => {
+      if (walletType?.tokenId) {
+        return client.buildTransfer({
+          to,
+          amount,
+          token_id: walletType.tokenId,
+        })
+      }
+
+      return client.buildTransaction({
+        type: 'Transfer',
+        params: { to, amount },
+        ...(utxos?.length ? { opts: { withUTXO: utxos } } : {}),
+      })
+    },
+    [client, walletType, utxos],
+  )
 
   useEffect(() => {
     if (
@@ -77,11 +102,7 @@ const SendMlTransactionPage = () => {
 
     const timer = setTimeout(async () => {
       try {
-        const transaction = await client.buildTransfer({
-          to: transactionInformation.to,
-          amount: transactionInformation.amount,
-          token_id: walletType?.tokenId,
-        })
+        const transaction = await buildMlTransaction(transactionInformation)
         if (cancelled) return
         setTotalFeeCrypto(transaction.JSONRepresentation.fee.decimal)
       } catch (error) {
@@ -101,12 +122,16 @@ const SendMlTransactionPage = () => {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [transactionInformation, client, walletType, isFormValid])
+  }, [transactionInformation, buildMlTransaction, isFormValid])
+
+  useEffect(() => {
+    if (!accountID) {
+      navigate('/dashboard')
+    }
+  }, [accountID, navigate])
 
   if (!accountID) {
-    console.log('No account id.')
-    navigate('/wallet')
-    return
+    return null
   }
 
   const createTransaction = async (transactionInfo) => {
@@ -114,11 +139,8 @@ const SendMlTransactionPage = () => {
   }
 
   const confirmMlTransaction = async () => {
-    const result = await client.transfer({
-      to: transactionInformation.to,
-      amount: transactionInformation.amount,
-      token_id: walletType?.tokenId,
-    })
+    const transaction = await buildMlTransaction(transactionInformation)
+    const result = await client.signTransaction(transaction)
     return result
   }
 
@@ -152,6 +174,7 @@ const SendMlTransactionPage = () => {
             isFormValid={isFormValid}
             goBackToWallet={goBackToWallet}
             walletType={walletType}
+            decimals={tokenDecimals || AppInfo.ML_DECIMALS}
           />
         </VerticalGroup>
       </div>

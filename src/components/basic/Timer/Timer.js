@@ -1,31 +1,30 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 
 const Timer = ({ onTimerEnd, repeat, duration }) => {
-  const [timer, setTimer] = useState(null)
+  const timerIdRef = useRef(null)
+  const onTimerEndRef = useRef(onTimerEnd)
+  onTimerEndRef.current = onTimerEnd
 
-  const stopTimer = () => {
-    if (timer) {
-      clearTimeout(timer)
-      setTimer(null)
-    }
+  const clearTimer = () => {
+    clearTimeout(timerIdRef.current)
+    timerIdRef.current = null
   }
 
   const startTimer = () => {
-    stopTimer() // Ensure no timer is already running
-    const newTimer = setTimeout(() => {
-      onTimerEnd() // Call the function provided via props
+    clearTimer()
+    timerIdRef.current = setTimeout(() => {
+      onTimerEndRef.current()
       if (repeat) {
-        startTimer() // Restart the timer if `repeat` is true
+        startTimer()
       }
     }, duration)
-    setTimer(newTimer)
   }
 
   useEffect(() => {
     startTimer()
-    return () => stopTimer() // Cleanup on component unmount
+    return () => clearTimer()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [repeat, duration, onTimerEnd])
+  }, [repeat, duration])
 
   return <div></div>
 }

@@ -36,7 +36,7 @@ describe('TransactionAmount', () => {
     expect(screen.getByTestId('swap-icon')).toBeInTheDocument()
   })
 
-  it('renders swap transaction with fallback ML ticker', () => {
+  it('renders swap transaction with fallback Token ticker', () => {
     const transaction = {
       type: 'FillOrder',
       value: {
@@ -46,10 +46,10 @@ describe('TransactionAmount', () => {
     }
     renderWithContext(<TransactionAmount transaction={transaction} />)
     expect(screen.getByTestId('transaction-amount-from')).toHaveTextContent(
-      '5 ML',
+      '5 Token',
     )
     expect(screen.getByTestId('transaction-amount-to')).toHaveTextContent(
-      '15 ML',
+      '15 Token',
     )
   })
 
@@ -59,13 +59,7 @@ describe('TransactionAmount', () => {
       amount: 123456,
       value: 123456,
     }
-    // Mock Format.BTCValue
-    jest
-      .spyOn(require('@Helpers').Format, 'BTCValue')
-      .mockReturnValue('1.23456')
     renderWithContext(<TransactionAmount transaction={transaction} />)
-    expect(screen.getByTestId('transaction-amount')).toHaveTextContent(
-      '1.23456',
-    )
+    expect(screen.getByTestId('transaction-amount')).toHaveTextContent('123456')
   })
 })

@@ -11,14 +11,14 @@
 .backup-description h2 {
   font-size: 14px;
   letter-spacing: 0.05em;
-  color: rgb(var(--color-dark-gray));
+  color: var(--be-text-2);
   margin-bottom: 6px;
 }
 
 .backup-description p {
   font-size: 13px;
   line-height: 1.5;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .settings-backup-button {

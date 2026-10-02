@@ -1,0 +1,59 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  cursor: pointer;
+  border-radius: 14px;
+  transition: background 150ms ease;
+  animation: be-slide-up 400ms both;
+}
+
+.row:hover {
+  background: oklch(1 0 0 / 0.03);
+}
+
+.detail {
+  flex: 1;
+  min-width: 0;
+}
+
+.titleLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--be-text-0);
+}
+
+.sub {
+  font-family: var(--be-font-mono);
+  font-size: 11px;
+  color: var(--be-text-2);
+  margin-top: 2px;
+}
+
+.fiatSide {
+  text-align: right;
+  min-width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.fiat {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--be-text-0);
+  font-variant-numeric: tabular-nums;
+}
+
+.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

@@ -1,3 +1,4 @@
+import '../workerSetup'
 import { generatePBKDF2Key, encryptAES, decryptAES } from './Cipher'
 
 const CipherWorkerEnum = {

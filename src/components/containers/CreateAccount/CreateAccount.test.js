@@ -191,9 +191,7 @@ test('Renders set account page with step 4 (show words)', () => {
 })
 
 test('Renders set account page with step 5 (verify words)', () => {
-  jest.spyOn(window, 'alert').mockImplementation((message) => {
-    window.alert.mockRestore()
-  })
+  const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
 
   const onStepsFinishedFn = jest.fn()
   const validateMnemonicMock = jest
@@ -236,9 +234,19 @@ test('Renders set account page with step 5 (verify words)', () => {
     fireEvent.submit(setAccountForm)
   })
 
+  // first submit: mnemonic validation fails -> alert warns, flow not finished
+  expect(alertSpy).toHaveBeenCalledTimes(1)
+  expect(onStepsFinishedFn).not.toHaveBeenCalled()
+
   act(() => {
     fireEvent.submit(setAccountForm)
   })
+
+  // second submit: mnemonic is valid -> the flow finishes
+  expect(onStepsFinishedFn).toHaveBeenCalledTimes(1)
+  expect(onStepsFinishedFn).toHaveBeenCalledWith('', '', ['btc', 'ml'])
+
+  alertSpy.mockRestore()
 })
 
 test('Checks back button behavior in a internal navigation component - first step', () => {

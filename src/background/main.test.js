@@ -1,0 +1,1322 @@
+/**
+ * Tests for the background service worker (src/background/main.js) covering
+ * the bridge-integration contract: connect approval + session persistence
+ * (addressesByChain + network), structured error codes, sign-request network
+ * stamping, and disconnect actually revoking the session.
+ */
+const { initBackground } = require('./main.js')
+
+const EXT_ID = 'ext-id-123'
+
+const dappSender = {
+  id: 'some-site',
+  origin: 'https://bridge.example',
+  url: 'https://bridge.example/page',
+}
+// Chromium content-script senders carry the tab the dApp runs in: the
+// side-panel approval surface keys its requests off the tab's WINDOW id.
+const tabDappSender = {
+  ...dappSender,
+  tab: { id: 5, windowId: 3 },
+}
+const extensionSender = {
+  id: EXT_ID,
+  origin: `chrome-extension://${EXT_ID}`,
+  url: `chrome-extension://${EXT_ID}/index.html`,
+}
+
+describe('background service worker', () => {
+  let messageListeners
+  let storageData
+  let createdWindows
+  let windowRemovedListeners
+
+  const loadBackground = () => {
+    // The WXT entrypoint wraps the original IIFE body in a factory; each
+    // test boots a fresh worker instance by invoking it again.
+    initBackground()
+  }
+
+  const dispatch = (message, sender) => {
+    // The reply object is stable: an async approval answers the ORIGINAL
+    // dispatch's channel later (e.g. from a popupResponse dispatch).
+    const reply = { current: undefined }
+    const sendResponse = (response) => {
+      reply.current = response
+    }
+    let keptOpen = false
+    for (const listener of messageListeners) {
+      // listeners return true when they will respond asynchronously
+      // eslint-disable-next-line no-return-assign
+      keptOpen = keptOpen || listener(message, sender, sendResponse) === true
+    }
+    return { reply, keptOpen }
+  }
+
+  beforeEach(() => {
+    jest.resetModules()
+    messageListeners = []
+    storageData = {}
+    createdWindows = []
+    windowRemovedListeners = []
+
+    global.browser = undefined
+    global.chrome = {
+      runtime: {
+        id: EXT_ID,
+        getURL: (p) => `chrome-extension://${EXT_ID}/${p}`,
+        getManifest: () => ({ version: '1.6.1' }),
+        onMessage: {
+          addListener: (fn) => messageListeners.push(fn),
+        },
+        // self-healing sweep registers itself here on load
+        onInstalled: { addListener: jest.fn() },
+        onStartup: { addListener: jest.fn() },
+        lastError: null,
+      },
+      // used by the sweep to re-inject dead content scripts
+      scripting: {
+        executeScript: jest.fn().mockResolvedValue([]),
+      },
+      storage: {
+        local: {
+          get: (keys, cb) => {
+            const result = {}
+            for (const key of keys) {
+              if (key in storageData)
+                result[key] = JSON.parse(JSON.stringify(storageData[key]))
+            }
+            cb(result)
+          },
+          set: (obj, cb) => {
+            Object.assign(storageData, JSON.parse(JSON.stringify(obj)))
+            cb && cb()
+          },
+          remove: (key, cb) => {
+            delete storageData[key]
+            cb && cb()
+          },
+        },
+      },
+      windows: {
+        create: jest.fn((opts, cb) => {
+          const win = { id: 700 + createdWindows.length }
+          createdWindows.push(win)
+          cb(win)
+        }),
+        get: (id, cb) => cb({ id }),
+        update: (id, opts, cb) => cb && cb({ id }),
+        // the overlap model DISMISSES the losing surface instead of
+        // letting it steal/replace the winner
+        remove: jest.fn((id, cb) => cb && cb()),
+        // the background registers cleanup here: an approval window closed
+        // without a decision must answer (cancel) the waiting dApp instead
+        // of hanging it forever
+        onRemoved: { addListener: (fn) => windowRemovedListeners.push(fn) },
+      },
+      sidePanel: {
+        open: jest.fn().mockResolvedValue(undefined),
+      },
+      // used only by notifyOriginRevoked (revocation broadcast to open tabs)
+      tabs: {
+        query: jest.fn((query, cb) => cb([{ id: 1 }, { id: 2 }])),
+        sendMessage: jest.fn(),
+      },
+    }
+
+    loadBackground()
+  })
+
+  const sessionData = {
+    address: { testnet: { receiving: ['tmtc1qabc'], change: ['tmtc1qchg'] } },
+    addressesByChain: {
+      mintlayer: { receiving: ['tmtc1qabc'], change: ['tmtc1qchg'] },
+    },
+    network: 'testnet',
+  }
+
+  // Approvals are routed by a BACKGROUND-GENERATED opaque id (the dApp's
+  // requestId is never used for routing). The approval UI echoes the id it
+  // was given via storage — tests do the same.
+  const internalIdFor = (windowId) =>
+    storageData[`pendingRequest:${windowId}`]?.requestId
+
+  describe('connect', () => {
+    it('opens one approval window and keeps the channel open', () => {
+      const { reply, keptOpen } = dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        dappSender,
+      )
+
+      expect(reply.current).toBeUndefined()
+      expect(keptOpen).toBe(true)
+      expect(createdWindows).toHaveLength(1)
+      console.log(
+        'DEBUG stored:',
+        JSON.stringify(storageData['pendingRequest:700']),
+      )
+      // keyed by the window that will show the approval
+      expect(storageData['pendingRequest:700']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+        requestId: expect.any(String),
+      })
+    })
+
+    it('persists the full session (addressesByChain + network) on approval', () => {
+      // the approval answers the ORIGINAL connect channel
+      const connect = dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        dappSender,
+      )
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+
+      expect(connect.reply.current.result).toEqual(sessionData)
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toMatchObject({
+        address: sessionData.address,
+        addressesByChain: sessionData.addressesByChain,
+        network: 'testnet',
+      })
+      // the pending request is consumed
+      expect(storageData['pendingRequest:700']).toBeUndefined()
+    })
+
+    it('rejects with USER_REJECTED when the wallet denies', () => {
+      const connect = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        dappSender,
+      )
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: null,
+        },
+        extensionSender,
+      )
+
+      expect(connect.reply.current.error).toMatchObject({
+        code: 'USER_REJECTED',
+        message: expect.stringContaining('rejected'),
+      })
+    })
+
+    it('answers an already-connected site immediately, without a popup', () => {
+      const connect = dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        dappSender,
+      )
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+
+      const { keptOpen } = dispatch(
+        { requestId: 'r9', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(keptOpen).toBe(false)
+      expect(createdWindows).toHaveLength(1) // no second window
+      // the repeat request is answered synchronously with the stored session
+      const repeat = dispatch(
+        { requestId: 'r10', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(
+        repeat.reply.current.result.addressesByChain.mintlayer.receiving,
+      ).toEqual(['tmtc1qabc'])
+    })
+
+    it('ignores popup responses from non-extension senders', () => {
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      const { reply } = dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          result: sessionData,
+        },
+        dappSender, // a web page trying to forge an approval
+      )
+
+      expect(reply.current).toBeUndefined()
+    })
+  })
+
+  describe('signTransaction', () => {
+    beforeEach(() => {
+      // establish a connection first
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+    })
+
+    it('stamps the request with the session network for the wrong-chain guard', () => {
+      const { keptOpen } = dispatch(
+        {
+          requestId: 's1',
+          method: 'signTransaction',
+          params: { txData: { JSONRepresentation: {} } },
+        },
+        dappSender,
+      )
+
+      expect(keptOpen).toBe(true)
+      expect(storageData['pendingRequest:701']).toMatchObject({
+        action: 'signTransaction',
+        network: 'testnet',
+        data: { txData: { JSONRepresentation: {} } },
+      })
+    })
+
+    it('rejects with NOT_CONNECTED when the site never connected', () => {
+      const { reply } = dispatch(
+        { requestId: 's2', method: 'signTransaction', params: {} },
+        {
+          id: 'other',
+          origin: 'https://evil.example',
+          url: 'https://evil.example/',
+        },
+      )
+
+      expect(reply.current.error).toMatchObject({ code: 'NOT_CONNECTED' })
+    })
+  })
+
+  describe('getSession / disconnect (restore + revocation)', () => {
+    it('returns the full session for a connected origin', () => {
+      storageData.connectedSites = {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      }
+      // re-sync the worker's in-memory map via a connect+approve
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+
+      const { reply: getSessionReply } = dispatch(
+        { method: 'getSession' },
+        dappSender,
+      )
+      expect(getSessionReply.current.result).toEqual({
+        address: sessionData.address,
+        addressesByChain: sessionData.addressesByChain,
+        network: 'testnet',
+      })
+    })
+
+    it('disconnect revokes the grant: getSession returns null afterwards', () => {
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+
+      const { reply } = dispatch({ method: 'disconnect' }, dappSender)
+      expect(reply.current.result).toBe(true)
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toBeUndefined()
+
+      const session = dispatch({ method: 'getSession' }, dappSender)
+      expect(session.reply.current.result).toBeNull()
+    })
+
+    it('ignores disconnect forged from a web page sender', () => {
+      // forge from a different origin: it must not delete the target origin
+      storageData.connectedSites = {
+        'https://bridge.example': { address: sessionData.address },
+      }
+      const { reply } = dispatch(
+        { method: 'disconnect' },
+        {
+          id: 'other',
+          origin: 'https://evil.example',
+          url: 'https://evil.example/',
+        },
+      )
+
+      expect(reply.current.result).toBe(true) // nothing to delete for evil.example
+      // and it only deletes its OWN origin — bridge.example untouched
+      // (in-memory map is seeded through connect/approve only, so assert
+      // via a real connect+approve cycle):
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+      dispatch(
+        { method: 'disconnect' },
+        {
+          id: 'other',
+          origin: 'https://evil.example',
+          url: 'https://evil.example/',
+        },
+      )
+      expect(storageData.connectedSites['https://bridge.example']).toBeDefined()
+    })
+  })
+
+  describe('errors', () => {
+    it('unknown methods get a machine-readable code', () => {
+      const { reply } = dispatch({ method: 'requestSecretHash' }, dappSender)
+      expect(reply.current.error).toMatchObject({
+        code: 'UNSUPPORTED_METHOD',
+        message: expect.stringContaining('requestSecretHash'),
+      })
+    })
+  })
+  describe('concurrent approval windows (the blocker scenario)', () => {
+    it('a connect window and a signing window keep separate pending requests', () => {
+      // origin A opens a connect approval (window 700) and approves it
+      dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        {
+          id: 'site-a',
+          origin: 'https://a.example',
+          url: 'https://a.example/',
+        },
+      )
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://a.example',
+          windowId: 700,
+          result: {
+            address: { testnet: { receiving: ['tmtc1qabc'], change: [] } },
+            addressesByChain: {
+              mintlayer: { receiving: ['tmtc1qabc'], change: [] },
+            },
+            network: 'testnet',
+          },
+        },
+        extensionSender,
+      )
+      // while A's connect window is pending, a signing approval opens
+      // (window 701) for the same origin
+      dispatch(
+        {
+          requestId: 's1',
+          method: 'signTransaction',
+          params: { txData: { JSONRepresentation: {} } },
+        },
+        {
+          id: 'site-a',
+          origin: 'https://a.example',
+          url: 'https://a.example/',
+        },
+      )
+
+      // the connect request was consumed on approval; the signing window
+      // has its own record — the two never overwrote each other
+      expect(storageData['pendingRequest:700']).toBeUndefined()
+      expect(storageData['pendingRequest:701']).toMatchObject({
+        action: 'signTransaction',
+        requestId: expect.any(String),
+        network: 'testnet',
+      })
+    })
+  })
+
+  // ── S1 regression: request-id collision cannot cross-deliver results ──
+  // Approvals are routed by the background's internal opaque id. Two pages
+  // sending the SAME dApp requestId must get independent internal ids and
+  // their answers must go to their own channels only.
+  it('keeps identical dApp requestIds on different origins isolated', async () => {
+    const flush = async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    }
+    const victim = {
+      ...tabDappSender,
+      origin: 'https://shop.example',
+      url: 'https://shop.example/page',
+    }
+    const attacker = {
+      ...tabDappSender,
+      origin: 'https://evil.example',
+      url: 'https://evil.example/page',
+      tab: { id: 6, windowId: 9 },
+    }
+
+    // Pre-grant the victim so it can sign; the attacker never connects.
+    dispatch({ requestId: 'pre', method: 'connect', params: {} }, victim)
+    await flush()
+    dispatch(
+      {
+        action: 'popupResponse',
+        method: 'connect',
+        requestId: internalIdFor(3),
+        origin: 'https://shop.example',
+        windowId: 3,
+        result: sessionData,
+      },
+      extensionSender,
+    )
+    expect(storageData['connectedSites']['https://shop.example']).toBeTruthy()
+
+    // SAME dApp requestId from two origins, two approval slots:
+    const sign = dispatch(
+      { requestId: 'dup', method: 'signTransaction', params: {} },
+      victim,
+    )
+    await flush()
+    const connect = dispatch(
+      { requestId: 'dup', method: 'connect', params: {} },
+      attacker,
+    )
+    await flush()
+
+    // both approvals are live with independent internal ids
+    expect(storageData['pendingRequest:3'].requestId).not.toBe('dup')
+    expect(typeof storageData['pendingRequest:3'].requestId).toBe('string')
+    expect(sign.reply.current).toBeUndefined()
+    expect(connect.reply.current).toBeUndefined()
+
+    // the user approves the VICTIM's signing request
+    dispatch(
+      {
+        action: 'popupResponse',
+        method: 'signTransaction_approve',
+        requestId: storageData['pendingRequest:3'].requestId,
+        origin: 'https://shop.example',
+        windowId: 3,
+        result: { signedTxHex: 'deadbeef' },
+      },
+      extensionSender,
+    )
+
+    // the signature lands on the VICTIM's channel…
+    expect(sign.reply.current).toMatchObject({
+      result: { signedTxHex: 'deadbeef' },
+    })
+    // …and NEVER on the attacker's waiting connect channel
+    expect(connect.reply.current).toBeUndefined()
+
+    // the attacker's connect approval is still live and answers only its
+    // own channel when approved
+    dispatch(
+      {
+        action: 'popupResponse',
+        method: 'connect',
+        requestId: storageData['pendingRequest:9'].requestId,
+        origin: 'https://evil.example',
+        windowId: 9,
+        result: sessionData,
+      },
+      extensionSender,
+    )
+    expect(connect.reply.current).toMatchObject({ result: sessionData })
+  })
+
+  describe('side-panel approval surface (dApp request from a tab)', () => {
+    // The mock sidePanel.open resolves immediately, but the pending request
+    // is persisted only in the .then() of that promise (gesture-first
+    // ordering): storage assertions need a microtask flush first.
+    const flushMicrotasks = async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    }
+
+    it('opens the side panel on the dApp tab instead of a popup window', async () => {
+      const { reply, keptOpen } = dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        tabDappSender,
+      )
+
+      // gesture-first ordering: sidePanel.open is called SYNCHRONOUSLY when
+      // the dApp request arrives — Chrome silently no-ops a gestureless
+      // open, and the user gesture that produced this request can expire
+      // across async hops (e.g. a storage round-trip). This assertion
+      // deliberately stays before any await.
+      expect(global.chrome.sidePanel.open).toHaveBeenCalledWith({ tabId: 5 })
+      // the panel path creates NO popup window
+      expect(createdWindows).toHaveLength(0)
+
+      // the pending request is persisted only AFTER the open promise
+      // resolves
+      await flushMicrotasks()
+
+      // the request is keyed by the dApp tab's WINDOW id (3), not the tab id
+      expect(storageData['pendingRequest:3']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+        requestId: expect.any(String),
+      })
+      expect(storageData['pendingRequest:5']).toBeUndefined()
+      // the channel stays open until the approval answers it
+      expect(keptOpen).toBe(true)
+      expect(reply.current).toBeUndefined()
+    })
+
+    it('falls back to a popup window when the side panel cannot open', async () => {
+      global.chrome.sidePanel.open.mockRejectedValue(new Error('no gesture'))
+
+      const connect = dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        tabDappSender,
+      )
+      expect(connect.keptOpen).toBe(true)
+
+      // let the sidePanel.open rejection settle and the fallback run
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+
+      expect(global.chrome.sidePanel.open).toHaveBeenCalledWith({ tabId: 5 })
+      // the fallback opens ONE popup window (id 700 per the mock)
+      expect(createdWindows).toHaveLength(1)
+      // the request now lives under the popup's window id
+      expect(storageData['pendingRequest:700']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+        requestId: expect.any(String),
+      })
+      // the panel registration was rolled back
+      expect(storageData['pendingRequest:3']).toBeUndefined()
+
+      // approving in the popup resolves the ORIGINAL dApp channel
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+
+      expect(connect.reply.current.result).toEqual(sessionData)
+      // and the pending request is consumed
+      expect(storageData['pendingRequest:700']).toBeUndefined()
+    })
+
+    it('answers REQUEST_IN_PROGRESS for a second request while the panel approval is pending', () => {
+      dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        tabDappSender,
+      )
+
+      const second = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        tabDappSender,
+      )
+
+      expect(second.reply.current).toMatchObject({
+        error: { code: 'REQUEST_IN_PROGRESS' },
+      })
+      expect(second.keptOpen).toBe(false)
+      // the busy answer must not have opened any approval window
+      expect(createdWindows).toHaveLength(0)
+    })
+
+    // Chrome silently no-ops sidePanel.open() without a user gesture: the
+    // promise resolves but nothing opens. The background therefore waits for
+    // an `approvalDisplayed` ack from the panel and, when none arrives
+    // within 8s, opens a popup as a SECOND surface (never a replacement):
+    // the panel registration is kept so a late-loading panel can still
+    // claim the request — the first surface to display or answer owns it.
+    describe('ack-or-fallback (silent sidePanel.open no-op)', () => {
+      it('cancels the popup fallback when the panel acks approvalDisplayed in time', async () => {
+        jest.useFakeTimers()
+        try {
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            tabDappSender,
+          )
+          expect(connect.keptOpen).toBe(true)
+
+          // let sidePanel.open resolve
+          await flushMicrotasks()
+          expect(createdWindows).toHaveLength(0)
+
+          // the panel confirms it rendered the approval
+          dispatch(
+            { action: 'approvalDisplayed', requestId: internalIdFor(3) },
+            extensionSender,
+          )
+
+          // the fallback popup would have fired within this window
+          jest.advanceTimersByTime(8000)
+          await flushMicrotasks()
+
+          // NO popup was created
+          expect(createdWindows).toHaveLength(0)
+          expect(storageData['pendingRequest:700']).toBeUndefined()
+          // the panel registration survives: the panel owns this request now
+          expect(storageData['pendingRequest:3']).toMatchObject({
+            action: 'connect',
+            requestId: expect.any(String),
+          })
+          // the dApp's channel is still open, awaiting the panel's decision
+          expect(connect.reply.current).toBeUndefined()
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('opens a popup as a second surface when no ack arrives within 8s', async () => {
+        jest.useFakeTimers()
+        try {
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            tabDappSender,
+          )
+          expect(connect.keptOpen).toBe(true)
+
+          await flushMicrotasks()
+          // sidePanel.open resolved, but the panel never acked
+          expect(createdWindows).toHaveLength(0)
+
+          jest.advanceTimersByTime(8000)
+          await flushMicrotasks()
+
+          // the panel registration is NOT rolled back: a late-loading panel
+          // may still claim the request
+          expect(storageData['pendingRequest:3']).toMatchObject({
+            action: 'connect',
+            requestId: expect.any(String),
+          })
+          // ...and a POPUP opened as a second surface, keyed by its own
+          // window id ALONGSIDE the panel's key
+          expect(createdWindows).toHaveLength(1)
+          expect(storageData['pendingRequest:700']).toMatchObject({
+            action: 'connect',
+            origin: 'https://bridge.example',
+            requestId: expect.any(String),
+          })
+          // the ORIGINAL dApp channel is still the one being answered
+          expect(connect.reply.current).toBeUndefined()
+
+          // the popup answering owns the request: the dApp is resolved and
+          // BOTH surfaces' pending requests are withdrawn
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(700),
+              origin: 'https://bridge.example',
+              windowId: 700,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(connect.reply.current.result).toEqual(sessionData)
+          expect(storageData['pendingRequest:700']).toBeUndefined()
+          expect(storageData['pendingRequest:3']).toBeUndefined()
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      // Regression for the approval-ack fix: the panel's ack must cancel the
+      // 8s popup-fallback timer for ITS request only — a later request that
+      // never gets an ack still opens a second-surface popup.
+      it('cancels only the acked request: a later unacked request still falls back', async () => {
+        jest.useFakeTimers()
+        try {
+          // request 1: the panel acks it after opening
+          const first = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            tabDappSender,
+          )
+          expect(first.keptOpen).toBe(true)
+          await flushMicrotasks()
+
+          dispatch(
+            { action: 'approvalDisplayed', requestId: internalIdFor(3) },
+            extensionSender,
+          )
+
+          // past the 8s fallback deadline: NO popup for the acked request
+          jest.advanceTimersByTime(8000)
+          await flushMicrotasks()
+          expect(global.chrome.windows.create).not.toHaveBeenCalled()
+          expect(createdWindows).toHaveLength(0)
+          // the panel still owns the request
+          expect(storageData['pendingRequest:3']).toMatchObject({
+            action: 'connect',
+            requestId: expect.any(String),
+          })
+
+          // free the panel slot by rejecting r1 (as the approval page does)
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(3),
+              origin: 'https://bridge.example',
+              windowId: 3,
+              result: null,
+            },
+            extensionSender,
+          )
+          expect(first.reply.current.error).toMatchObject({
+            code: 'USER_REJECTED',
+          })
+
+          // request 2 from the same tab: NEVER acked
+          const second = dispatch(
+            { requestId: 'r2', method: 'connect', params: {} },
+            tabDappSender,
+          )
+          expect(second.keptOpen).toBe(true)
+          await flushMicrotasks()
+          expect(createdWindows).toHaveLength(0)
+
+          jest.advanceTimersByTime(8000)
+          await flushMicrotasks()
+
+          // the unacked request opened a second-surface popup
+          expect(global.chrome.windows.create).toHaveBeenCalledTimes(1)
+          expect(createdWindows).toHaveLength(1)
+          expect(storageData['pendingRequest:700']).toMatchObject({
+            action: 'connect',
+            origin: 'https://bridge.example',
+            requestId: expect.any(String),
+          })
+          // the panel registration is NOT rolled back: it was re-keyed for
+          // the new request and now holds r2 until a surface claims it
+          expect(storageData['pendingRequest:3']).toMatchObject({
+            requestId: expect.any(String),
+          })
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('ignores an approvalDisplayed ack forged from a web page sender', async () => {
+        jest.useFakeTimers()
+        try {
+          dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            tabDappSender,
+          )
+
+          await flushMicrotasks()
+
+          // a dApp page tries to forge the panel's "displayed" ack
+          dispatch(
+            { action: 'approvalDisplayed', requestId: internalIdFor(700) },
+            dappSender,
+          )
+
+          jest.advanceTimersByTime(8000)
+          await flushMicrotasks()
+
+          // the forged ack was ignored: the popup fallback happened anyway
+          expect(createdWindows).toHaveLength(1)
+          expect(storageData['pendingRequest:700']).toMatchObject({
+            requestId: expect.any(String),
+          })
+          // the overlap keeps the panel's registration alive (no-steal
+          // model) — only an ack from a wallet page may arbitrate
+          expect(storageData['pendingRequest:3']).toMatchObject({
+            requestId: expect.any(String),
+          })
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+    })
+
+    // The no-steal overlap model: while a panel approval is pending, the
+    // fallback popup opens as a SECOND surface and the first surface to
+    // display (approvalDisplayed ack, carrying its own window id) or answer
+    // (popupResponse) owns the request — the loser is dismissed. These
+    // tests pin the arbitration contract from both sides.
+    describe('overlap arbitration (panel vs second-surface popup)', () => {
+      const openOverlap = async () => {
+        const connect = dispatch(
+          { requestId: 'r1', method: 'connect', params: {} },
+          tabDappSender,
+        )
+        expect(connect.keptOpen).toBe(true)
+        await flushMicrotasks()
+        // the panel never acked: the fallback popup (window 700) opens as a
+        // second surface while the panel key (pendingRequest:3) survives
+        jest.advanceTimersByTime(8000)
+        await flushMicrotasks()
+        expect(createdWindows).toHaveLength(1)
+        expect(storageData['pendingRequest:3']).toMatchObject({
+          requestId: expect.any(String),
+        })
+        expect(storageData['pendingRequest:700']).toMatchObject({
+          requestId: expect.any(String),
+        })
+        return connect
+      }
+
+      it('late panel ack closes the overlap popup and keeps the approval in the panel', async () => {
+        jest.useFakeTimers()
+        try {
+          const connect = await openOverlap()
+
+          // the panel (window 3) finally displays the request
+          dispatch(
+            {
+              action: 'approvalDisplayed',
+              requestId: internalIdFor(3),
+              windowId: 3,
+            },
+            extensionSender,
+          )
+          await flushMicrotasks()
+
+          // the overlap popup was dismissed and unregistered, but the
+          // panel's key survives — the panel owns the approval now
+          expect(global.chrome.windows.remove).toHaveBeenCalledWith(
+            700,
+            expect.any(Function),
+          )
+          expect(storageData['pendingRequest:700']).toBeUndefined()
+          expect(storageData['pendingRequest:3']).toMatchObject({
+            requestId: expect.any(String),
+          })
+          // the dApp is still waiting for the panel's decision
+          expect(connect.reply.current).toBeUndefined()
+
+          // answering in the panel resolves the dApp
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(3),
+              origin: 'https://bridge.example',
+              windowId: 3,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(connect.reply.current.result).toEqual(sessionData)
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('popup displaying first claims the request and withdraws the panel key', async () => {
+        jest.useFakeTimers()
+        try {
+          const connect = await openOverlap()
+
+          // the popup (window 700) displayed the request first
+          dispatch(
+            {
+              action: 'approvalDisplayed',
+              requestId: internalIdFor(700),
+              windowId: 700,
+            },
+            extensionSender,
+          )
+          await flushMicrotasks()
+
+          // the popup became the sole owner WITHOUT being dismissed, and
+          // the panel key is withdrawn so a late-loading panel cannot
+          // prompt for an already-claimed request
+          expect(global.chrome.windows.remove).not.toHaveBeenCalled()
+          expect(storageData['pendingRequest:3']).toBeUndefined()
+          expect(storageData['pendingRequest:700']).toMatchObject({
+            requestId: expect.any(String),
+          })
+
+          // the popup closing without a decision cancels the dApp request —
+          // no live surface is left to answer it
+          for (const listener of windowRemovedListeners) listener(700)
+          expect(connect.reply.current.error).toMatchObject({
+            code: 'REQUEST_CANCELLED',
+          })
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('panel answering during overlap dismisses the popup', async () => {
+        jest.useFakeTimers()
+        try {
+          const connect = await openOverlap()
+
+          // the user answers in the PANEL while the overlap popup is open
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(3),
+              origin: 'https://bridge.example',
+              windowId: 3,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          await flushMicrotasks()
+
+          // the decision reaches the dApp and the losing popup surface is
+          // dismissed with its pending key withdrawn
+          expect(connect.reply.current.result).toEqual(sessionData)
+          expect(global.chrome.windows.remove).toHaveBeenCalledWith(
+            700,
+            expect.any(Function),
+          )
+          expect(storageData['pendingRequest:700']).toBeUndefined()
+          expect(storageData['pendingRequest:3']).toBeUndefined()
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+    })
+  })
+
+  describe('revocation propagation (disconnectSite)', () => {
+    const connectAndApprove = () => {
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+    }
+
+    it('broadcasts MOJITO_SESSION_REVOKED to every open tab and removes the grant', () => {
+      connectAndApprove()
+
+      const { reply } = dispatch(
+        { action: 'disconnectSite', origin: 'https://bridge.example' },
+        extensionSender,
+      )
+
+      expect(reply.current.result).toEqual({
+        origin: 'https://bridge.example',
+      })
+      // every tab is notified so no page keeps acting on the dead grant
+      expect(global.chrome.tabs.query).toHaveBeenCalledWith(
+        {},
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      // and the grant is durably gone
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toBeUndefined()
+    })
+
+    it('a revoked site can never shortcut-connect again (bypass regression)', () => {
+      connectAndApprove()
+      dispatch(
+        { action: 'disconnectSite', origin: 'https://bridge.example' },
+        extensionSender,
+      )
+      expect(storageData.connectedSites).toEqual({})
+
+      const reconnect = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        dappSender,
+      )
+
+      // NOT the stored session: the channel stays open for a fresh approval
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
+      // a NEW approval window was created (the first was 700)
+      expect(createdWindows).toHaveLength(2)
+      expect(storageData['pendingRequest:701']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+        requestId: expect.any(String),
+      })
+    })
+  })
+
+  describe('self-healing content-script injection', () => {
+    const CONTENT_SCRIPT_FILE = 'explorer/content-script.js'
+
+    // A reload/update wipes content scripts from already-open tabs. The
+    // sweep pings every tab and re-injects where the ping goes unanswered
+    // (MV3 signals that via runtime.lastError, not a throw).
+    const useSweepTabs = () => {
+      // includes a tab with a non-numeric id: the sweep must skip it
+      global.chrome.tabs.query.mockImplementation((query, cb) =>
+        cb([{ id: 1 }, { id: 2 }, { id: 'no-id' }]),
+      )
+    }
+
+    const registeredListener = (event) => {
+      expect(event.addListener).toHaveBeenCalledTimes(1)
+      return event.addListener.mock.calls[0][0]
+    }
+
+    // Fire the callbacks the sweep stored on tabs.sendMessage. lastError is
+    // shared mutable state across the whole chrome mock: set it only around
+    // each invocation and delete it afterwards so nothing leaks into later
+    // callbacks or tests.
+    const answerPings = ({ withLastError }) => {
+      for (const call of global.chrome.tabs.sendMessage.mock.calls) {
+        const sendCallback = call[2]
+        if (typeof sendCallback !== 'function') continue
+        if (withLastError) {
+          global.chrome.runtime.lastError = { message: 'context invalidated' }
+        }
+        try {
+          sendCallback()
+        } finally {
+          delete global.chrome.runtime.lastError
+        }
+      }
+    }
+
+    afterEach(() => {
+      delete global.chrome.runtime.lastError
+    })
+
+    it('sweeps every open tab on install/update and re-injects where the content script is dead', () => {
+      useSweepTabs()
+      const onInstalledListener = registeredListener(
+        global.chrome.runtime.onInstalled,
+      )
+
+      onInstalledListener()
+
+      // every numerically-id'd tab was pinged...
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      // ...but the non-numeric-id tab was never touched
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        'no-id',
+        expect.anything(),
+        expect.anything(),
+      )
+      // pings alone inject nothing: injection happens only when a ping
+      // comes back with lastError (the default mock never answers)
+      expect(global.chrome.scripting.executeScript).not.toHaveBeenCalled()
+
+      // the pings now answer as dead content scripts (extension reloaded)
+      answerPings({ withLastError: true })
+
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledTimes(2)
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledWith({
+        target: { tabId: 1 },
+        files: [CONTENT_SCRIPT_FILE],
+      })
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledWith({
+        target: { tabId: 2 },
+        files: [CONTENT_SCRIPT_FILE],
+      })
+    })
+
+    it('does not re-inject when the content script is alive (no lastError)', () => {
+      useSweepTabs()
+      registeredListener(global.chrome.runtime.onInstalled)()
+
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+
+      // every ping answers cleanly: the content scripts are alive
+      answerPings({ withLastError: false })
+
+      expect(global.chrome.scripting.executeScript).not.toHaveBeenCalled()
+    })
+
+    it('runs the same sweep on browser start (onStartup)', () => {
+      useSweepTabs()
+      const onStartupListener = registeredListener(
+        global.chrome.runtime.onStartup,
+      )
+
+      onStartupListener()
+
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        'no-id',
+        expect.anything(),
+        expect.anything(),
+      )
+
+      // dead content scripts on startup get re-injected too
+      answerPings({ withLastError: true })
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledTimes(2)
+    })
+
+    // Regression: restricted targets (chrome://, other extensions' pages,
+    // about:, file:) can never host the wallet content script — sweeping
+    // them used to surface user-visible errors like "Cannot access a
+    // chrome:// URL". The sweep must consult the tab's url up front and
+    // ping/re-inject ONLY injectable http(s) tabs.
+    it('skips restricted targets (chrome://, extension pages) entirely', () => {
+      global.chrome.tabs.query.mockImplementation((query, cb) =>
+        cb([
+          { id: 1, url: 'https://bridge.example/' },
+          { id: 2, url: 'chrome://settings/' },
+          { id: 3, url: `chrome-extension://${EXT_ID}/popup.html` },
+          { id: 4, url: 'about:blank' },
+          { id: 5, url: 'file:///home/user/page.html' },
+        ]),
+      )
+      registeredListener(global.chrome.runtime.onInstalled)()
+
+      // only the plain https tab was pinged...
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(1)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_PING' },
+        expect.any(Function),
+      )
+      // ...and none of the restricted targets were ever touched
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        2,
+        expect.anything(),
+        expect.anything(),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        3,
+        expect.anything(),
+        expect.anything(),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        4,
+        expect.anything(),
+        expect.anything(),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        5,
+        expect.anything(),
+        expect.anything(),
+      )
+
+      // the https tab's ping answers as a dead content script: exactly one
+      // re-injection, for that tab only — restricted targets never get one
+      answerPings({ withLastError: true })
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledTimes(1)
+      expect(global.chrome.scripting.executeScript).toHaveBeenCalledWith({
+        target: { tabId: 1 },
+        files: [CONTENT_SCRIPT_FILE],
+      })
+    })
+
+    // Regression: without the "tabs" permission Chrome hides the tab url
+    // (undefined) — such a tab is NOT restricted (it may be injectable), so
+    // the sweep still pings it. But if the page turns out unreachable, the
+    // failed re-injection used to log user-visible console.error noise
+    // ("... manifest must request permission to access the respective
+    // host."). Unreachable-by-design targets must stay quiet.
+    it('stays quiet when injection fails on an unreachable page', async () => {
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+      try {
+        global.chrome.tabs.query.mockImplementation((query, cb) =>
+          cb([{ id: 1 }]),
+        )
+        global.chrome.scripting.executeScript = jest
+          .fn()
+          .mockRejectedValue(
+            new Error(
+              'Cannot access contents of the page. Extension manifest must request permission to access the respective host.',
+            ),
+          )
+
+        registeredListener(global.chrome.runtime.onInstalled)()
+        answerPings({ withLastError: true })
+
+        // let the executeScript rejection settle into the .catch handler
+        await Promise.resolve()
+        await Promise.resolve()
+
+        expect(global.chrome.scripting.executeScript).toHaveBeenCalledTimes(1)
+        expect(consoleErrorSpy).not.toHaveBeenCalled()
+      } finally {
+        consoleErrorSpy.mockRestore()
+      }
+    })
+  })
+})

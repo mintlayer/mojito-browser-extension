@@ -3,10 +3,11 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: var(--mojito-green-soft);
-  background: rgb(var(--mojito-green-soft));
+  /* --mojito-green-soft is a near-white mint (light theme): on the dark
+     theme it rendered as a white card. */
+  background: var(--be-bg-1);
   border-radius: 14px;
-  border: 1.5px solid rgba(var(--mojito-green), 0.5);
+  border: 1px solid rgba(var(--mojito-green), 0.35);
 }
 
 .walletCardLeft {
@@ -35,10 +36,10 @@
 .walletCardName {
   font-size: 16px;
   font-weight: 700;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
 }
 
 .walletCardBalance {
   font-size: 13px;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
 }

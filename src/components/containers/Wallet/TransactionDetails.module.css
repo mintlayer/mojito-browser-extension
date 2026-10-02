@@ -18,7 +18,7 @@
   gap: 6px;
   min-height: max-content;
   padding: 28px 20px 24px;
-  background: rgb(var(--mojito-green-soft));
+  background: var(--be-bg-1);
   border-radius: 16px;
   border: 1.5px solid rgba(var(--mojito-green), 0.15);
 }
@@ -38,7 +38,7 @@
   min-height: 56px;
   min-width: 56px;
   border-radius: 12px;
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
@@ -61,7 +61,7 @@
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
 }
 
 .bannerAmount {
@@ -113,13 +113,13 @@
 .bannerSwapArrow {
   width: 18px;
   height: 18px;
-  color: rgba(var(--color-black), 0.3);
+  color: var(--be-text-3);
 }
 
 .bannerTicker {
   font-size: 14px;
   font-weight: 600;
-  color: rgba(var(--color-black), 0.5);
+  color: var(--be-text-3);
 }
 
 .bannerStatus {
@@ -128,7 +128,7 @@
   gap: 4px;
   padding: 4px 12px;
   border-radius: 99px;
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   font-size: 13px;
   font-weight: 600;
   color: rgb(var(--mojito-green));
@@ -145,9 +145,9 @@
 }
 
 .detailsCard {
-  background: rgb(var(--color-white));
+  background: var(--be-bg-1);
   border-radius: 16px;
-  border: 1.5px solid rgba(var(--color-black), 0.08);
+  border: 1.5px solid var(--be-line-soft);
   overflow: hidden;
 }
 
@@ -156,7 +156,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(var(--color-black), 0.06);
+  border-bottom: 1px solid var(--be-line-soft);
 }
 
 .detailRow:last-child {
@@ -166,13 +166,13 @@
 .detailLabel {
   font-size: 13px;
   font-weight: 400;
-  color: rgba(var(--color-black), 0.6);
+  color: var(--be-text-2);
 }
 
 .detailValue {
   font-size: 14px;
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   text-align: right;
   word-break: break-all;
   max-width: 60%;
@@ -194,7 +194,7 @@
 .hashLabel {
   font-size: 12px;
   font-weight: 600;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   padding-left: 4px;
 }
 
@@ -205,13 +205,13 @@
   padding: 10px 14px;
   background: #f5f7fa;
   border-radius: 16px;
-  border: 1.5px solid rgba(var(--color-black), 0.02);
+  border: 1.5px solid var(--be-line-soft);
 }
 
 .hashValue {
   font-size: 13px;
   font-weight: 400;
-  color: rgba(var(--color-black), 0.6);
+  color: var(--be-text-2);
   word-break: break-all;
   flex: 1;
 }

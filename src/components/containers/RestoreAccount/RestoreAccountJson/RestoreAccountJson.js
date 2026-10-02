@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router'
 
-import { Button } from '@BasicComponents'
+import { Button, Error } from '@BasicComponents'
 import { CenteredLayout, VerticalGroup } from '@LayoutComponents'
 import { ProgressTracker } from '@ComposedComponents'
 import { ReactComponent as IconArrowRight } from '@Assets/images/icon-arrow-right.svg'
@@ -20,6 +20,7 @@ const RestoreAccountJson = () => {
   const [step, setStep] = useState(1)
   const [errorMessage, setErrorMessage] = useState('')
   const [fileContent, setFileContent] = useState(null)
+  const [restoring, setRestoring] = useState(false)
 
   const steps = [
     { name: 'Backup file', active: step === 1 },
@@ -27,17 +28,21 @@ const RestoreAccountJson = () => {
     { name: 'Finish', active: step === 3 },
   ]
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (step === 1 && fileContent && !errorMessage) {
       setStep(step + 1)
     }
-    if (step === 2) {
+    if (step === 2 && !restoring) {
+      setRestoring(true)
       try {
-        Account.restoreAccountFromJSON(fileContent)
+        await Account.restoreAccountFromJSON(fileContent)
         setStep(step + 1)
-      } catch {
+      } catch (error) {
+        console.error(error)
         setErrorMessage('Error restoring account from JSON file.')
+      } finally {
+        setRestoring(false)
       }
     }
     if (step === 3) {
@@ -45,7 +50,8 @@ const RestoreAccountJson = () => {
     }
   }
 
-  const isSubmitButtonDisabled = step === 1 && (!fileContent || errorMessage)
+  const isSubmitButtonDisabled =
+    (step === 1 && (!fileContent || errorMessage)) || restoring
   const submitButtonTitles = { 2: 'Restore wallet', 3: 'Go to login' }
   const submitButtonContent = submitButtonTitles[step] || 'Next'
 
@@ -81,6 +87,7 @@ const RestoreAccountJson = () => {
             />
           )}
           {step === 2 && <WalletDetails fileContent={fileContent} />}
+          {step === 2 && errorMessage && <Error error={errorMessage} />}
 
           {step === 3 && <RestoreSuccess />}
           <CenteredLayout>

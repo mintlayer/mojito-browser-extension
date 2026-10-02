@@ -3,17 +3,18 @@
   width: 28px;
   height: 28px;
   padding: 5px;
-  background: #f0f2f5;
+  background: oklch(1 0 0 / 0.06);
+  border-radius: 8px;
 }
 
 .update-button svg {
   width: 100%;
   height: 100%;
-  fill: rgb(var(--color-green));
+  fill: var(--be-amber);
 }
 
 .update-button svg path {
-  fill: rgb(var(--color-green));
+  fill: var(--be-amber);
 }
 
 @keyframes spin {

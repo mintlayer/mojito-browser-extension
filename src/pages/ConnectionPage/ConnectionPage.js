@@ -1,10 +1,16 @@
-/* eslint-disable no-undef */
-import './ConnectionPage.css'
 import { useLocation } from 'react-router'
 import { useContext, useState } from 'react'
-import { AccountContext } from '@Contexts'
-import { Button, Toggle, PageWrapper } from '@BasicComponents'
+import { AccountContext, SettingsContext } from '@Contexts'
+import { Button, PageWrapper, SiteBadge } from '@BasicComponents'
 import { ReactComponent as IconShield } from '@Assets/images/icon-shield.svg'
+import { ReactComponent as IconEye } from '@Assets/images/icon-eye.svg'
+import { ReactComponent as IconSign } from '@Assets/images/icon-sign.svg'
+import { ReactComponent as IconLoop } from '@Assets/images/icon-loop.svg'
+import PermissionItem from './PermissionItem'
+import BitcoinDataNotice from './BitcoinDataNotice'
+import { sendPopupResponse } from '@Browser'
+import { BTC } from '@Helpers'
+import styles from './ConnectionPage.module.css'
 
 const toHexString = (obj) => {
   return Object.values(obj)
@@ -12,78 +18,88 @@ const toHexString = (obj) => {
     .join('')
 }
 
-const storage =
-  typeof browser !== 'undefined' && browser.storage
-    ? browser.storage
-    : typeof chrome !== 'undefined' && chrome.storage
-      ? chrome.storage
-      : null
+const btcPubKeyOf = (entry) => {
+  if (!entry || typeof entry === 'string') return undefined
+  const { pubkey } = Object.values(entry)[0] ?? {}
+  return pubkey ? toHexString(pubkey) : undefined
+}
 
-const runtime =
-  typeof browser !== 'undefined' && browser.runtime
-    ? browser.runtime
-    : typeof chrome !== 'undefined' && chrome.runtime
-      ? chrome.runtime
-      : null
+const UNKNOWN_WEBSITE = 'Unknown Website'
 
 export const ConnectionPage = () => {
   const { state: external_state } = useLocation()
   const { addresses } = useContext(AccountContext)
-  const website = 'Unknown Website' // This should be replaced with the actual website name or URL
-  const [, setProvideBitcoinData] = useState(false)
-
-  const provideBitcoinData = true
+  const { networkType } = useContext(SettingsContext)
 
   const state = external_state
-  const origin = state?.request?.origin || website
+  const origin = state?.request?.origin || UNKNOWN_WEBSITE
   const permissions = state?.request?.permissions || []
 
   const requireBTC = permissions.includes('bitcoin')
+  const isUnknownOrigin = origin === UNKNOWN_WEBSITE
 
-  const connectButtonExtraStyles = ['connectButton']
+  // Only include Bitcoin data when the site actually asked for the
+  // 'bitcoin' permission AND the user keeps the toggle on — the toggle only
+  // renders for such sites, so the default must match.
+  const [provideBitcoinData, setProvideBitcoinData] = useState(requireBTC)
 
+  const ml = addresses?.mlAddresses ?? {}
+  const btc = addresses?.btcAddresses ?? {}
+
+  const btcReceiving = Array.isArray(btc.btcReceivingAddresses)
+    ? btc.btcReceivingAddresses
+    : []
+  const btcChange = Array.isArray(btc.btcChangeAddresses)
+    ? btc.btcChangeAddresses
+    : []
+
+  const hasWalletAddresses =
+    Array.isArray(ml.mlReceivingAddresses) && ml.mlReceivingAddresses.length > 0
+
+  const connectButtonExtraStyles = [styles.actionButton]
+
+  // SECURITY: approving here creates a PERMISSION-LEVEL grant — the site
+  // receives wallet addresses and public keys and can request signatures.
+  // Only include data the site explicitly asked for, and remember every
+  // grant is revocable in Settings → Connections.
   const handleConnect = () => {
-    const remember = document.querySelector('.connect-page__checkbox')?.checked
-    const sessionKey = `session_${origin}`
+    if (!hasWalletAddresses) return
+
+    const includeBitcoin =
+      provideBitcoinData && btcReceiving.length + btcChange.length > 0
+
+    // The addresses belong to the wallet's ACTIVE network only — filing them
+    // under both network keys would hand a dApp testnet addresses labeled
+    // mainnet (or vice versa). `network` records the grant's network so the
+    // sign flow can reject a wrong-chain request.
+    //
+    // PRIVACY: the grant shares RECEIVING addresses/keys only. Change
+    // addresses would let the dApp (and chain analyzers it feeds) link the
+    // victim's change outputs across transactions; pubkeys of unused change
+    // paths add clustering surface with zero dApp utility.
     const sessionData = {
       origin,
       connected: true,
+      network: networkType,
       address: {
-        mainnet: {
-          receiving: addresses?.mlAddresses?.mlReceivingAddresses,
-          change: addresses?.mlAddresses?.mlChangeAddresses,
-        },
-        testnet: {
-          receiving: addresses?.mlAddresses?.mlReceivingAddresses,
-          change: addresses?.mlAddresses?.mlChangeAddresses,
+        [networkType]: {
+          receiving: ml.mlReceivingAddresses,
         },
       },
       addressesByChain: {
         mintlayer: {
-          receiving: addresses?.mlAddresses?.mlReceivingAddresses,
-          change: addresses?.mlAddresses?.mlChangeAddresses,
+          receiving: ml.mlReceivingAddresses,
           publicKeys: {
-            receiving:
-              addresses?.mlAddresses?.mlReceivingPublicKeys.map(toHexString),
-            change: addresses?.mlAddresses?.mlChangePublicKeys.map(toHexString),
+            receiving: ml.mlReceivingPublicKeys?.map(toHexString) ?? [],
           },
         },
-        ...(provideBitcoinData && {
+        ...(includeBitcoin && {
           bitcoin: {
-            receiving: addresses?.btcAddresses?.btcReceivingAddresses.map(
-              (addr) => Object.keys(addr)[0],
-            ),
-            change: addresses?.btcAddresses?.btcChangeAddresses.map(
-              (addr) => Object.keys(addr)[0],
-            ),
+            receiving: btcReceiving
+              .map(BTC.getBtcAddressString)
+              .filter(Boolean),
             publicKeys: {
-              receiving: addresses?.btcAddresses?.btcReceivingAddresses.map(
-                (addr) =>
-                  Buffer.from(Object.values(addr)[0].pubkey).toString('hex'),
-              ),
-              change: addresses?.btcAddresses?.btcChangeAddresses.map((addr) =>
-                Buffer.from(Object.values(addr)[0].pubkey).toString('hex'),
-              ),
+              receiving: btcReceiving.map(btcPubKeyOf).filter(Boolean),
             },
           },
         }),
@@ -91,66 +107,20 @@ export const ConnectionPage = () => {
       timestamp: Date.now(),
     }
 
-    const requestId = state?.request?.requestId
-    const response = {
-      action: 'popupResponse',
+    sendPopupResponse({
       method: 'connect',
-      requestId,
+      requestId: state?.request?.requestId,
       origin,
       result: sessionData,
-    }
-
-    const saveAndClose = () => {
-      storage.local.remove('pendingRequest', () => {
-        if (runtime.lastError) {
-          console.error(
-            '[Mojito Popup] Error removing pendingRequest:',
-            runtime.lastError,
-          )
-        }
-        window.close()
-      })
-    }
-
-    if (remember) {
-      // Save session only if checkbox is checked
-      storage.local.set({ [sessionKey]: sessionData }, () => {
-        console.log('[Mojito Popup] Session saved for', origin)
-        runtime.sendMessage(response, () => {
-          console.log('[Popup] Response sent:', response)
-          saveAndClose()
-        })
-      })
-    } else {
-      // No session save
-      runtime.sendMessage(response, () => {
-        console.log('[Popup] Response sent:', response)
-        saveAndClose()
-      })
-    }
+    })
   }
 
   const handleReject = () => {
-    const requestId = state?.request?.requestId
-    const response = {
-      action: 'popupResponse',
+    sendPopupResponse({
       method: 'connect',
-      requestId,
+      requestId: state?.request?.requestId,
       origin,
       result: null,
-    }
-    runtime.sendMessage(response, () => {
-      console.log('[Popup] Response sent:', response)
-      // Remove pendingRequest after sending response
-      storage.local.remove('pendingRequest', () => {
-        if (runtime.lastError) {
-          console.error(
-            '[Mojito Popup] Error removing pendingRequest:',
-            runtime.lastError,
-          )
-        }
-        window.close()
-      })
     })
   }
 
@@ -162,80 +132,92 @@ export const ConnectionPage = () => {
   return (
     <PageWrapper>
       <form
-        className="connect-page__form"
+        className={styles.form}
         onSubmit={submitHandler}
         method="POST"
       >
-        <div className="connect-page__title">
-          <h2 className="connect-page__title">
-            Connect Website to Your Mojito Wallet
-          </h2>
-          <p className="connect-page__description">
-            The website <span className="connect-page__host">{origin}</span> is
-            requesting access to your wallet.
-          </p>
-        </div>
+        <div className={styles.scrollArea}>
+          <div className={styles.intro}>
+            <span className={styles.shield}>
+              <IconShield className={styles.shieldIcon} />
+            </span>
+            <h2 className={styles.title}>
+              Connect website to your Mojito wallet
+            </h2>
+            <p className={styles.subtitle}>
+              This website is requesting access to your wallet.
+            </p>
+            <SiteBadge
+              origin={origin}
+              unknown={isUnknownOrigin}
+            />
+          </div>
 
-        <div className="connect-page__content">
-          <div>
-            <ul className="connect-page__permissions">
-              <IconShield className="connect-page__icon" />
-              <li>View your public addresses</li>
-              <li>Request transaction signing</li>
-              <li>Track connection status</li>
+          <div className={styles.card}>
+            <span className={styles.cardTitle}>
+              This will allow the website to
+            </span>
+
+            <ul className={styles.permissions}>
+              <PermissionItem
+                icon={IconEye}
+                title="View your public addresses"
+                description="Public addresses and keys only, never your private keys or seed phrase."
+              />
+              <PermissionItem
+                icon={IconSign}
+                title="Request transaction signing"
+                description="Every request opens in Mojito and needs your approval."
+              />
+              <PermissionItem
+                icon={IconLoop}
+                title="Track connection status"
+                description="Check whether your wallet is still connected to this website."
+              />
             </ul>
 
             {requireBTC && (
-              <>
-                <div className="connect-page__bitcoin-section">
-                  <div className="connect-page__bitcoin-toggle">
-                    <div>Provide Bitcoin data (addresses AND public keys)</div>
-                    <Toggle
-                      label="Provide Bitcoin data (addresses AND public keys)"
-                      name="provideBitcoinData"
-                      toggled={provideBitcoinData}
-                      onClick={setProvideBitcoinData}
-                    />
-                  </div>
-
-                  <div className="connect-page__info-block">
-                    <div className="connect-page__info-icon">i</div>
-                    <p className="connect-page__info-text">
-                      <strong>Note:</strong> This option is mandatory when
-                      connecting to HTLC Atomic Swaps dApps. It provides both
-                      Bitcoin addresses and public keys required for cross-chain
-                      transactions.
-                    </p>
-                  </div>
-                </div>
-              </>
+              <div className={styles.bitcoinSlot}>
+                <BitcoinDataNotice
+                  provideBitcoinData={provideBitcoinData}
+                  onToggle={setProvideBitcoinData}
+                />
+              </div>
             )}
           </div>
 
-          {/* // TODO: Make this work */}
-          {/* <label className="connect-page__remember">
-            <input
-              type="checkbox"
-              className="connect-page__checkbox"
-            />
-            <span>Always allow this app</span>
-          </label> */}
+          {!hasWalletAddresses && (
+            <p
+              className={styles.warning}
+              data-testid="incomplete-data-warning"
+            >
+              Wallet data incomplete — unlock your wallet and try again
+            </p>
+          )}
 
-          <div className="connect-page__actions">
-            <Button
-              onClickHandle={handleReject}
-              extraStyleClasses={connectButtonExtraStyles}
-              alternate
-            >
-              Reject
-            </Button>
-            <Button
-              onClickHandle={handleConnect}
-              extraStyleClasses={connectButtonExtraStyles}
-            >
-              Connect
-            </Button>
-          </div>
+          <p className={styles.disclaimer}>
+            Only connect to websites you trust. You can reject this request and
+            nothing will be shared.
+          </p>
+        </div>
+
+        <div className={styles.actions}>
+          <Button
+            onClickHandle={handleReject}
+            extraStyleClasses={connectButtonExtraStyles}
+            dataTestId="reject-button"
+            alternate
+          >
+            Reject
+          </Button>
+          <Button
+            onClickHandle={handleConnect}
+            extraStyleClasses={connectButtonExtraStyles}
+            disabled={!hasWalletAddresses}
+            dataTestId="connect-button"
+          >
+            Connect
+          </Button>
         </div>
       </form>
     </PageWrapper>

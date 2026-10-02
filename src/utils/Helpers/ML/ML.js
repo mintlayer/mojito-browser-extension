@@ -1,4 +1,5 @@
-import { AppInfo } from '@Constants'
+import * as AppInfo from '../../Constants/AppInfo/AppInfoCore'
+import { bech32VerifyChecksum } from './bech32'
 import { ArrayHelper } from '@Helpers'
 import { LocalStorageService } from '@Storage'
 import Decimal from 'decimal.js'
@@ -16,17 +17,21 @@ const calculateExchangeRate = (askAmount, giveAmount) => {
 }
 
 const getAmountInCoins = (
-  amointInAtoms,
+  amountInAtoms,
   atomsPerCoin = AppInfo.ML_ATOMS_PER_COIN,
 ) => {
-  return amointInAtoms / atomsPerCoin
+  // Decimal division avoids float drift on the 11-decimal atom scale.
+  return new Decimal(amountInAtoms.toString())
+    .dividedBy(atomsPerCoin)
+    .toNumber()
 }
 
 const getAmountInAtoms = (
   amountInCoins,
   atomsPerCoin = AppInfo.ML_ATOMS_PER_COIN,
 ) => {
-  return BigInt(Math.round(amountInCoins * atomsPerCoin))
+  // Decimal multiplication avoids float rounding on the 11-decimal scale.
+  return BigInt(new Decimal(amountInCoins).times(atomsPerCoin).toFixed(0))
 }
 
 const getSwapDetails = (transaction) => {
@@ -99,15 +104,26 @@ const getSwapDetails = (transaction) => {
   return null
 }
 
+// localStorage key for the unconfirmed-transaction list — one definition
+// instead of eight hand-built copies that can drift.
+const getUnconfirmedTransactionKey = (accountName, networkType) =>
+  `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
+
 const getParsedTransactions = (transactions, addresses) => {
   const account = LocalStorageService.getItem('unlockedAccount')
   const networkType = LocalStorageService.getItem('networkType')
   const accountName = account && account.name
-  const unconfirmedTransactionString = `${AppInfo.UNCONFIRMED_TRANSACTION_NAME}_${accountName}_${networkType}`
+  const unconfirmedTransactionString = getUnconfirmedTransactionKey(
+    accountName,
+    networkType,
+  )
   const unconfirmedTransactions = LocalStorageService.getItem(
     unconfirmedTransactionString,
   )
-  const filteredTransactions = ArrayHelper.removeDublicates(transactions)
+  const filteredTransactions = ArrayHelper.removeDuplicates(
+    transactions,
+    (transaction) => transaction.id || transaction.txid,
+  )
   const sortedTransactions = filteredTransactions.sort(
     (a, b) => b.timestamp - a.timestamp,
   )
@@ -184,6 +200,7 @@ const getParsedTransactions = (transactions, addresses) => {
     let value
     let sameWalletTransaction = false
     let delegationOwner
+    let swapDetails = null
 
     const token_id = transaction.outputs.find(
       (output) => output?.value?.token_id,
@@ -215,7 +232,7 @@ const getParsedTransactions = (transactions, addresses) => {
           if (output.type === 'CreateOrder') {
             type = 'CreateOrder'
             destAddress = output.conclude_key
-            return output.give_value.amount.decimal
+            return acc + Number(output.give_value.amount.decimal)
           }
           if (order_id) {
             type = 'FillOrder'
@@ -224,11 +241,14 @@ const getParsedTransactions = (transactions, addresses) => {
               (input) => input.input.command === 'FillOrder',
             )
             if (fillOrderInput && fillOrderInput.input?.fill_atoms?.atoms) {
-              return getSwapDetails(transaction)
+              swapDetails = getSwapDetails(transaction)
+              return acc
             }
           }
           if (output.type === 'Transfer') {
-            return acc + output.value.amount.decimal
+            // Number() is required: amount.decimal is a string, and
+            // 'acc + string' would concatenate instead of accumulate.
+            return acc + Number(output.value.amount.decimal)
           }
           if (output.type === 'LockThenTransfer') {
             return acc + Number(output.value.amount.decimal)
@@ -258,7 +278,8 @@ const getParsedTransactions = (transactions, addresses) => {
               (input) => input.input.command === 'FillOrder',
             )
             if (fillOrderInput && fillOrderInput.input?.fill_atoms?.atoms) {
-              return getSwapDetails(transaction)
+              swapDetails = getSwapDetails(transaction)
+              return acc
             }
           }
           if (output.type === 'CreateStakePool') {
@@ -281,7 +302,7 @@ const getParsedTransactions = (transactions, addresses) => {
         }
         return acc
       }, 0)
-      value = totalValue
+      value = swapDetails || totalValue
     }
 
     // inbound transaction
@@ -292,12 +313,14 @@ const getParsedTransactions = (transactions, addresses) => {
         .reduce((acc, output) => {
           if (token_id) {
             if (output.value.token_id === token_id) {
-              return acc + output.value.amount.decimal
+              // Number(): string concat would corrupt multi-output sums.
+              return acc + Number(output.value.amount.decimal)
             }
           } else {
             if (output.type === 'Transfer') {
               if (output.value.type === 'Coin') {
-                return acc + output.value.amount.decimal
+                // Number(): string concat would corrupt multi-output sums.
+                return acc + Number(output.value.amount.decimal)
               }
             }
             if (output.type === 'LockThenTransfer') {
@@ -329,7 +352,8 @@ const getParsedTransactions = (transactions, addresses) => {
       const totalValue = transaction.outputs.reduce((acc, output) => {
         if (addresses.includes(output.destination)) {
           if (output.type === 'Transfer') {
-            return acc + output.value.amount.decimal
+            // Number(): string concat would corrupt multi-output sums.
+            return acc + Number(output.value.amount.decimal)
           }
           if (output.type === 'LockThenTransfer') {
             if (
@@ -374,52 +398,44 @@ const getParsedTransactions = (transactions, addresses) => {
   })
 }
 
-const getTokenBalances = (utxos) => {
-  const tokenBalances = {}
-  utxos.forEach((item) => {
-    if (item.utxo.value.token_id && item.utxo.value.type === 'TokenV1') {
-      const token = item.utxo.value.token_id
-      if (tokenBalances[token]) {
-        tokenBalances[token] += parseFloat(item.utxo.value.amount.decimal)
-      } else {
-        tokenBalances[token] = parseFloat(item.utxo.value.amount.decimal)
-      }
-    }
-  })
-
-  return tokenBalances
-}
-
 const isMlAddressValid = (address, network) => {
-  const mainnetRegex = /^mtc1[a-z0-9]{30,}$/
-  const testnetRegex = /^tmt1[a-z0-9]{30,}$/
+  // Pubkeyhash (mtc1/tmt1) AND multisig (mmtc1/tmtc1) bech32 addresses —
+  // mmtc1… was rejected before, breaking sends to multisig destinations.
+  const mainnetRegex = /^(mtc1|mmtc1)[a-z0-9]{30,}$/
+  const testnetRegex = /^(tmt1|tmtc1)[a-z0-9]{30,}$/
+  // Regex pre-filter (charset/shape), then the BIP-173 checksum + HRP
+  // check: a single-character typo must never pass validation.
   return network === AppInfo.NETWORK_TYPES.MAINNET
-    ? mainnetRegex.test(address)
-    : testnetRegex.test(address)
+    ? mainnetRegex.test(address) &&
+        bech32VerifyChecksum(address, ['mtc', 'mmtc'])
+    : testnetRegex.test(address) &&
+        bech32VerifyChecksum(address, ['tmt', 'tmtc'])
 }
 
 const isMlPoolIdValid = (poolId, network) => {
   const mainnetRegex = /^mpool[a-z0-9]{30,}$/
   const testnetRegex = /^tpool[a-z0-9]{30,}$/
   return network === AppInfo.NETWORK_TYPES.MAINNET
-    ? mainnetRegex.test(poolId)
-    : testnetRegex.test(poolId)
+    ? mainnetRegex.test(poolId) && bech32VerifyChecksum(poolId, ['mpool'])
+    : testnetRegex.test(poolId) && bech32VerifyChecksum(poolId, ['tpool'])
 }
 
 const isMlDelegationIdValid = (delegationId, network) => {
   const mainnetRegex = /^mdelg[a-z0-9]{30,}$/
   const testnetRegex = /^tdelg[a-z0-9]{30,}$/
   return network === AppInfo.NETWORK_TYPES.MAINNET
-    ? mainnetRegex.test(delegationId)
-    : testnetRegex.test(delegationId)
+    ? mainnetRegex.test(delegationId) &&
+        bech32VerifyChecksum(delegationId, ['mdelg'])
+    : testnetRegex.test(delegationId) &&
+        bech32VerifyChecksum(delegationId, ['tdelg'])
 }
 
 const isMlOrderIdValid = (orderId, network) => {
   const mainnetRegex = /^mordr[a-z0-9]{30,}$/
   const testnetRegex = /^tordr[a-z0-9]{30,}$/
   return network === AppInfo.NETWORK_TYPES.MAINNET
-    ? mainnetRegex.test(orderId)
-    : testnetRegex.test(orderId)
+    ? mainnetRegex.test(orderId) && bech32VerifyChecksum(orderId, ['mordr'])
+    : testnetRegex.test(orderId) && bech32VerifyChecksum(orderId, ['tordr'])
 }
 
 const formatAddress = (address, limitSize = 24) => {
@@ -483,6 +499,54 @@ const getMlTransactionLink = (txId, network) => {
   return `${baseUrl}/tx/${txId}`
 }
 
+// Rebuilds the growth of the total staked balance over time from the
+// wallet's parsed Mintlayer transactions:
+// - 'DelegateStaking' (out) adds to the stake (new delegation / add funds)
+// - 'Delegate Withdrawal' (in) removes from it
+// The last point is anchored to the live delegation total, which also
+// includes rewards accrued while staking.
+const buildStakeGrowthSeries = (transactions, currentTotal = null) => {
+  const events = (transactions || [])
+    .filter(
+      (tx) =>
+        tx.type === 'DelegateStaking' || tx.type === 'Delegate Withdrawal',
+    )
+    .sort((a, b) => (a.date || 0) - (b.date || 0))
+
+  const series = []
+  let contributed = 0
+  let withdrawn = 0
+
+  events.forEach((tx) => {
+    const value = Number(tx.value) || 0
+    if (tx.type === 'DelegateStaking') {
+      contributed += value
+    } else {
+      withdrawn += value
+    }
+    if (series.length === 0) {
+      series.push(0)
+    }
+    series.push(contributed - withdrawn)
+  })
+
+  if (
+    currentTotal != null &&
+    series.length > 0 &&
+    series[series.length - 1] !== currentTotal
+  ) {
+    series.push(currentTotal)
+  }
+
+  // Delegation predates the parsed transaction history: still chart the
+  // live total instead of hiding the chart entirely.
+  if (series.length === 0 && currentTotal != null && currentTotal > 0) {
+    series.push(0, currentTotal)
+  }
+
+  return { series, contributed, withdrawn }
+}
+
 export {
   getParsedTransactions,
   getAmountInAtoms,
@@ -490,7 +554,6 @@ export {
   isMlAddressValid,
   isMlPoolIdValid,
   isMlDelegationIdValid,
-  getTokenBalances,
   formatAddress,
   isMlOrderIdValid,
   calculateExchangeRate,
@@ -498,4 +561,6 @@ export {
   getBatchData,
   getMlAddressLink,
   getMlTransactionLink,
+  buildStakeGrowthSeries,
+  getUnconfirmedTransactionKey,
 }

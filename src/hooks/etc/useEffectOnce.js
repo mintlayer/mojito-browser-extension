@@ -4,7 +4,7 @@ export function useEffectOnce(effect) {
   useEffect(() => {
     if (!called.current) {
       called.current = true
-      effect()
+      return effect()
     }
   }, [effect])
 }

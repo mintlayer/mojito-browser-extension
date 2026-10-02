@@ -4,8 +4,8 @@
   padding: 12px 29px 12px 8px;
   margin-bottom: 0;
   border-radius: 22px;
-  background: rgb(var(--color-gray));
-  border: 1px solid rgba(var(--color-light-green), 0.2);
+  background: var(--be-bg-1);
+  border: 1px solid var(--be-line-soft);
   word-break: break-all;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
@@ -28,7 +28,7 @@
   width: 60px;
   min-width: 60px;
   height: 60px;
-  background: rgb(var(--color-dim-green));
+  background: var(--be-green-soft, var(--be-amber-soft));
   border-radius: 50%;
   position: relative;
   z-index: 5;
@@ -37,22 +37,22 @@
 .logoTypeInfo {
   font-size: 1.4rem;
   font-weight: 600;
-  color: #fff;
-  background: rgb(var(--color-dark-gray));
+  color: var(--be-text-0);
+  background: var(--be-line);
 }
 
 .logoTypeWithdrawal {
   font-size: 1.4rem;
   font-weight: 600;
-  color: #fff;
-  background: rgb(var(--color-dark-gray));
+  color: var(--be-text-0);
+  background: var(--be-line);
 }
 
 .logoTypeSame {
   position: absolute;
   z-index: 10;
   left: 22px;
-  background: rgb(var(--color-dark-gray));
+  background: var(--be-line);
 }
 
 .logoTypeSame .loopIcon {
@@ -62,7 +62,7 @@
 }
 
 .logoTypeSame .loopIcon path {
-  stroke: rgb(var(--color-white)) !important;
+  stroke: var(--be-text-0) !important;
 }
 
 .detail {
@@ -71,19 +71,19 @@
 }
 
 .logoOut {
-  background: rgb(var(--color-dim-corail));
+  background: oklch(0.7 0.2 25 / 0.18);
 }
 
 .logoTypeStake {
-  background: rgb(var(--color-dim-blue));
+  background: var(--be-teal-soft);
 }
 
 .logoTypeDelegate {
-  background: rgb(var(--color-dim-purple));
+  background: var(--be-violet-soft);
 }
 
 .logoTypeUnconfirmed {
-  background: rgb(var(--color-dim-yellow));
+  background: var(--be-amber-soft);
 }
 
 .arrowIcon {
@@ -105,7 +105,7 @@
 .unconfirmedIcon {
   width: 26px;
   height: 28px;
-  color: #fff;
+  color: var(--be-text-0);
 }
 
 .delegationIcon {
@@ -113,11 +113,11 @@
   height: 28px;
   margin-left: 2px;
   margin-top: -2px;
-  color: rgb(var(--color-black));
+  color: var(--be-text-1);
 }
 
 .delegationIcon svg {
-  color: rgb(var(--color-black));
+  color: var(--be-text-1);
 }
 
 .arrowIconOut {
@@ -162,5 +162,5 @@
 
 .transaction:hover {
   transform: scale(1.02);
-  border: 1px solid rgba(var(--color-light-green), 0.5);
+  border: 1px solid oklch(0.82 0.16 70 / 0.5);
 }

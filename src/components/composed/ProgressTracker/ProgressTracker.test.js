@@ -33,5 +33,5 @@ test('Render ProgressTracker component - with steps', () => {
   const items = screen.getAllByTestId('progress-step')
 
   expect(progressTrackerComponent).toBeInTheDocument()
-  expect(items).toHaveLength(items.length)
+  expect(items).toHaveLength(5)
 })

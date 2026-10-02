@@ -2,8 +2,17 @@ require('dotenv').config()
 
 module.exports = {
   testEnvironment: 'jsdom',
+  // Jest's default cache lives in /tmp, whose per-user quota this machine
+  // exhausts — pin the cache next to the repo so parallel workers and the
+  // transform cache always work (node_modules is gitignored).
+  cacheDirectory: '<rootDir>/node_modules/.cache/jest',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
-  testPathIgnorePatterns: ['/node_modules/', '/tests/', 'src/pages'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/',
+    '/build/',
+    '/\\.output/',
+  ],
   transform: {
     '\\.[jt]sx?$': 'babel-jest',
   },
@@ -27,9 +36,11 @@ module.exports = {
     '^@Contexts$': '<rootDir>/src/contexts/index.js',
     '^@Databases$': '<rootDir>/src/services/Database/index.js',
     '^@Cryptos$': '<rootDir>/src/services/Crypto/index.js',
+    '^@Cryptos/(.*)$': '<rootDir>/src/services/Crypto/$1',
     '^@Entities$': '<rootDir>/src/services/Entity/index.js',
     '^@APIs$': '<rootDir>/src/services/API/index.js',
     '^@Storage$': '<rootDir>/src/services/Storage/index.js',
+    '^@Browser$': '<rootDir>/src/services/Browser/index.js',
     '^@Version$': '<rootDir>/src/version/version.js',
     '^d3$': '<rootDir>/node_modules/d3/dist/d3.min.js',
     '^react-router$':

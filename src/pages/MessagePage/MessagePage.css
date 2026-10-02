@@ -8,10 +8,10 @@
   padding: 15px 20px;
   cursor: pointer;
   border: none;
-  background: #f0f0f0;
+  background: var(--be-bg-2);
   width: 50%;
   border-radius: 0%;
-  color: rgb(var(--color-black));
+  color: var(--be-text-0);
   font-size: 18px;
   transition: all 0.3s ease-in-out;
 }
