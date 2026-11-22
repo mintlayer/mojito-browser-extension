@@ -235,23 +235,17 @@ export const initBackground = () => {
   // DELETE them (a fresh approval always overwrites/recreates the grant, so
   // deletion leaves no read path to stale addresses) and notify the sites'
   // open tabs — same propagation as a disconnect — so cached SDK clients
-  // drop the stale addresses.
+  // drop the stale addresses. The persist routes through the SAME durable
+  // path as the lock/epoch revocations (revokeOrigins/persistRevocation):
+  // a failed write retries once and leaves revocationPending set, so a
+  // later sweep/persist heals the deletion instead of silently losing it.
   const revokeGrantsFromOtherNetworks = () => {
     if (!activeNetwork) return
     const staleOrigins = Object.keys(connectedSites).filter(
       (origin) => connectedSites[origin]?.network !== activeNetwork,
     )
     if (!staleOrigins.length) return
-    for (const origin of staleOrigins) {
-      delete connectedSites[origin]
-    }
-    api.storage.local.set({ connectedSites }, () => {
-      if (api.runtime.lastError) {
-        console.error('[Mintlayer] Storage set error:', api.runtime.lastError)
-        return
-      }
-      for (const origin of staleOrigins) notifyOriginRevoked(origin)
-    })
+    revokeOrigins(staleOrigins)
   }
 
   // Revokes EVERY grant — the walletLocked action and the lock-mirror sweep

@@ -2919,6 +2919,71 @@ describe('background service worker', () => {
       expect(reconnect.reply.current).toBeUndefined()
       expect(reconnect.keptOpen).toBe(true)
     })
+
+    // The switch's durable deletion must survive a failing persist exactly
+    // like the lock/epoch revocations: both writes fail (initial + retry) →
+    // revocationPending stays set with the stale grant still durable → a
+    // later sweep's durable re-read finishes the deletion and notifies the
+    // tabs — the same self-heal a healthy persist would have produced.
+    it('a later sweep completes a network-switch revocation whose persist failed twice', () => {
+      jest.useFakeTimers()
+      try {
+        jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+        bootWithNetwork('mainnet')
+        approve(mainnetSession)
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toMatchObject({ network: 'mainnet' })
+
+        // the wallet switches mainnet → testnet while storage writes fail
+        jest.setSystemTime(new Date('2026-01-01T00:01:00Z'))
+        const originalSet = global.chrome.storage.local.set
+        global.chrome.storage.local.set = (obj, cb) => {
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+        publishNetwork('testnet')
+        jest.advanceTimersByTime(250)
+
+        // the shared revocation path retried once, then gave up: memory
+        // clean (reads fail closed), NO tab notified, durable copy still
+        // holding the stale grant
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toMatchObject({ network: 'mainnet' })
+        expect(
+          dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+        ).toEqual({ result: { isConnected: false } })
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toBeDefined()
+
+        // worker recovers; a logout stamps the revocation epoch — the
+        // sweep's pending durable re-read completes the switch's deletion
+        global.chrome.storage.local.set = originalSet
+        const revokedAt = Date.now()
+        storageData.grantsRevokedAt = revokedAt
+        for (const listener of storageChangeListeners) {
+          listener({ grantsRevokedAt: { newValue: revokedAt } }, 'local')
+        }
+
+        // durable deletion landed and the site's tabs were told — exactly
+        // the propagation a healthy switch persist would have produced
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        expect(
+          dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+        ).toEqual({ result: { isConnected: false } })
+      } finally {
+        jest.useRealTimers()
+      }
+    })
   })
 
   describe('self-healing content-script injection', () => {
