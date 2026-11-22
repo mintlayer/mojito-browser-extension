@@ -30,8 +30,9 @@ test.each(['BTC', 'ML'])(
 
 test('renders the metadata icon of an ML-tickered token without native (spoof regression)', () => {
   // Previously the ML logo short-circuit suppressed the token's own icon;
-  // tokens must always render their metadata icon when available.
-  const iconUri = 'https://x/icon.png'
+  // tokens must always render their metadata icon when available. The
+  // provider delivers icons as in-memory blob: urls.
+  const iconUri = 'blob:chrome-extension://ext-id/ml-token-icon'
   const { getByTestId, queryByTestId } = render(
     <TokenIcon
       symbol="ML"
@@ -106,3 +107,24 @@ test('never renders a raw ipfs:// uri as the img src', () => {
   const img = screen.getByTestId('token-icon-image') as HTMLImageElement
   expect(img.src).not.toMatch(/^ipfs:/)
 })
+
+test.each([
+  'https://attacker.example/icon.png',
+  'http://attacker.example/icon.png',
+  'data:image/png;base64,AAAA',
+])(
+  'never hands a non-blob, non-ipfs icon uri to the browser (%s)',
+  (iconUri) => {
+    // The provider only ever delivers blob: urls. Any other uri — an
+    // issuer-supplied origin included — must not become a browser fetch:
+    // the procedural tile renders instead.
+    const { getByTestId, queryByTestId } = render(
+      <TokenIcon
+        symbol="USDC"
+        iconUri={iconUri}
+      />,
+    )
+    expect(queryByTestId('token-icon-image')).not.toBeInTheDocument()
+    expect(getByTestId('token-icon')).toHaveTextContent('$')
+  },
+)

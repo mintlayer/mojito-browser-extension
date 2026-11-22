@@ -91,8 +91,10 @@ jest.mock('@Contexts', () => {
             token_ticker: { string: 'CBEAT', hex: '0x4342454154' },
             number_of_decimals: 2,
             icon_uri: {
-              hex: '0x68747470733a2f2f65782e636f6d2f69636f6e2e706e67',
-              string: 'https://example.com/icon.png',
+              hex: '0x626c6f623a6368726f6d652d657874656e73696f6e3a2f2f6578742d69642f63626561742d69636f6e',
+              // the provider resolves metadata icons to in-memory blob: urls;
+              // raw issuer https uris never reach the UI
+              string: 'blob:chrome-extension://ext-id/cbeat-icon',
             },
           },
         },
@@ -152,7 +154,10 @@ describe('AssetPage', () => {
     const { getByTestId } = renderAt(TOKEN_ID)
 
     const img = getByTestId('token-icon-image')
-    expect(img).toHaveAttribute('src', 'https://example.com/icon.png')
+    expect(img).toHaveAttribute(
+      'src',
+      'blob:chrome-extension://ext-id/cbeat-icon',
+    )
   })
 
   it('renders an unknown token id without crashing', () => {

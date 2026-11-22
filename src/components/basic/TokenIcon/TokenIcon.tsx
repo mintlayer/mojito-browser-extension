@@ -33,13 +33,19 @@ const LOGOS: Record<string, ReactElement> = {
   ML: <MlLogo />,
 }
 
-// Safety net: the wallet provider normally resolves metadata icons to blob:
-// urls, but if an unresolved ipfs:// uri ever leaks through, map it to the
-// public gateway so the browser gets a fetchable https url.
-const toRenderableUri = (uri: string) =>
-  uri.startsWith('ipfs://')
-    ? `https://ipfs.io/ipfs/${uri.slice('ipfs://'.length)}`
-    : uri
+// Render contract: the wallet provider resolves metadata icons to in-memory
+// blob: urls (rendered verbatim), and an unresolved ipfs:// uri is mapped to
+// the public gateway as a safety net. ANY other uri — an issuer-supplied
+// https/http url included — is never handed to the browser: rendering a
+// token must not make the wallet fetch an arbitrary origin; the procedural
+// tile renders instead.
+const toRenderableUri = (uri: string): string | undefined => {
+  if (uri.startsWith('blob:')) return uri
+  if (uri.startsWith('ipfs://')) {
+    return `https://ipfs.io/ipfs/${uri.slice('ipfs://'.length)}`
+  }
+  return undefined
+}
 
 // Native BTC/ML assets get the real chain logos; tokens show their metadata
 // icon when available, otherwise the procedural design-system tile (unknown
@@ -57,7 +63,8 @@ const TokenIcon = ({
     c2: 'oklch(0.4 0.05 60)',
   }
 
-  const showImage = Boolean(iconUri) && !iconFailed && !logo
+  const renderableUri = iconUri ? toRenderableUri(iconUri) : undefined
+  const showImage = Boolean(renderableUri) && !iconFailed && !logo
 
   return (
     <div
@@ -74,7 +81,7 @@ const TokenIcon = ({
       {showImage ? (
         <img
           className={styles.tokenImage}
-          src={toRenderableUri(iconUri)}
+          src={renderableUri}
           alt={symbol}
           width={size}
           height={size}

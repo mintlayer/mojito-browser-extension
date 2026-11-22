@@ -121,6 +121,7 @@ describe('resolveTokenIcon', () => {
     headers: { get: () => 'image/png' },
     blob: async () => ({ size: 1024, type: 'image/png' }),
   })
+  const MAINNET_PROXY_ICON = 'https://explorer.mintlayer.org/api/ipfs-media/'
 
   beforeAll(() => {
     global.URL.createObjectURL = jest.fn(() => 'blob:mock-icon')
@@ -130,11 +131,20 @@ describe('resolveTokenIcon', () => {
     jest.restoreAllMocks()
   })
 
-  // fetch mock: bafymetadata* answers the metadata JSON, bafyicon* answers
-  // with image bytes
-  const mockGateways = ({ metadata, metadataFail = false, iconFail = false }) =>
+  // fetch mock: the gateways answer the metadata JSON for bafymetadata*;
+  // the explorer proxy AND the gateway race answer image bytes for bafyicon*
+  const mockGateways = ({
+    metadata,
+    metadataFail = false,
+    iconFail = false,
+    proxyFail = false,
+  }) =>
     jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
       const target = String(url)
+      if (target.includes('/api/ipfs-media/')) {
+        if (proxyFail) return { ok: false, status: 404 }
+        if (target.includes('bafyicon')) return okImage()
+      }
       if (target.includes('bafyicon')) {
         if (iconFail) throw new Error('signal timed out')
         return okImage()
@@ -146,22 +156,31 @@ describe('resolveTokenIcon', () => {
       throw new Error(`unexpected url ${target}`)
     })
 
-  it('resolves the metadata, fetches the icon bytes and returns a blob url', async () => {
+  const iconCallsOf = (fetchSpy) =>
+    fetchSpy.mock.calls.filter(([u]) => String(u).includes('bafyicon'))
+
+  it('resolves the icon through the first-party explorer proxy — gateways untouched on success', async () => {
     const fetchSpy = mockGateways({
       metadata: { tokenIcon: 'ipfs://bafyicon/logo.png' },
     })
 
-    const url = await resolveTokenIcon('ipfs://bafymetadata/doc.json')
+    const url = await resolveTokenIcon(
+      'ipfs://bafymetadata/doc.json',
+      'mainnet',
+    )
 
     expect(url).toBe('blob:mock-icon')
     expect(global.URL.createObjectURL).toHaveBeenCalled()
-    // 3 gateways raced for the metadata + 3 for the icon bytes
+    // 3 gateways raced for the metadata JSON…
     expect(
       fetchSpy.mock.calls.filter(([u]) => String(u).includes('bafymetadata')),
     ).toHaveLength(3)
-    expect(
-      fetchSpy.mock.calls.filter(([u]) => String(u).includes('bafyicon')),
-    ).toHaveLength(3)
+    // …but the icon bytes come from exactly ONE first-party proxy request
+    const iconCalls = iconCallsOf(fetchSpy)
+    expect(iconCalls).toHaveLength(1)
+    expect(String(iconCalls[0][0])).toBe(
+      `${MAINNET_PROXY_ICON}bafyicon/logo.png`,
+    )
   })
 
   it('is fully cached after the first resolution (zero gateway traffic)', async () => {
@@ -169,22 +188,45 @@ describe('resolveTokenIcon', () => {
       metadata: { tokenIcon: 'ipfs://bafyicon/logo.png' },
     })
 
-    await resolveTokenIcon('ipfs://bafymetadata/cached.json')
+    await resolveTokenIcon('ipfs://bafymetadata/cached.json', 'mainnet')
     const callsAfterFirst = fetchSpy.mock.calls.length
-    await resolveTokenIcon('ipfs://bafymetadata/cached.json')
+    await resolveTokenIcon('ipfs://bafymetadata/cached.json', 'mainnet')
 
     expect(fetchSpy.mock.calls.length).toBe(callsAfterFirst)
+  })
+
+  it('falls back to the public gateway race when the proxy fails', async () => {
+    const fetchSpy = mockGateways({
+      metadata: { tokenIcon: 'ipfs://bafyicon/i.png' },
+      proxyFail: true,
+    })
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/fallback.json', 'mainnet'),
+    ).resolves.toBe('blob:mock-icon')
+
+    // the proxy + the 3 raced public gateways answered the icon bytes
+    expect(iconCallsOf(fetchSpy)).toHaveLength(4)
+    // invariant: only first-party https urls are requested, never raw ipfs://
+    for (const [candidate] of fetchSpy.mock.calls) {
+      expect(String(candidate)).toMatch(/^https:\/\//)
+      expect(String(candidate)).not.toMatch(/^ipfs:\/\//)
+    }
   })
 
   it('races gateways — a dead one loses the race without blocking', async () => {
     const fetchSpy = mockGateways({
       metadata: { tokenIcon: 'ipfs://bafyicon/i.png' },
+      proxyFail: true,
     })
     // make the ipfs.io candidate fail for every request
     fetchSpy.mockImplementation(async (url) => {
       const target = String(url)
       if (target.startsWith('https://ipfs.io/')) {
         throw new Error('signal timed out')
+      }
+      if (target.includes('/api/ipfs-media/')) {
+        return { ok: false, status: 404 }
       }
       if (target.includes('bafyicon')) return okImage()
       if (target.includes('bafymetadata')) {
@@ -194,10 +236,10 @@ describe('resolveTokenIcon', () => {
     })
 
     await expect(
-      resolveTokenIcon('ipfs://bafymetadata/slow.json'),
+      resolveTokenIcon('ipfs://bafymetadata/slow.json', 'mainnet'),
     ).resolves.toBe('blob:mock-icon')
 
-    // invariant: only gateway https urls are requested, never raw ipfs://
+    // invariant: only first-party https urls are requested, never raw ipfs://
     for (const [candidate] of fetchSpy.mock.calls) {
       expect(String(candidate)).toMatch(/^https:\/\//)
       expect(String(candidate)).not.toMatch(/^ipfs:\/\//)
@@ -208,13 +250,70 @@ describe('resolveTokenIcon', () => {
     const fetchSpy = mockGateways({ metadata: { name: 'no icon here' } })
 
     await expect(
-      resolveTokenIcon('ipfs://bafymetadata/noicon.json'),
+      resolveTokenIcon('ipfs://bafymetadata/noicon.json', 'mainnet'),
     ).resolves.toBeUndefined()
     await expect(
-      resolveTokenIcon('ipfs://bafymetadata/noicon.json'),
+      resolveTokenIcon('ipfs://bafymetadata/noicon.json', 'mainnet'),
     ).resolves.toBeUndefined()
     // 3 gateways raced once for the metadata; the negative answer is cached
     expect(fetchSpy.mock.calls.length).toBe(3)
+  })
+
+  it('expires the negative no-icon cache after the TTL — the stale entry is dropped, not permanent poisoning', async () => {
+    const fetchSpy = mockGateways({ metadata: { name: 'no icon here' } })
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/noicon-ttl.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    // within the TTL the negative entry short-circuits silently
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/noicon-ttl.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+
+    // jump past NEGATIVE_CACHE_TTL_MS (5min): the entry must expire instead
+    // of short-circuiting forever. The metadata document is content-
+    // addressed and permanently cached by design, so the expired negative
+    // entry is dropped and the no-icon answer is re-derived locally — no
+    // additional gateway traffic and no session-long poisoning. The
+    // fetch-visible expiry contract is exercised end-to-end by the
+    // resolveNftImage negative-path test below.
+    const realNow = Date.now.bind(global.Date)
+    const nowSpy = jest
+      .spyOn(Date, 'now')
+      .mockImplementation(() => realNow() + 5 * 60 * 1000 + 1)
+    try {
+      await expect(
+        resolveTokenIcon('ipfs://bafymetadata/noicon-ttl.json', 'mainnet'),
+      ).resolves.toBeUndefined()
+      expect(fetchSpy).toHaveBeenCalledTimes(3)
+    } finally {
+      nowSpy.mockRestore()
+    }
+  })
+
+  it('does not cache implausible gateway junk — a 200 captive-portal answer cannot win the race permanently', async () => {
+    // Promise.any crowns ANY 200-with-parseable-JSON response; a captive
+    // portal / gateway error page must not poison the permanent
+    // metadataCache for the session.
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (url) => {
+        const target = String(url)
+        if (target.includes('bafymetadata')) {
+          return okJson({ portal: 'sign in', error: 'gateway overloaded' })
+        }
+        throw new Error(`unexpected url ${target}`)
+      })
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/junk.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/junk.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    // nothing cached: both resolutions race the 3 gateways again
+    expect(fetchSpy).toHaveBeenCalledTimes(6)
   })
 
   it('does not cache total gateway failures — the next refresh retries', async () => {
@@ -223,10 +322,10 @@ describe('resolveTokenIcon', () => {
       .mockRejectedValue(new Error('signal timed out'))
 
     await expect(
-      resolveTokenIcon('ipfs://bafymetadata/fail.json'),
+      resolveTokenIcon('ipfs://bafymetadata/fail.json', 'mainnet'),
     ).resolves.toBeUndefined()
     await expect(
-      resolveTokenIcon('ipfs://bafymetadata/fail.json'),
+      resolveTokenIcon('ipfs://bafymetadata/fail.json', 'mainnet'),
     ).resolves.toBeUndefined()
     // 3 gateway attempts per resolution, nothing cached
     expect(fetchSpy).toHaveBeenCalledTimes(6)
@@ -235,12 +334,142 @@ describe('resolveTokenIcon', () => {
   it('rejects non-ipfs metadata uris without any network request', async () => {
     const fetchSpy = jest.spyOn(global, 'fetch')
     await expect(
-      resolveTokenIcon('https://evil.example/metadata.json'),
+      resolveTokenIcon('https://evil.example/metadata.json', 'mainnet'),
     ).resolves.toBeUndefined()
     await expect(
-      resolveTokenIcon('http://localhost:8080/metadata.json'),
+      resolveTokenIcon('http://localhost:8080/metadata.json', 'mainnet'),
     ).resolves.toBeUndefined()
     expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('rejects metadata uris with unsafe cid paths — the issuer cannot shape gateway paths', async () => {
+    // '../' segments would normalize at fetch resolution
+    // (ipfs://bafybase/../../x → https://gateway/x), letting the issuer
+    // aim the metadata race at arbitrary paths on the fixed gateway hosts.
+    const fetchSpy = jest.spyOn(global, 'fetch')
+    await expect(
+      resolveTokenIcon('ipfs://bafybase/../../escalate', 'mainnet'),
+    ).resolves.toBeUndefined()
+    await expect(
+      resolveTokenIcon('ipfs://..%2fescape/doc.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('never fetches a non-gateway https icon_uri — the issuer cannot aim the wallet at an origin', async () => {
+    // the shared beforeAll mock accumulates across tests: only this test's
+    // calls matter here
+    global.URL.createObjectURL.mockClear()
+    const fetchSpy = mockGateways({
+      metadata: { icon_uri: 'https://attacker.example/icon.png' },
+    })
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/evil.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+
+    // only the 3 first-party gateway metadata requests happened; the
+    // attacker-chosen origin was never contacted, no icon was built
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+    for (const [candidate] of fetchSpy.mock.calls) {
+      expect(String(candidate)).not.toContain('attacker.example')
+    }
+    expect(global.URL.createObjectURL).not.toHaveBeenCalled()
+
+    // definitive no-usable-icon: negative-cached, the next refresh is silent
+    await resolveTokenIcon('ipfs://bafymetadata/evil.json', 'mainnet')
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+  })
+
+  it('rejects https icon urls that are not gateway spellings of ipfs content', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (url) => {
+        const target = String(url)
+        if (target.includes('bafymetadata')) {
+          return okJson({
+            icon: 'https://gateway.pinata.cloud/not-ipfs/icon.png',
+          })
+        }
+        throw new Error(`unexpected url ${target}`)
+      })
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/notgw.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    // only the metadata race ran; the icon url was never fetched
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+  })
+
+  it('converts gateway-hosted https icon urls into ipfs content behind the proxy', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (url) => {
+        const target = String(url)
+        if (
+          target ===
+          'https://lovelace.explorer.mintlayer.org/api/ipfs-media/bafyicon/pic.png'
+        ) {
+          return okImage()
+        }
+        if (target.includes('bafymetadata')) {
+          return okJson({ icon: 'https://ipfs.io/ipfs/bafyicon/pic.png' })
+        }
+        throw new Error(`unexpected url ${target}`)
+      })
+
+    const url = await resolveTokenIcon(
+      'ipfs://bafymetadata/gwhost.json',
+      'testnet',
+    )
+
+    expect(url).toBe('blob:mock-icon')
+    // 3 metadata gateway requests + exactly one proxy request: the
+    // issuer-named https url itself is never contacted directly
+    expect(fetchSpy).toHaveBeenCalledTimes(4)
+    expect(
+      fetchSpy.mock.calls.some(
+        ([u]) => String(u) === 'https://ipfs.io/ipfs/bafyicon/pic.png',
+      ),
+    ).toBe(false)
+  })
+
+  it('enforces the image content-type and size caps on icon bytes (proxy and gateway race)', async () => {
+    global.URL.createObjectURL.mockClear()
+    const wrongType = {
+      ok: true,
+      headers: { get: () => 'text/html' },
+      blob: async () => ({ size: 10, type: 'text/html' }),
+    }
+    const tooBig = {
+      ok: true,
+      headers: { get: () => 'image/png' },
+      blob: async () => ({ size: 5 * 1024 * 1024 + 1, type: 'image/png' }),
+    }
+    const mockAllIcons = (metadata, iconResponse) =>
+      jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
+        const target = String(url)
+        if (target.includes('bafymetadata')) return okJson(metadata)
+        return iconResponse
+      })
+
+    // the proxy AND every gateway answer text/html → no usable icon
+    mockAllIcons({ tokenIcon: 'ipfs://bafyicon/wrongtype.png' }, wrongType)
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/type.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    expect(global.URL.createObjectURL).not.toHaveBeenCalled()
+
+    // an oversized image is rejected on both legs as well
+    const fetchSpy = mockAllIcons(
+      { tokenIcon: 'ipfs://bafyicon/toobig.png' },
+      tooBig,
+    )
+    await expect(
+      resolveTokenIcon('ipfs://bafymetadata/size.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    expect(global.URL.createObjectURL).not.toHaveBeenCalled()
+    expect(fetchSpy).toHaveBeenCalled()
   })
 })
 
@@ -482,5 +711,33 @@ describe('resolveNftImage', () => {
     await resolveNftImage(uri, 'mainnet')
 
     expect(fetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('expires the negative cache after the TTL — a fresh fetch occurs instead of permanent poisoning', async () => {
+    // everything 404s: the failure is negative-cached with a TTL
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue({ ok: false, status: 404 })
+
+    const uri = 'ipfs://bafynegttl/cover.png'
+    await expect(resolveNftImage(uri, 'mainnet')).resolves.toBeNull()
+    // proxy + the 3 raced gateways
+    expect(fetchSpy).toHaveBeenCalledTimes(4)
+    // within the TTL the negative entry short-circuits — zero fetches
+    await expect(resolveNftImage(uri, 'mainnet')).resolves.toBeNull()
+    expect(fetchSpy).toHaveBeenCalledTimes(4)
+
+    // jump past NEGATIVE_CACHE_TTL_MS (5min): the entry expires and the
+    // next call fetches fresh instead of replaying the cached failure
+    const realNow = Date.now.bind(global.Date)
+    const nowSpy = jest
+      .spyOn(Date, 'now')
+      .mockImplementation(() => realNow() + 5 * 60 * 1000 + 1)
+    try {
+      await expect(resolveNftImage(uri, 'mainnet')).resolves.toBeNull()
+      expect(fetchSpy).toHaveBeenCalledTimes(8)
+    } finally {
+      nowSpy.mockRestore()
+    }
   })
 })

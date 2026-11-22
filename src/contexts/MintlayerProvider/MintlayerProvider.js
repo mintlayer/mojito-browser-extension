@@ -360,8 +360,10 @@ const MintlayerProvider = ({ value: propValue, children }) => {
 
           // Tokens have no on-chain icon: resolve it from the metadata
           // document (cached, non-fatal — no icon means the fallback tile).
+          // networkType picks the first-party explorer proxy host.
           const iconUri = await Mintlayer.resolveTokenIcon(
             tokensData[key].metadata_uri?.string,
+            networkType,
           ).catch(() => undefined)
 
           return [
