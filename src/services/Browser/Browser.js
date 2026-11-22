@@ -65,6 +65,60 @@ export const sendPopupResponse = ({
   }
 }
 
+// Mirrors the wallet's lock clock into chrome.storage.local ('walletLockAt'):
+// the service worker cannot read the wallet pages' localStorage, so this is
+// the only way it can enforce the 30-minute auto-lock when no wallet page is
+// open to observe the expiry. `value` is the lock timestamp (stamped on
+// pagehide and logout) or null (live session — any stale mirror must not
+// sweep grants while the wallet is unlocked).
+export const stampWalletLock = (value) => {
+  if (!storage?.local) return
+  try {
+    storage.local.set(
+      { walletLockAt: typeof value === 'number' ? value : null },
+      () => {
+        // Fire-and-forget: nothing sensible to do on a failed stamp — the
+        // next pagehide/logout/unlock re-stamps.
+        void runtime?.lastError
+      },
+    )
+  } catch {
+    /* storage unavailable — the next lock state change re-stamps */
+  }
+}
+
+// Tells the background the wallet was locked or logged out — via the manual
+// logout button or the 30-minute auto-lock expiry (AccountProvider is the
+// only place that can observe both; the service worker cannot read the
+// wallet pages' localStorage lock state). The background answers by
+// revoking EVERY dApp connection grant, exactly like a manual disconnect.
+export const notifyWalletLocked = () => {
+  if (!runtime) return
+  // One bounded re-send on any failure signal: an {error} reply from a live
+  // worker (persist failed) or runtime.lastError from a dead one (worker
+  // not yet restarted / context invalidated). A silently lost lock would
+  // otherwise let the dead grants answer until the persisted lock mirror
+  // expires them on the worker's next boot. The re-delivery is idempotent:
+  // revokeAllGrants answers duplicate sends from the durable snapshot.
+  let resent = false
+  const send = () => {
+    try {
+      runtime.sendMessage({ action: 'walletLocked' }, (response) => {
+        // reading lastError here acknowledges it for Chrome
+        const undelivered = runtime.lastError
+        if ((response?.error || undelivered) && !resent) {
+          resent = true
+          send()
+        }
+      })
+    } catch {
+      /* messaging unavailable — the persisted lock mirror still sweeps the
+         grants on the worker's next boot */
+    }
+  }
+  send()
+}
+
 // Tells the background the approval surface (side panel or popup) rendered
 // the request: it cancels the popup-fallback timer for that requestId.
 // Without this ack the background assumes the panel did not display the

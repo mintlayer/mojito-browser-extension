@@ -175,4 +175,206 @@ describe('Browser', () => {
       expect(chromeMock.runtime.sendMessage).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('notifyWalletLocked', () => {
+    it('sends exactly the walletLocked action', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', sendMessage: jest.fn() },
+        storage: { local: { remove: jest.fn() } },
+      }
+      global.chrome = chromeMock
+
+      const { notifyWalletLocked } = loadBrowserModule()
+
+      notifyWalletLocked()
+
+      expect(chromeMock.runtime.sendMessage).toHaveBeenCalledTimes(1)
+      const [payload, callback] = chromeMock.runtime.sendMessage.mock.calls[0]
+      // exactly { action }: no extra fields
+      expect(payload).toEqual({ action: 'walletLocked' })
+      expect(callback).toEqual(expect.any(Function))
+
+      // the reply callback must tolerate a lastError (worker dead / no
+      // responder alive): that is exactly the re-send trigger, and it stays
+      // bounded at one
+      chromeMock.runtime.lastError = { message: 'No responder' }
+      expect(() => callback()).not.toThrow()
+    })
+
+    it('is a no-op when no extension APIs are available', () => {
+      const { notifyWalletLocked } = loadBrowserModule()
+
+      expect(() => notifyWalletLocked()).not.toThrow()
+    })
+
+    it('re-sends once when the background reports a failed revocation', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', sendMessage: jest.fn() },
+        storage: { local: { remove: jest.fn() } },
+      }
+      global.chrome = chromeMock
+
+      const { notifyWalletLocked } = loadBrowserModule()
+
+      chromeMock.runtime.sendMessage.mockImplementation((payload, cb) => {
+        if (chromeMock.runtime.sendMessage.mock.calls.length === 1) {
+          cb({ error: 'quota exceeded' })
+        } else {
+          cb({ result: { revoked: 2 } })
+        }
+      })
+
+      notifyWalletLocked()
+
+      expect(chromeMock.runtime.sendMessage).toHaveBeenCalledTimes(2)
+      // the re-send is the same action, nothing else attached
+      expect(chromeMock.runtime.sendMessage.mock.calls[1][0]).toEqual({
+        action: 'walletLocked',
+      })
+    })
+
+    it('does not re-send when the background answers success', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', sendMessage: jest.fn() },
+        storage: { local: { remove: jest.fn() } },
+      }
+      global.chrome = chromeMock
+
+      const { notifyWalletLocked } = loadBrowserModule()
+
+      chromeMock.runtime.sendMessage.mockImplementation((payload, cb) => {
+        cb({ result: { revoked: 2 } })
+      })
+
+      notifyWalletLocked()
+
+      expect(chromeMock.runtime.sendMessage).toHaveBeenCalledTimes(1)
+    })
+
+    it('stops after one retry when the background keeps failing', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', sendMessage: jest.fn() },
+        storage: { local: { remove: jest.fn() } },
+      }
+      global.chrome = chromeMock
+
+      const { notifyWalletLocked } = loadBrowserModule()
+
+      chromeMock.runtime.sendMessage.mockImplementation((payload, cb) => {
+        cb({ error: 'quota exceeded' })
+      })
+
+      notifyWalletLocked()
+
+      // bounded: one automatic re-send, then the persisted lock mirror is
+      // the remaining safety net (sweep on the worker's next boot)
+      expect(chromeMock.runtime.sendMessage).toHaveBeenCalledTimes(2)
+    })
+
+    it('stops after one re-send when every delivery hits runtime.lastError', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', sendMessage: jest.fn(), lastError: null },
+        storage: { local: { remove: jest.fn() } },
+      }
+      global.chrome = chromeMock
+
+      const { notifyWalletLocked } = loadBrowserModule()
+
+      // every delivery reports undeliverable (worker keeps dying before the
+      // retry lands) — the re-send must stay bounded at one
+      chromeMock.runtime.sendMessage.mockImplementation((payload, cb) => {
+        chromeMock.runtime.lastError = { message: 'No responder' }
+        cb()
+      })
+
+      notifyWalletLocked()
+
+      expect(chromeMock.runtime.sendMessage).toHaveBeenCalledTimes(2)
+    })
+
+    it('swallows sendMessage throwing (messaging unavailable)', () => {
+      const chromeMock = {
+        runtime: {
+          id: 'test-id',
+          sendMessage: jest.fn(() => {
+            throw new Error('Extension context invalidated')
+          }),
+        },
+        storage: { local: { remove: jest.fn() } },
+      }
+      global.chrome = chromeMock
+
+      const { notifyWalletLocked } = loadBrowserModule()
+
+      expect(() => notifyWalletLocked()).not.toThrow()
+      expect(chromeMock.runtime.sendMessage).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('stampWalletLock', () => {
+    it('writes the lock timestamp to chrome.storage.local', () => {
+      const set = jest.fn()
+      const chromeMock = {
+        runtime: { id: 'test-id', lastError: null },
+        storage: { local: { set } },
+      }
+      global.chrome = chromeMock
+
+      const { stampWalletLock } = loadBrowserModule()
+
+      stampWalletLock(1700000000000)
+
+      expect(set).toHaveBeenCalledTimes(1)
+      const [payload, callback] = set.mock.calls[0]
+      // exactly { walletLockAt }: no extra fields
+      expect(payload).toEqual({ walletLockAt: 1700000000000 })
+      expect(callback).toEqual(expect.any(Function))
+
+      // the fire-and-forget reply callback must tolerate a lastError
+      // response (nothing sensible to do on a failed stamp)
+      chromeMock.runtime.lastError = { message: 'Storage unavailable' }
+      expect(() => callback()).not.toThrow()
+    })
+
+    it('clears the mirror with null when the session is live', () => {
+      const set = jest.fn()
+      global.chrome = {
+        runtime: { id: 'test-id', lastError: null },
+        storage: { local: { set } },
+      }
+
+      const { stampWalletLock } = loadBrowserModule()
+
+      stampWalletLock(null)
+
+      expect(set).toHaveBeenCalledWith(
+        { walletLockAt: null },
+        expect.any(Function),
+      )
+    })
+
+    it('is a no-op when no storage APIs are available', () => {
+      const { stampWalletLock } = loadBrowserModule()
+
+      expect(() => stampWalletLock(123)).not.toThrow()
+    })
+
+    it('swallows storage throwing (storage unavailable)', () => {
+      global.chrome = {
+        runtime: { id: 'test-id', lastError: null },
+        storage: {
+          local: {
+            set: jest.fn(() => {
+              throw new Error('storage context gone')
+            }),
+          },
+        },
+      }
+
+      const { stampWalletLock } = loadBrowserModule()
+
+      expect(() => stampWalletLock(123)).not.toThrow()
+      expect(global.chrome.storage.local.set).toHaveBeenCalledTimes(1)
+    })
+  })
 })

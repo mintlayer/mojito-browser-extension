@@ -1,6 +1,8 @@
 /* eslint-disable no-undef */
 /* global chrome */
 
+import { LOGIN_TIMEOUT_MINUTES } from '../utils/Constants/WalletLifecycle'
+
 /**
  * SECURITY CONTRACT — dApp connections are PERMISSION-LEVEL AUTHORIZATIONS.
  *
@@ -8,9 +10,13 @@
  *   with a connect result) and stored per-origin in `connectedSites`.
  * - A grant is revoked IMMEDIATELY and durably on disconnect — from the
  *   dApp itself (`disconnect` method), from the wallet settings
- *   (`disconnectSite`), or on wallet lock/logout — and every revocation is
- *   persisted to storage and PROPAGATED to the site's open tabs
- *   (notifyOriginRevoked), so no page keeps acting on a dead grant.
+ *   (`disconnectSite`), or on wallet lock/logout — the wallet UI announces
+ *   both with the `walletLocked` action and mirrors its lock clock to
+ *   chrome.storage.local ('walletLockAt'), which the worker sweeps against
+ *   even when no wallet page is open to observe the 30-minute auto-lock
+ *   (the worker cannot read the wallet pages' localStorage) — and every
+ *   revocation is persisted to storage and PROPAGATED to the site's open
+ *   tabs (notifyOriginRevoked), so no page keeps acting on a dead grant.
  * - A grant authorizes ONLY the network it was approved on. The wallet UI
  *   publishes its active network to chrome.storage.local ('networkType' —
  *   the worker cannot read the wallet pages' localStorage); switching
@@ -59,6 +65,25 @@ export const initBackground = () => {
   // not revert the adopted value — reverting would un-sweep grants the
   // adoption already revoked.
   let networkAdopted = false
+  // The wallet UI mirrors its lock clock here ('walletLockAt' in
+  // chrome.storage.local — ms epoch): stamped on pagehide/logout, cleared on
+  // unlock/resume. The worker cannot read the wallet pages' localStorage, so
+  // without this mirror the 30-minute auto-lock would fire only when a LIVE
+  // wallet page happens to re-check — with no page open, locked-wallet
+  // grants would keep answering checkConnection/getSession forever, across
+  // worker and browser restarts.
+  let walletLockAt = null
+  // Set once the storage.onChanged listener has adopted a mirror write: a
+  // boot snapshot landing afterwards is OLDER (read before the write) and
+  // must not revert the adopted value — a stale null would lose the pagehide
+  // stamp for this worker's lifetime, a stale expired value would false-sweep
+  // an unlocked wallet's live grants at boot.
+  let lockMirrorAdopted = false
+  // Same expiry semantics as AccountProvider.checkAccountLockState: whole
+  // minutes since the stamp, rounded up.
+  const isLockMirrorExpired = (value) =>
+    typeof value === 'number' &&
+    Math.ceil((Date.now() - value) / 60000) >= LOGIN_TIMEOUT_MINUTES
   const pendingResponses = new Map()
 
   // Open the wallet in the browser side panel when the toolbar icon is clicked
@@ -207,6 +232,90 @@ export const initBackground = () => {
     })
   }
 
+  // Revokes EVERY grant — the walletLocked action and the lock-mirror sweep
+  // share this path, with the same propagation as per-site disconnects:
+  // durable deletion + notifyOriginRevoked to the sites' open tabs. The
+  // persist is retried ONCE after a short backoff before reporting failure:
+  // a silently lost revocation would reload the grants on the next boot.
+  const REVOCATION_PERSIST_RETRY_MS = 250
+  // True from the moment grants are dropped from the in-memory map until the
+  // durable revocation is CONFIRMED by a successful persist. While set, the
+  // storage snapshot still holds the grants: a re-send (or sweep) must
+  // re-attempt persistence against it instead of answering {revoked: 0}
+  // success for work that never landed.
+  let revocationPending = false
+  const persistRevocation = (origins, done, attempt) => {
+    api.storage.local.set({ connectedSites }, () => {
+      if (api.runtime.lastError) {
+        if (attempt === 0) {
+          setTimeout(
+            () => persistRevocation(origins, done, 1),
+            REVOCATION_PERSIST_RETRY_MS,
+          )
+          return
+        }
+        console.error('[Mintlayer] Storage set error:', api.runtime.lastError)
+        done?.({ error: api.runtime.lastError.message })
+        // revocationPending stays set: the snapshot still holds the grants
+        return
+      }
+      revocationPending = false
+      for (const origin of origins) notifyOriginRevoked(origin)
+      done?.({ result: { revoked: origins.length } })
+    })
+  }
+  const revokeOrigins = (origins, done) => {
+    for (const origin of origins) {
+      delete connectedSites[origin]
+    }
+    revocationPending = true
+    persistRevocation(origins, done, 0)
+  }
+  const revokeAllGrants = (done) => {
+    const origins = Object.keys(connectedSites)
+    if (origins.length) {
+      revokeOrigins(origins, done)
+      return
+    }
+
+    // Empty in-memory map: a genuine no-op — UNLESS a previous attempt
+    // emptied the map without ever persisting (both writes failed, or the
+    // worker died mid-persist). Then the storage snapshot still holds the
+    // grants and a re-send must re-attempt the whole revocation against it.
+    if (!revocationPending) {
+      done?.({ result: { revoked: 0 } })
+      return
+    }
+    api.storage.local.get(['connectedSites'], (data) => {
+      if (api.runtime.lastError) {
+        done?.({ error: api.runtime.lastError.message })
+        return
+      }
+      // Read the durable keys WITHOUT re-hydrating the in-memory map: a
+      // fresh connect approval completing while this get was in flight must
+      // not be clobbered by the stale snapshot. Deleting absent keys is a
+      // no-op, and the whole-map persist preserves the newer grant.
+      const durable = Object.keys(data.connectedSites || {})
+      if (!durable.length) {
+        // the failure self-healed elsewhere (e.g. another sweep persisted
+        // the same removal): nothing left to revoke
+        revocationPending = false
+        done?.({ result: { revoked: 0 } })
+        return
+      }
+      revokeOrigins(durable, done)
+    })
+  }
+
+  // Enforcement entry point for an expired lock mirror: revokes every grant
+  // the moment the worker observes the 30-minute auto-lock (at boot, on a
+  // mirror write, or on any inbound message) even though no wallet page is
+  // open to announce it — exactly the walletLocked lifecycle.
+  const sweepExpiredLockMirror = () => {
+    if (!isLockMirrorExpired(walletLockAt)) return
+    revokeAllGrants()
+  }
+
   // Load connected sites from storage. Messages arriving before the load
   // completes are queued: acting on a half-loaded session map would tell
   // already-connected sites they are NOT_CONNECTED.
@@ -220,54 +329,68 @@ export const initBackground = () => {
     }
     messageQueue.length = 0
   }
-  api.storage.local.get(['connectedSites', 'networkType'], (data) => {
-    if (api.runtime.lastError) {
-      console.error('[Mintlayer] Storage get error:', api.runtime.lastError)
-    } else {
-      connectedSites = data.connectedSites || {}
-      if (!networkAdopted) {
-        activeNetwork = normalizeNetwork(data.networkType)
-      }
-      // A switch that happened while this worker was dead still left grants
-      // approved on the OLD network in storage: revoke them before any
-      // queued message is answered. Runs on whatever snapshot loaded, so a
-      // stale snapshot can still only shrink the map, never answer from it.
-      revokeGrantsFromOtherNetworks()
-    }
-    // one-time cleanup of the pre-window-keyed pending request
-    api.storage.local.remove('pendingRequest')
-    // Sweep orphan `pendingRequest:<windowId>` keys left behind when the
-    // service worker was killed before an approval resolved. The key list
-    // is snapshotted BEFORE the queued messages drain, so a live approval
-    // (which can only start after the drain) can never be swept.
-    if (typeof api.storage.local.getKeys === 'function') {
-      api.storage.local.getKeys((keys) => {
-        if (api.runtime.lastError) {
-          console.error(
-            '[Mintlayer] Storage getKeys error:',
-            api.runtime.lastError,
-          )
-        } else {
-          const orphanKeys = keys.filter((key) =>
-            key.startsWith('pendingRequest:'),
-          )
-          if (orphanKeys.length) {
-            api.storage.local.remove(orphanKeys, () => {
-              if (api.runtime.lastError) {
-                console.error(
-                  '[Mintlayer] Storage remove error:',
-                  api.runtime.lastError,
-                )
-              }
-            })
-          }
+  api.storage.local.get(
+    ['connectedSites', 'networkType', 'walletLockAt'],
+    (data) => {
+      if (api.runtime.lastError) {
+        console.error('[Mintlayer] Storage get error:', api.runtime.lastError)
+      } else {
+        connectedSites = data.connectedSites || {}
+        // Same adoption rule as the network: a live mirror write landing
+        // while this read was in flight is NEWER than any snapshot — the
+        // stale boot value must not revert it.
+        if (!lockMirrorAdopted) {
+          walletLockAt =
+            typeof data.walletLockAt === 'number' ? data.walletLockAt : null
         }
+        if (!networkAdopted) {
+          activeNetwork = normalizeNetwork(data.networkType)
+        }
+        // A switch that happened while this worker was dead still left grants
+        // approved on the OLD network in storage: revoke them before any
+        // queued message is answered. Runs on whatever snapshot loaded, so a
+        // stale snapshot can still only shrink the map, never answer from it.
+        revokeGrantsFromOtherNetworks()
+        // Same for a lock that expired while NO wallet page was open to
+        // announce it: the mirror is the only witness — sweep before any
+        // queued message is answered.
+        sweepExpiredLockMirror()
+      }
+      // one-time cleanup of the pre-window-keyed pending request
+      api.storage.local.remove('pendingRequest')
+      // Sweep orphan `pendingRequest:<windowId>` keys left behind when the
+      // service worker was killed before an approval resolved. The key list
+      // is snapshotted BEFORE the queued messages drain, so a live approval
+      // (which can only start after the drain) can never be swept.
+      if (typeof api.storage.local.getKeys === 'function') {
+        api.storage.local.getKeys((keys) => {
+          if (api.runtime.lastError) {
+            console.error(
+              '[Mintlayer] Storage getKeys error:',
+              api.runtime.lastError,
+            )
+          } else {
+            const orphanKeys = keys.filter((key) =>
+              key.startsWith('pendingRequest:'),
+            )
+            if (orphanKeys.length) {
+              api.storage.local.remove(orphanKeys, () => {
+                if (api.runtime.lastError) {
+                  console.error(
+                    '[Mintlayer] Storage remove error:',
+                    api.runtime.lastError,
+                  )
+                }
+              })
+            }
+          }
+          drainMessageQueue()
+        })
+      } else {
         drainMessageQueue()
-      })
-    } else {
-      drainMessageQueue()
-    }
-  })
+      }
+    },
+  )
 
   // Live network switch: the wallet UI persists the new network to
   // chrome.storage.local ('networkType'). Revoke every grant approved on
@@ -275,12 +398,27 @@ export const initBackground = () => {
   // addresses even before their next request is re-validated.
   if (api.storage.onChanged?.addListener) {
     api.storage.onChanged.addListener((changes, area) => {
-      if (area !== 'local' || !changes.networkType) return
-      const next = normalizeNetwork(changes.networkType.newValue)
-      if (next === activeNetwork) return
-      activeNetwork = next
-      networkAdopted = true
-      revokeGrantsFromOtherNetworks()
+      if (area !== 'local') return
+      if (changes.networkType) {
+        const next = normalizeNetwork(changes.networkType.newValue)
+        if (next !== activeNetwork) {
+          activeNetwork = next
+          networkAdopted = true
+          revokeGrantsFromOtherNetworks()
+        }
+      }
+      // Lock-mirror writes land here too: pagehide/logout stamp it,
+      // unlock/resume clears it. The write is ADOPTED (newer than any boot
+      // snapshot in flight), and an already-expired value revokes
+      // immediately; a fresh value just updates the in-memory clock.
+      if (changes.walletLockAt) {
+        walletLockAt =
+          typeof changes.walletLockAt.newValue === 'number'
+            ? changes.walletLockAt.newValue
+            : null
+        lockMirrorAdopted = true
+        sweepExpiredLockMirror()
+      }
     })
   }
 
@@ -814,6 +952,19 @@ export const initBackground = () => {
       return true
     }
 
+    // Wallet lock/logout (manual logout or the 30-minute auto-lock expiry,
+    // both observed by AccountProvider): revoke EVERY grant. This is the
+    // lifecycle the revocation contract promises — a locked wallet must not
+    // keep answering dApps on pre-lock grants. Gated to the wallet's own
+    // pages like every other wallet-UI action. The reply reports failure so
+    // the wallet can re-send: a silently lost revocation would reload the
+    // grants on the next boot.
+    if (message.action === 'walletLocked') {
+      if (!isFromExtensionPage(sender)) return false
+      revokeAllGrants(sendResponse)
+      return true
+    }
+
     if (!message.method) return false
 
     // A sender id different from ours can only be ANOTHER extension's page
@@ -964,6 +1115,10 @@ export const initBackground = () => {
   // session map is loaded — answering a "connect" against a half-loaded map
   // would tell already-connected sites they are not connected.
   api.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // Piggyback lock enforcement (no alarms permission): any message is
+    // exactly the moment a stale grant could be used, so a mirror expiry
+    // observed while this worker stays alive revokes BEFORE it is answered.
+    sweepExpiredLockMirror()
     if (!connectedSitesLoaded) {
       messageQueue.push([message, sender, sendResponse])
       return true

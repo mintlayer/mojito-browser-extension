@@ -1103,6 +1103,671 @@ describe('background service worker', () => {
     })
   })
 
+  // ── lock/logout revocation (walletLocked) ──
+  // The revocation contract promises that wallet lock/logout revokes every
+  // grant, but the lock state lives in the wallet pages' localStorage —
+  // unreadable from the worker. AccountProvider announces both lifecycle
+  // events (manual logout and the 30-minute auto-lock expiry) with the
+  // `walletLocked` action; the worker must then revoke ALL grants with the
+  // same propagation as disconnectSite: durable deletion + tab broadcast.
+  describe('lock/logout revocation (walletLocked)', () => {
+    const otherDappSender = {
+      id: 'some-site',
+      origin: 'https://other.example',
+      url: 'https://other.example/page',
+    }
+
+    const connectOrigin = (sender, requestId) => {
+      dispatch({ requestId, method: 'connect', params: {} }, sender)
+      // the approval is keyed by the window the connect opened for it
+      const windowId = createdWindows[createdWindows.length - 1].id
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(windowId),
+          origin: sender.origin,
+          windowId,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+    }
+
+    it('revokes every grant and broadcasts MOJITO_SESSION_REVOKED for each origin', () => {
+      connectOrigin(dappSender, 'r1')
+      connectOrigin(otherDappSender, 'r2')
+      expect(Object.keys(storageData.connectedSites)).toHaveLength(2)
+
+      const { reply } = dispatch({ action: 'walletLocked' }, extensionSender)
+
+      expect(reply.current.result).toEqual({ revoked: 2 })
+      // durably gone, not just dropped from memory
+      expect(storageData.connectedSites).toEqual({})
+      // every tab is notified for EVERY revoked origin, so no page keeps
+      // acting on a dead grant after the user locked the wallet
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(4)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://other.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://other.example' },
+        expect.any(Function),
+      )
+    })
+
+    it('a locked wallet stops answering the dApp: checkConnection/getSession refuse and connect needs a fresh approval', () => {
+      connectOrigin(dappSender, 'r1')
+      dispatch({ action: 'walletLocked' }, extensionSender)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalled()
+      global.chrome.tabs.sendMessage.mockClear()
+
+      const check = dispatch(
+        { requestId: 'c1', method: 'checkConnection', params: {} },
+        dappSender,
+      )
+      expect(check.reply.current).toEqual({
+        result: { isConnected: false },
+      })
+
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current).toEqual({ result: null })
+
+      // and a reconnect is NOT shortcut by the revoked grant: a fresh
+      // approval flow opens instead
+      global.chrome.tabs.sendMessage.mockClear()
+      const reconnect = dispatch(
+        { requestId: 'r3', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
+      expect(createdWindows).toHaveLength(2)
+      expect(storageData['pendingRequest:701']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+      })
+      // no revocation broadcast can be forged this way either
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('ignores walletLocked forged from a web page sender (extension-page gate)', () => {
+      connectOrigin(dappSender, 'r1')
+
+      const forged = dispatch({ action: 'walletLocked' }, dappSender)
+
+      // no answer, no revocation, no broadcast: a website must never be
+      // able to revoke other sites' grants
+      expect(forged.reply.current).toBeUndefined()
+      expect(forged.keptOpen).toBe(false)
+      expect(storageData.connectedSites['https://bridge.example']).toBeDefined()
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('answers revoked: 0 with no broadcast when nothing is connected', () => {
+      const { reply } = dispatch({ action: 'walletLocked' }, extensionSender)
+
+      expect(reply.current.result).toEqual({ revoked: 0 })
+      expect(global.chrome.tabs.query).not.toHaveBeenCalled()
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('answers failure only after the retried persist also fails', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        let setCalls = 0
+        global.chrome.storage.local.set = (obj, cb) => {
+          setCalls += 1
+          Object.assign(storageData, JSON.parse(JSON.stringify(obj)))
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+
+        const { reply } = dispatch({ action: 'walletLocked' }, extensionSender)
+
+        // first attempt failed: the answer waits for the retried write
+        expect(reply.current).toBeUndefined()
+        jest.advanceTimersByTime(250)
+        global.chrome.storage.local.set = originalSet
+
+        // failed persistence must NOT be answered with success and must not
+        // claim revocation to the sites' tabs
+        expect(setCalls).toBe(2)
+        expect(reply.current.error).toBe('quota exceeded')
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a retried persist that succeeds still revokes and broadcasts', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        let setCalls = 0
+        global.chrome.storage.local.set = (obj, cb) => {
+          setCalls += 1
+          Object.assign(storageData, JSON.parse(JSON.stringify(obj)))
+          if (setCalls === 1) {
+            global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+
+        const { reply } = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        global.chrome.storage.local.set = originalSet
+
+        expect(setCalls).toBe(2)
+        expect(reply.current.result).toEqual({ revoked: 1 })
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a re-send after total persist failure re-attempts against storage (success is never faked)', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        // both write attempts fail WITHOUT landing: storage keeps the grant,
+        // the memory map is emptied — exactly the state a lost revocation
+        // leaves behind
+        global.chrome.storage.local.set = (obj, cb) => {
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+
+        const first = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        expect(first.reply.current.error).toBe('quota exceeded')
+        // durable snapshot still holds the grant; the memory map does not
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toBeDefined()
+
+        // worker recovers; the wallet re-sends (its reply was an error)
+        global.chrome.storage.local.set = originalSet
+        const second = dispatch({ action: 'walletLocked' }, extensionSender)
+
+        // NOT {revoked: 0}: the re-send re-attempted persistence against the
+        // durable snapshot and actually deleted the grants
+        expect(second.reply.current).toEqual({ result: { revoked: 1 } })
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a re-send answers the error when the durable re-read itself fails', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        global.chrome.storage.local.set = (obj, cb) => {
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+        const first = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        expect(first.reply.current.error).toBe('quota exceeded')
+        global.chrome.storage.local.set = originalSet
+
+        const originalGet = global.chrome.storage.local.get
+        global.chrome.storage.local.get = (keys, cb) => {
+          if (
+            Array.isArray(keys) &&
+            keys.length === 1 &&
+            keys[0] === 'connectedSites'
+          ) {
+            // the re-read that would recover the durable snapshot fails too
+            global.chrome.runtime.lastError = { message: 'storage unavailable' }
+            cb({})
+            delete global.chrome.runtime.lastError
+            return
+          }
+          originalGet(keys, cb)
+        }
+
+        const second = dispatch({ action: 'walletLocked' }, extensionSender)
+        global.chrome.storage.local.get = originalGet
+
+        expect(second.reply.current.error).toBe('storage unavailable')
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a re-send clears the pending flag when the durable snapshot self-healed', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        global.chrome.storage.local.set = (obj, cb) => {
+          // fails WITHOUT landing; the durable copy is removed below by
+          // another writer (e.g. a network sweep persisting the same removal)
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+        const first = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        expect(first.reply.current.error).toBe('quota exceeded')
+        global.chrome.storage.local.set = originalSet
+
+        delete storageData.connectedSites
+
+        const second = dispatch({ action: 'walletLocked' }, extensionSender)
+        expect(second.reply.current).toEqual({ result: { revoked: 0 } })
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a re-send does not clobber a grant approved while the durable re-read was in flight', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        global.chrome.storage.local.set = (obj, cb) => {
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+        const first = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        expect(first.reply.current.error).toBe('quota exceeded')
+        global.chrome.storage.local.set = originalSet
+
+        // defer the durable re-read: while it is in flight, a SECOND site
+        // completes a fresh connect approval (its grant lands in storage)
+        let resolveReRead
+        const realGet = global.chrome.storage.local.get
+        global.chrome.storage.local.get = (keys, cb) => {
+          if (
+            Array.isArray(keys) &&
+            keys.length === 1 &&
+            keys[0] === 'connectedSites'
+          ) {
+            resolveReRead = () =>
+              cb({
+                connectedSites: {
+                  // the STALE durable snapshot: only the pre-lock grant
+                  'https://bridge.example': { ...sessionData, timestamp: 1 },
+                },
+              })
+            return
+          }
+          realGet(keys, cb)
+        }
+        const second = dispatch({ action: 'walletLocked' }, extensionSender)
+        expect(second.reply.current).toBeUndefined()
+
+        const freshSender = {
+          id: 'some-site',
+          origin: 'https://fresh.example',
+          url: 'https://fresh.example/page',
+        }
+        dispatch(
+          { requestId: 'r2', method: 'connect', params: {} },
+          freshSender,
+        )
+        const freshWindowId = createdWindows.at(-1).id
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: internalIdFor(freshWindowId),
+            origin: 'https://fresh.example',
+            windowId: freshWindowId,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(
+          storageData.connectedSites['https://fresh.example'],
+        ).toBeDefined()
+
+        // the stale snapshot lands: the re-send must revoke the stale origin
+        // and persist the whole CURRENT map — the newer grant survives
+        // (rehydrating the snapshot used to erase it from memory AND storage)
+        resolveReRead()
+
+        expect(second.reply.current).toEqual({ result: { revoked: 1 } })
+        expect(
+          storageData.connectedSites['https://fresh.example'],
+        ).toBeDefined()
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toBeUndefined()
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+  })
+
+  // ── lock-mirror sweep (auto-lock with no wallet page open) ──
+  // The 30-minute auto-lock previously fired only when a LIVE wallet page
+  // re-checked its registry: with no page open, persisted grants kept
+  // answering checkConnection/getSession indefinitely — across worker AND
+  // browser restarts. The wallet now mirrors its lock clock to
+  // chrome.storage.local ('walletLockAt', stamped on pagehide/logout), and
+  // the worker sweeps grants whenever it observes an expired mirror: at
+  // boot, on the storage write, and on any inbound message.
+  describe('lock-mirror sweep (auto-lock with no wallet page open)', () => {
+    const expiredMirror = () => Date.now() - 31 * 60 * 1000
+    const freshMirror = () => Date.now() - 5 * 60 * 1000
+
+    const connectAndApprove = () => {
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+    }
+
+    // boots a fresh worker on top of pre-seeded storage (the boot snapshot
+    // path: mirror + grants land while the worker was dead)
+    const bootWithMirror = (walletLockAt, sites = {}) => {
+      messageListeners.length = 0
+      storageChangeListeners.length = 0
+      windowRemovedListeners.length = 0
+      createdWindows.length = 0
+      global.chrome.tabs.query.mockClear()
+      global.chrome.tabs.sendMessage.mockClear()
+      storageData.networkType = 'testnet'
+      storageData.connectedSites = sites
+      if (walletLockAt == null) delete storageData.walletLockAt
+      else storageData.walletLockAt = walletLockAt
+      loadBackground()
+    }
+
+    // Boots a worker whose boot get is held open: the callback only lands
+    // when the test resolves it, so a live mirror write can interleave —
+    // the exact interleaving the adoption guard must survive. `sites` seeds
+    // the persisted grants (the stale snapshot typically mirrors them).
+    const bootWithDeferredSnapshot = (staleSnapshot, sites = {}) => {
+      let resolveBootGet
+      const realGet = global.chrome.storage.local.get
+      global.chrome.storage.local.get = (keys, cb) => {
+        // defer ONLY the boot read (its key trio is unique to the boot)
+        if (Array.isArray(keys) && keys.includes('walletLockAt')) {
+          resolveBootGet = () => cb(staleSnapshot)
+          return
+        }
+        realGet(keys, cb)
+      }
+      bootWithMirror(null, sites)
+      global.chrome.storage.local.get = realGet
+      return resolveBootGet
+    }
+
+    // The boot read and a live mirror write can interleave: storage.onChanged
+    // adopts a write while the boot get is still in flight, then the boot
+    // callback lands with the OLDER snapshot. The snapshot must never revert
+    // the adopted value: a stale null would lose the pagehide stamp for this
+    // worker's lifetime (grants answer a locked wallet until restart), and a
+    // stale expired value would false-sweep an unlocked wallet's live grants
+    // at boot.
+    it('a boot snapshot landing after an adopted stamp cannot revert it to null', () => {
+      jest.useFakeTimers()
+      try {
+        jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+        const grant = {
+          'https://bridge.example': { ...sessionData, timestamp: 1 },
+        }
+        const resolveBootGet = bootWithDeferredSnapshot(
+          {
+            connectedSites: grant, // OLDER snapshot: read before the stamp
+            networkType: 'testnet',
+            walletLockAt: null,
+          },
+          grant,
+        )
+
+        // the pagehide stamp lands live while the boot get is in flight
+        const stampedAt = Date.now() - 5 * 60 * 1000
+        storageData.walletLockAt = stampedAt
+        for (const listener of storageChangeListeners) {
+          listener({ walletLockAt: { newValue: stampedAt } }, 'local')
+        }
+        // fresh mirror: nothing swept yet
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+
+        // 36 minutes pass with no wallet page open; then the stale (null)
+        // snapshot lands
+        jest.setSystemTime(new Date('2026-01-01T00:36:00Z'))
+        resolveBootGet()
+
+        // the ADOPTED stamp survives boot — it is expired by now, so the
+        // grants are swept exactly as if no boot read had been in flight
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        const check = dispatch(
+          { requestId: 'c1', method: 'checkConnection', params: {} },
+          dappSender,
+        )
+        expect(check.reply.current).toEqual({ result: { isConnected: false } })
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a boot snapshot landing after an adopted clear cannot false-sweep an unlocked wallet', () => {
+      const grant = {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      }
+      const resolveBootGet = bootWithDeferredSnapshot(
+        {
+          connectedSites: grant, // OLDER snapshot: mirror stamped before the unlock
+          networkType: 'testnet',
+          walletLockAt: Date.now() - 40 * 60 * 1000,
+        },
+        grant,
+      )
+
+      // unlock/resume clears the mirror while the boot get is in flight
+      for (const listener of storageChangeListeners) {
+        listener({ walletLockAt: { newValue: null } }, 'local')
+      }
+      // adopted clear: nothing swept so far
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+
+      // then the stale (already-expired) snapshot lands
+      resolveBootGet()
+
+      // the adopted clear wins: the live grant keeps answering, no sweep
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+      expect(storageData.connectedSites).toEqual(grant)
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a worker that boots with an expired lock mirror sweeps the grants', () => {
+      bootWithMirror(expiredMirror(), {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      // durably gone before any queued message could be answered
+      expect(storageData.connectedSites).toEqual({})
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+    })
+
+    it('a fresh (unexpired) lock mirror never sweeps at boot', () => {
+      bootWithMirror(freshMirror(), {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('no mirror at all never sweeps (wallet unlocked or never locked)', () => {
+      bootWithMirror(null, {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a live worker sweeps when onChanged lands an expired lock mirror', () => {
+      bootWithMirror(null)
+      connectAndApprove()
+      expect(Object.keys(storageData.connectedSites)).toHaveLength(1)
+
+      const stale = expiredMirror()
+      storageData.walletLockAt = stale
+      for (const listener of storageChangeListeners) {
+        listener({ walletLockAt: { newValue: stale } }, 'local')
+      }
+
+      expect(storageData.connectedSites).toEqual({})
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+    })
+
+    it('a fresh mirror landing through onChanged does not sweep', () => {
+      bootWithMirror(null)
+      connectAndApprove()
+
+      const fresh = freshMirror()
+      storageData.walletLockAt = fresh
+      for (const listener of storageChangeListeners) {
+        listener({ walletLockAt: { newValue: fresh } }, 'local')
+      }
+
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a live worker sweeps an expiry observed on the message path (piggyback)', () => {
+      jest.useFakeTimers()
+      try {
+        jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+        bootWithMirror(Date.now() - 5 * 60 * 1000, {
+          'https://bridge.example': { ...sessionData, timestamp: 1 },
+        })
+
+        // still fresh: the session answers normally
+        const before = dispatch(
+          { requestId: 'g1', method: 'getSession', params: {} },
+          dappSender,
+        )
+        expect(before.reply.current.result).toMatchObject({
+          network: 'testnet',
+        })
+
+        // 31 minutes pass with no wallet page open; the next message is
+        // exactly the moment a stale grant could be used
+        jest.setSystemTime(new Date('2026-01-01T00:31:00Z'))
+        const check = dispatch(
+          { requestId: 'c1', method: 'checkConnection', params: {} },
+          dappSender,
+        )
+
+        expect(check.reply.current).toEqual({ result: { isConnected: false } })
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+  })
+
   // ── network-switch regression: grants are network-scoped ──
   // The wallet UI publishes its active network to chrome.storage.local
   // ('networkType') — the worker cannot read the wallet pages' localStorage.
@@ -1309,8 +1974,9 @@ describe('background service worker', () => {
     it('a boot snapshot landing after an adopted switch cannot revert the network', () => {
       let resolveBootGet
       const realGet = global.chrome.storage.local.get
-      // defer ONLY the boot read (['connectedSites', 'networkType']):
-      // its callback resolves later, after the switch was adopted live
+      // defer ONLY the boot read (['connectedSites', 'networkType',
+      // 'walletLockAt']): its callback resolves later, after the switch was
+      // adopted live
       global.chrome.storage.local.get = (keys, cb) => {
         if (Array.isArray(keys) && keys.includes('networkType')) {
           resolveBootGet = () =>
