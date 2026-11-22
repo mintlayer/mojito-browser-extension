@@ -231,6 +231,11 @@ export const SignTransactionPage = () => {
     // Defense in depth: the approve button is already disabled, but the
     // modal submit must never reach the signer for a blocked request.
     if (approvalBlocked) return
+    // Defense in depth: both approval paths (passkey and password) funnel
+    // through this handler, and the buttons can be the only UI guard. A
+    // dApp-supplied intent is opaque bytes — it must never be signed unless
+    // the user explicitly acknowledged it.
+    if (hasIntent && !intentAcknowledged) return
 
     // Validate secret if it's an HTLC claim transaction
     if (isHTLCClaim && secret && !Secret.validateSecretHex(secret.trim())) {
@@ -728,7 +733,11 @@ export const SignTransactionPage = () => {
                     <Button
                       onClickHandle={() => handleModalSubmit()}
                       extraStyleClasses={extraButtonStyles}
-                      disabled={isSigning || !password}
+                      disabled={
+                        isSigning ||
+                        !password ||
+                        (hasIntent && !intentAcknowledged)
+                      }
                     >
                       {isSigning ? 'Signing…' : 'Approve'}
                     </Button>
