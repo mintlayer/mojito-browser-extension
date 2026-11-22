@@ -27,7 +27,9 @@ const requiredKeys = {
     encryptedMlMainnetPrivateKey: 'string',
     encryptedMlTestnetPrivateKey: 'string',
   },
-  walletType: 'string',
+  // walletType is intentionally not required: records predating the field
+  // export without it and restore normalizes them to nativeSegwit. When
+  // present it must still be a string (checked in validateContent).
   walletsToCreate: ['string'],
 }
 
@@ -68,6 +70,8 @@ const isPlausibleSecret = (value) =>
 const SECRET_GROUPS = ['iv', 'tag', 'seed']
 
 const validateContent = (json) => {
+  if (json.walletType !== undefined && typeof json.walletType !== 'string')
+    return false
   if (json.salt !== undefined && !isPlausibleSecret(json.salt)) return false
   for (const groupName of SECRET_GROUPS) {
     const group = json[groupName]

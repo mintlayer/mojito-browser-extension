@@ -230,9 +230,23 @@ const getAccountJSON = async (accountId, onError, DB = IDB) => {
   }
 }
 
+// A restored record's walletType is the BTC address type: unlock, signing
+// and password-checked deletion all resolve it through BTC_ADDRESS_TYPE_MAP,
+// where an out-of-enum value (e.g. a prototype name smuggled into a backup)
+// maps to undefined and permanently bricks unlock/delete for the account.
+// Whitelisted literally to keep this storage layer import-free; keep in
+// sync with BTC_ADDRESS_TYPE_ENUM (src/services/Crypto/BTC/BTC.addressType.js).
+const SUPPORTED_WALLET_TYPES = ['legacy', 'p2sh', 'nativeSegwit']
+
+// Records predating the walletType field export verbatim without it
+// (migrations never backfill it); every consumer defaults a missing
+// walletType via `account.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT`.
+const DEFAULT_WALLET_TYPE = 'nativeSegwit'
+
 const restoreAccountFromJSON = async (json, onError, DB = IDB) => {
+  let db
   try {
-    const db = await openDatabase(DB)
+    db = await openDatabase(DB)
     const transaction = db.transaction([ACCOUNTSSTORENAME], 'readwrite')
     const store = transaction.objectStore(ACCOUNTSSTORENAME)
     const accounts = await getAll(store)
@@ -251,7 +265,25 @@ const restoreAccountFromJSON = async (json, onError, DB = IDB) => {
       )
     }
 
+    // Fail closed only on PRESENT-but-invalid values (the poisoning vector);
+    // a missing walletType is normalized to the legacy default below.
+    if (
+      json.walletType !== undefined &&
+      (typeof json.walletType !== 'string' ||
+        !SUPPORTED_WALLET_TYPES.includes(json.walletType))
+    ) {
+      throw new Error(
+        'The JSON object contains an unsupported "walletType" value.',
+      )
+    }
+
     const restoringAccount = { ...json }
+
+    // Normalize legacy backups: store the value every consumer would
+    // otherwise fall back to at unlock time.
+    if (restoringAccount.walletType === undefined) {
+      restoringAccount.walletType = DEFAULT_WALLET_TYPE
+    }
 
     // Check if restoring account id already exists
     if (accountsIds.includes(restoringAccount.id)) {
@@ -281,12 +313,14 @@ const restoreAccountFromJSON = async (json, onError, DB = IDB) => {
         reject(error)
       }
     })
-
-    db.close()
   } catch (error) {
     onError && onError(error)
     console.error('Error restoring account from JSON:', error)
     throw error
+  } finally {
+    // Close on every path: a leaked connection blocks deleteDatabase and
+    // future version upgrades forever.
+    db?.close()
   }
 }
 

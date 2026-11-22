@@ -70,7 +70,7 @@ jest.mock('@Cryptos', () => ({
   BTC: { getHDWalletFromSeed: jest.fn() },
   ML: { getWalletAddresses: jest.fn(), getPrivateKeyFromMnemonic: jest.fn() },
   BTC_ADDRESS_TYPE_MAP: {},
-  BTC_ADDRESS_TYPE_ENUM: { LEGACY: 'legacy', NATIVE_SEGWIT: 'nativeSegWit' },
+  BTC_ADDRESS_TYPE_ENUM: { LEGACY: 'legacy', NATIVE_SEGWIT: 'nativeSegwit' },
 }))
 
 jest.mock('@Helpers', () => ({
