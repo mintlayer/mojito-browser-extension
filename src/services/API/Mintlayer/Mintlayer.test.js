@@ -19,6 +19,13 @@ if (typeof AbortSignal === 'function' && !AbortSignal.timeout) {
   }
 }
 
+// The metadata streaming guard decodes chunk bytes with TextDecoder;
+// jsdom does not provide it — Node's implementation is identical to the
+// browsers'. Same conditional-polyfill pattern as AbortSignal.timeout.
+if (typeof TextDecoder === 'undefined') {
+  global.TextDecoder = require('util').TextDecoder
+}
+
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 const mockId = 'networkType'
 const mockValue = 'testnet'
@@ -114,6 +121,9 @@ describe('resolveTokenIcon', () => {
 
   const okJson = (body) => ({
     ok: true,
+    // the metadata gateway legs buffer response.text() (the size cap is
+    // applied before JSON.parse); json() stays for other read paths
+    text: async () => JSON.stringify(body),
     json: async () => body,
   })
   const okImage = () => ({
@@ -316,19 +326,297 @@ describe('resolveTokenIcon', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(6)
   })
 
-  it('does not cache total gateway failures — the next refresh retries', async () => {
+  it('negative-caches total gateway failures with the TTL — expiry re-races the gateways', async () => {
+    // Every leg dead (404 everywhere) → a null lookup. Re-racing is futile
+    // for the TTL window, so the failure is negative-cached; past the TTL
+    // the entry expires and the gateways race again instead of
+    // short-circuiting forever.
     const fetchSpy = jest
       .spyOn(global, 'fetch')
-      .mockRejectedValue(new Error('signal timed out'))
+      .mockResolvedValue({ ok: false, status: 404 })
 
     await expect(
-      resolveTokenIcon('ipfs://bafymetadata/fail.json', 'mainnet'),
+      resolveTokenIcon('ipfs://bafydead/doc.json', 'mainnet'),
     ).resolves.toBeUndefined()
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+    // within the TTL the failure short-circuits — zero fetches
     await expect(
-      resolveTokenIcon('ipfs://bafymetadata/fail.json', 'mainnet'),
+      resolveTokenIcon('ipfs://bafydead/doc.json', 'mainnet'),
     ).resolves.toBeUndefined()
-    // 3 gateway attempts per resolution, nothing cached
-    expect(fetchSpy).toHaveBeenCalledTimes(6)
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+
+    // jump past NEGATIVE_CACHE_TTL_MS (5min): the entry expires and the
+    // gateways race again
+    const realNow = Date.now.bind(global.Date)
+    const nowSpy = jest
+      .spyOn(Date, 'now')
+      .mockImplementation(() => realNow() + 5 * 60 * 1000 + 1)
+    try {
+      await expect(
+        resolveTokenIcon('ipfs://bafydead/doc.json', 'mainnet'),
+      ).resolves.toBeUndefined()
+      expect(fetchSpy).toHaveBeenCalledTimes(6)
+    } finally {
+      nowSpy.mockRestore()
+    }
+  })
+
+  it('rejects over-cap content-length before reading the body', async () => {
+    // The content-length header (bytes) is checked against the cap BEFORE
+    // any body transfer: an honestly-announced oversized document costs a
+    // header round-trip, not a download.
+    const cap = 256 * 1024
+    let bodyReads = 0
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async () => ({
+        ok: true,
+        headers: {
+          get: (name) =>
+            String(name).toLowerCase() === 'content-length'
+              ? String(cap + 1)
+              : null,
+        },
+        text: async () => {
+          bodyReads += 1
+          return '{}'
+        },
+      }))
+
+    await expect(
+      resolveTokenIcon('ipfs://bafyclen/doc.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    // every leg was convicted by its header alone — no body was read
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+    expect(bodyReads).toBe(0)
+  })
+
+  it('cuts off headerless streaming bodies once the byte budget is exceeded', async () => {
+    // No content-length header: the body is read incrementally under a
+    // cumulative byte budget — past the budget the reader is cancelled
+    // (connection dropped) instead of draining an unbounded response.
+    const cap = 256 * 1024
+    const chunk = Uint8Array.from({ length: 200 * 1024 }, () => 65) // 'A' × 200KB
+    const readers = []
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async () => ({
+        ok: true,
+        headers: { get: () => null },
+        body: {
+          getReader: () => {
+            const reads = [
+              { done: false, value: chunk },
+              { done: false, value: chunk },
+              { done: true, value: undefined },
+            ]
+            const reader = {
+              read: jest.fn(() => Promise.resolve(reads.shift())),
+              cancel: jest.fn(() => Promise.resolve()),
+            }
+            readers.push(reader)
+            return reader
+          },
+        },
+        text: async () => {
+          throw new Error('text() must not run when a streaming body exists')
+        },
+      }))
+
+    await expect(
+      resolveTokenIcon('ipfs://bafystream/doc.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    // 3 legs, each cut off mid-stream at the budget: 2 chunks read
+    // (400KB > 256KB), then the reader is cancelled
+    expect(readers).toHaveLength(3)
+    for (const reader of readers) {
+      expect(reader.read).toHaveBeenCalledTimes(2)
+      expect(reader.cancel).toHaveBeenCalledTimes(1)
+    }
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+  })
+
+  it('catches a lying short content-length via the decoded-text backstop', async () => {
+    // A header claiming 10 bytes cannot smuggle an oversized body through:
+    // the decoded text is re-checked in UTF-16 code units after buffering.
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async () => ({
+        ok: true,
+        headers: {
+          get: (name) =>
+            String(name).toLowerCase() === 'content-length' ? '10' : null,
+        },
+        text: async () => JSON.stringify({ name: 'A'.repeat(300 * 1024) }),
+      }))
+
+    await expect(
+      resolveTokenIcon('ipfs://bafylie/doc.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+    // negative-cached within the TTL: the next resolution races nothing
+    await resolveTokenIcon('ipfs://bafylie/doc.json', 'mainnet')
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+  })
+
+  it('rejects oversized metadata on every leg — the futile lookup is negative-cached', async () => {
+    // A huge but VALID metadata document must not be downloaded, parsed
+    // and retained for the page lifetime: each over-cap leg fails exactly
+    // like a dead gateway, and with every leg over the cap the lookup is
+    // a failed lookup — nothing enters the session-long metadataCache,
+    // and the futile retry is negative-cached with the TTL (ipfs content
+    // is content-addressed: a dead document stays dead).
+    const oversizedBody = JSON.stringify({ name: 'A'.repeat(3 * 1024 * 1024) })
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async () => ({
+        ok: true,
+        text: async () => oversizedBody,
+      }))
+
+    await expect(
+      resolveTokenIcon('ipfs://bafybig/doc.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    // all 3 gateway legs raced and all failed the size cap
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+
+    // negative-cached: the next resolution within the TTL races nothing
+    await expect(
+      resolveTokenIcon('ipfs://bafybig/doc.json', 'mainnet'),
+    ).resolves.toBeUndefined()
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+  })
+
+  it('falls back to an under-cap gateway leg when other legs exceed the metadata cap', async () => {
+    const oversizedBody = JSON.stringify({ name: 'A'.repeat(3 * 1024 * 1024) })
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (url) => {
+        const target = String(url)
+        if (target.includes('bafyicon')) return okImage()
+        if (target.includes('bafymixed')) {
+          // two gateways answer over-cap; ipfs.io answers a usable doc
+          if (target.startsWith('https://ipfs.io/')) {
+            return {
+              ok: true,
+              text: async () =>
+                JSON.stringify({ tokenIcon: 'ipfs://bafyicon/mixed.png' }),
+            }
+          }
+          return { ok: true, text: async () => oversizedBody }
+        }
+        throw new Error(`unexpected url ${target}`)
+      })
+
+    await expect(
+      resolveTokenIcon('ipfs://bafymixed/doc.json', 'mainnet'),
+    ).resolves.toBe('blob:mock-icon')
+    // every metadata leg raced; the winning document came from ipfs.io
+    expect(
+      fetchSpy.mock.calls.filter(([u]) => String(u).includes('bafymixed')),
+    ).toHaveLength(3)
+    expect(
+      fetchSpy.mock.calls.some(
+        ([u]) => String(u) === 'https://ipfs.io/ipfs/bafymixed/doc.json',
+      ),
+    ).toBe(true)
+  })
+
+  it('accepts metadata exactly at the size cap and caches it', async () => {
+    // A document landing exactly on the cap is accepted, not rejected: the
+    // byte budget must not clip legitimate (if unusually large) metadata.
+    // The honest content-length header sits ON the cap — the pre-check is
+    // an over-cap check, not an at-cap one. Test cap mirrors the
+    // implementation's METADATA_MAX_BYTES = 256KB.
+    const cap = 256 * 1024
+    const base = JSON.stringify({ tokenIcon: 'ipfs://bafyicon/cap.png' })
+    // `,"name":"` framing is 9 code units, the closing `"}` adds 2
+    const atCapBody = `${base.slice(0, -1)},"name":"${'A'.repeat(
+      cap - base.length - 10,
+    )}"}`
+    expect(atCapBody.length).toBe(cap)
+
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (url) => {
+        const target = String(url)
+        if (target.includes('bafyicon')) return okImage()
+        if (target.includes('bafycap')) {
+          return {
+            ok: true,
+            headers: {
+              get: (name) =>
+                String(name).toLowerCase() === 'content-length'
+                  ? String(cap)
+                  : null,
+            },
+            text: async () => atCapBody,
+          }
+        }
+        throw new Error(`unexpected url ${target}`)
+      })
+
+    await expect(
+      resolveTokenIcon('ipfs://bafycap/doc.json', 'mainnet'),
+    ).resolves.toBe('blob:mock-icon')
+    // 3 metadata gateway legs + exactly one first-party proxy icon request
+    expect(fetchSpy).toHaveBeenCalledTimes(4)
+
+    await resolveTokenIcon('ipfs://bafycap/doc.json', 'mainnet')
+    // at-cap document cached: the second resolution is served from cache
+    expect(fetchSpy).toHaveBeenCalledTimes(4)
+  })
+
+  it('bounds the metadata cache — eviction drops the least-RECENTLY-used doc', async () => {
+    // Metadata whose icon bytes are unreachable keeps tokenIconCache empty
+    // (icon failures are never cached), so metadataCache insertions, LRU
+    // touches and evictions stay observable through metadata gateway
+    // traffic. Pins the LRU end-to-end: EVERY resolution re-inserts the
+    // entry at the newest slot (the read touch plus the bounded write-path
+    // re-insert — a bare Map.set on an existing key would NOT reorder),
+    // so eviction must drop uri[1], the least-RECENTLY-used doc, after
+    // uri[0] was touched. Breaking re-insert ordering (miss-only inserts
+    // → silent FIFO) evicts the untouched uri[0] instead and fails here.
+    const metadataCallsOf = (spy) =>
+      spy.mock.calls.filter(([u]) => String(u).includes('bafyfill')).length
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (url) => {
+        const target = String(url)
+        if (target.includes('bafyfill')) {
+          return {
+            ok: true,
+            text: async () =>
+              JSON.stringify({ tokenIcon: 'ipfs://bafyunreachable/x.png' }),
+          }
+        }
+        throw new Error('signal timed out') // every icon leg fails
+      })
+
+    const uriOf = (i) => `ipfs://bafyfill${String(i).padStart(3, '0')}/m.json`
+    // fill the cache exactly to its 500-entry bound
+    for (let i = 0; i < 500; i++) {
+      await resolveTokenIcon(uriOf(i), 'mainnet')
+    }
+
+    // touch uri[0]: a cache hit — the read re-inserts it as the newest
+    // slot, zero gateway traffic
+    const before = metadataCallsOf(fetchSpy)
+    await resolveTokenIcon(uriOf(0), 'mainnet')
+    expect(metadataCallsOf(fetchSpy)).toBe(before)
+
+    // the 501st insertion is itself a fresh doc (3 gateway legs) and must
+    // evict uri[1] — the least-RECENTLY-used doc now that uri[0] was just
+    // touched — not uri[0]
+    await resolveTokenIcon(uriOf(500), 'mainnet')
+    expect(metadataCallsOf(fetchSpy)).toBe(before + 3)
+
+    // uri[1] was evicted: resolving it races the 3 gateways again
+    await resolveTokenIcon(uriOf(1), 'mainnet')
+    expect(metadataCallsOf(fetchSpy)).toBe(before + 6)
+    // uri[0] survived the eviction: resolving it touches again, 0 traffic
+    await resolveTokenIcon(uriOf(0), 'mainnet')
+    expect(metadataCallsOf(fetchSpy)).toBe(before + 6)
   })
 
   it('rejects non-ipfs metadata uris without any network request', async () => {

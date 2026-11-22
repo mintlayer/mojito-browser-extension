@@ -412,19 +412,76 @@ const NEGATIVE_CACHE_TTL_MS = 5 * 60 * 1000
 // explorer proxy contract itself serves PNG/JPEG/WebP ≤1MB — the wider 5MB
 // cap only bounds what the fallback gateway leg may buffer.
 const ICON_MAX_BYTES = 5 * 1024 * 1024
+// Issuer-controlled metadata documents are tiny JSON (name, ticker, icon
+// pointers) — real ones sit far below 256KB. The cap bounds ingest AND
+// retention of every raced leg: an over-cap document fails its gateway leg
+// exactly like a dead gateway (see readMetadataTextCapped: rejected on
+// content-length before download, cut off mid-stream when headerless), and
+// when every leg exceeds the cap the lookup is a failed lookup, which is
+// negative-cached with the TTL below. Measured on the decoded text (UTF-16
+// code units — the string actually retained in memory); the same budget is
+// applied to wire bytes via the content-length pre-check.
+const METADATA_MAX_BYTES = 256 * 1024
 // metadata uri -> { value: blobUrl, expires? } (negative entries carry a TTL)
 const tokenIconCache = new Map()
 // metadata uri -> parsed JSON. Ipfs content is content-addressed, so a
-// resolved metadata document never needs to be fetched again.
+// resolved metadata document never needs to be fetched again. The Map is
+// bounded (see setBounded/getCachedMetadata): a session-long unbounded Map
+// would let the wallet retain every issuer document it ever displayed.
 const metadataCache = new Map()
-const failedLookupsLogged = new Set()
+// metadata uri -> { value: null, expires } — failed (null) lookups, same
+// shape and TTL as the tokenIconCache negatives. Every leg having failed
+// (HTTP errors, timeouts, size cap) is futile to re-race: ipfs content is
+// content-addressed, a dead document stays dead for the TTL window.
+const failedMetadataCache = new Map()
+// Session bound shared by the metadata-uri-keyed Maps: 500 entries keeps
+// worst-case retention at ~500 × METADATA_MAX_BYTES and stops unbounded
+// growth across every token the wallet ever displays.
+const METADATA_CACHE_MAX_ENTRIES = 500
+
+// Bounded insert for insertion-ordered Maps: evict the oldest entry before
+// setting, so no collection can grow past maxEntries. delete-then-set also
+// moves an existing key to the newest slot.
+const setBounded = (map, key, value, maxEntries) => {
+  map.delete(key)
+  while (map.size >= maxEntries) {
+    map.delete(map.keys().next().value)
+  }
+  map.set(key, value)
+}
+
+// Metadata cache read with an LRU touch: re-inserting the entry moves it
+// to the newest slot, so eviction drops the least-RECENTLY-used document,
+// not a merely old-but-hot one.
+const getCachedMetadata = (metadataUri) => {
+  const cached = metadataCache.get(metadataUri)
+  if (cached !== undefined) {
+    metadataCache.delete(metadataUri)
+    metadataCache.set(metadataUri, cached)
+  }
+  return cached
+}
+
+// First failed lookup per uri is logged once (bounded Map, see setBounded)
+// so a dead gateway does not spam the console every refresh cycle.
+const failedLookupsLogged = new Map()
+const logFailedMetadataLookup = (metadataUri) => {
+  if (failedLookupsLogged.has(metadataUri)) return
+  setBounded(failedLookupsLogged, metadataUri, true, METADATA_CACHE_MAX_ENTRIES)
+  console.error(
+    `Failed to resolve usable token metadata from the gateways: ${metadataUri}`,
+  )
+}
 
 // fetchJsonWithGatewayFallback resolves Promise.any over parallel gateway
 // requests: ANY 200-with-parseable-JSON response wins — a captive portal or
 // a gateway error page can answer first. Only docs naming at least one
 // recognized metadata field count as content; junk is not cached (a
 // permanent metadataCache entry would poison icon resolution for the whole
-// session) and is retried on the next refresh.
+// session) and is retried on the next refresh. Every leg is byte-budgeted
+// (readMetadataTextCapped): an honestly-announced over-cap document is
+// rejected before its body is downloaded, a headerless one is cut off
+// mid-stream.
 const METADATA_FIELDS = [
   'tokenIcon',
   'icon_uri',
@@ -441,6 +498,53 @@ const isPlausibleTokenMetadata = (metadata) =>
   !Array.isArray(metadata) &&
   METADATA_FIELDS.some((field) => field in metadata)
 
+// Reads a metadata response body under a hard BYTE budget:
+// 1. The content-length header is bytes and is checked BEFORE any body
+//    transfer — an honestly-announced over-cap document costs a header
+//    round-trip, not a download. (Wire bytes ≥ decoded UTF-16 units, so
+//    the byte pre-check is the strict one; the unit backstop below can
+//    only re-confirm it.)
+// 2. Headerless responses stream through a cumulative byte budget: past
+//    the budget the reader is cancelled — the connection is dropped, not
+//    drained — and the leg fails like any dead gateway.
+// 3. The decoded text is re-checked in UTF-16 code units (the string
+//    actually retained) so a lying short header, or a runtime with no
+//    streaming body, cannot smuggle an oversized string through.
+const readMetadataTextCapped = async (response, maxBytes) => {
+  const contentLength = Number(response.headers?.get?.('content-length'))
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    throw new Error(`Metadata too large: content-length ${contentLength}`)
+  }
+  const reader = response.body?.getReader?.()
+  if (!reader) {
+    // No streaming body available (mocked/exotic responses): buffer fully
+    // and let the code-unit backstop below decide.
+    const buffered = await response.text()
+    if (buffered.length > maxBytes) {
+      throw new Error('Metadata too large')
+    }
+    return buffered
+  }
+  const decoder = new TextDecoder()
+  let received = 0
+  let text = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    received += value.byteLength
+    if (received > maxBytes) {
+      await reader.cancel?.()
+      throw new Error('Metadata too large')
+    }
+    text += decoder.decode(value, { stream: true })
+  }
+  text += decoder.decode()
+  if (text.length > maxBytes) {
+    throw new Error('Metadata too large')
+  }
+  return text
+}
+
 const fetchJsonWithGatewayFallback = async (metadataUri) => {
   const candidates = IPFS_GATEWAYS.map(
     (gateway) => `${gateway}/${metadataUri.slice('ipfs://'.length)}`,
@@ -455,7 +559,8 @@ const fetchJsonWithGatewayFallback = async (metadataUri) => {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
     }
-    return response.json()
+    const text = await readMetadataTextCapped(response, METADATA_MAX_BYTES)
+    return JSON.parse(text)
   })
 
   try {
@@ -542,25 +647,45 @@ const resolveTokenIcon = async (metadataUri, networkType) => {
     }
   }
 
-  const metadata =
-    metadataCache.get(metadataUri) ??
-    (await fetchJsonWithGatewayFallback(metadataUri))
-  if (!isPlausibleTokenMetadata(metadata)) {
-    // Every gateway failed OR the race winner was junk JSON (captive
-    // portal / gateway error page answering 200): log once per uri, do NOT
-    // cache — the next refresh retries instead of poisoning the
-    // session-long metadataCache.
-    if (!failedLookupsLogged.has(metadataUri)) {
-      failedLookupsLogged.add(metadataUri)
-      console.error(
-        `Failed to resolve usable token metadata from the gateways: ${metadataUri}`,
-      )
+  const failedMetadata = failedMetadataCache.get(metadataUri)
+  if (failedMetadata) {
+    // Negative entries carry a TTL; expiry drops the entry so the gateways
+    // are re-raced instead of short-circuiting forever.
+    if (failedMetadata.expires && failedMetadata.expires < Date.now()) {
+      failedMetadataCache.delete(metadataUri)
+    } else {
+      return undefined
     }
+  }
+
+  const metadata =
+    getCachedMetadata(metadataUri) ??
+    (await fetchJsonWithGatewayFallback(metadataUri))
+  if (metadata === null) {
+    // Every gateway leg failed (HTTP error, timeout, size cap): the race
+    // is futile for the TTL window — ipfs content is content-addressed, a
+    // dead document stays dead — so the failure is negative-cached like a
+    // definitive no-icon answer instead of re-raced on every refresh.
+    setBounded(
+      failedMetadataCache,
+      metadataUri,
+      { value: null, expires: Date.now() + NEGATIVE_CACHE_TTL_MS },
+      METADATA_CACHE_MAX_ENTRIES,
+    )
+    logFailedMetadataLookup(metadataUri)
     return undefined
   }
-  // Ipfs content is content-addressed: cache the document permanently so
-  // the refresh loop never re-fetches it.
-  metadataCache.set(metadataUri, metadata)
+  if (!isPlausibleTokenMetadata(metadata)) {
+    // The race winner was junk JSON (captive portal / gateway error page
+    // answering 200): log once per uri, do NOT cache — a junk winner must
+    // be retried on the next refresh, not trusted for the TTL window.
+    logFailedMetadataLookup(metadataUri)
+    return undefined
+  }
+  // Ipfs content is content-addressed: cache the document for the session
+  // (bounded, LRU-touched, oldest-evicted) so the refresh loop never
+  // re-fetches it.
+  setBounded(metadataCache, metadataUri, metadata, METADATA_CACHE_MAX_ENTRIES)
 
   const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
   // Issuer-controlled icon field: resolve ONLY ipfs content — ipfs:// uris,
