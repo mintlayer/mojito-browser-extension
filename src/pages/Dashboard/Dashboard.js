@@ -38,7 +38,7 @@ const DashboardPage = () => {
   const { networkType } = useContext(SettingsContext)
 
   const [openConnectConfirmation, setOpenConnectConfirmation] = useState(false)
-  // REVIEW-PLAN #10: the Send quick action no longer hardcodes the ML flow —
+  // The Send quick action no longer hardcodes the ML flow —
   // it opens a chain chooser (Bitcoin send uses its own BTC flow).
   const [sendChainSheetOpen, setSendChainSheetOpen] = useState(false)
   const [allowClosing, setAllowClosing] = useState(true)

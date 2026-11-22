@@ -29,7 +29,7 @@ yarn-error.log*
 /blob-report/
 /playwright/.cache/
 
-# llm
+# local tool state
 .claude
 
 # local manifest key for unpacked builds
