@@ -418,4 +418,98 @@ describe('Browser', () => {
       expect(chromeMock.storage.local.set).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('stampGrantsRevoked', () => {
+    it('writes a fresh revocation epoch under grantsRevokedAt (never touched by unlock)', () => {
+      const set = jest.fn()
+      const chromeMock = {
+        runtime: { id: 'test-id', lastError: null },
+        storage: { local: { set } },
+      }
+      global.chrome = chromeMock
+
+      const { stampGrantsRevoked } = loadBrowserModule()
+
+      const before = Date.now()
+      stampGrantsRevoked()
+
+      expect(set).toHaveBeenCalledTimes(1)
+      const [payload, callback] = set.mock.calls[0]
+      // exactly { grantsRevokedAt }: no extra fields, a NUMBER stamped at
+      // lock time (the worker deletes grants with timestamp <= it)
+      expect(payload).toEqual({ grantsRevokedAt: expect.any(Number) })
+      expect(payload.grantsRevokedAt).toBeGreaterThanOrEqual(before)
+      expect(callback).toEqual(expect.any(Function))
+
+      // a failed set is retried ONCE; the retry re-stamps (a fresh
+      // Date.now() is still a valid epoch for THIS lock's witness) and the
+      // failure path must tolerate the lastError signal without throwing
+      chromeMock.runtime.lastError = { message: 'Storage unavailable' }
+      expect(() => callback()).not.toThrow()
+      expect(set).toHaveBeenCalledTimes(2)
+      expect(set.mock.calls[1][0]).toEqual({
+        grantsRevokedAt: expect.any(Number),
+      })
+    })
+
+    it('is a no-op when no storage APIs are available', () => {
+      const { stampGrantsRevoked } = loadBrowserModule()
+
+      expect(() => stampGrantsRevoked()).not.toThrow()
+    })
+
+    it('swallows storage throwing (storage unavailable)', () => {
+      global.chrome = {
+        runtime: { id: 'test-id', lastError: null },
+        storage: {
+          local: {
+            set: jest.fn(() => {
+              throw new Error('storage context gone')
+            }),
+          },
+        },
+      }
+
+      const { stampGrantsRevoked } = loadBrowserModule()
+
+      expect(() => stampGrantsRevoked()).not.toThrow()
+      expect(global.chrome.storage.local.set).toHaveBeenCalledTimes(1)
+    })
+
+    it('gives up after one retry when every set reports a lastError', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', lastError: null },
+        storage: { local: { set: jest.fn() } },
+      }
+      chromeMock.storage.local.set.mockImplementation((_payload, callback) => {
+        chromeMock.runtime.lastError = { message: 'Storage unavailable' }
+        callback()
+      })
+      global.chrome = chromeMock
+
+      const { stampGrantsRevoked } = loadBrowserModule()
+
+      stampGrantsRevoked()
+
+      // exactly one rewrite: a persistently failing storage must not loop
+      expect(chromeMock.storage.local.set).toHaveBeenCalledTimes(2)
+    })
+
+    it('does not retry when the set succeeds', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', lastError: null },
+        storage: { local: { set: jest.fn() } },
+      }
+      chromeMock.storage.local.set.mockImplementation((_payload, callback) => {
+        callback()
+      })
+      global.chrome = chromeMock
+
+      const { stampGrantsRevoked } = loadBrowserModule()
+
+      stampGrantsRevoked()
+
+      expect(chromeMock.storage.local.set).toHaveBeenCalledTimes(1)
+    })
+  })
 })

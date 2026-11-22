@@ -8,4 +8,5 @@ export {
   sendPopupResponse,
   notifyWalletLocked,
   stampWalletLock,
+  stampGrantsRevoked,
 } from './Browser'

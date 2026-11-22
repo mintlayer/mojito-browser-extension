@@ -101,6 +101,42 @@ export const stampWalletLock = (value) => {
   write()
 }
 
+// Stamps the durable REVOCATION EPOCH ('grantsRevokedAt' in
+// chrome.storage.local, ms epoch) at every lock/logout. This is the
+// revocation witness, deliberately SPLIT from the liveness mirror
+// ('walletLockAt'): the mirror is re-stamped fresh by every unlock (before
+// the registry write), so in the lost-notify case (both walletLocked sends
+// fail — the worker stayed dead) a re-unlock would overwrite the
+// already-expired logout stamp before the worker ever observed it, and the
+// pre-logout grants would answer for a whole fresh mirror TTL. The epoch is
+// NEVER re-stamped by an unlock and is monotonic (Date.now() at lock time,
+// the same clock grant timestamps come from): grants approved at or before
+// it are dead regardless of how fresh the mirror reads, and grants approved
+// after it (post-re-unlock approvals) legitimately survive.
+export const stampGrantsRevoked = () => {
+  if (!storage?.local) return
+  // One bounded rewrite on any failure signal (same pattern as
+  // stampWalletLock): a lost epoch weakens revocation until the next lock
+  // re-epochs, and the idempotent rewrite (a new Date.now() is still a
+  // valid epoch for a witness written by THIS lock) keeps one retry.
+  let rewrote = false
+  const write = () => {
+    try {
+      storage.local.set({ grantsRevokedAt: Date.now() }, () => {
+        // reading lastError here acknowledges it for Chrome
+        const failed = runtime?.lastError
+        if (failed && !rewrote) {
+          rewrote = true
+          write()
+        }
+      })
+    } catch {
+      /* storage unavailable — walletLocked notify + lock mirror still sweep */
+    }
+  }
+  write()
+}
+
 // Tells the background the wallet was locked or logged out — via the manual
 // logout button or the 30-minute auto-lock expiry (AccountProvider is the
 // only place that can observe both; the service worker cannot read the

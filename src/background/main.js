@@ -11,12 +11,16 @@ import { LOGIN_TIMEOUT_MINUTES } from '../utils/Constants/WalletLifecycle'
  * - A grant is revoked IMMEDIATELY and durably on disconnect — from the
  *   dApp itself (`disconnect` method), from the wallet settings
  *   (`disconnectSite`), or on wallet lock/logout — the wallet UI announces
- *   both with the `walletLocked` action and mirrors its lock clock to
- *   chrome.storage.local ('walletLockAt'), which the worker sweeps against
- *   even when no wallet page is open to observe the 30-minute auto-lock
- *   (the worker cannot read the wallet pages' localStorage) — and every
- *   revocation is persisted to storage and PROPAGATED to the site's open
- *   tabs (notifyOriginRevoked), so no page keeps acting on a dead grant.
+ *   both with the `walletLocked` action and persists TWO durable witnesses
+ *   the worker sweeps against: its lock clock ('walletLockAt'), which
+ *   catches the 30-minute auto-lock even when no wallet page is open to
+ *   observe it (the worker cannot read the wallet pages' localStorage),
+ *   and a revocation epoch ('grantsRevokedAt', stamped at every lock and
+ *   NEVER re-stamped by an unlock), which survives the fresh mirror
+ *   re-stamp of a re-unlock so a lost `walletLocked` notify can never
+ *   leave the pre-logout grants answering — and every revocation is
+ *   persisted to storage and PROPAGATED to the site's open tabs
+ *   (notifyOriginRevoked), so no page keeps acting on a dead grant.
  * - A grant authorizes ONLY the network it was approved on. The wallet UI
  *   publishes its active network to chrome.storage.local ('networkType' —
  *   the worker cannot read the wallet pages' localStorage); switching
@@ -82,6 +86,21 @@ export const initBackground = () => {
   // stamp for this worker's lifetime, a stale expired value would false-sweep
   // an unlocked wallet's live grants at boot.
   let lockMirrorAdopted = false
+  // The durable revocation epoch ('grantsRevokedAt' in chrome.storage.local
+  // — ms epoch, stamped by the wallet UI at every lock/logout): every grant
+  // approved at or before it is revoked, whatever the liveness mirror reads.
+  // Unlike the mirror it is NEVER re-stamped by an unlock, so it survives
+  // the fresh mirror re-stamp that would otherwise erase the already-expired
+  // logout witness in the lost-notify case (both walletLocked sends failed,
+  // the worker stayed dead, the re-unlock overwrote the mirror before it
+  // was ever observed). null = no epoch observed (legacy storage, or the
+  // wallet was never locked): no epoch-based deletion at all.
+  let grantsRevokedAt = null
+  // Same adoption rule as the mirror: a live epoch write landing while the
+  // boot snapshot is in flight is NEWER than the snapshot — a stale
+  // snapshot must not revert the adopted epoch to null, or this worker
+  // would never sweep the grants that epoch revoked.
+  let revocationEpochAdopted = false
   // Same expiry semantics as AccountProvider.checkAccountLockState: whole
   // minutes since the stamp, rounded up.
   const isLockMirrorExpired = (value) =>
@@ -310,13 +329,33 @@ export const initBackground = () => {
     })
   }
 
-  // Enforcement entry point for an expired lock mirror: revokes every grant
-  // the moment the worker observes the 30-minute auto-lock (at boot, on a
-  // mirror write, or on any inbound message) even though no wallet page is
-  // open to announce it — exactly the walletLocked lifecycle.
-  const sweepExpiredLockMirror = () => {
-    if (!isLockMirrorExpired(walletLockAt)) return
-    revokeAllGrants()
+  // Enforcement entry point for BOTH durable revocation witnesses, run at
+  // boot, on every lock-state storage write, and on any inbound message:
+  // 1. an EXPIRED LOCK MIRROR — the 30-minute auto-lock fired while no
+  //    wallet page was open to announce it — revokes EVERY grant, exactly
+  //    the walletLocked lifecycle;
+  // 2. the REVOCATION EPOCH — deletes every grant approved at or before
+  //    'grantsRevokedAt'. This is the witness an unlock's fresh mirror
+  //    re-stamp cannot erase: in the lost-notify case a re-unlock
+  //    overwrites the already-expired logout mirror before the worker
+  //    observes it, but the epoch survives and still sweeps the pre-logout
+  //    grants. Grants carry their approval-time timestamp (set in
+  //    handlePopupResponse), so grants approved after the re-unlock
+  //    (timestamp > epoch) legitimately survive; a grant whose age cannot
+  //    be proven (no timestamp) fails closed, like a grant without a
+  //    network stamp.
+  const sweepRevokedGrants = () => {
+    if (isLockMirrorExpired(walletLockAt)) {
+      revokeAllGrants()
+      return
+    }
+    if (typeof grantsRevokedAt !== 'number') return
+    const staleOrigins = Object.keys(connectedSites).filter((origin) => {
+      const { timestamp } = connectedSites[origin] || {}
+      return !(typeof timestamp === 'number' && timestamp > grantsRevokedAt)
+    })
+    if (!staleOrigins.length) return
+    revokeOrigins(staleOrigins)
   }
 
   // Load connected sites from storage. Messages arriving before the load
@@ -333,7 +372,7 @@ export const initBackground = () => {
     messageQueue.length = 0
   }
   api.storage.local.get(
-    ['connectedSites', 'networkType', 'walletLockAt'],
+    ['connectedSites', 'networkType', 'walletLockAt', 'grantsRevokedAt'],
     (data) => {
       if (api.runtime.lastError) {
         console.error('[Mintlayer] Storage get error:', api.runtime.lastError)
@@ -346,6 +385,16 @@ export const initBackground = () => {
           walletLockAt =
             typeof data.walletLockAt === 'number' ? data.walletLockAt : null
         }
+        // Same for the epoch: a live logout write landing while this read
+        // was in flight is NEWER than the snapshot — reverting the adopted
+        // epoch to the snapshot's (absent/older) value would let the grants
+        // it revoked answer for this worker's whole lifetime.
+        if (!revocationEpochAdopted) {
+          grantsRevokedAt =
+            typeof data.grantsRevokedAt === 'number'
+              ? data.grantsRevokedAt
+              : null
+        }
         if (!networkAdopted) {
           activeNetwork = normalizeNetwork(data.networkType)
         }
@@ -354,10 +403,12 @@ export const initBackground = () => {
         // queued message is answered. Runs on whatever snapshot loaded, so a
         // stale snapshot can still only shrink the map, never answer from it.
         revokeGrantsFromOtherNetworks()
-        // Same for a lock that expired while NO wallet page was open to
-        // announce it: the mirror is the only witness — sweep before any
-        // queued message is answered.
-        sweepExpiredLockMirror()
+        // Same for the durable lock witnesses: a lock that expired while NO
+        // wallet page was open to announce it (the mirror is the only
+        // witness) and a revocation whose walletLocked notify was lost (the
+        // epoch survives the re-unlock's mirror re-stamp) must sweep before
+        // any queued message is answered.
+        sweepRevokedGrants()
       }
       // one-time cleanup of the pre-window-keyed pending request
       api.storage.local.remove('pendingRequest')
@@ -421,7 +472,19 @@ export const initBackground = () => {
             ? changes.walletLockAt.newValue
             : null
         lockMirrorAdopted = true
-        sweepExpiredLockMirror()
+        sweepRevokedGrants()
+      }
+      // A revocation epoch lands here when a lock/logout stamps it — even
+      // when the walletLocked message was lost (the worker observes the
+      // durable write directly). The write is ADOPTED like the mirror's,
+      // and the grants the epoch revokes are swept immediately.
+      if (changes.grantsRevokedAt) {
+        grantsRevokedAt =
+          typeof changes.grantsRevokedAt.newValue === 'number'
+            ? changes.grantsRevokedAt.newValue
+            : null
+        revocationEpochAdopted = true
+        sweepRevokedGrants()
       }
     })
   }
@@ -1136,8 +1199,9 @@ export const initBackground = () => {
   api.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Piggyback lock enforcement (no alarms permission): any message is
     // exactly the moment a stale grant could be used, so a mirror expiry
-    // observed while this worker stays alive revokes BEFORE it is answered.
-    sweepExpiredLockMirror()
+    // or an epoch revocation observed while this worker stays alive
+    // revokes BEFORE it is answered.
+    sweepRevokedGrants()
     if (!connectedSitesLoaded) {
       messageQueue.push([message, sender, sendResponse])
       return true

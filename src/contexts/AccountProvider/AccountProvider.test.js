@@ -20,6 +20,7 @@
  */
 const mockNotifyWalletLocked = jest.fn()
 const mockStampWalletLock = jest.fn()
+const mockStampGrantsRevoked = jest.fn()
 const mockGetItem = jest.fn()
 const mockSetItem = jest.fn()
 const mockRemoveItem = jest.fn()
@@ -27,6 +28,7 @@ const mockRemoveItem = jest.fn()
 jest.mock('@Browser', () => ({
   notifyWalletLocked: (...args) => mockNotifyWalletLocked(...args),
   stampWalletLock: (...args) => mockStampWalletLock(...args),
+  stampGrantsRevoked: (...args) => mockStampGrantsRevoked(...args),
 }))
 
 jest.mock('@Storage', () => ({
@@ -133,6 +135,15 @@ describe('AccountProvider lock/logout notifications', () => {
     expect(stampedAt).toBeLessThanOrEqual(
       Date.now() - loginTimeoutMinutes * 60 * 1000,
     )
+    // logout ALSO stamps the durable revocation epoch ('grantsRevokedAt'):
+    // the witness the next unlock's fresh mirror re-stamp cannot erase, so
+    // a lost notify still sweeps the pre-logout grants at the worker's
+    // next boot even after a re-unlock. Both durable witnesses land BEFORE
+    // the best-effort notify.
+    expect(mockStampGrantsRevoked).toHaveBeenCalledTimes(1)
+    expect(mockStampGrantsRevoked.mock.invocationCallOrder[0]).toBeLessThan(
+      mockNotifyWalletLocked.mock.invocationCallOrder[0],
+    )
   })
 
   it('an expired registry locks: clears the registry, stamps the mirror, notifies', () => {
@@ -157,6 +168,9 @@ describe('AccountProvider lock/logout notifications', () => {
       mockNotifyWalletLocked.mock.invocationCallOrder[0],
     )
     expect(mockNotifyWalletLocked).toHaveBeenCalledTimes(1)
+    // the same lock path stamps the revocation epoch too — this expiry is a
+    // real revocation, not a liveness refresh
+    expect(mockStampGrantsRevoked).toHaveBeenCalledTimes(1)
   })
 
   it('a registry inside the timeout resumes: no notify, mirror re-stamped with the registry clock', () => {
@@ -173,6 +187,10 @@ describe('AccountProvider lock/logout notifications', () => {
     expect(unlocked).toBe(true)
     expect(mockRemoveItem).not.toHaveBeenCalled()
     expect(mockNotifyWalletLocked).not.toHaveBeenCalled()
+    // a resume is NOT a revocation: the epoch must stay untouched, or
+    // grants approved between the last lock and this resume would be
+    // falsely swept
+    expect(mockStampGrantsRevoked).not.toHaveBeenCalled()
     // resumed before expiry: the mirror must hold the SAME idle clock the
     // registry does — a pagehide-stamped mirror must not expire while an
     // open, unlocked wallet is live, and a NUMBER stamp keeps aging if the
@@ -231,6 +249,11 @@ describe('AccountProvider lock/logout notifications', () => {
       mockSetItem.mock.invocationCallOrder[0],
     )
     expect(mockNotifyWalletLocked).not.toHaveBeenCalled()
+    // THE FIX INVARIANT: an unlock re-stamps ONLY the liveness mirror — it
+    // must never touch the revocation epoch, or a re-unlock would erase the
+    // lost-notify logout's witness before the worker observes it (and a
+    // spurious epoch would revoke grants approved before the unlock)
+    expect(mockStampGrantsRevoked).not.toHaveBeenCalled()
   })
 
   it('pagehide stamps the idle clock and mirrors it for the worker', () => {
@@ -251,6 +274,9 @@ describe('AccountProvider lock/logout notifications', () => {
     // the worker applies the same 30-minute constant to it
     expect(mockStampWalletLock).toHaveBeenLastCalledWith(stored.logoutDate)
     expect(mockNotifyWalletLocked).not.toHaveBeenCalled()
+    // a pagehide (live session keeping its stamp current) is not a
+    // revocation either: no epoch
+    expect(mockStampGrantsRevoked).not.toHaveBeenCalled()
   })
 })
 
@@ -305,6 +331,12 @@ describe('AccountProvider open-page inactivity auto-lock', () => {
     expect(getValue().addresses).toBe('')
     expect(getValue().accountID).toBe('')
     expect(getValue().accountName).toBe('')
+    // the auto-lock is a real revocation: the epoch witness is stamped
+    // too (before the notify, like logout)
+    expect(mockStampGrantsRevoked).toHaveBeenCalledTimes(1)
+    expect(mockStampGrantsRevoked.mock.invocationCallOrder[0]).toBeLessThan(
+      mockNotifyWalletLocked.mock.invocationCallOrder[0],
+    )
   })
 
   it('user activity inside the window resets the timer: no lock until idle again', () => {
@@ -471,5 +503,7 @@ describe('AccountProvider open-page inactivity auto-lock', () => {
     })
     expect(mockSetItem).toHaveBeenCalledTimes(1)
     expect(mockStampWalletLock).toHaveBeenLastCalledWith(mountTime + 61 * 1000)
+    // an activity refresh is a liveness mirror write only — never an epoch
+    expect(mockStampGrantsRevoked).not.toHaveBeenCalled()
   })
 })

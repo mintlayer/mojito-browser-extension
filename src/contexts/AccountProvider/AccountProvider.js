@@ -1,7 +1,11 @@
 import React, { createContext, useEffect, useRef, useState } from 'react'
 import { differenceInMinutes } from 'date-fns'
 import { LocalStorageService } from '@Storage'
-import { notifyWalletLocked, stampWalletLock } from '@Browser'
+import {
+  notifyWalletLocked,
+  stampGrantsRevoked,
+  stampWalletLock,
+} from '@Browser'
 import { AppInfo, LOGIN_TIMEOUT_MINUTES } from '@Constants'
 
 const AccountContext = createContext()
@@ -74,15 +78,21 @@ const AccountProvider = ({ value: propValue, children }) => {
   }
 
   // Revokes the session: clears the registry, stamps the lock mirror with
-  // the idle clock and notifies the background (which revokes every dApp
-  // connect grant). The mirror stamp lands BEFORE the notify: it is the
-  // durable witness, so a lost message still gets swept at the worker's
-  // next boot — every caller stamps an ALREADY-AGED clock (expiry paths,
-  // logout, the stampless-registry branch), so the sweep lands immediately
-  // instead of buying a fresh 30-minute mirror TTL.
+  // the idle clock, stamps the durable revocation epoch ('grantsRevokedAt')
+  // and notifies the background (which revokes every dApp connect grant).
+  // Both stamps land BEFORE the notify: they are the durable witnesses, so
+  // a lost message still gets swept at the worker's next boot — every
+  // caller stamps an ALREADY-AGED mirror clock (expiry paths, logout, the
+  // stampless-registry branch), so the mirror sweep lands immediately
+  // instead of buying a fresh 30-minute mirror TTL. The epoch survives the
+  // next unlock's mirror re-stamp (which never touches it), so even a
+  // re-unlock that erases the expired mirror before the worker observes it
+  // cannot resurrect the pre-logout grants: the worker sweeps every grant
+  // whose approval timestamp is at or before the epoch.
   const lockWallet = (lockedAt) => {
     LocalStorageService.removeItem(accountRegistryName)
     stampWalletLock(lockedAt)
+    stampGrantsRevoked()
     notifyWalletLocked()
   }
 

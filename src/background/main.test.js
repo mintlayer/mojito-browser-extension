@@ -1831,8 +1831,12 @@ describe('background service worker', () => {
     }
 
     // boots a fresh worker on top of pre-seeded storage (the boot snapshot
-    // path: mirror + grants land while the worker was dead)
-    const bootWithMirror = (walletLockAt, sites = {}) => {
+    // path: mirror + epoch + grants land while the worker was dead)
+    const bootWithMirror = (
+      walletLockAt,
+      sites = {},
+      grantsRevokedAt = null,
+    ) => {
       messageListeners.length = 0
       storageChangeListeners.length = 0
       windowRemovedListeners.length = 0
@@ -1843,6 +1847,8 @@ describe('background service worker', () => {
       storageData.connectedSites = sites
       if (walletLockAt == null) delete storageData.walletLockAt
       else storageData.walletLockAt = walletLockAt
+      if (grantsRevokedAt == null) delete storageData.grantsRevokedAt
+      else storageData.grantsRevokedAt = grantsRevokedAt
       loadBackground()
     }
 
@@ -2125,6 +2131,352 @@ describe('background service worker', () => {
       } finally {
         jest.useRealTimers()
       }
+    })
+
+    // ── revocation epoch ('grantsRevokedAt') ──
+    // The lock mirror is re-stamped FRESH by every unlock — which in the
+    // lost-notify case (both walletLocked sends fail, the worker stays dead)
+    // erases the logout's already-expired stamp before the worker ever
+    // observes it: the worker then boots with a fresh mirror and the durable
+    // pre-logout grants, answering the session the logout destroyed for a
+    // whole fresh mirror TTL. Every lock therefore ALSO stamps a monotonic
+    // revocation epoch ('grantsRevokedAt') the unlock never touches, and the
+    // sweep (the same boot/write/piggyback paths as the mirror) deletes every
+    // grant approved at or before it: grant timestamps are set at approval
+    // time, so grants approved after the re-unlock legitimately survive, and
+    // absent epoch (legacy storage) means no epoch-based deletion at all —
+    // the mirror-expiry path keeps its pre-existing behavior.
+    describe('revocation epoch (grantsRevokedAt survives unlock re-stamps)', () => {
+      const epochAfterLogout = () => Date.now() - 10 * 60 * 1000
+      const freshUnlockMirror = () => Date.now() - 5 * 60 * 1000
+
+      const landEpochWrite = (revokedAt) => {
+        storageData.grantsRevokedAt = revokedAt
+        for (const listener of storageChangeListeners) {
+          listener({ grantsRevokedAt: { newValue: revokedAt } }, 'local')
+        }
+      }
+
+      const landMirrorWrite = (stampedAt) => {
+        storageData.walletLockAt = stampedAt
+        for (const listener of storageChangeListeners) {
+          listener({ walletLockAt: { newValue: stampedAt } }, 'local')
+        }
+      }
+
+      it('a lost-notify logout survives the re-unlock re-stamp: pre-logout grants swept at boot', () => {
+        // Timeline: grant approved 2h ago → logout 10 min ago stamped the
+        // epoch and an already-expired mirror, both walletLocked sends failed
+        // → re-unlock 5 min ago re-stamped the mirror FRESH (erasing the
+        // expired witness) → the worker only now wakes via an open dApp
+        // tab's checkConnection poll.
+        bootWithMirror(
+          freshUnlockMirror(),
+          {
+            'https://bridge.example': {
+              ...sessionData,
+              timestamp: Date.now() - 2 * 60 * 60 * 1000,
+            },
+          },
+          epochAfterLogout(),
+        )
+
+        // the epoch swept the pre-logout grant durably before any message
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        const check = dispatch({ method: 'checkConnection' }, dappSender)
+        expect(check.reply.current).toEqual({ result: { isConnected: false } })
+      })
+
+      it('a grant approved after the re-unlock (timestamp > epoch) survives the boot sweep', () => {
+        bootWithMirror(
+          freshUnlockMirror(),
+          {
+            'https://bridge.example': {
+              ...sessionData,
+              timestamp: Date.now() - 60 * 1000,
+            },
+          },
+          epochAfterLogout(),
+        )
+
+        const session = dispatch({ method: 'getSession' }, dappSender)
+        expect(session.reply.current.result).toMatchObject({
+          network: 'testnet',
+        })
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      })
+
+      it('only pre-epoch grants are swept when pre- and post-unlock grants coexist', () => {
+        bootWithMirror(
+          freshUnlockMirror(),
+          {
+            'https://bridge.example': {
+              ...sessionData,
+              timestamp: Date.now() - 2 * 60 * 60 * 1000,
+            },
+            'https://other.example': {
+              ...sessionData,
+              timestamp: Date.now() - 60 * 1000,
+            },
+          },
+          epochAfterLogout(),
+        )
+
+        // exactly the pre-logout grant is gone, durably and for its tabs
+        expect(storageData.connectedSites).toEqual({
+          'https://other.example': expect.objectContaining({
+            network: 'testnet',
+          }),
+        })
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://other.example' },
+          expect.any(Function),
+        )
+      })
+
+      it('a live worker sweeps the moment the logout epoch lands via onChanged (lost notify)', () => {
+        // Fake timers make every step's clock deterministic: the re-approval
+        // must land STRICTLY after the epoch (a same-millisecond approval
+        // compares equal and fails closed in production — never in a test).
+        jest.useFakeTimers()
+        try {
+          jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+          bootWithMirror(null)
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            dappSender,
+          )
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(700),
+              origin: 'https://bridge.example',
+              windowId: 700,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(connect.reply.current.result).toEqual(sessionData)
+          expect(Object.keys(storageData.connectedSites)).toHaveLength(1)
+
+          // logout at +1min stamps the epoch but both walletLocked sends
+          // fail: only the durable write lands, and the worker sweeps the
+          // grant the moment it observes it
+          jest.setSystemTime(new Date('2026-01-01T00:01:00Z'))
+          landEpochWrite(Date.now())
+
+          expect(storageData.connectedSites).toEqual({})
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://bridge.example',
+            },
+            expect.any(Function),
+          )
+          const check = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(check.reply.current).toEqual({
+            result: { isConnected: false },
+          })
+
+          // the re-unlock at +2min re-stamps the mirror fresh; the epoch
+          // stays put and must not sweep anything on its own — a NEW
+          // approval at +3min (timestamp > epoch) connects and answers
+          jest.setSystemTime(new Date('2026-01-01T00:02:00Z'))
+          landMirrorWrite(Date.now())
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2) // no new revocations
+
+          jest.setSystemTime(new Date('2026-01-01T00:03:00Z'))
+          const reconnect = dispatch(
+            { requestId: 'r2', method: 'connect', params: {} },
+            dappSender,
+          )
+          expect(reconnect.keptOpen).toBe(true)
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(701),
+              origin: 'https://bridge.example',
+              windowId: 701,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(reconnect.reply.current.result).toEqual(sessionData)
+          const recheck = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(recheck.reply.current).toEqual({
+            result: { isConnected: true },
+          })
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('a boot snapshot lacking the epoch cannot revert an adopted epoch (grants still swept)', () => {
+        // The epoch needs the same adoption latch as the mirror: the logout's
+        // epoch write can land live while the boot get is still in flight, and
+        // the stale snapshot (read before the logout — no epoch, and the
+        // mirror still carrying the logout's already-expired stamp) must not
+        // revert either adoption — a reverted epoch would let the pre-logout
+        // grants answer for this worker's whole lifetime.
+        const preEpochGrant = {
+          'https://bridge.example': {
+            ...sessionData,
+            timestamp: Date.now() - 2 * 60 * 60 * 1000,
+          },
+        }
+        const resolveBootGet = bootWithDeferredSnapshot(
+          {
+            connectedSites: preEpochGrant, // OLDER snapshot: pre-logout
+            networkType: 'testnet',
+            walletLockAt: Date.now() - 31 * 60 * 1000, // the logout's expired stamp
+          },
+          preEpochGrant,
+        )
+
+        // the logout's epoch write lands while the boot get is in flight
+        // (its sweep no-ops: the in-memory map is still empty pre-snapshot)…
+        landEpochWrite(Date.now())
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+
+        // …and so does the re-unlock's fresh mirror re-stamp
+        landMirrorWrite(Date.now())
+
+        // then the STALE snapshot lands: no epoch, expired mirror
+        resolveBootGet()
+
+        // both adoptions survived: the mirror stayed fresh (no full revoke
+        // from the snapshot's expired stamp) and the epoch swept the
+        // pre-logout grant exactly once, at snapshot adoption time
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2) // both tabs, bridge.example only
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        const check = dispatch({ method: 'checkConnection' }, dappSender)
+        expect(check.reply.current).toEqual({ result: { isConnected: false } })
+      })
+
+      it('legacy storage without an epoch: even an ancient grant keeps answering on a fresh mirror', () => {
+        // Backwards compat: absent epoch → NO epoch-based deletion, whatever
+        // the grant timestamp. Only the pre-existing mirror-expiry path (its
+        // own tests above, which seed no epoch either) may sweep.
+        bootWithMirror(freshUnlockMirror(), {
+          'https://bridge.example': { ...sessionData, timestamp: 1 },
+        })
+
+        const session = dispatch({ method: 'getSession' }, dappSender)
+        expect(session.reply.current.result).toMatchObject({
+          network: 'testnet',
+        })
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      })
+
+      it('a grant approved with a timestamp EXACTLY equal to the epoch is swept (<= boundary)', () => {
+        // Pins the sweep's fail-closed comparison: a grant survives only
+        // when timestamp > epoch, so an approval completing in the same
+        // millisecond as the logout's epoch write (timestamp === epoch) is
+        // dead. A `>` → `>=` mutation would flip the boundary to fail-open
+        // and this test fails on it.
+        jest.useFakeTimers()
+        try {
+          jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+          bootWithMirror(null)
+
+          // the logout's epoch write lands at T — nothing to sweep yet
+          landEpochWrite(Date.now())
+          expect(storageData.connectedSites).toEqual({})
+
+          // an approval completes IN THE SAME millisecond: its approval-time
+          // timestamp is exactly the epoch
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            dappSender,
+          )
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(700),
+              origin: 'https://bridge.example',
+              windowId: 700,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(connect.reply.current.result).toEqual(sessionData)
+          expect(storageData.connectedSites['https://bridge.example']).toEqual(
+            expect.objectContaining({ timestamp: Date.now() }),
+          )
+
+          // the next message's piggyback sweep observes timestamp === epoch
+          // and deletes the grant durably, propagating to the site's tabs
+          const check = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(check.reply.current).toEqual({
+            result: { isConnected: false },
+          })
+          expect(storageData.connectedSites).toEqual({})
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://bridge.example',
+            },
+            expect.any(Function),
+          )
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('a grant of unprovable age (no timestamp field) fails closed: swept and propagated', () => {
+        // Only handlePopupResponse creates grants (always timestamped), so a
+        // timestampless grant can only be ancient/foreign durable storage.
+        // With an epoch present its age cannot be proven to postdate the
+        // revocation — it fails closed exactly like a grant without a
+        // network stamp.
+        bootWithMirror(
+          freshUnlockMirror(),
+          {
+            'https://bridge.example': {
+              address: sessionData.address,
+              addressesByChain: sessionData.addressesByChain,
+              network: 'testnet',
+              // deliberately NO timestamp field
+            },
+          },
+          epochAfterLogout(),
+        )
+
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          {
+            type: 'MOJITO_SESSION_REVOKED',
+            origin: 'https://bridge.example',
+          },
+          expect.any(Function),
+        )
+        const check = dispatch({ method: 'checkConnection' }, dappSender)
+        expect(check.reply.current).toEqual({
+          result: { isConnected: false },
+        })
+      })
     })
   })
 
