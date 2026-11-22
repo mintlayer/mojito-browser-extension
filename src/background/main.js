@@ -350,12 +350,45 @@ export const initBackground = () => {
       return
     }
     if (typeof grantsRevokedAt !== 'number') return
-    const staleOrigins = Object.keys(connectedSites).filter((origin) => {
-      const { timestamp } = connectedSites[origin] || {}
-      return !(typeof timestamp === 'number' && timestamp > grantsRevokedAt)
+    const staleGrant = (grant) =>
+      !(
+        typeof grant?.timestamp === 'number' &&
+        grant.timestamp > grantsRevokedAt
+      )
+    const staleOrigins = Object.keys(connectedSites).filter((origin) =>
+      staleGrant(connectedSites[origin]),
+    )
+    if (staleOrigins.length) {
+      revokeOrigins(staleOrigins)
+      return
+    }
+    // Empty in-memory map: a genuine no-op — UNLESS a previous epoch sweep
+    // emptied the map without ever persisting (both writes failed while this
+    // worker lived). Then the storage snapshot still holds the pre-epoch
+    // grants and every later sweep must re-attempt the deletion against it —
+    // the same durable-snapshot re-read revokeAllGrants uses, filtered
+    // through the epoch predicate: grants approved after the epoch
+    // legitimately survive, in memory or in storage. As there, the durable
+    // keys are read WITHOUT re-hydrating the in-memory map: deleting absent
+    // keys is a no-op and the whole-map persist preserves a newer grant.
+    if (!revocationPending) return
+    api.storage.local.get(['connectedSites'], (data) => {
+      if (api.runtime.lastError) {
+        // revocationPending stays set: the next sweep re-reads and retries
+        return
+      }
+      const durable = data.connectedSites || {}
+      const staleDurable = Object.keys(durable).filter((origin) =>
+        staleGrant(durable[origin]),
+      )
+      if (!staleDurable.length) {
+        // the failure self-healed elsewhere (e.g. another writer persisted
+        // the same removal): nothing left for this witness to revoke
+        revocationPending = false
+        return
+      }
+      revokeOrigins(staleDurable)
     })
-    if (!staleOrigins.length) return
-    revokeOrigins(staleOrigins)
   }
 
   // Load connected sites from storage. Messages arriving before the load

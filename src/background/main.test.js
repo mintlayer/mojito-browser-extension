@@ -2245,6 +2245,158 @@ describe('background service worker', () => {
         )
       })
 
+      it('a later sweep completes an epoch deletion whose persist failed twice (durable re-read)', () => {
+        // The sweep emptied the in-memory map but both storage writes failed
+        // while the worker lived: revocationPending stays set and the
+        // pre-epoch grant lingers in the durable snapshot. The NEXT sweep
+        // (here: the message-path piggyback) must re-read that snapshot and
+        // finish the deletion — not answer from the empty in-memory map.
+        jest.useFakeTimers()
+        try {
+          jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+          bootWithMirror(null)
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            dappSender,
+          )
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(700),
+              origin: 'https://bridge.example',
+              windowId: 700,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(connect.reply.current.result).toEqual(sessionData)
+
+          // logout at +1min stamps the epoch; the sweep's persist fails
+          // twice WITHOUT landing (the retry backoff runs on fake timers)
+          jest.setSystemTime(new Date('2026-01-01T00:01:00Z'))
+          const originalSet = global.chrome.storage.local.set
+          global.chrome.storage.local.set = (obj, cb) => {
+            global.chrome.runtime.lastError = { message: 'quota exceeded' }
+            cb()
+            delete global.chrome.runtime.lastError
+          }
+          landEpochWrite(Date.now())
+          jest.advanceTimersByTime(250)
+          expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+          // exactly the lost-revocation state: memory empty, durable copy
+          // still holding the grant
+          expect(
+            storageData.connectedSites['https://bridge.example'],
+          ).toBeDefined()
+
+          // worker recovers; the next piggyback sweep self-heals against
+          // the durable snapshot
+          global.chrome.storage.local.set = originalSet
+          const check = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(check.reply.current).toEqual({
+            result: { isConnected: false },
+          })
+          expect(storageData.connectedSites).toEqual({})
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://bridge.example',
+            },
+            expect.any(Function),
+          )
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('the epoch self-heal re-read revokes only pre-epoch durable grants', () => {
+        // The durable re-read must NOT become a whole-map revoke: a
+        // post-epoch grant that also sits in storage (its own persist may
+        // have landed while the sweep's write kept failing) legitimately
+        // survives — routing through revokeAllGrants wholesale would
+        // delete it.
+        jest.useFakeTimers()
+        try {
+          jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+          const originalSet = global.chrome.storage.local.set
+          global.chrome.storage.local.set = (obj, cb) => {
+            global.chrome.runtime.lastError = { message: 'quota exceeded' }
+            cb()
+            delete global.chrome.runtime.lastError
+          }
+          bootWithMirror(
+            freshUnlockMirror(),
+            {
+              'https://bridge.example': {
+                ...sessionData,
+                timestamp: Date.now() - 2 * 60 * 60 * 1000,
+              },
+              'https://other.example': {
+                ...sessionData,
+                timestamp: Date.now() - 60 * 1000,
+              },
+            },
+            epochAfterLogout(),
+          )
+          jest.advanceTimersByTime(250)
+
+          // the boot sweep failed to persist: both grants are still durable,
+          // only the pre-epoch one is gone from memory
+          expect(
+            storageData.connectedSites['https://bridge.example'],
+          ).toBeDefined()
+          expect(
+            storageData.connectedSites['https://other.example'],
+          ).toBeDefined()
+
+          global.chrome.storage.local.set = originalSet
+          const check = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(check.reply.current).toEqual({
+            result: { isConnected: false },
+          })
+
+          // only the pre-epoch grant was revoked, durably and for its tabs;
+          // the post-epoch grant keeps answering
+          expect(storageData.connectedSites).toEqual({
+            'https://other.example': expect.objectContaining({
+              network: 'testnet',
+            }),
+          })
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://bridge.example',
+            },
+            expect.any(Function),
+          )
+          expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://other.example',
+            },
+            expect.any(Function),
+          )
+          const other = dispatch(
+            { method: 'checkConnection' },
+            {
+              id: 'some-site',
+              origin: 'https://other.example',
+              url: 'https://other.example/page',
+            },
+          )
+          expect(other.reply.current).toEqual({
+            result: { isConnected: true },
+          })
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
       it('a live worker sweeps the moment the logout epoch lands via onChanged (lost notify)', () => {
         // Fake timers make every step's clock deterministic: the re-approval
         // must land STRICTLY after the epoch (a same-millisecond approval

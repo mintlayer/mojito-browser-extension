@@ -44,8 +44,14 @@ export const initMojito = (appVersion) => {
 
     async request(method, params = {}) {
       return new Promise((resolve, reject) => {
-        // CSPRNG ids: unguessable, so another script in this page cannot
-        // forge or collide a response for an in-flight request.
+        // CSPRNG ids give response correlation, NOT authentication: the id
+        // is broadcast on the outbound MINTLAYER_REQUEST event, so any
+        // same-origin script can read it and forge a matching
+        // MINTLAYER_RESPONSE (e.g. a fake "connected" state). The
+        // postMessage bridge is unauthenticated; the real boundary is
+        // worker-side — every privileged operation is re-validated there
+        // against the actual grant, so a forged response can only mislead
+        // this page's own SDK state, never obtain addresses or signatures.
         const requestId =
           globalThis.crypto?.randomUUID?.() ||
           Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) =>
