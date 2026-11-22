@@ -61,6 +61,14 @@ Notes:
   or on wallet lock/logout — is **immediate and persistent**: the wallet
   deletes the session, and open tabs for that origin receive
   `MINTLAYER_EVENT: disconnect`.
+- A grant is scoped to the network it was approved on: switching the
+  wallet's active network (mainnet ↔ testnet) revokes it the same way, and
+  `checkConnection`/`getSession` report disconnected/no session until the
+  dApp calls `connect` again (fresh approval on the new network). Grants
+  created by older wallet builds (no network stamp) are revoked the same
+  way — with disconnect events to open tabs — the first time the wallet UI
+  opens after the update; sign attempts on such a grant fail with
+  `WRONG_NETWORK`.
 - Bridges MUST treat that event as authoritative: drop every cached
   session/address from the SDK client. Do not trust an in-memory client
   state that predates the revocation (this caused an incident where the

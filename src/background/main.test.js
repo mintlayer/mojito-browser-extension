@@ -30,6 +30,7 @@ describe('background service worker', () => {
   let storageData
   let createdWindows
   let windowRemovedListeners
+  let storageChangeListeners
 
   const loadBackground = () => {
     // The WXT entrypoint wraps the original IIFE body in a factory; each
@@ -59,6 +60,7 @@ describe('background service worker', () => {
     storageData = {}
     createdWindows = []
     windowRemovedListeners = []
+    storageChangeListeners = []
 
     global.browser = undefined
     global.chrome = {
@@ -96,6 +98,11 @@ describe('background service worker', () => {
             delete storageData[key]
             cb && cb()
           },
+        },
+        // the background tracks the wallet UI's active network through the
+        // 'networkType' key it persists to chrome.storage.local
+        onChanged: {
+          addListener: (fn) => storageChangeListeners.push(fn),
         },
       },
       windows: {
@@ -151,10 +158,6 @@ describe('background service worker', () => {
       expect(reply.current).toBeUndefined()
       expect(keptOpen).toBe(true)
       expect(createdWindows).toHaveLength(1)
-      console.log(
-        'DEBUG stored:',
-        JSON.stringify(storageData['pendingRequest:700']),
-      )
       // keyed by the window that will show the approval
       expect(storageData['pendingRequest:700']).toMatchObject({
         action: 'connect',
@@ -1097,6 +1100,294 @@ describe('background service worker', () => {
         origin: 'https://bridge.example',
         requestId: expect.any(String),
       })
+    })
+  })
+
+  // ── network-switch regression: grants are network-scoped ──
+  // The wallet UI publishes its active network to chrome.storage.local
+  // ('networkType') — the worker cannot read the wallet pages' localStorage.
+  // A grant approved on one network must never answer after a switch:
+  // checkConnection says disconnected, connect opens a FRESH approval,
+  // getSession refuses, and the stale grant is revoked + propagated so open
+  // dApp tabs drop their cached addresses.
+  describe('network switch re-validation', () => {
+    const mainnetSession = {
+      address: { mainnet: { receiving: ['mtc1qabc'], change: ['mtc1qchg'] } },
+      addressesByChain: {
+        mintlayer: { receiving: ['mtc1qabc'], change: ['mtc1qchg'] },
+      },
+      network: 'mainnet',
+    }
+
+    // Simulates the wallet UI's switch write (SettingsProvider persists
+    // 'networkType' to chrome.storage.local on every toggle).
+    const publishNetwork = (network) => {
+      storageData.networkType = network
+      for (const listener of storageChangeListeners) {
+        listener({ networkType: { newValue: network } }, 'local')
+      }
+    }
+
+    // Boots a worker whose storage ALREADY holds a published network —
+    // e.g. the switch happened while the MV3 worker was dead. Only the
+    // fresh worker's listeners stay registered.
+    const bootWithNetwork = (network, sites = {}) => {
+      messageListeners.length = 0
+      storageChangeListeners.length = 0
+      windowRemovedListeners.length = 0
+      createdWindows.length = 0
+      global.chrome.tabs.query.mockClear()
+      global.chrome.tabs.sendMessage.mockClear()
+      storageData.networkType = network
+      storageData.connectedSites = sites
+      loadBackground()
+    }
+
+    const approve = (result, windowId = 700) => {
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(windowId),
+          origin: 'https://bridge.example',
+          windowId,
+          result,
+        },
+        extensionSender,
+      )
+    }
+
+    it('revokes a mainnet grant on switch to testnet and fails closed', () => {
+      bootWithNetwork('mainnet')
+      approve(mainnetSession)
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toMatchObject({ network: 'mainnet' })
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: true } })
+
+      // the wallet UI switches mainnet → testnet
+      publishNetwork('testnet')
+
+      // the stale grant was revoked proactively and the site's tabs told
+      // to drop their cached addresses
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toBeUndefined()
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+
+      // checkConnection fails closed on the new network
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+
+      // getSession refuses: no stale mainnet addresses disclosed
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+
+      // connect opens a FRESH approval instead of answering the stale grant
+      const reconnect = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
+      expect(createdWindows).toHaveLength(2) // the first approval was 700
+      expect(storageData['pendingRequest:701']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+      })
+
+      // re-approval ON THE NEW network answers with the NEW session
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(701),
+          origin: 'https://bridge.example',
+          windowId: 701,
+          result: sessionData, // testnet session
+        },
+        extensionSender,
+      )
+      expect(reconnect.reply.current.result).toEqual(sessionData)
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: true } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toMatchObject({ result: { network: 'testnet' } })
+    })
+
+    it('same-network grants keep answering normally (no false revocation)', () => {
+      bootWithNetwork('testnet')
+      approve(sessionData)
+
+      // re-publishing the SAME network must not revoke anything
+      publishNetwork('testnet')
+      expect(storageData.connectedSites['https://bridge.example']).toBeTruthy()
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: true } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toMatchObject({ result: { network: 'testnet' } })
+
+      // an already-connected site is still answered from the stored grant
+      const repeat = dispatch(
+        { requestId: 'r9', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(repeat.keptOpen).toBe(false)
+      expect(
+        repeat.reply.current.result.addressesByChain.mintlayer.receiving,
+      ).toEqual(['tmtc1qabc'])
+    })
+
+    it('a worker that boots after a switch sweeps stale grants before answering', () => {
+      // the switch happened while the worker was dead: storage holds the
+      // NEW network AND the stale mainnet grant
+      bootWithNetwork('testnet', {
+        'https://bridge.example': { ...mainnetSession, timestamp: 1 },
+      })
+
+      // revoked at load, before any queued message is answered
+      expect(storageData.connectedSites).toEqual({})
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+    })
+
+    it('a grant that lands on the old network after the switch never answers', () => {
+      // razor-edge race: the approval completes with a grant approved on
+      // mainnet AFTER the wallet already switched to testnet (the sweep
+      // already ran) — the read-side re-validation is the last line of
+      // defense and must treat the stale grant as absent.
+      bootWithNetwork('testnet')
+      approve(mainnetSession)
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toMatchObject({ network: 'mainnet' })
+
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+      // connect does NOT return the stale grant: fresh approval instead
+      const reconnect = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
+    })
+
+    // The boot read and a live switch can interleave: storage.onChanged
+    // adopts the NEW network while the boot get is still in flight, then
+    // the boot callback lands with the OLDER (pre-switch) snapshot. The
+    // snapshot must never revert the adopted network — reverting would
+    // resurrect the very grants the adoption swept.
+    it('a boot snapshot landing after an adopted switch cannot revert the network', () => {
+      let resolveBootGet
+      const realGet = global.chrome.storage.local.get
+      // defer ONLY the boot read (['connectedSites', 'networkType']):
+      // its callback resolves later, after the switch was adopted live
+      global.chrome.storage.local.get = (keys, cb) => {
+        if (Array.isArray(keys) && keys.includes('networkType')) {
+          resolveBootGet = () =>
+            cb({
+              // OLDER snapshot: read before the switch (mainnet grant)
+              connectedSites: {
+                'https://bridge.example': { ...mainnetSession, timestamp: 1 },
+              },
+              networkType: 'mainnet',
+            })
+          return
+        }
+        realGet(keys, cb)
+      }
+
+      bootWithNetwork('mainnet', {
+        'https://bridge.example': { ...mainnetSession, timestamp: 1 },
+      })
+      expect(resolveBootGet).toBeDefined()
+
+      // the wallet UI switches mainnet → testnet while the boot get is in
+      // flight: onChanged adopts testnet (its sweep no-ops — the map is
+      // still empty at this point)
+      publishNetwork('testnet')
+
+      // ...then the stale pre-switch snapshot lands
+      resolveBootGet()
+
+      // the adopted (testnet) network wins: the mainnet grant is swept and
+      // never answers
+      expect(storageData.connectedSites).toEqual({})
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+    })
+
+    // Pre-upgrade grants carry no network stamp: they cannot be proven
+    // current, so the first published network fails them closed — swept,
+    // tabs notified, and the dApp must reconnect with a fresh approval.
+    it('revokes pre-upgrade grants without a network stamp (fail closed)', () => {
+      bootWithNetwork('testnet', {
+        'https://bridge.example': {
+          address: {
+            testnet: { receiving: ['tmtc1qabc'], change: ['tmtc1qchg'] },
+          },
+          addressesByChain: {
+            mintlayer: { receiving: ['tmtc1qabc'], change: ['tmtc1qchg'] },
+          },
+          timestamp: 1,
+        },
+      })
+
+      // swept at boot, before any message is answered
+      expect(storageData.connectedSites).toEqual({})
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+
+      // connect opens a FRESH approval instead of answering the unstamped grant
+      const reconnect = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
     })
   })
 

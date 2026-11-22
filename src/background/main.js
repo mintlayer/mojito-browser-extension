@@ -11,10 +11,17 @@
  *   (`disconnectSite`), or on wallet lock/logout — and every revocation is
  *   persisted to storage and PROPAGATED to the site's open tabs
  *   (notifyOriginRevoked), so no page keeps acting on a dead grant.
+ * - A grant authorizes ONLY the network it was approved on. The wallet UI
+ *   publishes its active network to chrome.storage.local ('networkType' —
+ *   the worker cannot read the wallet pages' localStorage); switching
+ *   networks REVOKES every grant approved on another network (with tab
+ *   propagation), and connect/checkConnection/getSession re-validate the
+ *   grant's network against the CURRENT one before answering — a stale
+ *   grant is treated as absent.
  * - No code path may return wallet addresses (getSession/connect/
  *   checkConnection/signTransaction/signChallenge) without a live grant.
  * - Any change to these handlers must keep this invariant and add a
- *   regression test (see public/background.test.js).
+ *   regression test (see src/background/main.test.js).
  */
 
 export const initBackground = () => {
@@ -42,6 +49,16 @@ export const initBackground = () => {
   const popupSlot = createApprovalSlot()
   const connectSlot = createApprovalSlot()
   let connectedSites = {}
+  // The wallet's CURRENT network, as published by the wallet UI to
+  // chrome.storage.local ('networkType'). `null` = not published yet (fresh
+  // install/update before the UI first opens): grants cannot be
+  // re-validated and nothing is revoked until the UI publishes a value.
+  let activeNetwork = null
+  // Set once the storage.onChanged listener has adopted a network: a boot
+  // snapshot landing afterwards is OLDER (read before the switch) and must
+  // not revert the adopted value — reverting would un-sweep grants the
+  // adoption already revoked.
+  let networkAdopted = false
   const pendingResponses = new Map()
 
   // Open the wallet in the browser side panel when the toolbar icon is clicked
@@ -129,6 +146,67 @@ export const initBackground = () => {
     })
   }
 
+  // Revocation must reach open dApp tabs: broadcast to every tab, the
+  // content script filters by its own origin. Rare + tiny, so spraying is
+  // acceptable and needs no extra permissions.
+  const notifyOriginRevoked = (origin) => {
+    if (!origin || !api.tabs?.query || !api.tabs?.sendMessage) return
+    api.tabs.query({}, (tabs) => {
+      if (api.runtime.lastError) return
+      for (const tab of tabs) {
+        if (typeof tab.id !== 'number') continue
+        api.tabs.sendMessage(
+          tab.id,
+          { type: 'MOJITO_SESSION_REVOKED', origin },
+          () => {
+            // no content script in that tab — expected, ignore
+          },
+        )
+      }
+    })
+  }
+
+  // The wallet UI (SettingsProvider) owns the active network and publishes
+  // every value — initial and toggles — to chrome.storage.local, because
+  // the service worker cannot read the wallet pages' localStorage.
+  const normalizeNetwork = (value) =>
+    value === 'mainnet' || value === 'testnet' ? value : null
+
+  // A grant authorizes ONLY the network it was approved on. A grant without
+  // a `network` stamp (pre-dating network-scoped grants) cannot be proven
+  // current either and fails re-validation — fail closed. When the UI has
+  // not published a network yet, nothing can be re-validated and grants
+  // keep the pre-existing behavior.
+  const hasLiveGrant = (origin) => {
+    const grant = connectedSites[origin]
+    if (!grant) return false
+    if (!activeNetwork) return true
+    return grant.network === activeNetwork
+  }
+
+  // Grants from another network must never answer, not even from storage:
+  // DELETE them (a fresh approval always overwrites/recreates the grant, so
+  // deletion leaves no read path to stale addresses) and notify the sites'
+  // open tabs — same propagation as a disconnect — so cached SDK clients
+  // drop the stale addresses.
+  const revokeGrantsFromOtherNetworks = () => {
+    if (!activeNetwork) return
+    const staleOrigins = Object.keys(connectedSites).filter(
+      (origin) => connectedSites[origin]?.network !== activeNetwork,
+    )
+    if (!staleOrigins.length) return
+    for (const origin of staleOrigins) {
+      delete connectedSites[origin]
+    }
+    api.storage.local.set({ connectedSites }, () => {
+      if (api.runtime.lastError) {
+        console.error('[Mintlayer] Storage set error:', api.runtime.lastError)
+        return
+      }
+      for (const origin of staleOrigins) notifyOriginRevoked(origin)
+    })
+  }
+
   // Load connected sites from storage. Messages arriving before the load
   // completes are queued: acting on a half-loaded session map would tell
   // already-connected sites they are NOT_CONNECTED.
@@ -142,11 +220,19 @@ export const initBackground = () => {
     }
     messageQueue.length = 0
   }
-  api.storage.local.get(['connectedSites'], (data) => {
+  api.storage.local.get(['connectedSites', 'networkType'], (data) => {
     if (api.runtime.lastError) {
       console.error('[Mintlayer] Storage get error:', api.runtime.lastError)
     } else {
       connectedSites = data.connectedSites || {}
+      if (!networkAdopted) {
+        activeNetwork = normalizeNetwork(data.networkType)
+      }
+      // A switch that happened while this worker was dead still left grants
+      // approved on the OLD network in storage: revoke them before any
+      // queued message is answered. Runs on whatever snapshot loaded, so a
+      // stale snapshot can still only shrink the map, never answer from it.
+      revokeGrantsFromOtherNetworks()
     }
     // one-time cleanup of the pre-window-keyed pending request
     api.storage.local.remove('pendingRequest')
@@ -182,6 +268,21 @@ export const initBackground = () => {
       drainMessageQueue()
     }
   })
+
+  // Live network switch: the wallet UI persists the new network to
+  // chrome.storage.local ('networkType'). Revoke every grant approved on
+  // another network immediately, so open dApp tabs are told to drop cached
+  // addresses even before their next request is re-validated.
+  if (api.storage.onChanged?.addListener) {
+    api.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local' || !changes.networkType) return
+      const next = normalizeNetwork(changes.networkType.newValue)
+      if (next === activeNetwork) return
+      activeNetwork = next
+      networkAdopted = true
+      revokeGrantsFromOtherNetworks()
+    })
+  }
 
   const pendingRequestKeyFor = (windowId) => `pendingRequest:${windowId}`
 
@@ -221,26 +322,6 @@ export const initBackground = () => {
   // on first panel open); while it runs, the panel keeps priority.
   const PANEL_ACK_TIMEOUT_MS = 8000
   const approvalAcks = new Map() // requestId -> timeout id
-
-  // Revocation must reach open dApp tabs: broadcast to every tab, the
-  // content script filters by its own origin. Rare + tiny, so spraying is
-  // acceptable and needs no extra permissions.
-  const notifyOriginRevoked = (origin) => {
-    if (!origin || !api.tabs?.query || !api.tabs?.sendMessage) return
-    api.tabs.query({}, (tabs) => {
-      if (api.runtime.lastError) return
-      for (const tab of tabs) {
-        if (typeof tab.id !== 'number') continue
-        api.tabs.sendMessage(
-          tab.id,
-          { type: 'MOJITO_SESSION_REVOKED', origin },
-          () => {
-            // no content script in that tab — expected, ignore
-          },
-        )
-      }
-    })
-  }
 
   // Approval responses and disconnections must come from the wallet's own
   // pages, never from a content script injected into a website.
@@ -745,12 +826,18 @@ export const initBackground = () => {
 
     // Handle requests from content.js
     if (message.method === 'checkConnection') {
+      // Re-validated against the CURRENT network: a grant approved on
+      // another network is treated as absent.
       sendResponse({
-        result: { isConnected: !!connectedSites[origin] },
+        result: { isConnected: hasLiveGrant(origin) },
       })
     } else if (message.method === 'connect') {
-      // Already connected: answer immediately instead of asking again.
-      if (connectedSites[origin]) {
+      // Already connected ON THE CURRENT NETWORK: answer immediately
+      // instead of asking again. A stale grant (approved on another
+      // network — normally already swept at switch time; re-validated here
+      // in case the sweep was missed) is treated as absent, so the dApp
+      // gets a FRESH approval flow instead of the stale session.
+      if (hasLiveGrant(origin)) {
         sendResponse({ result: connectedSites[origin] })
         return false
       }
@@ -843,10 +930,12 @@ export const initBackground = () => {
       sendResponse({ result: true })
     } else if (message.method === 'getSession') {
       // Origin MUST come from the browser's `sender` — a caller-supplied
-      // origin would let any page read another origin's session.
+      // origin would let any page read another origin's session. The grant
+      // is re-validated against the CURRENT network: a stale grant answers
+      // as "no session" instead of disclosing the old network's addresses.
       const session = connectedSites[origin]
 
-      if (session && session.address) {
+      if (hasLiveGrant(origin) && session.address) {
         sendResponse({
           result: {
             address: session.address,
