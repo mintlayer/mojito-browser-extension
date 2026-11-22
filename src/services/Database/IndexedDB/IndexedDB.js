@@ -116,7 +116,9 @@ const save = (store, entity) => {
   return new Promise((resolve, reject) => {
     const dbOperation = store.add(entity)
     dbOperation.onsuccess = ({ target: { result } }) => resolve(result)
-    dbOperation.onerror = (error) => reject(error)
+    // Reject with the underlying error, not the raw event (same parity as
+    // openDatabase): callers' catch blocks can rely on .message.
+    dbOperation.onerror = (event) => reject(event?.target?.error ?? event)
   })
 }
 
@@ -124,7 +126,9 @@ const get = (store, index) => {
   return new Promise((resolve, reject) => {
     const dbOperation = store.get(index)
     dbOperation.onsuccess = ({ target: { result } }) => resolve(result)
-    dbOperation.onerror = (error) => reject(error)
+    // Reject with the underlying error, not the raw event (same parity as
+    // openDatabase): callers' catch blocks can rely on .message.
+    dbOperation.onerror = (event) => reject(event?.target?.error ?? event)
   })
 }
 
@@ -132,7 +136,9 @@ const getAll = (store) => {
   return new Promise((resolve, reject) => {
     const dbOperation = store.getAll()
     dbOperation.onsuccess = ({ target: { result } }) => resolve(result)
-    dbOperation.onerror = (error) => reject(error)
+    // Reject with the underlying error, not the raw event (same parity as
+    // openDatabase): callers' catch blocks can rely on .message.
+    dbOperation.onerror = (event) => reject(event?.target?.error ?? event)
   })
 }
 
@@ -140,7 +146,9 @@ const update = (store, entity) => {
   return new Promise((resolve, reject) => {
     const dbOperation = store.put(entity)
     dbOperation.onsuccess = ({ target: { result } }) => resolve(result)
-    dbOperation.onerror = (error) => reject(error)
+    // Reject with the underlying error, not the raw event (same parity as
+    // openDatabase): callers' catch blocks can rely on .message.
+    dbOperation.onerror = (event) => reject(event?.target?.error ?? event)
   })
 }
 
@@ -148,7 +156,9 @@ const remove = (store, key) => {
   return new Promise((resolve, reject) => {
     const dbOperation = store.delete(key)
     dbOperation.onsuccess = ({ target: { result } }) => resolve(result)
-    dbOperation.onerror = (error) => reject(error)
+    // Reject with the underlying error, not the raw event (same parity as
+    // openDatabase): callers' catch blocks can rely on .message.
+    dbOperation.onerror = (event) => reject(event?.target?.error ?? event)
   })
 }
 
@@ -156,7 +166,9 @@ const clear = (store) => {
   return new Promise((resolve, reject) => {
     const dbOperation = store.clear()
     dbOperation.onsuccess = ({ target: { result } }) => resolve(result)
-    dbOperation.onerror = (error) => reject(error)
+    // Reject with the underlying error, not the raw event (same parity as
+    // openDatabase): callers' catch blocks can rely on .message.
+    dbOperation.onerror = (event) => reject(event?.target?.error ?? event)
   })
 }
 
@@ -172,6 +184,11 @@ const deleteAccount = async (accountId, onError, DB = IDB) => {
   } catch (error) {
     onError && onError(error)
     console.error(error)
+    // Propagate: a delete that silently "succeeds" would let callers treat
+    // the wallet as gone when it is not — the UI's delete flow skips the
+    // dApp-grant revocation (logout) on a real failure and must be able to
+    // tell the difference.
+    throw error
   }
 }
 

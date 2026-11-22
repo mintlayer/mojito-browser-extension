@@ -4,6 +4,7 @@ import {
   SCHEMAVERSION,
   createOrUpdateDatabase,
   createTransaction,
+  deleteAccount,
   loadAccounts,
   openDatabase,
   save,
@@ -27,6 +28,58 @@ test('IndexedDB basic functions - loadAccounts', async () => {
 test('IndexedDB basic functions - loadAccounts error', async () => {
   const onError = (event) => expect(event).toBeInstanceOf(Error)
   await loadAccounts(onError, null)
+})
+
+test('IndexedDB basic functions - deleteAccount rethrows on failure', async () => {
+  const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  try {
+    const onError = jest.fn()
+    // a null DB makes openDatabase reject — the same failure source the
+    // loadAccounts error test uses
+    await expect(
+      deleteAccount('account-id', onError, null),
+    ).rejects.toBeInstanceOf(Error)
+    expect(onError).toHaveBeenCalledTimes(1)
+  } finally {
+    errorSpy.mockRestore()
+  }
+})
+
+test('IndexedDB basic functions - deleteAccount rethrows write failures as Errors', async () => {
+  const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  try {
+    // the store WRITE fails (e.g. quota): the request helper must reject
+    // with the underlying Error, not the raw IDB event, so the rethrown
+    // value carries .message for callers
+    const writeError = new Error('quota exceeded')
+    const failingStore = {
+      delete: () => ({
+        set onsuccess(_) {},
+        set onerror(handler) {
+          queueMicrotask(() => handler({ target: { error: writeError } }))
+        },
+      }),
+    }
+    const fakeDb = {
+      transaction: () => ({ objectStore: () => failingStore }),
+      close: () => {},
+    }
+    const fakeFactory = {
+      open: () => {
+        const request = {}
+        queueMicrotask(() => request.onsuccess({ target: { result: fakeDb } }))
+        return request
+      },
+    }
+
+    const onError = jest.fn()
+    await expect(
+      deleteAccount('account-id', onError, fakeFactory),
+    ).rejects.toBe(writeError)
+    expect(onError).toHaveBeenCalledWith(writeError)
+  } finally {
+    errorSpy.mockRestore()
+  }
 })
 
 test('IndexedDB basic functions - createOrUpdateDatabase', async () => {

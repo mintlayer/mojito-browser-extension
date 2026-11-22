@@ -1,7 +1,7 @@
 import { useState, useContext, ChangeEvent, ReactNode } from 'react'
 
 import { CenteredLayout } from '@LayoutComponents'
-import { Button } from '@BasicComponents'
+import { Button, Error } from '@BasicComponents'
 import { Login } from '@ContainerComponents'
 
 import { Account } from '@Entities'
@@ -14,6 +14,7 @@ const DeleteAccount = () => {
   const [step, setStep] = useState(1)
   const [seedSaved, setSeedSaved] = useState(false)
   const [understandIrreversible, setUnderstandIrreversible] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const {
     logout,
     verifyAccountsExistence,
@@ -33,14 +34,36 @@ const DeleteAccount = () => {
   ) => {
     try {
       await Account.deleteAccount(accountId as string)
+    } catch (e) {
+      // The wallet still exists: the session stays unlocked and its grants
+      // keep answering, so revocation must NOT fire for a delete that never
+      // happened. SetPassword never leaves its loading state once onSubmit
+      // fires, so surface the failure here — a permanent loading screen
+      // with no feedback would hard-stick the user.
+      console.error(e)
+      setDeleteError(
+        'Something went wrong while deleting your wallet. Please try again.',
+      )
+      return
+    }
+    // SECURITY: logout is what revokes the dApp connection grants (see
+    // AccountProvider.logout). It must fire the moment the wallet data is
+    // gone — BEFORE anything that can fail or that the page teardown can
+    // interrupt — so a completed delete can never leave the grants alive.
+    // The mirror stamp inside logout lands before the notify, so even a
+    // lost message is swept at the worker's next boot.
+    logout()
+    // Cosmetic accounts refresh only, best-effort: its failure must never
+    // strand the user on the now-dead password screen or read as a delete
+    // failure — the revocation already fired above.
+    try {
       await verifyAccountsExistence()
-      navigate('/')
-      setAllDataFetching(false)
-      logout()
-      setRemoveAccountPopupOpen(false)
     } catch (e) {
       console.error(e)
     }
+    navigate('/')
+    setAllDataFetching(false)
+    setRemoveAccountPopupOpen(false)
   }
 
   const onCancel = () => {
@@ -161,7 +184,23 @@ const DeleteAccount = () => {
           </div>
         </div>
       )}
-      {step === 2 && (
+      {step === 2 && deleteError && (
+        <CenteredLayout>
+          <div className={styles.container}>
+            <h2 className={styles.title}>Error deleting wallet</h2>
+            <Error error={deleteError} />
+            <div className={styles.buttonRow}>
+              <Button
+                onClickHandle={() => setDeleteError(null)}
+                extraStyleClasses={[styles.cancelButton]}
+              >
+                Back
+              </Button>
+            </div>
+          </div>
+        </CenteredLayout>
+      )}
+      {step === 2 && !deleteError && (
         <Login.SetPassword
           onSubmit={deleteAccountHandler}
           checkPassword={Account.unlockAccount}
