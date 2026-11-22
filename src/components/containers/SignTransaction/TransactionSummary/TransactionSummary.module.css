@@ -8,32 +8,6 @@
   padding: 14px 16px;
 }
 
-.row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.rowLabel {
-  color: var(--be-text-2);
-  font-size: var(--font-size-sm);
-  flex-shrink: 0;
-}
-
-.rowValue {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--be-text-0);
-  font-family: var(--be-font-mono);
-  font-size: var(--font-size-sm);
-  overflow-wrap: anywhere;
-  min-width: 0;
-  justify-content: flex-end;
-  text-align: right;
-}
-
 .valueLine {
   display: inline-flex;
   align-items: center;
@@ -43,6 +17,28 @@
 .amount {
   font-weight: 700;
   color: var(--be-text-0);
+}
+
+/* Fail-closed verification error shown in place of an amount/fee the
+   payload's `.decimal` label failed to reconcile with the signed `.atoms`. */
+.amountError {
+  font-weight: 700;
+  color: #c0392b;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+/* Fail-closed banner: rendered when any displayed amount disagrees with the
+   signed atoms — the page blocks the approve action alongside it. */
+.mismatchBanner {
+  border: 1px solid #c0392b;
+  background: rgba(192, 57, 43, 0.08);
+  color: #c0392b;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 10px;
+  overflow-wrap: anywhere;
 }
 
 .intentRow {

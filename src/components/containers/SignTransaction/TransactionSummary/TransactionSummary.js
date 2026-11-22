@@ -1,20 +1,11 @@
 import { useState, useContext } from 'react'
-import Decimal from 'decimal.js'
 
 import { MintlayerContext, SettingsContext } from '@Contexts'
-import { SignTransaction as SignTxHelpers } from '@Helpers'
+import { SignTransaction as SignTxHelpers, TransactionAmounts } from '@Helpers'
 import { CopyButton } from '@ComposedComponents'
 import { KV, Tag } from '@BasicComponents'
 
 import styles from './TransactionSummary.module.css'
-
-// Tokens can exceed float precision; never fall back to exponents.
-const Amount = Decimal.clone({ precision: 40, toExpNeg: -30, toExpPos: 30 })
-
-const COIN_DECIMALS = 11
-
-const trimTrailingZeros = (text) =>
-  text.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')
 
 const truncate = (value, head = 12, tail = 8) => {
   if (!value) return '—'
@@ -32,35 +23,11 @@ const getAddressOf = (candidate) => {
   return null
 }
 
-// The outputs the user is actually approving: those that don't land straight
-// back on this wallet. When every output goes to a wallet address (a
-// self-transfer), the payment is what goes to a receiving address — outputs
-// to change addresses are just the unspent remainder coming back.
-const findRelevantOutputs = (inputs, outputs, ownAddresses) => {
-  const receiving = ownAddresses.receiving || []
-  const ownList = [...receiving, ...(ownAddresses.change || [])]
-  const isOwn = (address) => address && ownList.includes(address)
-  const isReceiving = (address) => address && receiving.includes(address)
-
-  const inputWithToken = inputs.find(
-    (input) => input.utxo?.value?.type === 'TokenV1',
-  )
-  const tokenId = inputWithToken?.utxo?.value?.token_id
-  const matchesAsset = (output) =>
-    !tokenId || output.value?.token_id === tokenId
-
-  const toOthers = outputs.filter(
-    (output) => matchesAsset(output) && !isOwn(getAddressOf(output)),
-  )
-  if (toOthers.length > 0) return { outputs: toOthers, toSelf: false }
-
-  return {
-    outputs: outputs.filter(
-      (output) => matchesAsset(output) && isReceiving(getAddressOf(output)),
-    ),
-    toSelf: true,
-  }
-}
+// The signer reads utxo fields only for input_type 'UTXO' legs — an
+// injected utxo object on an account-command input must not fake the From
+// address.
+const utxoAddressOf = (input) =>
+  input?.input?.input_type === 'UTXO' ? getAddressOf(input?.utxo) : null
 
 const findOwnInputAddress = (inputs, ownAddresses) => {
   const ownList = [
@@ -68,34 +35,36 @@ const findOwnInputAddress = (inputs, ownAddresses) => {
     ...(ownAddresses.change || []),
   ]
   for (const input of inputs) {
-    const address = getAddressOf(input?.utxo) || getAddressOf(input?.input)
+    const address = utxoAddressOf(input) || getAddressOf(input?.input)
     if (address && ownList.includes(address)) return address
   }
-  return (
-    inputs.find((input) => input?.utxo?.destination)?.utxo?.destination ?? null
-  )
+  return inputs.find((input) => utxoAddressOf(input))?.utxo?.destination ?? null
 }
 
 const OPERATION_LABELS = [
+  ['isTransfer', 'Send'],
   ['isBridgeRequest', 'Bridge transaction'],
-  ['isDelegateStaking', 'Stake to delegation'],
-  ['isDelegateWithdraw', 'Withdraw from delegation'],
-  ['isCreateHtlc', 'Create HTLC (swap escrow)'],
-  ['isSpendHtlc', 'Claim HTLC'],
-  ['isCreateStakePool', 'Create stake pool'],
-  ['isCreateDelegationId', 'Create delegation'],
   ['isTokenMint', 'Mint tokens'],
   ['isTokenUnmint', 'Unmint tokens'],
+  ['isTokenMintWithLock', 'Mint tokens with lock'],
   ['isIssueToken', 'Issue token'],
   ['isIssueNft', 'Issue NFT'],
+  ['isCreateOrder', 'Create order'],
+  ['isFillOrder', 'Fill order'],
+  ['isConcludeOrder', 'Conclude order'],
   ['isBurnCoin', 'Burn coins'],
   ['isBurnToken', 'Burn tokens'],
+  ['isLockTokenSupply', 'Lock token supply'],
+  ['isChangeTokenAuthority', 'Change token authority'],
+  ['isChangeTokenMetadata', 'Change token metadata'],
   ['isFreezeToken', 'Freeze token'],
   ['isUnfreezeToken', 'Unfreeze token'],
-  ['isLockTokenSupply', 'Lock token supply'],
-  ['isChangeTokenMetadata', 'Change token metadata'],
-  ['isChangeTokenAuthority', 'Change token authority'],
-  ['isTransfer', 'Send'],
+  ['isCreateHtlc', 'Create HTLC (swap escrow)'],
+  ['isSpendHtlc', 'Claim HTLC'],
+  ['isDataDeposit', 'Data deposit'],
+  ['isCreateDelegationId', 'Create delegation'],
+  ['isDelegateStaking', 'Stake to delegation'],
+  ['isDelegateWithdraw', 'Withdraw from delegation'],
 ]
 
 /**
@@ -113,108 +82,42 @@ const TransactionSummary = ({
   const { networkType } = useContext(SettingsContext)
   const [showDetails, setShowDetails] = useState(false)
 
-  const inputs = jsonRepresentation?.inputs || []
-  const outputs = jsonRepresentation?.outputs || []
+  // Fail closed on non-array legs (the background forwards dApp params
+  // unvalidated): normalized here so rendering can never crash, and
+  // reconcileApprovalAmounts blocks the payload below.
+  const inputs = Array.isArray(jsonRepresentation?.inputs)
+    ? jsonRepresentation.inputs
+    : []
+  const outputs = Array.isArray(jsonRepresentation?.outputs)
+    ? jsonRepresentation.outputs
+    : []
 
   const coinTicker = networkType === 'testnet' ? 'TML' : 'ML'
   const fromAddress = findOwnInputAddress(inputs, ownAddresses)
   const { outputs: relevantOutputs, toSelf: targetsOwnWallet } =
-    findRelevantOutputs(inputs, outputs, ownAddresses)
+    TransactionAmounts.findRelevantOutputs(outputs, ownAddresses)
   const toAddress = getAddressOf(relevantOutputs[0])
   const toSelf = targetsOwnWallet && Boolean(toAddress)
 
-  const tokenDecimalsById = new Map(
-    (allNetworkTokensData || []).map((token) => {
-      const decimals = parseInt(token.number_of_decimals, 10)
-      return [token.token_id, Number.isFinite(decimals) ? decimals : null]
-    }),
-  )
+  const tokenDecimalsById =
+    TransactionAmounts.buildTokenDecimalsIndex(allNetworkTokensData)
 
-  // Every approved output is being paid, so sum them per asset instead of
-  // reporting only the first one.
-  const amountRows = (() => {
-    const totals = new Map()
-    relevantOutputs.forEach((relevantOutput) => {
-      const value = relevantOutput?.value || relevantOutput?.amount
-      const tokenId = value?.token_id || relevantOutput?.token_id
-      const amount =
-        value?.amount?.decimal ?? relevantOutput?.amount?.decimal ?? null
-      if (amount == null) return
+  // SECURITY: every displayed number is derived from the signed `.atoms`
+  // values, and the dApp-supplied `.decimal` labels are verified against
+  // them. Any disagreement fails closed: the row shows the verification
+  // error instead of a number and the page blocks the approve action.
+  const {
+    amountRows,
+    extraAmountRows,
+    fee,
+    blocked: amountsMismatch,
+  } = TransactionAmounts.reconcileApprovalAmounts(jsonRepresentation, {
+    tokenDecimalsById,
+    ownAddresses,
+  })
 
-      const key = tokenId || 'Coin'
-      const ticker = tokenId
-        ? tokenMap?.[tokenId] || truncate(tokenId, 8, 6)
-        : coinTicker
-      const decimals = tokenId ? tokenDecimalsById.get(tokenId) : COIN_DECIMALS
-
-      let parsed
-      try {
-        parsed = new Amount(amount)
-      } catch {
-        parsed = null
-      }
-      const entry = totals.get(key) || { ticker, decimals, total: null }
-      if (parsed) {
-        entry.total = (entry.total || new Amount(0)).plus(parsed)
-      }
-      totals.set(key, entry)
-    })
-
-    return [...totals.entries()].map(([key, { ticker, decimals, total }]) => ({
-      key,
-      ticker,
-      amount:
-        total === null
-          ? 'Unknown amount'
-          : trimTrailingZeros(
-              decimals != null ? total.toFixed(decimals) : total.toFixed(),
-            ),
-    }))
-  })()
-
-  // SECURITY: never trust the dApp-supplied `fee` field for display. The
-  // miner fee is what the encoded transaction actually pays: coin inputs
-  // minus coin outputs (token values are not coin; account-command inputs
-  // carry no coin value). Fall back to the declared fee only when either
-  // side is not coin-computable (e.g. pure account-command transactions).
-  const coinDecimal = (value) =>
-    value?.type === 'Coin'
-      ? (value?.amount?.decimal ?? value?.decimal ?? null)
-      : null
-  // A malformed dApp-supplied decimal must never crash the approval UI:
-  // any parse failure falls back to the declared fee (never partial sums).
-  const sumCoinSide = (items) => {
-    let acc = new Amount(0)
-    for (const item of items) {
-      const decimal = coinDecimal(item?.utxo?.value ?? item?.value)
-      if (decimal == null) continue
-      try {
-        acc = acc.plus(new Amount(decimal))
-      } catch {
-        return null // unparseable: refuse to compute from partial data
-      }
-    }
-    return acc
-  }
-  let computedFee = null
-  try {
-    const inputsCoinSum = sumCoinSide(inputs)
-    const outputsCoinSum = sumCoinSide(outputs)
-    if (
-      inputsCoinSum != null &&
-      outputsCoinSum != null &&
-      inputsCoinSum.gt(0)
-    ) {
-      computedFee = inputsCoinSum.minus(outputsCoinSum)
-    }
-  } catch {
-    computedFee = null
-  }
-  const declaredFee = jsonRepresentation?.fee?.decimal ?? null
-  const fee =
-    computedFee != null && computedFee.gt(0)
-      ? trimTrailingZeros(computedFee.toFixed(COIN_DECIMALS))
-      : declaredFee
+  const tickerOf = (tokenId) =>
+    tokenId ? tokenMap?.[tokenId] || truncate(tokenId, 8, 6) : coinTicker
 
   const typeFlag = SignTxHelpers.getTransactionType(jsonRepresentation, intent)
   const label =
@@ -251,24 +154,63 @@ const TransactionSummary = ({
               {toAddress && <CopyButton content={toAddress} />}
             </span>,
           ],
-          ...amountRows.map(({ key, ticker, amount }) => [
+          ...amountRows.map(({ key, tokenId, amount, errors }) => [
             'Amount',
             <span
               key={`amount-${key}`}
-              className={styles.amount}
+              className={errors ? styles.amountError : styles.amount}
             >
-              {amount} {ticker}
+              {errors
+                ? errors
+                    .map(({ error, amount: signed }) =>
+                      signed != null
+                        ? `${error} — will sign ${signed} ${tickerOf(tokenId)}`
+                        : error,
+                    )
+                    .join('; ')
+                : `${amount} ${tickerOf(tokenId)}`}
             </span>,
           ]),
-          ...(fee != null
+          ...extraAmountRows.map(
+            ({ key, label, tokenId, amount, errors, withTicker }) => [
+              label,
+              <span
+                key={`extra-${key}`}
+                className={errors ? styles.amountError : styles.amount}
+              >
+                {errors
+                  ? errors
+                      .map(({ error, amount: signed }) =>
+                        signed != null
+                          ? `${error} — will sign ${signed}${
+                              withTicker ? ` ${tickerOf(tokenId)}` : ''
+                            }`
+                          : error,
+                      )
+                      .join('; ')
+                  : withTicker
+                    ? `${amount} ${tickerOf(tokenId)}`
+                    : amount}
+              </span>,
+            ],
+          ),
+          ...(fee
             ? [
                 [
                   'Network fee',
                   <span
                     key="fee"
-                    className={styles.amount}
+                    className={fee.error ? styles.amountError : styles.amount}
                   >
-                    {fee} {coinTicker}
+                    {fee.unknown
+                      ? 'Unknown'
+                      : (fee.error ?? `${fee.amount} ${coinTicker}`)}
+                    {!fee.unknown && fee.error && fee.amount != null && (
+                      <>
+                        {' '}
+                        — will sign {fee.amount} {coinTicker}
+                      </>
+                    )}
                   </span>,
                 ],
               ]
@@ -276,6 +218,17 @@ const TransactionSummary = ({
           ['Network', networkType === 'testnet' ? 'Testnet' : 'Mainnet'],
         ]}
       />
+
+      {amountsMismatch && (
+        <div
+          className={styles.mismatchBanner}
+          data-testid="approval-blocked"
+          role="alert"
+        >
+          SECURITY: the amounts reported by the site do not match what this
+          transaction would actually sign. Approval is blocked.
+        </div>
+      )}
 
       {intent && (
         <div className={styles.intentRow}>

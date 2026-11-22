@@ -143,3 +143,11 @@
   color: rgb(var(--color-stats-green));
   font-weight: 600;
 }
+
+/* Fail-closed verification error shown in place of an amount/fee whose
+   payload `.decimal` label did not reconcile with the signed `.atoms`. */
+.signTxAmountMismatch {
+  color: #c0392b;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

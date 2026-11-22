@@ -1,15 +1,22 @@
-import Decimal from 'decimal.js'
+import { useContext } from 'react'
+
+import { MintlayerContext } from '@Contexts'
+import { TransactionAmounts } from '@Helpers'
 
 import styles from './TransactionBreakdown.module.css'
 
+const {
+  COIN_DECIMALS,
+  atomsToDecimalString,
+  buildTokenDecimalsIndex,
+  resolveAssetDecimals,
+  signerAmountContainer,
+  signerAmountScale,
+  signerAmountTokenId,
+  verifyAmountPair,
+} = TransactionAmounts
+
 const COIN_KEY = 'Coin'
-const COIN_DECIMALS = 11
-
-// keeps room for the largest balances and never falls back to exponents
-const Amount = Decimal.clone({ precision: 40, toExpNeg: -30, toExpPos: 30 })
-
-const formatTotal = (total, isCoin) =>
-  (isCoin ? total.toDecimalPlaces(COIN_DECIMALS) : total).toFixed()
 
 const shortenId = (id) =>
   id && id.length > 16 ? `${id.slice(0, 8)}…${id.slice(-6)}` : id
@@ -34,26 +41,6 @@ const boundedStringify = (value) => {
   } catch {
     return '[unserializable]'
   }
-}
-
-const getAmount = (source) =>
-  source?.value?.amount?.decimal ??
-  source?.amount?.decimal ??
-  (typeof source?.amount === 'string' ? source.amount : null)
-
-const getAsset = (source, tokenMap, coinTicker) => {
-  const value = source?.value || source
-  if (value?.type === 'Coin') {
-    return { key: COIN_KEY, label: coinTicker }
-  }
-
-  const tokenId = value?.token_id || source?.token_id
-  if (tokenId) {
-    return { key: tokenId, label: tokenMap[tokenId] || shortenId(tokenId) }
-  }
-
-  // account inputs carry a bare amount, and those are always coins
-  return getAmount(source) ? { key: COIN_KEY, label: coinTicker } : null
 }
 
 const getOwnership = (address, ownAddresses) => {
@@ -85,7 +72,7 @@ const LOCK_LABELS = {
   ForBlockCount: (content) => `for ${content} blocks`,
   UntilTime: (content) => `until ${content}`,
   ForSeconds: (content) => `for ${content} seconds`,
-  UntilHeight: (content) => `until block ${content}`,
+  UntilHeight: (content) => `until ${content}`,
 }
 
 const formatLock = (lock) => {
@@ -154,7 +141,38 @@ const ExtraFields = ({ source }) => {
   )
 }
 
-const Entry = ({ title, amount, asset, address, ownership, source }) => (
+// Asset label from the SAME signer-read token identity as the verified
+// amount (signerAmountTokenId) — never from injected top-level token_id
+// fields, which would mislabel a verified coin amount.
+const assetOf = (tokenId, tokenMap, coinTicker) => {
+  if (tokenId) {
+    return { key: tokenId, label: tokenMap[tokenId] || shortenId(tokenId) }
+  }
+  return { key: COIN_KEY, label: coinTicker }
+}
+
+// SECURITY: every rendered amount is verified against the signed `.atoms`
+// via the shared leg-kind-aware container resolver — DelegateStaking outputs
+// and DelegationBalance/MintTokens account inputs sign `amount.atoms`,
+// signed-type outputs and utxo inputs sign `value.atoms`, and everything
+// else resolves to null so injected fields can never fake a row. Resolution
+// is per legKind ('input' | 'output'): input legs resolve from the
+// {input, utxo} wrapper on the signer's own dispatch key (input.input_type),
+// outputs from output.type alone — an output's injected command/
+// account_type and an account input's injected value-type can never resolve
+// a container the signer does not read. Identity and scale come from the
+// same signer-read fields (signerAmountTokenId / signerAmountScale). The
+// dApp-supplied `.decimal` label may only be shown after it reconciles.
+const verifiedAmountOf = (source, tokenDecimalsById, legKind) => {
+  const container = signerAmountContainer(source, legKind)
+  const tokenId = signerAmountTokenId(source, container, legKind)
+  const scale = signerAmountScale(source, container, tokenDecimalsById, legKind)
+  const verified = verifyAmountPair(container, scale)
+  if (!verified) return null
+  return { ...verified, tokenId }
+}
+
+const Entry = ({ title, verified, asset, address, ownership, source }) => (
   <li className={styles.row}>
     <div className={styles.rowMain}>
       <span className={styles.rowTitle}>
@@ -169,46 +187,72 @@ const Entry = ({ title, amount, asset, address, ownership, source }) => (
       {address && <span className={styles.rowAddress}>{address}</span>}
       <ExtraFields source={source} />
     </div>
-    {amount && (
-      <span className={styles.rowAmount}>
-        {amount} {asset?.label}
+    {verified && (
+      <span
+        className={
+          verified.error
+            ? `${styles.rowAmount} ${styles.amountError}`
+            : styles.rowAmount
+        }
+      >
+        {verified.error ?? verified.amount}
+        {verified.error && verified.amount != null
+          ? ` — will sign ${verified.amount}`
+          : ''}
+        {` ${asset?.label ?? ''}`}
       </span>
     )}
   </li>
 )
 
+// Net change of the wallet's OWN funds per asset, aggregated from the
+// verified signed atoms. Any owned amount that fails verification marks the
+// whole hero unverified — a fail-closed note replaces the numbers.
 const getBalanceChanges = ({
   inputs,
   outputs,
   ownAddresses,
   tokenMap,
   coinTicker,
+  tokenDecimalsById,
 }) => {
   const changes = new Map()
+  let unverified = false
 
-  const apply = (source, address, sign) => {
+  const apply = (source, address, sign, legKind) => {
     if (!getOwnership(address, ownAddresses)) return
-    const asset = getAsset(source, tokenMap, coinTicker)
-    const amount = getAmount(source)
-    if (!asset || !amount) return
-
+    const verified = verifiedAmountOf(source, tokenDecimalsById, legKind)
+    if (!verified) return
+    if (verified.error) {
+      unverified = true
+      return
+    }
+    const asset = assetOf(verified.tokenId, tokenMap, coinTicker)
     const current = changes.get(asset.key) || {
       key: asset.key,
       label: asset.label,
-      total: new Amount(0),
+      atoms: 0n,
+      decimals:
+        asset.key === COIN_KEY
+          ? COIN_DECIMALS
+          : resolveAssetDecimals(asset.key, tokenDecimalsById),
     }
-    current.total = current.total.plus(new Amount(amount).times(sign))
+    current.atoms =
+      sign < 0 ? current.atoms - verified.atoms : current.atoms + verified.atoms
     changes.set(asset.key, current)
   }
 
   inputs.forEach((input) => {
     if (input.input?.input_type !== 'UTXO') return
-    apply(input.utxo, input.utxo?.destination, -1)
+    apply(input, input.utxo?.destination, -1, 'input')
   })
 
-  outputs.forEach((output) => apply(output, output.destination, 1))
+  outputs.forEach((output) => apply(output, output.destination, 1, 'output'))
 
-  return [...changes.values()].filter(({ total }) => !total.isZero())
+  return {
+    unverified,
+    changes: [...changes.values()].filter(({ atoms }) => atoms !== 0n),
+  }
 }
 
 const TransactionBreakdown = ({
@@ -217,8 +261,20 @@ const TransactionBreakdown = ({
   tokenMap = {},
   coinTicker = 'ML',
 }) => {
-  const inputs = JSONRepresentation?.inputs || []
-  const outputs = JSONRepresentation?.outputs || []
+  // Guarded: the context default is undefined when rendered without a
+  // provider (tests, isolated previews).
+  const { allNetworkTokensData } = useContext(MintlayerContext) || {}
+  const tokenDecimalsById = buildTokenDecimalsIndex(allNetworkTokensData)
+
+  // Fail closed on malformed payloads: legs may be truthy non-arrays (the
+  // background forwards dApp params unvalidated) — normalize so the row
+  // reads below can never crash; reconcileApprovalAmounts blocks the payload.
+  const inputs = Array.isArray(JSONRepresentation?.inputs)
+    ? JSONRepresentation.inputs
+    : []
+  const outputs = Array.isArray(JSONRepresentation?.outputs)
+    ? JSONRepresentation.outputs
+    : []
 
   const balanceChanges = getBalanceChanges({
     inputs,
@@ -226,6 +282,7 @@ const TransactionBreakdown = ({
     ownAddresses,
     tokenMap,
     coinTicker,
+    tokenDecimalsById,
   })
 
   return (
@@ -235,19 +292,28 @@ const TransactionBreakdown = ({
     >
       <section className={styles.hero}>
         <span className={styles.heroLabel}>Balance change</span>
-        {balanceChanges.length > 0 ? (
+        {balanceChanges.unverified ? (
+          <p className={styles.heroEmpty}>
+            Some owned amounts could not be verified against the signed
+            transaction data.
+          </p>
+        ) : balanceChanges.changes.length > 0 ? (
           <>
             <ul className={styles.heroList}>
-              {balanceChanges.map(({ key, label, total }) => (
+              {balanceChanges.changes.map(({ key, label, atoms, decimals }) => (
                 <li
-                  key={label}
-                  className={
-                    total.isNegative() ? styles.negative : styles.positive
-                  }
+                  // keyed by the grouped asset key/token id — tickers can
+                  // collide across tokens, labels cannot be trusted as keys
+                  key={key}
+                  className={atoms < 0n ? styles.negative : styles.positive}
                   data-testid="balance-change"
                 >
-                  {total.isNegative() ? '−' : '+'}
-                  {formatTotal(total.abs(), key === COIN_KEY)} {label}
+                  {atoms < 0n ? '−' : '+'}
+                  {atomsToDecimalString(
+                    atoms < 0n ? -atoms : atoms,
+                    decimals ?? 0,
+                  )}{' '}
+                  {label}
                 </li>
               ))}
             </ul>
@@ -267,6 +333,7 @@ const TransactionBreakdown = ({
         <ul className={styles.rows}>
           {inputs.map((input, index) => {
             const isUtxo = input.input?.input_type === 'UTXO'
+
             const source = isUtxo ? input.utxo : input.input
             const address = isUtxo
               ? input.utxo?.destination
@@ -276,13 +343,18 @@ const TransactionBreakdown = ({
               : input.input?.command ||
                 input.input?.account_type ||
                 input.input?.input_type
+            const verified = verifiedAmountOf(input, tokenDecimalsById, 'input')
 
             return (
               <Entry
                 key={`${input.input?.source_id || 'input'}-${index}`}
                 title={title}
-                amount={getAmount(source)}
-                asset={getAsset(source, tokenMap, coinTicker)}
+                verified={verified}
+                asset={
+                  verified
+                    ? assetOf(verified.tokenId, tokenMap, coinTicker)
+                    : null
+                }
                 address={address}
                 ownership={getOwnership(address, ownAddresses)}
                 source={source}
@@ -295,17 +367,29 @@ const TransactionBreakdown = ({
       <section className={styles.group}>
         <h4 className={styles.groupHead}>Outputs ({outputs.length})</h4>
         <ul className={styles.rows}>
-          {outputs.map((output, index) => (
-            <Entry
-              key={`${output.type}-${index}`}
-              title={output.type}
-              amount={getAmount(output)}
-              asset={getAsset(output, tokenMap, coinTicker)}
-              address={output.destination}
-              ownership={getOwnership(output.destination, ownAddresses)}
-              source={output}
-            />
-          ))}
+          {outputs.map((output, index) => {
+            const verified = verifiedAmountOf(
+              output,
+              tokenDecimalsById,
+              'output',
+            )
+
+            return (
+              <Entry
+                key={`${output.type}-${index}`}
+                title={output.type}
+                verified={verified}
+                asset={
+                  verified
+                    ? assetOf(verified.tokenId, tokenMap, coinTicker)
+                    : null
+                }
+                address={output.destination}
+                ownership={getOwnership(output.destination, ownAddresses)}
+                source={output}
+              />
+            )
+          })}
         </ul>
       </section>
     </div>

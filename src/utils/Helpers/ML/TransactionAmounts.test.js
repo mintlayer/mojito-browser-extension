@@ -1,0 +1,1898 @@
+import {
+  COIN_DECIMALS,
+  TOKEN_DECIMALS_LIMIT,
+  atomsToDecimalString,
+  buildTokenDecimalsIndex,
+  computeCoinFeeAtoms,
+  decimalMatchesAtoms,
+  deriveApprovalFee,
+  findRelevantOutputs,
+  reconcileApprovalAmounts,
+  resolveAssetDecimals,
+  resolveCurrencyDecimals,
+  signerAmountContainer,
+  signerAmountScale,
+  signerAmountTokenId,
+  verifyAmountPair,
+  verifyDeclaredFee,
+} from './TransactionAmounts'
+
+const toAtoms = (decimal, decimals = 11) => {
+  const [whole, fraction = ''] = String(decimal).split('.')
+  const digits = (fraction + '0'.repeat(decimals)).slice(0, decimals)
+  return `${whole}${digits}`.replace(/^(-?)0+(?=\d)/, '$1')
+}
+
+const coin = (decimal, atoms = toAtoms(decimal)) => ({
+  type: 'Coin',
+  amount: { decimal, atoms },
+})
+
+const coinOutput = (destination, decimal, atoms) => ({
+  type: 'Transfer',
+  destination,
+  value: coin(decimal, atoms),
+})
+
+const coinInput = (destination, atoms, decimal) => ({
+  input: { input_type: 'UTXO', source_id: 'src', index: 0 },
+  input_type: 'UTXO',
+  utxo: {
+    destination,
+    value: coin(decimal, atoms),
+  },
+})
+
+describe('atomsToDecimalString', () => {
+  it('scales whole and fractional atom amounts exactly', () => {
+    expect(atomsToDecimalString(2500000000000n, COIN_DECIMALS)).toBe('25')
+    expect(atomsToDecimalString(1n, COIN_DECIMALS)).toBe('0.00000000001')
+    expect(atomsToDecimalString(1707148604300000n, COIN_DECIMALS)).toBe(
+      '17071.486043',
+    )
+    expect(atomsToDecimalString(2500n, 2)).toBe('25')
+    expect(atomsToDecimalString(1000n, 2)).toBe('10')
+    expect(atomsToDecimalString(0n, COIN_DECIMALS)).toBe('0')
+  })
+
+  it('keeps magnitudes beyond float precision exact', () => {
+    const atoms = 340282366920938463463374607431768211455n // 2^128 − 1
+    expect(atomsToDecimalString(atoms, 18)).toBe(
+      '340282366920938463463.374607431768211455',
+    )
+  })
+
+  it('rejects scales outside 0..18 instead of throwing RangeError or hanging', () => {
+    for (const bad of [-1, NaN, 19, TOKEN_DECIMALS_LIMIT + 1, 1e11, 1.5]) {
+      expect(() => atomsToDecimalString(1n, bad)).toThrow(RangeError)
+    }
+  })
+})
+
+describe('decimalMatchesAtoms', () => {
+  it('accepts the exact scaled value regardless of notation or trailing zeros', () => {
+    expect(decimalMatchesAtoms('17071.486043', 1707148604300000n, 11)).toBe(
+      true,
+    )
+    expect(decimalMatchesAtoms('25.0', 2500000000000n, 11)).toBe(true)
+    expect(decimalMatchesAtoms('1e+2', 10000000000000n, 11)).toBe(true)
+    expect(decimalMatchesAtoms(10, 1000n, 2)).toBe(true)
+  })
+
+  it('rejects any other value, including rounding tricks', () => {
+    // THE ATTACK: dApp reports "1" while the tx commits the full balance.
+    expect(decimalMatchesAtoms('1', 1707148604300000n, COIN_DECIMALS)).toBe(
+      false,
+    )
+    expect(decimalMatchesAtoms('25.00000000001', 2500000000000n, 11)).toBe(
+      false,
+    )
+    expect(decimalMatchesAtoms('not-a-number', 2500000000000n, 11)).toBe(false)
+    expect(decimalMatchesAtoms('', 0n, 11)).toBe(false)
+    // more fractional places than the scale allows can never match
+    expect(decimalMatchesAtoms('0.1', 0n, 0)).toBe(false)
+  })
+
+  it('rejects scales outside 0..18', () => {
+    for (const bad of [-1, NaN, 19, 1e11]) {
+      expect(() => decimalMatchesAtoms('1', 1n, bad)).toThrow(RangeError)
+    }
+  })
+})
+
+describe('buildTokenDecimalsIndex', () => {
+  it('indexes chain metadata, skipping entries without usable decimals', () => {
+    expect(
+      buildTokenDecimalsIndex([
+        { token_id: 'a', number_of_decimals: '2' },
+        { token_id: 'b', number_of_decimals: 18 },
+        { token_id: 'c', number_of_decimals: 'nope' },
+        { number_of_decimals: 6 },
+      ]),
+    ).toEqual(
+      new Map([
+        ['a', 2],
+        ['b', 18],
+      ]),
+    )
+    expect(buildTokenDecimalsIndex(undefined)).toEqual(new Map())
+  })
+
+  it('drops out-of-range scales (negative, oversized, fractional) so they fail closed as unknown', () => {
+    expect(
+      buildTokenDecimalsIndex([
+        { token_id: 'neg', number_of_decimals: -1 },
+        { token_id: 'big', number_of_decimals: 19 },
+        { token_id: 'huge', number_of_decimals: 1e11 },
+        // fractional values truncate, matching the signer's own parseInt
+        { token_id: 'frac', number_of_decimals: 2.5 },
+        { token_id: 'ok', number_of_decimals: 0 },
+      ]),
+    ).toEqual(
+      new Map([
+        ['frac', 2],
+        ['ok', 0],
+      ]),
+    )
+  })
+})
+
+describe('resolveAssetDecimals', () => {
+  it('uses coin scale for token-less values, chain data for tokens, null for unknown tokens', () => {
+    expect(resolveAssetDecimals(undefined, new Map())).toBe(COIN_DECIMALS)
+    expect(resolveAssetDecimals('a', new Map([['a', 2]]))).toBe(2)
+    // unknown token: null scale → verbatim atom counts stay displayable, any
+    // site-supplied decimal label fails closed as "scale cannot be verified"
+    expect(resolveAssetDecimals('unknown', new Map())).toBe(null)
+  })
+})
+
+describe('verifyAmountPair', () => {
+  it('returns null when the container carries no numeric amount', () => {
+    expect(verifyAmountPair({ type: 'DataDeposit', data: 'hello' }, 11)).toBe(
+      null,
+    )
+    expect(verifyAmountPair(undefined, 11)).toBe(null)
+  })
+
+  it('returns the atoms-derived amount for a consistent pair', () => {
+    expect(verifyAmountPair(coin('10', '1000000000000'), 11)).toEqual({
+      atoms: 1000000000000n,
+      amount: '10',
+    })
+  })
+
+  it('returns the atoms-derived amount when no decimal label exists', () => {
+    expect(
+      verifyAmountPair({ type: 'Coin', amount: { atoms: '1000' } }, 2),
+    ).toEqual({ atoms: 1000n, amount: '10' })
+  })
+
+  it('fails closed on a decimal that disagrees with the signed atoms', () => {
+    const verified = verifyAmountPair(
+      { type: 'Coin', amount: { decimal: '1', atoms: '1707148604300000' } },
+      COIN_DECIMALS,
+    )
+    expect(verified.error).toMatch(/does not match/)
+    // the truth is still surfaced for the user
+    expect(verified.amount).toBe('17071.486043')
+  })
+
+  it('fails closed when the signed atoms are missing or unreadable', () => {
+    expect(
+      verifyAmountPair({ type: 'Coin', amount: { decimal: '1' } }, 11).error,
+    ).toMatch(/cannot be verified/)
+    expect(
+      verifyAmountPair(
+        { type: 'Coin', amount: { decimal: '1', atoms: 'x' } },
+        11,
+      ).error,
+    ).toMatch(/cannot be verified/)
+  })
+
+  it('fails closed on negative atom amounts', () => {
+    const verified = verifyAmountPair(
+      { type: 'Coin', amount: { decimal: '-1', atoms: '-100000000000' } },
+      COIN_DECIMALS,
+    )
+    expect(verified.error).toMatch(/cannot be negative/)
+  })
+
+  it('fails closed on invalid scales, even without a decimal label', () => {
+    for (const bad of [-1, NaN, 19, 1e11]) {
+      expect(
+        verifyAmountPair({ type: 'Coin', amount: { atoms: '1000' } }, bad)
+          .error,
+      ).toMatch(/scale cannot be verified/)
+    }
+  })
+
+  it('treats unknown token scales as verifiable only at raw atom count', () => {
+    // no decimal label: the verbatim atom count is honest and shown
+    expect(
+      verifyAmountPair({ type: 'Coin', amount: { atoms: '91400' } }, null),
+    ).toEqual({ atoms: 91400n, amount: '91400' })
+    // label equal to the raw atom count: consistent, shown
+    expect(
+      verifyAmountPair(
+        { type: 'Coin', amount: { decimal: '91400', atoms: '91400' } },
+        null,
+      ),
+    ).toEqual({ atoms: 91400n, amount: '91400' })
+    // a scaled label cannot be checked without the scale: distinct blocking error
+    const verified = verifyAmountPair(
+      { type: 'Coin', amount: { decimal: '914', atoms: '91400' } },
+      null,
+    )
+    expect(verified.error).toMatch(/decimals are unknown/)
+    expect(verified.amount).toBe('91400')
+  })
+})
+
+describe('computeCoinFeeAtoms', () => {
+  it('computes fee as coin input atoms minus coin output atoms', () => {
+    expect(
+      computeCoinFeeAtoms(
+        [coinInput('a', '1707148604300000', '17071.486043')],
+        [coinOutput('b', '10', '1000000000000')],
+      ),
+    ).toBe(1706148604300000n)
+  })
+
+  it('ignores token values but refuses to compute at all on unreadable coin atoms', () => {
+    const tokenInput = {
+      input_type: 'UTXO',
+      utxo: {
+        destination: 'a',
+        value: { type: 'TokenV1', token_id: 't', amount: { atoms: '91400' } },
+      },
+    }
+    expect(
+      computeCoinFeeAtoms(
+        [tokenInput, coinInput('a', '100000000000', '100')],
+        [],
+      ),
+    ).toBe(100000000000n)
+    expect(
+      computeCoinFeeAtoms(
+        [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: 'a', value: coin('100', 'garbage') },
+          },
+        ],
+        [],
+      ),
+    ).toBeUndefined()
+  })
+
+  it('refuses sums containing negative coin atoms', () => {
+    expect(
+      computeCoinFeeAtoms(
+        [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: 'a', value: coin('-1', '-100000000000') },
+          },
+        ],
+        [],
+      ),
+    ).toBeUndefined()
+  })
+
+  it('returns null when there are no coin inputs to compute from', () => {
+    expect(computeCoinFeeAtoms([], [coinOutput('b', '10', '1')])).toBe(null)
+    expect(computeCoinFeeAtoms(undefined, undefined)).toBe(null)
+  })
+
+  it('subtracts DelegateStaking escrow from the fee', () => {
+    expect(
+      computeCoinFeeAtoms(
+        [coinInput('a', '10001000000000', '100.01')],
+        [
+          {
+            type: 'DelegateStaking',
+            amount: { atoms: '10000000000000', decimal: '100' },
+            delegation_id: 'd1',
+          },
+        ],
+      ),
+    ).toBe(1000000000n) // 0.01 ML — the escrow is not miner fee
+  })
+
+  it('subtracts the CreateOrder coin escrow (give side) from the fee', () => {
+    expect(
+      computeCoinFeeAtoms(
+        [coinInput('a', '10001000000000', '100.01')],
+        [
+          {
+            type: 'CreateOrder',
+            ask_balance: { atoms: '1', decimal: '1' },
+            ask_currency: { type: 'Coin' },
+            give_balance: { atoms: '10000000000000', decimal: '100' },
+            give_currency: { type: 'Coin' },
+            conclude_destination: 'c',
+          },
+        ],
+      ),
+    ).toBe(1000000000n) // 0.01 ML
+    // a token give side escrows tokens, not coin — ignored
+    expect(
+      computeCoinFeeAtoms(
+        [coinInput('a', '100000000000', '100')],
+        [
+          {
+            type: 'CreateOrder',
+            ask_balance: { atoms: '1', decimal: '1' },
+            ask_currency: { type: 'Coin' },
+            give_balance: { atoms: '50000', decimal: '500' },
+            give_currency: { type: 'Token', token_id: 't' },
+            conclude_destination: 'c',
+          },
+        ],
+      ),
+    ).toBe(100000000000n)
+  })
+
+  it('credits a DelegationBalance withdraw as coin input', () => {
+    expect(
+      computeCoinFeeAtoms(
+        [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              account_type: 'DelegationBalance',
+              delegation_id: 'd1',
+              amount: { atoms: '1000000000000', decimal: '10' },
+              nonce: '0',
+            },
+          },
+          coinInput('a', '150000000000', '1.5'),
+        ],
+        [coinOutput('b', '8', '800000000000')],
+      ),
+    ).toBe(350000000000n) // 10 + 1.5 − 8 = 3.5 ML
+  })
+
+  it('treats a coin burn as an output in the balance equation', () => {
+    expect(
+      computeCoinFeeAtoms(
+        [coinInput('a', '10001000000000', '100.01')],
+        [
+          {
+            type: 'BurnToken',
+            value: coin('100'),
+          },
+        ],
+      ),
+    ).toBe(1000000000n) // 0.01 ML — destruction is not miner fee
+  })
+
+  it('keys currency decimals off token-id presence, not currency.type', () => {
+    expect(resolveCurrencyDecimals({ type: 'Coin' }, new Map())).toBe(
+      COIN_DECIMALS,
+    )
+    // self-contradictory currency: the signer escrows a token → token scale
+    expect(
+      resolveCurrencyDecimals(
+        { type: 'Coin', token_id: 't' },
+        new Map([['t', 2]]),
+      ),
+    ).toBe(2)
+    expect(resolveCurrencyDecimals({ type: 'Coin' }, undefined)).toBe(
+      COIN_DECIMALS,
+    )
+  })
+
+  it('does not subtract a contradictory CreateOrder currency as coin', () => {
+    // give_currency carries a token_id → the signer escrows a TOKEN; the
+    // give balance must never be subtracted as coin
+    expect(
+      computeCoinFeeAtoms(
+        [coinInput('a', '100000000000', '100')],
+        [
+          {
+            type: 'CreateOrder',
+            ask_currency: { type: 'Coin' },
+            give_currency: { type: 'Coin', token_id: 't' },
+            give_balance: { atoms: '50000', decimal: '500' },
+            conclude_destination: 'c',
+          },
+        ],
+      ),
+    ).toBe(100000000000n)
+  })
+
+  it('does not skip real utxo coin on hybrid DelegationBalance inputs', () => {
+    // input_type 'UTXO' + account_type DelegationBalance + amount 0: the
+    // signer encodes the utxo coin leg (no known command), so the credit
+    // branch must not swallow the real coin
+    expect(
+      computeCoinFeeAtoms(
+        [
+          {
+            input: {
+              input_type: 'UTXO',
+              account_type: 'DelegationBalance',
+              amount: { atoms: '0', decimal: '0' },
+            },
+            input_type: 'UTXO',
+            utxo: {
+              destination: 'a',
+              value: {
+                type: 'Coin',
+                amount: { atoms: '100000000000', decimal: '100' },
+              },
+            },
+          },
+        ],
+        [],
+      ),
+    ).toBe(100000000000n)
+  })
+
+  it('ignores withdrawal credits on known-command hybrids', () => {
+    // a known command resolves before DelegationBalance in the signer — the
+    // withdrawal credit must not fire for the hybrid shape
+    expect(
+      computeCoinFeeAtoms(
+        [
+          {
+            input: {
+              input_type: 'AccountCommand',
+              command: 'UnmintTokens',
+              account_type: 'DelegationBalance',
+              amount: { atoms: '50000000000000', decimal: '500' },
+              nonce: '0',
+            },
+          },
+          coinInput('a', '100000000000', '100'),
+        ],
+        [],
+      ),
+    ).toBe(100000000000n)
+  })
+
+  it('ignores injected coin legs on shapes the signer does not encode', () => {
+    // DataDeposit output with injected value.atoms must not understate the fee
+    expect(
+      computeCoinFeeAtoms(
+        [coinInput('a', '10001000000000', '100.01')],
+        [
+          {
+            type: 'DataDeposit',
+            data: 'x',
+            value: {
+              type: 'Coin',
+              amount: { atoms: '10000000000000', decimal: '100' },
+            },
+          },
+        ],
+      ),
+    ).toBe(10001000000000n) // injected leg ignored — fee is the full input
+    // injected utxo on an account command must not inflate the input sum
+    expect(
+      computeCoinFeeAtoms(
+        [
+          {
+            input_type: 'AccountCommand',
+            input: { command: 'UnmintTokens', token_id: 't', nonce: '0' },
+            utxo: {
+              value: {
+                type: 'Coin',
+                amount: { atoms: '50000000000000', decimal: '500' },
+              },
+            },
+          },
+          coinInput('a', '100000000000', '100'),
+        ],
+        [],
+      ),
+    ).toBe(100000000000n)
+  })
+
+  it('scales MintTokens amounts by the command-level token identity', () => {
+    expect(
+      signerAmountScale(
+        {
+          input: {
+            input_type: 'AccountCommand',
+            command: 'MintTokens',
+            token_id: 't18',
+          },
+        },
+        { atoms: '1500000000000000000', decimal: '1.5' },
+        new Map([['t18', 18]]),
+        'input',
+      ),
+    ).toBe(18)
+    // coin-only shapes stay at coin scale even with an injected amount token_id
+    expect(
+      signerAmountScale(
+        {
+          type: 'DelegateStaking',
+          amount: { atoms: '1000000000000', decimal: '1000', token_id: 't2' },
+          delegation_id: 'd1',
+        },
+        { token_id: 't2' },
+        new Map([['t2', 2]]),
+        'output',
+      ),
+    ).toBe(COIN_DECIMALS)
+  })
+
+  it('resolves the MintTokens token identity from the command level', () => {
+    const wrapper = {
+      input: {
+        input_type: 'AccountCommand',
+        command: 'MintTokens',
+        token_id: 't18',
+        amount: {
+          atoms: '1500000000000000000',
+          decimal: '1.5',
+          token_id: 'evil',
+        },
+      },
+    }
+    const container = signerAmountContainer(wrapper, 'input')
+    expect(container).toEqual({
+      atoms: '1500000000000000000',
+      decimal: '1.5',
+      token_id: 'evil',
+    })
+    // identity is the command-level token — the container's injected
+    // token_id is ignored
+    expect(signerAmountTokenId(wrapper, container, 'input')).toBe('t18')
+  })
+
+  it('marks order fill/conclusion legs as unverifiable instead of guessing', () => {
+    for (const command of ['FillOrder', 'ConcludeOrder']) {
+      expect(
+        computeCoinFeeAtoms(
+          [
+            {
+              input_type: 'AccountCommand',
+              input: {
+                input_type: 'AccountCommand',
+                command,
+                order_id: 'o1',
+                nonce: '0',
+              },
+            },
+            coinInput('a', '100000000000', '100'),
+          ],
+          [],
+        ),
+      ).toBeUndefined()
+    }
+  })
+
+  it('renders Unknown for non-array legs instead of deriving a partial fee', () => {
+    expect(deriveApprovalFee({ inputs: {}, outputs: [] })).toEqual({
+      unknown: true,
+    })
+    expect(deriveApprovalFee({ inputs: [], outputs: 'x' })).toEqual({
+      unknown: true,
+    })
+  })
+})
+
+describe('verifyDeclaredFee', () => {
+  it('verifies the declared fee against its own atoms at coin scale', () => {
+    expect(
+      verifyDeclaredFee({ decimal: '0.01', atoms: toAtoms('0.01') }),
+    ).toEqual({ atoms: 1000000000n, amount: '0.01' })
+    expect(verifyDeclaredFee(undefined)).toBe(null)
+  })
+
+  it('fails closed with fee wording when the declared pair disagrees', () => {
+    expect(
+      verifyDeclaredFee({ decimal: '0.00000000001', atoms: '100000' }).error,
+    ).toMatch(/fee does not match/)
+  })
+
+  it('uses fee wording for the unverifiable case too', () => {
+    expect(verifyDeclaredFee({ decimal: '0.01' }).error).toMatch(
+      /Fee cannot be verified/,
+    )
+  })
+})
+
+describe('deriveApprovalFee', () => {
+  it('computes the fee from signed coin atom sums', () => {
+    expect(
+      deriveApprovalFee({
+        inputs: [coinInput('a', '1000000000000', '10')],
+        outputs: [coinOutput('b', '2.5', '250000000000')],
+      }),
+    ).toEqual({ amount: '7.5' })
+  })
+
+  it('renders a computed zero fee as 0 instead of the declared fee', () => {
+    expect(
+      deriveApprovalFee({
+        inputs: [coinInput('a', '1000000000000', '10')],
+        outputs: [coinOutput('b', '10', '1000000000000')],
+        // self-consistent attacker fee must NOT replace the computed zero
+        fee: { decimal: '0.01', atoms: toAtoms('0.01') },
+      }),
+    ).toEqual({ amount: '0' })
+  })
+
+  it('renders a computed negative fee truthfully instead of the declared fee', () => {
+    expect(
+      deriveApprovalFee({
+        inputs: [coinInput('a', '1000000000000', '10')],
+        outputs: [coinOutput('b', '15', '1500000000000')],
+        fee: { decimal: '0.01', atoms: toAtoms('0.01') },
+      }),
+    ).toEqual({ amount: '-5' })
+  })
+
+  it('falls back to the verified declared fee when the sums are not computable', () => {
+    expect(
+      deriveApprovalFee({
+        inputs: [],
+        outputs: [],
+        fee: { decimal: '0.01', atoms: toAtoms('0.01') },
+      }),
+    ).toEqual({ amount: '0.01' })
+    // nothing determinable at all (array legs, no coin, no declared fee)
+    expect(deriveApprovalFee({ inputs: [], outputs: [] })).toBe(null)
+  })
+
+  it('fails closed on a declared fee that cannot be verified', () => {
+    expect(
+      deriveApprovalFee({
+        inputs: [],
+        outputs: [],
+        fee: { decimal: 'x', atoms: 'y' },
+      }).error,
+    ).toMatch(/Fee cannot be verified/)
+  })
+
+  it('renders an unmodelable order-fill payload as Unknown, not the declared fee', () => {
+    expect(
+      deriveApprovalFee({
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'FillOrder',
+              order_id: 'o1',
+              fill_atoms: '10',
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+        fee: { decimal: '0.01', atoms: toAtoms('0.01') },
+      }),
+    ).toEqual({ unknown: true })
+  })
+})
+
+describe('findRelevantOutputs', () => {
+  const ownAddresses = { receiving: ['wallet'], change: ['change'] }
+
+  it('keeps every asset that pays out, not just the first input token', () => {
+    const outputs = [
+      coinOutput('attacker', '10', '1000000000000'),
+      {
+        type: 'Transfer',
+        destination: 'attacker',
+        value: {
+          type: 'TokenV1',
+          token_id: 't',
+          amount: { decimal: '500', atoms: '50000' },
+        },
+      },
+      coinOutput('change', '80', '8000000000000'),
+    ]
+    const { outputs: relevant, toSelf } = findRelevantOutputs(
+      outputs,
+      ownAddresses,
+    )
+    expect(toSelf).toBe(false)
+    expect(relevant).toEqual([outputs[0], outputs[1]]) // own change excluded
+  })
+
+  it('falls back to receiving-address outputs for self-transfers', () => {
+    const outputs = [
+      coinOutput('wallet', '10', '1000000000000'),
+      coinOutput('change', '80', '8000000000000'),
+    ]
+    const { outputs: relevant, toSelf } = findRelevantOutputs(
+      outputs,
+      ownAddresses,
+    )
+    expect(toSelf).toBe(true)
+    expect(relevant).toEqual([outputs[0]]) // change excluded, payment kept
+  })
+})
+
+describe('signer leg-kind-aware amount resolution', () => {
+  it('never consults the account/command branches for outputs', () => {
+    // THE ATTACK: an output with injected input_type/command/account_type
+    // plus a self-consistent amount would display funds the signer never
+    // encodes — the signer reads command/account_type on inputs only
+    const injection = {
+      type: 'CreateDelegationId',
+      pool_id: 'p1',
+      input_type: 'AccountCommand',
+      command: 'MintTokens',
+      token_id: 'tmltk1cheap',
+      account_type: 'DelegationBalance',
+      amount: { atoms: '2500', decimal: '25' },
+    }
+    expect(signerAmountContainer(injection, 'output')).toBe(null)
+    expect(signerAmountTokenId(injection, null, 'output')).toBe(null)
+    // the real output branches still resolve
+    const transfer = {
+      type: 'Transfer',
+      value: { type: 'Coin', amount: { atoms: '1' } },
+    }
+    expect(signerAmountContainer(transfer, 'output')).toBe(transfer.value)
+    const staking = {
+      type: 'DelegateStaking',
+      amount: { atoms: '2' },
+      delegation_id: 'd1',
+    }
+    expect(signerAmountContainer(staking, 'output')).toBe(staking.amount)
+    expect(signerAmountTokenId(staking, staking.amount, 'output')).toBe(null)
+    expect(
+      signerAmountScale(staking, staking.amount, new Map(), 'output'),
+    ).toBe(COIN_DECIMALS)
+  })
+
+  it('never consults the value-type branches for inputs', () => {
+    // an account input injected with type 'Transfer' (+ value) must not
+    // resolve the injected value, and one injected with type
+    // 'DelegateStaking' (+ amount) must not resolve the amount — the signer
+    // reads utxo.value only for input_type 'UTXO' legs
+    const transferImpersonator = {
+      input: {
+        input_type: 'AccountCommand',
+        command: 'ConcludeOrder',
+        order_id: 'o1',
+        nonce: '0',
+        type: 'Transfer',
+        value: {
+          type: 'Coin',
+          amount: { atoms: '1000000000000', decimal: '10' },
+        },
+      },
+    }
+    expect(signerAmountContainer(transferImpersonator, 'input')).toBe(null)
+    const stakingImpersonator = {
+      input: {
+        input_type: 'Account',
+        account_type: 'ExternalKey',
+        nonce: '0',
+        type: 'DelegateStaking',
+        amount: { atoms: '1000000000000', decimal: '10' },
+      },
+    }
+    expect(signerAmountContainer(stakingImpersonator, 'input')).toBe(null)
+    // resolution is per leg kind, never shape-only: the same injected shape
+    // resolves as an output (where type 'DelegateStaking' IS signed)
+    expect(signerAmountContainer(stakingImpersonator.input, 'output')).toBe(
+      stakingImpersonator.input.amount,
+    )
+  })
+
+  it('reads utxo.value only for input_type UTXO legs of signed types', () => {
+    const value = {
+      type: 'Coin',
+      amount: { atoms: '150000000000', decimal: '1.5' },
+    }
+    expect(
+      signerAmountContainer(
+        { input: { input_type: 'UTXO' }, utxo: { type: 'Transfer', value } },
+        'input',
+      ),
+    ).toBe(value)
+    expect(
+      signerAmountContainer(
+        { input: { input_type: 'UTXO' }, utxo: { type: 'Htlc', value } },
+        'input',
+      ),
+    ).toBe(value)
+    expect(
+      signerAmountContainer(
+        { input: { input_type: 'UTXO' }, utxo: { type: 'IssueNft', value } },
+        'input',
+      ),
+    ).toBe(null)
+    // account fields injected ON the utxo object never redirect the
+    // resolution — a UTXO leg's container comes from utxo.value alone
+    const evil = {
+      input: { input_type: 'UTXO' },
+      utxo: {
+        type: 'Transfer',
+        input_type: 'AccountCommand',
+        command: 'MintTokens',
+        token_id: 'tmltk1evil',
+        amount: { atoms: '999', decimal: '999' },
+        value,
+      },
+    }
+    expect(signerAmountContainer(evil, 'input')).toBe(value)
+    // utxo identity comes from the signer-read container
+    expect(signerAmountTokenId(evil, value, 'input')).toBe(null)
+  })
+
+  it('resolves account-command containers from the wrapper input', () => {
+    const mint = {
+      input_type: 'AccountCommand',
+      command: 'MintTokens',
+      token_id: 't2',
+      amount: { atoms: '2500', decimal: '25' },
+      nonce: '0',
+    }
+    expect(signerAmountContainer({ input: mint }, 'input')).toBe(mint.amount)
+    expect(signerAmountTokenId({ input: mint }, mint.amount, 'input')).toBe(
+      't2',
+    )
+    expect(
+      signerAmountScale(
+        { input: mint },
+        mint.amount,
+        new Map([['t2', 2]]),
+        'input',
+      ),
+    ).toBe(2)
+    const withdraw = {
+      input_type: 'Account',
+      account_type: 'DelegationBalance',
+      delegation_id: 'd1',
+      amount: { atoms: '1000000000000', decimal: '10', token_id: 'evil' },
+      nonce: '0',
+    }
+    expect(signerAmountContainer({ input: withdraw }, 'input')).toBe(
+      withdraw.amount,
+    )
+    // withdrawals are coin-only, whatever identity is injected
+    expect(
+      signerAmountTokenId({ input: withdraw }, withdraw.amount, 'input'),
+    ).toBe(null)
+    expect(
+      signerAmountScale(
+        { input: withdraw },
+        withdraw.amount,
+        new Map(),
+        'input',
+      ),
+    ).toBe(COIN_DECIMALS)
+  })
+
+  it('fails closed without an explicit legKind', () => {
+    const transfer = {
+      type: 'Transfer',
+      value: { type: 'Coin', amount: { atoms: '1' } },
+    }
+    const mint = {
+      input: {
+        input_type: 'AccountCommand',
+        command: 'MintTokens',
+        token_id: 't',
+        amount: { atoms: '1' },
+      },
+    }
+    // a call site that skipped the legKind parameter resolves nothing
+    expect(signerAmountContainer(transfer)).toBe(null)
+    expect(signerAmountContainer(mint)).toBe(null)
+    expect(signerAmountTokenId(mint, mint.input.amount)).toBe(null)
+    expect(signerAmountScale(transfer, transfer.value, new Map())).toBe(null)
+  })
+})
+
+describe('reconcileApprovalAmounts', () => {
+  const ownAddresses = { receiving: ['wallet'], change: ['change'] }
+
+  it('derives amounts and fee from atoms for a consistent transfer', () => {
+    const { amountRows, fee, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
+        outputs: [coinOutput('tmt1qrecipient', '10', '1000000000000')],
+        fee: { decimal: '0.01', atoms: toAtoms('0.01') },
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '10' }])
+    // 17071.486043 − 10 = 17061.486043
+    expect(fee).toEqual({ amount: '17061.486043' })
+    expect(blocked).toBe(false)
+  })
+
+  it('blocks when an approved output reports a smaller decimal than its atoms', () => {
+    const { amountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: 'attacker',
+            value: {
+              type: 'Coin',
+              amount: { decimal: '1', atoms: '1707148604300000' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(amountRows[0].errors[0].error).toMatch(/does not match/)
+    expect(amountRows[0].errors[0].amount).toBe('17071.486043')
+  })
+
+  it('groups rows by every output asset for mixed coin+token payments', () => {
+    const tokenId = 'token-a'
+    const { amountRows, fee, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          coinInput('wallet', '10000000000000', '100'),
+          {
+            input_type: 'UTXO',
+            utxo: {
+              destination: 'wallet',
+              value: {
+                type: 'TokenV1',
+                token_id: tokenId,
+                amount: { decimal: '914', atoms: '91400' },
+              },
+            },
+          },
+        ],
+        outputs: [
+          // token payment to the recipient
+          {
+            type: 'Transfer',
+            destination: 'attacker',
+            value: {
+              type: 'TokenV1',
+              token_id: tokenId,
+              amount: { decimal: '500', atoms: '50000' },
+            },
+          },
+          // coin payment to the recipient …
+          coinOutput('attacker', '10', '1000000000000'),
+          // … and the coin change back to the wallet (never a "payment")
+          coinOutput('change', '80', '8000000000000'),
+        ],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(amountRows).toEqual([
+      { key: tokenId, tokenId, amount: '500' },
+      { key: 'Coin', tokenId: null, amount: '10' },
+    ])
+    // 100 − 10 − 80 = 10 ML fee (token values are not coin)
+    expect(fee).toEqual({ amount: '10' })
+  })
+
+  it('aggregates every mismatching output of an asset, not only the first', () => {
+    const { amountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: 'attacker1',
+            value: {
+              type: 'Coin',
+              amount: { decimal: '1', atoms: '1000000000000' },
+            },
+          },
+          {
+            type: 'Transfer',
+            destination: 'attacker2',
+            value: {
+              type: 'Coin',
+              amount: { decimal: '1', atoms: '2000000000000' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(amountRows).toHaveLength(1)
+    expect(amountRows[0].errors).toHaveLength(2)
+    expect(amountRows[0].errors[0].amount).toBe('10')
+    expect(amountRows[0].errors[1].amount).toBe('20')
+  })
+
+  it('blocks on a tampered declared fee when the sums are not computable', () => {
+    const { fee, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: { command: 'CreateDelegationId' },
+          },
+        ],
+        outputs: [],
+        fee: { decimal: '0.00000000001', atoms: '100000' },
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(fee.error).toMatch(/fee does not match/)
+  })
+
+  it('blocks when a displayed amount carries an unknown token scale and a scaled label', () => {
+    const tokenId = 'token-unknown'
+    const { amountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: 'attacker',
+            value: {
+              type: 'TokenV1',
+              token_id: tokenId,
+              amount: { decimal: '914', atoms: '91400' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(amountRows[0].errors[0].error).toMatch(/decimals are unknown/)
+    expect(amountRows[0].errors[0].amount).toBe('91400')
+  })
+
+  it('verifies CreateOrder balances and blocks a lying order decimal', () => {
+    const tokenId = 'token-give'
+    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '10000000000000', '100')],
+        outputs: [
+          {
+            type: 'CreateOrder',
+            ask_balance: { atoms: '1000000000000', decimal: '10' },
+            ask_currency: { type: 'Coin' },
+            // LIE: 50000 atoms at scale 2 is 500, not 999
+            give_balance: { atoms: '50000', decimal: '999' },
+            give_currency: { type: 'Token', token_id: tokenId },
+            conclude_destination: 'wallet',
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    const give = extraAmountRows.find((row) => row.label === 'Order give')
+    expect(give.errors[0].error).toMatch(/does not match/)
+    expect(give.errors[0].amount).toBe('500')
+    expect(give.withTicker).toBe(true)
+    // the coin payment rows are unaffected by the order lie
+    expect(amountRows.every((row) => !row.errors)).toBe(true)
+  })
+
+  it('shows consistent order balances without blocking', () => {
+    const tokenId = 'token-give'
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'CreateOrder',
+            ask_balance: { atoms: '1000000000000', decimal: '10' },
+            ask_currency: { type: 'Coin' },
+            give_balance: { atoms: '50000', decimal: '500' },
+            give_currency: { type: 'Token', token_id: tokenId },
+            initially_asked: { atoms: '1000000000000', decimal: '10' },
+            initially_given: { atoms: '50000', decimal: '500' },
+            conclude_destination: 'wallet',
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(extraAmountRows.map((row) => [row.label, row.amount])).toEqual([
+      ['Order ask', '10'],
+      ['Order give', '500'],
+    ])
+    // initially_asked/given are chain-state metadata — the CreateOrder
+    // encoding reads only ask_balance/give_balance, so they are not rows
+  })
+
+  it('resolves the DelegateStaking container per type, ignoring injected value', () => {
+    // SECURITY: the signer escrows output.amount.atoms — a payload carrying
+    // BOTH a pretty value (for display) and the huge signed amount must
+    // review the amount-derived truth, never the attacker-chosen number.
+    const { amountRows, fee, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '9901000000000', '99.01')],
+        outputs: [
+          {
+            type: 'DelegateStaking',
+            value: {
+              type: 'Coin',
+              amount: { atoms: '1000', decimal: '0.00000000001' },
+            },
+            amount: { atoms: '9900000000000', decimal: '99' },
+            delegation_id: 'd1',
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    // 99 ML escrow shown (the signed truth), not the 0.00000000001 decoy
+    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '99' }])
+    // fee = 99.01 − 99 escrow = 0.01
+    expect(fee).toEqual({ amount: '0.01' })
+  })
+
+  it('does not render phantom rows for outputs without a known container', () => {
+    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'DataDeposit',
+            data: 'deadbeef',
+            // injected top-level numerics the signer never reads
+            atoms: '1000000000000',
+            decimal: '10',
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(amountRows).toEqual([])
+    expect(extraAmountRows).toEqual([])
+    expect(blocked).toBe(false)
+  })
+
+  it('ignores injected top-level token_id for scale and identity', () => {
+    const tokenId = 'token-inject'
+    const { amountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '10000000000000000', '100000')],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: 'attacker',
+            // top-level injection — the signer reads value.token_id only
+            token_id: tokenId,
+            value: {
+              type: 'Coin',
+              amount: { atoms: '10000000000000000', decimal: '100000' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    // coin truth at coin scale, keyed off the signer-read container only
+    expect(amountRows).toEqual([
+      { key: 'Coin', tokenId: null, amount: '100000' },
+    ])
+  })
+
+  it('ignores injected command/account_type on value-bearing outputs', () => {
+    // a Transfer output's identity and scale come from its value — the
+    // signer never reads command/account_type/token_id on outputs
+    const tokenId = 'token-real'
+    const { amountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '100000000000000', '100000')],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: 'attacker',
+            command: 'MintTokens',
+            token_id: 'token-cheap',
+            account_type: 'DelegationBalance',
+            value: {
+              type: 'TokenV1',
+              token_id: tokenId,
+              amount: { atoms: '50000', decimal: '500' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    // the value's own identity and scale: 50000 atoms @2 = 500
+    expect(amountRows).toEqual([{ key: tokenId, tokenId, amount: '500' }])
+  })
+
+  it('blocks a lying total_supply decimal on token issuance', () => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'IssueFungibleToken',
+            number_of_decimals: 2,
+            total_supply: {
+              type: 'Fixed',
+              amount: { atoms: '2500', decimal: '99' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows[0].label).toBe('Total supply')
+    expect(extraAmountRows[0].errors[0].error).toMatch(/does not match/)
+    expect(extraAmountRows[0].errors[0].amount).toBe('25')
+    // pre-issuance: no ticker exists yet, the signed truth renders bare
+    expect(extraAmountRows[0].withTicker).toBe(false)
+  })
+
+  it('shows a consistent total supply without blocking', () => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'IssueFungibleToken',
+            number_of_decimals: 2,
+            total_supply: {
+              type: 'Fixed',
+              amount: { atoms: '2500', decimal: '25' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'supply:0',
+        label: 'Total supply',
+        tokenId: null,
+        withTicker: false,
+        amount: '25',
+      },
+    ])
+  })
+
+  it('never treats a BurnCoin-shaped output as a signed burn leg', () => {
+    // the signer has no BurnCoin branch — such an output encodes to null and
+    // must neither subtract from the fee nor render a Burned row
+    expect(
+      computeCoinFeeAtoms(
+        [coinInput('a', '10001000000000', '100.01')],
+        [
+          {
+            type: 'BurnCoin',
+            value: {
+              type: 'Coin',
+              amount: { atoms: '10000000000000', decimal: '100' },
+            },
+          },
+        ],
+      ),
+    ).toBe(10001000000000n) // fee = full input — nothing subtracted
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('a', '10001000000000', '100.01')],
+        outputs: [
+          {
+            type: 'BurnCoin',
+            value: {
+              type: 'Coin',
+              amount: { atoms: '10000000000000', decimal: '100' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+    expect(blocked).toBe(false)
+    expect(extraAmountRows).toEqual([])
+  })
+
+  it('ignores malformed BurnToken values the signer drops', () => {
+    // a BurnToken value with neither token_id nor type 'Coin' encodes to a
+    // null output — it must not touch the fee or render a row
+    expect(
+      computeCoinFeeAtoms(
+        [coinInput('a', '10001000000000', '100.01')],
+        [
+          {
+            type: 'BurnToken',
+            value: {
+              type: 'Token',
+              amount: { atoms: '10000000000000', decimal: '100' },
+            },
+          },
+        ],
+      ),
+    ).toBe(10001000000000n)
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('a', '10001000000000', '100.01')],
+        outputs: [
+          {
+            type: 'BurnToken',
+            value: {
+              type: 'Token',
+              amount: { atoms: '10000000000000', decimal: '100' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+    expect(blocked).toBe(false)
+    expect(extraAmountRows).toEqual([])
+  })
+
+  it('credits DelegationBalance withdrawals on input_type Account too', () => {
+    // the signer's inputCommands filter accepts both input_type spellings
+    expect(
+      computeCoinFeeAtoms(
+        [
+          {
+            input_type: 'Account',
+            input: {
+              input_type: 'Account',
+              account_type: 'DelegationBalance',
+              delegation_id: 'd1',
+              amount: { atoms: '1000000000000', decimal: '10' },
+              nonce: '0',
+            },
+          },
+          coinInput('a', '150000000000', '1.5'),
+        ],
+        [coinOutput('b', '8', '800000000000')],
+      ),
+    ).toBe(350000000000n) // 10 + 1.5 − 8 = 3.5 ML
+  })
+
+  it('does not fabricate a fill row for a contradictory FillOrder input', () => {
+    // input_type 'UTXO' + command 'FillOrder' encodes a plain utxo input —
+    // fill_atoms is never signed, so no row may be fabricated
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'UTXO',
+            input: {
+              input_type: 'UTXO',
+              command: 'FillOrder',
+              order_id: 'order-1',
+              fill_atoms: '1000000000000',
+              destination: 'wallet',
+              nonce: '0',
+            },
+            utxo: {
+              destination: 'wallet',
+              value: {
+                type: 'Coin',
+                amount: { atoms: '1000000000000', decimal: '10' },
+              },
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(extraAmountRows).toEqual([])
+  })
+
+  it('resolves no container for known-command DelegationBalance hybrids', () => {
+    // the signer resolves known commands before the DelegationBalance branch:
+    // UnmintTokens + DelegationBalance signs NO amount (the injected amount
+    // is chain-state metadata, not a committed value)
+    const source = {
+      input_type: 'AccountCommand',
+      command: 'UnmintTokens',
+      account_type: 'DelegationBalance',
+      amount: { atoms: '50000000000000', decimal: '500' },
+      nonce: '0',
+    }
+    expect(signerAmountContainer({ input: source }, 'input')).toBe(null)
+
+    // MintTokens keeps its signed amount container
+    const mint = {
+      input_type: 'AccountCommand',
+      command: 'MintTokens',
+      token_id: 't',
+      amount: { atoms: '1500000000000000000', decimal: '1.5' },
+      nonce: '0',
+    }
+    expect(signerAmountContainer({ input: mint }, 'input')).toBe(mint.amount)
+  })
+
+  it('does not fabricate rows for injected commands/account_type on outputs', () => {
+    // LEG-KIND REGRESSION: the signer reads command/account_type on INPUTS
+    // only — an output carrying those injected fields (plus a consistent
+    // amount) encodes nothing signable, so no Amount row may appear
+    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'CreateDelegationId',
+            pool_id: 'p1',
+            input_type: 'AccountCommand',
+            command: 'MintTokens',
+            token_id: 'tmltk1cheap',
+            amount: { atoms: '2500', decimal: '25' },
+          },
+          {
+            type: 'DataDeposit',
+            data: 'aa',
+            input_type: 'Account',
+            account_type: 'DelegationBalance',
+            amount: { atoms: '1000000000000', decimal: '10' },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map([['tmltk1cheap', 2]]), ownAddresses },
+    )
+
+    expect(amountRows).toEqual([])
+    expect(extraAmountRows).toEqual([])
+    expect(blocked).toBe(false)
+  })
+
+  it('does not fake a value row for an account input injected with type Transfer', () => {
+    // LEG-KIND REGRESSION: Transfer is an output type — the signer reads
+    // input.value nowhere, so an account input injected with a type/value
+    // pair resolves no container and shows no "will sign" number
+    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'ConcludeOrder',
+              order_id: 'o1',
+              nonce: '0',
+              type: 'Transfer',
+              value: {
+                type: 'Coin',
+                amount: { atoms: '1000000000000', decimal: '10' },
+              },
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(amountRows).toEqual([])
+    expect(extraAmountRows).toEqual([])
+    expect(blocked).toBe(false)
+  })
+
+  it('blocks a lying decimal on a signed MintTokens amount', () => {
+    // the signer commits input.amount.atoms for a mint, so its decimal label
+    // is reconciliation-relevant exactly like a Transfer output's
+    const tokenId = 'tmltk1mint2'
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'MintTokens',
+              token_id: tokenId,
+              // LIE: 2500 atoms at scale 2 is 25, not 99
+              amount: { atoms: '2500', decimal: '99' },
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'signed-amount:0',
+        label: 'Amount',
+        tokenId,
+        withTicker: true,
+        errors: [
+          {
+            error: expect.stringMatching(/does not match/),
+            amount: '25',
+          },
+        ],
+      },
+    ])
+  })
+
+  it('blocks a lying decimal on a DelegationBalance withdrawal', () => {
+    const { extraAmountRows, blocked, fee } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              account_type: 'DelegationBalance',
+              delegation_id: 'd1',
+              // LIE: 1000000000000 atoms is 10, not 1
+              amount: { atoms: '1000000000000', decimal: '1' },
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'signed-amount:0',
+        label: 'Amount',
+        tokenId: null,
+        withTicker: true,
+        errors: [
+          {
+            error: expect.stringMatching(/does not match/),
+            amount: '10',
+          },
+        ],
+      },
+    ])
+    // the signed truth still drives the fee: the 10 ML credit is the only
+    // coin leg
+    expect(fee).toEqual({ amount: '10' })
+  })
+
+  it('keeps consistent mint/withdrawal amounts unblocked and row-free', () => {
+    const tokenId = 'tmltk1mint2'
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'MintTokens',
+              token_id: tokenId,
+              amount: { atoms: '2500', decimal: '25' },
+              nonce: '0',
+            },
+          },
+          {
+            input_type: 'Account',
+            input: {
+              input_type: 'Account',
+              account_type: 'DelegationBalance',
+              delegation_id: 'd1',
+              amount: { atoms: '1000000000000', decimal: '10' },
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    // honest amounts are already displayed by the operation panels — no new
+    // row, and approval stays available
+    expect(extraAmountRows).toEqual([])
+    expect(blocked).toBe(false)
+  })
+
+  it('collects supply extras even when the issuance targets a wallet address', () => {
+    // relevance gates PAYMENT rows only — an extra routed to a wallet address
+    // must still block on a lying decimal
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'IssueFungibleToken',
+            destination: 'change',
+            number_of_decimals: 2,
+            total_supply: {
+              type: 'Fixed',
+              amount: { atoms: '2500', decimal: '999' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows[0].label).toBe('Total supply')
+    expect(extraAmountRows[0].errors[0].error).toMatch(/does not match/)
+    expect(extraAmountRows[0].errors[0].amount).toBe('25')
+  })
+
+  it('does not collect initially_* order balances as committed amounts', () => {
+    // the CreateOrder encoding reads only ask_balance/give_balance —
+    // initially_* are chain-state metadata the signer never encodes, so a
+    // lying decimal on them can neither display nor block
+    const tokenId = 'token-give'
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'CreateOrder',
+            ask_balance: { atoms: '1000000000000', decimal: '10' },
+            ask_currency: { type: 'Coin' },
+            give_balance: { atoms: '50000', decimal: '500' },
+            give_currency: { type: 'Token', token_id: tokenId },
+            initially_asked: { atoms: '1000000000000', decimal: '999' },
+            initially_given: { atoms: '50000', decimal: '42' },
+            conclude_destination: 'wallet',
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(extraAmountRows.map((row) => row.label)).toEqual([
+      'Order ask',
+      'Order give',
+    ])
+  })
+
+  it('shows and verifies the committed FillOrder fill_atoms size', () => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'FillOrder',
+              order_id: 'order-1',
+              fill_atoms: '1000000000000',
+              destination: 'wallet',
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    // bare atom string, no scale in the payload → shown verbatim
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'order:fill:0',
+        label: 'Order fill',
+        tokenId: null,
+        withTicker: false,
+        amount: '1000000000000',
+      },
+    ])
+  })
+
+  it('blocks when the committed FillOrder size is unreadable or negative', () => {
+    for (const bad of ['garbage', '-1000000000000']) {
+      const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+        {
+          inputs: [
+            {
+              input_type: 'AccountCommand',
+              input: {
+                input_type: 'AccountCommand',
+                command: 'FillOrder',
+                order_id: 'order-1',
+                fill_atoms: bad,
+                destination: 'wallet',
+                nonce: '0',
+              },
+            },
+          ],
+          outputs: [],
+        },
+        { tokenDecimalsById: new Map(), ownAddresses },
+      )
+
+      expect(blocked).toBe(true)
+      expect(extraAmountRows[0].errors).toHaveLength(1)
+    }
+  })
+
+  it('ignores non-FillOrder inputs when collecting signed extras', () => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              command: 'ConcludeOrder',
+              order_id: 'order-1',
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(extraAmountRows).toEqual([])
+    expect(blocked).toBe(false)
+  })
+
+  it('skips supply/order extras that carry no numeric amount', () => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'IssueFungibleToken',
+            number_of_decimals: 8,
+            total_supply: { type: 'Unlimited' },
+          },
+          {
+            type: 'CreateOrder',
+            ask_currency: { type: 'Coin' },
+            give_currency: { type: 'Coin' },
+            conclude_destination: 'wallet',
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(extraAmountRows).toEqual([])
+    expect(blocked).toBe(false)
+  })
+
+  it('shows token burns as their own verified row and blocks a lying one', () => {
+    const tokenId = 'token-burn'
+    const lying = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'BurnToken',
+            value: {
+              type: 'TokenV1',
+              token_id: tokenId,
+              // LIE: 50000 atoms at scale 2 is 500, not 999
+              amount: { atoms: '50000', decimal: '999' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(lying.blocked).toBe(true)
+    expect(lying.extraAmountRows).toEqual([
+      {
+        key: 'burned:0',
+        label: 'Burned',
+        tokenId,
+        withTicker: true,
+        errors: [
+          {
+            error: expect.stringMatching(/does not match/),
+            amount: '500',
+          },
+        ],
+      },
+    ])
+
+    const honest = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'BurnToken',
+            value: {
+              type: 'TokenV1',
+              token_id: tokenId,
+              amount: { atoms: '50000', decimal: '500' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(honest.blocked).toBe(false)
+    expect(honest.extraAmountRows).toEqual([
+      {
+        key: 'burned:0',
+        label: 'Burned',
+        tokenId,
+        withTicker: true,
+        amount: '500',
+      },
+    ])
+  })
+
+  it('fails closed on an unknown-scale token burn', () => {
+    const tokenId = 'token-unknown-burn'
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'BurnToken',
+            value: {
+              type: 'TokenV1',
+              token_id: tokenId,
+              amount: { atoms: '50000', decimal: '500' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows[0].errors[0].error).toMatch(/decimals are unknown/)
+    expect(extraAmountRows[0].errors[0].amount).toBe('50000')
+  })
+
+  it('shows no supply row for a Lockable total_supply (no signed cap)', () => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'IssueFungibleToken',
+            number_of_decimals: 2,
+            // a Lockable supply encodes NO amount at signing time — a payload
+            // attaching one must not display a cap
+            total_supply: {
+              type: 'Lockable',
+              amount: { atoms: '2500', decimal: '99' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(extraAmountRows).toEqual([])
+    expect(blocked).toBe(false)
+  })
+})

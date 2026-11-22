@@ -1,5 +1,9 @@
 import { useLocation } from 'react-router'
-import { SignTransaction as SignTxHelpers, Secret } from '@Helpers'
+import {
+  SignTransaction as SignTxHelpers,
+  Secret,
+  TransactionAmounts,
+} from '@Helpers'
 import { MOCKS } from './mocks'
 import { Button, Error, PageWrapper, SiteBadge } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
@@ -42,7 +46,7 @@ export const SignTransactionPage = () => {
   const [usePasswordEntry, setPasswordEntry] = useState(false)
   const [secret, setSecret] = useState('')
 
-  const { currentHeight } = useContext(MintlayerContext)
+  const { currentHeight, allNetworkTokensData } = useContext(MintlayerContext)
   const { networkType } = useContext(SettingsContext)
 
   const blockHeight = currentHeight ? BigInt(currentHeight) : 0n
@@ -74,31 +78,58 @@ export const SignTransactionPage = () => {
 
   const currentMlAddresses = addresses.mlAddresses
 
+  // SECURITY: fail closed when the dApp-reported amounts do not match the
+  // transaction that would actually be signed. This is the same
+  // reconciliation the summary renders from, so what was reviewed is what
+  // can be approved — a mismatching request can never reach the signer.
+  const jsonRepresentation = state?.request?.data?.txData?.JSONRepresentation
+  const tokenDecimalsById =
+    TransactionAmounts.buildTokenDecimalsIndex(allNetworkTokensData)
+  const { blocked: approvalBlocked } = jsonRepresentation
+    ? TransactionAmounts.reconcileApprovalAmounts(jsonRepresentation, {
+        tokenDecimalsById,
+        ownAddresses: {
+          receiving: currentMlAddresses.mlReceivingAddresses,
+          change: currentMlAddresses.mlChangeAddresses,
+        },
+      })
+    : { blocked: false }
+
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
   const hasIntent = Boolean(state?.request?.data?.txData?.intent)
-  const isHTLCCreateTx =
-    state?.request?.data?.txData?.JSONRepresentation?.outputs?.some(
-      (output) => output?.type === 'Htlc',
-    )
 
-  const isHTLCTx =
-    state?.request?.data?.txData?.JSONRepresentation?.inputs?.some(
-      (input) => input?.utxo?.type === 'Htlc',
-    )
+  // Fail closed on malformed payloads: legs may not even be arrays (the
+  // background forwards dApp params unvalidated), and an HTLC-shaped input
+  // may arrive without an htlc object — never dereference them during
+  // render; a crash here would wedge the approval window behind the
+  // ErrorBoundary. reconcileApprovalAmounts blocks non-array payloads.
+  const payloadInputs = Array.isArray(jsonRepresentation?.inputs)
+    ? jsonRepresentation.inputs
+    : []
+  const payloadOutputs = Array.isArray(jsonRepresentation?.outputs)
+    ? jsonRepresentation.outputs
+    : []
+  const htlcInputs = payloadInputs.filter(
+    (input) =>
+      input?.input?.input_type === 'UTXO' && input?.utxo?.type === 'Htlc',
+  )
+  const isHTLCTx = htlcInputs.length > 0
+  const HtlcInput = htlcInputs[0]
 
-  const HtlcInput =
-    state?.request?.data?.txData?.JSONRepresentation?.inputs.find(
-      (input) => input?.utxo?.type === 'Htlc',
-    )
+  const isHTLCCreateTx = payloadOutputs.some(
+    (output) => output?.type === 'Htlc',
+  )
 
   const isHTLCClaim =
     isHTLCTx &&
-    state?.request?.data?.txData?.JSONRepresentation?.outputs?.some(
-      (output) => output?.destination === HtlcInput.utxo.htlc.spend_key,
+    HtlcInput?.utxo?.htlc?.spend_key != null &&
+    payloadOutputs.some(
+      (output) => output?.destination === HtlcInput?.utxo?.htlc?.spend_key,
     )
 
   const handleApprove = () => {
+    if (approvalBlocked) return // fail closed: verified amounts only
     setSignError('')
     setIsModalOpen(true) // Open the modal
   }
@@ -125,7 +156,10 @@ export const SignTransactionPage = () => {
     const transactionJSON =
       currentState?.request?.data?.txData?.JSONRepresentation
 
-    if (!transactionJSON || !transactionJSON.outputs) {
+    // outputs may be a truthy non-array (the background forwards dApp params
+    // unvalidated) — a filter over it would crash the effect and unmount the
+    // page into the ErrorBoundary before the blocked banner can render.
+    if (!transactionJSON || !Array.isArray(transactionJSON.outputs)) {
       return
     }
 
@@ -194,6 +228,9 @@ export const SignTransactionPage = () => {
 
   const handleModalSubmit = async ({ usePasskey = false } = {}) => {
     if (isSigning) return
+    // Defense in depth: the approve button is already disabled, but the
+    // modal submit must never reach the signer for a blocked request.
+    if (approvalBlocked) return
 
     // Validate secret if it's an HTLC claim transaction
     if (isHTLCClaim && secret && !Secret.validateSecretHex(secret.trim())) {
@@ -508,6 +545,10 @@ export const SignTransactionPage = () => {
             <Error error="No pending sign request." />
           )}
 
+          {approvalBlocked && (
+            <Error error="Amount verification failed: the site-reported amounts do not match what this transaction would sign. For your safety, this request cannot be approved." />
+          )}
+
           {/* HTLC Secret Information */}
           {isHTLCCreateTx && generatedSecret && (
             <div className="htlc-secret-section">
@@ -566,7 +607,10 @@ export const SignTransactionPage = () => {
           <Button
             onClickHandle={handleApprove}
             extraStyleClasses={extraButtonStyles}
-            disabled={!state?.request?.data?.txData?.JSONRepresentation}
+            disabled={
+              !state?.request?.data?.txData?.JSONRepresentation ||
+              approvalBlocked
+            }
           >
             Approve and return to page
           </Button>

@@ -130,6 +130,15 @@
   white-space: nowrap;
 }
 
+/* Fail-closed verification error shown in place of an amount whose payload
+   `.decimal` label did not reconcile with the signed `.atoms`. */
+.amountError {
+  color: #c0392b;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
 .fields {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { SignTransaction as SignTxHelpers } from '@Helpers'
+import { SignTransaction as SignTxHelpers, TransactionAmounts } from '@Helpers'
 import './ExternalTransactionPreview.css'
 
 import { AccountContext, MintlayerContext, SettingsContext } from '@Contexts'
@@ -9,37 +9,67 @@ import TransactionBreakdown from '../TransactionBreakdown/TransactionBreakdown'
 import TransactionPreviewErrorBoundary from '../TransactionPreviewErrorBoundary/TransactionPreviewErrorBoundary'
 import UnrecognizedOperation from '../UnrecognizedOperation/UnrecognizedOperation'
 
-// Prefer an output paid to an address outside this wallet. When every
-// output lands on the wallet (a self-transfer), fall back to an output
-// addressed to one of its receiving addresses — change-address outputs
-// are only the unspent remainder coming back.
-const findRelevantOutput = (inputs, outputs, ownAddresses) => {
-  const receiving = ownAddresses?.receiving || []
-  const ownList = [...receiving, ...(ownAddresses?.change || [])]
+const {
+  COIN_DECIMALS,
+  buildTokenDecimalsIndex,
+  deriveApprovalFee,
+  findRelevantOutputs,
+  isAccountCommandShape,
+  isDelegationWithdrawInput,
+  resolveAssetDecimals,
+  resolveCurrencyDecimals,
+  signerAmountContainer,
+  verifyAmountPair,
+} = TransactionAmounts
 
-  const inputWithToken = inputs.find(
-    (input) => input.utxo?.value?.type === 'TokenV1',
-  )
-  const tokenId = inputWithToken?.utxo?.value?.token_id
-  const matchesAsset = (output) =>
-    !tokenId || output.value?.token_id === tokenId
+// Chain token metadata → Map token_id → decimals, for scaling signed token
+// atoms into displayable amounts.
+const useTokenDecimalsIndex = () => {
+  const { allNetworkTokensData } = useContext(MintlayerContext)
+  return buildTokenDecimalsIndex(allNetworkTokensData)
+}
 
+// Renders the atoms-derived amount, or — fail closed — the verification
+// error in place of any number that could not be reconciled with the signed
+// `.atoms` values.
+// Fail closed on malformed payloads: legs may be truthy non-arrays (the
+// background forwards dApp params unvalidated) — normalize once so every
+// sub-component's .find/.filter/.some reads can never crash. The payload
+// itself is blocked by reconcileApprovalAmounts.
+const normalizedLegs = (JSONRepresentation) => ({
+  ...JSONRepresentation,
+  inputs: Array.isArray(JSONRepresentation?.inputs)
+    ? JSONRepresentation.inputs
+    : [],
+  outputs: Array.isArray(JSONRepresentation?.outputs)
+    ? JSONRepresentation.outputs
+    : [],
+})
+
+// Account-command inputs the signer encodes — the shared signer-exact
+// predicate (isAccountCommandShape, both input_type spellings) on the
+// wrapper's inner input. UTXO inputs with injected command/token_id/
+// account_type fields are plain utxo legs and must not drive panels.
+const isAccountCommandInput = (input) => isAccountCommandShape(input?.input)
+
+const VerifiedAmount = ({ container, decimals, fallback = 'Unknown' }) => {
+  const verified = verifyAmountPair(container, decimals)
+  if (!verified) return <p>{fallback}</p>
   return (
-    outputs.find(
-      (output) =>
-        output.destination &&
-        matchesAsset(output) &&
-        !ownList.includes(output.destination),
-    ) ||
-    outputs.find(
-      (output) =>
-        output.destination &&
-        matchesAsset(output) &&
-        receiving.includes(output.destination),
-    )
+    <p className={verified.error ? 'signTxAmountMismatch' : undefined}>
+      {verified.error ?? verified.amount}
+      {verified.error && verified.amount != null && (
+        <> — will sign {verified.amount}</>
+      )}
+    </p>
   )
 }
 
+// Prefer an output paid to an address outside this wallet — the same
+// relevance rules as the approval summary (findRelevantOutputs), so the
+// technical preview and the summary can never disagree about what is being
+// approved. When every output lands on the wallet (a self-transfer), the
+// payment is what goes to a receiving address.
 const isOwnReceiving = (address, ownAddresses) =>
   Boolean(address) && (ownAddresses?.receiving || []).includes(address)
 
@@ -67,21 +97,41 @@ const RequestDetails = ({ transactionData }) => {
 }
 
 const NetworkFee = ({ transactionData }) => {
-  const fee =
-    transactionData.data.txData.JSONRepresentation.fee?.decimal ?? 'Unknown'
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
+
+  // SECURITY: the shared fee rule (TransactionAmounts.deriveApprovalFee) —
+  // computed from the signed coin atoms (inputs − outputs); the dApp-supplied
+  // `fee` field is display-only and used only as a verified fallback. Order
+  // fill/conclusion legs are unmodelable from the payload alone → 'Unknown'.
+  const verified = deriveApprovalFee(JSONRepresentation)
+
   return (
     <div className="signTxSection">
       <h4>Network fee</h4>
-      <p>{fee}</p>
+      <p className={verified?.error ? 'signTxAmountMismatch' : undefined}>
+        {verified == null || verified.unknown
+          ? 'Unknown'
+          : (verified.error ?? verified.amount)}
+        {verified?.error && verified.amount != null && (
+          <> — will sign {verified.amount}</>
+        )}
+      </p>
     </div>
   )
 }
 
 const TransferDetails = ({ transactionData, ownAddresses }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
+  const tokenDecimalsById = useTokenDecimalsIndex()
 
   const inputWithToken = JSONRepresentation.inputs.find(
-    (input) => input.utxo?.value?.type === 'TokenV1',
+    (input) =>
+      input.input?.input_type === 'UTXO' &&
+      input.utxo?.value?.type === 'TokenV1',
   )
   const tokenId = inputWithToken ? inputWithToken?.utxo.value.token_id : null
 
@@ -94,11 +144,10 @@ const TransferDetails = ({ transactionData, ownAddresses }) => {
       ? 'Transfer token'
       : 'Transfer coins'
 
-  const relevantOutput = findRelevantOutput(
-    JSONRepresentation.inputs,
+  const relevantOutput = findRelevantOutputs(
     JSONRepresentation.outputs,
     ownAddresses,
-  )
+  ).outputs.find((output) => output.destination)
 
   // If no relevant output found, try to find any output with the token ID
   const fallbackOutput =
@@ -144,17 +193,28 @@ const TransferDetails = ({ transactionData, ownAddresses }) => {
           </>
         )}
         <h4>Amount</h4>
-        <p>{outputToUse.value?.amount?.decimal || 'Unknown'}</p>
+        <VerifiedAmount
+          container={outputToUse.value}
+          // token identity comes ONLY from the signer-read container
+          // (output.value.token_id) — never from a top-level injection
+          decimals={resolveAssetDecimals(
+            outputToUse.value?.token_id,
+            tokenDecimalsById,
+          )}
+          fallback="Unknown"
+        />
       </div>
     </div>
   )
 }
 
 const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const inputWithToken = JSONRepresentation.inputs.find(
-    (input) => input.input?.token_id,
+    (input) => isAccountCommandInput(input) && input.input?.token_id,
   )
 
   if (!inputWithToken) {
@@ -192,10 +252,12 @@ const FreezeTokenDetails = ({ transactionData, unfreeze }) => {
 }
 
 const ChangeTokenMetadata = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const inputWithToken = JSONRepresentation.inputs.find(
-    (input) => input.input?.token_id,
+    (input) => isAccountCommandInput(input) && input.input?.token_id,
   )
 
   if (!inputWithToken) {
@@ -225,10 +287,12 @@ const ChangeTokenMetadata = ({ transactionData }) => {
 }
 
 const ChangeTokenAuthority = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const inputWithToken = JSONRepresentation.inputs.find(
-    (input) => input.input?.token_id,
+    (input) => isAccountCommandInput(input) && input.input?.token_id,
   )
 
   if (!inputWithToken) {
@@ -258,10 +322,12 @@ const ChangeTokenAuthority = ({ transactionData }) => {
 }
 
 const LockTokenSupply = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const inputWithToken = JSONRepresentation.inputs.find(
-    (input) => input.input?.token_id,
+    (input) => isAccountCommandInput(input) && input.input?.token_id,
   )
 
   if (!inputWithToken) {
@@ -287,13 +353,16 @@ const LockTokenSupply = ({ transactionData }) => {
 }
 
 const BurnToken = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const burnOutput = JSONRepresentation.outputs.find(
     (output) => output.type === 'BurnToken',
   )
-  const tokenId =
-    burnOutput?.value?.type === 'TokenV1' ? burnOutput.value.token_id : null
+  // coin-vs-token keys off token-id presence (the signer encodes
+  // value.token_id || null), never off the value.type label
+  const tokenId = burnOutput?.value?.token_id ?? null
 
   return (
     <div className="transactionDetails">
@@ -313,9 +382,11 @@ const BurnToken = ({ transactionData }) => {
 }
 
 const ConcludeOrder = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
   const inputWithOrderID = JSONRepresentation.inputs.find(
-    (input) => input.input?.order_id,
+    (input) => isAccountCommandInput(input) && input.input?.order_id,
   )
 
   if (!inputWithOrderID) {
@@ -341,9 +412,11 @@ const ConcludeOrder = ({ transactionData }) => {
 }
 
 const FillOrder = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
   const inputWithOrderID = JSONRepresentation.inputs.find(
-    (input) => input.input?.order_id,
+    (input) => isAccountCommandInput(input) && input.input?.order_id,
   )
 
   if (!inputWithOrderID) {
@@ -369,7 +442,10 @@ const FillOrder = ({ transactionData }) => {
 }
 
 const CreateOrder = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
+  const tokenDecimalsById = useTokenDecimalsIndex()
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateOrder',
@@ -386,35 +462,54 @@ const CreateOrder = ({ transactionData }) => {
     )
   }
 
-  // TODO: double check the data structure with final transaction
+  // SECURITY: order balances are shown from their signed `.atoms`, scaled by
+  // the currency's decimals (shared rule in TransactionAmounts).
+  const askDecimals = resolveCurrencyDecimals(
+    outputWithCreateOrder.ask_currency,
+    tokenDecimalsById,
+  )
+  const giveDecimals = resolveCurrencyDecimals(
+    outputWithCreateOrder.give_currency,
+    tokenDecimalsById,
+  )
+
+  // Order balances are verified against the signed atoms above; what is
+  // intentionally NOT shown here is the order's live chain state (current
+  // fills/balance) — only the payload's signed amounts are rendered.
   return (
     <div className="transactionDetails">
       <EstimatedChanges action="Create order" />
       <div className="signTxSection">
         <h4>Ask balance</h4>
-        <p>{outputWithCreateOrder.ask_balance?.decimal ?? 'Unknown'}</p>
+        <VerifiedAmount
+          container={outputWithCreateOrder.ask_balance}
+          decimals={askDecimals}
+          fallback="Unknown"
+        />
         <h4>Ask currency</h4>
         <p>{outputWithCreateOrder.ask_currency?.type ?? 'Unknown'}</p>
         <h4>Destination</h4>
         <p>{outputWithCreateOrder.conclude_destination}</p>
         <h4>Give balance</h4>
-        <p>{outputWithCreateOrder.give_balance?.decimal ?? 'Unknown'}</p>
+        <VerifiedAmount
+          container={outputWithCreateOrder.give_balance}
+          decimals={giveDecimals}
+          fallback="Unknown"
+        />
         <h4>Give currency</h4>
         <p>
           Token id: {outputWithCreateOrder.give_currency?.token_id ?? 'Unknown'}
         </p>
         <p>type: {outputWithCreateOrder.give_currency?.type ?? 'Unknown'}</p>
-        <h4>Initially asked</h4>
-        <p>{outputWithCreateOrder.initially_asked?.decimal ?? 'Unknown'}</p>
-        <h4>Initially given</h4>
-        <p>{outputWithCreateOrder.initially_given?.decimal ?? 'Unknown'}</p>
       </div>
     </div>
   )
 }
 
 const IssueToken = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const outputWithCreateOrder = JSONRepresentation.outputs.find(
     (output) => output.type === 'IssueFungibleToken',
@@ -430,6 +525,12 @@ const IssueToken = ({ transactionData }) => {
       </div>
     )
   }
+
+  // SECURITY: total supply is signed from `total_supply.amount.atoms` scaled
+  // by this output's own (signed) `number_of_decimals` — never from the
+  // dApp-supplied decimal label. Out-of-range scales (negative, NaN, huge)
+  // fail closed inside the verifier instead of throwing or hanging the tab.
+  const supplyDecimals = parseInt(outputWithCreateOrder.number_of_decimals, 10)
 
   return (
     <div className="transactionDetails">
@@ -449,19 +550,28 @@ const IssueToken = ({ transactionData }) => {
         <p>String: {outputWithCreateOrder.token_ticker?.string ?? 'Unknown'}</p>
         <h4>Supply type</h4>
         <p>{outputWithCreateOrder.total_supply?.type ?? 'Unknown'}</p>
-        {outputWithCreateOrder.total_supply?.amount?.decimal && (
-          <>
-            <h4>Total supply</h4>
-            <p>{outputWithCreateOrder.total_supply.amount.decimal}</p>
-          </>
-        )}
+        {/* SECURITY: the signer encodes a supply amount ONLY for type 'Fixed'
+            (Lockable/Unlimited encode none) — render the row only then, or a
+            payload could display a cap the signed tx does not have. */}
+        {outputWithCreateOrder.total_supply?.type === 'Fixed' &&
+          outputWithCreateOrder.total_supply?.amount && (
+            <>
+              <h4>Total supply</h4>
+              <VerifiedAmount
+                container={outputWithCreateOrder.total_supply}
+                decimals={supplyDecimals}
+              />
+            </>
+          )}
       </div>
     </div>
   )
 }
 
 const IssueNft = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const outputWithIssueNft = JSONRepresentation.outputs.find(
     (output) => output.type === 'IssueNft',
@@ -490,7 +600,9 @@ const IssueNft = ({ transactionData }) => {
 }
 
 const DataDeposit = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'DataDeposit',
@@ -519,7 +631,9 @@ const DataDeposit = ({ transactionData }) => {
 }
 
 const CreateDelegationId = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'CreateDelegationId',
@@ -548,7 +662,9 @@ const CreateDelegationId = ({ transactionData }) => {
 }
 
 const DelegateStaking = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const outputWithDataDeposit = JSONRepresentation.outputs.find(
     (output) => output.type === 'DelegateStaking',
@@ -572,17 +688,25 @@ const DelegateStaking = ({ transactionData }) => {
         <h4>Delegation Id</h4>
         <p>{outputWithDataDeposit.delegation_id}</p>
         <h4>Amount</h4>
-        <p>{outputWithDataDeposit.amount?.decimal}</p>
+        <VerifiedAmount
+          container={outputWithDataDeposit.amount}
+          decimals={COIN_DECIMALS}
+        />
       </div>
     </div>
   )
 }
 
 const DelegateWithdraw = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
-  const inputWithWithdraw = JSONRepresentation.inputs.find(
-    (input) => input.input?.account_type === 'DelegationBalance',
+  // signer-exact withdrawal input (shared predicate): account input type and
+  // no coexisting known command — a hybrid input signs the command, not a
+  // withdrawal credit
+  const inputWithWithdraw = JSONRepresentation.inputs.find((input) =>
+    isDelegationWithdrawInput(input.input),
   )?.input
 
   if (!inputWithWithdraw) {
@@ -603,14 +727,20 @@ const DelegateWithdraw = ({ transactionData }) => {
         <h4>Delegation Id</h4>
         <p>{inputWithWithdraw.delegation_id}</p>
         <h4>Amount</h4>
-        <p>{inputWithWithdraw.amount?.decimal}</p>
+        <VerifiedAmount
+          container={inputWithWithdraw.amount}
+          decimals={COIN_DECIMALS}
+        />
       </div>
     </div>
   )
 }
 
 const CreateHtlc = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
+  const tokenDecimalsById = useTokenDecimalsIndex()
 
   const outputWithHtlc = JSONRepresentation.outputs.find(
     (output) => output.type === 'Htlc',
@@ -632,7 +762,13 @@ const CreateHtlc = ({ transactionData }) => {
       <EstimatedChanges action="Create HTLC" />
       <div className="signTxSection">
         <h4>Amount</h4>
-        <p>{outputWithHtlc.value?.amount?.decimal}</p>
+        <VerifiedAmount
+          container={outputWithHtlc.value}
+          decimals={resolveAssetDecimals(
+            outputWithHtlc.value?.token_id,
+            tokenDecimalsById,
+          )}
+        />
         <h4>Secret Hash</h4>
         <p>{outputWithHtlc.htlc?.secret_hash?.hex}</p>
         <h4>Spend Key</h4>
@@ -650,10 +786,14 @@ const CreateHtlc = ({ transactionData }) => {
 }
 
 const SpendHtlc = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
+  const tokenDecimalsById = useTokenDecimalsIndex()
 
   const inputWithHtlc = JSONRepresentation.inputs.find(
-    (input) => input.utxo?.type === 'Htlc',
+    (input) =>
+      input.input?.input_type === 'UTXO' && input.utxo?.type === 'Htlc',
   )
 
   if (!inputWithHtlc) {
@@ -667,12 +807,23 @@ const SpendHtlc = ({ transactionData }) => {
     )
   }
 
+  // signer-exact: the legKind-aware resolver returns utxo.value only for
+  // input_type 'UTXO' legs of signed types — an injected utxo object on an
+  // account-command input commits nothing and must not render an Amount
+  const container = signerAmountContainer(inputWithHtlc, 'input')
+
   return (
     <div className="transactionDetails">
       <EstimatedChanges action="Spend HTLC" />
       <div className="signTxSection">
         <h4>Amount</h4>
-        <p>{inputWithHtlc.utxo.value?.amount?.decimal}</p>
+        <VerifiedAmount
+          container={container}
+          decimals={resolveAssetDecimals(
+            container?.token_id,
+            tokenDecimalsById,
+          )}
+        />
         <h4>Secret Hash</h4>
         <p>{inputWithHtlc.utxo.htlc?.secret_hash?.hex}</p>
         <h4>Spend Key</h4>
@@ -690,10 +841,14 @@ const SpendHtlc = ({ transactionData }) => {
 }
 
 const BridgeRequest = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
+  const tokenDecimalsById = useTokenDecimalsIndex()
 
   const inputsWithTokens = JSONRepresentation.inputs.filter(
-    (input) => input.utxo?.value?.token_id,
+    (input) =>
+      input.input?.input_type === 'UTXO' && input.utxo?.value?.token_id,
   )
   const outputsWithTokens = JSONRepresentation.outputs.filter(
     (output) => output.value?.token_id,
@@ -706,17 +861,33 @@ const BridgeRequest = ({ transactionData }) => {
         <h4>Token id</h4>
         <p>{inputsWithTokens[0]?.utxo?.value?.token_id || 'Unknown'}</p>
         <h4>Amount</h4>
-        <p>{outputsWithTokens[0]?.value?.amount?.decimal || 'Unknown'}</p>
+        <VerifiedAmount
+          container={outputsWithTokens[0]?.value}
+          decimals={resolveAssetDecimals(
+            outputsWithTokens[0]?.value?.token_id,
+            tokenDecimalsById,
+          )}
+          fallback="Unknown"
+        />
       </div>
     </div>
   )
 }
 
 const BurnCoin = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
+  const tokenDecimalsById = useTokenDecimalsIndex()
 
+  // coin burns encode as BurnToken with a Coin value (no token_id) — the
+  // signer has no 'BurnCoin' output branch, so the type === 'BurnCoin'
+  // search could never match a real payload
   const outputWithBurnCoin = JSONRepresentation.outputs.find(
-    (output) => output.type === 'BurnCoin',
+    (output) =>
+      output.type === 'BurnToken' &&
+      output.value?.type === 'Coin' &&
+      !output.value?.token_id,
   )
 
   if (!outputWithBurnCoin) {
@@ -735,17 +906,27 @@ const BurnCoin = ({ transactionData }) => {
       <EstimatedChanges action="Burn coin" />
       <div className="signTxSection">
         <h4>Amount</h4>
-        <p>{outputWithBurnCoin.value?.amount?.decimal}</p>
+        <VerifiedAmount
+          container={outputWithBurnCoin.value}
+          decimals={resolveAssetDecimals(
+            outputWithBurnCoin.value?.token_id,
+            tokenDecimalsById,
+          )}
+        />
       </div>
     </div>
   )
 }
 
 const TokenMint = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
+  const tokenDecimalsById = useTokenDecimalsIndex()
 
   const inputWithMint = JSONRepresentation.inputs.find(
-    (input) => input.input?.command === 'MintTokens',
+    (input) =>
+      isAccountCommandInput(input) && input.input?.command === 'MintTokens',
   )
 
   if (!inputWithMint) {
@@ -766,17 +947,26 @@ const TokenMint = ({ transactionData }) => {
         <h4>Token id</h4>
         <p>{inputWithMint.input.token_id}</p>
         <h4>Amount</h4>
-        <p>{inputWithMint.input.amount?.decimal}</p>
+        <VerifiedAmount
+          container={inputWithMint.input.amount}
+          decimals={resolveAssetDecimals(
+            inputWithMint.input.token_id,
+            tokenDecimalsById,
+          )}
+        />
       </div>
     </div>
   )
 }
 
 const TokenUnmint = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
 
   const inputWithUnmint = JSONRepresentation.inputs.find(
-    (input) => input.input?.command === 'UnmintTokens',
+    (input) =>
+      isAccountCommandInput(input) && input.input?.command === 'UnmintTokens',
   )
 
   if (!inputWithUnmint) {
@@ -796,15 +986,19 @@ const TokenUnmint = ({ transactionData }) => {
       <div className="signTxSection">
         <h4>Token id</h4>
         <p>{inputWithUnmint.input.token_id}</p>
-        <h4>Amount</h4>
-        <p>{inputWithUnmint.input.amount?.decimal}</p>
+        {/* SECURITY: UnmintTokens encodes only the token_id + nonce — the
+            payload's amount is not signed, so it is never rendered as a
+            "will sign" number. */}
       </div>
     </div>
   )
 }
 
 const TokenMintWithLock = ({ transactionData }) => {
-  const JSONRepresentation = transactionData.data.txData.JSONRepresentation
+  const JSONRepresentation = normalizedLegs(
+    transactionData.data.txData.JSONRepresentation,
+  )
+  const tokenDecimalsById = useTokenDecimalsIndex()
 
   const outputWithLock = JSONRepresentation.outputs.find(
     (output) => output.type === 'LockThenTransfer',
@@ -828,7 +1022,13 @@ const TokenMintWithLock = ({ transactionData }) => {
         <h4>Destination</h4>
         <p>{outputWithLock.destination}</p>
         <h4>Amount</h4>
-        <p>{outputWithLock.value?.amount?.decimal}</p>
+        <VerifiedAmount
+          container={outputWithLock.value}
+          decimals={resolveAssetDecimals(
+            outputWithLock.value?.token_id,
+            tokenDecimalsById,
+          )}
+        />
         {outputWithLock.value?.token_id && (
           <>
             <h4>Token id</h4>
