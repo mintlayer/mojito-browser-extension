@@ -113,7 +113,8 @@ describe('AccountProvider lock/logout notifications', () => {
   })
 
   it('logout clears the registry and notifies the background', () => {
-    const { captureContextValue, act } = loadAccountProvider()
+    const { captureContextValue, act, loginTimeoutMinutes } =
+      loadAccountProvider()
     const value = captureContextValue()
 
     act(() => {
@@ -122,9 +123,16 @@ describe('AccountProvider lock/logout notifications', () => {
 
     expect(mockRemoveItem).toHaveBeenCalledWith('unlockedAccount')
     expect(mockNotifyWalletLocked).toHaveBeenCalledTimes(1)
-    // logout also stamps the lock mirror: a lost notify is still swept at
-    // the worker's next boot
+    // logout also stamps the lock mirror, ALREADY-EXPIRED (fail-closed, the
+    // same pattern as the stampless-registry branch): a lost notify is
+    // swept at the worker's next boot immediately — never a fresh
+    // 30-minute mirror TTL for revoked-bound grants. The next unlock
+    // re-stamps the mirror fresh before any new grant can exist.
     expect(mockStampWalletLock).toHaveBeenCalledWith(expect.any(Number))
+    const [stampedAt] = mockStampWalletLock.mock.calls[0]
+    expect(stampedAt).toBeLessThanOrEqual(
+      Date.now() - loginTimeoutMinutes * 60 * 1000,
+    )
   })
 
   it('an expired registry locks: clears the registry, stamps the mirror, notifies', () => {
@@ -151,8 +159,9 @@ describe('AccountProvider lock/logout notifications', () => {
     expect(mockNotifyWalletLocked).toHaveBeenCalledTimes(1)
   })
 
-  it('a registry inside the timeout resumes: no notify, mirror cleared', () => {
-    mockGetItem.mockReturnValue(unlockedAccount(Date.now() - 5 * 60 * 1000))
+  it('a registry inside the timeout resumes: no notify, mirror re-stamped with the registry clock', () => {
+    const logoutDate = Date.now() - 5 * 60 * 1000
+    mockGetItem.mockReturnValue(unlockedAccount(logoutDate))
     const { captureContextValue, act } = loadAccountProvider()
     const value = captureContextValue()
 
@@ -164,9 +173,12 @@ describe('AccountProvider lock/logout notifications', () => {
     expect(unlocked).toBe(true)
     expect(mockRemoveItem).not.toHaveBeenCalled()
     expect(mockNotifyWalletLocked).not.toHaveBeenCalled()
-    // resumed before expiry: the pagehide-stamped mirror must not make the
-    // worker sweep grants for an open, unlocked wallet
-    expect(mockStampWalletLock).toHaveBeenCalledWith(null)
+    // resumed before expiry: the mirror must hold the SAME idle clock the
+    // registry does — a pagehide-stamped mirror must not expire while an
+    // open, unlocked wallet is live, and a NUMBER stamp keeps aging if the
+    // session is later hard-killed without a pagehide (never a permanent
+    // null the worker could never sweep across restarts)
+    expect(mockStampWalletLock).toHaveBeenCalledWith(logoutDate)
   })
 
   it('a registry without an idle clock fails closed: locks and notifies', () => {
@@ -194,7 +206,7 @@ describe('AccountProvider lock/logout notifications', () => {
     expect(mockNotifyWalletLocked).toHaveBeenCalledTimes(1)
   })
 
-  it('unlocking stamps the idle clock and clears any stale lock mirror', () => {
+  it('unlocking stamps the idle clock and mirrors it as a number (never null)', () => {
     const { captureContextValue, act } = loadAccountProvider()
     const value = captureContextValue()
 
@@ -204,13 +216,20 @@ describe('AccountProvider lock/logout notifications', () => {
 
     // The idle clock is stamped AT unlock: it is what makes a page killed
     // before any pagehide age out on reopen.
-    expect(mockSetItem).toHaveBeenCalledWith('unlockedAccount', {
-      addresses: ['addr'],
-      id: 'acc-1',
-      name: 'Main',
-      logoutDate: expect.any(Number),
-    })
-    expect(mockStampWalletLock).toHaveBeenCalledWith(null)
+    const [registryKey, stored] = mockSetItem.mock.calls[0]
+    expect(registryKey).toBe('unlockedAccount')
+    expect(stored.logoutDate).toEqual(expect.any(Number))
+    // the mirror carries the SAME fresh clock: a stale expired mirror must
+    // not sweep the new session's grants, and a hard kill (no pagehide)
+    // leaves an AGING stamp the worker sweeps after the lock deadline —
+    // never a permanent null
+    expect(mockStampWalletLock).toHaveBeenCalledWith(stored.logoutDate)
+    // the stamp lands BEFORE the registry write: a page killed between the
+    // two writes must not leave the previous session's EXPIRED mirror
+    // witnessing against the new session's grants at the next worker boot
+    expect(mockStampWalletLock.mock.invocationCallOrder[0]).toBeLessThan(
+      mockSetItem.mock.invocationCallOrder[0],
+    )
     expect(mockNotifyWalletLocked).not.toHaveBeenCalled()
   })
 
@@ -353,10 +372,11 @@ describe('AccountProvider open-page inactivity auto-lock', () => {
     act(() => {
       unlocked = getValue().isAccountUnlocked(false)
     })
-    // resume-inside-timeout branch, unchanged: unlocked, mirror cleared
+    // resume-inside-timeout branch: unlocked, mirror re-stamped with the
+    // registry's accrued idle clock (a NUMBER, never null)
     expect(unlocked).toBe(true)
     expect(mockNotifyWalletLocked).not.toHaveBeenCalled()
-    expect(mockStampWalletLock).toHaveBeenCalledWith(null)
+    expect(mockStampWalletLock).toHaveBeenCalledWith(mountTime - 20 * 60 * 1000)
 
     // 9 more minutes: still inside the window, no lock
     act(() => {
@@ -418,5 +438,38 @@ describe('AccountProvider open-page inactivity auto-lock', () => {
     )
     // the clock never went idle long enough to lock
     expect(mockNotifyWalletLocked).not.toHaveBeenCalled()
+  })
+
+  it('the throttled activity persist refreshes the lock mirror with the same clock', () => {
+    const mountTime = Date.now()
+    seedRegistry(mountTime)
+    const { captureLiveContextValue, act } = loadAccountProvider()
+    captureLiveContextValue()
+
+    // a persist past the throttle window stamps the mirror with the SAME
+    // refreshed clock it wrote to the registry: an active session's mirror
+    // stamp is at most one persist interval stale, so the worker can never
+    // false-sweep a live wallet
+    act(() => {
+      jest.advanceTimersByTime(61 * 1000)
+    })
+    act(() => {
+      window.dispatchEvent(new Event('pointerdown'))
+    })
+    expect(registryStore.get(registryKey).logoutDate).toBe(
+      mountTime + 61 * 1000,
+    )
+    expect(mockStampWalletLock).toHaveBeenLastCalledWith(mountTime + 61 * 1000)
+
+    // a throttle-SUPPRESSED activity persists nothing and must not stamp
+    // the mirror either — the mirror only ever moves with the registry
+    act(() => {
+      jest.advanceTimersByTime(1000)
+    })
+    act(() => {
+      window.dispatchEvent(new Event('keydown'))
+    })
+    expect(mockSetItem).toHaveBeenCalledTimes(1)
+    expect(mockStampWalletLock).toHaveBeenLastCalledWith(mountTime + 61 * 1000)
   })
 })

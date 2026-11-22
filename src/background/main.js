@@ -66,12 +66,15 @@ export const initBackground = () => {
   // adoption already revoked.
   let networkAdopted = false
   // The wallet UI mirrors its lock clock here ('walletLockAt' in
-  // chrome.storage.local — ms epoch): stamped on pagehide/logout, cleared on
-  // unlock/resume. The worker cannot read the wallet pages' localStorage, so
-  // without this mirror the 30-minute auto-lock would fire only when a LIVE
-  // wallet page happens to re-check — with no page open, locked-wallet
-  // grants would keep answering checkConnection/getSession forever, across
-  // worker and browser restarts.
+  // chrome.storage.local — ms epoch): stamped at EVERY registry write —
+  // unlock, throttled activity refresh, pagehide, logout — so a live
+  // session's stamp is at most one persist interval stale and a session
+  // hard-killed without a pagehide still leaves an aging stamp. The worker
+  // cannot read the wallet pages' localStorage, so without this mirror the
+  // 30-minute auto-lock would fire only when a LIVE wallet page happens to
+  // re-check — with no page open, locked-wallet grants would keep
+  // answering checkConnection/getSession forever, across worker and
+  // browser restarts.
   let walletLockAt = null
   // Set once the storage.onChanged listener has adopted a mirror write: a
   // boot snapshot landing afterwards is OLDER (read before the write) and
@@ -407,9 +410,10 @@ export const initBackground = () => {
           revokeGrantsFromOtherNetworks()
         }
       }
-      // Lock-mirror writes land here too: pagehide/logout stamp it,
-      // unlock/resume clears it. The write is ADOPTED (newer than any boot
-      // snapshot in flight), and an already-expired value revokes
+      // Lock-mirror writes land here too: unlock, throttled activity
+      // refresh, pagehide and logout all stamp it (a live session's stamp
+      // stays fresh — never a null). The write is ADOPTED (newer than any
+      // boot snapshot in flight), and an already-expired value revokes
       // immediately; a fresh value just updates the in-memory clock.
       if (changes.walletLockAt) {
         walletLockAt =

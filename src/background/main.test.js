@@ -1806,9 +1806,11 @@ describe('background service worker', () => {
   // re-checked its registry: with no page open, persisted grants kept
   // answering checkConnection/getSession indefinitely — across worker AND
   // browser restarts. The wallet now mirrors its lock clock to
-  // chrome.storage.local ('walletLockAt', stamped on pagehide/logout), and
-  // the worker sweeps grants whenever it observes an expired mirror: at
-  // boot, on the storage write, and on any inbound message.
+  // chrome.storage.local ('walletLockAt', stamped at every registry write:
+  // unlock, throttled activity refresh, pagehide, logout — never null while
+  // a session is live), and the worker sweeps grants whenever it observes
+  // an expired mirror: at boot, on the storage write, and on any inbound
+  // message.
   describe('lock-mirror sweep (auto-lock with no wallet page open)', () => {
     const expiredMirror = () => Date.now() - 31 * 60 * 1000
     const freshMirror = () => Date.now() - 5 * 60 * 1000
@@ -1932,7 +1934,9 @@ describe('background service worker', () => {
         grant,
       )
 
-      // unlock/resume clears the mirror while the boot get is in flight
+      // a legacy/pre-fix writer clears the mirror (the UI now stamps a
+      // NUMBER everywhere, but the worker must still adopt a null
+      // defensively) while the boot get is in flight
       for (const listener of storageChangeListeners) {
         listener({ walletLockAt: { newValue: null } }, 'local')
       }
@@ -2000,6 +2004,50 @@ describe('background service worker', () => {
       expect(session.reply.current.result).toMatchObject({
         network: 'testnet',
       })
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a hard-killed session ages its unlock stamp into a boot sweep (no pagehide ever fired)', () => {
+      // The scenario: unlock stamped the mirror with the fresh
+      // registry clock, then the browser was killed without any pagehide
+      // (crash/OOM/power loss) — hours later the worker restarts with the
+      // grant still persisted and the aged stamp as the only witness.
+      bootWithMirror(Date.now() - 2 * 60 * 60 * 1000, {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      // swept durably before any queued message could be answered
+      expect(storageData.connectedSites).toEqual({})
+      const check = dispatch(
+        { requestId: 'c1', method: 'checkConnection', params: {} },
+        dappSender,
+      )
+      expect(check.reply.current).toEqual({ result: { isConnected: false } })
+    })
+
+    it('a mirror an active session keeps ≤60s stale never false-sweeps (boot + message path)', () => {
+      // What an actively used session leaves behind: every throttled
+      // activity persist re-stamps the mirror, so the worst case staleness
+      // is one persist interval (ACTIVITY_PERSIST_INTERVAL_MS = 60s).
+      bootWithMirror(Date.now() - 55 * 1000, {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      // no sweep at boot — the grant still answers
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+
+      // and no piggyback sweep on the message path either
+      const check = dispatch(
+        { requestId: 'c1', method: 'checkConnection', params: {} },
+        dappSender,
+      )
+      expect(check.reply.current).toEqual({ result: { isConnected: true } })
       expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
     })
 

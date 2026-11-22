@@ -40,6 +40,17 @@ const AccountProvider = ({ value: propValue, children }) => {
   const setId = (id) => id && setAccountID(id)
   const setName = (name) => name && setAccountName(name)
   const unlockAccount = (addresses, id, name) => {
+    const logoutDate = Date.now()
+    // The mirror is stamped BEFORE the registry write: the stamp is
+    // fire-and-forget, so if the page dies between the two writes the
+    // reverse order would leave the previous session's EXPIRED mirror
+    // witnessing against the new session's grants at the next worker boot
+    // (false sweep). A fresh stamp while the registry briefly lags behind
+    // is harmless — the prior session's grants were already revoked by its
+    // lock, and the fresh stamp keeps AGING if this session is hard-killed
+    // with no pagehide (crash, OOM, power loss) instead of leaving a
+    // permanent null the worker could never sweep across restarts.
+    stampWalletLock(logoutDate)
     const account = {
       addresses,
       id,
@@ -47,18 +58,16 @@ const AccountProvider = ({ value: propValue, children }) => {
       // The idle clock starts at unlock: an open page auto-locks after 30
       // minutes WITHOUT activity, and a page killed before any pagehide
       // still ages out — here and on reopen.
-      logoutDate: Date.now(),
+      logoutDate,
     }
     LocalStorageService.setItem(accountRegistryName, account)
+    return logoutDate
   }
 
   const unlockAccountAndSaveParams = (addresses, id, name) => {
-    unlockAccount(addresses, id, name)
-    // Live session: any stale lock mirror must not make the worker sweep
-    // grants while the wallet is unlocked.
-    stampWalletLock(null)
+    const logoutDate = unlockAccount(addresses, id, name)
     // A fresh unlock starts a full inactivity window.
-    lastPersistedActivityRef.current = Date.now()
+    lastPersistedActivityRef.current = logoutDate
     setAddresses(addresses)
     setName(name)
     setId(id)
@@ -67,9 +76,10 @@ const AccountProvider = ({ value: propValue, children }) => {
   // Revokes the session: clears the registry, stamps the lock mirror with
   // the idle clock and notifies the background (which revokes every dApp
   // connect grant). The mirror stamp lands BEFORE the notify: it is the
-  // durable witness, so a lost message still gets swept — immediately when
-  // the stamped clock is already expired (expiry paths), at the next boot
-  // otherwise (logout, whose stamp is necessarily fresh).
+  // durable witness, so a lost message still gets swept at the worker's
+  // next boot — every caller stamps an ALREADY-AGED clock (expiry paths,
+  // logout, the stampless-registry branch), so the sweep lands immediately
+  // instead of buying a fresh 30-minute mirror TTL.
   const lockWallet = (lockedAt) => {
     LocalStorageService.removeItem(accountRegistryName)
     stampWalletLock(lockedAt)
@@ -103,10 +113,12 @@ const AccountProvider = ({ value: propValue, children }) => {
     if (!isUnlocked) {
       lockWallet(logoutDate)
     } else {
-      // Resumed before the timeout: the session is live again — clear the
-      // pagehide-stamped mirror so the worker never sweeps grants for an
-      // open, unlocked wallet.
-      stampWalletLock(null)
+      // Resumed before the timeout: the session is live again — re-mirror
+      // the registry clock so the worker holds the same idle deadline. A
+      // pagehide-stamped mirror must not expire while an open, unlocked
+      // wallet is live, and a NUMBER stamp (never null) keeps aging if
+      // this session is later hard-killed without a pagehide.
+      stampWalletLock(logoutDate)
       if (updateState) {
         setAddresses(account.addresses)
         setId(account.id)
@@ -138,9 +150,14 @@ const AccountProvider = ({ value: propValue, children }) => {
 
   const logout = () => {
     // There is no prior idle clock to preserve (the registry is discarded),
-    // so the witness stamp is necessarily fresh — unlike the expiry paths,
-    // which stamp the aged clock.
-    lockWallet(Date.now())
+    // so stamp an ALREADY-EXPIRED one — the same fail-closed pattern as
+    // checkAccountLockState's stampless-registry branch: a lost
+    // walletLocked notify is then swept at the worker's next boot
+    // immediately, instead of surviving up to a fresh 30-minute mirror TTL
+    // while revoked-bound grants keep answering. The next unlock re-stamps
+    // the mirror fresh (before the registry write), so no live session is
+    // ever swept by it.
+    lockWallet(Date.now() - LOGIN_TIMEOUT_MINUTES * 60 * 1000)
   }
 
   // User activity refreshes the SHARED persisted clock (the registry write
@@ -166,6 +183,12 @@ const AccountProvider = ({ value: propValue, children }) => {
       ...fresh,
       logoutDate: now,
     })
+    // The throttled write is also a mirror refresh: an active session's
+    // mirror stamp stays at most one persist interval stale, so the worker
+    // can never sweep grants for a live wallet — while a session killed
+    // after this point still leaves an aging stamp the worker sweeps
+    // across restarts.
+    stampWalletLock(now)
     lastPersistedActivityRef.current = now
   }
 

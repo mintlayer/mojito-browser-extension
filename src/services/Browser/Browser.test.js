@@ -330,13 +330,15 @@ describe('Browser', () => {
       expect(payload).toEqual({ walletLockAt: 1700000000000 })
       expect(callback).toEqual(expect.any(Function))
 
-      // the fire-and-forget reply callback must tolerate a lastError
-      // response (nothing sensible to do on a failed stamp)
+      // a failed set is retried ONCE with the same value (idempotent); the
+      // failure path must tolerate the lastError signal without throwing
       chromeMock.runtime.lastError = { message: 'Storage unavailable' }
       expect(() => callback()).not.toThrow()
+      expect(set).toHaveBeenCalledTimes(2)
+      expect(set.mock.calls[1][0]).toEqual({ walletLockAt: 1700000000000 })
     })
 
-    it('clears the mirror with null when the session is live', () => {
+    it('writes null for legacy/pre-fix callers (worker treats it as no clock observed)', () => {
       const set = jest.fn()
       global.chrome = {
         runtime: { id: 'test-id', lastError: null },
@@ -375,6 +377,45 @@ describe('Browser', () => {
 
       expect(() => stampWalletLock(123)).not.toThrow()
       expect(global.chrome.storage.local.set).toHaveBeenCalledTimes(1)
+    })
+
+    it('gives up after one retry when every set reports a lastError', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', lastError: null },
+        storage: { local: { set: jest.fn() } },
+      }
+      chromeMock.storage.local.set.mockImplementation((_payload, callback) => {
+        chromeMock.runtime.lastError = { message: 'Storage unavailable' }
+        callback()
+      })
+      global.chrome = chromeMock
+
+      const { stampWalletLock } = loadBrowserModule()
+
+      stampWalletLock(1700000000000)
+
+      // exactly one rewrite: a persistently failing storage must not loop
+      expect(chromeMock.storage.local.set).toHaveBeenCalledTimes(2)
+      expect(chromeMock.storage.local.set.mock.calls[1][0]).toEqual({
+        walletLockAt: 1700000000000,
+      })
+    })
+
+    it('does not retry when the set succeeds', () => {
+      const chromeMock = {
+        runtime: { id: 'test-id', lastError: null },
+        storage: { local: { set: jest.fn() } },
+      }
+      chromeMock.storage.local.set.mockImplementation((_payload, callback) => {
+        callback()
+      })
+      global.chrome = chromeMock
+
+      const { stampWalletLock } = loadBrowserModule()
+
+      stampWalletLock(1700000000000)
+
+      expect(chromeMock.storage.local.set).toHaveBeenCalledTimes(1)
     })
   })
 })

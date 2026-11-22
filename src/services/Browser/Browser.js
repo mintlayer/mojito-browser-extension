@@ -68,23 +68,37 @@ export const sendPopupResponse = ({
 // Mirrors the wallet's lock clock into chrome.storage.local ('walletLockAt'):
 // the service worker cannot read the wallet pages' localStorage, so this is
 // the only way it can enforce the 30-minute auto-lock when no wallet page is
-// open to observe the expiry. `value` is the lock timestamp (stamped on
-// pagehide and logout) or null (live session — any stale mirror must not
-// sweep grants while the wallet is unlocked).
+// open to observe the expiry. `value` is the lock timestamp (stamped at
+// every registry write: unlock, throttled activity refresh, pagehide and
+// logout) or null (legacy/pre-fix writers only — the worker treats it as
+// 'no clock observed', i.e. never expired).
 export const stampWalletLock = (value) => {
   if (!storage?.local) return
-  try {
-    storage.local.set(
-      { walletLockAt: typeof value === 'number' ? value : null },
-      () => {
-        // Fire-and-forget: nothing sensible to do on a failed stamp — the
-        // next pagehide/logout/unlock re-stamps.
-        void runtime?.lastError
-      },
-    )
-  } catch {
-    /* storage unavailable — the next lock state change re-stamps */
+  // One bounded rewrite on any failure signal (runtime.lastError from the
+  // set callback): a lost stamp is NOT self-healing at unlock — until the
+  // next pagehide/logout the mirror would keep the previous session's
+  // already-expired clock, which the worker sweeps against the new
+  // session's grants at its next boot. The rewrite is idempotent (same
+  // value); a persistently failing storage just stays at one retry.
+  let rewrote = false
+  const write = () => {
+    try {
+      storage.local.set(
+        { walletLockAt: typeof value === 'number' ? value : null },
+        () => {
+          // reading lastError here acknowledges it for Chrome
+          const failed = runtime?.lastError
+          if (failed && !rewrote) {
+            rewrote = true
+            write()
+          }
+        },
+      )
+    } catch {
+      /* storage unavailable — the next lock state change re-stamps */
+    }
   }
+  write()
 }
 
 // Tells the background the wallet was locked or logged out — via the manual
