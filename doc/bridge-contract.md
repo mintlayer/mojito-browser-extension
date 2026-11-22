@@ -90,7 +90,7 @@ trigger that).
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `USER_REJECTED`       | user denied the approval                                                                                                |
 | `REQUEST_CANCELLED`   | approval window closed without a decision                                                                               |
-| `REQUEST_IN_PROGRESS` | an approval window is already open                                                                                      |
+| `REQUEST_IN_PROGRESS` | an approval is already pending for this window; complete or reject it first                                             |
 | `NOT_CONNECTED`       | sign/challenge without a prior connect grant                                                                            |
 | `WRONG_NETWORK`       | session granted on a different network than the wallet's active one                                                     |
 | `UNSUPPORTED_METHOD`  | method not implemented by the wallet                                                                                    |

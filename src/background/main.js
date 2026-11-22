@@ -620,10 +620,25 @@ export const initBackground = () => {
       return openPopupApproval(slot, request, sendResponse)
     }
 
+    // One pending approval per window: connect and signing run in SEPARATE
+    // slots, but both persist panel requests under `pendingRequest:<windowId>`.
+    // Without this cross-slot check a request from another tab of the same
+    // window would overwrite the pending approval's record — the panel would
+    // show only the new request, the first dApp's promise would hang until
+    // its timeout and its slot would stay busy until the worker restarts.
+    const windowBusy = [connectSlot, popupSlot].some(
+      (other) =>
+        other !== slot &&
+        other.panelMode &&
+        other.windowId === sender.tab.windowId &&
+        other.requestId != null,
+    )
+
     const busy =
       slot.opening ||
       (typeof slot.id === 'number' && !slot.panelMode) ||
-      (slot.panelMode && slot.requestId != null)
+      (slot.panelMode && slot.requestId != null) ||
+      windowBusy
 
     if (busy) {
       // surface the pending request again

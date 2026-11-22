@@ -1026,6 +1026,318 @@ describe('background service worker', () => {
         }
       })
     })
+
+    // Regression for the same-window key clobber: panel requests are keyed
+    // by the dApp tab's WINDOW id and connect vs signing run in SEPARATE
+    // slots — two requests from two tabs of one window used to both pass
+    // their own slot's busy guard, and the second storage write under
+    // `pendingRequest:<windowId>` overwrote the first approval's record.
+    // The first dApp's promise hung until its timeout and its slot stayed
+    // busy until the worker restarts. One pending approval per window now:
+    // the second request is refused with the same structured code the
+    // same-slot busy guard already answers, the pending record survives,
+    // and the window frees up as soon as the first approval is answered.
+    describe('one pending approval per window (cross-slot clobber)', () => {
+      const grantedSender = {
+        ...tabDappSender,
+        origin: 'https://shop.example',
+        url: 'https://shop.example/page',
+      }
+      const otherTabSameWindow = {
+        id: 'other-site',
+        origin: 'https://other.example',
+        url: 'https://other.example/page',
+        tab: { id: 6, windowId: 3 },
+      }
+
+      const grantShopOrigin = async () => {
+        dispatch(
+          { requestId: 'pre', method: 'connect', params: {} },
+          grantedSender,
+        )
+        await flushMicrotasks()
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: internalIdFor(3),
+            origin: 'https://shop.example',
+            windowId: 3,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(
+          storageData['connectedSites']['https://shop.example'],
+        ).toBeTruthy()
+      }
+
+      // Grants the OTHER origin through its own approval flow in a DIFFERENT
+      // window (9) — a mid-test storage write would not reach the worker's
+      // in-memory map, and window 3 must stay free for the tests below.
+      const grantOtherOrigin = async () => {
+        dispatch(
+          { requestId: 'pre2', method: 'connect', params: {} },
+          { ...otherTabSameWindow, tab: { id: 7, windowId: 9 } },
+        )
+        await flushMicrotasks()
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: internalIdFor(9),
+            origin: 'https://other.example',
+            windowId: 9,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(
+          storageData['connectedSites']['https://other.example'],
+        ).toBeTruthy()
+      }
+
+      it('refuses a same-window second approval instead of clobbering the pending record, and frees the window when it answers', async () => {
+        await grantShopOrigin()
+
+        // the granted origin opens a SIGNING approval in window 3 (panel)
+        const sign = dispatch(
+          {
+            requestId: 's1',
+            method: 'signTransaction',
+            params: { txData: { JSONRepresentation: {} } },
+          },
+          grantedSender,
+        )
+        await flushMicrotasks()
+        expect(sign.keptOpen).toBe(true)
+        const signId = storageData['pendingRequest:3']?.requestId
+        expect(signId).toBeTruthy()
+
+        // another tab of the SAME window asks for a connect approval while
+        // the signing approval is pending
+        const connect = dispatch(
+          { requestId: 'c1', method: 'connect', params: {} },
+          otherTabSameWindow,
+        )
+
+        // refused immediately with the same structured code the same-slot
+        // busy guard answers — the dApp is never left hanging
+        expect(connect.reply.current).toMatchObject({
+          error: { code: 'REQUEST_IN_PROGRESS' },
+        })
+        expect(connect.keptOpen).toBe(false)
+        // no approval window was opened for the refused request
+        expect(createdWindows).toHaveLength(0)
+        // the signing record was NOT overwritten
+        expect(storageData['pendingRequest:3']?.requestId).toBe(signId)
+
+        // the pending request resolves CORRECTLY: the answer lands on the
+        // signing channel it was opened for
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'signTransaction_approve',
+            requestId: signId,
+            origin: 'https://shop.example',
+            windowId: 3,
+            result: { signedTxHex: 'deadbeef' },
+          },
+          extensionSender,
+        )
+        expect(sign.reply.current).toMatchObject({
+          result: { signedTxHex: 'deadbeef' },
+        })
+        expect(storageData['pendingRequest:3']).toBeUndefined()
+
+        // the window is free again: the refused connect can now proceed
+        // (no slot wedge) and opens its own panel approval
+        const retry = dispatch(
+          { requestId: 'c2', method: 'connect', params: {} },
+          otherTabSameWindow,
+        )
+        expect(retry.keptOpen).toBe(true)
+        await flushMicrotasks()
+        expect(storageData['pendingRequest:3']).toMatchObject({
+          action: 'connect',
+          origin: 'https://other.example',
+          requestId: expect.any(String),
+        })
+        const retryId = storageData['pendingRequest:3']?.requestId
+
+        // answer the retried connect too: an unanswered panel approval would
+        // leave its 8s popup-fallback timer live under real timers, and the
+        // stale closure could mutate later fixtures
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: retryId,
+            origin: 'https://other.example',
+            windowId: 3,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(retry.reply.current.result).toEqual(sessionData)
+        expect(storageData['pendingRequest:3']).toBeUndefined()
+      })
+
+      it('both a connect and a sign request for the same window eventually resolve', async () => {
+        await grantShopOrigin()
+
+        // signing approval pending in window 3
+        const sign = dispatch(
+          {
+            requestId: 's1',
+            method: 'signTransaction',
+            params: { txData: { JSONRepresentation: {} } },
+          },
+          grantedSender,
+        )
+        await flushMicrotasks()
+        const signId = storageData['pendingRequest:3']?.requestId
+
+        // the same window's connect request is refused while the signing
+        // approval is pending (its promise settles — with the busy error —
+        // instead of hanging)
+        const connect = dispatch(
+          { requestId: 'c1', method: 'connect', params: {} },
+          otherTabSameWindow,
+        )
+        expect(connect.reply.current).toMatchObject({
+          error: { code: 'REQUEST_IN_PROGRESS' },
+        })
+        expect(storageData['pendingRequest:3']?.requestId).toBe(signId)
+
+        // the signing approval answers first…
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'signTransaction_approve',
+            requestId: signId,
+            origin: 'https://shop.example',
+            windowId: 3,
+            result: { signedTxHex: 'feedface' },
+          },
+          extensionSender,
+        )
+        expect(sign.reply.current).toMatchObject({
+          result: { signedTxHex: 'feedface' },
+        })
+
+        // …and the connect request, retried once the window is free,
+        // resolves with its own approval and grant
+        const retry = dispatch(
+          { requestId: 'c2', method: 'connect', params: {} },
+          otherTabSameWindow,
+        )
+        expect(retry.keptOpen).toBe(true)
+        await flushMicrotasks()
+        const retryId = storageData['pendingRequest:3']?.requestId
+        expect(retryId).toBeTruthy()
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: retryId,
+            origin: 'https://other.example',
+            windowId: 3,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(retry.reply.current.result).toEqual(sessionData)
+        expect(
+          storageData['connectedSites']['https://other.example'],
+        ).toBeTruthy()
+      })
+
+      // The predicate is symmetric: the same-window refusal must also hold
+      // when the CONNECT slot owns the window and a signing request arrives.
+      it('refuses a signTransaction while a connect approval is pending in the same window', async () => {
+        await grantOtherOrigin()
+
+        // shop.example has NO grant yet: its connect reaches the approval
+        // path and opens a panel approval in window 3
+        const connect = dispatch(
+          { requestId: 'c1', method: 'connect', params: {} },
+          grantedSender,
+        )
+        await flushMicrotasks()
+        expect(connect.keptOpen).toBe(true)
+        const connectId = storageData['pendingRequest:3']?.requestId
+        expect(connectId).toBeTruthy()
+
+        // another tab of the SAME window (its origin IS granted) asks for a
+        // signing approval while the connect approval is pending
+        const sign = dispatch(
+          {
+            requestId: 's1',
+            method: 'signTransaction',
+            params: { txData: { JSONRepresentation: {} } },
+          },
+          otherTabSameWindow,
+        )
+
+        // refused with the same structured code; the connect record was NOT
+        // overwritten and no approval window was opened
+        expect(sign.reply.current).toMatchObject({
+          error: { code: 'REQUEST_IN_PROGRESS' },
+        })
+        expect(sign.keptOpen).toBe(false)
+        expect(createdWindows).toHaveLength(0)
+        expect(storageData['pendingRequest:3']?.requestId).toBe(connectId)
+
+        // the pending connect resolves CORRECTLY and frees the window
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: connectId,
+            origin: 'https://shop.example',
+            windowId: 3,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(connect.reply.current.result).toEqual(sessionData)
+        expect(storageData['pendingRequest:3']).toBeUndefined()
+
+        // the window is free again: the refused sign can now proceed
+        // (no slot wedge)
+        const retry = dispatch(
+          {
+            requestId: 's2',
+            method: 'signTransaction',
+            params: { txData: { JSONRepresentation: {} } },
+          },
+          otherTabSameWindow,
+        )
+        expect(retry.keptOpen).toBe(true)
+        await flushMicrotasks()
+        const retryId = storageData['pendingRequest:3']?.requestId
+        expect(retryId).toBeTruthy()
+
+        // answer the retried sign too so no popup-fallback timer outlives
+        // the test under real timers
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'signTransaction_approve',
+            requestId: retryId,
+            origin: 'https://other.example',
+            windowId: 3,
+            result: { signedTxHex: 'cafebabe' },
+          },
+          extensionSender,
+        )
+        expect(retry.reply.current).toMatchObject({
+          result: { signedTxHex: 'cafebabe' },
+        })
+        expect(storageData['pendingRequest:3']).toBeUndefined()
+      })
+    })
   })
 
   describe('revocation propagation (disconnectSite)', () => {
