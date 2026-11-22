@@ -1,13 +1,26 @@
 import * as bitcoin from 'bitcoinjs-lib'
 import { BIP32Factory } from 'bip32'
+import { ECPairFactory, networks as ecpairNetworks } from 'ecpair'
 import * as ecc from '@bitcoinerlab/secp256k1'
 import {
   findWalletKeyForRedeemScript,
   buildHtlcClaimTx,
+  buildHtlcRefundTx,
   HTLC_CLAIM_FEE_SATOSHIS,
+  HTLC_REFUND_FEE_SATOSHIS,
+  toSatoshiBigInt,
 } from './BTCTransaction'
 
 const bip32 = BIP32Factory(ecc)
+
+// Deterministic testnet signer bound into the psbt-construction fixtures
+// below (never holds funds; rng-seeded so the WIF is stable).
+const ECPair = ECPairFactory(ecc)
+const claimSigner = ECPair.makeRandom({
+  network: ecpairNetworks.testnet,
+  rng: (size) => new Uint8Array(size).fill(7),
+})
+const claimSignerWif = claimSigner.toWIF()
 
 // Deterministic test HD wallet (never holds funds).
 const root = bip32.fromSeed(new Uint8Array(64).fill(1))
@@ -153,10 +166,22 @@ describe('buildHtlcClaimTx — request validation', () => {
 
   it('rejects a non-integer or non-positive utxo value', async () => {
     await expect(
-      buildHtlcClaimTx({ ...base, utxo: { ...base.utxo, value: '2000' } }),
+      buildHtlcClaimTx({ ...base, utxo: { ...base.utxo, value: '2.5' } }),
     ).rejects.toThrow('Invalid UTXO: value must be a positive integer')
     await expect(
       buildHtlcClaimTx({ ...base, utxo: { ...base.utxo, value: 0 } }),
+    ).rejects.toThrow('Invalid UTXO: value must be a positive integer')
+    // Numbers >= 2^53 are rounded before this code runs (lossy JSON), so
+    // they must be rejected instead of signed with a wrong amount.
+    await expect(
+      buildHtlcClaimTx({ ...base, utxo: { ...base.utxo, value: 2 ** 53 } }),
+    ).rejects.toThrow('Invalid UTXO: value must be a positive integer')
+    // Above consensus MAX_MONEY no utxo can exist on-chain.
+    await expect(
+      buildHtlcClaimTx({
+        ...base,
+        utxo: { ...base.utxo, value: '2100000000000001' },
+      }),
     ).rejects.toThrow('Invalid UTXO: value must be a positive integer')
   })
 
@@ -189,4 +214,164 @@ describe('buildHtlcClaimTx — request validation', () => {
       }),
     ).rejects.toThrow('UTXO amount too low to cover fee')
   })
+})
+
+describe('buildHtlcClaimTx — psbt construction (BigInt witness utxos)', () => {
+  const claimScriptHex = compileHtlc(claimSigner.publicKey, foreignPubkey, 100)
+  const utxo = { txid: 'f'.repeat(64), vout: 0, value: 2000 }
+  const base = {
+    networkType: 'testnet',
+    utxo,
+    toAddress: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
+    wif: claimSignerWif,
+    redeemScriptHex: claimScriptHex,
+    secretHex: 'a'.repeat(64),
+  }
+
+  it('builds a signed claim transaction from a Number utxo value', async () => {
+    const hex = await buildHtlcClaimTx(base)
+    const tx = bitcoin.Transaction.fromHex(hex)
+
+    expect(tx.ins).toHaveLength(1)
+    expect(Buffer.from(tx.ins[0].hash).reverse().toString('hex')).toBe(
+      utxo.txid,
+    )
+    expect(tx.ins[0].index).toBe(0)
+
+    // claim output = input value − fixed claim fee
+    expect(tx.outs).toHaveLength(1)
+    expect(tx.outs[0].value).toBe(
+      BigInt(utxo.value) - BigInt(HTLC_CLAIM_FEE_SATOSHIS),
+    )
+
+    // OP_IF claim witness: [signature, secret, OP_1, witness script]
+    const witness = tx.ins[0].witness
+    expect(witness).toHaveLength(4)
+    expect(Buffer.from(witness[1]).toString('hex')).toBe(base.secretHex)
+    expect(Array.from(witness[2])).toEqual([0x01])
+    expect(Buffer.from(witness[3]).toString('hex')).toBe(claimScriptHex)
+  })
+
+  it('keeps satoshi exactness at the MAX_MONEY boundary (exact string source)', async () => {
+    // Consensus MAX_MONEY — the largest utxo value that can exist on-chain;
+    // it must be spent as the exact BigInt, not a float approximation.
+    const maxMoneySat = '2100000000000000'
+    const hex = await buildHtlcClaimTx({
+      ...base,
+      utxo: { ...utxo, value: maxMoneySat },
+    })
+    const tx = bitcoin.Transaction.fromHex(hex)
+
+    expect(tx.outs[0].value).toBe(
+      BigInt(maxMoneySat) - BigInt(HTLC_CLAIM_FEE_SATOSHIS),
+    )
+    expect(tx.outs[0].value).toBe(
+      2100000000000000n - BigInt(HTLC_CLAIM_FEE_SATOSHIS),
+    )
+  })
+
+  it('accepts a BigInt utxo value', async () => {
+    const hex = await buildHtlcClaimTx({
+      ...base,
+      utxo: { ...utxo, value: 2000n },
+    })
+    const tx = bitcoin.Transaction.fromHex(hex)
+    expect(tx.outs[0].value).toBe(2000n - BigInt(HTLC_CLAIM_FEE_SATOSHIS))
+  })
+})
+
+describe('buildHtlcRefundTx — psbt construction (BigInt witness utxos)', () => {
+  // refund binds the sender (timelock) branch of the script
+  const refundScriptHex = compileHtlc(foreignPubkey, claimSigner.publicKey, 100)
+  const utxo = { txid: 'e'.repeat(64), vout: 0, value: 2500 }
+  const base = {
+    networkType: 'testnet',
+    utxo,
+    toAddress: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
+    wif: claimSignerWif,
+    redeemScriptHex: refundScriptHex,
+  }
+
+  it('builds a version-2 refund with the CSV sequence and fixed fee', async () => {
+    const hex = await buildHtlcRefundTx(base)
+    const tx = bitcoin.Transaction.fromHex(hex)
+
+    expect(tx.version).toBe(2)
+    expect(tx.ins).toHaveLength(1)
+    expect(tx.ins[0].sequence).toBe(100)
+
+    // refund output = input value − fixed refund fee
+    expect(tx.outs).toHaveLength(1)
+    expect(tx.outs[0].value).toBe(
+      BigInt(utxo.value) - BigInt(HTLC_REFUND_FEE_SATOSHIS),
+    )
+
+    // refund witness: [signature, empty (OP_FALSE), witness script]
+    const witness = tx.ins[0].witness
+    expect(witness).toHaveLength(3)
+    expect(witness[1]).toHaveLength(0)
+    expect(Buffer.from(witness[2]).toString('hex')).toBe(refundScriptHex)
+  })
+
+  it('keeps satoshi exactness at the MAX_MONEY boundary (exact string source)', async () => {
+    const maxMoneySat = '2100000000000000'
+    const hex = await buildHtlcRefundTx({
+      ...base,
+      utxo: { ...utxo, value: maxMoneySat },
+    })
+    const tx = bitcoin.Transaction.fromHex(hex)
+    expect(tx.outs[0].value).toBe(
+      BigInt(maxMoneySat) - BigInt(HTLC_REFUND_FEE_SATOSHIS),
+    )
+  })
+
+  it('rejects an odd-length redeem script (hex decode would truncate)', async () => {
+    await expect(
+      buildHtlcRefundTx({
+        ...base,
+        redeemScriptHex: refundScriptHex.slice(0, -1),
+      }),
+    ).rejects.toThrow('Invalid redeemScriptHex')
+  })
+
+  it('rejects a missing, non-integer or fee-devouring utxo value', async () => {
+    await expect(
+      buildHtlcRefundTx({ ...base, utxo: { txid: utxo.txid, vout: 0 } }),
+    ).rejects.toThrow('Invalid UTXO: value must be a positive integer')
+    await expect(
+      buildHtlcRefundTx({ ...base, utxo: { ...utxo, value: '2.5' } }),
+    ).rejects.toThrow('Invalid UTXO: value must be a positive integer')
+    await expect(
+      buildHtlcRefundTx({
+        ...base,
+        utxo: { ...utxo, value: HTLC_REFUND_FEE_SATOSHIS },
+      }),
+    ).rejects.toThrow('UTXO amount too low to cover fee')
+  })
+})
+
+describe('toSatoshiBigInt — the dApp value trust boundary', () => {
+  it.each([
+    ['0x10', 'hex literal'],
+    ['1e3', 'exponent notation'],
+    [' 5', 'leading whitespace'],
+    ['+1', 'explicit sign'],
+    ['-1', 'negative'],
+    ['2100000000000001', 'one sat above MAX_MONEY'],
+    ['9223372036854775808', 'int64 overflow'],
+  ])('rejects %p (%s)', (raw) => {
+    expect(() => toSatoshiBigInt(raw)).toThrow(
+      'Invalid UTXO: value must be a positive integer',
+    )
+  })
+
+  it.each([
+    ['007', 7n],
+    ['2100000000000000', 2100000000000000n],
+  ])(
+    'accepts %p exactly as %p (leading digits, MAX_MONEY bound)',
+    (raw, expected) => {
+      expect(toSatoshiBigInt(raw)).toBe(expected)
+    },
+  )
 })

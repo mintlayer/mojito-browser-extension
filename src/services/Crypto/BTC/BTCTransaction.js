@@ -51,6 +51,39 @@ class FeeTooHighError extends Error {
 // from the HTLC output itself, so the fee comes off the claimed value.
 const HTLC_CLAIM_FEE_SATOSHIS = 500
 
+// Fixed miner fee for HTLC refund transactions (satoshis). The refund pays
+// from the HTLC output after the timelock, so the fee comes off the refund.
+const HTLC_REFUND_FEE_SATOSHIS = 1000
+
+// Bitcoin consensus MAX_MONEY (21M BTC): no larger utxo value can exist
+// on-chain, so out-of-range values are malformed input, not signable amounts.
+const BTC_MAX_MONEY_SATOSHIS = 2100000000000000n
+
+// bitcoinjs v7 (bip174) mandates BigInt PSBT input/output values. HTLC utxo
+// values arrive as JSON over the bridge, so they are exact only as digit
+// strings or BigInts — a Number >= 2^53 is rounded before this code runs,
+// which is why lossy Numbers are rejected rather than signed with a wrong
+// amount. The MAX_MONEY bound catches otherwise-unbounded strings here
+// instead of letting them fail cryptically later.
+const toSatoshiBigInt = (value) => {
+  let satoshis = null
+  if (typeof value === 'bigint') {
+    satoshis = value
+  } else if (typeof value === 'number' && Number.isSafeInteger(value)) {
+    satoshis = BigInt(value)
+  } else if (typeof value === 'string' && /^[0-9]+$/.test(value)) {
+    satoshis = BigInt(value)
+  }
+  if (
+    satoshis === null ||
+    satoshis <= 0n ||
+    satoshis > BTC_MAX_MONEY_SATOSHIS
+  ) {
+    throw new Error('Invalid UTXO: value must be a positive integer')
+  }
+  return satoshis
+}
+
 // Fee estimation only needs txId/vout/value (plus the witness script for
 // nativeSegwit); the full raw preimage is only fetched in getFormattedUtxos
 // for signing, so estimation does not do one network round-trip per UTXO.
@@ -388,9 +421,7 @@ const buildHtlcClaimTx = async (params) => {
   if (!utxo?.txid || !Number.isInteger(utxo.vout)) {
     throw new Error('Invalid UTXO: txid or vout missing/invalid')
   }
-  if (!Number.isSafeInteger(utxo.value) || utxo.value <= 0) {
-    throw new Error('Invalid UTXO: value must be a positive integer')
-  }
+  const utxoValueSat = toSatoshiBigInt(utxo.value)
   if (!redeemScriptHex || !/^[0-9a-fA-F]+$/.test(redeemScriptHex)) {
     throw new Error('Invalid redeemScriptHex: must be a valid hex string')
   }
@@ -406,7 +437,7 @@ const buildHtlcClaimTx = async (params) => {
   if (!secretHex || !/^[0-9a-fA-F]{64}$/.test(secretHex)) {
     throw new Error('Invalid secret: must be a 64-character hex string')
   }
-  if (utxo.value <= HTLC_CLAIM_FEE_SATOSHIS) {
+  if (utxoValueSat <= BigInt(HTLC_CLAIM_FEE_SATOSHIS)) {
     throw new Error('UTXO amount too low to cover fee')
   }
 
@@ -423,14 +454,14 @@ const buildHtlcClaimTx = async (params) => {
         redeem: { output: redeemScript },
         network,
       }).output,
-      value: utxo.value,
+      value: utxoValueSat,
     },
     witnessScript: redeemScript,
   })
 
   psbt.addOutput({
     address: toAddress,
-    value: utxo.value - HTLC_CLAIM_FEE_SATOSHIS, // fee
+    value: utxoValueSat - BigInt(HTLC_CLAIM_FEE_SATOSHIS), // fee
   })
 
   const ECPair = ECPairFactory(ecc)
@@ -465,14 +496,20 @@ const buildHtlcRefundTx = async (params) => {
   if (!utxo?.txid || !Number.isInteger(utxo.vout)) {
     throw new Error('Invalid UTXO: txid or vout missing/invalid')
   }
+  const utxoValueSat = toSatoshiBigInt(utxo.value)
+
   if (!redeemScriptHex || !/^[0-9a-fA-F]+$/.test(redeemScriptHex)) {
+    throw new Error('Invalid redeemScriptHex: must be a valid hex string')
+  }
+  // Same parity contract as buildHtlcClaimTx: the Buffer polyfill's hex
+  // decode silently truncates odd-length strings, so a truncated redeem
+  // script would otherwise reach the PSBT and only fail at broadcast.
+  if (redeemScriptHex.length % 2 !== 0) {
     throw new Error('Invalid redeemScriptHex: must be a valid hex string')
   }
   if (!toAddress || !wif) {
     throw new Error('toAddress or wif missing')
   }
-
-  const amountInSatoshis = utxo.value
 
   const network = bitcoin.networks[networkType]
 
@@ -515,19 +552,19 @@ const buildHtlcRefundTx = async (params) => {
     sequence: lockBlockCount,
     witnessUtxo: {
       script: p2wshOutput,
-      value: amountInSatoshis,
+      value: utxoValueSat,
     },
     witnessScript: redeemScript,
   })
 
   // Add output
-  const fee = '1000' // Fixed fee in satoshis
-  if (amountInSatoshis <= fee) {
+  const refundFee = BigInt(HTLC_REFUND_FEE_SATOSHIS) // Fixed fee in satoshis
+  if (utxoValueSat <= refundFee) {
     throw new Error('UTXO amount too low to cover fee')
   }
   psbt.addOutput({
     address: toAddress,
-    value: amountInSatoshis - fee,
+    value: utxoValueSat - refundFee,
   })
 
   // Set version for CHECKSEQUENCEVERIFY
@@ -603,4 +640,6 @@ export {
   parseLockBlockCount,
   findWalletKeyForRedeemScript,
   HTLC_CLAIM_FEE_SATOSHIS,
+  HTLC_REFUND_FEE_SATOSHIS,
+  toSatoshiBigInt,
 }
