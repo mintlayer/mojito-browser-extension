@@ -18,6 +18,10 @@ const CryptoFiatField = ({
   setAmountValidity = () => {},
   totalFeeInCrypto,
   transactionMode = AppInfo.ML_TRANSACTION_MODES.TRANSACTION,
+  // Token sends pay the network fee in ML coins while the amount and the
+  // balance are in token units: subtracting the fee from the token balance
+  // mixes units, so the field must not reserve fee room for them.
+  feeCurrencyDiffers = false,
   validate,
   decimals,
   extraStyleClasses = [],
@@ -29,9 +33,12 @@ const CryptoFiatField = ({
   const parsedValueInToken = Number.isFinite(parsedValueInTokenRaw)
     ? parsedValueInTokenRaw
     : 0
+  const feeReservedFromBalance = !isDelegationWithdraw && !feeCurrencyDiffers
   const rawMaxValue = isDelegationWithdraw
     ? parsedValueInToken
-    : parsedValueInToken - totalFeeInCrypto
+    : feeReservedFromBalance
+      ? parsedValueInToken - totalFeeInCrypto
+      : parsedValueInToken
   const finalMaxValue = Number.isFinite(rawMaxValue) ? rawMaxValue : 0
   const [maxCryptoValue, setMaxCryptoValue] = useState(finalMaxValue)
   const { coinType } = useParams()
@@ -114,7 +121,9 @@ const CryptoFiatField = ({
 
   const safeSpend = (value) => {
     if (!value || value <= 0) return '0.00'
-    if (isDelegationWithdraw) {
+    // Withdrawals and token sends show the full balance: no fee belongs to
+    // this unit (delegation fees are quoted separately; token fees are ML).
+    if (isDelegationWithdraw || feeCurrencyDiffers) {
       return value
     }
     const fee = Number.isFinite(totalFeeInCrypto) ? totalFeeInCrypto : 0

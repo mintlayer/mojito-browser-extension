@@ -28,7 +28,12 @@ const SendMlTransactionPage = () => {
   )
 
   const datahook = useMlWalletInfo
-  const { client, utxos } = useContext(MintlayerContext)
+  const {
+    client,
+    utxos,
+    balance: mlCoinBalance,
+    fetchingBalances,
+  } = useContext(MintlayerContext)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [feeLoading, setFeeLoading] = useState(false)
   const [feeError, setFeeError] = useState('')
@@ -168,6 +173,8 @@ const SendMlTransactionPage = () => {
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={balance}
+            mlCoinBalance={mlCoinBalance}
+            mlBalanceLoading={fetchingBalances}
             setFormValidity={setFormValid}
             onSendTransaction={createTransaction}
             confirmTransaction={confirmMlTransaction}

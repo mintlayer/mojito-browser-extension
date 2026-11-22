@@ -22,6 +22,13 @@ const SendMlTransaction = ({
   transactionData,
   exchangeRate = 0,
   maxValueInToken,
+  // ML coin balance: the network fee is paid in ML coins even when the
+  // transfer itself spends a token balance.
+  mlCoinBalance = 0,
+  // True while the provider is fetching balances: the fee-vs-ML check is
+  // skipped so a fetch starting from the 0 default cannot flash a false
+  // 'Insufficient ML balance' before the real balance arrives.
+  mlBalanceLoading = false,
   setFormValidity,
   onSendTransaction,
   confirmTransaction,
@@ -149,6 +156,31 @@ const SendMlTransaction = ({
       return
     }
 
+    // Token transfers spend two balances in different units: the amount
+    // comes off the token balance while the network fee is paid in ML
+    // coins. Summing amount + fee and comparing against one balance mixes
+    // the units, so each side is checked against its own balance.
+    if (walletType?.tokenId) {
+      if (amountDecimal.gt(maxValueDecimal)) {
+        setAmountValidity(false)
+        setPassErrorMessage('Insufficient token balance')
+        return
+      }
+      const mlBalanceDecimal = new Decimal(
+        NumbersHelper.floatStringToNumber(mlCoinBalance) || 0,
+      )
+      if (!mlBalanceLoading && totalFeeDecimal.gt(mlBalanceDecimal)) {
+        setAmountValidity(false)
+        setPassErrorMessage('Insufficient ML balance for the transaction fee')
+        return
+      }
+      setAmountValidity(true)
+      setPassErrorMessage('')
+      return
+    }
+
+    // Coin sends spend amount and fee from the same ML balance, so the
+    // combined check is unit-safe.
     const totalAmountDecimal = amountDecimal.plus(totalFeeDecimal)
     const insufficientFunds = totalAmountDecimal.gt(maxValueDecimal)
 
@@ -163,6 +195,9 @@ const SendMlTransaction = ({
     totalFeeCrypto,
     amountInCrypto,
     maxValueInToken,
+    mlCoinBalance,
+    mlBalanceLoading,
+    walletType,
     originalAmount,
     setAmountValidity,
     transactionMode,
@@ -238,6 +273,7 @@ const SendMlTransaction = ({
                 totalFeeInCrypto={totalFeeCrypto}
                 transactionMode={transactionMode}
                 decimals={decimals}
+                feeCurrencyDiffers={!!walletType?.tokenId}
               />
             )}
 

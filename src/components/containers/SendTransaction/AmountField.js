@@ -16,6 +16,9 @@ const AmountField = ({
   placeholder,
   validate,
   decimals,
+  // Forwarded to CryptoFiatField: token sends must not reserve the ML fee
+  // from the token-unit balance (see CryptoFiatField.feeCurrencyDiffers).
+  feeCurrencyDiffers,
   label = 'Amount',
   children,
 }) => {
@@ -46,6 +49,7 @@ const AmountField = ({
         transactionMode={transactionMode}
         validate={validate}
         decimals={decimals}
+        feeCurrencyDiffers={feeCurrencyDiffers}
       />
       {children}
       {(localMessage || errorMessage) && (
