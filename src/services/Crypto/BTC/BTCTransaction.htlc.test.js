@@ -375,3 +375,103 @@ describe('toSatoshiBigInt — the dApp value trust boundary', () => {
     },
   )
 })
+
+describe('buildHtlcClaimTx / buildHtlcRefundTx — network binding', () => {
+  // Deterministic MAINNET signer: a mainnet WIF carries the 0x80 version
+  // byte, so these fixtures fail closed unless the caller's networkType
+  // string actually reaches the sink — the psbt is pinned to
+  // bitcoin.networks[networkType] by it, never by a Mintlayer enum number.
+  const mainnetSigner = ECPair.makeRandom({
+    network: ecpairNetworks.mainnet,
+    rng: (size) => new Uint8Array(size).fill(11),
+  })
+  const mainnetWif = mainnetSigner.toWIF()
+  // BIP173 mainnet P2WPKH test vector address.
+  const mainnetDest = 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4'
+  const mainnetClaimScriptHex = compileHtlc(
+    mainnetSigner.publicKey,
+    foreignPubkey,
+    100,
+  )
+  const mainnetRefundScriptHex = compileHtlc(
+    foreignPubkey,
+    mainnetSigner.publicKey,
+    100,
+  )
+
+  it('builds a mainnet claim that pays the mainnet bc1 destination', async () => {
+    const hex = await buildHtlcClaimTx({
+      networkType: 'mainnet',
+      utxo: { txid: 'a'.repeat(64), vout: 0, value: 2000 },
+      toAddress: mainnetDest,
+      wif: mainnetWif,
+      redeemScriptHex: mainnetClaimScriptHex,
+      secretHex: 'a'.repeat(64),
+    })
+    const tx = bitcoin.Transaction.fromHex(hex)
+
+    expect(tx.outs).toHaveLength(1)
+    expect(Buffer.from(tx.outs[0].script)).toEqual(
+      Buffer.from(
+        bitcoin.address.toOutputScript(mainnetDest, bitcoin.networks.mainnet),
+      ),
+    )
+    expect(tx.outs[0].value).toBe(2000n - BigInt(HTLC_CLAIM_FEE_SATOSHIS))
+    expect(tx.ins[0].witness).toHaveLength(4)
+  })
+
+  it('builds a mainnet refund that pays the mainnet bc1 destination', async () => {
+    const hex = await buildHtlcRefundTx({
+      networkType: 'mainnet',
+      utxo: { txid: 'b'.repeat(64), vout: 0, value: 2500 },
+      toAddress: mainnetDest,
+      wif: mainnetWif,
+      redeemScriptHex: mainnetRefundScriptHex,
+    })
+    const tx = bitcoin.Transaction.fromHex(hex)
+
+    expect(tx.version).toBe(2)
+    expect(tx.outs).toHaveLength(1)
+    expect(Buffer.from(tx.outs[0].script)).toEqual(
+      Buffer.from(
+        bitcoin.address.toOutputScript(mainnetDest, bitcoin.networks.mainnet),
+      ),
+    )
+    expect(tx.outs[0].value).toBe(2500n - BigInt(HTLC_REFUND_FEE_SATOSHIS))
+  })
+
+  it('fails closed when mainnet material is signed under a testnet pin (missing or explicit testnet networkType)', async () => {
+    const mainnetClaimRequest = {
+      utxo: { txid: 'a'.repeat(64), vout: 0, value: 2000 },
+      toAddress: mainnetDest,
+      wif: mainnetWif,
+      redeemScriptHex: mainnetClaimScriptHex,
+      secretHex: 'a'.repeat(64),
+    }
+
+    // networkType dropped (what the page's enum-vs-string bug did) →
+    // 'testnet' default → mainnet address rejected.
+    await expect(buildHtlcClaimTx(mainnetClaimRequest)).rejects.toThrow()
+
+    // Explicitly pinned to the wrong Bitcoin network fails closed too.
+    await expect(
+      buildHtlcClaimTx({
+        ...mainnetClaimRequest,
+        networkType: 'testnet',
+      }),
+    ).rejects.toThrow()
+
+    // Testnet material under an explicit mainnet pin fails closed the
+    // same way — the parameter genuinely selects the network.
+    await expect(
+      buildHtlcClaimTx({
+        networkType: 'mainnet',
+        utxo: { txid: 'a'.repeat(64), vout: 0, value: 2000 },
+        toAddress: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
+        wif: claimSignerWif,
+        redeemScriptHex: compileHtlc(claimSigner.publicKey, foreignPubkey, 100),
+        secretHex: 'a'.repeat(64),
+      }),
+    ).rejects.toThrow()
+  })
+})

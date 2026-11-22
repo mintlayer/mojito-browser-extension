@@ -6,7 +6,6 @@ import { SignTransaction } from '@ContainerComponents'
 
 import './SignBitcoinTransaction.css'
 import { useState, useContext, useMemo, useEffect } from 'react'
-import { Network } from '../../services/Crypto/Mintlayer/@mintlayerlib-js'
 import * as bitcoin from 'bitcoinjs-lib'
 import { Account } from '@Entities'
 import { AccountContext, BitcoinContext, SettingsContext } from '@Contexts'
@@ -154,8 +153,6 @@ export const SignBitcoinTransactionPage = () => {
   const { btcUtxos, unusedAddresses: unusedBtcAddresses } =
     useContext(BitcoinContext)
   const { networkType } = useContext(SettingsContext)
-
-  const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
   // Pre-computed, password-free facts for the HTLC create recap: the escrow
   // address (from the dApp's script params) and the fee estimate (from the
@@ -490,8 +487,12 @@ export const SignBitcoinTransactionPage = () => {
 
     const finalSecret = secretPresaved || revealed_secret || secret
 
+    // The builders pin the PSBT to bitcoin.networks[networkType]: pass the
+    // validated string networkType (guarded above), never the Mintlayer
+    // Network enum — an enum number silently falls back to the 'testnet'
+    // default and mainnet signing fails on the mainnet destination address.
     const tx = await BTCTransaction.buildHtlcClaimTx({
-      network,
+      networkType,
       utxo: transactionJSONrepresentation.utxo,
       toAddress,
       redeemScriptHex: transactionJSONrepresentation.redeemScriptHex,
@@ -548,8 +549,10 @@ export const SignBitcoinTransactionPage = () => {
       btcPrivateKeys.btcAddressData,
     )
 
+    // Same networkType contract as the claim builder above: the validated
+    // string, not the Mintlayer Network enum.
     const tx = await BTCTransaction.buildHtlcRefundTx({
-      network,
+      networkType,
       utxo: transactionJSONrepresentation.utxo,
       toAddress,
       redeemScriptHex: transactionJSONrepresentation.redeemScriptHex,
@@ -590,20 +593,14 @@ export const SignBitcoinTransactionPage = () => {
 
       if (transactionJSONrepresentation.type === 'refundHtlc') {
         await submitRefund()
-        return
-      }
-
-      if (transactionJSONrepresentation.secretHash) {
+      } else if (transactionJSONrepresentation.secretHash) {
         await submitCreate()
-        return
-      }
-
-      if (!transactionJSONrepresentation.secretHash) {
+      } else {
         await submitSpend()
-        return
       }
       // Signing done: drop the password/secret from memory — the page stays
-      // mounted in the side panel after the response is returned.
+      // mounted in the side panel after the response is returned. Skipped on
+      // a throw so the open modal keeps its material for the retry.
       setPassword('')
       setSecret('')
     } catch (error) {

@@ -1,6 +1,8 @@
 export const MOCKS = {
   createHtlc: {
     request: {
+      // Match the WRONG_NETWORK guard: dev-mode signing must pass it.
+      network: 'testnet',
       data: {
         txData: {
           JSONRepresentation: {
@@ -19,6 +21,8 @@ export const MOCKS = {
   },
   spendHtlc: {
     request: {
+      // Match the WRONG_NETWORK guard: dev-mode signing must pass it.
+      network: 'testnet',
       data: {
         txData: {
           JSONRepresentation: {
@@ -45,6 +49,8 @@ export const MOCKS = {
   },
   spendHtlc2: {
     request: {
+      // Match the WRONG_NETWORK guard: dev-mode signing must pass it.
+      network: 'testnet',
       data: {
         txData: {
           JSONRepresentation: {
@@ -69,6 +75,8 @@ export const MOCKS = {
   },
   refundHtlc: {
     request: {
+      // Match the WRONG_NETWORK guard: dev-mode signing must pass it.
+      network: 'testnet',
       data: {
         txData: {
           JSONRepresentation: {
