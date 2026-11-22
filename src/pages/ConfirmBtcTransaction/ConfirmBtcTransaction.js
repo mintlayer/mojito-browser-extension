@@ -1,9 +1,9 @@
 import { useLocation, useNavigate } from 'react-router'
 import { useState, useContext, useEffect } from 'react'
-import { Button, Error, PageWrapper } from '@BasicComponents'
+import { Button, Error as ErrorBanner, PageWrapper } from '@BasicComponents'
 import { PopUp, TextField, Loading } from '@ComposedComponents'
 import { AccountContext, BitcoinContext, SettingsContext } from '@Contexts'
-import { BTCTransaction, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
+import { BTCTransaction } from '@Cryptos'
 import { Account } from '@Entities'
 import { BTC as BTCHelper } from '@Helpers'
 import { Electrum } from '@APIs'
@@ -37,11 +37,8 @@ const ConfirmBtcTransactionPage = () => {
       cancelled = true
     }
   }, [accountID])
-  const {
-    btcUtxos,
-    unusedAddresses: unusedBtcAddresses,
-    fetchAllData,
-  } = useContext(BitcoinContext)
+  const { unusedAddresses: unusedBtcAddresses, fetchAllData } =
+    useContext(BitcoinContext)
   const { networkType } = useContext(SettingsContext)
   const isTestnet = networkType === AppInfo.NETWORK_TYPES.TESTNET
 
@@ -52,6 +49,9 @@ const ConfirmBtcTransactionPage = () => {
     fee,
     totalFeeFiat,
     totalFeeCrypto,
+    totalFeeSatoshi,
+    approvedUtxos,
+    btcWalletType,
     walletType,
     poolData,
   } = state || {}
@@ -103,6 +103,48 @@ const ConfirmBtcTransactionPage = () => {
 
     setSendingTransaction(true)
     try {
+      // The user approved the recap (amount, fee) quoted from a UTXO
+      // snapshot frozen on the send form. Rebuilding from the live
+      // BitcoinContext UTXO list here would silently sign a different
+      // transaction (different inputs, different fee) whenever a background
+      // refresh changed the set in between. Broadcast is therefore built
+      // from the approved snapshot only, and fails closed if that snapshot
+      // no longer reproduces the approved fee.
+      // The gate covers every approval figure the signed transaction
+      // depends on: a crafted route state that freezes the UTXO trio but
+      // drops the recipient would otherwise unlock keys and let
+      // buildTransaction silently fold the missing recipient output into
+      // the wallet change address (an approved-looking self-send).
+      if (
+        !Array.isArray(approvedUtxos) ||
+        typeof totalFeeSatoshi !== 'number' ||
+        typeof btcWalletType !== 'string' ||
+        typeof address !== 'string' ||
+        !address ||
+        fee == null
+      ) {
+        throw new Error(
+          'Approved transaction data is missing. Please review the transaction and try again.',
+        )
+      }
+
+      const transactionAmountInSatoshi = BTCHelper.convertBtcToSatoshi(
+        state.transactionAmount,
+      )
+
+      const approvedFee = await BTCTransaction.calculateBtcTransactionFee({
+        to: address,
+        amount: transactionAmountInSatoshi,
+        utxos: approvedUtxos,
+        feeRate: fee,
+        walletType: btcWalletType,
+      })
+      if (approvedFee !== totalFeeSatoshi) {
+        throw new Error(
+          'Fee changed since approval. Please review the transaction and confirm again.',
+        )
+      }
+
       const unwrappedPassword = hasPasskey
         ? await Account.getPasswordWithPasskey(accountID)
         : password
@@ -112,19 +154,11 @@ const ConfirmBtcTransactionPage = () => {
         { wallets: ['btc'] },
       )
 
-      const transactionAmountInSatoshi = BTCHelper.convertBtcToSatoshi(
-        state.transactionAmount,
-      )
-
-      const currentAccount = await Account.getAccount(accountID)
-      const btcWalletType =
-        currentAccount.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
-
       // eslint-disable-next-line no-unused-vars
       const [__, transactionHex] = await BTCTransaction.buildTransaction({
         to: address,
         amount: transactionAmountInSatoshi,
-        utxos: btcUtxos || [],
+        utxos: approvedUtxos,
         feeRate: fee,
         walletType: btcWalletType,
         changeAddress: getChangeAddress(),
@@ -274,7 +308,7 @@ const ConfirmBtcTransactionPage = () => {
                     placeHolder="Enter your password"
                     autoFocus
                   />
-                  {txErrorMessage && <Error error={txErrorMessage} />}
+                  {txErrorMessage && <ErrorBanner error={txErrorMessage} />}
                 </div>
                 <div className={styles.modalButtons}>
                   <Button

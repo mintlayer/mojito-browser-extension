@@ -1,5 +1,5 @@
 import { render, screen, act, fireEvent } from '@testing-library/react'
-import { MemoryRouter, Routes, Route } from 'react-router'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router'
 
 import SendBtcTransaction from './SendBtcTransaction'
 
@@ -17,7 +17,10 @@ const TRANSACTIONDATASAMPLE = {
   maxValueInToken: 450,
 }
 
-const renderSendTransaction = (onSendTransaction) =>
+const renderSendTransaction = (
+  onSendTransaction,
+  confirmElement = <div>Confirm transaction</div>,
+) =>
   render(
     <MemoryRouter initialEntries={['/']}>
       <Routes>
@@ -44,7 +47,7 @@ const renderSendTransaction = (onSendTransaction) =>
         />
         <Route
           path="confirm"
-          element={<div>Confirm transaction</div>}
+          element={confirmElement}
         />
       </Routes>
     </MemoryRouter>,
@@ -92,4 +95,41 @@ test('does not navigate when onSendTransaction resolves without fee data', async
   // no fee data means no navigation: the form stays mounted on the same route
   expect(screen.getByText('Send')).toBeInTheDocument()
   expect(screen.queryByText('Confirm transaction')).not.toBeInTheDocument()
+})
+
+// The confirm page must broadcast what the user approved, so the approval
+// figures travel together with the exact UTXO snapshot the fee was quoted
+// from — the route state carries them as one frozen record.
+test('passes the approved fee snapshot through the confirmation route state', async () => {
+  const approvedUtxos = [{ txid: 'aa'.repeat(32), vout: 0, value: 45000 }]
+  let confirmRouteState
+  const StateCapture = () => {
+    const { state } = useLocation()
+    confirmRouteState = state
+    return <div>Confirm transaction</div>
+  }
+  const onSendTransaction = jest.fn().mockResolvedValue({
+    totalFeeFiat: 1,
+    totalFeeCrypto: 2,
+    totalFeeSatoshi: 7480,
+    approvedUtxos,
+    btcWalletType: 'nativeSegwit',
+  })
+
+  await act(async () => {
+    renderSendTransaction(onSendTransaction, <StateCapture />)
+  })
+
+  const btn = screen.getByText('Send')
+
+  await act(async () => {
+    fireEvent.click(btn)
+  })
+
+  expect(await screen.findByText('Confirm transaction')).toBeInTheDocument()
+  expect(confirmRouteState).toMatchObject({
+    totalFeeSatoshi: 7480,
+    approvedUtxos,
+    btcWalletType: 'nativeSegwit',
+  })
 })

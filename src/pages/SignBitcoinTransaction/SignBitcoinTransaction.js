@@ -180,21 +180,35 @@ export const SignBitcoinTransactionPage = () => {
         })
         const feeRate = await getBtcFeeRate()
         let estimatedFee = null
+        let fundingWalletType = BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
         try {
           const currentAccount = await Account.getAccount(accountID)
-          const walletType =
+          fundingWalletType =
             currentAccount?.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
           estimatedFee = await BTCTransaction.calculateBtcTransactionFee({
             to: htlc.p2wshAddress,
             amount: parseSatoshiAmount(requestJSON.amount),
             utxos: btcUtxos || [],
             feeRate,
-            walletType,
+            walletType: fundingWalletType,
           })
         } catch {
           estimatedFee = null
         }
-        if (active) setEscrowFeeInfo({ htlc, feeRate, estimatedFee })
+        if (active)
+          setEscrowFeeInfo({
+            // Owner stamp: this frozen record is only ever valid for the
+            // request whose fields it was quoted from (see below).
+            owner: requestJSON,
+            htlc,
+            feeRate,
+            estimatedFee,
+            // Funding snapshot: the exact UTXO set, fee rate and address type
+            // this estimate was quoted from. Signing rebuilds from this frozen
+            // record so the charged fee cannot drift from the displayed one.
+            fundingUtxos: btcUtxos || [],
+            fundingWalletType,
+          })
       } catch {
         // Malformed request data: the recap falls back to warnings and
         // signing will fail with the same error.
@@ -206,11 +220,21 @@ export const SignBitcoinTransactionPage = () => {
     }
   }, [isCreateRequest, requestJSON, btcUtxos, accountID, networkType])
 
+  // A second sign request can navigate into this already-mounted route
+  // (same path, no remount), so escrowFeeInfo may still hold the previous
+  // request's frozen record while this request's recompute is pending. The
+  // record is only valid for the request it was quoted from — the recap and
+  // the sign path treat a foreign record as absent, so request A's escrow
+  // address/fee/funding snapshot can never leak into request B. Reruns for
+  // the SAME request (UTXO poll refresh) keep the current record visible.
+  const activeEscrowFeeInfo =
+    escrowFeeInfo?.owner === requestJSON ? escrowFeeInfo : null
+
   // Human-readable approval summary — parsed facts, not raw JSON.
   const recap = buildBtcSignRecap({
     json: requestJSON,
     networkType,
-    escrowFeeInfo,
+    escrowFeeInfo: activeEscrowFeeInfo,
   })
 
   // Helper functions to detect transaction types
@@ -311,11 +335,20 @@ export const SignBitcoinTransactionPage = () => {
     // address to send funds to
     const address = htlc.p2wshAddress
 
-    // Fund the HTLC the same way ConfirmBtcTransaction funds a transfer:
-    // wallet UTXOs + feeRate + change address + the HD root for signing.
+    // Fund the HTLC from the frozen approval snapshot — the same UTXO set,
+    // fee rate and address type the recap's estimate was quoted from. The
+    // live context UTXO list is only a fallback for the corner case where
+    // the recap pre-computation never ran (no displayed fee to diverge from);
+    // building from it on the happy path would silently sign a different
+    // transaction than the one approved (same invariant class as the
+    // ConfirmBtcTransaction transfer flow).
     const currentAccount = await Account.getAccount(accountID)
-    const btcWalletType =
+    const resolvedWalletType =
       currentAccount.walletType || BTC_ADDRESS_TYPE_ENUM.NATIVE_SEGWIT
+    const feeRate = activeEscrowFeeInfo?.feeRate ?? (await getBtcFeeRate())
+    const fundingUtxos = activeEscrowFeeInfo?.fundingUtxos ?? (btcUtxos || [])
+    const fundingWalletType =
+      activeEscrowFeeInfo?.fundingWalletType ?? resolvedWalletType
 
     const { btcPrivateKeys } = await Account.unlockAccount(accountID, pass, {
       wallets: ['btc'],
@@ -341,16 +374,12 @@ export const SignBitcoinTransactionPage = () => {
       transactionJSONrepresentation.amount,
     )
 
-    // Reuse the fee rate the recap displayed; only refetch when the
-    // pre-computation was unavailable.
-    const feeRate = escrowFeeInfo?.feeRate ?? (await getBtcFeeRate())
-
     const [tx, txHex] = await BTCTransaction.buildTransaction({
       to: address,
       amount: amountSatoshis, // satoshis
-      utxos: btcUtxos || [],
+      utxos: fundingUtxos,
       feeRate,
-      walletType: btcWalletType,
+      walletType: fundingWalletType,
       changeAddress: getChangeAddress(),
       root: btcPrivateKeys,
     })

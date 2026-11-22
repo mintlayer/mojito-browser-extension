@@ -658,4 +658,100 @@ describe('BTCTransaction', () => {
       },
     )
   })
+
+  describe('preview vs signing selection agreement', () => {
+    // Regression guard for the approval-invariant fix: the fee preview runs
+    // coinSelect over getFormattedFeeUtxos while signing runs it over
+    // getFormattedUtxos. If those two shapers ever diverge (extra fields,
+    // different value types), the approved fee and the charged fee would
+    // silently part ways. This pins both shapes to the REAL coinselect:
+    // identical UTXO set + targets + rate must yield the identical fee.
+    test('calculateBtcTransactionFee equals the signing selection fee for the same inputs', async () => {
+      const realCoinSelect = jest.requireActual('coinselect')
+      coinSelect.mockImplementation((u, t, f) => realCoinSelect(u, t, f))
+
+      const previewUtxos = [
+        { txid: 'a1b2c3d4', vout: 0, value: 45000, address: '1ABC...' },
+        { txid: 'e4f5a6b7', vout: 1, value: 40000, address: '1ABC...' },
+      ]
+      const previewFee = await calculateBtcTransactionFee({
+        to: '1ABC...',
+        amount: 5000,
+        utxos: previewUtxos,
+        feeRate: 10,
+        walletType: 'nativeSegwit',
+      })
+
+      // Real coinselect produced a real fee for this request shape.
+      expect(previewFee).toBeGreaterThan(0)
+
+      const mockPsbt = {
+        addedInputs: [],
+        addedOutputs: [],
+        addInput(input) {
+          this.addedInputs.push(input)
+        },
+        addOutput(output) {
+          this.addedOutputs.push(output)
+        },
+        signAllInputsHD: jest.fn(),
+        finalizeAllInputs: jest.fn(),
+        extractTransaction: jest.fn(() => ({
+          toHex: jest.fn(() => 'mockHex'),
+        })),
+      }
+      const psbtSpy = jest
+        .spyOn(bitcoin, 'Psbt')
+        .mockImplementation(() => mockPsbt)
+      BTC.checkFee = jest.fn(() => true)
+
+      try {
+        await buildTransaction({
+          to: '1ABC...',
+          amount: 5000,
+          utxos: previewUtxos,
+          feeRate: 10,
+          walletType: 'nativeSegwit',
+          changeAddress: '1CHANGE...',
+          root: {
+            btcAddressData: {
+              btcReceivingAddresses: [
+                {
+                  address: '1ABC...',
+                  pubkey:
+                    '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
+                  derivationPath: "m/44'/0'/0'/0/0",
+                },
+              ],
+              btcChangeAddresses: [],
+            },
+            btcHDWallet: {
+              fingerprint: Buffer.from('12345678', 'hex'),
+            },
+          },
+        })
+
+        // The signing path's fee is what the selected inputs actually pay:
+        // input values minus output values (recipient + change).
+        const signingFee =
+          mockPsbt.addedInputs.reduce(
+            (sum, input) => sum + Number(input.witnessUtxo.value),
+            0,
+          ) -
+          mockPsbt.addedOutputs.reduce(
+            (sum, output) => sum + Number(output.value),
+            0,
+          )
+
+        expect(signingFee).toBe(previewFee)
+        expect(mockPsbt.addedOutputs.map((o) => o.address)).toEqual([
+          '1ABC...',
+          '1CHANGE...',
+        ])
+      } finally {
+        psbtSpy.mockRestore()
+        coinSelect.mockReset()
+      }
+    })
+  })
 })
