@@ -4,8 +4,14 @@ import { useNavigate, useParams } from 'react-router'
 import { SendMlTransaction } from '@ContainerComponents'
 import { VerticalGroup } from '@LayoutComponents'
 import { useExchangeRates, useMlWalletInfo } from '@Hooks'
-import { AccountContext, MintlayerContext, TransactionContext } from '@Contexts'
+import {
+  AccountContext,
+  MintlayerContext,
+  SettingsContext,
+  TransactionContext,
+} from '@Contexts'
 import { AppInfo } from '@Constants'
+import { DelegationWithdrawBalance } from '@Helpers'
 import { Mintlayer } from '@APIs'
 
 import './DelegationWithdraw.css'
@@ -22,6 +28,7 @@ const DelegationWithdrawPage = () => {
   const transactionMode = AppInfo.ML_TRANSACTION_MODES.WITHDRAW
   const { accountID } = useContext(AccountContext)
   const { client, mlDelegationList } = useContext(MintlayerContext)
+  const { networkType } = useContext(SettingsContext)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const navigate = useNavigate()
   const tokenName = 'ML'
@@ -67,13 +74,20 @@ const DelegationWithdrawPage = () => {
         delegation_id,
       ])
 
-      return client.buildTransaction({
+      const transaction = await client.buildTransaction({
         type: 'DelegationWithdraw',
         params: { delegation_id, amount, delegation_details },
         ...(utxos.length ? { opts: { withUTXO: utxos } } : {}),
       })
+
+      // The SDK's fee-convergence loop can re-subtract the fee from its
+      // internally-built withdrawal output (shared-object aliasing), producing
+      // an unbalanced transaction; verify and repair before preview/signing.
+      return DelegationWithdrawBalance.enforceTransactionBalance(transaction, {
+        networkType,
+      }).transaction
     },
-    [client, utxos],
+    [client, utxos, networkType],
   )
 
   useEffect(() => {

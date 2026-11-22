@@ -40,7 +40,7 @@ const NETWORKS = {
   signet: 3,
 }
 
-const getNetworkIndex = (networkType) => {
+export const getNetworkIndex = (networkType) => {
   const networkIndex = NETWORKS[networkType]
   if (networkIndex === undefined) {
     throw new Error(`Unknown Mintlayer network type: ${networkType}`)

@@ -74,7 +74,7 @@ export const handleTxError = (error, setTxErrorMessage, setPassword) => {
   }
 }
 
-function mergeUint8Arrays(arrays) {
+export function mergeUint8Arrays(arrays) {
   const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0)
 
   const result = new Uint8Array(totalLength)
