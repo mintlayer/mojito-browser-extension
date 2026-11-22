@@ -17,10 +17,17 @@ const Header = () => {
   const location = useLocation()
   const {
     isAccountUnlocked,
+    addresses,
     sliderMenuOpen,
     setSliderMenuOpen,
     customBackAction,
   } = useContext(AccountContext)
+
+  // `unlocked` is a route-change snapshot: an in-page auto-lock clears the
+  // session (addresses) BETWEEN route changes, so the chrome must react to
+  // the live context state too — a locked wallet must not keep rendering
+  // as unlocked just because its route has not changed.
+  const sessionActive = unlocked && !!addresses
 
   const coinType = location.pathname.includes('/wallet/')
     ? location.pathname.split('/wallet/')[1].split('/')[0]
@@ -48,7 +55,7 @@ const Header = () => {
       return
     }
     if (isSettingsPage) {
-      navigate(unlocked ? '/dashboard' : '/')
+      navigate(sessionActive ? '/dashboard' : '/')
       return
     }
     if (isStakingPage) {
@@ -94,11 +101,11 @@ const Header = () => {
       {!isCreateRestorePage && (
         <div className={styles.logoWrapper}>
           <Logo />
-          {unlocked && <UpdateButton />}
+          {sessionActive && <UpdateButton />}
         </div>
       )}
 
-      {!unlocked && (
+      {!sessionActive && (
         <div className={styles.settingsExpand}>
           <Button
             extraStyleClasses={[styles.settingsButton]}

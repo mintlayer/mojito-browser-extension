@@ -100,6 +100,12 @@ const App = () => {
     removeAccountPopupOpen,
     setRemoveAccountPopupOpen,
   } = useContext(AccountContext)
+
+  // `unlocked` is a route-change snapshot: an in-page auto-lock clears the
+  // session (addresses) BETWEEN route changes, so the chrome must react to
+  // the live context state too — a locked wallet must not keep rendering
+  // as unlocked just because its route has not changed.
+  const sessionActive = unlocked && !!addresses
   const { setAllDataFetching, InMemoryAccountProvider, setClient } =
     useContext(MintlayerContext)
   const { networkType } = useContext(SettingsContext)
@@ -390,7 +396,7 @@ const App = () => {
   return (
     <>
       <Sidebar />
-      {!unlocked && <BrandPanel />}
+      {!sessionActive && <BrandPanel />}
       <div className="app-content">
         <Header />
         <main className="App">
@@ -428,7 +434,7 @@ const App = () => {
               />
               <Route
                 path="/settings"
-                element={<SettingsPage unlocked={unlocked} />}
+                element={<SettingsPage unlocked={sessionActive} />}
               />
               <Route
                 path="/connect"
