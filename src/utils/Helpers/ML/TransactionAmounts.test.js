@@ -43,6 +43,13 @@ const coinInput = (destination, atoms, decimal) => ({
   },
 })
 
+// `value` wrapped in `depth` plain-object layers
+const nestedBelow = (value, depth) => {
+  let node = value
+  for (let i = 0; i < depth; i++) node = { nested: node }
+  return node
+}
+
 describe('atomsToDecimalString', () => {
   it('scales whole and fractional atom amounts exactly', () => {
     expect(atomsToDecimalString(2500000000000n, COIN_DECIMALS)).toBe('25')
@@ -940,7 +947,7 @@ describe('reconcileApprovalAmounts', () => {
         inputs: [
           coinInput('wallet', '10000000000000', '100'),
           {
-            input_type: 'UTXO',
+            input: { input_type: 'UTXO', source_id: 'src', index: 1 },
             utxo: {
               destination: 'wallet',
               value: {
@@ -1894,5 +1901,227 @@ describe('reconcileApprovalAmounts', () => {
 
     expect(extraAmountRows).toEqual([])
     expect(blocked).toBe(false)
+  })
+
+  // SECURITY: every leg entry is dApp-controlled. An entry the signer
+  // cannot read — not an object, an input without its `input` object, an
+  // output without a string `type` — is unverifiable: the payload is
+  // blocked instead of the entry being skipped as if it carried no amount.
+  it.each([
+    ['a null output', { inputs: [], outputs: [null] }],
+    ['an undefined output', { inputs: [], outputs: [undefined] }],
+    [
+      'a number output',
+      { inputs: [coinInput('wallet', '100', '1')], outputs: [42] },
+    ],
+    ['a string output', { inputs: [], outputs: ['Transfer'] }],
+    ['an array output', { inputs: [], outputs: [[]] }],
+    [
+      'an output without a type',
+      { inputs: [], outputs: [{ destination: 'x', value: coin('1', '100') }] },
+    ],
+    [
+      'an output whose type is not a string',
+      { inputs: [], outputs: [{ type: 42 }] },
+    ],
+    ['a null input', { inputs: [null], outputs: [] }],
+    ['a string input', { inputs: ['UTXO'], outputs: [] }],
+    [
+      'an input without an input object',
+      {
+        inputs: [{ utxo: { destination: 'wallet', value: coin('1', '100') } }],
+        outputs: [],
+      },
+    ],
+    [
+      'an input whose input is not an object',
+      { inputs: [{ input: 'UTXO' }], outputs: [] },
+    ],
+    // ... or nesting an object with its own `toString`/`valueOf`: it throws
+    // wherever a string or a number is needed (label, object key, parseInt
+    // argument), wherever it sits in the entry (an own `toLocaleString` or
+    // Symbol.toPrimitive is flagged for completeness only)
+    [
+      'an output type that shadows toString',
+      { inputs: [], outputs: [{ type: { toString: 1 } }] },
+    ],
+    [
+      'an account command that shadows toString',
+      {
+        inputs: [
+          { input: { input_type: 'AccountCommand', command: { toString: 1 } } },
+        ],
+        outputs: [],
+      },
+    ],
+    [
+      'a nested token id that shadows toString',
+      {
+        inputs: [coinInput('wallet', '100', '1')],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: 'x',
+            value: { token_id: { toString: 1 }, amount: { atoms: '100' } },
+          },
+        ],
+      },
+    ],
+    [
+      'a valueOf shadow nested inside an array',
+      {
+        inputs: [coinInput('wallet', '100', '1')],
+        outputs: [{ type: 'DataDeposit', data: [['deep', { valueOf: 1 }]] }],
+      },
+    ],
+    [
+      'a toLocaleString shadow on a utxo leg',
+      {
+        inputs: [
+          {
+            input: { input_type: 'UTXO', source_id: 'src', index: 0 },
+            utxo: {
+              destination: 'wallet',
+              value: { toLocaleString: 1, amount: { atoms: '1' } },
+            },
+          },
+        ],
+        outputs: [],
+      },
+    ],
+    [
+      'a Symbol.toPrimitive shadow',
+      {
+        inputs: [],
+        outputs: [{ type: 'DataDeposit', data: { [Symbol.toPrimitive]: 1 } }],
+      },
+    ],
+    [
+      'an entry nested deeper than the walk limit',
+      {
+        inputs: [coinInput('wallet', '100', '1')],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: 'x',
+            value: nestedBelow({ atoms: '100' }, 20),
+          },
+        ],
+      },
+    ],
+  ])('blocks on %s', (_description, legs) => {
+    const { amountRows, extraAmountRows, fee, blocked } =
+      reconcileApprovalAmounts(legs, {
+        tokenDecimalsById: new Map(),
+        ownAddresses,
+      })
+
+    expect(blocked).toBe(true)
+    expect(amountRows).toEqual([])
+    expect(extraAmountRows).toEqual([])
+    expect(fee).toBeNull()
+  })
+
+  it('does not block an empty outputs leg (a transaction with no outputs)', () => {
+    const { blocked, fee } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    // no outputs: the whole input is the fee
+    expect(fee).toEqual({ amount: '17071.486043' })
+  })
+
+  it('does not block plain nested objects that carry no shadowing member', () => {
+    // a typed entry with an unreadable (but non-throwing) nested value stays
+    // unblocked — it simply resolves no amount and fails closed at sign time
+    const { blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '100', '1')],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: 'x',
+            value: nestedBelow({ foo: 'bar' }, 10),
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+  })
+
+  // The walk limit is pinned at its boundary. Levels are counted from the
+  // leg entry (the entry itself is level 0, its `value` is level 1): an
+  // entry whose objects reach exactly 16 levels is walked in full and is
+  // not malformed; one reaching 17 levels is too deep to verify and is.
+  const nestedTransfer = (levels) => ({
+    inputs: [coinInput('wallet', '100', '1')],
+    outputs: [
+      {
+        type: 'Transfer',
+        destination: 'x',
+        value: nestedBelow('leaf', levels),
+      },
+    ],
+  })
+
+  it('does not block an entry whose objects reach exactly 16 levels deep', () => {
+    const { blocked } = reconcileApprovalAmounts(nestedTransfer(16), {
+      tokenDecimalsById: new Map(),
+      ownAddresses,
+    })
+
+    expect(blocked).toBe(false)
+  })
+
+  it('blocks an entry whose objects reach 17 levels deep', () => {
+    const { blocked } = reconcileApprovalAmounts(nestedTransfer(17), {
+      tokenDecimalsById: new Map(),
+      ownAddresses,
+    })
+
+    expect(blocked).toBe(true)
+  })
+
+  // An intent that is present but not a string (opaque bytes) can neither be
+  // shown nor acknowledged nor signed: it blocks exactly like a malformed
+  // leg entry. No intent, or a string intent, leaves the verdict untouched.
+  const consistentLegs = {
+    inputs: [coinInput('wallet', '1000000000000', '10')],
+    outputs: [coinOutput('x', '1', '100000000000')],
+  }
+  it.each([
+    ['an object intent', {}],
+    ['a shadowing intent', { toString: 1 }],
+    ['a number intent', 42],
+    ['an array intent', []],
+  ])('blocks on %s', (_description, intent) => {
+    expect(
+      reconcileApprovalAmounts(consistentLegs, {
+        tokenDecimalsById: new Map(),
+        ownAddresses,
+        intent,
+      }).blocked,
+    ).toBe(true)
+  })
+
+  it.each([
+    ['no intent', undefined],
+    ['a null intent', null],
+    ['a string intent', 'deadbeef'],
+  ])('keeps the verdict with %s', (_description, intent) => {
+    expect(
+      reconcileApprovalAmounts(consistentLegs, {
+        tokenDecimalsById: new Map(),
+        ownAddresses,
+        intent,
+      }).blocked,
+    ).toBe(false)
   })
 })

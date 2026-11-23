@@ -170,6 +170,58 @@ describe('getTransactionType', () => {
     expect(getTransactionType({ inputs: [], outputs: [] })).toBe('isUnknown')
   })
 
+  it('never throws on leg entries that are not objects', () => {
+    // entries are dApp-controlled too — null, undefined or primitive entries
+    // in either leg degrade to 'unknown operation' instead of crashing the
+    // approval render
+    expect(
+      getTransactionType({
+        inputs: [null, undefined, 'UTXO', 42],
+        outputs: [null, undefined, 'Transfer', 42],
+      }),
+    ).toBe('isUnknown')
+  })
+
+  it('reads only string types and commands, and only own flag-table keys', () => {
+    // an object type/command never names an operation — it must select
+    // nothing and never throw (one carrying its own `toString`/`valueOf`
+    // would even throw when coerced to a property key); nor must an
+    // inherited member name such as 'toString' or 'constructor' select an
+    // operation
+    expect(
+      getTransactionType({
+        inputs: [
+          { input: { input_type: 'AccountCommand', command: { toString: 1 } } },
+        ],
+        outputs: [{ type: { toString: 1 } }],
+      }),
+    ).toBe('isUnknown')
+    expect(
+      getTransactionType({
+        inputs: [
+          {
+            input: { input_type: 'AccountCommand', command: 'constructor' },
+          },
+        ],
+        outputs: [{ type: 'toString' }, { type: 'toLocaleString' }],
+      }),
+    ).toBe('isUnknown')
+  })
+
+  it('names a bridge request only for a string intent', () => {
+    expect(getTransactionType({ inputs: [], outputs: [] }, 'deadbeef')).toBe(
+      'isBridgeRequest',
+    )
+    // anything else present is malformed (blocked upstream) and names no
+    // operation
+    expect(
+      getTransactionType({ inputs: [], outputs: [] }, { toString: 1 }),
+    ).toBe('isUnknown')
+    expect(getTransactionType({ inputs: [], outputs: [] }, 42)).toBe(
+      'isUnknown',
+    )
+  })
+
   it('never raises two flags for the same transaction', () => {
     Object.entries(MOCKS).forEach(([name, mock]) => {
       const { flags } = getTransactionDetails(mock)

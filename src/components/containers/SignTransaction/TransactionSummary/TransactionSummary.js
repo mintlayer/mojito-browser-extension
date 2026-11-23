@@ -7,8 +7,16 @@ import { KV, Tag } from '@BasicComponents'
 
 import styles from './TransactionSummary.module.css'
 
+// Payload-derived text: only strings and numbers are ever rendered. An
+// object that carries its own `toString`/`valueOf` shadows the inherited
+// callable with a non-callable value (JSON cannot carry functions) and
+// throws when converted to text, so objects show a neutral placeholder
+// instead.
+const isText = (value) => typeof value === 'string' || typeof value === 'number'
+const asText = (value, fallback = '—') =>
+  isText(value) ? String(value) : fallback
 const truncate = (value, head = 12, tail = 8) => {
-  if (!value) return '—'
+  if (!value || !isText(value)) return '—'
   const text = String(value)
   return text.length > head + tail + 3
     ? `${text.slice(0, head)}…${text.slice(-tail)}`
@@ -101,6 +109,10 @@ const TransactionSummary = ({
 
   const tokenDecimalsById =
     TransactionAmounts.buildTokenDecimalsIndex(allNetworkTokensData)
+  // SECURITY: a dApp-supplied intent is opaque bytes (a string). Anything
+  // else that is present is malformed — it blocks approval below and is
+  // never rendered (an object cannot be a React child).
+  const intentText = typeof intent === 'string' ? intent : null
 
   // SECURITY: every displayed number is derived from the signed `.atoms`
   // values, and the dApp-supplied `.decimal` labels are verified against
@@ -114,12 +126,28 @@ const TransactionSummary = ({
   } = TransactionAmounts.reconcileApprovalAmounts(jsonRepresentation, {
     tokenDecimalsById,
     ownAddresses,
+    intent,
   })
 
-  const tickerOf = (tokenId) =>
-    tokenId ? tokenMap?.[tokenId] || truncate(tokenId, 8, 6) : coinTicker
+  const tickerOf = (tokenId) => {
+    if (!tokenId) return coinTicker
+    // a token id that is not a string or a number can neither be looked up
+    // nor shown as text (an object with a shadowing `toString`/`valueOf`
+    // would throw when coerced)
+    return isText(tokenId)
+      ? tokenMap?.[tokenId] || truncate(tokenId, 8, 6)
+      : '—'
+  }
+  // React keys and labels built from payload-derived ids
+  const rowKey = (prefix, key) => `${prefix}-${asText(key, 'unknown')}`
 
-  const typeFlag = SignTxHelpers.getTransactionType(jsonRepresentation, intent)
+  // SECURITY: a blocked payload is never interpreted: the operation label
+  // is fixed and no amount is derived from it, so nothing that could throw
+  // on a dApp-controlled value is computed for the blocked screen (the
+  // address rows read strings only).
+  const typeFlag = amountsMismatch
+    ? null
+    : SignTxHelpers.getTransactionType(jsonRepresentation, intentText)
   const label =
     OPERATION_LABELS.find(([flag]) => flag === typeFlag)?.[1] ?? 'Transaction'
 
@@ -130,7 +158,7 @@ const TransactionSummary = ({
     >
       <div className={styles.header}>
         <span className={styles.headerLabel}>{label}</span>
-        {intent && <Tag c="teal">Bridge</Tag>}
+        {intentText && <Tag c="teal">Bridge</Tag>}
       </div>
       <KV
         rows={[
@@ -157,7 +185,7 @@ const TransactionSummary = ({
           ...amountRows.map(({ key, tokenId, amount, errors }) => [
             'Amount',
             <span
-              key={`amount-${key}`}
+              key={rowKey('amount', key)}
               className={errors ? styles.amountError : styles.amount}
             >
               {errors
@@ -175,7 +203,7 @@ const TransactionSummary = ({
             ({ key, label, tokenId, amount, errors, withTicker }) => [
               label,
               <span
-                key={`extra-${key}`}
+                key={rowKey('extra', key)}
                 className={errors ? styles.amountError : styles.amount}
               >
                 {errors
@@ -230,7 +258,7 @@ const TransactionSummary = ({
         </div>
       )}
 
-      {intent && (
+      {intentText && (
         <div className={styles.intentRow}>
           <Tag c="teal">Bridge intent</Tag>
           {/* SECURITY: the wallet signs these bytes — show them IN FULL.
@@ -239,9 +267,9 @@ const TransactionSummary = ({
             className={`${styles.intentValue} ${styles.intentValueFull}`}
             data-testid="intent-raw"
           >
-            {intent}
+            {intentText}
           </span>
-          <CopyButton content={intent} />
+          <CopyButton content={intentText} />
         </div>
       )}
 

@@ -82,7 +82,10 @@ export const SignTransactionPage = () => {
   // transaction that would actually be signed. This is the same
   // reconciliation the summary renders from, so what was reviewed is what
   // can be approved — a mismatching request can never reach the signer.
+  // Malformed payloads (non-array legs, unreadable entries, an intent that
+  // is not a string) are blocked by the same rule.
   const jsonRepresentation = state?.request?.data?.txData?.JSONRepresentation
+  const intent = state?.request?.data?.txData?.intent
   const tokenDecimalsById =
     TransactionAmounts.buildTokenDecimalsIndex(allNetworkTokensData)
   const { blocked: approvalBlocked } = jsonRepresentation
@@ -92,18 +95,20 @@ export const SignTransactionPage = () => {
           receiving: currentMlAddresses.mlReceivingAddresses,
           change: currentMlAddresses.mlChangeAddresses,
         },
+        intent,
       })
     : { blocked: false }
 
   const network = networkType === 'testnet' ? Network.Testnet : Network.Mainnet
 
-  const hasIntent = Boolean(state?.request?.data?.txData?.intent)
+  const hasIntent = Boolean(intent)
 
   // Fail closed on malformed payloads: legs may not even be arrays (the
-  // background forwards dApp params unvalidated), and an HTLC-shaped input
-  // may arrive without an htlc object — never dereference them during
-  // render; a crash here would wedge the approval window behind the
-  // ErrorBoundary. reconcileApprovalAmounts blocks non-array payloads.
+  // background forwards dApp params unvalidated), their entries may not be
+  // objects, and an HTLC-shaped input may arrive without an htlc object —
+  // never dereference them during render; a crash here would wedge the
+  // approval window behind the ErrorBoundary. reconcileApprovalAmounts
+  // blocks non-array legs and malformed entries.
   const payloadInputs = Array.isArray(jsonRepresentation?.inputs)
     ? jsonRepresentation.inputs
     : []
@@ -156,9 +161,10 @@ export const SignTransactionPage = () => {
     const transactionJSON =
       currentState?.request?.data?.txData?.JSONRepresentation
 
-    // outputs may be a truthy non-array (the background forwards dApp params
-    // unvalidated) — a filter over it would crash the effect and unmount the
-    // page into the ErrorBoundary before the blocked banner can render.
+    // outputs may be a truthy non-array, or hold entries that are not
+    // objects (the background forwards dApp params unvalidated) — a filter
+    // that dereferenced them would crash the effect and unmount the page
+    // into the ErrorBoundary before the blocked banner can render.
     if (!transactionJSON || !Array.isArray(transactionJSON.outputs)) {
       return
     }
@@ -167,7 +173,7 @@ export const SignTransactionPage = () => {
     const htlcOutputsNeedingSecret = transactionJSON.outputs.filter(
       (output) => {
         return (
-          output.type === 'Htlc' &&
+          output?.type === 'Htlc' &&
           output.htlc &&
           (!output.htlc.secret_hash ||
             !output.htlc.secret_hash.hex ||
@@ -194,7 +200,7 @@ export const SignTransactionPage = () => {
         const updatedHtlcOutputs = updatedTransactionJSON.outputs.filter(
           (output) => {
             return (
-              output.type === 'Htlc' &&
+              output?.type === 'Htlc' &&
               output.htlc &&
               (!output.htlc.secret_hash ||
                 !output.htlc.secret_hash.hex ||

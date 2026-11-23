@@ -539,6 +539,15 @@ export const signerAmountScale = (
   return null
 }
 
+// parseInt over dApp-controlled data: only a string or a number is ever
+// coerced (an object with a shadowing `toString`/`valueOf` would throw, and
+// no object carries a scale); anything else is an unknown scale (NaN),
+// which fails closed downstream like any invalid scale.
+const parseScale = (value) =>
+  typeof value === 'string' || typeof value === 'number'
+    ? parseInt(value, 10)
+    : NaN
+
 // Amounts signed outside output.value/amount: token issuance total supply
 // (only total_supply.type === 'Fixed' carries a signed supply — Lockable/
 // Unlimited encode NO amount, so a payload attaching one to those types
@@ -558,7 +567,7 @@ const collectSignedExtras = (output, index, tokenDecimalsById) => {
       label: 'Total supply',
       container: output.total_supply,
       // the output's own (signed) scale; invalid values fail closed
-      decimals: parseInt(output.number_of_decimals, 10),
+      decimals: parseScale(output.number_of_decimals),
       tokenId: null, // pre-issuance: no ticker exists yet
       withTicker: false,
     })
@@ -610,19 +619,79 @@ const collectSignedInputExtras = (input, index) => {
   return extras
 }
 
+// One leg entry the approval can read: a non-array object (never null,
+// undefined, a primitive or an array). An input must carry the `input`
+// object the signer dispatches on and an output the string `type` the
+// signer encodes by — without them nothing about the entry is verifiable.
+const isLegEntryObject = (entry) =>
+  typeof entry === 'object' && entry !== null && !Array.isArray(entry)
+
+// An object with an own member named `toString` or `valueOf` — whatever the
+// value of that member — cannot be converted to a string or a number: data
+// arriving from the dApp is JSON-derived and can never contain a function,
+// so such a member shadows the inherited callable with a non-callable
+// value, and the object throws wherever a string or a number is required
+// (label, object key, parseInt argument). An own `toLocaleString` takes no
+// part in that coercion (only an explicit `.toLocaleString()` call would
+// throw). An own Symbol.toPrimitive is consulted first by every implicit
+// conversion, so a non-callable one throws as well, though it cannot even
+// arrive through JSON; both are flagged for completeness only. Any such
+// object anywhere inside a leg entry makes the entry unverifiable. Arrays
+// and objects are walked to a bounded depth; an entry too deep to walk is
+// unverifiable as well.
+const PRIMITIVE_SHADOWERS = ['toString', 'valueOf', 'toLocaleString']
+const MAX_LEG_ENTRY_DEPTH = 16
+const hasOwn = (object, key) =>
+  Object.prototype.hasOwnProperty.call(object, key)
+const shadowsPrimitive = (value, depth = 0) => {
+  if (value === null || typeof value !== 'object') return false
+  if (depth > MAX_LEG_ENTRY_DEPTH) return true
+  if (
+    PRIMITIVE_SHADOWERS.some((name) => hasOwn(value, name)) ||
+    Object.getOwnPropertySymbols(value).includes(Symbol.toPrimitive)
+  ) {
+    return true
+  }
+  return Object.values(value).some((child) =>
+    shadowsPrimitive(child, depth + 1),
+  )
+}
+const hasMalformedLegEntry = (inputs, outputs) =>
+  inputs.some(
+    (input) =>
+      !isLegEntryObject(input) ||
+      !isLegEntryObject(input.input) ||
+      shadowsPrimitive(input),
+  ) ||
+  outputs.some(
+    (output) =>
+      !isLegEntryObject(output) ||
+      typeof output.type !== 'string' ||
+      shadowsPrimitive(output),
+  )
+
 // Single source of truth for what the approval UI may display and whether
 // the payload may be approved at all. TransactionSummary renders from it and
 // SignExternalTransaction blocks the approve action with it, so the numbers
 // a user reviews are provably the numbers that get signed.
 export const reconcileApprovalAmounts = (
   jsonRepresentation,
-  { tokenDecimalsById, ownAddresses },
+  { tokenDecimalsById, ownAddresses, intent },
 ) => {
+  const inputs = jsonRepresentation?.inputs
+  const outputs = jsonRepresentation?.outputs
   // Fail closed: the background forwards dApp params unvalidated — non-array
-  // legs cannot be verified, so the payload is blocked, never guessed.
+  // legs cannot be verified, and an entry inside a leg that is not an
+  // object, lacks the signer-read `input`/`type`, or nests an object with a
+  // shadowing member (hasMalformedLegEntry) can neither be verified nor
+  // signed. An intent that is present but not a string (opaque bytes) can
+  // neither be shown nor acknowledged nor signed. The payload is blocked,
+  // never guessed and never dereferenced during render.
   if (
-    !Array.isArray(jsonRepresentation?.inputs) ||
-    !Array.isArray(jsonRepresentation?.outputs)
+    (intent != null && typeof intent !== 'string') ||
+    !Array.isArray(inputs) ||
+    !Array.isArray(outputs) ||
+    hasMalformedLegEntry(inputs, outputs)
   ) {
     return {
       amountRows: [],
@@ -631,8 +700,6 @@ export const reconcileApprovalAmounts = (
       blocked: true,
     }
   }
-  const outputs = jsonRepresentation.outputs
-  const inputs = jsonRepresentation.inputs
   const { outputs: relevantOutputs } = findRelevantOutputs(
     outputs,
     ownAddresses,
