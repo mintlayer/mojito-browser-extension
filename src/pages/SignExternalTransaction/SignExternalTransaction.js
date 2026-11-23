@@ -5,7 +5,12 @@ import {
   TransactionAmounts,
 } from '@Helpers'
 import { MOCKS } from './mocks'
-import { Button, Error, PageWrapper, SiteBadge } from '@BasicComponents'
+import {
+  Button,
+  Error as ErrorBanner,
+  PageWrapper,
+  SiteBadge,
+} from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 import { MintlayerContext } from '@Contexts'
@@ -20,6 +25,249 @@ import { Mintlayer } from '@APIs'
 import { sendPopupResponse } from '@Browser'
 
 const isDevelopment = process.env.NODE_ENV === 'development'
+
+// A refusal to sign an HTLC spend the wallet cannot verify. Carries no
+// secret: the message only ever describes what failed.
+const htlcSpendRefusal = (message) =>
+  Object.assign(new Error(message), { code: 'HTLC_SPEND_UNVERIFIED' })
+
+const isWalletAddress = (address, walletAddresses) =>
+  typeof address === 'string' && walletAddresses.includes(address)
+
+// The chain's hash over a hex secret — the one the wallet locks into an
+// HTLC when it creates one (Secret.generateSecretHash).
+const htlcSecretHashHex = (secretHex) =>
+  Buffer.from(
+    Secret.generateSecretHash(Secret.hexToSecret(secretHex)),
+  ).toString('hex')
+
+const isSecretHashHex = (hex) =>
+  typeof hex === 'string' && /^[0-9a-fA-F]{40}$/.test(hex)
+
+// A node-serialized secret hash: a plain hex string or `{ hex }`.
+const readSecretHashHex = (secretHash) => {
+  const hex = typeof secretHash === 'string' ? secretHash : secretHash?.hex
+  return isSecretHashHex(hex) ? hex.toLowerCase() : null
+}
+
+// Atoms as BigInt from a node-serialized amount (a digit string or a safe
+// integer), or null when unreadable.
+const atomsOf = (value) => {
+  const raw = value?.amount?.atoms
+  if (typeof raw === 'number' && !Number.isSafeInteger(raw)) return null
+  try {
+    const atoms = BigInt(raw)
+    return atoms < 0n ? null : atoms
+  } catch {
+    return null
+  }
+}
+
+// The asset of a node-serialized value: a token id, or null for the coin.
+const tokenIdOf = (value) => value?.token_id ?? null
+
+const isSameOutpoint = (outpoint, sourceId, index) =>
+  typeof outpoint?.source_id === 'string' &&
+  outpoint.source_id.toLowerCase() === sourceId.toLowerCase() &&
+  outpoint.index === index
+
+/**
+ * Verifies an HTLC input the wallet is asked to spend with its secret
+ * against the chain, before any key or secret is used.
+ *
+ * Both answers come from the node's batch endpoint — the one the wallet's
+ * own history is built from (MintlayerProvider → ML.getBatchData →
+ * batchRequestMintlayer):
+ *  - the transaction at input.source_id, asked for by that one id: the
+ *    answer must hold exactly that one transaction. It must be CONFIRMED
+ *    (confirmations > 0) and have an HTLC output at input.index with the
+ *    same spend_key, secret hash, asset and value as the request describes.
+ *    Of the fields read here from the transaction answer, id,
+ *    confirmations, outputs[].type, outputs[].value.token_id and
+ *    outputs[].value.amount.decimal are what the production parser reads
+ *    (ML.getParsedTransactions). outputs[].htlc — the spend key and secret
+ *    hash this verification turns on — and outputs[].value.amount.atoms are
+ *    read from this answer by nothing in the wallet's production code:
+ *    their shape here follows the wallet's request fixtures and is
+ *    unverified against a live node, which must be checked before relying
+ *    on this path.
+ *  - the spendable UTXOs of the spend_key address, items of
+ *    { outpoint: { source_id, index }, utxo: { type, value } } as
+ *    MintlayerProvider reads them (item.outpoint, item.utxo) and as the
+ *    SDK reads the atoms of utxo.value; the htlc object inside utxo — its
+ *    spend_key and secret_hash are compared too — is read from this answer
+ *    by nothing in production and is likewise known only from the request
+ *    fixtures and unverified against a live node.
+ *    The outpoint must still be among them, describing the same HTLC.
+ *    That answer carries no confirmation indicator, which is why
+ *    confirmation is required from the transaction answer.
+ *
+ * Returns the on-chain secret hash — the only key a stored secret may be
+ * looked up by. Fail closed: a lookup that cannot be completed refuses as
+ * well.
+ */
+const verifyHtlcSpendInput = async ({ input }) => {
+  const outpoint = input?.input
+  const htlc = input?.utxo?.htlc
+  if (
+    typeof outpoint?.source_id !== 'string' ||
+    !/^[0-9a-fA-F]{64}$/.test(outpoint.source_id) ||
+    !Number.isInteger(outpoint?.index) ||
+    outpoint.index < 0
+  ) {
+    throw htlcSpendRefusal('The HTLC input does not name a transaction output.')
+  }
+  const requestedHash = readSecretHashHex(htlc?.secret_hash)
+  if (!requestedHash) {
+    throw htlcSpendRefusal('The HTLC input carries no readable secret hash.')
+  }
+  const requestedAtoms = atomsOf(input.utxo?.value)
+  const requestedTokenId = tokenIdOf(input.utxo?.value)
+
+  // The transaction, fetched the way the wallet's history fetches it: the
+  // batch endpoint with the transaction lookup as its type, one id asked
+  // and exactly one transaction expected back.
+  let transactions
+  try {
+    transactions = await Mintlayer.batchRequestMintlayer({
+      ids: [outpoint.source_id],
+      type: Mintlayer.MINTLAYER_ENDPOINTS.GET_TRANSACTION_DATA,
+    })
+  } catch {
+    throw htlcSpendRefusal(
+      'The HTLC output could not be looked up on chain. Check your connection and try again.',
+    )
+  }
+  const transaction =
+    Array.isArray(transactions) && transactions.length === 1
+      ? transactions[0]
+      : null
+  if (!transaction || typeof transaction !== 'object') {
+    throw htlcSpendRefusal(
+      'The transaction holding the HTLC output could not be read from the chain.',
+    )
+  }
+  const reportedId = transaction.txid ?? transaction.id
+  if (
+    typeof reportedId !== 'string' ||
+    reportedId.toLowerCase() !== outpoint.source_id.toLowerCase()
+  ) {
+    throw htlcSpendRefusal(
+      'The node returned a different transaction than the one being claimed.',
+    )
+  }
+  if (
+    !Number.isInteger(transaction.confirmations) ||
+    transaction.confirmations <= 0
+  ) {
+    throw htlcSpendRefusal(
+      'The transaction holding the HTLC output is not confirmed on chain yet.',
+    )
+  }
+  const output = Array.isArray(transaction.outputs)
+    ? transaction.outputs[outpoint.index]
+    : null
+  if (!output || output.type !== 'Htlc' || typeof output.htlc !== 'object') {
+    throw htlcSpendRefusal(
+      'The output being claimed is not an HTLC output on chain.',
+    )
+  }
+  if (output.htlc.spend_key !== htlc.spend_key) {
+    throw htlcSpendRefusal(
+      'The HTLC output on chain pays its spend branch to a different key.',
+    )
+  }
+  const chainHash = readSecretHashHex(output.htlc.secret_hash)
+  if (!chainHash) {
+    throw htlcSpendRefusal(
+      'The HTLC output on chain carries no readable secret hash.',
+    )
+  }
+  if (chainHash !== requestedHash) {
+    throw htlcSpendRefusal(
+      'The HTLC output on chain is locked to a different secret hash than the request states.',
+    )
+  }
+  const chainAtoms = atomsOf(output.value)
+  if (
+    chainAtoms === null ||
+    requestedAtoms === null ||
+    chainAtoms !== requestedAtoms
+  ) {
+    throw htlcSpendRefusal(
+      'The HTLC output on chain holds a different amount than the request states.',
+    )
+  }
+  if (tokenIdOf(output.value) !== requestedTokenId) {
+    throw htlcSpendRefusal(
+      'The HTLC output on chain holds a different asset than the request states.',
+    )
+  }
+
+  // Still unspent: the outpoint is among the spend key's spendable UTXOs
+  // (the same batch endpoint, with the spendable-utxo lookup as its type),
+  // and that entry describes the same HTLC.
+  let spendable
+  try {
+    spendable = await Mintlayer.batchRequestMintlayer({
+      ids: [htlc.spend_key],
+      type: Mintlayer.MINTLAYER_ENDPOINTS.GET_ADDRESS_SPENDABLE_UTXO,
+    })
+  } catch {
+    throw htlcSpendRefusal(
+      'The HTLC output could not be looked up on chain. Check your connection and try again.',
+    )
+  }
+  const live = Array.isArray(spendable)
+    ? spendable.find((item) =>
+        isSameOutpoint(item?.outpoint, outpoint.source_id, outpoint.index),
+      )
+    : null
+  if (!live) {
+    throw htlcSpendRefusal(
+      'The HTLC output being claimed is no longer an unspent output of its spend key.',
+    )
+  }
+  const liveHtlc = live.utxo?.htlc
+  if (
+    live.utxo?.type !== 'Htlc' ||
+    typeof liveHtlc !== 'object' ||
+    liveHtlc?.spend_key !== htlc.spend_key ||
+    readSecretHashHex(liveHtlc?.secret_hash) !== chainHash ||
+    atomsOf(live.utxo?.value) !== requestedAtoms ||
+    tokenIdOf(live.utxo?.value) !== requestedTokenId
+  ) {
+    throw htlcSpendRefusal(
+      'The unspent output at this outpoint is not the HTLC being claimed.',
+    )
+  }
+  return chainHash
+}
+
+/**
+ * Decides whether a wallet secret will be signed into the request and
+ * where it comes from. A typed secret must have an HTLC input paying its
+ * spend branch to this wallet — there is nothing it could legitimately be
+ * signed for otherwise. The stored secret is used when such an input
+ * exists, nothing was typed and the request brings no witness of its own.
+ */
+export const resolveWalletSecretUse = ({
+  claimedInputs,
+  typedSecret,
+  witnessInputGiven,
+}) => {
+  const typedSecretUsed = typedSecret !== ''
+  if (typedSecretUsed && claimedInputs.length === 0) {
+    throw htlcSpendRefusal(
+      'A secret was entered, but no HTLC input of this transaction pays its spend branch to this wallet.',
+    )
+  }
+  return {
+    typedSecretUsed,
+    storedSecretUsed:
+      claimedInputs.length > 0 && !typedSecretUsed && !witnessInputGiven,
+  }
+}
 
 export const SignTransactionPage = () => {
   const { state: external_state } = useLocation()
@@ -120,17 +368,31 @@ export const SignTransactionPage = () => {
       input?.input?.input_type === 'UTXO' && input?.utxo?.type === 'Htlc',
   )
   const isHTLCTx = htlcInputs.length > 0
-  const HtlcInput = htlcInputs[0]
+
+  // The HTLC inputs whose spend branch pays this wallet — the only ones
+  // this wallet's secret could ever be placed into. An HTLC input whose
+  // spend key is not a wallet address is not a claim by this wallet.
+  const walletMlAddresses = [
+    ...currentMlAddresses.mlReceivingAddresses,
+    ...currentMlAddresses.mlChangeAddresses,
+  ]
+  const claimedInputs = htlcInputs.filter((input) =>
+    isWalletAddress(input?.utxo?.htlc?.spend_key, walletMlAddresses),
+  )
+  const claimedInput = claimedInputs[0]
 
   const isHTLCCreateTx = payloadOutputs.some(
     (output) => output?.type === 'Htlc',
   )
 
+  // A claim by this wallet: an HTLC input pays its spend branch to this
+  // wallet and an output pays that key. The secret prompt is shown for
+  // it alone — a typed secret is only ever used for such an input.
   const isHTLCClaim =
     isHTLCTx &&
-    HtlcInput?.utxo?.htlc?.spend_key != null &&
+    claimedInput !== undefined &&
     payloadOutputs.some(
-      (output) => output?.destination === HtlcInput?.utxo?.htlc?.spend_key,
+      (output) => output?.destination === claimedInput?.utxo?.htlc?.spend_key,
     )
 
   const handleApprove = () => {
@@ -275,6 +537,43 @@ export const SignTransactionPage = () => {
     }
 
     try {
+      // Everything that needs neither keys nor a secret runs first: whether
+      // a wallet secret will be used at all and, if so, that every HTLC
+      // input it would be placed into is the confirmed, unspent on-chain
+      // HTLC output the request describes — and, for a typed secret, that
+      // it hashes to that output's hash. A request refused here never
+      // decrypts the wallet and never reaches the stored secret.
+      const typedSecret = secret.trim()
+      const { typedSecretUsed, storedSecretUsed } = resolveWalletSecretUse({
+        claimedInputs,
+        typedSecret,
+        witnessInputGiven:
+          state?.request?.data?.txData?.htlc?.witness_input !== undefined,
+      })
+      let claimSecretHash = null
+      if (typedSecretUsed || storedSecretUsed) {
+        const verifiedHashes = []
+        for (const input of claimedInputs) {
+          verifiedHashes.push(await verifyHtlcSpendInput({ input }))
+        }
+        claimSecretHash = verifiedHashes[0]
+        // One secret is signed for every claimed input, so they must all
+        // demand it.
+        if (verifiedHashes.some((hash) => hash !== claimSecretHash)) {
+          throw htlcSpendRefusal(
+            'The HTLC inputs being claimed are locked to different secret hashes.',
+          )
+        }
+        if (
+          typedSecretUsed &&
+          htlcSecretHashHex(typedSecret) !== claimSecretHash
+        ) {
+          throw htlcSpendRefusal(
+            'The secret does not match the hash of the HTLC being claimed.',
+          )
+        }
+      }
+
       const transactionJSONrepresentation =
         state?.request?.data?.txData?.JSONRepresentation
 
@@ -324,18 +623,28 @@ export const SignTransactionPage = () => {
         })
       }
 
-      const secretPresaved =
-        HtlcInput?.utxo?.htlc &&
-        !secret &&
-        state?.request?.data?.txData?.htlc?.witness_input === undefined
-          ? await Account.unlockHtlsSecret({
-              accountId: accountID,
-              password: pass,
-              hash: HtlcInput.utxo.htlc.secret_hash.hex,
-            })
-          : null
+      // The stored secret is looked up by the hash the ON-CHAIN output
+      // carries — never by a value the request supplies — and must hash to
+      // it before anything is built or signed with it.
+      const secretPresaved = storedSecretUsed
+        ? await Account.unlockHtlsSecret({
+            accountId: accountID,
+            password: pass,
+            hash: claimSecretHash,
+          })
+        : null
 
-      const secret_ = secretPresaved || secret
+      const secret_ = secretPresaved || typedSecret
+
+      if (
+        secret_ &&
+        claimSecretHash !== null &&
+        htlcSecretHashHex(secret_) !== claimSecretHash
+      ) {
+        throw htlcSpendRefusal(
+          'The secret does not match the hash of the HTLC being claimed.',
+        )
+      }
 
       const order_info = {}
 
@@ -553,11 +862,11 @@ export const SignTransactionPage = () => {
           )}
 
           {!state?.request?.data?.txData?.JSONRepresentation && (
-            <Error error="No pending sign request." />
+            <ErrorBanner error="No pending sign request." />
           )}
 
           {approvalBlocked && (
-            <Error error="Amount verification failed: the site-reported amounts do not match what this transaction would sign. For your safety, this request cannot be approved." />
+            <ErrorBanner error="Amount verification failed: the site-reported amounts do not match what this transaction would sign. For your safety, this request cannot be approved." />
           )}
 
           {/* HTLC Secret Information */}

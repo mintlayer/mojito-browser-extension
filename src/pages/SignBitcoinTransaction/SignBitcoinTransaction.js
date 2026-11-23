@@ -1,12 +1,16 @@
 import { useLocation } from 'react-router'
 import { MOCKS } from './mocks'
-import { Button, Error, PageWrapper, SiteBadge } from '@BasicComponents'
+import {
+  Button,
+  Error as ErrorBanner,
+  PageWrapper,
+  SiteBadge,
+} from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 import { SignTransaction } from '@ContainerComponents'
 
 import './SignBitcoinTransaction.css'
 import { useState, useContext, useMemo, useEffect } from 'react'
-import * as bitcoin from 'bitcoinjs-lib'
 import { Account } from '@Entities'
 import { AccountContext, BitcoinContext, SettingsContext } from '@Contexts'
 import { BTCTransaction, BTC_ADDRESS_TYPE_ENUM } from '@Cryptos'
@@ -26,10 +30,6 @@ const isDevelopment = process.env.NODE_ENV === 'development'
 // sat/vB used when the fee service is unreachable
 const FALLBACK_BTC_FEE_RATE = 10
 
-// bitcoinjs boundary helpers (the Buffer polyfill fails its exact
-// Uint8Array validation — see BTCTransaction.js).
-const u8FromHex = (hex) => new Uint8Array(Buffer.from(hex, 'hex'))
-
 const getBtcFeeRate = async () => {
   try {
     const estimates = JSON.parse(await Electrum.getFeesEstimates())
@@ -43,49 +43,34 @@ const getBtcFeeRate = async () => {
   }
 }
 
-function parseSecretHashFromRedeemScript(redeemScriptHex) {
-  // Decompile the redeem script hex into chunks (plain Uint8Array input —
-  // this bitcoinjs build rejects the Buffer polyfill).
-  const chunks = bitcoin.script.decompile(u8FromHex(redeemScriptHex))
-  if (!chunks) throw new Error('Invalid redeemScript')
+// hash160 (RIPEMD160 over SHA256) of a hex secret — the hash the wallet
+// locks into an HTLC when it creates one (Secret.generateSecretHash).
+const secretHashHexOf = (secretHex) =>
+  Buffer.from(
+    Secret.generateSecretHash(Secret.hexToSecret(secretHex)),
+  ).toString('hex')
 
-  // HTLC script structure:
-  // OP_IF
-  //   OP_HASH160
-  //   <secretHash>        <- This is at index 2
-  //   OP_EQUALVERIFY
-  //   <receiverPubKey>
-  // OP_ELSE
-  //   <lockBlockCount>
-  //   OP_CHECKSEQUENCEVERIFY
-  //   OP_DROP
-  //   <senderPubKey>
-  // OP_ENDIF
-  // OP_CHECKSIG
-
-  // Verify the script starts with OP_IF and has OP_HASH160
-  if (chunks[0] !== bitcoin.opcodes.OP_IF) {
-    throw new Error('Invalid HTLC script: does not start with OP_IF')
+// The hash a claim request carries next to its utxo, if any: a JSON
+// string or an object holding secret_hash_hex. null when the request
+// carries none; undefined when it carries one that cannot be read.
+const readRequestedSecretHash = (secretHash) => {
+  if (secretHash == null) return null
+  let container = secretHash
+  if (typeof secretHash === 'string') {
+    try {
+      container = JSON.parse(secretHash)
+    } catch {
+      return undefined
+    }
   }
-
-  if (chunks[1] !== bitcoin.opcodes.OP_HASH160) {
-    throw new Error(
-      'Invalid HTLC script: OP_HASH160 not found at expected position',
-    )
-  }
-
-  // The secret hash should be at index 2 (this bitcoinjs build returns
-  // plain Uint8Array chunks — Buffer.isBuffer is always false here).
-  const secretHashChunk = chunks[2]
-
-  if (!ArrayBuffer.isView(secretHashChunk)) {
-    throw new Error(
-      'Secret hash not found at expected position in redeemScript',
-    )
-  }
-
-  return Buffer.from(secretHashChunk).toString('hex')
+  const hex = container?.secret_hash_hex
+  return typeof hex === 'string' ? hex.toLowerCase() : undefined
 }
+
+// A refusal to sign an HTLC request the wallet cannot verify. Carries no
+// secret: the message only ever describes what failed.
+const htlcRefusal = (code, message) =>
+  Object.assign(new Error(message), { code })
 
 export const SignBitcoinTransactionPage = () => {
   const { state: external_state } = useLocation()
@@ -298,22 +283,76 @@ export const SignBitcoinTransactionPage = () => {
     return fallback
   }
 
-  // Signs only when the redeem script actually binds a key from this
-  // wallet — otherwise our signature is meaningless and the request is
-  // either malformed or an attempt to abuse the signing oracle.
-  const requireWalletKeyFor = (redeemScriptHex, btcPrivateKeys) => {
+  // Signs only with the wallet key ONE branch of the redeem script binds:
+  // a claim with the spend-branch key (the one checked against the secret
+  // hash), a refund with the refund-branch key (the one behind the
+  // timelock). A wallet key that sits only on the other branch is refused.
+  const requireWalletKeyFor = (branch, redeemScriptHex, btcPrivateKeys) => {
     const keyInfo = BTCTransaction.findWalletKeyForRedeemScript({
       redeemScriptHex,
       btcAddressData: btcPrivateKeys.btcAddressData,
       btcHDWallet: btcPrivateKeys.btcHDWallet,
+      branch,
     })
     if (!keyInfo) {
-      throw Object.assign(
-        new Error('This HTLC script does not bind any key from this wallet.'),
-        { code: 'HTLC_SCRIPT_NOT_OURS' },
+      throw htlcRefusal(
+        'HTLC_SCRIPT_NOT_OURS',
+        branch === 'spend'
+          ? 'This HTLC does not pay its spend branch to a key from this wallet, so this wallet cannot claim it.'
+          : 'This HTLC does not pay its refund branch to a key from this wallet, so this wallet cannot refund it.',
       )
     }
     return keyInfo
+  }
+
+  // The HTLC as its redeem script describes it. The script is the only
+  // source of the hash a stored secret may be looked up by and of the key
+  // each branch pays; a request whose script is not this shape is refused.
+  const requireParsedHtlc = (redeemScriptHex) => {
+    const htlc = BTCTransaction.parseHtlcRedeemScript(redeemScriptHex)
+    if (!htlc) {
+      throw htlcRefusal(
+        'HTLC_SCRIPT_INVALID',
+        'The HTLC script is not a valid HTLC script.',
+      )
+    }
+    return htlc
+  }
+
+  // A hash the request carries next to the utxo must be the script's own.
+  const requireRequestedHashMatches = (requestedHash, htlc) => {
+    if (requestedHash !== null && requestedHash !== htlc.secretHashHex) {
+      throw htlcRefusal(
+        'HTLC_SECRET_HASH_MISMATCH',
+        'The secret hash in the request does not match the hash in the HTLC script.',
+      )
+    }
+  }
+
+  // The output being spent must exist on chain exactly as described. Fail
+  // closed: a lookup that cannot be completed refuses as well.
+  const requireVerifiedOutpoint = (utxo, redeemScriptHex) =>
+    BTCTransaction.verifyHtlcOutpoint({
+      networkType,
+      utxo,
+      redeemScriptHex,
+    })
+
+  // The secret — stored or typed — must hash to the HTLC's hash before
+  // anything is built or signed with it.
+  const requireSecretMatchesHash = (secretHex, htlc) => {
+    if (!secretHex) {
+      throw htlcRefusal(
+        'HTLC_SECRET_MISSING',
+        'The secret is required to claim this HTLC.',
+      )
+    }
+    if (secretHashHexOf(secretHex) !== htlc.secretHashHex) {
+      throw htlcRefusal(
+        'HTLC_SECRET_MISMATCH',
+        'The secret does not match the hash in the HTLC script.',
+      )
+    }
   }
 
   const handleApprove = () => {
@@ -472,15 +511,24 @@ export const SignBitcoinTransactionPage = () => {
 
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
+    const { utxo, redeemScriptHex } = transactionJSONrepresentation
+
+    // Everything that needs no key material runs first: the script's
+    // shape, the hash the request carries, and the output on chain. A
+    // request that fails here never reaches the stored secret.
+    const htlc = requireParsedHtlc(redeemScriptHex)
+    requireRequestedHashMatches(readRequestedSecretHash(utxo?.secretHash), htlc)
+    await requireVerifiedOutpoint(utxo, redeemScriptHex)
 
     const { btcPrivateKeys } = await Account.unlockAccount(accountID, pass, {
       wallets: ['btc'],
     })
 
-    // Sign ONLY with the wallet key the redeem script binds; reject
-    // scripts that bind foreign keys instead of feeding them our signer.
+    // Sign ONLY with the wallet key the SPEND branch binds; a wallet key
+    // that sits only on the refund branch is refused.
     const keyInfo = requireWalletKeyFor(
-      transactionJSONrepresentation.redeemScriptHex,
+      'spend',
+      redeemScriptHex,
       btcPrivateKeys,
     )
     const toAddress = resolveHtlcDestination(
@@ -488,35 +536,24 @@ export const SignBitcoinTransactionPage = () => {
       btcPrivateKeys.btcAddressData,
     )
 
-    // Parse secret hash from redeem script as fallback
-    const secretHashFromRedeemScript = parseSecretHashFromRedeemScript(
-      transactionJSONrepresentation.redeemScriptHex,
-    )
-
-    // Try to retrieve previously saved secret for HTLC spend transactions
+    // The stored secret is looked up by the hash the SCRIPT carries —
+    // never by a value the request supplies.
     let secretPresaved = null
-    if (isHTLCSpendTx) {
-      try {
-        // Use secret hash from utxo if available, otherwise use parsed from redeem script
-        const secretHash = transactionJSONrepresentation.utxo?.secretHash
-          ? typeof transactionJSONrepresentation.utxo.secretHash === 'string'
-            ? JSON.parse(transactionJSONrepresentation.utxo.secretHash)
-                .secret_hash_hex
-            : transactionJSONrepresentation.utxo.secretHash.secret_hash_hex
-          : secretHashFromRedeemScript
-
-        secretPresaved = await Account.unlockHtlsSecret({
-          accountId: accountID,
-          password: pass,
-          hash: secretHash,
-        })
-      } catch {
-        // No saved secret for this hash — the user is prompted for manual
-        // input below, so this fallback is expected and stays silent.
-      }
+    try {
+      secretPresaved = await Account.unlockHtlsSecret({
+        accountId: accountID,
+        password: pass,
+        hash: htlc.secretHashHex,
+      })
+    } catch {
+      // No saved secret for this hash — the user is prompted for manual
+      // input, so this fallback is expected and stays silent.
     }
 
-    const finalSecret = secretPresaved || revealed_secret || secret
+    // A typed secret is taken trimmed: a trailing newline would otherwise
+    // stop the hex decode early and read as a hash mismatch.
+    const finalSecret = secretPresaved || revealed_secret || secret.trim()
+    requireSecretMatchesHash(finalSecret, htlc)
 
     // The builders pin the PSBT to bitcoin.networks[networkType]: pass the
     // validated string networkType (guarded above), never the Mintlayer
@@ -524,9 +561,9 @@ export const SignBitcoinTransactionPage = () => {
     // default and mainnet signing fails on the mainnet destination address.
     const tx = await BTCTransaction.buildHtlcClaimTx({
       networkType,
-      utxo: transactionJSONrepresentation.utxo,
+      utxo,
       toAddress,
-      redeemScriptHex: transactionJSONrepresentation.redeemScriptHex,
+      redeemScriptHex,
       secretHex: finalSecret,
       wif: keyInfo.wif,
     })
@@ -566,13 +603,22 @@ export const SignBitcoinTransactionPage = () => {
 
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
+    const { utxo, redeemScriptHex } = transactionJSONrepresentation
+
+    // No secret is involved, but the output must be the HTLC output the
+    // request describes before any key material is used for it.
+    requireParsedHtlc(redeemScriptHex)
+    await requireVerifiedOutpoint(utxo, redeemScriptHex)
 
     const { btcPrivateKeys } = await Account.unlockAccount(accountID, pass, {
       wallets: ['btc'],
     })
 
+    // Sign ONLY with the wallet key the REFUND branch (behind the timelock)
+    // binds; a wallet key that sits only on the spend branch is refused.
     const keyInfo = requireWalletKeyFor(
-      transactionJSONrepresentation.redeemScriptHex,
+      'refund',
+      redeemScriptHex,
       btcPrivateKeys,
     )
     const toAddress = resolveHtlcDestination(
@@ -584,9 +630,9 @@ export const SignBitcoinTransactionPage = () => {
     // string, not the Mintlayer Network enum.
     const tx = await BTCTransaction.buildHtlcRefundTx({
       networkType,
-      utxo: transactionJSONrepresentation.utxo,
+      utxo,
       toAddress,
-      redeemScriptHex: transactionJSONrepresentation.redeemScriptHex,
+      redeemScriptHex,
       wif: keyInfo.wif,
     })
 
@@ -758,13 +804,13 @@ export const SignBitcoinTransactionPage = () => {
                   )}
                 </div>
               )}
-              {approvalBlocked && <Error error={blockedReason} />}
+              {approvalBlocked && <ErrorBanner error={blockedReason} />}
               <SignTransaction.JsonPreview data={state} />
             </div>
           )}
 
           {!state?.request?.data?.txData?.JSONRepresentation && (
-            <Error error="No pending sign request." />
+            <ErrorBanner error="No pending sign request." />
           )}
 
           {/* HTLC Secret Information */}

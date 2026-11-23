@@ -7,6 +7,7 @@ const ELECTRUM_ENDPOINTS = {
   GET_LAST_BLOCK_HASH: '/blocks/tip/hash',
   GET_TRANSACTION_DATA: '/tx/:txid',
   GET_TRANSACTION_HEX: '/tx/:txid/hex',
+  GET_OUTSPEND: '/tx/:txid/outspend/:vout',
   GET_TRANSACTION_STATUS: '/tx/:txid/status',
   GET_ADDRESS_TRANSACTIONS: '/address/:address/txs',
   GET_ADDRESS_MEMPOOL_TRANSACTIONS: '/address/:address/txs/mempool',
@@ -106,6 +107,15 @@ const getTransactionHex = (txid) =>
       ':txid',
       encodeURIComponent(txid),
     ),
+  )
+
+// The spend status of one output of a transaction.
+const getOutspend = (txid, vout) =>
+  tryServers(
+    ELECTRUM_ENDPOINTS.GET_OUTSPEND.replace(
+      ':txid',
+      encodeURIComponent(txid),
+    ).replace(':vout', encodeURIComponent(String(vout))),
   )
 
 const getTransactionStatus = (txid) =>
@@ -220,6 +230,7 @@ export {
   getTransactionData,
   getTransactionStatus,
   getTransactionHex,
+  getOutspend,
   getAddressTransactions,
   getAddressMempoolTransactions,
   getAddress,

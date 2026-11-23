@@ -4,12 +4,26 @@ import { ECPairFactory, networks as ecpairNetworks } from 'ecpair'
 import * as ecc from '@bitcoinerlab/secp256k1'
 import {
   findWalletKeyForRedeemScript,
+  parseHtlcRedeemScript,
+  verifyHtlcOutpoint,
   buildHtlcClaimTx,
   buildHtlcRefundTx,
   HTLC_CLAIM_FEE_SATOSHIS,
   HTLC_REFUND_FEE_SATOSHIS,
   toSatoshiBigInt,
 } from './BTCTransaction'
+import { Electrum } from '@APIs'
+
+// The chain: the Electrum client is a mock, no network is ever touched.
+jest.mock('@APIs', () => ({
+  __esModule: true,
+  Electrum: {
+    getTransactionData: jest.fn(),
+    getTransactionHex: jest.fn(),
+    getOutspend: jest.fn(),
+  },
+  Mintlayer: {},
+}))
 
 const bip32 = BIP32Factory(ecc)
 
@@ -30,11 +44,16 @@ const ourChild = root.derivePath("m/84'/0'/0'/0/0")
 // Buffer-derived fixtures are converted before compiling.
 const u8 = (bytes) => new Uint8Array(bytes)
 
-const compileHtlc = (receiverPubkey, senderPubkey, lockBlocks = 100) => {
+const compileHtlc = (
+  receiverPubkey,
+  senderPubkey,
+  lockBlocks = 100,
+  secretHash = Buffer.alloc(20, 2),
+) => {
   const compiled = bitcoin.script.compile([
     bitcoin.opcodes.OP_IF,
     bitcoin.opcodes.OP_HASH160,
-    u8(Buffer.alloc(20, 2)),
+    u8(secretHash),
     bitcoin.opcodes.OP_EQUALVERIFY,
     u8(receiverPubkey),
     bitcoin.opcodes.OP_ELSE,
@@ -50,6 +69,8 @@ const compileHtlc = (receiverPubkey, senderPubkey, lockBlocks = 100) => {
 const foreignPubkey = Buffer.alloc(33, 9)
 const ourScriptHex = compileHtlc(ourChild.publicKey, foreignPubkey)
 const foreignScriptHex = compileHtlc(foreignPubkey, Buffer.alloc(33, 8))
+// our key behind the timelock only
+const ourRefundBranchScriptHex = compileHtlc(foreignPubkey, ourChild.publicKey)
 
 const addressData = {
   btcReceivingAddresses: [
@@ -63,12 +84,63 @@ const addressData = {
   btcChangeAddresses: [],
 }
 
+describe('parseHtlcRedeemScript', () => {
+  it("reads the hash, both branch keys and the lock of the wallet's script shape", () => {
+    const secretHash = Buffer.alloc(20, 7)
+    expect(
+      parseHtlcRedeemScript(
+        compileHtlc(ourChild.publicKey, foreignPubkey, 144, secretHash),
+      ),
+    ).toEqual({
+      secretHashHex: secretHash.toString('hex'),
+      spendPubkeyHex: Buffer.from(ourChild.publicKey).toString('hex'),
+      refundPubkeyHex: foreignPubkey.toString('hex'),
+      lockBlockCount: 144,
+    })
+  })
+
+  it('reads a lock encoded as OP_1…OP_16, as other compilers emit it', () => {
+    const withOpN = Buffer.from(
+      bitcoin.script.compile([
+        bitcoin.opcodes.OP_IF,
+        bitcoin.opcodes.OP_HASH160,
+        u8(Buffer.alloc(20, 2)),
+        bitcoin.opcodes.OP_EQUALVERIFY,
+        u8(ourChild.publicKey),
+        bitcoin.opcodes.OP_ELSE,
+        bitcoin.opcodes.OP_4,
+        bitcoin.opcodes.OP_CHECKSEQUENCEVERIFY,
+        bitcoin.opcodes.OP_DROP,
+        u8(foreignPubkey),
+        bitcoin.opcodes.OP_ENDIF,
+        bitcoin.opcodes.OP_CHECKSIG,
+      ]),
+    ).toString('hex')
+    expect(parseHtlcRedeemScript(withOpN).lockBlockCount).toBe(4)
+  })
+
+  it.each([
+    ['an empty value', ''],
+    ['non-hex', 'zzzz'],
+    ['an odd length', 'abc'],
+    ['a missing value', undefined],
+    ['a truncated script', ourScriptHex.slice(0, -4)],
+    [
+      'a script whose hash is 32 bytes',
+      compileHtlc(ourChild.publicKey, foreignPubkey, 100, Buffer.alloc(32, 2)),
+    ],
+  ])('returns null for %s', (_description, redeemScriptHex) => {
+    expect(parseHtlcRedeemScript(redeemScriptHex)).toBeNull()
+  })
+})
+
 describe('findWalletKeyForRedeemScript', () => {
-  it('finds the stored WIF when the script binds one of our pubkeys', () => {
+  it('finds the stored WIF when the SPEND branch binds one of our pubkeys', () => {
     const keyInfo = findWalletKeyForRedeemScript({
       redeemScriptHex: ourScriptHex,
       btcAddressData: addressData,
       btcHDWallet: root,
+      branch: 'spend',
     })
 
     expect(keyInfo).toEqual({
@@ -76,6 +148,48 @@ describe('findWalletKeyForRedeemScript', () => {
       address: 'bc1qours',
       derivationPath: "m/84'/0'/0'/0/0",
     })
+  })
+
+  it('finds the stored WIF when the REFUND branch binds one of our pubkeys', () => {
+    const keyInfo = findWalletKeyForRedeemScript({
+      redeemScriptHex: ourRefundBranchScriptHex,
+      btcAddressData: addressData,
+      btcHDWallet: root,
+      branch: 'refund',
+    })
+
+    expect(keyInfo.wif).toBe(ourChild.toWIF())
+  })
+
+  it('refuses our key when it sits only on the other branch', () => {
+    // our key behind the timelock only: not the key a claim signs with
+    expect(
+      findWalletKeyForRedeemScript({
+        redeemScriptHex: ourRefundBranchScriptHex,
+        btcAddressData: addressData,
+        btcHDWallet: root,
+        branch: 'spend',
+      }),
+    ).toBeNull()
+    // our key on the secret branch only: not the key a refund signs with
+    expect(
+      findWalletKeyForRedeemScript({
+        redeemScriptHex: ourScriptHex,
+        btcAddressData: addressData,
+        btcHDWallet: root,
+        branch: 'refund',
+      }),
+    ).toBeNull()
+  })
+
+  it('refuses when no branch is named', () => {
+    expect(
+      findWalletKeyForRedeemScript({
+        redeemScriptHex: ourScriptHex,
+        btcAddressData: addressData,
+        btcHDWallet: root,
+      }),
+    ).toBeNull()
   })
 
   it('re-derives from the HD node when the entry has no stored WIF', () => {
@@ -94,6 +208,7 @@ describe('findWalletKeyForRedeemScript', () => {
       redeemScriptHex: ourScriptHex,
       btcAddressData: entryWithoutWif,
       btcHDWallet: root,
+      branch: 'spend',
     })
 
     expect(keyInfo.wif).toBe(ourChild.toWIF())
@@ -114,16 +229,18 @@ describe('findWalletKeyForRedeemScript', () => {
       redeemScriptHex: ourScriptHex,
       btcAddressData: entriesWithoutPubkeys,
       btcHDWallet: root,
+      branch: 'spend',
     })
 
     expect(keyInfo.wif).toBe(ourChild.toWIF())
   })
 
-  it('returns null when the script binds only foreign keys', () => {
+  it('returns null when the branch binds only foreign keys', () => {
     const keyInfo = findWalletKeyForRedeemScript({
       redeemScriptHex: foreignScriptHex,
       btcAddressData: addressData,
       btcHDWallet: root,
+      branch: 'spend',
     })
 
     expect(keyInfo).toBeNull()
@@ -135,6 +252,7 @@ describe('findWalletKeyForRedeemScript', () => {
         redeemScriptHex: 'zzzz',
         btcAddressData: addressData,
         btcHDWallet: root,
+        branch: 'spend',
       }),
     ).toBeNull()
     expect(
@@ -142,8 +260,191 @@ describe('findWalletKeyForRedeemScript', () => {
         redeemScriptHex: undefined,
         btcAddressData: addressData,
         btcHDWallet: root,
+        branch: 'spend',
       }),
     ).toBeNull()
+  })
+})
+
+describe('verifyHtlcOutpoint — the output on chain', () => {
+  const txid = 'a'.repeat(64)
+  const utxo = { txid, vout: 0, value: 2000 }
+  const p2wshHex = (redeemScriptHex) =>
+    Buffer.from(
+      bitcoin.payments.p2wsh({
+        redeem: { output: u8(Buffer.from(redeemScriptHex, 'hex')) },
+      }).output,
+    ).toString('hex')
+  // An Esplora-style /tx/:txid answer; confirmed unless stated otherwise
+  // (null = no status object at all).
+  const chainTransaction = (outputs, id = txid, confirmed = true) =>
+    JSON.stringify({
+      txid: id,
+      vin: [],
+      vout: outputs,
+      ...(confirmed === null ? {} : { status: { confirmed } }),
+    })
+  const chainOutput = (scriptPubKeyHex, value) => ({
+    scriptpubkey: scriptPubKeyHex,
+    value,
+  })
+  // An Esplora-style /tx/:txid/outspend/:vout answer
+  const chainOutspend = (spent) => JSON.stringify({ spent })
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    // the output is unspent unless a case says otherwise
+    Electrum.getOutspend.mockResolvedValue(chainOutspend(false))
+  })
+
+  it('returns the confirmed, unspent output the chain holds for the script and value the request names', async () => {
+    Electrum.getTransactionData.mockResolvedValue(
+      chainTransaction([
+        chainOutput('0020' + '0'.repeat(64), 1),
+        chainOutput(p2wshHex(ourScriptHex), 2000),
+      ]),
+    )
+
+    await expect(
+      verifyHtlcOutpoint({
+        networkType: 'testnet',
+        utxo: { ...utxo, vout: 1, value: '2000' },
+        redeemScriptHex: ourScriptHex,
+      }),
+    ).resolves.toEqual({
+      txid,
+      vout: 1,
+      value: 2000n,
+      scriptPubKeyHex: p2wshHex(ourScriptHex),
+    })
+    expect(Electrum.getTransactionData).toHaveBeenCalledWith(txid)
+    expect(Electrum.getOutspend).toHaveBeenCalledWith(txid, 1)
+  })
+
+  it.each([
+    [
+      'the transaction is not found',
+      new Error('Request not successful'),
+      /could not be looked up on chain/,
+    ],
+    ['the answer is not JSON', 'not json', /could not be looked up on chain/],
+    [
+      'the answer is a different transaction',
+      chainTransaction(
+        [chainOutput(p2wshHex(ourScriptHex), 2000)],
+        'b'.repeat(64),
+      ),
+      /different transaction/,
+    ],
+    [
+      'the transaction is unconfirmed',
+      chainTransaction(
+        [chainOutput(p2wshHex(ourScriptHex), 2000)],
+        txid,
+        false,
+      ),
+      /not confirmed on chain yet/,
+    ],
+    [
+      'the answer carries no status',
+      chainTransaction([chainOutput(p2wshHex(ourScriptHex), 2000)], txid, null),
+      /not confirmed on chain yet/,
+    ],
+    [
+      'the output at the index does not exist',
+      chainTransaction([]),
+      /does not exist on chain/,
+    ],
+    [
+      'the output is locked to another script',
+      chainTransaction([chainOutput(p2wshHex(foreignScriptHex), 2000)]),
+      /not locked to this HTLC script/,
+    ],
+    [
+      'the output holds another amount',
+      chainTransaction([chainOutput(p2wshHex(ourScriptHex), 1999)]),
+      /different amount on chain/,
+    ],
+    [
+      'the output value is unreadable',
+      chainTransaction([chainOutput(p2wshHex(ourScriptHex), '2.5')]),
+      /different amount on chain/,
+    ],
+  ])('refuses, fail closed, when %s', async (_description, answer, error) => {
+    if (answer instanceof Error) {
+      Electrum.getTransactionData.mockRejectedValue(answer)
+    } else {
+      Electrum.getTransactionData.mockResolvedValue(answer)
+    }
+
+    await expect(
+      verifyHtlcOutpoint({ utxo, redeemScriptHex: ourScriptHex }),
+    ).rejects.toMatchObject({
+      code: 'HTLC_OUTPOINT_UNVERIFIED',
+      message: expect.stringMatching(error),
+    })
+  })
+
+  it.each([
+    [
+      'the output is already spent',
+      () => Electrum.getOutspend.mockResolvedValue(chainOutspend(true)),
+      /already been spent on chain/,
+    ],
+    [
+      'the spend status has no spent flag',
+      () => Electrum.getOutspend.mockResolvedValue('{}'),
+      /spend status of the HTLC output could not be read/,
+    ],
+    [
+      'the spend status is not JSON',
+      () => Electrum.getOutspend.mockResolvedValue('not json'),
+      /spend status of the HTLC output could not be looked up on chain/,
+    ],
+    [
+      'the spend status lookup fails',
+      () => Electrum.getOutspend.mockRejectedValue(new Error('network down')),
+      /spend status of the HTLC output could not be looked up on chain/,
+    ],
+  ])('refuses, fail closed, when %s', async (_description, arrange, error) => {
+    Electrum.getTransactionData.mockResolvedValue(
+      chainTransaction([chainOutput(p2wshHex(ourScriptHex), 2000)]),
+    )
+    arrange()
+
+    await expect(
+      verifyHtlcOutpoint({ utxo, redeemScriptHex: ourScriptHex }),
+    ).rejects.toMatchObject({
+      code: 'HTLC_OUTPOINT_UNVERIFIED',
+      message: expect.stringMatching(error),
+    })
+  })
+
+  it.each([
+    ['a malformed txid', { ...utxo, txid: 'abc' }, ourScriptHex],
+    ['a negative vout', { ...utxo, vout: -1 }, ourScriptHex],
+    ['a non-integer vout', { ...utxo, vout: 0.5 }, ourScriptHex],
+    ['an unreadable value', { ...utxo, value: '2.5' }, ourScriptHex],
+    ['a non-hex script', utxo, 'not-hex'],
+    ['an odd-length script', utxo, ourScriptHex.slice(0, -1)],
+  ])(
+    'refuses %s before any lookup',
+    async (_description, utxo_, redeemScriptHex) => {
+      await expect(
+        verifyHtlcOutpoint({ utxo: utxo_, redeemScriptHex }),
+      ).rejects.toThrow()
+      expect(Electrum.getTransactionData).not.toHaveBeenCalled()
+      expect(Electrum.getOutspend).not.toHaveBeenCalled()
+    },
+  )
+
+  it('does not ask for the spend status before the output itself is verified', async () => {
+    Electrum.getTransactionData.mockResolvedValue(chainTransaction([]))
+
+    await expect(
+      verifyHtlcOutpoint({ utxo, redeemScriptHex: ourScriptHex }),
+    ).rejects.toThrow(/does not exist on chain/)
+    expect(Electrum.getOutspend).not.toHaveBeenCalled()
   })
 })
 

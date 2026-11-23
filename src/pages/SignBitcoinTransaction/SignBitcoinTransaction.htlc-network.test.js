@@ -7,6 +7,7 @@ import { Account } from '@Entities'
 import { BTCTransaction } from '@Cryptos'
 import { SettingsContext } from '@Contexts'
 import { sendPopupResponse } from '@Browser'
+import { Secret } from '@Helpers'
 import { SignBitcoinTransactionPage } from './SignBitcoinTransaction'
 
 // Keep the output readable: swallow React error-logging noise.
@@ -58,7 +59,9 @@ jest.mock('../../services/Crypto/Mintlayer/@mintlayerlib-js', () => ({
 
 // The gate under test is WHICH networkType value reaches the HTLC claim /
 // refund builders, not the crypto: the builders are stubbed and the call
-// arguments are the assertion surface.
+// arguments are the assertion surface. The script parser is real (the
+// claim's hash must match the request's secret) and the chain lookup is a
+// stub that confirms the outpoint.
 jest.mock('@Cryptos', () => ({
   __esModule: true,
   BTC: {},
@@ -73,7 +76,11 @@ jest.mock('@Cryptos', () => ({
     toSatoshiBigInt: jest.requireActual(
       '../../services/Crypto/BTC/BTCTransaction',
     ).toSatoshiBigInt,
+    parseHtlcRedeemScript: jest.requireActual(
+      '../../services/Crypto/BTC/BTCTransaction',
+    ).parseHtlcRedeemScript,
     findWalletKeyForRedeemScript: jest.fn(),
+    verifyHtlcOutpoint: jest.fn(),
     buildHTLCAndFundingAddress: jest.fn(),
     calculateBtcTransactionFee: jest.fn(),
     buildTransaction: jest.fn(),
@@ -126,14 +133,24 @@ jest.mock('@Contexts', () => {
 })
 
 // The page parses the redeem script with real bitcoinjs code, so the
-// fixture must be a genuine HTLC script (OP_IF / OP_HASH160 / hash ...).
+// fixture must be a genuine HTLC script (OP_IF / OP_HASH160 / hash ...)
+// whose hash is the hash of the request's secret.
 const u8 = (bytes) => new Uint8Array(bytes)
-const compileHtlc = (receiverPubkey, senderPubkey, lockBlocks = 100) =>
+const REQUEST_SECRET = 'ab'.repeat(32)
+const requestSecretHash = Buffer.from(
+  Secret.generateSecretHash(Secret.hexToSecret(REQUEST_SECRET)),
+).toString('hex')
+const compileHtlc = (
+  receiverPubkey,
+  senderPubkey,
+  lockBlocks = 100,
+  hashHex = null,
+) =>
   Buffer.from(
     bitcoin.script.compile([
       bitcoin.opcodes.OP_IF,
       bitcoin.opcodes.OP_HASH160,
-      u8(Buffer.alloc(20, 2)),
+      hashHex ? u8(Buffer.from(hashHex, 'hex')) : u8(Buffer.alloc(20, 2)),
       bitcoin.opcodes.OP_EQUALVERIFY,
       u8(receiverPubkey),
       bitcoin.opcodes.OP_ELSE,
@@ -150,6 +167,7 @@ const claimScriptHex = compileHtlc(
   Buffer.alloc(33, 3),
   Buffer.alloc(33, 9),
   100,
+  requestSecretHash,
 )
 const refundScriptHex = compileHtlc(
   Buffer.alloc(33, 9),
@@ -173,7 +191,7 @@ const makeClaimRequestState = (network, to) => ({
           type: 'spendHtlc',
           utxo: { txid: 'f'.repeat(64), vout: 0, value: 2000 },
           redeemScriptHex: claimScriptHex,
-          secret: 'ab'.repeat(32),
+          secret: REQUEST_SECRET,
           to,
         },
       },
@@ -259,6 +277,8 @@ describe('SignBitcoinTransaction — HTLC claim/refund network binding', () => {
         },
       },
     })
+    // The chain confirms every outpoint these tests spend.
+    BTCTransaction.verifyHtlcOutpoint.mockResolvedValue({})
     // No pre-saved secret: the claim falls back to the request's revealed
     // secret (the manual-input path stays out of scope here).
     Account.unlockHtlsSecret.mockRejectedValue(new Error('no saved secret'))

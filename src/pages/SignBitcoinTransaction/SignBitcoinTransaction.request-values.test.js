@@ -64,7 +64,9 @@ jest.mock('../../services/Crypto/Mintlayer/@mintlayerlib-js', () => ({
 // stricter than the real builder (which accepts an array and truncates
 // non-hex strings) and equal for the probed value, a shadowing object.
 // Everything that needs keys, UTXOs or the network is stubbed so the
-// create-request escrow pre-computation completes.
+// create-request escrow pre-computation completes. The script parser is
+// real (a claim's hash must match its secret); the chain lookup is a stub
+// that confirms the outpoint.
 jest.mock('@Cryptos', () => {
   const actual = jest.requireActual('../../services/Crypto/BTC/BTCTransaction')
   return {
@@ -79,7 +81,9 @@ jest.mock('@Cryptos', () => {
       HTLC_CLAIM_FEE_SATOSHIS: actual.HTLC_CLAIM_FEE_SATOSHIS,
       HTLC_REFUND_FEE_SATOSHIS: actual.HTLC_REFUND_FEE_SATOSHIS,
       toSatoshiBigInt: actual.toSatoshiBigInt,
+      parseHtlcRedeemScript: actual.parseHtlcRedeemScript,
       findWalletKeyForRedeemScript: jest.fn(),
+      verifyHtlcOutpoint: jest.fn(),
       buildHTLCAndFundingAddress: jest.fn(),
       calculateBtcTransactionFee: jest.fn(),
       buildTransaction: jest.fn(),
@@ -435,8 +439,8 @@ const CLAIM_DEST = MOCKS.spendHtlc2.request.data.txData.JSONRepresentation.to
 const SECRET_FIELD = 'Enter htlc secret in hex format (64 characters)'
 
 // Lets a claim request reach the claim builder: keys unlock, the redeem
-// script binds a wallet key, the destination is a wallet address, and no
-// secret was saved for the hash.
+// script binds a wallet key, the chain confirms the outpoint, the
+// destination is a wallet address, and no secret was saved for the hash.
 const stubClaimSigning = () => {
   Account.unlockAccount.mockResolvedValue({
     btcPrivateKeys: {
@@ -448,6 +452,7 @@ const stubClaimSigning = () => {
   })
   Account.unlockHtlsSecret.mockRejectedValue(new Error('no saved secret'))
   BTCTransaction.findWalletKeyForRedeemScript.mockReturnValue({ wif: 'wif' })
+  BTCTransaction.verifyHtlcOutpoint.mockResolvedValue({})
   BTCTransaction.buildHtlcClaimTx.mockResolvedValue('deadbeef')
 }
 
@@ -481,13 +486,19 @@ describe('SignBitcoinTransaction — revealed secret, escrow address and the blo
 
     expect(approveButton()).toBeEnabled()
     openPasswordModal()
+    // the fixture script is locked to the hash of its own secret
     fireEvent.change(screen.getByPlaceholderText(SECRET_FIELD), {
-      target: { value: 'ab'.repeat(32) },
+      target: {
+        value: MOCKS.spendHtlc2.request.data.txData.JSONRepresentation.secret,
+      },
     })
     await submitPasswordModal()
 
     expect(BTCTransaction.buildHtlcClaimTx).toHaveBeenCalledWith(
-      expect.objectContaining({ secretHex: 'ab'.repeat(32) }),
+      expect.objectContaining({
+        secretHex:
+          MOCKS.spendHtlc2.request.data.txData.JSONRepresentation.secret,
+      }),
     )
     expect(sendPopupResponse).toHaveBeenCalledWith(
       expect.objectContaining({
