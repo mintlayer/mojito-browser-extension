@@ -67,6 +67,8 @@ import { ML } from '@Cryptos'
 import { LocalStorageService } from '@Storage'
 import { Browser } from '@Browser'
 
+import { useOwnPendingRequestListener } from './useOwnPendingRequestListener'
+
 import '@Assets/styles/fonts.css'
 import '@Assets/styles/constants.css'
 import '@Assets/styles/theme.css'
@@ -197,14 +199,30 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname])
 
+  // Stable handle to the current handlePendingRequest for the listener that
+  // is registered once. Only the ref is declared here; the assignment stays
+  // after handlePendingRequest is declared (see below).
+  const handlePendingRequestRef = useRef()
+
+  // Only THIS window's own key is ever routed; until the mount read below
+  // has recorded the window id, the listener routes nothing.
+  const ownWindowIdRef = useOwnPendingRequestListener(
+    storage,
+    handlePendingRequestRef,
+  )
+
   useEffect(() => {
     let cancelled = false
     if (storage && windows) {
       // Read THIS window's pending request. Approval requests are keyed by
       // window id, so two approval windows can never read (and approve)
-      // each other's request.
+      // each other's request. The id is recorded BEFORE the read is issued,
+      // in the same synchronous step: that binds the storage.onChanged
+      // listener to this window from that point on — a write that landed
+      // earlier is seen by this read, one that lands later by the listener.
       windows.getCurrent((win) => {
         if (cancelled || !win) return
+        ownWindowIdRef.current = win.id
         const key = `pendingRequest:${win.id}`
         storage.local.get([key], (data) => {
           if (cancelled) return
@@ -220,23 +238,6 @@ const App = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses, isAccountUnlocked, navigate])
-
-  // Approvals can arrive while the side panel is already open: react to the
-  // storage write immediately instead of waiting for the next effect run.
-  useEffect(() => {
-    if (!storage?.onChanged) return
-    const listener = (changes, areaName) => {
-      if (areaName !== 'local') return
-      const key = Object.keys(changes).find((k) =>
-        k.startsWith('pendingRequest:'),
-      )
-      if (!key) return
-      const request = changes[key].newValue
-      if (request) handlePendingRequestRef.current(request)
-    }
-    storage.onChanged.addListener(listener)
-    return () => storage.onChanged.removeListener(listener)
-  }, [])
 
   const handledRequestIds = useRef(new Set())
 
@@ -378,7 +379,6 @@ const App = () => {
   // NOTE: assigned AFTER handlePendingRequest is declared — assigning above
   // the function declaration hits the temporal dead zone and crashes the
   // panel on every render.
-  const handlePendingRequestRef = useRef()
   handlePendingRequestRef.current = handlePendingRequest
 
   useEffect(() => {
