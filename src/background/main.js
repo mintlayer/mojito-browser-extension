@@ -1156,7 +1156,13 @@ export const initBackground = () => {
         {
           origin,
           requestId: message.requestId,
-          permissions: message.params?.permissions || [],
+          // dApp-supplied, and read by the approval page while it renders:
+          // pass on ONLY an array of strings, never any other shape.
+          permissions: Array.isArray(message.params?.permissions)
+            ? message.params.permissions.filter(
+                (permission) => typeof permission === 'string',
+              )
+            : [],
           action: 'connect',
         },
         sendResponse,

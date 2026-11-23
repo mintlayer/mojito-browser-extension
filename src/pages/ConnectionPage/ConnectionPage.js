@@ -33,7 +33,10 @@ export const ConnectionPage = () => {
 
   const state = external_state
   const origin = state?.request?.origin || UNKNOWN_WEBSITE
-  const permissions = state?.request?.permissions || []
+  // dApp-supplied: only an array is read, anything else means no permissions
+  const permissions = Array.isArray(state?.request?.permissions)
+    ? state.request.permissions
+    : []
 
   const requireBTC = permissions.includes('bitcoin')
   const isUnknownOrigin = origin === UNKNOWN_WEBSITE

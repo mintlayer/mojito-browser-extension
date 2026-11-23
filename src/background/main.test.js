@@ -267,6 +267,72 @@ describe('background service worker', () => {
 
       expect(reply.current).toBeUndefined()
     })
+
+    // `permissions` is dApp-supplied and the approval page renders it:
+    // whatever shape arrives, the pending request carries ONLY an array of
+    // strings (non-array values become empty, non-string entries are
+    // dropped) on every approval surface.
+    describe('dApp-supplied permissions', () => {
+      const permissionCases = [
+        ['a number', 42, []],
+        ['an object', {}, []],
+        ['a string', 'bitcoin', []],
+        ['null', null, []],
+        ['a mixed array', [null, 42, 'bitcoin', {}], ['bitcoin']],
+        ['an array of strings', ['bitcoin'], ['bitcoin']],
+      ]
+
+      const connectWith = (permissions, sender) =>
+        dispatch(
+          { requestId: 'r1', method: 'connect', params: { permissions } },
+          sender,
+        )
+
+      it.each(permissionCases)(
+        'popup approval: permissions given as %s',
+        (_shape, permissions, expected) => {
+          connectWith(permissions, dappSender)
+
+          expect(storageData['pendingRequest:700'].permissions).toEqual(
+            expected,
+          )
+        },
+      )
+
+      // the panel path persists the request only after sidePanel.open settles
+      const flushMicrotasks = async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+        await Promise.resolve()
+      }
+
+      it.each(permissionCases)(
+        'side panel approval: permissions given as %s',
+        async (_shape, permissions, expected) => {
+          connectWith(permissions, tabDappSender)
+          await flushMicrotasks()
+
+          expect(storageData['pendingRequest:3'].permissions).toEqual(expected)
+        },
+      )
+
+      it.each(permissionCases)(
+        'popup fallback approval: permissions given as %s',
+        async (_shape, permissions, expected) => {
+          global.chrome.sidePanel.open.mockRejectedValue(
+            new Error('no gesture'),
+          )
+          connectWith(permissions, tabDappSender)
+          await flushMicrotasks()
+
+          // the fallback persists under ITS window id, never the panel's
+          expect(storageData['pendingRequest:3']).toBeUndefined()
+          expect(storageData['pendingRequest:700'].permissions).toEqual(
+            expected,
+          )
+        },
+      )
+    })
   })
 
   describe('signTransaction', () => {
