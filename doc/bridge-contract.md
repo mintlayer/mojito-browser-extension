@@ -57,6 +57,12 @@ Notes:
 ## Connection lifecycle / revocation (authoritative)
 
 - A grant is created only by explicit user approval and is stored per-origin.
+- The origin is the one the browser reports for the page. A page whose
+  origin is not a bare `http(s)://host[:port]` origin (an opaque-origin
+  document, an extension page) can never hold a grant: every request from
+  it is refused with `UNSUPPORTED_ORIGIN`, before any approval is opened,
+  and a grant an older build stored under such a key is removed when the
+  background starts.
 - Revoking it — from the wallet Settings, via `window.mojito.disconnect()`,
   or on wallet lock/logout — is **immediate and persistent**: the wallet
   deletes the session, and open tabs for that origin receive
@@ -94,6 +100,7 @@ trigger that).
 | `NOT_CONNECTED`       | sign/challenge without a prior connect grant                                                                            |
 | `WRONG_NETWORK`       | session granted on a different network than the wallet's active one                                                     |
 | `UNSUPPORTED_METHOD`  | method not implemented by the wallet                                                                                    |
+| `UNSUPPORTED_ORIGIN`  | the page's origin is not a bare http(s) origin (an opaque-origin page, an extension page); nothing from it is processed |
 | `TIMEOUT`             | no answer from the wallet within 5 minutes                                                                              |
 | `CONTEXT_INVALIDATED` | the extension was reloaded/updated/disabled while the page was open; the page must be reloaded and connect called again |
 | `EXTENSION_ERROR`     | content script could not reach the background                                                                           |

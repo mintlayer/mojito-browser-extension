@@ -2986,6 +2986,303 @@ describe('background service worker', () => {
     })
   })
 
+  describe('unsupported origins (an opaque-origin page shares no grant)', () => {
+    const unsupportedOriginError = {
+      error: {
+        code: 'UNSUPPORTED_ORIGIN',
+        message: 'This site cannot be identified.',
+      },
+    }
+
+    // The browser reports an opaque-origin document (a page served with a
+    // sandboxing CSP, a data: document...) as the literal string "null":
+    // every such page on every site is the SAME value to the worker.
+    const opaqueSenderA = {
+      ...tabDappSender,
+      origin: 'null',
+      url: 'https://sandbox-a.example/page',
+    }
+    const opaqueSenderB = {
+      ...tabDappSender,
+      origin: 'null',
+      url: 'https://sandbox-b.example/other',
+    }
+
+    const unsupportedSenders = [
+      ['the opaque origin "null"', opaqueSenderA],
+      ['the opaque origin "null" on an unrelated site', opaqueSenderB],
+      [
+        'the origin "unknown"',
+        { id: 'some-site', origin: 'unknown', tab: { id: 5, windowId: 3 } },
+      ],
+      [
+        'a sender with neither origin nor url',
+        { id: 'some-site', tab: { id: 5, windowId: 3 } },
+      ],
+      [
+        "the wallet's own page (chrome-extension://)",
+        { ...extensionSender, tab: { id: 5, windowId: 3 } },
+      ],
+      [
+        'a moz-extension:// origin',
+        {
+          id: 'moz-ext-id',
+          origin: 'moz-extension://moz-ext-id',
+          url: 'moz-extension://moz-ext-id/index.html',
+          tab: { id: 5, windowId: 3 },
+        },
+      ],
+    ]
+
+    // Every method a dApp can relay through request().
+    const dAppMessages = [
+      ['connect', { requestId: 'r1', method: 'connect', params: {} }],
+      ['disconnect', { method: 'disconnect' }],
+      ['checkConnection', { method: 'checkConnection' }],
+      ['getSession', { method: 'getSession' }],
+      [
+        'signTransaction',
+        { requestId: 's1', method: 'signTransaction', params: { txData: {} } },
+      ],
+      [
+        'signChallenge',
+        { requestId: 'c1', method: 'signChallenge', params: { message: 'hi' } },
+      ],
+      ['version', { method: 'version' }],
+    ]
+
+    const pendingRequestKeys = () =>
+      Object.keys(storageData).filter((key) =>
+        key.startsWith('pendingRequest:'),
+      )
+
+    // Boots a worker whose storage ALREADY holds the given grants — the
+    // way a snapshot persisted by a previous worker is loaded at startup.
+    // Only the fresh worker's listeners stay registered.
+    const bootWithSites = (sites) => {
+      messageListeners.length = 0
+      storageChangeListeners.length = 0
+      windowRemovedListeners.length = 0
+      createdWindows.length = 0
+      storageData.connectedSites = sites
+      loadBackground()
+    }
+
+    // Puts a grant under the given key into the LIVE map the way the wallet
+    // UI's approval response does. The boot sweep removes unsupported keys
+    // from the snapshot, so this is the only way such a key can exist in a
+    // running worker (the state an earlier build could leave behind).
+    const seedLiveGrantFor = (origin) => {
+      // from an origin that holds no grant, so a real approval is opened
+      dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        {
+          id: 'some-site',
+          origin: 'https://seed.example',
+          url: 'https://seed.example/',
+        },
+      )
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin,
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+    }
+
+    const snapshotOf = (value) => JSON.parse(JSON.stringify(value))
+
+    it('connect from an opaque-origin page is refused: no approval target, no pending request, no grant', () => {
+      const { reply, keptOpen } = dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        opaqueSenderA,
+      )
+
+      expect(reply.current).toEqual(unsupportedOriginError)
+      expect(keptOpen).toBe(false)
+      expect(createdWindows).toHaveLength(0)
+      expect(global.chrome.sidePanel.open).not.toHaveBeenCalled()
+      expect(pendingRequestKeys()).toEqual([])
+      expect(storageData.connectedSites ?? {}).toEqual({})
+    })
+
+    it('an unrelated opaque-origin page never reads a grant stored under "null"', () => {
+      seedLiveGrantFor('null')
+      const before = snapshotOf(storageData.connectedSites)
+      expect(before.null).toMatchObject({
+        addressesByChain: sessionData.addressesByChain,
+      })
+
+      const session = dispatch({ method: 'getSession' }, opaqueSenderB)
+      expect(session.reply.current).toEqual(unsupportedOriginError)
+      expect(JSON.stringify(session.reply.current)).not.toContain('tmtc1qabc')
+
+      const check = dispatch({ method: 'checkConnection' }, opaqueSenderB)
+      expect(check.reply.current).toEqual(unsupportedOriginError)
+
+      // the grant under the shared key authorizes nothing: not even an
+      // approval surface
+      const sign = dispatch(
+        { requestId: 's1', method: 'signTransaction', params: {} },
+        opaqueSenderB,
+      )
+      expect(sign.reply.current).toEqual(unsupportedOriginError)
+      expect(global.chrome.sidePanel.open).not.toHaveBeenCalled()
+      expect(pendingRequestKeys()).toEqual([])
+      // ...and the refused requests neither rewrite nor remove it
+      expect(storageData.connectedSites).toEqual(before)
+    })
+
+    it('disconnect from an opaque-origin page is refused and leaves the grant store untouched', () => {
+      bootWithSites({
+        'https://bridge.example': { ...sessionData, timestamp: 2 },
+      })
+      seedLiveGrantFor('null')
+      const before = snapshotOf(storageData.connectedSites)
+      expect(Object.keys(before).sort()).toEqual([
+        'https://bridge.example',
+        'null',
+      ])
+
+      const { reply } = dispatch({ method: 'disconnect' }, opaqueSenderA)
+
+      expect(reply.current).toEqual(unsupportedOriginError)
+      // neither the shared-key grant nor a real site's grant was deleted
+      expect(storageData.connectedSites).toEqual(before)
+      // no revocation was broadcast to any tab
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a worker that boots with grants under unsupported keys removes them and keeps the rest', () => {
+      const supportedGrant = { ...sessionData, timestamp: 2 }
+      bootWithSites({
+        null: { ...sessionData, timestamp: 1 },
+        unknown: { ...sessionData, timestamp: 1 },
+        'https://dapp.example': supportedGrant,
+      })
+
+      // removed from the PERSISTED map, not only from memory
+      expect(storageData.connectedSites).toEqual({
+        'https://dapp.example': supportedGrant,
+      })
+      // the surviving grant is untouched and still answers
+      const survivor = dispatch(
+        { method: 'getSession' },
+        {
+          id: 'some-site',
+          origin: 'https://dapp.example',
+          url: 'https://dapp.example/',
+        },
+      )
+      expect(survivor.reply.current).toMatchObject({
+        result: { address: sessionData.address },
+      })
+      // the removals were propagated like any other revocation — and the
+      // surviving origin was NOT announced as revoked
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'null' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'unknown' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ origin: 'https://dapp.example' }),
+        expect.anything(),
+      )
+    })
+
+    describe.each(unsupportedSenders)('%s', (_name, sender) => {
+      it.each(dAppMessages)(
+        '%s is refused before any state is touched',
+        (_method, message) => {
+          const { reply, keptOpen } = dispatch(message, sender)
+
+          expect(reply.current).toEqual(unsupportedOriginError)
+          expect(keptOpen).toBe(false)
+          expect(createdWindows).toHaveLength(0)
+          expect(global.chrome.sidePanel.open).not.toHaveBeenCalled()
+          expect(pendingRequestKeys()).toEqual([])
+          expect(storageData.connectedSites ?? {}).toEqual({})
+        },
+      )
+    })
+
+    describe.each([
+      [
+        'https://dapp.example',
+        {
+          id: 'some-site',
+          origin: 'https://dapp.example',
+          url: 'https://dapp.example/',
+        },
+      ],
+      [
+        'http://localhost:3000',
+        {
+          id: 'some-site',
+          origin: 'http://localhost:3000',
+          url: 'http://localhost:3000/',
+        },
+      ],
+      [
+        'http://127.0.0.1:5173',
+        {
+          id: 'some-site',
+          origin: 'http://127.0.0.1:5173',
+          url: 'http://127.0.0.1:5173/',
+        },
+      ],
+      [
+        'the url-derived fallback (no sender.origin)',
+        { id: 'some-site', url: 'https://dapp.example/page' },
+      ],
+    ])('%s stays supported', (_name, sender) => {
+      it('connect opens an approval keyed by the origin, and the approved grant answers', () => {
+        const origin = new URL(sender.url).origin
+        const connect = dispatch(
+          { requestId: 'r1', method: 'connect', params: {} },
+          sender,
+        )
+        expect(connect.reply.current).toBeUndefined()
+        expect(connect.keptOpen).toBe(true)
+        expect(createdWindows).toHaveLength(1)
+        expect(storageData['pendingRequest:700']).toMatchObject({
+          action: 'connect',
+          origin,
+        })
+
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: internalIdFor(700),
+            origin,
+            windowId: 700,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(connect.reply.current.result).toEqual(sessionData)
+        expect(
+          dispatch({ method: 'checkConnection' }, sender).reply.current,
+        ).toEqual({ result: { isConnected: true } })
+        expect(
+          dispatch({ method: 'getSession' }, sender).reply.current,
+        ).toMatchObject({ result: { address: sessionData.address } })
+      })
+    })
+  })
+
   describe('self-healing content-script injection', () => {
     const CONTENT_SCRIPT_FILE = 'explorer/content-script.js'
 

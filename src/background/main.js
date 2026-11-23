@@ -248,6 +248,40 @@ export const initBackground = () => {
     revokeOrigins(staleOrigins)
   }
 
+  // Only a bare http(s) origin identifies a dApp site. Every other value
+  // the grant key can take is unsupported: the browser reports an
+  // opaque-origin document (a page served with a sandboxing CSP, a data:
+  // document...) as the literal string "null", so all such pages on all
+  // sites would SHARE one grant — connect/getSession/checkConnection would
+  // answer one page from another page's approval. Extension, file and
+  // full-URL values name no dApp site either.
+  const isSupportedOrigin = (origin) => {
+    if (typeof origin !== 'string') return false
+    try {
+      const url = new URL(origin)
+      return (
+        (url.protocol === 'http:' || url.protocol === 'https:') &&
+        url.origin === origin
+      )
+    } catch {
+      return false
+    }
+  }
+
+  // A grant stored under an unsupported key by an earlier build (an
+  // opaque-origin page's "null", the "unknown" fallback) is never answered
+  // — every grant read is behind the origin check — but it would linger in
+  // storage, and in the wallet's Connections list, until some later sweep.
+  // DELETE it at boot, through the same durable path and tab propagation
+  // as the network-switch revocation above.
+  const revokeGrantsFromUnsupportedOrigins = () => {
+    const unsupportedOrigins = Object.keys(connectedSites).filter(
+      (origin) => !isSupportedOrigin(origin),
+    )
+    if (!unsupportedOrigins.length) return
+    revokeOrigins(unsupportedOrigins)
+  }
+
   // Revokes EVERY grant — the walletLocked action and the lock-mirror sweep
   // share this path, with the same propagation as per-site disconnects:
   // durable deletion + notifyOriginRevoked to the sites' open tabs. The
@@ -430,6 +464,11 @@ export const initBackground = () => {
         // queued message is answered. Runs on whatever snapshot loaded, so a
         // stale snapshot can still only shrink the map, never answer from it.
         revokeGrantsFromOtherNetworks()
+        // A grant left under an unsupported key ("null", "unknown") by an
+        // earlier build can never be answered, but would linger in storage
+        // — and in the wallet's Connections list — until a later sweep:
+        // remove it now, before any queued message is answered.
+        revokeGrantsFromUnsupportedOrigins()
         // Same for the durable lock witnesses: a lock that expired while NO
         // wallet page was open to announce it (the mirror is the only
         // witness) and a revocation whose walletLocked notify was lost (the
@@ -1081,6 +1120,16 @@ export const initBackground = () => {
     // foreign extension drive approval flows. Content-script relays and
     // wallet pages always carry this extension's own runtime id.
     if (sender.id !== api.runtime.id && origin.startsWith('chrome-extension')) {
+      return false
+    }
+
+    // Refused BEFORE any dApp method runs: no approval is opened, no pending
+    // request is written and no grant is read or stored under an
+    // unsupported key (a grant left under "null" is never answered).
+    if (!isSupportedOrigin(origin)) {
+      sendResponse({
+        error: errorOf('UNSUPPORTED_ORIGIN', 'This site cannot be identified.'),
+      })
       return false
     }
 
