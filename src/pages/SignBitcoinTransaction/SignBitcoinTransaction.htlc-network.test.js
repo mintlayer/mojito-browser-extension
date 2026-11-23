@@ -69,6 +69,10 @@ jest.mock('@Cryptos', () => ({
   },
   BTCTransaction: {
     HTLC_CLAIM_FEE_SATOSHIS: 154,
+    HTLC_REFUND_FEE_SATOSHIS: 1000,
+    toSatoshiBigInt: jest.requireActual(
+      '../../services/Crypto/BTC/BTCTransaction',
+    ).toSatoshiBigInt,
     findWalletKeyForRedeemScript: jest.fn(),
     buildHTLCAndFundingAddress: jest.fn(),
     calculateBtcTransactionFee: jest.fn(),

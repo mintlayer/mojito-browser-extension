@@ -14,7 +14,12 @@ import { BTC as BTCHelpers, Secret } from '@Helpers'
 import { Electrum } from '@APIs'
 import { sendPopupResponse } from '@Browser'
 
-import { buildBtcSignRecap, parseSatoshiAmount } from './recap'
+import {
+  BTC_REQUEST_KIND,
+  buildBtcSignRecap,
+  classifyBtcSignRequest,
+  parseSatoshiAmount,
+} from './recap'
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 
@@ -106,9 +111,10 @@ export const SignBitcoinTransactionPage = () => {
       const currentState = initialState
       const transactionJSON =
         currentState?.request?.data?.txData?.JSONRepresentation
-      const isCreate = transactionJSON?.secretHash
+      const isCreate =
+        classifyBtcSignRequest(transactionJSON) === BTC_REQUEST_KIND.CREATE
 
-      if (!transactionJSON || !isCreate) {
+      if (!isCreate) {
         return {
           generatedSecret: null,
           generatedSecretHash: null,
@@ -144,10 +150,16 @@ export const SignBitcoinTransactionPage = () => {
     }, [initialState])
 
   const state = htlcTransactionState || initialState
-  const origin = state?.request?.origin
+  // Browser-stamped, but rendered as text: only a string is shown.
+  const rawOrigin = state?.request?.origin
+  const origin = typeof rawOrigin === 'string' ? rawOrigin : undefined
 
-  const revealed_secret =
-    state?.request?.data?.txData?.JSONRepresentation?.secret
+  // dApp-supplied: only a string is the revealed secret. Any other type
+  // reads as none, both for the manual-secret prompt below and at signing
+  // time (a non-string would otherwise hide the prompt and reach the
+  // signer as the secret).
+  const rawSecret = state?.request?.data?.txData?.JSONRepresentation?.secret
+  const revealed_secret = typeof rawSecret === 'string' ? rawSecret : ''
 
   const { addresses, accountID } = useContext(AccountContext)
   const { btcUtxos, unusedAddresses: unusedBtcAddresses } =
@@ -160,8 +172,16 @@ export const SignBitcoinTransactionPage = () => {
   // exactly what signing later uses — the displayed fee can't drift from
   // the charged one.
   const [escrowFeeInfo, setEscrowFeeInfo] = useState(null)
+  // Owner-stamped once the escrow pre-computation of a create request has
+  // run and could not build the escrow address; null while it is pending
+  // and when it succeeded.
+  const [escrowUnbuildable, setEscrowUnbuildable] = useState(null)
   const requestJSON = state?.request?.data?.txData?.JSONRepresentation
-  const isCreateRequest = Boolean(requestJSON?.secretHash)
+  // The request's kind, from the one classifier: the recap is built by it
+  // (below) and the submit handler signs by it, so what the user approves
+  // is what gets signed.
+  const requestKind = classifyBtcSignRequest(requestJSON)
+  const isCreateRequest = requestKind === BTC_REQUEST_KIND.CREATE
 
   useEffect(() => {
     let active = true
@@ -192,7 +212,7 @@ export const SignBitcoinTransactionPage = () => {
         } catch {
           estimatedFee = null
         }
-        if (active)
+        if (active) {
           setEscrowFeeInfo({
             // Owner stamp: this frozen record is only ever valid for the
             // request whose fields it was quoted from (see below).
@@ -206,10 +226,16 @@ export const SignBitcoinTransactionPage = () => {
             fundingUtxos: btcUtxos || [],
             fundingWalletType,
           })
+          setEscrowUnbuildable(null)
+        }
       } catch {
-        // Malformed request data: the recap falls back to warnings and
-        // signing will fail with the same error.
-        if (active) setEscrowFeeInfo(null)
+        // Malformed request data: the recap falls back to warnings, the
+        // page states that the escrow address could not be built and blocks
+        // approval, and signing would fail with the same error.
+        if (active) {
+          setEscrowFeeInfo(null)
+          setEscrowUnbuildable({ owner: requestJSON })
+        }
       }
     })()
     return () => {
@@ -226,20 +252,25 @@ export const SignBitcoinTransactionPage = () => {
   // the SAME request (UTXO poll refresh) keep the current record visible.
   const activeEscrowFeeInfo =
     escrowFeeInfo?.owner === requestJSON ? escrowFeeInfo : null
+  // Same ownership rule for a failed pre-computation: only the request it
+  // ran for may be blocked by it, and only once it has settled.
+  const escrowFailed =
+    isCreateRequest && escrowUnbuildable?.owner === requestJSON
 
-  // Human-readable approval summary — parsed facts, not raw JSON.
+  // Human-readable approval summary — parsed facts, not raw JSON. A value
+  // the signer needs but cannot read blocks approval (fail closed).
   const recap = buildBtcSignRecap({
     json: requestJSON,
     networkType,
     escrowFeeInfo: activeEscrowFeeInfo,
+    escrowFailed,
   })
+  const approvalBlocked = Boolean(recap?.blockedReason)
+  const blockedReason = recap?.blockedReason ?? null
 
-  // Helper functions to detect transaction types
-  const isHTLCCreateTx =
-    state?.request?.data?.txData?.JSONRepresentation?.secretHash
-  const isHTLCSpendTx =
-    state?.request?.data?.txData?.JSONRepresentation?.type === 'spendHtlc'
-  // const isHTLCRefundTx = state?.request?.data?.txData?.JSONRepresentation?.type === 'refundHtlc'
+  // Transaction types, from the same classifier as the recap
+  const isHTLCCreateTx = requestKind === BTC_REQUEST_KIND.CREATE
+  const isHTLCSpendTx = requestKind === BTC_REQUEST_KIND.SPEND
 
   // HTLC claim/refund proceeds must land in OUR wallet: the claim pays the
   // swap output to the claimer, the refund returns to the funder. A dApp
@@ -575,6 +606,9 @@ export const SignBitcoinTransactionPage = () => {
 
   const handleModalSubmit = async () => {
     if (isSigning) return
+    // Defense in depth: both Approve buttons are already disabled, but the
+    // modal submit must never reach the signer for a blocked request.
+    if (approvalBlocked) return
 
     try {
       // Validate secret if it's an HTLC spend transaction and secret is manually entered
@@ -588,15 +622,22 @@ export const SignBitcoinTransactionPage = () => {
       setIsSigning(true)
       setSignError('')
 
-      const transactionJSONrepresentation =
-        state?.request?.data?.txData?.JSONRepresentation
-
-      if (transactionJSONrepresentation.type === 'refundHtlc') {
-        await submitRefund()
-      } else if (transactionJSONrepresentation.secretHash) {
-        await submitCreate()
-      } else {
-        await submitSpend()
+      // Signed by the same classifier the recap was shown by. An
+      // unrecognised or ambiguous payload is never signed (it is blocked
+      // above, and there is no path to a signer for it here either).
+      switch (requestKind) {
+        case BTC_REQUEST_KIND.REFUND:
+          await submitRefund()
+          break
+        case BTC_REQUEST_KIND.CREATE:
+          await submitCreate()
+          break
+        case BTC_REQUEST_KIND.SPEND:
+          await submitSpend()
+          break
+        default:
+          setIsSigning(false)
+          return
       }
       // Signing done: drop the password/secret from memory — the page stays
       // mounted in the side panel after the response is returned. Skipped on
@@ -717,6 +758,7 @@ export const SignBitcoinTransactionPage = () => {
                   )}
                 </div>
               )}
+              {approvalBlocked && <Error error={blockedReason} />}
               <SignTransaction.JsonPreview data={state} />
             </div>
           )}
@@ -778,7 +820,10 @@ export const SignBitcoinTransactionPage = () => {
           <Button
             onClickHandle={handleApprove}
             extraStyleClasses={extraButtonStyles}
-            disabled={!state?.request?.data?.txData?.JSONRepresentation}
+            disabled={
+              !state?.request?.data?.txData?.JSONRepresentation ||
+              approvalBlocked
+            }
           >
             Approve and return to page
           </Button>
@@ -802,7 +847,7 @@ export const SignBitcoinTransactionPage = () => {
                     <TextField
                       value={secret}
                       onChangeHandle={secretChangeHandler}
-                      placeholder="Enter htlc secret in hex format (64 characters)"
+                      placeHolder="Enter htlc secret in hex format (64 characters)"
                       autoFocus
                     />
                     {secretError && (
@@ -815,6 +860,11 @@ export const SignBitcoinTransactionPage = () => {
                     </div>
                   </div>
                 </>
+              )}
+              {/* A block that arose while the modal was already open (the
+                  escrow pre-computation settling late) is stated here too. */}
+              {approvalBlocked && (
+                <div className="sign-error">{blockedReason}</div>
               )}
               {signError && <div className="sign-error">{signError}</div>}
               <div className="modal-buttons">
@@ -832,7 +882,7 @@ export const SignBitcoinTransactionPage = () => {
                 <Button
                   onClickHandle={handleModalSubmit}
                   extraStyleClasses={extraButtonStyles}
-                  disabled={isSigning || !password}
+                  disabled={isSigning || !password || approvalBlocked}
                 >
                   {isSigning ? 'Signing…' : 'Approve'}
                 </Button>
