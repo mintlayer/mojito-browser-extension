@@ -13,6 +13,9 @@ const {
   signerAmountContainer,
   signerAmountScale,
   signerAmountTokenId,
+  signerOutputDestination,
+  signerFillOrderDestination,
+  signerUtxoOwnerAddress,
   verifyAmountPair,
 } = TransactionAmounts
 
@@ -242,12 +245,23 @@ const getBalanceChanges = ({
     changes.set(asset.key, current)
   }
 
+  // An input counts towards this wallet's balance only when the spent utxo
+  // is the wallet's own (signerUtxoOwnerAddress): the key of its
+  // destination, or for an Htlc utxo — which carries none — its spend or
+  // refund key. A utxo injected on an account-command leg encodes no input
+  // and is never consulted here.
   inputs.forEach((input) => {
     if (input.input?.input_type !== 'UTXO') return
-    apply(input, input.utxo?.destination, -1, 'input')
+    apply(input, signerUtxoOwnerAddress(input.utxo, ownAddresses), -1, 'input')
   })
 
-  outputs.forEach((output) => apply(output, output.destination, 1, 'output'))
+  // An output counts towards this wallet's balance only when the signer
+  // encodes one of its addresses as the destination (signerOutputDestination)
+  // — an Htlc, staking or burn output leaves the wallet whatever address the
+  // payload attaches to it.
+  outputs.forEach((output) =>
+    apply(output, signerOutputDestination(output), 1, 'output'),
+  )
 
   return {
     unverified,
@@ -335,9 +349,28 @@ const TransactionBreakdown = ({
             const isUtxo = input.input?.input_type === 'UTXO'
 
             const source = isUtxo ? input.utxo : input.input
+            // the address shown is the one the signer ties the leg to, and
+            // what it is differs per row — a source is never presented as a
+            // destination, nor the reverse. A utxo row shows where this
+            // input's funds live: the destination of the spent outpoint, or
+            // for an Htlc-typed utxo the wallet's spend/refund key that
+            // spends it. An account command other than a fill shows a
+            // signing key and never a destination: its `destination` is the
+            // last fallback of the signer's key resolution
+            // (`utxo.destination || input.authority || input.destination`, or
+            // `outputs[0].destination` when the first input is a
+            // DelegationBalance withdrawal). A fill row shows the
+            // `destination` the signer encodes in the fill — where the
+            // acquired asset lands, a string only — on the fill's own row,
+            // so several fills are each seen for where they go.
+            const isFillOrder = !isUtxo && input.input?.command === 'FillOrder'
             const address = isUtxo
-              ? input.utxo?.destination
-              : input.input?.destination
+              ? input.utxo?.type === 'Htlc'
+                ? signerUtxoOwnerAddress(input.utxo, ownAddresses)
+                : input.utxo?.destination
+              : isFillOrder
+                ? signerFillOrderDestination(input)
+                : input.input?.destination
             const title = isUtxo
               ? input.utxo?.type || 'UTXO'
               : input.input?.command ||
@@ -373,6 +406,9 @@ const TransactionBreakdown = ({
               tokenDecimalsById,
               'output',
             )
+            // the address shown is the one the signer encodes for the
+            // output — never a `destination`/`address` its type ignores
+            const destination = signerOutputDestination(output)
 
             return (
               <Entry
@@ -384,8 +420,8 @@ const TransactionBreakdown = ({
                     ? assetOf(verified.tokenId, tokenMap, coinTicker)
                     : null
                 }
-                address={output.destination}
-                ownership={getOwnership(output.destination, ownAddresses)}
+                address={destination}
+                ownership={getOwnership(destination, ownAddresses)}
                 source={output}
               />
             )

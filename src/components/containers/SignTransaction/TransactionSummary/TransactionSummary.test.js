@@ -951,6 +951,84 @@ describe('TransactionSummary', () => {
     expect(screen.queryByText('Amount')).not.toBeInTheDocument()
   })
 
+  // The signer encodes `destination` for Transfer, LockThenTransfer and
+  // CreateDelegationId outputs only: an Htlc or staking output moves its
+  // funds elsewhere whatever `destination`/`address` the payload attaches
+  // to it, so those fields must never become the "To" line.
+  it('derives the To line from the first relevant output whose type carries a destination', () => {
+    const decoyEscrow = {
+      type: 'Htlc',
+      destination: OWN_RECEIVING,
+      address: OWN_CHANGE,
+      value: coin('16071.486043'),
+      htlc: { spend_key: 'mtc1qdappspendkey', refund_key: 'mtc1qdapprefund' },
+    }
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('17081.486043') },
+          },
+        ],
+        // the decoy-tagged escrow comes first; the payment is a Transfer
+        outputs: [
+          decoyEscrow,
+          { type: 'Transfer', destination: DESTINATION, value: coin('10') },
+        ],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
+    // the wallet's own address appears as From only
+    expect(screen.getAllByText(truncated(OWN_RECEIVING))).toHaveLength(1)
+    expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
+    // both outputs leave the wallet: 16071.486043 + 10
+    expect(screen.getByText('16081.486043 ML')).toBeInTheDocument()
+  })
+
+  it('shows the neutral placeholder when no relevant output carries a signed destination', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('17081.486043') },
+          },
+        ],
+        outputs: [
+          {
+            type: 'Htlc',
+            destination: OWN_RECEIVING,
+            value: coin('16071.486043'),
+            htlc: {
+              spend_key: 'mtc1qdappspendkey',
+              refund_key: 'mtc1qdapprefund',
+            },
+          },
+          {
+            type: 'DelegateStaking',
+            destination: OWN_RECEIVING,
+            amount: { decimal: '10', atoms: toAtoms('10') },
+            delegation_id: 'd1',
+          },
+        ],
+      },
+    })
+
+    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
+    expect(screen.getAllByText('—')).toHaveLength(1)
+    expect(screen.getAllByText(truncated(OWN_RECEIVING))).toHaveLength(1)
+    // only From has a copy button: there is no To address to copy
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+    expect(screen.getByText('16081.486043 ML')).toBeInTheDocument()
+  })
+
   it('does not take the From address from a utxo injected on an account input', () => {
     // LEG-KIND REGRESSION: the signer reads utxo fields only for input_type
     // 'UTXO' legs — an injected utxo destination on an account-command input
@@ -984,4 +1062,469 @@ describe('TransactionSummary', () => {
     expect(screen.queryByText(injected)).not.toBeInTheDocument()
     expect(screen.queryByText(truncated(injected))).not.toBeInTheDocument()
   })
+
+  // A FillOrder input's `destination` is where the acquired asset lands and
+  // the input carries no signature (encode_witness_no_signature): it is
+  // never the source of funds, whatever address it names. `.address` is
+  // read by the signer nowhere.
+  const FILL_PROCEEDS = 'mtc1qfillproceedsdestination' // a second wallet address
+  const FOREIGN_UTXO = 'mtc1qforeignutxoowner'
+  const fillOrderInput = (destination, fields = {}) => ({
+    input: {
+      input_type: 'AccountCommand',
+      command: 'FillOrder',
+      order_id: 'order-1',
+      fill_atoms: '1000000000000',
+      nonce: '0',
+      ...fields,
+      destination,
+    },
+    utxo: null,
+  })
+  const utxoInput = (destination, decimal) => ({
+    input: { input_type: 'UTXO' },
+    utxo: { type: 'Transfer', destination, value: coin(decimal) },
+  })
+  const WITH_FILL_KEY = {
+    receiving: [OWN_RECEIVING, FILL_PROCEEDS],
+    change: [OWN_CHANGE],
+  }
+
+  it('does not take the From address from a FillOrder destination', () => {
+    renderSummary({
+      ownAddresses: WITH_FILL_KEY,
+      jsonRepresentation: {
+        inputs: [
+          fillOrderInput(FILL_PROCEEDS),
+          utxoInput(OWN_RECEIVING, '100'),
+        ],
+        outputs: [
+          { type: 'Transfer', destination: DESTINATION, value: coin('25') },
+        ],
+      },
+    })
+
+    expect(screen.getByText('Fill order')).toBeInTheDocument()
+    // From is the utxo's address, never the fill's proceeds destination
+    expect(screen.getByText('From').nextElementSibling).toHaveTextContent(
+      truncated(OWN_RECEIVING),
+    )
+    expect(screen.getByText('To').nextElementSibling).toHaveTextContent(
+      truncated(DESTINATION),
+    )
+  })
+
+  it('shows the utxo source, not a FillOrder destination, when no leg is the wallet', () => {
+    renderSummary({
+      ownAddresses: WITH_FILL_KEY,
+      jsonRepresentation: {
+        inputs: [fillOrderInput(FILL_PROCEEDS), utxoInput(FOREIGN_UTXO, '100')],
+        outputs: [],
+      },
+    })
+
+    // the foreign utxo is where the funds come from; the fill's destination
+    // names only where the acquired asset goes
+    expect(screen.getByText('From').nextElementSibling).toHaveTextContent(
+      FOREIGN_UTXO,
+    )
+    expect(screen.getByText(/^To/).nextElementSibling).toHaveTextContent(
+      truncated(FILL_PROCEEDS),
+    )
+  })
+
+  it('never takes the From address from an `address` field', () => {
+    const addressOnly = {
+      input: { input_type: 'UTXO' },
+      utxo: { address: FILL_PROCEEDS, value: coin('1') },
+    }
+    renderSummary({
+      ownAddresses: WITH_FILL_KEY,
+      jsonRepresentation: {
+        inputs: [addressOnly, utxoInput(OWN_RECEIVING, '100')],
+        outputs: [],
+      },
+    })
+
+    expect(screen.getByText('From').nextElementSibling).toHaveTextContent(
+      truncated(OWN_RECEIVING),
+    )
+    // the `address` value appears nowhere on the summary
+    expect(screen.queryByText(truncated(FILL_PROCEEDS))).not.toBeInTheDocument()
+  })
+
+  it('shows the placeholder when a utxo names its address only through `address`', () => {
+    renderSummary({
+      ownAddresses: WITH_FILL_KEY,
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            utxo: { address: FILL_PROCEEDS, value: coin('1') },
+          },
+        ],
+        outputs: [],
+      },
+    })
+
+    // From and To both show the placeholder: nothing to copy
+    expect(screen.getAllByText('—')).toHaveLength(2)
+    expect(screen.queryByTestId('copy-btn')).not.toBeInTheDocument()
+  })
+
+  // An Htlc utxo carries no destination: the signer signs it with the key
+  // of its spend key (a claim) or else of its refund key.
+  it.each([
+    ['spend_key', true],
+    ['refund_key', true],
+    ['keys the wallet does not hold', false],
+  ])('takes the From address of an Htlc utxo from its %s', (keys, owned) => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            utxo: {
+              type: 'Htlc',
+              value: coin('10'),
+              htlc: {
+                spend_key:
+                  keys === 'spend_key' ? OWN_RECEIVING : 'mtc1qdappspendkey',
+                refund_key:
+                  keys === 'refund_key' ? OWN_RECEIVING : 'mtc1qdapprefund',
+              },
+            },
+          },
+        ],
+        outputs: [],
+      },
+    })
+
+    if (owned) {
+      expect(screen.getByText(truncated(OWN_RECEIVING))).toBeInTheDocument()
+    } else {
+      // neither key is the wallet's: the utxo is not its funds, so no
+      // source address is claimed (From and To both show the placeholder)
+      expect(
+        screen.queryByText(truncated(OWN_RECEIVING)),
+      ).not.toBeInTheDocument()
+      expect(screen.getAllByText('—')).toHaveLength(2)
+      expect(screen.queryByTestId('copy-btn')).not.toBeInTheDocument()
+    }
+  })
+
+  // The signer encodes `destination` on an account-command FillOrder input
+  // as well — where the acquired asset lands — so it may name the "To"
+  // line when no output carries a destination the signer encodes.
+  it('falls back to the FillOrder destination for the To line', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [fillOrderInput(DESTINATION), utxoInput(OWN_RECEIVING, '100')],
+        outputs: [],
+      },
+    })
+
+    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
+    // one copy button each for From and To
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
+  })
+
+  it('keeps an output destination ahead of a FillOrder destination', () => {
+    renderSummary({
+      ownAddresses: WITH_FILL_KEY,
+      jsonRepresentation: {
+        inputs: [
+          fillOrderInput(FILL_PROCEEDS),
+          utxoInput(OWN_RECEIVING, '100'),
+        ],
+        outputs: [
+          { type: 'Transfer', destination: DESTINATION, value: coin('25') },
+        ],
+      },
+    })
+
+    expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
+    expect(screen.queryByText(truncated(FILL_PROCEEDS))).not.toBeInTheDocument()
+  })
+
+  it('does not label a FillOrder destination as the wallet', () => {
+    // every output returns to a change address while the fill sends the
+    // acquired asset elsewhere: not a transfer back to the wallet
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [fillOrderInput(DESTINATION), utxoInput(OWN_RECEIVING, '100')],
+        outputs: [
+          { type: 'Transfer', destination: OWN_CHANGE, value: coin('99') },
+        ],
+      },
+    })
+
+    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
+    expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
+  })
+
+  it.each([
+    ['a non-string destination', fillOrderInput(42)],
+    ['an `address` field', fillOrderInput(undefined, { address: DESTINATION })],
+    [
+      'a UTXO leg injected with the command',
+      {
+        input: {
+          input_type: 'UTXO',
+          command: 'FillOrder',
+          destination: DESTINATION,
+          index: 0,
+        },
+        utxo: null,
+      },
+    ],
+  ])(
+    'keeps the neutral placeholder for %s on a FillOrder leg',
+    (_description, input) => {
+      renderSummary({
+        jsonRepresentation: {
+          inputs: [input, utxoInput(OWN_RECEIVING, '100')],
+          outputs: [],
+        },
+      })
+
+      expect(screen.getByText('To')).toBeInTheDocument()
+      expect(screen.getAllByText('—')).toHaveLength(1)
+      // only From has a copy button
+      expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+    },
+  )
+
+  // Beside a relevant output that carries a signed amount, "To" must not
+  // name a fill destination: the Amount row would read as what goes to that
+  // address, while the funds of the Htlc/staking output go elsewhere. The
+  // fill destination is named only when no relevant output carries a
+  // signed amount at all.
+  it.each([
+    [
+      'an Htlc output',
+      {
+        type: 'Htlc',
+        value: coin('10'),
+        htlc: { spend_key: 'mtc1qdappspendkey', refund_key: 'mtc1qdapprefund' },
+      },
+    ],
+    [
+      'a DelegateStaking output',
+      {
+        type: 'DelegateStaking',
+        amount: coin('10').amount,
+        delegation_id: 'd1',
+      },
+    ],
+  ])(
+    'keeps the placeholder when the amount goes to %s beside a fill',
+    (_description, escrowOutput) => {
+      renderSummary({
+        jsonRepresentation: {
+          // the fill's proceeds go to the wallet's receiving address R
+          inputs: [
+            utxoInput(OWN_RECEIVING, '100'),
+            fillOrderInput(OWN_RECEIVING),
+          ],
+          outputs: [
+            escrowOutput,
+            {
+              type: 'Transfer',
+              destination: OWN_CHANGE,
+              value: coin('89.99'),
+            },
+          ],
+        },
+      })
+
+      // the Amount row is the 10 ML escrowed, which never reaches R
+      expect(screen.getByText('10 ML')).toBeInTheDocument()
+      expect(screen.getByText('To')).toBeInTheDocument()
+      expect(screen.getAllByText('—')).toHaveLength(1)
+      // only From has a copy button
+      expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+    },
+  )
+
+  // A pure fill that returns its change to a RECEIVING address of the
+  // wallet: that change output is the relevant output, so "To" names it as
+  // the wallet's own address beside its own amount. True on both counts —
+  // the Transfer's destination is signer-encoded, and the Amount row is
+  // exactly what it pays. The fill's destination does not replace it.
+  it('names the change output of a pure fill, not the fill destination', () => {
+    const CHANGE_RECEIVING = 'mtc1qsecondreceivingaddress'
+    renderSummary({
+      ownAddresses: {
+        receiving: [OWN_RECEIVING, CHANGE_RECEIVING],
+        change: [OWN_CHANGE],
+      },
+      jsonRepresentation: {
+        inputs: [fillOrderInput(DESTINATION), utxoInput(OWN_RECEIVING, '100')],
+        outputs: [
+          {
+            type: 'Transfer',
+            destination: CHANGE_RECEIVING,
+            value: coin('99'),
+          },
+        ],
+      },
+    })
+
+    expect(screen.getByText('To (your address)')).toBeInTheDocument()
+    expect(
+      screen.getByText('To (your address)').nextElementSibling,
+    ).toHaveTextContent(truncated(CHANGE_RECEIVING))
+    // the Amount row is what that Transfer pays back
+    expect(screen.getByText('99 ML')).toBeInTheDocument()
+    expect(screen.queryByText(truncated(DESTINATION))).not.toBeInTheDocument()
+  })
+
+  // The same fill with its change returning to a CHANGE address: change is
+  // not a payment, so no relevant output remains and "To" names the fill's
+  // destination — where the acquired asset lands — with no Amount row beside
+  // it. Nothing on screen is attributed to an address it does not go to.
+  it('names the fill destination when a pure fill returns change to a change address', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [fillOrderInput(DESTINATION), utxoInput(OWN_RECEIVING, '100')],
+        outputs: [
+          { type: 'Transfer', destination: OWN_CHANGE, value: coin('99') },
+        ],
+      },
+    })
+
+    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.getByText('To').nextElementSibling).toHaveTextContent(
+      truncated(DESTINATION),
+    )
+    expect(screen.queryByText('Amount')).not.toBeInTheDocument()
+    // the order leg makes the fee unverifiable, so no number is derived
+    // from the change either
+    expect(screen.getByText('Unknown')).toBeInTheDocument()
+  })
+
+  // An order or a token issuance resolves no amount container but still
+  // shows signed amounts as extra rows. Beside those the fill destination
+  // must not be named either: the order's funds are escrowed to its conclude
+  // address and the supply belongs to the issuance, neither to R.
+  it.each([
+    [
+      'a CreateOrder output',
+      'Order give',
+      '100 ML',
+      {
+        type: 'CreateOrder',
+        ask_currency: { type: 'Coin' },
+        ask_balance: { decimal: '1', atoms: toAtoms('1') },
+        give_currency: { type: 'Coin' },
+        give_balance: { decimal: '100', atoms: toAtoms('100') },
+        conclude_destination: 'mtc1qattackerconclude',
+      },
+    ],
+    [
+      'a token issuance output',
+      'Total supply',
+      '100',
+      {
+        type: 'IssueFungibleToken',
+        token_ticker: { string: 'TST', hex: '00' },
+        metadata_uri: { string: '', hex: '' },
+        total_supply: {
+          type: 'Fixed',
+          amount: { decimal: '100', atoms: '100' },
+        },
+        number_of_decimals: 0,
+        authority: 'mtc1qissuer',
+        is_freezable: false,
+      },
+    ],
+  ])(
+    'keeps the placeholder beside the signed rows of %s',
+    (_description, rowLabel, rowText, escrowOutput) => {
+      renderSummary({
+        jsonRepresentation: {
+          // the fill's proceeds go to the wallet's receiving address R
+          inputs: [
+            utxoInput(OWN_RECEIVING, '100'),
+            fillOrderInput(OWN_RECEIVING),
+          ],
+          outputs: [escrowOutput],
+        },
+      })
+
+      // the output's own signed row is shown …
+      expect(screen.getByText(rowLabel).nextElementSibling).toHaveTextContent(
+        rowText,
+      )
+      // … and "To" names neither R nor the conclude address
+      expect(screen.getByText('To')).toBeInTheDocument()
+      expect(screen.getAllByText('—')).toHaveLength(1)
+      expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+    },
+  )
+
+  // One "To" line cannot stand for several fills: it names their
+  // destination only when every fill carrying a string destination names
+  // the same one. Each fill's own destination is shown on its own row in
+  // the technical breakdown.
+  it('keeps the placeholder when fills go to different addresses', () => {
+    renderSummary({
+      ownAddresses: WITH_FILL_KEY,
+      jsonRepresentation: {
+        inputs: [
+          utxoInput(OWN_RECEIVING, '100'),
+          // one fill's proceeds go to the wallet's receiving address R…
+          fillOrderInput(FILL_PROCEEDS),
+          // …and another's to an address outside the wallet
+          fillOrderInput('mtc1qattackerproceeds'),
+        ],
+        outputs: [
+          { type: 'Transfer', destination: OWN_CHANGE, value: coin('99') },
+        ],
+      },
+    })
+
+    // both fills are listed, each with its committed size
+    expect(screen.getAllByText('Order fill')).toHaveLength(2)
+    // no single address receives them: no "To" address, no copy button
+    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
+    expect(screen.getAllByText('—')).toHaveLength(1)
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+    // R appears nowhere on the summary
+    expect(screen.queryByText(truncated(FILL_PROCEEDS))).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['an address outside the wallet', DESTINATION, 'To'],
+    ['a receiving address of the wallet', FILL_PROCEEDS, 'To (your address)'],
+  ])(
+    'names the one destination two fills share when both go to %s',
+    (_which, destination, label) => {
+      renderSummary({
+        ownAddresses: WITH_FILL_KEY,
+        jsonRepresentation: {
+          inputs: [
+            utxoInput(OWN_RECEIVING, '100'),
+            fillOrderInput(destination),
+            fillOrderInput(destination),
+          ],
+          outputs: [
+            { type: 'Transfer', destination: OWN_CHANGE, value: coin('99') },
+          ],
+        },
+      })
+
+      expect(screen.getAllByText('Order fill')).toHaveLength(2)
+      expect(screen.getByText(label)).toBeInTheDocument()
+      expect(screen.getByText(label).nextElementSibling).toHaveTextContent(
+        truncated(destination),
+      )
+      // From and To each have a copy button
+      expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
+    },
+  )
 })

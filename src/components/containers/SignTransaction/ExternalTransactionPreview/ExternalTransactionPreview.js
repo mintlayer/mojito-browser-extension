@@ -19,6 +19,7 @@ const {
   resolveAssetDecimals,
   resolveCurrencyDecimals,
   signerAmountContainer,
+  signerOutputDestination,
   verifyAmountPair,
 } = TransactionAmounts
 
@@ -144,10 +145,12 @@ const TransferDetails = ({ transactionData, ownAddresses }) => {
       ? 'Transfer token'
       : 'Transfer coins'
 
+  // the destination shown is the one the signer encodes for the output
+  // (signerOutputDestination), exactly like the summary's "To" line
   const relevantOutput = findRelevantOutputs(
     JSONRepresentation.outputs,
     ownAddresses,
-  ).outputs.find((output) => output.destination)
+  ).outputs.find((output) => signerOutputDestination(output))
 
   // If no relevant output found, try to find any output with the token ID
   const fallbackOutput =
@@ -158,6 +161,7 @@ const TransferDetails = ({ transactionData, ownAddresses }) => {
       : null
 
   const outputToUse = relevantOutput || fallbackOutput
+  const destination = outputToUse ? signerOutputDestination(outputToUse) : null
 
   if (!outputToUse) {
     return (
@@ -182,9 +186,8 @@ const TransferDetails = ({ transactionData, ownAddresses }) => {
       <div className="signTxSection">
         <h4>Destination</h4>
         <p>
-          {outputToUse.destination || 'Unknown'}
-          {isOwnReceiving(outputToUse.destination, ownAddresses) &&
-            ' (your address)'}
+          {destination || 'Unknown'}
+          {isOwnReceiving(destination, ownAddresses) && ' (your address)'}
         </p>
         {inputWithToken && (
           <>

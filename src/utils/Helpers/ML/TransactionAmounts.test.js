@@ -13,6 +13,9 @@ import {
   signerAmountContainer,
   signerAmountScale,
   signerAmountTokenId,
+  outputCarriesSignedAmount,
+  signerFillOrderDestination,
+  signerUtxoOwnerAddress,
   verifyAmountPair,
   verifyDeclaredFee,
 } from './TransactionAmounts'
@@ -720,6 +723,124 @@ describe('findRelevantOutputs', () => {
     expect(toSelf).toBe(true)
     expect(relevant).toEqual([outputs[0]]) // change excluded, payment kept
   })
+
+  // The signer encodes `destination` for Transfer, LockThenTransfer and
+  // CreateDelegationId outputs only. Every other output type moves its
+  // funds elsewhere whatever address the payload attaches to it — an Htlc
+  // pays to its spend/refund keys, a DelegateStaking escrows into its
+  // delegation, a burn destroys them — so such an output is a payment even
+  // when tagged with one of the wallet's own addresses.
+  it.each([
+    ['CreateOrder', { conclude_destination: 'attacker' }],
+    ['BurnToken', {}],
+    ['IssueFungibleToken', {}],
+    ['DataDeposit', {}],
+    ['DelegateStaking', { delegation_id: 'd1' }],
+    ['Htlc', { htlc: { spend_key: 'attacker', refund_key: 'attacker' } }],
+  ])(
+    'keeps a %s output tagged with own addresses as a payment',
+    (type, fields) => {
+      const outputs = [
+        coinOutput('attacker', '10', '1000000000000'),
+        { type, ...fields, destination: 'wallet', address: 'change' },
+      ]
+      const { outputs: relevant, toSelf } = findRelevantOutputs(
+        outputs,
+        ownAddresses,
+      )
+      expect(toSelf).toBe(false)
+      expect(relevant).toEqual(outputs)
+    },
+  )
+
+  it('never honours `address`, on any output type', () => {
+    const outputs = [
+      coinOutput('attacker', '10', '1000000000000'),
+      // a destination-bearing type addressed through `address` only
+      { type: 'Transfer', address: 'wallet', value: coin('5') },
+      // an own `address` next to a foreign destination
+      { ...coinOutput('attacker', '1'), address: 'wallet' },
+      {
+        type: 'LockThenTransfer',
+        address: 'wallet',
+        lock: { type: 'ForBlockCount', content: 1 },
+        value: coin('1'),
+      },
+      { type: 'CreateDelegationId', address: 'wallet', pool_id: 'pool' },
+    ]
+    const { outputs: relevant, toSelf } = findRelevantOutputs(
+      outputs,
+      ownAddresses,
+    )
+    expect(toSelf).toBe(false)
+    expect(relevant).toEqual(outputs)
+  })
+
+  it('excludes Transfer, LockThenTransfer and CreateDelegationId to own addresses as change', () => {
+    const payment = coinOutput('attacker', '10')
+    const outputs = [
+      coinOutput('wallet', '1'),
+      coinOutput('change', '2'),
+      {
+        type: 'LockThenTransfer',
+        destination: 'change',
+        lock: { type: 'ForBlockCount', content: 1 },
+        value: coin('3'),
+      },
+      { type: 'CreateDelegationId', destination: 'wallet', pool_id: 'pool' },
+      payment,
+    ]
+    const { outputs: relevant, toSelf } = findRelevantOutputs(
+      outputs,
+      ownAddresses,
+    )
+    expect(toSelf).toBe(false)
+    expect(relevant).toEqual([payment])
+  })
+
+  it('keeps the self-transfer branch for outputs that genuinely target the wallet', () => {
+    const toReceiving = coinOutput('wallet', '10')
+    const delegation = {
+      type: 'CreateDelegationId',
+      destination: 'wallet',
+      pool_id: 'pool',
+    }
+    const outputs = [
+      toReceiving,
+      coinOutput('change', '80'),
+      delegation,
+      {
+        type: 'LockThenTransfer',
+        destination: 'change',
+        lock: { type: 'ForBlockCount', content: 1 },
+        value: coin('5'),
+      },
+    ]
+    const { outputs: relevant, toSelf } = findRelevantOutputs(
+      outputs,
+      ownAddresses,
+    )
+    expect(toSelf).toBe(true)
+    // change excluded, payments to receiving addresses kept
+    expect(relevant).toEqual([toReceiving, delegation])
+  })
+
+  it('leaves the self-transfer branch as soon as one output type ignores destination', () => {
+    const escrow = {
+      type: 'Htlc',
+      destination: 'wallet',
+      value: coin('5'),
+      htlc: { spend_key: 'attacker', refund_key: 'attacker' },
+    }
+    const outputs = [coinOutput('wallet', '10'), escrow]
+    const { outputs: relevant, toSelf } = findRelevantOutputs(
+      outputs,
+      ownAddresses,
+    )
+    expect(toSelf).toBe(false)
+    // the transfer to the wallet is change; the escrow leaves the wallet
+    expect(relevant).toEqual([escrow])
+  })
 })
 
 describe('signer leg-kind-aware amount resolution', () => {
@@ -898,6 +1019,318 @@ describe('signer leg-kind-aware amount resolution', () => {
   })
 })
 
+describe('signer-read input addresses', () => {
+  const ownAddresses = { receiving: ['wallet'], change: ['change'] }
+  const htlcUtxo = (keys) => ({
+    type: 'Htlc',
+    value: coin('10'),
+    htlc: keys,
+  })
+
+  // An Htlc utxo carries no destination: the signer signs it with the key
+  // of its spend key (a claim) or else of its refund key.
+  it.each([
+    ['spend_key', { spend_key: 'wallet', refund_key: 'attacker' }, 'wallet'],
+    ['refund_key', { spend_key: 'attacker', refund_key: 'change' }, 'change'],
+    // the signer prefers the spend key when the wallet holds both
+    [
+      'spend_key ahead of an owned refund_key',
+      { spend_key: 'change', refund_key: 'wallet' },
+      'change',
+    ],
+  ])(
+    'resolves the owner of an Htlc utxo from its %s',
+    (_field, keys, expected) => {
+      expect(signerUtxoOwnerAddress(htlcUtxo(keys), ownAddresses)).toBe(
+        expected,
+      )
+    },
+  )
+
+  it('never resolves an Htlc utxo owner from its destination', () => {
+    // the signer signs an Htlc utxo with a spend/refund key only
+    expect(
+      signerUtxoOwnerAddress(
+        htlcUtxo({
+          destination: 'wallet',
+          address: 'wallet',
+          spend_key: 'attacker',
+          refund_key: 'attacker',
+        }),
+        ownAddresses,
+      ),
+    ).toBe(null)
+    expect(
+      signerUtxoOwnerAddress(
+        htlcUtxo({ spend_key: 42, refund_key: { toString: 1 } }),
+        ownAddresses,
+      ),
+    ).toBe(null)
+    expect(signerUtxoOwnerAddress({ type: 'Htlc' }, ownAddresses)).toBe(null)
+  })
+
+  it('resolves any other utxo from its string destination, never `address`', () => {
+    expect(
+      signerUtxoOwnerAddress(
+        { type: 'Transfer', destination: 'wallet' },
+        ownAddresses,
+      ),
+    ).toBe('wallet')
+    expect(
+      signerUtxoOwnerAddress(
+        { type: 'Transfer', destination: 'attacker' },
+        ownAddresses,
+      ),
+    ).toBe(null)
+    expect(
+      signerUtxoOwnerAddress(
+        { type: 'Transfer', address: 'wallet' },
+        ownAddresses,
+      ),
+    ).toBe(null)
+    expect(
+      signerUtxoOwnerAddress(
+        { type: 'Transfer', destination: { toString: 1 } },
+        ownAddresses,
+      ),
+    ).toBe(null)
+    expect(signerUtxoOwnerAddress(null, ownAddresses)).toBe(null)
+    // an Htlc utxo without its keys, and no own addresses at all
+    expect(signerUtxoOwnerAddress({ type: 'Htlc' }, undefined)).toBe(null)
+  })
+
+  // The signer encodes `destination` on an account-command FillOrder input
+  // (where the acquired asset lands) and on no other input shape.
+  it('reads a FillOrder destination only as a string on an account command', () => {
+    const leg = (input) => ({ input })
+    expect(
+      signerFillOrderDestination(
+        leg({
+          input_type: 'AccountCommand',
+          command: 'FillOrder',
+          destination: 'dApp',
+        }),
+      ),
+    ).toBe('dApp')
+    expect(
+      signerFillOrderDestination(
+        leg({
+          input_type: 'Account',
+          command: 'FillOrder',
+          destination: 'dApp',
+        }),
+      ),
+    ).toBe('dApp')
+    for (const input of [
+      { input_type: 'AccountCommand', command: 'FillOrder', destination: 42 },
+      { input_type: 'AccountCommand', command: 'FillOrder', address: 'dApp' },
+      {
+        input_type: 'AccountCommand',
+        command: 'ConcludeOrder',
+        destination: 'dApp',
+      },
+      { input_type: 'UTXO', command: 'FillOrder', destination: 'dApp' },
+      { command: 'FillOrder', destination: 'dApp' },
+    ]) {
+      expect(signerFillOrderDestination(leg(input))).toBe(null)
+    }
+    expect(signerFillOrderDestination(null)).toBe(null)
+  })
+})
+
+describe('outputCarriesSignedAmount', () => {
+  const ownAddresses = { receiving: ['wallet'], change: ['change'] }
+  const lock = { type: 'ForBlockCount', content: 1 }
+  const order = (side, balance) => ({
+    type: 'CreateOrder',
+    ask_currency: { type: 'Coin' },
+    give_currency: { type: 'Coin' },
+    conclude_destination: 'attacker',
+    [side]: balance,
+  })
+  const reconcileOutputs = (outputs, tokenDecimalsById = new Map()) =>
+    reconcileApprovalAmounts(
+      { inputs: [], outputs },
+      { tokenDecimalsById, ownAddresses },
+    )
+
+  // Every kind of row the approval renders for an output — an amount row
+  // per value-bearing type, Burned, Total supply, Order ask, Order give,
+  // as a number and as a verification error — checked against
+  // reconcileApprovalAmounts itself: the row is rendered AND the predicate
+  // names the output that renders it. With no inputs, every row rendered
+  // comes from the output under test.
+  it.each([
+    [
+      'an amount row (Transfer)',
+      [{ type: 'Transfer', destination: 'attacker', value: coin('10') }],
+    ],
+    [
+      'an amount row (LockThenTransfer)',
+      [
+        {
+          type: 'LockThenTransfer',
+          destination: 'attacker',
+          lock,
+          value: coin('10'),
+        },
+      ],
+    ],
+    [
+      'an amount row (Htlc)',
+      [
+        {
+          type: 'Htlc',
+          value: coin('10'),
+          htlc: { spend_key: 'attacker', refund_key: 'attacker' },
+        },
+      ],
+    ],
+    [
+      'an amount row (DelegateStaking)',
+      [
+        {
+          type: 'DelegateStaking',
+          amount: coin('10').amount,
+          delegation_id: 'd1',
+        },
+      ],
+    ],
+    ['a Burned row (coin)', [{ type: 'BurnToken', value: coin('10') }]],
+    [
+      'a Burned row (token)',
+      [
+        {
+          type: 'BurnToken',
+          value: {
+            type: 'TokenV1',
+            token_id: 'token-burn',
+            amount: { atoms: '50000', decimal: '500' },
+          },
+        },
+      ],
+    ],
+    [
+      'a Total supply row',
+      [
+        {
+          type: 'IssueFungibleToken',
+          total_supply: {
+            type: 'Fixed',
+            amount: { atoms: '100', decimal: '100' },
+          },
+          number_of_decimals: 0,
+        },
+      ],
+    ],
+    ['an Order ask row', [order('ask_balance', coin('1').amount)]],
+    ['an Order give row', [order('give_balance', coin('100').amount)]],
+    [
+      'an amount row shown as a verification error',
+      [
+        {
+          type: 'Transfer',
+          destination: 'attacker',
+          value: {
+            type: 'Coin',
+            amount: { decimal: '1', atoms: '100000000000' },
+          },
+        },
+      ],
+    ],
+    [
+      'an Order give row shown as a verification error',
+      [
+        order('give_balance', {
+          decimal: '1',
+          atoms: '10000000000000',
+        }),
+      ],
+    ],
+    [
+      'a Burned row shown as a verification error',
+      [
+        {
+          type: 'BurnToken',
+          value: {
+            type: 'Coin',
+            amount: { decimal: '1', atoms: '10000000000000' },
+          },
+        },
+      ],
+    ],
+  ])('is true for every output that renders %s', (_kind, outputs) => {
+    // the token-burn row needs its token's scale
+    const { amountRows, extraAmountRows } = reconcileOutputs(
+      outputs,
+      new Map([['token-burn', 2]]),
+    )
+    expect(amountRows.length + extraAmountRows.length).toBeGreaterThan(0)
+    // no input exists, so nothing but the output can have produced them
+    outputs.forEach((output) => {
+      expect(outputCarriesSignedAmount(output)).toBe(true)
+    })
+  })
+
+  it.each([
+    ['a DataDeposit', { type: 'DataDeposit', data: 'deadbeef' }],
+    [
+      'a CreateDelegationId',
+      { type: 'CreateDelegationId', destination: 'attacker', pool_id: 'pool' },
+    ],
+    ['an IssueNft', { type: 'IssueNft', destination: 'attacker' }],
+    [
+      'a CreateOrder without balances',
+      {
+        type: 'CreateOrder',
+        ask_currency: { type: 'Coin' },
+        give_currency: { type: 'Coin' },
+      },
+    ],
+    [
+      'an issuance with a Lockable supply',
+      {
+        type: 'IssueFungibleToken',
+        total_supply: { type: 'Lockable', amount: { atoms: '100' } },
+        number_of_decimals: 0,
+      },
+    ],
+    [
+      'an issuance with an Unlimited supply',
+      {
+        type: 'IssueFungibleToken',
+        total_supply: { type: 'Unlimited' },
+        number_of_decimals: 0,
+      },
+    ],
+    [
+      'a Transfer without a value',
+      { type: 'Transfer', destination: 'attacker' },
+    ],
+    [
+      'a DelegateStaking without an amount',
+      { type: 'DelegateStaking', delegation_id: 'd1' },
+    ],
+  ])('is false for %s, which renders no row', (_kind, output) => {
+    const { amountRows, extraAmountRows } = reconcileOutputs([output])
+    expect(amountRows).toEqual([])
+    expect(extraAmountRows).toEqual([])
+    expect(outputCarriesSignedAmount(output)).toBe(false)
+  })
+
+  // Over-approximation, in the safe direction only: a shape that resolves a
+  // container or an extra but carries no numeric amount renders no row and
+  // still reads true (nothing is then named beside an empty Amount row).
+  it('reads true for a resolved container that carries no numeric amount', () => {
+    const bare = { type: 'Transfer', destination: 'attacker', value: {} }
+    const { amountRows, extraAmountRows } = reconcileOutputs([bare])
+    expect(amountRows).toEqual([])
+    expect(extraAmountRows).toEqual([])
+    expect(outputCarriesSignedAmount(bare)).toBe(true)
+    expect(outputCarriesSignedAmount(null)).toBe(false)
+  })
+})
+
 describe('reconcileApprovalAmounts', () => {
   const ownAddresses = { receiving: ['wallet'], change: ['change'] }
 
@@ -1018,6 +1451,91 @@ describe('reconcileApprovalAmounts', () => {
     expect(amountRows[0].errors).toHaveLength(2)
     expect(amountRows[0].errors[0].amount).toBe('10')
     expect(amountRows[0].errors[1].amount).toBe('20')
+  })
+
+  // The signer ignores `destination`/`address` on Htlc, DelegateStaking and
+  // BurnToken outputs, so a wallet address on one of them hides nothing:
+  // its signed amount is summed into the amount rows (or surfaced as the
+  // Burned row) exactly like any payment, and a lying decimal on it blocks.
+  const decoyEscrowPayload = (escrowOutput) => ({
+    inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
+    outputs: [
+      coinOutput('attacker', '10', '1000000000000'),
+      { destination: 'wallet', address: 'wallet', ...escrowOutput },
+    ],
+  })
+
+  it.each([
+    [
+      'Htlc',
+      {
+        type: 'Htlc',
+        value: coin('16071.486043', '1607148604300000'),
+        htlc: { spend_key: 'attacker', refund_key: 'attacker' },
+      },
+    ],
+    [
+      'DelegateStaking',
+      {
+        type: 'DelegateStaking',
+        amount: coin('16071.486043', '1607148604300000').amount,
+        delegation_id: 'd1',
+      },
+    ],
+  ])(
+    'sums a %s output tagged with own addresses into the amount rows',
+    (_type, escrowOutput) => {
+      const { amountRows, blocked } = reconcileApprovalAmounts(
+        decoyEscrowPayload(escrowOutput),
+        { tokenDecimalsById: new Map(), ownAddresses },
+      )
+      expect(blocked).toBe(false)
+      // 10 + 16071.486043 — the escrowed funds are shown, never hidden
+      expect(amountRows).toEqual([
+        { key: 'Coin', tokenId: null, amount: '16081.486043' },
+      ])
+    },
+  )
+
+  it('blocks a lying decimal on a decoy-addressed Htlc output', () => {
+    const { amountRows, blocked } = reconcileApprovalAmounts(
+      decoyEscrowPayload({
+        type: 'Htlc',
+        // LIE: the escrow takes the whole remainder of the wallet
+        value: coin('0.00000000001', '1607148604300000'),
+        htlc: { spend_key: 'attacker', refund_key: 'attacker' },
+      }),
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+    expect(blocked).toBe(true)
+    expect(amountRows[0].errors).toEqual([
+      {
+        error: expect.stringMatching(/does not match/),
+        amount: '16071.486043',
+      },
+    ])
+  })
+
+  it('surfaces a decoy-addressed BurnToken output as its signed Burned row', () => {
+    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
+      decoyEscrowPayload({
+        type: 'BurnToken',
+        value: coin('16071.486043', '1607148604300000'),
+      }),
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+    // burns are never payment rows — the destroyed amount is its own row
+    expect(blocked).toBe(false)
+    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '10' }])
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'burned:1',
+        label: 'Burned',
+        tokenId: null,
+        withTicker: true,
+        amount: '16071.486043',
+      },
+    ])
   })
 
   it('blocks on a tampered declared fee when the sums are not computable', () => {

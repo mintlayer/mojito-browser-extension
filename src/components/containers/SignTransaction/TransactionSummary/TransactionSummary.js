@@ -23,30 +23,56 @@ const truncate = (value, head = 12, tail = 8) => {
     : text
 }
 
-const getAddressOf = (candidate) => {
-  if (!candidate) return null
-  if (typeof candidate === 'string') return candidate
-  if (typeof candidate.destination === 'string') return candidate.destination
-  if (typeof candidate.address === 'string') return candidate.address
-  return null
+// The source address of a UTXO leg — where the funds it spends live: the
+// utxo's destination or, for an Htlc-typed utxo (which carries none), the
+// wallet's spend or refund key (shared signerUtxoOwnerAddress). A string
+// only. A utxo is encoded as the spent outpoint only for input_type 'UTXO'
+// legs, so an injected utxo object on an account-command input must not
+// fake the From address.
+const utxoSourceAddressOf = (input, ownAddresses) => {
+  if (input?.input?.input_type !== 'UTXO') return null
+  const utxo = input.utxo
+  if (utxo?.type === 'Htlc') {
+    return TransactionAmounts.signerUtxoOwnerAddress(utxo, ownAddresses)
+  }
+  return typeof utxo?.destination === 'string' ? utxo.destination : null
 }
 
-// The signer reads utxo fields only for input_type 'UTXO' legs — an
-// injected utxo object on an account-command input must not fake the From
-// address.
-const utxoAddressOf = (input) =>
-  input?.input?.input_type === 'UTXO' ? getAddressOf(input?.utxo) : null
-
+// Where the funds come from: the first input whose source address is one
+// of the wallet's. getTransactionHEX signs an input with the key of
+// `utxo.destination || input.authority || input.destination` (or of
+// `outputs[0].destination` for every input when the first input is a
+// DelegationBalance withdrawal) and an input whose utxo carries an `htlc`
+// object with a key of that object instead; a FillOrder input is never
+// signed — its `destination` is encoded in the fill as the address the
+// acquired asset lands on. The From line reads a utxo's own address
+// (utxoSourceAddressOf) and, failing that, an input's `destination`, the
+// last fallback of that chain — never on a FillOrder; `.address` appears
+// nowhere in the signer. When no leg is the wallet's, the first utxo's
+// source address is shown as it is.
 const findOwnInputAddress = (inputs, ownAddresses) => {
   const ownList = [
     ...(ownAddresses.receiving || []),
     ...(ownAddresses.change || []),
   ]
+  const isOwn = (address) =>
+    typeof address === 'string' && ownList.includes(address)
+
   for (const input of inputs) {
-    const address = utxoAddressOf(input) || getAddressOf(input?.input)
-    if (address && ownList.includes(address)) return address
+    const utxoAddress = utxoSourceAddressOf(input, ownAddresses)
+    if (isOwn(utxoAddress)) return utxoAddress
+    if (
+      input?.input?.command !== 'FillOrder' &&
+      isOwn(input?.input?.destination)
+    ) {
+      return input.input.destination
+    }
   }
-  return inputs.find((input) => utxoAddressOf(input))?.utxo?.destination ?? null
+  return (
+    inputs
+      .map((input) => utxoSourceAddressOf(input, ownAddresses))
+      .find(Boolean) ?? null
+  )
 }
 
 const OPERATION_LABELS = [
@@ -104,8 +130,38 @@ const TransactionSummary = ({
   const fromAddress = findOwnInputAddress(inputs, ownAddresses)
   const { outputs: relevantOutputs, toSelf: targetsOwnWallet } =
     TransactionAmounts.findRelevantOutputs(outputs, ownAddresses)
-  const toAddress = getAddressOf(relevantOutputs[0])
-  const toSelf = targetsOwnWallet && Boolean(toAddress)
+  // The "To" line shows only an address the signer encodes: the
+  // signer-read destination of a destination-bearing output (an Htlc,
+  // staking or burn output has none whatever `destination`/`address` the
+  // payload attaches to it — the first relevant output that carries one is
+  // used). Failing that, the destination of account-command FillOrder
+  // inputs (where the acquired asset lands) is named ONLY while no relevant
+  // output yields any signed row, amount row or extra row
+  // (outputCarriesSignedAmount) — beside such a row it would read as the
+  // address that amount goes to, while an Htlc, staking, burn or order
+  // output pays elsewhere — AND while every fill carrying a string
+  // destination names the same one: a single line cannot stand for fills
+  // that go to different addresses (each is shown on its own row in the
+  // technical breakdown). Else the neutral placeholder.
+  const outputAddress = relevantOutputs
+    .map(TransactionAmounts.signerOutputDestination)
+    .find((destination) => destination != null)
+  const relevantOutputsCarryAmount = relevantOutputs.some(
+    TransactionAmounts.outputCarriesSignedAmount,
+  )
+  const fillDestinations = new Set(
+    inputs
+      .map(TransactionAmounts.signerFillOrderDestination)
+      .filter((destination) => destination != null),
+  )
+  const fillDestination =
+    fillDestinations.size === 1 ? [...fillDestinations][0] : null
+  const toAddress =
+    outputAddress ?? (relevantOutputsCarryAmount ? null : fillDestination)
+  // "your address" only when the shown address is a receiving address of
+  // this wallet (a FillOrder destination may name any address)
+  const toSelf =
+    targetsOwnWallet && (ownAddresses?.receiving || []).includes(toAddress)
 
   const tokenDecimalsById =
     TransactionAmounts.buildTokenDecimalsIndex(allNetworkTokensData)

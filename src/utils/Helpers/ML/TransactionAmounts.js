@@ -350,31 +350,51 @@ export const deriveApprovalFee = (jsonRepresentation) => {
     : { amount: declared.amount }
 }
 
-const getAddressOf = (candidate) => {
-  if (!candidate) return null
-  if (typeof candidate === 'string') return candidate
-  if (typeof candidate.destination === 'string') return candidate.destination
-  if (typeof candidate.address === 'string') return candidate.address
-  return null
-}
+// Output types whose encoder reads `destination`: Transfer and
+// LockThenTransfer (getOutputs) and CreateDelegationId
+// (encode_output_create_delegation). Every other output type ignores the
+// field — an Htlc pays to its spend/refund keys, a DelegateStaking escrows
+// into its delegation, a BurnToken destroys the funds — and `address` is
+// never read for any output. The funds of such an output leave the wallet
+// whatever address a payload attaches to it.
+const DESTINATION_BEARING_OUTPUT_TYPES = new Set([
+  'Transfer',
+  'LockThenTransfer',
+  'CreateDelegationId',
+])
+
+// The destination the signer encodes for an output: only for the
+// destination-bearing types, and only a string. Never `address`.
+export const signerOutputDestination = (output) =>
+  DESTINATION_BEARING_OUTPUT_TYPES.has(output?.type) &&
+  typeof output?.destination === 'string'
+    ? output.destination
+    : null
 
 // The outputs the user is actually approving: those that don't land straight
-// back on this wallet — across EVERY asset, not just the first input's
-// token, so mixed coin+token and multi-token payments are all shown and
-// verified. When every output goes to a wallet address (a self-transfer),
-// the payment is what goes to a receiving address — outputs to change
-// addresses are just the unspent remainder coming back.
+// back on this wallet — "lands back" meaning the signer encodes one of the
+// wallet's own addresses as the destination (signerOutputDestination); an
+// output of any other type is a payment whatever `destination`/`address` it
+// carries. Across EVERY asset, not just the first input's token, so mixed
+// coin+token and multi-token payments are all shown and verified. When
+// every output goes to a wallet address (a self-transfer), the payment is
+// what goes to a receiving address — outputs to change addresses are just
+// the unspent remainder coming back.
 export const findRelevantOutputs = (outputs, ownAddresses) => {
   const receiving = ownAddresses?.receiving || []
   const ownList = [...receiving, ...(ownAddresses?.change || [])]
   const isOwn = (address) => address && ownList.includes(address)
   const isReceiving = (address) => address && receiving.includes(address)
 
-  const toOthers = outputs.filter((output) => !isOwn(getAddressOf(output)))
+  const toOthers = outputs.filter(
+    (output) => !isOwn(signerOutputDestination(output)),
+  )
   if (toOthers.length > 0) return { outputs: toOthers, toSelf: false }
 
   return {
-    outputs: outputs.filter((output) => isReceiving(getAddressOf(output))),
+    outputs: outputs.filter((output) =>
+      isReceiving(signerOutputDestination(output)),
+    ),
     toSelf: true,
   }
 }
@@ -475,6 +495,48 @@ export const isDelegationWithdrawInput = (accountInput) =>
     accountInput?.input_type === 'Account') &&
   accountInput?.account_type === 'DelegationBalance' &&
   !SIGNER_ACCOUNT_COMMANDS.has(accountInput?.command)
+
+// The addresses the signer may sign a utxo input with, in its own order of
+// preference. getTransactionHEX signs an input with the key of
+// `utxo.destination || input.authority || input.destination` — of
+// `outputs[0].destination` for every input instead when the first input is
+// a DelegationBalance withdrawal — except that an input whose utxo carries
+// an `htlc` object takes the HTLC branch, keyed on that object: its spend
+// key (a claim, when a secret is given) or else its refund key. Listed
+// here are those two keys for an Htlc-typed utxo (the shape that carries
+// the object as its own) and, for every other utxo, its destination — the
+// address the spent outpoint pays, whichever key the signer reaches for.
+// `.address` is read nowhere.
+const signerUtxoKeyAddresses = (utxo) =>
+  utxo?.type === 'Htlc'
+    ? [utxo.htlc?.spend_key, utxo.htlc?.refund_key]
+    : [utxo?.destination]
+
+// The wallet address a utxo input's funds belong to — the first of the
+// candidate keys this wallet holds — or null when it holds none: the leg
+// is then not this wallet's funds and is never shown as such. Strings only.
+export const signerUtxoOwnerAddress = (utxo, ownAddresses) => {
+  const ownList = [
+    ...(ownAddresses?.receiving || []),
+    ...(ownAddresses?.change || []),
+  ]
+  return (
+    signerUtxoKeyAddresses(utxo).find(
+      (address) => typeof address === 'string' && ownList.includes(address),
+    ) ?? null
+  )
+}
+
+// The destination the signer encodes on an account-command FillOrder input
+// (encode_input_for_fill_order): where the acquired asset lands. The fill
+// itself carries no signature (encode_witness_no_signature), so this is
+// never the source of funds. Both input_type spellings; a string only.
+export const signerFillOrderDestination = (input) =>
+  isAccountCommandShape(input?.input) &&
+  input.input.command === 'FillOrder' &&
+  typeof input.input.destination === 'string'
+    ? input.input.destination
+    : null
 
 // Token identity from the SAME signer-read fields as the container:
 // value-bearing shapes carry it on the container (output.value.token_id,
@@ -618,6 +680,20 @@ const collectSignedInputExtras = (input, index) => {
   }
   return extras
 }
+
+// True for every output that yields a signed row of the approval — an
+// amount row (a signer amount container, which a burned value is as well)
+// or an extra row (an issued total supply, order balances) — so that
+// nothing shown as a signed amount can sit beside a "To" line this
+// predicate disagrees with. Resolved through the SAME container resolver
+// and the SAME extras collector that build those rows, so it cannot drift
+// from what is displayed; the index and the token scales only label and
+// scale an extra, never decide whether one exists. Shapes that resolve a
+// container or an extra yet carry no numeric amount at all render no row
+// and still read true here — the safe direction.
+export const outputCarriesSignedAmount = (output) =>
+  signerAmountContainer(output, 'output') !== null ||
+  collectSignedExtras(output, 0, undefined).length > 0
 
 // One leg entry the approval can read: a non-array object (never null,
 // undefined, a primitive or an array). An input must carry the `input`

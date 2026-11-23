@@ -403,6 +403,127 @@ describe('SignTransactionPage — decimal vs signed-atoms reconciliation', () =>
   })
 })
 
+// The signer encodes `destination` for Transfer, LockThenTransfer and
+// CreateDelegationId outputs only. An Htlc output pays to its spend/refund
+// keys and a DelegateStaking output escrows into its delegation whatever
+// address the payload attaches to it, so a wallet address on one of them
+// must hide nothing: the escrowed funds are summed into the Amount row and
+// the wallet's address never becomes the "To" line. Such a transaction is
+// legitimate — the full amount leaving the wallet is shown and approval
+// stays available.
+const OWN_RECEIVING = 'tmt1qwalletreceiving'
+const DAPP_TRANSFER = {
+  destination: 'tmt1qattackerdestination',
+  type: 'Transfer',
+  value: { type: 'Coin', amount: { atoms: '1000000000000', decimal: '10' } },
+}
+const ESCROWED = { atoms: '1607148604300000', decimal: '16071.486043' }
+const htlcEscrow = (decoyField) => ({
+  type: 'Htlc',
+  ...(decoyField ? { [decoyField]: OWN_RECEIVING } : {}),
+  value: { type: 'Coin', amount: ESCROWED },
+  htlc: {
+    refund_key: 'tmt1qdapprefundkey',
+    refund_timelock: { content: 20, type: 'ForBlockCount' },
+    secret_hash: {
+      hex: 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3',
+      string: null,
+    },
+    spend_key: 'tmt1qdappspendkey',
+  },
+})
+const stakingEscrow = (decoyField) => ({
+  type: 'DelegateStaking',
+  ...(decoyField ? { [decoyField]: OWN_RECEIVING } : {}),
+  amount: ESCROWED,
+  delegation_id:
+    'tdelg1d57nmkp24k0rh0fgsjnjy78wxql8wvgr420ncdsesvssvdgfcg6sx6262w',
+})
+// the summary shows an address as `head(10)…tail(8)` when longer than
+// 21 characters, in full otherwise
+const shown = (address) =>
+  address.length > 21 ? `${address.slice(0, 10)}…${address.slice(-8)}` : address
+
+// Expected per case: whether a visible transfer sits beside the escrow, the
+// Amount row, and the "To" line (null: the neutral placeholder).
+const WITH_TRANSFER = {
+  transfer: true,
+  amount: '16081.486043 TML',
+  to: DAPP_TRANSFER.destination,
+}
+const ALONE = { transfer: false, amount: '16071.486043 TML', to: null }
+
+const escrowRequest = (escrowOutput, besideTransfer) => {
+  const request = JSON.parse(JSON.stringify(honestRequest))
+  request.request.data.txData.JSONRepresentation.outputs = besideTransfer
+    ? [DAPP_TRANSFER, escrowOutput]
+    : [escrowOutput]
+  return request
+}
+
+describe('SignTransactionPage — value-bearing outputs tagged with a wallet address', () => {
+  it.each([
+    ['Htlc without any address (control)', htlcEscrow(null), WITH_TRANSFER],
+    [
+      'Htlc with destination = wallet address',
+      htlcEscrow('destination'),
+      WITH_TRANSFER,
+    ],
+    [
+      'Htlc with address = wallet address',
+      htlcEscrow('address'),
+      WITH_TRANSFER,
+    ],
+    [
+      'DelegateStaking with destination = wallet address',
+      stakingEscrow('destination'),
+      WITH_TRANSFER,
+    ],
+    [
+      'Htlc with destination = wallet address as the only output',
+      htlcEscrow('destination'),
+      ALONE,
+    ],
+  ])(
+    'shows the escrowed funds for %s',
+    (_description, escrowOutput, expected) => {
+      renderSignPage(escrowRequest(escrowOutput, expected.transfer))
+
+      const summary = screen.getByTestId('transaction-summary')
+      // 10 ML to the site + 16071.486043 ML escrowed in one combined row, or
+      // the escrowed amount alone
+      expect(within(summary).getByText(expected.amount)).toBeInTheDocument()
+
+      // the "To" line never shows the wallet's own address for the escrow:
+      // it is the Transfer's destination, or the neutral placeholder
+      expect(within(summary).getByText('To')).toBeInTheDocument()
+      expect(
+        within(summary).queryByText('To (your address)'),
+      ).not.toBeInTheDocument()
+      // the wallet address appears as From only
+      expect(within(summary).queryAllByText(shown(OWN_RECEIVING))).toHaveLength(
+        1,
+      )
+      if (expected.to) {
+        expect(
+          within(summary).getByText(shown(expected.to)),
+        ).toBeInTheDocument()
+        // From and To each have a copy button
+        expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
+      } else {
+        // no output carries a destination the signer encodes: the neutral
+        // placeholder, and only From has a copy button
+        expect(within(summary).getByText('—')).toBeInTheDocument()
+        expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+      }
+
+      // the payload is consistent and legitimate: nothing is blocked
+      expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+      expect(screen.getByText('Approve and return to page')).toBeEnabled()
+    },
+  )
+})
+
 // An object with an own non-callable `toString`: it throws wherever a
 // payload value is used as a string or a number (label, object key,
 // parseInt argument).
