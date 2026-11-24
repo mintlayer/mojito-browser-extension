@@ -344,6 +344,208 @@ const findWalletKeyForRedeemScript = ({
   }
 }
 
+// ── the two public keys of an HTLC create request ─────────────────────────
+
+/**
+ * Reads a public key strictly, as the HTLC script needs it: a hex string
+ * decoding to exactly 33 bytes starting 02 or 03 (a compressed key), AND a
+ * point on secp256k1. A 65-byte uncompressed key (starting 04) is refused
+ * even where it is a valid point: the escrow script carries compressed keys
+ * only, and bitcoinjs rejects a witness script that holds an uncompressed
+ * one, so no escrow address could be built from it. Nothing here truncates:
+ * Buffer.from would silently cut an odd-length or non-hex string down to a
+ * prefix, so the text is validated before it is decoded. Returns
+ * { valid: true, hex } (lowercase, so keys compare case-insensitively) or
+ * { valid: false, reason }.
+ */
+const readPublicKeyHex = (raw) => {
+  if (typeof raw !== 'string') {
+    return { valid: false, reason: 'it is not text' }
+  }
+  const hex = raw.toLowerCase()
+  if (hex.length === 0) return { valid: false, reason: 'it is empty' }
+  if (!/^[0-9a-f]+$/.test(hex)) {
+    return {
+      valid: false,
+      reason: 'it contains characters that are not hex digits',
+    }
+  }
+  if (hex.length % 2 !== 0) {
+    return { valid: false, reason: 'its hex has an odd number of digits' }
+  }
+  const bytes = Buffer.from(hex, 'hex')
+  if (bytes.length === 65 && bytes[0] === 0x04) {
+    return {
+      valid: false,
+      reason:
+        'it is an uncompressed key, and the escrow script carries compressed keys only',
+    }
+  }
+  const compressed =
+    bytes.length === 33 && (bytes[0] === 0x02 || bytes[0] === 0x03)
+  if (!compressed) {
+    return {
+      valid: false,
+      reason: `it is ${bytes.length} byte${bytes.length === 1 ? '' : 's'} starting ${hex.slice(0, 2)}, not 33 bytes starting 02 or 03`,
+    }
+  }
+  let onCurve = false
+  try {
+    onCurve = ecc.isPoint(toU8(bytes))
+  } catch {
+    onCurve = false
+  }
+  if (!onCurve) {
+    return { valid: false, reason: 'it is not a point on the secp256k1 curve' }
+  }
+  return { valid: true, hex }
+}
+
+// A public key a wallet address entry carries, as lowercase hex. The
+// stored entry is `{ [address]: { pubkey } }` (the shape the connect page
+// shares with a dApp, read as `Object.values(entry)[0].pubkey`), the
+// unlocked one `{ address, pubkey, derivationPath }`; the key itself is
+// bytes (a typed array, or a plain object of byte values once the store
+// has round-tripped through JSON) or a hex string. '' when the entry
+// carries none of these.
+const entryPublicKeyHex = (entry) => {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return ''
+  const record = entry.pubkey !== undefined ? entry : Object.values(entry)[0]
+  const pubkey = record && typeof record === 'object' ? record.pubkey : null
+  if (typeof pubkey === 'string') return pubkey.toLowerCase()
+  const bytes = ArrayBuffer.isView(pubkey)
+    ? Array.from(toU8(pubkey))
+    : pubkey && typeof pubkey === 'object'
+      ? Object.values(pubkey)
+      : []
+  if (bytes.length === 0) return ''
+  return bytes.every((n) => Number.isInteger(n) && n >= 0 && n <= 255)
+    ? bytes.map((n) => n.toString(16).padStart(2, '0')).join('')
+    : ''
+}
+
+/**
+ * The public keys of a wallet's Bitcoin addresses (receiving and change)
+ * as lowercase hex, read the way the connect page shares them with a dApp.
+ * Only valid public keys count: a stored value that is not one could never
+ * be the key of a spendable escrow branch. A Set, so membership is one
+ * lookup; empty when none could be read.
+ */
+const walletBtcPublicKeyHexes = (btcAddressData) => {
+  const keys = new Set()
+  for (const list of [
+    btcAddressData?.btcReceivingAddresses,
+    btcAddressData?.btcChangeAddresses,
+  ]) {
+    if (!Array.isArray(list)) continue
+    for (const entry of list) {
+      const key = readPublicKeyHex(entryPublicKeyHex(entry))
+      if (key.valid) keys.add(key.hex)
+    }
+  }
+  return keys
+}
+
+// The `code` of a refusal in verifyHtlcCreateKeys, thrown by the signer.
+const HTLC_CREATE_KEY_CODES = Object.freeze({
+  WALLET_KEYS_UNREADABLE: 'HTLC_WALLET_KEYS_UNREADABLE',
+  REFUND_KEY_INVALID: 'HTLC_REFUND_KEY_INVALID',
+  REFUND_KEY_NOT_WALLET: 'HTLC_REFUND_KEY_NOT_WALLET',
+  RECIPIENT_KEY_INVALID: 'HTLC_RECIPIENT_KEY_INVALID',
+})
+
+/**
+ * The ONE verdict on the two public keys of an HTLC create request, used
+ * by the approval (which shows its reason) and by the signer (which
+ * refuses by it, before the wallet is unlocked). The wallet funds the
+ * escrow and the script pays each branch to one single key, so the refund
+ * key must be a valid public key that is one of the wallet's own (receiving
+ * or change) — otherwise the user would hold no key that can ever recover
+ * the escrow after the lock time, and whoever holds the dApp's key could
+ * take it then, with no secret at all. The recipient key must be a valid
+ * public key, or the claim branch could never be spent.
+ *
+ * `btcAddressData` is the wallet's address data as the account context
+ * carries it ({ btcReceivingAddresses, btcChangeAddresses }). Returns
+ *   { ok: true, code: null, message: null,
+ *     refundKey: { valid: true, hex, isWallet }, recipientKey: { ... } }
+ * or the same shape with ok false, a `code`, and a plain-words `message`
+ * naming the key that failed and why. A key reads { valid: true, hex,
+ * isWallet } with isWallet true or false once it was checked against the
+ * wallet's keys, and null — not checked — when the wallet's key set is
+ * empty or unreadable; an invalid key reads { valid: false, hex: null,
+ * isWallet: null, reason }. Fail closed: when none of the wallet's own
+ * public keys can be read, the refund key cannot be checked and nothing is
+ * approvable. Never throws.
+ */
+const verifyHtlcCreateKeys = ({
+  refundPublicKey,
+  recipientPublicKey,
+  btcAddressData,
+}) => {
+  const unreadable = {
+    valid: false,
+    hex: null,
+    isWallet: null,
+    reason: 'it could not be read',
+  }
+  try {
+    const walletKeys = walletBtcPublicKeyHexes(btcAddressData)
+    // With no wallet key to check against, a valid key is neither the
+    // wallet's nor a foreign one: isWallet is null, "not checked".
+    const checked = walletKeys.size > 0
+    const view = (key) => ({
+      valid: key.valid,
+      hex: key.valid ? key.hex : null,
+      isWallet: key.valid && checked ? walletKeys.has(key.hex) : null,
+      ...(key.valid ? {} : { reason: key.reason }),
+    })
+    const refundKey = view(readPublicKeyHex(refundPublicKey))
+    const recipientKey = view(readPublicKeyHex(recipientPublicKey))
+    const refused = (code, message) => ({
+      ok: false,
+      code,
+      message,
+      refundKey,
+      recipientKey,
+    })
+    if (!refundKey.valid) {
+      return refused(
+        HTLC_CREATE_KEY_CODES.REFUND_KEY_INVALID,
+        `Refund key: not a valid public key — ${refundKey.reason}. The escrow's refund branch could never be spent, so these funds could never be recovered.`,
+      )
+    }
+    if (walletKeys.size === 0) {
+      return refused(
+        HTLC_CREATE_KEY_CODES.WALLET_KEYS_UNREADABLE,
+        'The public keys of this wallet could not be read, so the refund key cannot be checked against them. If it is not a key of this wallet, after the lock time only the holder of that key could recover these funds.',
+      )
+    }
+    if (!refundKey.isWallet) {
+      return refused(
+        HTLC_CREATE_KEY_CODES.REFUND_KEY_NOT_WALLET,
+        'Refund key: not a key of this wallet. After the lock time, only the holder of that key could recover these funds.',
+      )
+    }
+    if (!recipientKey.valid) {
+      return refused(
+        HTLC_CREATE_KEY_CODES.RECIPIENT_KEY_INVALID,
+        `Recipient key: not a valid public key — ${recipientKey.reason}. The escrow's claim branch could never be spent.`,
+      )
+    }
+    return { ok: true, code: null, message: null, refundKey, recipientKey }
+  } catch {
+    return {
+      ok: false,
+      code: HTLC_CREATE_KEY_CODES.WALLET_KEYS_UNREADABLE,
+      message:
+        'The public keys of this wallet could not be read, so the refund key cannot be checked against them. If it is not a key of this wallet, after the lock time only the holder of that key could recover these funds.',
+      refundKey: unreadable,
+      recipientKey: unreadable,
+    }
+  }
+}
+
 // Refusal for an HTLC outpoint that is not verified against the chain.
 // Carries no secret: it is thrown before any secret is fetched.
 const unverifiedOutpoint = (message) =>
@@ -603,8 +805,10 @@ const buildHTLCAndFundingAddress = async (input) => {
     ]),
   )
 
+  // bitcoinjs validates its byte inputs as Uint8Array, which a Buffer
+  // fails: hand it the script as one, at the boundary.
   const p2wsh = bitcoin.payments.p2wsh({
-    redeem: { output: redeemScript },
+    redeem: { output: toU8(redeemScript) },
     network,
   })
   // payments outputs come back as plain Uint8Array in this build.
@@ -613,7 +817,7 @@ const buildHTLCAndFundingAddress = async (input) => {
   return {
     redeemScript,
     redeemScriptHex: redeemScript.toString('hex'),
-    redeemScriptAsm: bitcoin.script.toASM(redeemScript),
+    redeemScriptAsm: bitcoin.script.toASM(toU8(redeemScript)),
     witnessScript: redeemScript,
     p2wshOutput,
     scriptPubKeyHex: p2wshOutput.toString('hex'),
@@ -851,6 +1055,10 @@ export {
   parseLockBlockCount,
   parseHtlcRedeemScript,
   findWalletKeyForRedeemScript,
+  readPublicKeyHex,
+  walletBtcPublicKeyHexes,
+  verifyHtlcCreateKeys,
+  HTLC_CREATE_KEY_CODES,
   verifyHtlcOutpoint,
   HTLC_CLAIM_FEE_SATOSHIS,
   HTLC_REFUND_FEE_SATOSHIS,

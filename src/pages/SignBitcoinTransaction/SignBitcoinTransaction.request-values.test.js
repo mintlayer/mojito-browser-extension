@@ -56,8 +56,9 @@ jest.mock('../../services/Crypto/Mintlayer/@mintlayerlib-js', () => ({
   }),
 }))
 
-// Render is the surface under test. The signer's UTXO-value rule is the
-// real one (the claim/refund verdicts depend on it); the escrow script
+// Render is the surface under test. The signer's UTXO-value rule and the
+// verdict on a create request's two public keys are the real ones (the
+// claim/refund and create verdicts depend on them); the escrow script
 // builder cannot run in this realm (bitcoinjs rejects the Buffer polyfill
 // here), so it is a stand-in that resolves for a well-formed create request
 // and rejects values that cannot be read as script parameters. It is
@@ -82,6 +83,7 @@ jest.mock('@Cryptos', () => {
       HTLC_REFUND_FEE_SATOSHIS: actual.HTLC_REFUND_FEE_SATOSHIS,
       toSatoshiBigInt: actual.toSatoshiBigInt,
       parseHtlcRedeemScript: actual.parseHtlcRedeemScript,
+      verifyHtlcCreateKeys: actual.verifyHtlcCreateKeys,
       findWalletKeyForRedeemScript: jest.fn(),
       verifyHtlcOutpoint: jest.fn(),
       buildHTLCAndFundingAddress: jest.fn(),
@@ -123,7 +125,22 @@ jest.mock('@Contexts', () => {
     __esModule: true,
     AccountContext: makeCtx({
       accountID: 'request-values-account',
-      addresses: {},
+      addresses: {
+        // the test wallet's Bitcoin public keys, in the stored shape: the
+        // createHtlc fixture's refund key is its receiving key
+        btcAddresses: {
+          btcReceivingAddresses: [
+            {
+              tb1qwalletreceiving: {
+                pubkey:
+                  jest.requireActual('./mocks').CREATE_HTLC_FIXTURE_KEYS
+                    .refundPublicKey,
+              },
+            },
+          ],
+          btcChangeAddresses: [],
+        },
+      },
     }),
     SettingsContext: makeCtx({ networkType: 'testnet' }),
     BitcoinContext: makeCtx({
@@ -524,10 +541,11 @@ describe('SignBitcoinTransaction — revealed secret, escrow address and the blo
     )
   })
 
-  // The escrow address of a create request is built before approval. Once
-  // that has run and failed, the page says so and blocks approval instead
-  // of offering a sign that cannot succeed.
-  it('states why and blocks approval once the escrow address could not be built', async () => {
+  // The escrow address of a create request is built before approval. A key
+  // that is not a valid public key blocks approval with that reason before
+  // anything is built from it: the page says which key and why, the escrow
+  // address stays unavailable, and no sign that cannot succeed is offered.
+  it('states why and blocks approval when a create request key is not a valid public key', async () => {
     renderSignPage(
       withValue(
         MOCKS.createHtlc,
@@ -535,6 +553,28 @@ describe('SignBitcoinTransaction — revealed secret, escrow address and the blo
         PRIMITIVE_SHADOW,
       ),
     )
+    await settlePage()
+
+    expect(boundaryMessage()).toBeNull()
+    expect(
+      screen.getByText(/^Recipient key: not a valid public key/),
+    ).toBeInTheDocument()
+    expect(escrowAddressValue()).toBe('unavailable')
+    // nothing is built from a key that failed validation
+    expect(BTCTransaction.buildHTLCAndFundingAddress).not.toHaveBeenCalled()
+    expect(approveButton()).toBeDisabled()
+    fireEvent.click(approveButton())
+    expect(screen.queryByText('Re-enter your Password')).not.toBeInTheDocument()
+  })
+
+  // Once the keys passed and the escrow address build itself failed, the
+  // page says so and blocks approval instead of offering a sign that
+  // cannot succeed.
+  it('states why and blocks approval once the escrow address could not be built', async () => {
+    BTCTransaction.buildHTLCAndFundingAddress.mockRejectedValue(
+      new Error('Invalid secret hash'),
+    )
+    renderSignPage(MOCKS.createHtlc)
     await settlePage()
 
     expect(boundaryMessage()).toBeNull()

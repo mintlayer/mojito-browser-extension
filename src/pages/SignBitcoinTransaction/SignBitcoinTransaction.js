@@ -168,9 +168,26 @@ export const SignBitcoinTransactionPage = () => {
   const requestKind = classifyBtcSignRequest(requestJSON)
   const isCreateRequest = requestKind === BTC_REQUEST_KIND.CREATE
 
+  // The refund key of a create request must be a key of this wallet and
+  // both keys valid public keys, or the request is neither shown as
+  // approvable nor signed. One verdict, shared with the signer, computed
+  // from the public keys of the wallet's addresses as the account context
+  // carries them (the ones the connect page shares with a dApp). The
+  // verdict never throws; a value it cannot read is an invalid key.
+  const createKeys = useMemo(() => {
+    if (!isCreateRequest) return null
+    return BTCTransaction.verifyHtlcCreateKeys({
+      refundPublicKey: requestJSON?.refundPublicKey,
+      recipientPublicKey: requestJSON?.recipientPublicKey,
+      btcAddressData: addresses?.btcAddresses,
+    })
+  }, [isCreateRequest, requestJSON, addresses])
+
   useEffect(() => {
     let active = true
-    if (!isCreateRequest || !requestJSON) return undefined
+    // Never an escrow address from keys that failed the verdict: the
+    // request is blocked, and the script is not built from them at all.
+    if (!isCreateRequest || !requestJSON || !createKeys?.ok) return undefined
     ;(async () => {
       try {
         const htlc = await BTCTransaction.buildHTLCAndFundingAddress({
@@ -226,7 +243,14 @@ export const SignBitcoinTransactionPage = () => {
     return () => {
       active = false
     }
-  }, [isCreateRequest, requestJSON, btcUtxos, accountID, networkType])
+  }, [
+    isCreateRequest,
+    requestJSON,
+    btcUtxos,
+    accountID,
+    networkType,
+    createKeys,
+  ])
 
   // A second sign request can navigate into this already-mounted route
   // (same path, no remount), so escrowFeeInfo may still hold the previous
@@ -249,6 +273,7 @@ export const SignBitcoinTransactionPage = () => {
     networkType,
     escrowFeeInfo: activeEscrowFeeInfo,
     escrowFailed,
+    createKeys,
   })
   const approvalBlocked = Boolean(recap?.blockedReason)
   const blockedReason = recap?.blockedReason ?? null
@@ -383,6 +408,19 @@ export const SignBitcoinTransactionPage = () => {
 
     const transactionJSONrepresentation =
       state?.request?.data?.txData?.JSONRepresentation
+
+    // The approval's own verdict on the two keys, re-run before anything
+    // is built or the wallet is unlocked (it needs public keys only): the
+    // escrow's refund branch must pay a key of this wallet, and both keys
+    // must be valid public keys.
+    const createKeys = BTCTransaction.verifyHtlcCreateKeys({
+      refundPublicKey: transactionJSONrepresentation?.refundPublicKey,
+      recipientPublicKey: transactionJSONrepresentation?.recipientPublicKey,
+      btcAddressData: addresses?.btcAddresses,
+    })
+    if (!createKeys.ok) {
+      throw htlcRefusal(createKeys.code, createKeys.message)
+    }
 
     // buildHTLCAndFundingAddress builds the HTLC script only — it never
     // used a WIF (the old code destructured a phantom `{ WIF }` from

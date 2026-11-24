@@ -80,6 +80,80 @@ const proceedsText = (amountSat, fee, feeName) =>
 const cannotApprove = (what) =>
   `${what} For your safety, this request cannot be approved.`
 
+// A public key shown truncated in the recap: the first 12 and last 8 hex
+// characters, monospaced.
+const truncateKey = (hex) => `${hex.slice(0, 12)}…${hex.slice(-8)}`
+
+// How a valid key relates to this wallet, as the verdict checked it: one
+// of its keys, not one of them, or not checked at all — the wallet's own
+// keys could not be read, so nothing can be said either way.
+const keyRelation = (key) =>
+  key.isWallet === null
+    ? 'could not be checked against the keys of this wallet'
+    : key.isWallet
+      ? 'a key of this wallet'
+      : 'not a key of this wallet'
+
+// The key rows of a create request, from the page's verdict on the two
+// keys: each shown truncated and named for how it relates to this wallet,
+// or refused with the reason it is not a valid public key. A refund key
+// that is not one of this wallet's, or could not be checked, is flagged:
+// the request is blocked for it below.
+const createKeyRows = (keys) =>
+  [
+    ['Refund key', keys.refundKey],
+    ['Recipient key', keys.recipientKey],
+  ].map(([label, key]) =>
+    key.valid
+      ? row(label, `${truncateKey(key.hex)} — ${keyRelation(key)}`, {
+          mono: true,
+          warn: label === 'Refund key' && key.isWallet !== true,
+        })
+      : row(label, `not a valid public key — ${key.reason}`, { warn: true }),
+  )
+
+// A create request with no verdict on its keys: nothing can be said about
+// the refund key, so it fails closed like a refused verdict.
+const UNVERIFIED_KEYS = {
+  refundKey: { valid: false, reason: 'it was not verified' },
+  recipientKey: { valid: false, reason: 'it was not verified' },
+}
+
+// Why a create request cannot be approved, in the order the signer would
+// refuse it: an amount or lock time it cannot read first, then the keys
+// (a refund key that is not one of the wallet's own, or either key not a
+// valid public key), then an escrow address that could not be built. Fail
+// closed: the signer rejects each of these, so none is approvable.
+const createBlockedReason = ({
+  amountInvalid,
+  lockBlocks,
+  createKeys,
+  escrowFailed,
+}) => {
+  if (amountInvalid) {
+    return cannotApprove(
+      'Unreadable amount: the site-reported amount is not a whole number of satoshis.',
+    )
+  }
+  if (lockBlocks === null) {
+    return cannotApprove(
+      'Unreadable lock time: the site-reported lock time is not a number of blocks.',
+    )
+  }
+  if (createKeys == null) {
+    return cannotApprove(
+      'The keys of this request were not verified, so the refund key cannot be confirmed as a key of this wallet.',
+    )
+  }
+  if (!createKeys.ok) return cannotApprove(createKeys.message)
+  if (escrowFailed) {
+    return cannotApprove(
+      'Escrow address unavailable: the HTLC script cannot be built from the parameters this site sent.',
+    )
+  }
+  return null
+}
+
 // A claim/refund destination is shown only as text. An absent one is
 // legitimate (the wallet pays its own address); a present non-string cannot
 // be used by the signer and blocks the request.
@@ -144,13 +218,17 @@ export const classifyBtcSignRequest = (json) => {
  * stays the only reference in that case). `blockedReason` is null for a
  * request that can be approved, or the text saying why it cannot be.
  * `escrowFailed` reports that the page could not build the escrow address
- * of a create request from its parameters.
+ * of a create request from its parameters. `createKeys` is the page's
+ * verdict on the two public keys of a create request (the refund key must
+ * be one of the wallet's own, both must be valid): a create request whose
+ * keys were not verified, or that the verdict refuses, is blocked.
  */
 export const buildBtcSignRecap = ({
   json,
   networkType,
   escrowFeeInfo,
   escrowFailed = false,
+  createKeys = null,
 }) => {
   if (!json) return null
 
@@ -225,26 +303,17 @@ export const buildBtcSignRecap = ({
           lockBlocks === null ? UNREADABLE : `${lockBlocks} blocks`,
           { warn: lockBlocks === null },
         ),
+        ...createKeyRows(createKeys ?? UNVERIFIED_KEYS),
         row('Network', networkType),
       ],
       warning:
         'These funds are locked in the escrow until the HTLC is claimed or the locktime expires. Verify the escrow address and amount with the service you are trading with.',
-      // Fail closed: the signer rejects an amount or lock time it cannot
-      // read, and cannot fund an escrow whose address it could not build,
-      // so the request must not be approvable either.
-      blockedReason: amountInvalid
-        ? cannotApprove(
-            'Unreadable amount: the site-reported amount is not a whole number of satoshis.',
-          )
-        : lockBlocks === null
-          ? cannotApprove(
-              'Unreadable lock time: the site-reported lock time is not a number of blocks.',
-            )
-          : escrowFailed
-            ? cannotApprove(
-                'Escrow address unavailable: the HTLC script cannot be built from the parameters this site sent.',
-              )
-            : null,
+      blockedReason: createBlockedReason({
+        amountInvalid,
+        lockBlocks,
+        createKeys,
+        escrowFailed,
+      }),
     }
   }
 

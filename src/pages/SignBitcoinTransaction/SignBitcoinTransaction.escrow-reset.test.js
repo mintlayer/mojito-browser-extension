@@ -6,6 +6,7 @@ import { Account } from '@Entities'
 import { BTCTransaction } from '@Cryptos'
 import { BitcoinContext } from '@Contexts'
 import { SignBitcoinTransactionPage } from './SignBitcoinTransaction'
+import { CREATE_HTLC_FIXTURE_KEYS } from './mocks'
 
 // Keep the output readable: swallow React error-logging noise.
 const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
@@ -79,7 +80,8 @@ jest.mock('@APIs', () => ({
 // The gate under test is WHICH request owns the frozen escrow record, not
 // the crypto: the HTLC/fee computations are stubbed with controllable
 // promises so the async recompute window between two navigations is
-// directly observable.
+// directly observable. The verdict on the two keys is the real one, so the
+// fixtures must carry a refund key of the test wallet (below).
 jest.mock('@Cryptos', () => ({
   __esModule: true,
   BTC: {},
@@ -89,6 +91,9 @@ jest.mock('@Cryptos', () => ({
     NATIVE_SEGWIT: 'nativeSegwit',
   },
   BTCTransaction: {
+    verifyHtlcCreateKeys: jest.requireActual(
+      '../../services/Crypto/BTC/BTCTransaction',
+    ).verifyHtlcCreateKeys,
     buildHTLCAndFundingAddress: jest.fn(),
     calculateBtcTransactionFee: jest.fn(),
     buildTransaction: jest.fn(),
@@ -102,7 +107,22 @@ jest.mock('@Contexts', () => {
     __esModule: true,
     AccountContext: makeCtx({
       accountID: 'escrow-reset-account',
-      addresses: {},
+      addresses: {
+        // the test wallet's Bitcoin public keys, in the stored shape: the
+        // createHtlc fixture's refund key is its receiving key
+        btcAddresses: {
+          btcReceivingAddresses: [
+            {
+              tb1qwalletreceiving: {
+                pubkey:
+                  jest.requireActual('./mocks').CREATE_HTLC_FIXTURE_KEYS
+                    .refundPublicKey,
+              },
+            },
+          ],
+          btcChangeAddresses: [],
+        },
+      },
     }),
     SettingsContext: makeCtx({ networkType: 'testnet' }),
     BitcoinContext: makeCtx({
@@ -115,6 +135,13 @@ jest.mock('@Contexts', () => {
   }
 })
 
+// A well-formed create request for the test wallet: its refund key is the
+// wallet's receiving key, its recipient key a counterparty's.
+const {
+  refundPublicKey: WALLET_REFUND_PUBKEY,
+  recipientPublicKey: RECIPIENT_PUBKEY,
+} = CREATE_HTLC_FIXTURE_KEYS
+
 const makeRequestState = (requestId, amountAtoms, timeoutBlocks) => ({
   request: {
     requestId,
@@ -126,6 +153,8 @@ const makeRequestState = (requestId, amountAtoms, timeoutBlocks) => ({
           secretHash: '{"secret_hash_hex":"ab"}',
           amount: amountAtoms,
           timeoutBlocks,
+          recipientPublicKey: RECIPIENT_PUBKEY,
+          refundPublicKey: WALLET_REFUND_PUBKEY,
         },
       },
     },

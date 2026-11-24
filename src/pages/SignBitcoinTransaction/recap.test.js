@@ -5,7 +5,45 @@ import {
   buildBtcSignRecap,
   classifyBtcSignRequest,
 } from './recap'
-import { MOCKS } from './mocks'
+import { MOCKS, CREATE_HTLC_FIXTURE_KEYS } from './mocks'
+
+// The test wallet's Bitcoin public keys, in the stored shape: the
+// createHtlc fixture's refund key is its receiving key. A create recap is
+// built from the page's verdict on the two keys, which the real verifier
+// computes from these keys.
+const WALLET_BTC_KEYS = {
+  btcReceivingAddresses: [
+    {
+      tb1qwalletreceiving: { pubkey: CREATE_HTLC_FIXTURE_KEYS.refundPublicKey },
+    },
+  ],
+  btcChangeAddresses: [],
+}
+const keysVerdict = (json, btcAddressData = WALLET_BTC_KEYS) =>
+  BTCTransaction.verifyHtlcCreateKeys({
+    refundPublicKey: json.refundPublicKey,
+    recipientPublicKey: json.recipientPublicKey,
+    btcAddressData,
+  })
+// A valid public key that is not one of the test wallet's, and a
+// well-formed 33-byte value whose x is not on the secp256k1 curve.
+const FOREIGN_PUBKEY =
+  '027b87bd06d549c49e3809adacefc62ea8beec177c32aeffaf5c00ac04ffd00749'
+const NOT_ON_CURVE_PUBKEY =
+  '020000000000000000000000000000000000000000000000000000000000000005'
+// A valid point as an uncompressed key (65 bytes starting 04): the
+// secp256k1 generator point.
+const UNCOMPRESSED_PUBKEY =
+  '0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8'
+// A well-formed create request for the test wallet, with the fields
+// overridden per test.
+const createJson = (overrides = {}) => ({
+  secretHash: '{"secret_hash_hex":"ab"}',
+  amount: '1000',
+  timeoutBlocks: 500,
+  ...CREATE_HTLC_FIXTURE_KEYS,
+  ...overrides,
+})
 
 describe('parseSatoshiAmount', () => {
   it('accepts positive integer strings and numbers', () => {
@@ -142,36 +180,61 @@ describe('buildBtcSignRecap', () => {
     })
   })
 
-  it('summarizes an HTLC create request with escrow, amount and fee', () => {
+  // The two keys of a well-formed create request: the refund key is one of
+  // the wallet's own and the recipient key is not, each shown truncated
+  // and named as such, monospaced.
+  it('summarizes an HTLC create request with escrow, amount, fee and both keys', () => {
+    const json = createJson({ amount: '20000' })
     const recap = buildBtcSignRecap({
-      json: {
-        secretHash: '{"secret_hash_hex":"ab"}',
-        amount: '20000',
-        timeoutBlocks: 500,
-      },
+      json,
       networkType,
       escrowFeeInfo: {
         htlc: { p2wshAddress: 'tb1qescrow' },
         feeRate: 10,
         estimatedFee: 1540,
       },
+      createKeys: keysVerdict(json),
     })
 
     expect(recap.title).toBe('Create HTLC — fund an escrow')
-    const byLabel = Object.fromEntries(
-      recap.rows.map((r) => [r.label, r.value]),
-    )
-    expect(byLabel['You are sending']).toBe('0.00020000 BTC (20000 sat)')
-    expect(byLabel['Escrow address']).toBe('tb1qescrow')
-    expect(byLabel['Fee (estimate)']).toBe('1540 sat @ 10 sat/vB')
-    expect(byLabel['Refund locktime']).toBe('500 blocks')
+    expect(recap.blockedReason).toBeNull()
+    const rows = Object.fromEntries(recap.rows.map((r) => [r.label, r]))
+    expect(rows['You are sending'].value).toBe('0.00020000 BTC (20000 sat)')
+    expect(rows['Escrow address'].value).toBe('tb1qescrow')
+    expect(rows['Fee (estimate)'].value).toBe('1540 sat @ 10 sat/vB')
+    expect(rows['Refund locktime'].value).toBe('500 blocks')
+    const refund = CREATE_HTLC_FIXTURE_KEYS.refundPublicKey
+    const recipient = CREATE_HTLC_FIXTURE_KEYS.recipientPublicKey
+    expect(rows['Refund key']).toEqual({
+      label: 'Refund key',
+      value: `${refund.slice(0, 12)}…${refund.slice(-8)} — a key of this wallet`,
+      mono: true,
+      warn: false,
+    })
+    expect(rows['Recipient key']).toEqual({
+      label: 'Recipient key',
+      value: `${recipient.slice(0, 12)}…${recipient.slice(-8)} — not a key of this wallet`,
+      mono: true,
+      warn: false,
+    })
+    expect(recap.rows.map((r) => r.label)).toEqual([
+      'You are sending',
+      'Escrow address',
+      'Fee (estimate)',
+      'Refund locktime',
+      'Refund key',
+      'Recipient key',
+      'Network',
+    ])
     expect(recap.warning).toBeTruthy()
   })
 
   it('flags an unparseable create amount instead of showing a wrong number', () => {
+    const json = { secretHash: '{}', amount: '1.9' }
     const recap = buildBtcSignRecap({
-      json: { secretHash: '{}', amount: '1.9' },
+      json,
       networkType,
+      createKeys: keysVerdict(json),
     })
 
     const amountRow = recap.rows.find((r) => r.label === 'You are sending')
@@ -214,9 +277,11 @@ describe('buildBtcSignRecap', () => {
   // signer cannot read blocks approval.
   it('never throws on an unreadable create amount and lock time, and blocks approval', () => {
     const shadow = { toString: 1 }
+    const json = { secretHash: '{}', amount: shadow, timeoutBlocks: shadow }
     const recap = buildBtcSignRecap({
-      json: { secretHash: '{}', amount: shadow, timeoutBlocks: shadow },
+      json,
       networkType,
+      createKeys: keysVerdict(json),
     })
 
     const byLabel = Object.fromEntries(
@@ -230,13 +295,144 @@ describe('buildBtcSignRecap', () => {
     expect(recap.blockedReason).toMatch(/cannot be approved/)
   })
 
-  it('keeps a readable create request approvable', () => {
+  it('keeps a readable create request with verified keys approvable', () => {
+    const json = createJson({ secretHash: '{}' })
     const recap = buildBtcSignRecap({
-      json: { secretHash: '{}', amount: '1000', timeoutBlocks: 500 },
+      json,
       networkType,
+      createKeys: keysVerdict(json),
     })
 
     expect(recap.blockedReason).toBeNull()
+  })
+
+  // The refund branch of the escrow pays one single key. A refund key that
+  // is a valid key but not one of the wallet's own leaves the user with no
+  // key that can recover the funds after the lock time, so the recap says
+  // so in plain words, flags the key and blocks approval.
+  it('blocks a create request whose refund key is not a key of the wallet, and says why', () => {
+    const json = createJson({
+      refundPublicKey: FOREIGN_PUBKEY,
+      recipientPublicKey: CREATE_HTLC_FIXTURE_KEYS.recipientPublicKey,
+    })
+    const recap = buildBtcSignRecap({
+      json,
+      networkType,
+      escrowFeeInfo: { htlc: { p2wshAddress: 'tb1qescrow' } },
+      createKeys: keysVerdict(json),
+    })
+
+    expect(recap.blockedReason).toBe(
+      'Refund key: not a key of this wallet. After the lock time, only the holder of that key could recover these funds. For your safety, this request cannot be approved.',
+    )
+    const refund = recap.rows.find((r) => r.label === 'Refund key')
+    expect(refund.value).toBe(
+      `${FOREIGN_PUBKEY.slice(0, 12)}…${FOREIGN_PUBKEY.slice(-8)} — not a key of this wallet`,
+    )
+    expect(refund.warn).toBe(true)
+    expect(refund.mono).toBe(true)
+  })
+
+  // A key that is not a valid public key makes its branch of the escrow
+  // unspendable (a truncated or non-hex value would otherwise be cut down
+  // to a prefix by the hex decode). The recap names the key and why.
+  it.each([
+    [
+      'an odd-length refund key',
+      { refundPublicKey: '02abc' },
+      /^Refund key: not a valid public key — its hex has an odd number of digits/,
+    ],
+    [
+      'a non-hex recipient key',
+      { recipientPublicKey: '02zz' },
+      /^Recipient key: not a valid public key — it contains characters that are not hex digits/,
+    ],
+    [
+      'a refund key that is not text',
+      { refundPublicKey: { toString: 1 } },
+      /^Refund key: not a valid public key — it is not text/,
+    ],
+    [
+      'a recipient key that is not on the curve',
+      { recipientPublicKey: NOT_ON_CURVE_PUBKEY },
+      /^Recipient key: not a valid public key — it is not a point on the secp256k1 curve/,
+    ],
+    // a valid point no escrow script can carry: the address builder
+    // rejects a script holding an uncompressed key
+    [
+      'an uncompressed refund key',
+      { refundPublicKey: UNCOMPRESSED_PUBKEY },
+      /^Refund key: not a valid public key — it is an uncompressed key, and the escrow script carries compressed keys only\. The escrow's refund branch could never be spent/,
+    ],
+    [
+      'an uncompressed recipient key',
+      { recipientPublicKey: UNCOMPRESSED_PUBKEY },
+      /^Recipient key: not a valid public key — it is an uncompressed key, and the escrow script carries compressed keys only/,
+    ],
+  ])(
+    'blocks a create request with %s, naming the key and why',
+    (_shape, overrides, reason) => {
+      const json = createJson(overrides)
+      const recap = buildBtcSignRecap({
+        json,
+        networkType,
+        createKeys: keysVerdict(json),
+      })
+
+      expect(recap.blockedReason).toMatch(reason)
+      expect(recap.blockedReason).toMatch(/cannot be approved/)
+      expect(recap.blockedReason).not.toMatch(
+        /Refund key: not a key of this wallet/,
+      )
+    },
+  )
+
+  // Fail closed: without the wallet's own public keys the refund key cannot
+  // be checked, and without a verdict nothing is verified. A key that could
+  // not be checked is never called the wallet's or a foreign one: the row
+  // says it could not be checked, and the reason does not presume the
+  // outcome either.
+  it("blocks a create request when the wallet's public keys cannot be read", () => {
+    const json = createJson()
+    const recap = buildBtcSignRecap({
+      json,
+      networkType,
+      createKeys: keysVerdict(json, { btcReceivingAddresses: [] }),
+    })
+
+    expect(recap.blockedReason).toBe(
+      'The public keys of this wallet could not be read, so the refund key cannot be checked against them. If it is not a key of this wallet, after the lock time only the holder of that key could recover these funds. For your safety, this request cannot be approved.',
+    )
+    const refund = CREATE_HTLC_FIXTURE_KEYS.refundPublicKey
+    const recipient = CREATE_HTLC_FIXTURE_KEYS.recipientPublicKey
+    const rows = Object.fromEntries(recap.rows.map((r) => [r.label, r]))
+    expect(rows['Refund key']).toEqual({
+      label: 'Refund key',
+      value: `${refund.slice(0, 12)}…${refund.slice(-8)} — could not be checked against the keys of this wallet`,
+      mono: true,
+      warn: true,
+    })
+    expect(rows['Recipient key']).toEqual({
+      label: 'Recipient key',
+      value: `${recipient.slice(0, 12)}…${recipient.slice(-8)} — could not be checked against the keys of this wallet`,
+      mono: true,
+      warn: false,
+    })
+    // neither key is called the wallet's or a foreign one
+    expect(recap.rows.map((r) => r.value).join(' ')).not.toMatch(
+      /not a key of this wallet|a key of this wallet/,
+    )
+  })
+
+  it('blocks a create request whose keys were not verified', () => {
+    const recap = buildBtcSignRecap({ json: createJson(), networkType })
+
+    expect(recap.blockedReason).toBe(
+      'The keys of this request were not verified, so the refund key cannot be confirmed as a key of this wallet. For your safety, this request cannot be approved.',
+    )
+    expect(recap.rows.find((r) => r.label === 'Refund key').value).toMatch(
+      /^not a valid public key — it was not verified/,
+    )
   })
 
   it.each([
@@ -418,32 +614,48 @@ describe('buildBtcSignRecap', () => {
   // approval. A create request whose address could not be built is blocked;
   // one whose address is still pending or was built is not.
   it('blocks a create request whose escrow address could not be built', () => {
+    const json = createJson({ secretHash: '{}' })
+    const createKeys = keysVerdict(json)
     const recap = buildBtcSignRecap({
-      json: { secretHash: '{}', amount: '1000', timeoutBlocks: 500 },
+      json,
       networkType,
       escrowFailed: true,
+      createKeys,
     })
 
     expect(recap.blockedReason).toMatch(/^Escrow address unavailable/)
     expect(recap.blockedReason).toMatch(/cannot be approved/)
-    // an unreadable amount is named first
+    // an unreadable amount is named first, then the keys
     expect(
       buildBtcSignRecap({
-        json: { secretHash: '{}', amount: { toString: 1 }, timeoutBlocks: 500 },
+        json: { ...json, amount: { toString: 1 } },
         networkType,
         escrowFailed: true,
+        createKeys,
       }).blockedReason,
     ).toMatch(/^Unreadable amount/)
+    expect(
+      buildBtcSignRecap({
+        json: { ...json, refundPublicKey: FOREIGN_PUBKEY },
+        networkType,
+        escrowFailed: true,
+        createKeys: keysVerdict({ ...json, refundPublicKey: FOREIGN_PUBKEY }),
+      }).blockedReason,
+    ).toMatch(/^Refund key: not a key of this wallet/)
   })
 
   it('keeps a create request approvable while its escrow address is pending or built', () => {
-    const json = { secretHash: '{}', amount: '1000', timeoutBlocks: 500 }
-    expect(buildBtcSignRecap({ json, networkType }).blockedReason).toBeNull()
+    const json = createJson({ secretHash: '{}' })
+    const createKeys = keysVerdict(json)
+    expect(
+      buildBtcSignRecap({ json, networkType, createKeys }).blockedReason,
+    ).toBeNull()
     expect(
       buildBtcSignRecap({
         json,
         networkType,
         escrowFeeInfo: { htlc: { p2wshAddress: 'tb1qescrow' } },
+        createKeys,
       }).blockedReason,
     ).toBeNull()
   })

@@ -8,6 +8,10 @@ import {
   verifyHtlcOutpoint,
   buildHtlcClaimTx,
   buildHtlcRefundTx,
+  readPublicKeyHex,
+  walletBtcPublicKeyHexes,
+  verifyHtlcCreateKeys,
+  HTLC_CREATE_KEY_CODES,
   HTLC_CLAIM_FEE_SATOSHIS,
   HTLC_REFUND_FEE_SATOSHIS,
   toSatoshiBigInt,
@@ -83,7 +87,19 @@ const addressData = {
   ],
   btcChangeAddresses: [],
 }
-
+const hexOf = (bytes) => Buffer.from(bytes).toString('hex')
+// Deterministic keys (never hold funds): another key of the test wallet,
+// and two valid keys it does not hold.
+const seededKey = (seed) =>
+  ECPair.makeRandom({
+    network: ecpairNetworks.testnet,
+    rng: (size) => new Uint8Array(size).fill(seed),
+  })
+const walletChangeKey = seededKey(5)
+// The same point as an uncompressed (65-byte, 04) public key.
+const uncompressedHex = hexOf(ecc.pointCompress(ourChild.publicKey, false))
+const foreignKey = seededKey(6)
+const counterpartyKey = seededKey(9)
 describe('parseHtlcRedeemScript', () => {
   it("reads the hash, both branch keys and the lock of the wallet's script shape", () => {
     const secretHash = Buffer.alloc(20, 7)
@@ -131,6 +147,306 @@ describe('parseHtlcRedeemScript', () => {
     ],
   ])('returns null for %s', (_description, redeemScriptHex) => {
     expect(parseHtlcRedeemScript(redeemScriptHex)).toBeNull()
+  })
+})
+
+describe('readPublicKeyHex', () => {
+  it.each([
+    ['a compressed key', hexOf(ourChild.publicKey)],
+    ['an uppercase hex key', hexOf(ourChild.publicKey).toUpperCase()],
+  ])('accepts %s and returns lowercase hex', (_shape, raw) => {
+    expect(readPublicKeyHex(raw)).toEqual({
+      valid: true,
+      hex: raw.toLowerCase(),
+    })
+  })
+
+  // Each shape the hex decode would otherwise accept by cutting the value
+  // down: an odd length, a non-hex character, a key one digit short.
+  it.each([
+    ['not text', 42, 'it is not text'],
+    ['an object', { toString: 1 }, 'it is not text'],
+    ['empty', '', 'it is empty'],
+    [
+      'an odd number of hex digits',
+      `${hexOf(ourChild.publicKey).slice(0, -1)}`,
+      'odd number of digits',
+    ],
+    [
+      'a non-hex character',
+      `${hexOf(ourChild.publicKey).slice(0, -2)}zz`,
+      'not hex digits',
+    ],
+    [
+      'a key one byte short',
+      hexOf(ourChild.publicKey).slice(0, -2),
+      'it is 32 bytes starting',
+    ],
+    [
+      '33 bytes starting 04',
+      `04${hexOf(ourChild.publicKey).slice(2)}`,
+      'it is 33 bytes starting 04',
+    ],
+    [
+      '32 bytes (an x-only key)',
+      hexOf(ourChild.publicKey).slice(2),
+      'it is 32 bytes starting',
+    ],
+    [
+      'a well-formed 33-byte value that is not a point on the curve',
+      `02${'00'.repeat(31)}05`,
+      'not a point on the secp256k1 curve',
+    ],
+    // a valid point, but no escrow script can carry it: the address
+    // builder rejects a script holding an uncompressed key
+    [
+      'an uncompressed key (65 bytes starting 04)',
+      uncompressedHex,
+      'it is an uncompressed key, and the escrow script carries compressed keys only',
+    ],
+    [
+      '65 bytes starting 02',
+      `02${uncompressedHex.slice(2)}`,
+      'it is 65 bytes starting 02, not 33 bytes starting 02 or 03',
+    ],
+  ])('refuses %s without truncating it', (_shape, raw, reason) => {
+    const key = readPublicKeyHex(raw)
+    expect(key.valid).toBe(false)
+    expect(key.reason).toContain(reason)
+    expect(key.hex).toBeUndefined()
+  })
+})
+
+describe('walletBtcPublicKeyHexes', () => {
+  const ourHex = hexOf(ourChild.publicKey)
+  const otherHex = hexOf(counterpartyKey.publicKey)
+  const stored = { bc1qours: { pubkey: ourChild.publicKey } }
+  const unlocked = addressData.btcReceivingAddresses[0]
+  // a typed array that round-tripped through the JSON store
+  const roundTripped = {
+    bc1qours: { pubkey: JSON.parse(JSON.stringify(ourChild.publicKey)) },
+  }
+  const asHex = { bc1qours: { pubkey: ourHex } }
+
+  it.each([
+    ['the stored entry shape', [stored]],
+    ['the unlocked entry shape', [unlocked]],
+    ['a byte object from the store', [roundTripped]],
+    ['a hex string', [asHex]],
+  ])('reads the public key from %s', (_shape, receiving) => {
+    expect(
+      walletBtcPublicKeyHexes({ btcReceivingAddresses: receiving }),
+    ).toEqual(new Set([ourHex]))
+  })
+
+  it('reads receiving and change keys, and only valid public keys', () => {
+    const keys = walletBtcPublicKeyHexes({
+      btcReceivingAddresses: [
+        stored,
+        // a value that is not a public key can never refund an escrow
+        { bc1qbad: { pubkey: { nope: 1 } } },
+        { bc1qshort: { pubkey: ourHex.slice(0, -2) } },
+        'bc1qstring',
+      ],
+      btcChangeAddresses: [{ bc1qchange: { pubkey: otherHex.toUpperCase() } }],
+    })
+    expect(keys).toEqual(new Set([ourHex, otherHex]))
+  })
+
+  it.each([
+    ['no address data', undefined],
+    ['no lists', {}],
+    [
+      'lists that are not arrays',
+      { btcReceivingAddresses: {}, btcChangeAddresses: 'x' },
+    ],
+    [
+      'entries without a public key',
+      {
+        btcReceivingAddresses: [{ bc1qnokey: {} }, null],
+        btcChangeAddresses: [],
+      },
+    ],
+  ])('reads nothing from %s', (_shape, btcAddressData) => {
+    expect(walletBtcPublicKeyHexes(btcAddressData)).toEqual(new Set())
+  })
+})
+
+describe("verifyHtlcCreateKeys — the verdict on a create request's two keys", () => {
+  const refundHex = hexOf(ourChild.publicKey)
+  const recipientHex = hexOf(counterpartyKey.publicKey)
+  const otherWalletHex = hexOf(walletChangeKey.publicKey)
+  const btcAddressData = {
+    btcReceivingAddresses: [addressData.btcReceivingAddresses[0]],
+    btcChangeAddresses: [
+      {
+        address: 'bc1qchange',
+        pubkey: Buffer.from(otherWalletHex, 'hex'),
+        derivationPath: "m/84'/0'/1'/0/0",
+      },
+    ],
+  }
+  const verify = (overrides = {}) =>
+    verifyHtlcCreateKeys({
+      refundPublicKey: refundHex,
+      recipientPublicKey: recipientHex,
+      btcAddressData,
+      ...overrides,
+    })
+  const accepted = {
+    ok: true,
+    code: null,
+    message: null,
+    refundKey: { valid: true, hex: refundHex, isWallet: true },
+    recipientKey: { valid: true, hex: recipientHex, isWallet: false },
+  }
+
+  it('accepts a refund key of the wallet and a valid recipient key', () => {
+    expect(verify()).toEqual(accepted)
+  })
+
+  it('matches the refund key case-insensitively, on either address list', () => {
+    expect(verify({ refundPublicKey: refundHex.toUpperCase() })).toEqual(
+      accepted,
+    )
+    expect(
+      verify({
+        refundPublicKey: otherWalletHex,
+        btcAddressData: {
+          btcChangeAddresses: [{ bc1qc: { pubkey: otherWalletHex } }],
+        },
+      }),
+    ).toEqual({
+      ...accepted,
+      refundKey: { valid: true, hex: otherWalletHex, isWallet: true },
+    })
+  })
+
+  // The loss of funds: a refund key the dApp holds leaves the user with no
+  // key that can recover the escrow after the lock time.
+  it("refuses a valid refund key that is not one of the wallet's", () => {
+    const foreignHex = hexOf(foreignKey.publicKey)
+    const verdict = verify({ refundPublicKey: foreignHex })
+    expect(verdict).toEqual({
+      ok: false,
+      code: HTLC_CREATE_KEY_CODES.REFUND_KEY_NOT_WALLET,
+      message:
+        'Refund key: not a key of this wallet. After the lock time, only the holder of that key could recover these funds.',
+      refundKey: { valid: true, hex: foreignHex, isWallet: false },
+      recipientKey: { valid: true, hex: recipientHex, isWallet: false },
+    })
+  })
+
+  it('refuses an invalid refund key, naming it and why, before any membership check', () => {
+    const verdict = verify({ refundPublicKey: `${refundHex.slice(0, -1)}` })
+    expect(verdict).toEqual({
+      ok: false,
+      code: HTLC_CREATE_KEY_CODES.REFUND_KEY_INVALID,
+      message:
+        "Refund key: not a valid public key — its hex has an odd number of digits. The escrow's refund branch could never be spent, so these funds could never be recovered.",
+      refundKey: {
+        valid: false,
+        hex: null,
+        isWallet: null,
+        reason: 'its hex has an odd number of digits',
+      },
+      recipientKey: { valid: true, hex: recipientHex, isWallet: false },
+    })
+  })
+
+  it('refuses an invalid recipient key, naming it and why', () => {
+    const verdict = verify({
+      recipientPublicKey: `04${recipientHex.slice(2)}`,
+    })
+    expect(verdict).toMatchObject({
+      ok: false,
+      code: HTLC_CREATE_KEY_CODES.RECIPIENT_KEY_INVALID,
+      refundKey: { valid: true, hex: refundHex, isWallet: true },
+      recipientKey: { valid: false, hex: null, isWallet: null },
+    })
+    expect(verdict.message).toBe(
+      "Recipient key: not a valid public key — it is 33 bytes starting 04, not 33 bytes starting 02 or 03. The escrow's claim branch could never be spent.",
+    )
+  })
+
+  // A valid point, but an uncompressed one: no escrow script can carry it
+  // (the address builder rejects a script holding it), so the verdict
+  // refuses it by name instead of letting the address build fail.
+  it.each([
+    [
+      'refundPublicKey',
+      HTLC_CREATE_KEY_CODES.REFUND_KEY_INVALID,
+      /^Refund key: not a valid public key — it is an uncompressed key, and the escrow script carries compressed keys only\. The escrow's refund branch could never be spent, so these funds could never be recovered\.$/,
+    ],
+    [
+      'recipientPublicKey',
+      HTLC_CREATE_KEY_CODES.RECIPIENT_KEY_INVALID,
+      /^Recipient key: not a valid public key — it is an uncompressed key, and the escrow script carries compressed keys only\. The escrow's claim branch could never be spent\.$/,
+    ],
+  ])(
+    'refuses an uncompressed %s, naming it and why',
+    (field, code, message) => {
+      const verdict = verify({ [field]: uncompressedHex })
+      expect(verdict).toMatchObject({
+        ok: false,
+        code,
+        [field === 'refundPublicKey' ? 'refundKey' : 'recipientKey']: {
+          valid: false,
+          hex: null,
+          isWallet: null,
+          reason:
+            'it is an uncompressed key, and the escrow script carries compressed keys only',
+        },
+      })
+      expect(verdict.message).toMatch(message)
+    },
+  )
+
+  // Fail closed: without the wallet's public keys the refund key cannot
+  // be checked, whatever it is. Both keys are still read, and neither is
+  // called the wallet's or a foreign one: isWallet is null, "not checked",
+  // for a valid key when the wallet's key set is empty.
+  it.each([
+    ['no address data', undefined],
+    [
+      'lists without public keys',
+      { btcReceivingAddresses: [{ bc1qnokey: {} }], btcChangeAddresses: [] },
+    ],
+  ])('refuses everything when the wallet has %s', (_shape, data) => {
+    const verdict = verify({ btcAddressData: data })
+    expect(verdict).toEqual({
+      ok: false,
+      code: HTLC_CREATE_KEY_CODES.WALLET_KEYS_UNREADABLE,
+      message:
+        'The public keys of this wallet could not be read, so the refund key cannot be checked against them. If it is not a key of this wallet, after the lock time only the holder of that key could recover these funds.',
+      refundKey: { valid: true, hex: refundHex, isWallet: null },
+      recipientKey: { valid: true, hex: recipientHex, isWallet: null },
+    })
+  })
+
+  it('reads an invalid key as invalid, not as unchecked, when the wallet has no public keys', () => {
+    expect(
+      verify({ refundPublicKey: 'zz', btcAddressData: undefined }),
+    ).toEqual({
+      ok: false,
+      code: HTLC_CREATE_KEY_CODES.REFUND_KEY_INVALID,
+      message:
+        "Refund key: not a valid public key — it contains characters that are not hex digits. The escrow's refund branch could never be spent, so these funds could never be recovered.",
+      refundKey: {
+        valid: false,
+        hex: null,
+        isWallet: null,
+        reason: 'it contains characters that are not hex digits',
+      },
+      recipientKey: { valid: true, hex: recipientHex, isWallet: null },
+    })
+  })
+
+  it("accepts a recipient key that happens to be one of the wallet's own keys", () => {
+    expect(verify({ recipientPublicKey: refundHex })).toEqual({
+      ...accepted,
+      recipientKey: { valid: true, hex: refundHex, isWallet: true },
+    })
   })
 })
 
