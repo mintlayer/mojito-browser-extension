@@ -5,7 +5,7 @@ import { render, within } from '@testing-library/react'
 const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
 
 const TOKEN_ID = 'tmltk1q2c7d9a4hm3'
-// UI review finding: the Token ID row shows the id truncated
+// The Token ID row shows the id truncated
 // (ML.formatAddress(id, 24)) with a copy button, never in full.
 const TRUNCATED_TOKEN_ID = 'tmltk1q2c7d9...1q2c7d9a4hm3'
 
