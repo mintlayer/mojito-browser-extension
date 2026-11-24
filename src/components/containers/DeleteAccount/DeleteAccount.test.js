@@ -155,8 +155,8 @@ describe('DeleteAccount', () => {
 })
 
 /**
- * Regression test (grant revocation):
- * not-revoked: deleting the wallet must revoke its dApp connection grants —
+ * Regression test for grant revocation on wallet deletion. Deleting the
+ * wallet must revoke its dApp connection grants —
  * via logout (AccountProvider.logout), which clears the unlockedAccount
  * registry, stamps the lock mirror to chrome.storage.local ('walletLockAt',
  * the durable witness the worker sweeps when a message is lost) and only
