@@ -387,6 +387,10 @@ const ownAddressList = (ownAddresses) => [
 // every output goes to a wallet address (a self-transfer), the payment is
 // what goes to a receiving address — outputs to change addresses are just
 // the unspent remainder coming back.
+// NB: outputs of types the signer reads `destination` on none (an Htlc, a
+// staking delegation) count as paying out as well: their signed amounts are
+// verified and shown grouped without a destination, never folded into a
+// recipient's amounts.
 export const findRelevantOutputs = (outputs, ownAddresses) => {
   const receiving = ownAddresses?.receiving || []
   const ownList = ownAddressList(ownAddresses)
@@ -823,6 +827,11 @@ const collectSignedInputExtras = (input, index) => {
   // utxo input and never signs fill_atoms, so no row is fabricated
   const isAccountCommandInput = isAccountCommandShape(input?.input)
   const rawFill = input?.input?.fill_atoms
+  // where the acquired asset lands: the signer encodes this string in the
+  // fill itself, so the row names it beside the committed size (a
+  // non-string, or a value only under `address`, is read by the signer
+  // nowhere and is never shown)
+  const fillDestination = signerFillOrderDestination(input)
   if (
     isAccountCommandInput &&
     input?.input?.command === 'FillOrder' &&
@@ -835,26 +844,11 @@ const collectSignedInputExtras = (input, index) => {
       decimals: null,
       tokenId: null,
       withTicker: false,
+      ...(fillDestination ? { destination: fillDestination } : {}),
     })
   }
   return extras
 }
-
-// True for every output that yields a signed row of the approval — an
-// amount row (a signer amount container, which a burned value is as well)
-// or an extra row (an issued total supply, order balances) — so that
-// nothing shown as a signed amount can sit beside a "To" line this
-// predicate disagrees with. Resolved through the SAME container resolver
-// and the SAME extras collector that build those rows, so it cannot drift
-// from what is displayed; the index and the token scales only label and
-// scale an extra, never decide whether one exists. A locked output coming
-// back to this wallet yields its own row the same way (its value
-// container), so it reads true here as well. Shapes that resolve a
-// container or an extra yet carry no numeric amount at all render no row
-// and still read true here — the safe direction.
-export const outputCarriesSignedAmount = (output) =>
-  signerAmountContainer(output, 'output') !== null ||
-  collectSignedExtras(output, 0, undefined).length > 0
 
 // One leg entry the approval can read: a non-array object (never null,
 // undefined, a primitive or an array). An input must carry the `input`
@@ -931,7 +925,7 @@ export const reconcileApprovalAmounts = (
     hasMalformedLegEntry(inputs, outputs)
   ) {
     return {
-      amountRows: [],
+      destinationRows: [],
       extraAmountRows: [],
       fee: null,
       blocked: true,
@@ -942,10 +936,10 @@ export const reconcileApprovalAmounts = (
     ownAddresses,
   )
 
-  // Every approved output is being paid, so verify and sum them per asset —
-  // grouping by each output's own asset and aggregating every mismatch of
-  // that asset instead of reporting only the first offender.
-  const totals = new Map()
+  // Every approved output is paid or encumbered by the transaction, so it is
+  // verified and grouped below — per destination, and per asset within a
+  // destination — aggregating every mismatch instead of reporting only the
+  // first offender.
   const extraAmountRows = []
   const pushExtra = (extra) => {
     const verified = verifyAmountPair(extra.container, extra.decimals)
@@ -955,6 +949,7 @@ export const reconcileApprovalAmounts = (
       label: extra.label,
       tokenId: extra.tokenId,
       withTicker: extra.withTicker,
+      ...(extra.destination ? { destination: extra.destination } : {}),
       ...(verified.error
         ? {
             errors: [
@@ -987,11 +982,16 @@ export const reconcileApprovalAmounts = (
         rawFill && typeof rawFill === 'object'
           ? verifyAmountPair(rawFill, null)
           : null
+      // the fill's own destination, when the signer encodes one, is named
+      // on this row too — the leg fails closed, but where its proceeds
+      // were meant to land stays visible
+      const fillDestination = signerFillOrderDestination(input)
       extraAmountRows.push({
         key: `order:fill:${index}`,
         label: 'Order fill',
         tokenId: null,
         withTicker: false,
+        ...(fillDestination ? { destination: fillDestination } : {}),
         errors: [
           ...(pairError?.error
             ? [
@@ -1128,12 +1128,36 @@ export const reconcileApprovalAmounts = (
     })
   })
 
-  // payment rows: only outputs that don't land back on this wallet — burns
-  // and the locked outputs coming back to this wallet surface as their own
-  // rows above and are never payment rows (BurnCoin-shaped outputs resolve
-  // to no container at all — the signer never encodes them). A locked
-  // output to a RECEIVING address is among the relevant outputs of a
-  // self-transfer (it names the "To" line), yet it is paid to no one else.
+  // Payment rows, grouped by the destination the signer encodes
+  // (signerOutputDestination): one group per distinct destination among the
+  // relevant outputs, in first-appearance order — the order the transaction
+  // declares its outputs — each summing its own outputs per asset exactly
+  // like a summed row. No recipient can therefore be named beside another
+  // destination's money, and a zero-amount output shows its own truthful
+  // pair. A destination with no numeric amount still renders the destination
+  // itself (a CreateDelegationId names where the delegation is created).
+  // Groups keyed null collect the outputs that name no destination the
+  // signer encodes (an Htlc escrow, a staking delegation — the signer reads
+  // `destination` on neither): their amounts render as their own rows,
+  // attributed to no address. Burns surface as their own rows above and
+  // locked outputs returning to this wallet as theirs — never here.
+  const groups = new Map()
+  const groupOf = (destination) => {
+    let group = groups.get(destination)
+    if (!group) {
+      group = {
+        destination,
+        // "your address" only when the destination is a receiving address
+        // of this wallet (never for a destination-less group)
+        toSelf:
+          destination != null &&
+          (ownAddresses?.receiving || []).includes(destination),
+        totals: new Map(),
+      }
+      groups.set(destination, group)
+    }
+    return group
+  }
   relevantOutputs.forEach((output) => {
     if (output?.type === 'BurnToken') return
     if (isLockedSelfOutput(output, ownAddresses)) return
@@ -1164,9 +1188,14 @@ export const reconcileApprovalAmounts = (
       output?.type === 'LockThenTransfer'
         ? describeOutputLock(output.lock).error
         : null
-    if (!verified && !lockError) return // carries nothing to verify
+    const destination = signerOutputDestination(output)
+    if (destination == null && !verified && !lockError) {
+      return // no destination to name and nothing to verify
+    }
+    const group = groupOf(destination)
+    if (!verified && !lockError) return // the destination pair stands alone
     const key = tokenId || 'Coin'
-    const entry = totals.get(key) || {
+    const entry = group.totals.get(key) || {
       key,
       tokenId,
       decimals,
@@ -1174,7 +1203,7 @@ export const reconcileApprovalAmounts = (
       errors: [],
     }
     if (lockError) entry.errors.push({ error: lockError, amount: null })
-    totals.set(key, entry)
+    group.totals.set(key, entry)
     if (!verified) return
     if (verified.error) {
       entry.errors.push({
@@ -1186,12 +1215,18 @@ export const reconcileApprovalAmounts = (
     }
   })
 
-  const amountRows = [...totals.values()].map((entry) => ({
-    key: entry.key,
-    tokenId: entry.tokenId,
-    ...(entry.errors.length > 0
-      ? { errors: entry.errors }
-      : { amount: atomsToDecimalString(entry.atoms, entry.decimals ?? 0) }),
+  const destinationRows = [...groups.values()].map((group) => ({
+    destination: group.destination,
+    toSelf: group.toSelf,
+    amountRows: [...group.totals.values()].map((entry) => ({
+      key: entry.key,
+      tokenId: entry.tokenId,
+      ...(entry.errors.length > 0
+        ? { errors: entry.errors }
+        : {
+            amount: atomsToDecimalString(entry.atoms, entry.decimals ?? 0),
+          }),
+    })),
   }))
 
   // SECURITY: the shared fee rule (deriveApprovalFee) — computed from the
@@ -1199,9 +1234,11 @@ export const reconcileApprovalAmounts = (
   const fee = deriveApprovalFee(jsonRepresentation)
 
   const blocked =
-    amountRows.some((row) => row.errors) ||
+    destinationRows.some((group) =>
+      group.amountRows.some((row) => row.errors),
+    ) ||
     extraAmountRows.some((row) => row.errors) ||
     Boolean(fee?.error)
 
-  return { amountRows, extraAmountRows, fee, blocked }
+  return { destinationRows, extraAmountRows, fee, blocked }
 }

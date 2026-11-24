@@ -18,7 +18,6 @@ import {
   signerAmountContainer,
   signerAmountScale,
   signerAmountTokenId,
-  outputCarriesSignedAmount,
   signerFillOrderDestination,
   signerUtxoOwnerAddress,
   verifyAmountPair,
@@ -1144,204 +1143,20 @@ describe('signer-read input addresses', () => {
   })
 })
 
-describe('outputCarriesSignedAmount', () => {
-  const ownAddresses = { receiving: ['wallet'], change: ['change'] }
-  const lock = { type: 'ForBlockCount', content: 1 }
-  const order = (side, balance) => ({
-    type: 'CreateOrder',
-    ask_currency: { type: 'Coin' },
-    give_currency: { type: 'Coin' },
-    conclude_destination: 'attacker',
-    [side]: balance,
-  })
-  const reconcileOutputs = (outputs, tokenDecimalsById = new Map()) =>
-    reconcileApprovalAmounts(
-      { inputs: [], outputs },
-      { tokenDecimalsById, ownAddresses },
-    )
-
-  // Every kind of row the approval renders for an output — an amount row
-  // per value-bearing type, Burned, Total supply, Order ask, Order give,
-  // as a number and as a verification error — checked against
-  // reconcileApprovalAmounts itself: the row is rendered AND the predicate
-  // names the output that renders it. With no inputs, every row rendered
-  // comes from the output under test.
-  it.each([
-    [
-      'an amount row (Transfer)',
-      [{ type: 'Transfer', destination: 'attacker', value: coin('10') }],
-    ],
-    [
-      'an amount row (LockThenTransfer)',
-      [
-        {
-          type: 'LockThenTransfer',
-          destination: 'attacker',
-          lock,
-          value: coin('10'),
-        },
-      ],
-    ],
-    [
-      'an amount row (Htlc)',
-      [
-        {
-          type: 'Htlc',
-          value: coin('10'),
-          htlc: { spend_key: 'attacker', refund_key: 'attacker' },
-        },
-      ],
-    ],
-    [
-      'an amount row (DelegateStaking)',
-      [
-        {
-          type: 'DelegateStaking',
-          amount: coin('10').amount,
-          delegation_id: 'd1',
-        },
-      ],
-    ],
-    ['a Burned row (coin)', [{ type: 'BurnToken', value: coin('10') }]],
-    [
-      'a Burned row (token)',
-      [
-        {
-          type: 'BurnToken',
-          value: {
-            type: 'TokenV1',
-            token_id: 'token-burn',
-            amount: { atoms: '50000', decimal: '500' },
-          },
-        },
-      ],
-    ],
-    [
-      'a Total supply row',
-      [
-        {
-          type: 'IssueFungibleToken',
-          total_supply: {
-            type: 'Fixed',
-            amount: { atoms: '100', decimal: '100' },
-          },
-          number_of_decimals: 0,
-        },
-      ],
-    ],
-    ['an Order ask row', [order('ask_balance', coin('1').amount)]],
-    ['an Order give row', [order('give_balance', coin('100').amount)]],
-    [
-      'an amount row shown as a verification error',
-      [
-        {
-          type: 'Transfer',
-          destination: 'attacker',
-          value: {
-            type: 'Coin',
-            amount: { decimal: '1', atoms: '100000000000' },
-          },
-        },
-      ],
-    ],
-    [
-      'an Order give row shown as a verification error',
-      [
-        order('give_balance', {
-          decimal: '1',
-          atoms: '10000000000000',
-        }),
-      ],
-    ],
-    [
-      'a Burned row shown as a verification error',
-      [
-        {
-          type: 'BurnToken',
-          value: {
-            type: 'Coin',
-            amount: { decimal: '1', atoms: '10000000000000' },
-          },
-        },
-      ],
-    ],
-  ])('is true for every output that renders %s', (_kind, outputs) => {
-    // the token-burn row needs its token's scale
-    const { amountRows, extraAmountRows } = reconcileOutputs(
-      outputs,
-      new Map([['token-burn', 2]]),
-    )
-    expect(amountRows.length + extraAmountRows.length).toBeGreaterThan(0)
-    // no input exists, so nothing but the output can have produced them
-    outputs.forEach((output) => {
-      expect(outputCarriesSignedAmount(output)).toBe(true)
-    })
-  })
-
-  it.each([
-    ['a DataDeposit', { type: 'DataDeposit', data: 'deadbeef' }],
-    [
-      'a CreateDelegationId',
-      { type: 'CreateDelegationId', destination: 'attacker', pool_id: 'pool' },
-    ],
-    ['an IssueNft', { type: 'IssueNft', destination: 'attacker' }],
-    [
-      'a CreateOrder without balances',
-      {
-        type: 'CreateOrder',
-        ask_currency: { type: 'Coin' },
-        give_currency: { type: 'Coin' },
-      },
-    ],
-    [
-      'an issuance with a Lockable supply',
-      {
-        type: 'IssueFungibleToken',
-        total_supply: { type: 'Lockable', amount: { atoms: '100' } },
-        number_of_decimals: 0,
-      },
-    ],
-    [
-      'an issuance with an Unlimited supply',
-      {
-        type: 'IssueFungibleToken',
-        total_supply: { type: 'Unlimited' },
-        number_of_decimals: 0,
-      },
-    ],
-    [
-      'a Transfer without a value',
-      { type: 'Transfer', destination: 'attacker' },
-    ],
-    [
-      'a DelegateStaking without an amount',
-      { type: 'DelegateStaking', delegation_id: 'd1' },
-    ],
-  ])('is false for %s, which renders no row', (_kind, output) => {
-    const { amountRows, extraAmountRows } = reconcileOutputs([output])
-    expect(amountRows).toEqual([])
-    expect(extraAmountRows).toEqual([])
-    expect(outputCarriesSignedAmount(output)).toBe(false)
-  })
-
-  // Over-approximation, in the safe direction only: a shape that resolves a
-  // container or an extra but carries no numeric amount renders no row and
-  // still reads true (nothing is then named beside an empty Amount row).
-  it('reads true for a resolved container that carries no numeric amount', () => {
-    const bare = { type: 'Transfer', destination: 'attacker', value: {} }
-    const { amountRows, extraAmountRows } = reconcileOutputs([bare])
-    expect(amountRows).toEqual([])
-    expect(extraAmountRows).toEqual([])
-    expect(outputCarriesSignedAmount(bare)).toBe(true)
-    expect(outputCarriesSignedAmount(null)).toBe(false)
-  })
-})
-
 describe('reconcileApprovalAmounts', () => {
   const ownAddresses = { receiving: ['wallet'], change: ['change'] }
 
+  // One destination group of the approval: the destination the signer
+  // encodes (null when it reads `destination` on none of the group's
+  // outputs) and the per-asset rows summed over exactly those outputs.
+  const pair = (destination, amountRows, toSelf = false) => ({
+    destination,
+    toSelf,
+    amountRows,
+  })
+
   it('derives amounts and fee from atoms for a consistent transfer', () => {
-    const { amountRows, fee, blocked } = reconcileApprovalAmounts(
+    const { destinationRows, fee, blocked } = reconcileApprovalAmounts(
       {
         inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
         outputs: [coinOutput('tmt1qrecipient', '10', '1000000000000')],
@@ -1350,14 +1165,16 @@ describe('reconcileApprovalAmounts', () => {
       { tokenDecimalsById: new Map(), ownAddresses },
     )
 
-    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '10' }])
+    expect(destinationRows).toEqual([
+      pair('tmt1qrecipient', [{ key: 'Coin', tokenId: null, amount: '10' }]),
+    ])
     // 17071.486043 − 10 = 17061.486043
     expect(fee).toEqual({ amount: '17061.486043' })
     expect(blocked).toBe(false)
   })
 
   it('blocks when an approved output reports a smaller decimal than its atoms', () => {
-    const { amountRows, blocked } = reconcileApprovalAmounts(
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
       {
         inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
         outputs: [
@@ -1375,13 +1192,17 @@ describe('reconcileApprovalAmounts', () => {
     )
 
     expect(blocked).toBe(true)
-    expect(amountRows[0].errors[0].error).toMatch(/does not match/)
-    expect(amountRows[0].errors[0].amount).toBe('17071.486043')
+    expect(destinationRows[0].amountRows[0].errors[0].error).toMatch(
+      /does not match/,
+    )
+    expect(destinationRows[0].amountRows[0].errors[0].amount).toBe(
+      '17071.486043',
+    )
   })
 
   it('groups rows by every output asset for mixed coin+token payments', () => {
     const tokenId = 'token-a'
-    const { amountRows, fee, blocked } = reconcileApprovalAmounts(
+    const { destinationRows, fee, blocked } = reconcileApprovalAmounts(
       {
         inputs: [
           coinInput('wallet', '10000000000000', '100'),
@@ -1418,16 +1239,18 @@ describe('reconcileApprovalAmounts', () => {
     )
 
     expect(blocked).toBe(false)
-    expect(amountRows).toEqual([
-      { key: tokenId, tokenId, amount: '500' },
-      { key: 'Coin', tokenId: null, amount: '10' },
+    expect(destinationRows).toEqual([
+      pair('attacker', [
+        { key: tokenId, tokenId, amount: '500' },
+        { key: 'Coin', tokenId: null, amount: '10' },
+      ]),
     ])
     // 100 − 10 − 80 = 10 ML fee (token values are not coin)
     expect(fee).toEqual({ amount: '10' })
   })
 
-  it('aggregates every mismatching output of an asset, not only the first', () => {
-    const { amountRows, blocked } = reconcileApprovalAmounts(
+  it('surfaces every mismatching output on its own destination row', () => {
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
       {
         inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
         outputs: [
@@ -1453,10 +1276,140 @@ describe('reconcileApprovalAmounts', () => {
     )
 
     expect(blocked).toBe(true)
-    expect(amountRows).toHaveLength(1)
-    expect(amountRows[0].errors).toHaveLength(2)
-    expect(amountRows[0].errors[0].amount).toBe('10')
-    expect(amountRows[0].errors[1].amount).toBe('20')
+    expect(destinationRows).toHaveLength(2)
+    expect(destinationRows[0].destination).toBe('attacker1')
+    expect(destinationRows[0].amountRows[0].errors[0].amount).toBe('10')
+    expect(destinationRows[1].destination).toBe('attacker2')
+    expect(destinationRows[1].amountRows[0].errors[0].amount).toBe('20')
+  })
+
+  // One group per distinct destination, in the order the transaction
+  // declares its outputs: naming one recipient beside a summed amount would
+  // present other destinations' money as theirs, and a zero-amount output
+  // would make the decoy read exactly like the payment it imitates.
+  it('shows one group per destination with each amount summed into its own', () => {
+    const { destinationRows, fee, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '10000000000000', '100')],
+        outputs: [
+          coinOutput('payee', '0', '0'),
+          coinOutput('attacker', '1', '100000000000'),
+          coinOutput('payee', '2', '200000000000'),
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(destinationRows).toEqual([
+      // the payee's pair is its own 0 + 2, never the other destination's
+      // money and never hidden for being zero
+      pair('payee', [{ key: 'Coin', tokenId: null, amount: '2' }]),
+      pair('attacker', [{ key: 'Coin', tokenId: null, amount: '1' }]),
+    ])
+    // the fee still counts every output: 100 − 0 − 1 − 2
+    expect(fee).toEqual({ amount: '97' })
+  })
+
+  it('keeps a zero-amount output visible as its own destination pair', () => {
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '10000000000000', '100')],
+        outputs: [coinOutput('payee', '0', '0')],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(destinationRows).toEqual([
+      pair('payee', [{ key: 'Coin', tokenId: null, amount: '0' }]),
+    ])
+  })
+
+  it('attaches a lying decimal to the row of the destination it lies about', () => {
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '10000000000000', '100')],
+        outputs: [
+          coinOutput('payee', '1', '100000000000'),
+          // LIE: the site reports 99 while committing 1 atom
+          coinOutput('attacker', '99', '1'),
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(destinationRows).toEqual([
+      pair('payee', [{ key: 'Coin', tokenId: null, amount: '1' }]),
+      pair('attacker', [
+        {
+          key: 'Coin',
+          tokenId: null,
+          errors: [
+            {
+              error: expect.stringMatching(/does not match/),
+              amount: '0.00000000001',
+            },
+          ],
+        },
+      ]),
+    ])
+  })
+
+  it('renders a destination pair with no amount row for an amountless output', () => {
+    // a CreateDelegationId carries no signed amount: the destination is
+    // still named, with nothing attributed to it
+    const { destinationRows, extraAmountRows, blocked } =
+      reconcileApprovalAmounts(
+        {
+          inputs: [],
+          outputs: [
+            {
+              type: 'CreateDelegationId',
+              destination: 'attacker',
+              pool_id: 'p1',
+            },
+          ],
+        },
+        { tokenDecimalsById: new Map(), ownAddresses },
+      )
+
+    expect(blocked).toBe(false)
+    expect(destinationRows).toEqual([pair('attacker', [])])
+    expect(extraAmountRows).toEqual([])
+  })
+
+  it('labels receiving-address destinations as this wallet’s, no other', () => {
+    // a self-transfer: every output lands back on the wallet, the two
+    // receiving destinations are its payments, the change address is not
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '10000000000000', '100')],
+        outputs: [
+          coinOutput('receiving', '2', '200000000000'),
+          coinOutput('second-receiving', '3', '300000000000'),
+          coinOutput('change', '95', '9500000000000'),
+        ],
+      },
+      {
+        tokenDecimalsById: new Map(),
+        ownAddresses: {
+          receiving: ['receiving', 'second-receiving'],
+          change: ['change'],
+        },
+      },
+    )
+
+    expect(blocked).toBe(false)
+    expect(destinationRows).toEqual([
+      pair('receiving', [{ key: 'Coin', tokenId: null, amount: '2' }], true),
+      pair(
+        'second-receiving',
+        [{ key: 'Coin', tokenId: null, amount: '3' }],
+        true,
+      ),
+    ])
   })
 
   // The signer ignores `destination`/`address` on Htlc, DelegateStaking and
@@ -1489,22 +1442,24 @@ describe('reconcileApprovalAmounts', () => {
       },
     ],
   ])(
-    'sums a %s output tagged with own addresses into the amount rows',
+    'sums a %s output tagged with own addresses into a destination-less row',
     (_type, escrowOutput) => {
-      const { amountRows, blocked } = reconcileApprovalAmounts(
+      const { destinationRows, blocked } = reconcileApprovalAmounts(
         decoyEscrowPayload(escrowOutput),
         { tokenDecimalsById: new Map(), ownAddresses },
       )
       expect(blocked).toBe(false)
-      // 10 + 16071.486043 — the escrowed funds are shown, never hidden
-      expect(amountRows).toEqual([
-        { key: 'Coin', tokenId: null, amount: '16081.486043' },
+      // the payment pair, then the escrowed 16071.486043 beside no address
+      // — never folded into the payment's amount
+      expect(destinationRows).toEqual([
+        pair('attacker', [{ key: 'Coin', tokenId: null, amount: '10' }]),
+        pair(null, [{ key: 'Coin', tokenId: null, amount: '16071.486043' }]),
       ])
     },
   )
 
   it('blocks a lying decimal on a decoy-addressed Htlc output', () => {
-    const { amountRows, blocked } = reconcileApprovalAmounts(
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
       decoyEscrowPayload({
         type: 'Htlc',
         // LIE: the escrow takes the whole remainder of the wallet
@@ -1514,7 +1469,11 @@ describe('reconcileApprovalAmounts', () => {
       { tokenDecimalsById: new Map(), ownAddresses },
     )
     expect(blocked).toBe(true)
-    expect(amountRows[0].errors).toEqual([
+    // the lie shows on the destination-less row of the output that lies
+    const unaddressed = destinationRows.find(
+      (group) => group.destination === null,
+    )
+    expect(unaddressed.amountRows[0].errors).toEqual([
       {
         error: expect.stringMatching(/does not match/),
         amount: '16071.486043',
@@ -1523,16 +1482,19 @@ describe('reconcileApprovalAmounts', () => {
   })
 
   it('surfaces a decoy-addressed BurnToken output as its signed Burned row', () => {
-    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
-      decoyEscrowPayload({
-        type: 'BurnToken',
-        value: coin('16071.486043', '1607148604300000'),
-      }),
-      { tokenDecimalsById: new Map(), ownAddresses },
-    )
+    const { destinationRows, extraAmountRows, blocked } =
+      reconcileApprovalAmounts(
+        decoyEscrowPayload({
+          type: 'BurnToken',
+          value: coin('16071.486043', '1607148604300000'),
+        }),
+        { tokenDecimalsById: new Map(), ownAddresses },
+      )
     // burns are never payment rows — the destroyed amount is its own row
     expect(blocked).toBe(false)
-    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '10' }])
+    expect(destinationRows).toEqual([
+      pair('attacker', [{ key: 'Coin', tokenId: null, amount: '10' }]),
+    ])
     expect(extraAmountRows).toEqual([
       {
         key: 'burned:1',
@@ -1565,7 +1527,7 @@ describe('reconcileApprovalAmounts', () => {
 
   it('blocks when a displayed amount carries an unknown token scale and a scaled label', () => {
     const tokenId = 'token-unknown'
-    const { amountRows, blocked } = reconcileApprovalAmounts(
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
       {
         inputs: [],
         outputs: [
@@ -1584,37 +1546,40 @@ describe('reconcileApprovalAmounts', () => {
     )
 
     expect(blocked).toBe(true)
-    expect(amountRows[0].errors[0].error).toMatch(/decimals are unknown/)
-    expect(amountRows[0].errors[0].amount).toBe('91400')
+    expect(destinationRows[0].amountRows[0].errors[0].error).toMatch(
+      /decimals are unknown/,
+    )
+    expect(destinationRows[0].amountRows[0].errors[0].amount).toBe('91400')
   })
 
   it('verifies CreateOrder balances and blocks a lying order decimal', () => {
     const tokenId = 'token-give'
-    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
-      {
-        inputs: [coinInput('wallet', '10000000000000', '100')],
-        outputs: [
-          {
-            type: 'CreateOrder',
-            ask_balance: { atoms: '1000000000000', decimal: '10' },
-            ask_currency: { type: 'Coin' },
-            // LIE: 50000 atoms at scale 2 is 500, not 999
-            give_balance: { atoms: '50000', decimal: '999' },
-            give_currency: { type: 'Token', token_id: tokenId },
-            conclude_destination: 'wallet',
-          },
-        ],
-      },
-      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
-    )
+    const { destinationRows, extraAmountRows, blocked } =
+      reconcileApprovalAmounts(
+        {
+          inputs: [coinInput('wallet', '10000000000000', '100')],
+          outputs: [
+            {
+              type: 'CreateOrder',
+              ask_balance: { atoms: '1000000000000', decimal: '10' },
+              ask_currency: { type: 'Coin' },
+              // LIE: 50000 atoms at scale 2 is 500, not 999
+              give_balance: { atoms: '50000', decimal: '999' },
+              give_currency: { type: 'Token', token_id: tokenId },
+              conclude_destination: 'wallet',
+            },
+          ],
+        },
+        { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+      )
 
     expect(blocked).toBe(true)
     const give = extraAmountRows.find((row) => row.label === 'Order give')
     expect(give.errors[0].error).toMatch(/does not match/)
     expect(give.errors[0].amount).toBe('500')
     expect(give.withTicker).toBe(true)
-    // the coin payment rows are unaffected by the order lie
-    expect(amountRows.every((row) => !row.errors)).toBe(true)
+    // an order output names no payment destination: no destination rows
+    expect(destinationRows).toEqual([])
   })
 
   it('shows consistent order balances without blocking', () => {
@@ -1651,7 +1616,7 @@ describe('reconcileApprovalAmounts', () => {
     // SECURITY: the signer escrows output.amount.atoms — a payload carrying
     // BOTH a pretty value (for display) and the huge signed amount must
     // review the amount-derived truth, never the attacker-chosen number.
-    const { amountRows, fee, blocked } = reconcileApprovalAmounts(
+    const { destinationRows, fee, blocked } = reconcileApprovalAmounts(
       {
         inputs: [coinInput('wallet', '9901000000000', '99.01')],
         outputs: [
@@ -1670,37 +1635,41 @@ describe('reconcileApprovalAmounts', () => {
     )
 
     expect(blocked).toBe(false)
-    // 99 ML escrow shown (the signed truth), not the 0.00000000001 decoy
-    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '99' }])
+    // 99 ML escrow shown (the signed truth), not the 0.00000000001 decoy,
+    // on the escrow's own destination-less row
+    expect(destinationRows).toEqual([
+      pair(null, [{ key: 'Coin', tokenId: null, amount: '99' }]),
+    ])
     // fee = 99.01 − 99 escrow = 0.01
     expect(fee).toEqual({ amount: '0.01' })
   })
 
   it('does not render phantom rows for outputs without a known container', () => {
-    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
-      {
-        inputs: [],
-        outputs: [
-          {
-            type: 'DataDeposit',
-            data: 'deadbeef',
-            // injected top-level numerics the signer never reads
-            atoms: '1000000000000',
-            decimal: '10',
-          },
-        ],
-      },
-      { tokenDecimalsById: new Map(), ownAddresses },
-    )
+    const { destinationRows, extraAmountRows, blocked } =
+      reconcileApprovalAmounts(
+        {
+          inputs: [],
+          outputs: [
+            {
+              type: 'DataDeposit',
+              data: 'deadbeef',
+              // injected top-level numerics the signer never reads
+              atoms: '1000000000000',
+              decimal: '10',
+            },
+          ],
+        },
+        { tokenDecimalsById: new Map(), ownAddresses },
+      )
 
-    expect(amountRows).toEqual([])
+    expect(destinationRows).toEqual([])
     expect(extraAmountRows).toEqual([])
     expect(blocked).toBe(false)
   })
 
   it('ignores injected top-level token_id for scale and identity', () => {
     const tokenId = 'token-inject'
-    const { amountRows, blocked } = reconcileApprovalAmounts(
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
       {
         inputs: [coinInput('wallet', '10000000000000000', '100000')],
         outputs: [
@@ -1721,8 +1690,8 @@ describe('reconcileApprovalAmounts', () => {
 
     expect(blocked).toBe(false)
     // coin truth at coin scale, keyed off the signer-read container only
-    expect(amountRows).toEqual([
-      { key: 'Coin', tokenId: null, amount: '100000' },
+    expect(destinationRows).toEqual([
+      pair('attacker', [{ key: 'Coin', tokenId: null, amount: '100000' }]),
     ])
   })
 
@@ -1730,7 +1699,7 @@ describe('reconcileApprovalAmounts', () => {
     // a Transfer output's identity and scale come from its value — the
     // signer never reads command/account_type/token_id on outputs
     const tokenId = 'token-real'
-    const { amountRows, blocked } = reconcileApprovalAmounts(
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
       {
         inputs: [coinInput('wallet', '100000000000000', '100000')],
         outputs: [
@@ -1753,7 +1722,9 @@ describe('reconcileApprovalAmounts', () => {
 
     expect(blocked).toBe(false)
     // the value's own identity and scale: 50000 atoms @2 = 500
-    expect(amountRows).toEqual([{ key: tokenId, tokenId, amount: '500' }])
+    expect(destinationRows).toEqual([
+      pair('attacker', [{ key: tokenId, tokenId, amount: '500' }]),
+    ])
   })
 
   it('blocks a lying total_supply decimal on token issuance', () => {
@@ -1968,31 +1939,32 @@ describe('reconcileApprovalAmounts', () => {
     // LEG-KIND REGRESSION: the signer reads command/account_type on INPUTS
     // only — an output carrying those injected fields (plus a consistent
     // amount) encodes nothing signable, so no Amount row may appear
-    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
-      {
-        inputs: [],
-        outputs: [
-          {
-            type: 'CreateDelegationId',
-            pool_id: 'p1',
-            input_type: 'AccountCommand',
-            command: 'MintTokens',
-            token_id: 'tmltk1cheap',
-            amount: { atoms: '2500', decimal: '25' },
-          },
-          {
-            type: 'DataDeposit',
-            data: 'aa',
-            input_type: 'Account',
-            account_type: 'DelegationBalance',
-            amount: { atoms: '1000000000000', decimal: '10' },
-          },
-        ],
-      },
-      { tokenDecimalsById: new Map([['tmltk1cheap', 2]]), ownAddresses },
-    )
+    const { destinationRows, extraAmountRows, blocked } =
+      reconcileApprovalAmounts(
+        {
+          inputs: [],
+          outputs: [
+            {
+              type: 'CreateDelegationId',
+              pool_id: 'p1',
+              input_type: 'AccountCommand',
+              command: 'MintTokens',
+              token_id: 'tmltk1cheap',
+              amount: { atoms: '2500', decimal: '25' },
+            },
+            {
+              type: 'DataDeposit',
+              data: 'aa',
+              input_type: 'Account',
+              account_type: 'DelegationBalance',
+              amount: { atoms: '1000000000000', decimal: '10' },
+            },
+          ],
+        },
+        { tokenDecimalsById: new Map([['tmltk1cheap', 2]]), ownAddresses },
+      )
 
-    expect(amountRows).toEqual([])
+    expect(destinationRows).toEqual([])
     expect(extraAmountRows).toEqual([])
     expect(blocked).toBe(false)
   })
@@ -2001,30 +1973,31 @@ describe('reconcileApprovalAmounts', () => {
     // LEG-KIND REGRESSION: Transfer is an output type — the signer reads
     // input.value nowhere, so an account input injected with a type/value
     // pair resolves no container and shows no "will sign" number
-    const { amountRows, extraAmountRows, blocked } = reconcileApprovalAmounts(
-      {
-        inputs: [
-          {
-            input_type: 'AccountCommand',
-            input: {
+    const { destinationRows, extraAmountRows, blocked } =
+      reconcileApprovalAmounts(
+        {
+          inputs: [
+            {
               input_type: 'AccountCommand',
-              command: 'ConcludeOrder',
-              order_id: 'o1',
-              nonce: '0',
-              type: 'Transfer',
-              value: {
-                type: 'Coin',
-                amount: { atoms: '1000000000000', decimal: '10' },
+              input: {
+                input_type: 'AccountCommand',
+                command: 'ConcludeOrder',
+                order_id: 'o1',
+                nonce: '0',
+                type: 'Transfer',
+                value: {
+                  type: 'Coin',
+                  amount: { atoms: '1000000000000', decimal: '10' },
+                },
               },
             },
-          },
-        ],
-        outputs: [],
-      },
-      { tokenDecimalsById: new Map(), ownAddresses },
-    )
+          ],
+          outputs: [],
+        },
+        { tokenDecimalsById: new Map(), ownAddresses },
+      )
 
-    expect(amountRows).toEqual([])
+    expect(destinationRows).toEqual([])
     expect(extraAmountRows).toEqual([])
     expect(blocked).toBe(false)
   })
@@ -2228,16 +2201,54 @@ describe('reconcileApprovalAmounts', () => {
     )
 
     expect(blocked).toBe(false)
-    // bare atom string, no scale in the payload → shown verbatim
+    // bare atom string, no scale in the payload → shown verbatim, with the
+    // destination the signer encodes for the fill
     expect(extraAmountRows).toEqual([
       {
         key: 'order:fill:0',
         label: 'Order fill',
         tokenId: null,
         withTicker: false,
+        destination: 'wallet',
         amount: '1000000000000',
       },
     ])
+  })
+
+  it('renders the fill row without a destination when none is signer-readable', () => {
+    for (const destination of [undefined, 42, { address: 'wallet' }]) {
+      const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+        {
+          inputs: [
+            {
+              input_type: 'AccountCommand',
+              input: {
+                input_type: 'AccountCommand',
+                command: 'FillOrder',
+                order_id: 'order-1',
+                fill_atoms: '1000000000000',
+                nonce: '0',
+                ...(destination !== undefined ? { destination } : {}),
+              },
+            },
+          ],
+          outputs: [],
+        },
+        { tokenDecimalsById: new Map(), ownAddresses },
+      )
+
+      expect(blocked).toBe(false)
+      // only a string destination the signer encodes is named
+      expect(extraAmountRows).toEqual([
+        {
+          key: 'order:fill:0',
+          label: 'Order fill',
+          tokenId: null,
+          withTicker: false,
+          amount: '1000000000000',
+        },
+      ])
+    }
   })
 
   it('blocks when the committed FillOrder size is unreadable or negative', () => {
@@ -2297,6 +2308,7 @@ describe('reconcileApprovalAmounts', () => {
         label: 'Order fill',
         tokenId: null,
         withTicker: false,
+        destination: 'wallet',
         errors: [{ error: 'Amount cannot be negative', amount: null }],
       },
     ])
@@ -2348,6 +2360,7 @@ describe('reconcileApprovalAmounts', () => {
         label: 'Order fill',
         tokenId: null,
         withTicker: false,
+        destination: 'wallet',
         errors: [{ error: ORDER_FILL_UNREADABLE_MESSAGE, amount: null }],
       },
     ])
@@ -2380,6 +2393,7 @@ describe('reconcileApprovalAmounts', () => {
         label: 'Order fill',
         tokenId: null,
         withTicker: false,
+        destination: 'wallet',
         errors: [{ error: ORDER_FILL_UNREADABLE_MESSAGE, amount: null }],
       },
     ])
@@ -2413,6 +2427,7 @@ describe('reconcileApprovalAmounts', () => {
         label: 'Order fill',
         tokenId: null,
         withTicker: false,
+        destination: 'wallet',
         amount: '1000000000000',
       },
     ])
@@ -2454,6 +2469,7 @@ describe('reconcileApprovalAmounts', () => {
           label: 'Order fill',
           tokenId: null,
           withTicker: false,
+          destination: 'wallet',
           amount: rawFill,
         },
       ])
@@ -2525,6 +2541,7 @@ describe('reconcileApprovalAmounts', () => {
         label: 'Order fill',
         tokenId: null,
         withTicker: false,
+        destination: 'wallet',
         errors: [{ error: ORDER_FILL_UNREADABLE_MESSAGE, amount: null }],
       },
     ])
@@ -2797,14 +2814,14 @@ describe('reconcileApprovalAmounts', () => {
       },
     ],
   ])('blocks on %s', (_description, legs) => {
-    const { amountRows, extraAmountRows, fee, blocked } =
+    const { destinationRows, extraAmountRows, fee, blocked } =
       reconcileApprovalAmounts(legs, {
         tokenDecimalsById: new Map(),
         ownAddresses,
       })
 
     expect(blocked).toBe(true)
-    expect(amountRows).toEqual([])
+    expect(destinationRows).toEqual([])
     expect(extraAmountRows).toEqual([])
     expect(fee).toBeNull()
   })
@@ -3134,6 +3151,13 @@ describe('isLockedSelfOutput', () => {
 })
 
 describe('reconcileApprovalAmounts — locked outputs returning to the wallet', () => {
+  // One destination group of the approval (same shape as the main
+  // describe's helper).
+  const pair = (destination, amountRows, toSelf = false) => ({
+    destination,
+    toSelf,
+    amountRows,
+  })
   // a wallet-owned utxo input of `decimal` coin (coinInput takes atoms first)
   const ownInput = (decimal) => coinInput('wallet', toAtoms(decimal), decimal)
   const reconcile = (payload) =>
@@ -3152,12 +3176,14 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
   }
 
   it('shows the locked change on its own row, outside the Amount row, without blocking', () => {
-    const { amountRows, extraAmountRows, fee, blocked } = reconcile(
+    const { destinationRows, extraAmountRows, fee, blocked } = reconcile(
       paymentAndLockedChange,
     )
 
     // only the payment is an Amount
-    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '1' }])
+    expect(destinationRows).toEqual([
+      pair('payee', [{ key: 'Coin', tokenId: null, amount: '1' }]),
+    ])
     expect(extraAmountRows).toEqual([
       {
         key: 'locked:1',
@@ -3174,7 +3200,7 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
   })
 
   it('blocks a lying decimal on the locked amount and still shows its lock', () => {
-    const { amountRows, extraAmountRows, fee, blocked } = reconcile({
+    const { destinationRows, extraAmountRows, fee, blocked } = reconcile({
       inputs: [ownInput('100')],
       outputs: [
         coinOutput('payee', '1'),
@@ -3184,7 +3210,9 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
     })
 
     expect(blocked).toBe(true)
-    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '1' }])
+    expect(destinationRows).toEqual([
+      pair('payee', [{ key: 'Coin', tokenId: null, amount: '1' }]),
+    ])
     expect(extraAmountRows).toEqual([
       {
         key: 'locked:1',
@@ -3204,12 +3232,12 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
   })
 
   it('shows amount and lock when the locked output is the only one', () => {
-    const { amountRows, extraAmountRows, fee, blocked } = reconcile({
+    const { destinationRows, extraAmountRows, fee, blocked } = reconcile({
       inputs: [ownInput('99')],
       outputs: [lockedOutput('change', '99', UNTIL_2100)],
     })
 
-    expect(amountRows).toEqual([])
+    expect(destinationRows).toEqual([])
     expect(extraAmountRows).toEqual([
       {
         key: 'locked:0',
@@ -3228,7 +3256,7 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
   // input and one LockThenTransfer coin output back to the wallet, locked
   // for the staking maturity.
   it('shows the amount and the block lock of a delegation withdrawal', () => {
-    const { amountRows, extraAmountRows, fee, blocked } = reconcile({
+    const { destinationRows, extraAmountRows, fee, blocked } = reconcile({
       inputs: [
         {
           input: {
@@ -3243,7 +3271,7 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
       outputs: [lockedOutput('wallet', '8', FOR_7200_BLOCKS)],
     })
 
-    expect(amountRows).toEqual([])
+    expect(destinationRows).toEqual([])
     expect(extraAmountRows).toEqual([
       {
         key: 'locked:0',
@@ -3328,13 +3356,15 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
       },
     ],
   ])('blocks on %s', (_description, lock) => {
-    const { amountRows, extraAmountRows, blocked } = reconcile({
+    const { destinationRows, extraAmountRows, blocked } = reconcile({
       inputs: [ownInput('100')],
       outputs: [coinOutput('payee', '1'), lockedOutput('change', '99', lock)],
     })
 
     expect(blocked).toBe(true)
-    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '1' }])
+    expect(destinationRows).toEqual([
+      pair('payee', [{ key: 'Coin', tokenId: null, amount: '1' }]),
+    ])
     expect(extraAmountRows).toEqual([
       {
         key: 'locked:1',
@@ -3391,13 +3421,15 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
   // so the payment row fails closed with the reason (as the technical
   // preview already says on that row).
   it('keeps a foreign locked output with a readable lock as a plain payment', () => {
-    const { amountRows, extraAmountRows, blocked } = reconcile({
+    const { destinationRows, extraAmountRows, blocked } = reconcile({
       inputs: [ownInput('100')],
       outputs: [lockedOutput('attacker', '99', FOR_7200_BLOCKS)],
     })
 
     expect(blocked).toBe(false)
-    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '99' }])
+    expect(destinationRows).toEqual([
+      pair('attacker', [{ key: 'Coin', tokenId: null, amount: '99' }]),
+    ])
     expect(extraAmountRows).toEqual([])
   })
 
@@ -3406,38 +3438,41 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
     ['an unknown lock type', { type: 'Nope' }],
     ['a non-numeric block count', { type: 'ForBlockCount', content: 'soon' }],
   ])('blocks a foreign locked output with %s', (_description, lock) => {
-    const { amountRows, extraAmountRows, blocked } = reconcile({
+    const { destinationRows, extraAmountRows, blocked } = reconcile({
       inputs: [ownInput('100')],
       outputs: [coinOutput('payee', '1'), lockedOutput('attacker', '99', lock)],
     })
 
     expect(blocked).toBe(true)
-    expect(amountRows).toEqual([
-      {
-        key: 'Coin',
-        tokenId: null,
-        errors: [{ error: LOCK_UNREADABLE, amount: null }],
-      },
+    expect(destinationRows).toEqual([
+      pair('payee', [{ key: 'Coin', tokenId: null, amount: '1' }]),
+      pair('attacker', [
+        {
+          key: 'Coin',
+          tokenId: null,
+          errors: [{ error: LOCK_UNREADABLE, amount: null }],
+        },
+      ]),
     ])
     // it is a payment, not this wallet's encumbrance: no locked row
     expect(extraAmountRows).toEqual([])
   })
 
   it('reports a lying amount and an unreadable lock on the same foreign output', () => {
-    const { amountRows, blocked } = reconcile({
+    const { destinationRows, blocked } = reconcile({
       inputs: [ownInput('100')],
       outputs: [lockedOutput('attacker', '1', { type: 'Nope' }, toAtoms('99'))],
     })
 
     expect(blocked).toBe(true)
-    expect(amountRows[0].errors).toEqual([
+    expect(destinationRows[0].amountRows[0].errors).toEqual([
       { error: LOCK_UNREADABLE, amount: null },
       { error: expect.stringMatching(/does not match/), amount: '99' },
     ])
   })
 
   it('blocks a foreign locked output without any amount when its lock is unreadable', () => {
-    const { amountRows, blocked } = reconcile({
+    const { destinationRows, blocked } = reconcile({
       inputs: [ownInput('100')],
       outputs: [
         { type: 'LockThenTransfer', destination: 'attacker', lock: undefined },
@@ -3445,7 +3480,7 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
     })
 
     expect(blocked).toBe(true)
-    expect(amountRows[0].errors).toEqual([
+    expect(destinationRows[0].amountRows[0].errors).toEqual([
       { error: LOCK_UNREADABLE, amount: null },
     ])
   })
@@ -3553,13 +3588,15 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
   // Unchanged: a plain Transfer to one of the wallet's own addresses is
   // change — no row at all.
   it('keeps a plain Transfer to the wallet as change, with no row', () => {
-    const { amountRows, extraAmountRows, blocked } = reconcile({
+    const { destinationRows, extraAmountRows, blocked } = reconcile({
       inputs: [ownInput('100')],
       outputs: [coinOutput('payee', '1'), coinOutput('change', '99')],
     })
 
     expect(blocked).toBe(false)
-    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '1' }])
+    expect(destinationRows).toEqual([
+      pair('payee', [{ key: 'Coin', tokenId: null, amount: '1' }]),
+    ])
     expect(extraAmountRows).toEqual([])
   })
 })

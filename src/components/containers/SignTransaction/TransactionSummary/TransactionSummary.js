@@ -116,52 +116,15 @@ const TransactionSummary = ({
   const { networkType } = useContext(SettingsContext)
   const [showDetails, setShowDetails] = useState(false)
 
-  // Fail closed on non-array legs (the background forwards dApp params
-  // unvalidated): normalized here so rendering can never crash, and
+  // Fail closed on non-array inputs (the background forwards dApp params
+  // unvalidated): normalized here so the From lookup can never crash, and
   // reconcileApprovalAmounts blocks the payload below.
   const inputs = Array.isArray(jsonRepresentation?.inputs)
     ? jsonRepresentation.inputs
     : []
-  const outputs = Array.isArray(jsonRepresentation?.outputs)
-    ? jsonRepresentation.outputs
-    : []
 
   const coinTicker = networkType === 'testnet' ? 'TML' : 'ML'
   const fromAddress = findOwnInputAddress(inputs, ownAddresses)
-  const { outputs: relevantOutputs, toSelf: targetsOwnWallet } =
-    TransactionAmounts.findRelevantOutputs(outputs, ownAddresses)
-  // The "To" line shows only an address the signer encodes: the
-  // signer-read destination of a destination-bearing output (an Htlc,
-  // staking or burn output has none whatever `destination`/`address` the
-  // payload attaches to it — the first relevant output that carries one is
-  // used). Failing that, the destination of account-command FillOrder
-  // inputs (where the acquired asset lands) is named ONLY while no relevant
-  // output yields any signed row, amount row or extra row
-  // (outputCarriesSignedAmount) — beside such a row it would read as the
-  // address that amount goes to, while an Htlc, staking, burn or order
-  // output pays elsewhere — AND while every fill carrying a string
-  // destination names the same one: a single line cannot stand for fills
-  // that go to different addresses (each is shown on its own row in the
-  // technical breakdown). Else the neutral placeholder.
-  const outputAddress = relevantOutputs
-    .map(TransactionAmounts.signerOutputDestination)
-    .find((destination) => destination != null)
-  const relevantOutputsCarryAmount = relevantOutputs.some(
-    TransactionAmounts.outputCarriesSignedAmount,
-  )
-  const fillDestinations = new Set(
-    inputs
-      .map(TransactionAmounts.signerFillOrderDestination)
-      .filter((destination) => destination != null),
-  )
-  const fillDestination =
-    fillDestinations.size === 1 ? [...fillDestinations][0] : null
-  const toAddress =
-    outputAddress ?? (relevantOutputsCarryAmount ? null : fillDestination)
-  // "your address" only when the shown address is a receiving address of
-  // this wallet (a FillOrder destination may name any address)
-  const toSelf =
-    targetsOwnWallet && (ownAddresses?.receiving || []).includes(toAddress)
 
   const tokenDecimalsById =
     TransactionAmounts.buildTokenDecimalsIndex(allNetworkTokensData)
@@ -174,8 +137,11 @@ const TransactionSummary = ({
   // values, and the dApp-supplied `.decimal` labels are verified against
   // them. Any disagreement fails closed: the row shows the verification
   // error instead of a number and the page blocks the approve action.
+  // destinationRows carry one group per distinct signer destination, in the
+  // order the transaction declares its outputs; a destinationless group
+  // (destination null) collects the amounts that name no address at all.
   const {
-    amountRows,
+    destinationRows,
     extraAmountRows,
     fee,
     blocked: amountsMismatch,
@@ -228,38 +194,68 @@ const TransactionSummary = ({
               {fromAddress && <CopyButton content={fromAddress} />}
             </span>,
           ],
-          [
-            toSelf ? 'To (your address)' : 'To',
-            <span
-              key="to"
-              className={styles.valueLine}
-            >
-              {truncate(toAddress, 10, 8)}
-              {toAddress && <CopyButton content={toAddress} />}
-            </span>,
-          ],
-          ...amountRows.map(({ key, tokenId, amount, errors }) => [
-            'Amount',
-            <span
-              key={rowKey('amount', key)}
-              className={errors ? styles.amountError : styles.amount}
-            >
-              {errors
-                ? errors
-                    .map(({ error, amount: signed }) =>
-                      signed != null
-                        ? `${error} — will sign ${signed} ${tickerOf(tokenId)}`
-                        : error,
-                    )
-                    .join('; ')
-                : `${amount} ${tickerOf(tokenId)}`}
-            </span>,
+          // One To line and that destination's own amounts per distinct
+          // signer destination, in declared order: naming one recipient
+          // beside a summed amount would present other destinations' money
+          // as theirs. A destinationless group renders its amounts with no
+          // To line (the signer reads `destination` on none of those
+          // outputs — they pay keys or delegations, not an address shown
+          // here); the destination of an order account command's fill is
+          // named on the fill's own row below, never as a To pair.
+          ...destinationRows.flatMap(({ destination, toSelf, amountRows }) => [
+            ...(destination
+              ? [
+                  [
+                    toSelf ? 'To (your address)' : 'To',
+                    <span
+                      key={rowKey('to', destination)}
+                      className={styles.valueLine}
+                    >
+                      {truncate(destination, 10, 8)}
+                      {destination && <CopyButton content={destination} />}
+                    </span>,
+                  ],
+                ]
+              : []),
+            ...amountRows.map(({ key, tokenId, amount, errors }) => [
+              'Amount',
+              <span
+                key={rowKey(
+                  'amount',
+                  `${asText(destination, 'unaddressed')}:${key}`,
+                )}
+                className={errors ? styles.amountError : styles.amount}
+              >
+                {errors
+                  ? errors
+                      .map(({ error, amount: signed }) =>
+                        signed != null
+                          ? `${error} — will sign ${signed} ${tickerOf(tokenId)}`
+                          : error,
+                      )
+                      .join('; ')
+                  : `${amount} ${tickerOf(tokenId)}`}
+              </span>,
+            ]),
           ]),
           // note: the plain-words lock of funds coming back locked to this
           // wallet — read out with the amount, verified or shown as the
-          // signed truth, so the encumbrance is never separated from it
+          // signed truth, so the encumbrance is never separated from it.
+          // An order fill's destination, when the signer encodes one, is
+          // named on the fill's own row the same way: where the acquired
+          // asset lands is signing-relevant, and it is never a To pair
+          // (no output pays it).
           ...extraAmountRows.map(
-            ({ key, label, tokenId, amount, errors, withTicker, note }) => [
+            ({
+              key,
+              label,
+              tokenId,
+              amount,
+              errors,
+              withTicker,
+              note,
+              destination,
+            }) => [
               label,
               <span
                 key={rowKey('extra', key)}
@@ -278,6 +274,15 @@ const TransactionSummary = ({
                   : `${withTicker ? `${amount} ${tickerOf(tokenId)}` : amount}${
                       note ? `, ${note}` : ''
                     }`}
+                {isText(destination) && (
+                  <>
+                    {' — proceeds to '}
+                    <span className={styles.valueLine}>
+                      {truncate(destination, 10, 8)}
+                      <CopyButton content={destination} />
+                    </span>
+                  </>
+                )}
               </span>,
             ],
           ),

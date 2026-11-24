@@ -279,6 +279,14 @@ describe('SignTransactionPage — decimal vs signed-atoms reconciliation', () =>
     errorSpy.mockRestore()
   })
 
+  beforeEach(() => {
+    jest.clearAllMocks()
+    Account.hasPasskey.mockResolvedValue(false)
+    Account.unlockAccount.mockResolvedValue({
+      mlPrivKeys: { mlTestnetPrivateKey: 'test-private-key' },
+    })
+  })
+
   it('blocks approval when the site-reported decimal disagrees with the signed atoms', () => {
     renderSignPage(mismatchingRequest)
 
@@ -290,7 +298,7 @@ describe('SignTransactionPage — decimal vs signed-atoms reconciliation', () =>
     expect(approve).toBeDisabled()
   })
 
-  it('keeps approval available for a consistent payload', () => {
+  it('keeps approval available for a consistent payload and signs it as before', async () => {
     renderSignPage(honestRequest)
 
     expect(
@@ -299,10 +307,26 @@ describe('SignTransactionPage — decimal vs signed-atoms reconciliation', () =>
     expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
 
     expect(screen.getByText('Approve and return to page')).toBeEnabled()
-    // the coin amount row carries the network ticker
+    // the single destination pair carries the network ticker
     expect(
       within(screen.getByTestId('transaction-summary')).getByText('10 TML'),
     ).toBeInTheDocument()
+
+    // an honest single-transfer request signs through the existing flow
+    fireEvent.click(screen.getByText('Approve and return to page'))
+    fireEvent.change(screen.getByPlaceholderText('Enter your password'), {
+      target: { value: 'wallet-password' },
+    })
+    fireEvent.click(screen.getByText('Approve'))
+
+    await waitFor(() =>
+      expect(sendPopupResponse).toHaveBeenCalledWith({
+        method: 'signTransaction_approve',
+        requestId: 'mismatch-1',
+        origin: 'https://attacker.example',
+        result: 'aabbccdd',
+      }),
+    )
   })
 
   // SECURITY REGRESSION: a payload with an HTLC-shaped input but no htlc
@@ -504,14 +528,12 @@ const stakingEscrow = (decoyField) => ({
 const shown = (address) =>
   address.length > 21 ? `${address.slice(0, 10)}…${address.slice(-8)}` : address
 
-// Expected per case: whether a visible transfer sits beside the escrow, the
-// Amount row, and the "To" line (null: the neutral placeholder).
-const WITH_TRANSFER = {
-  transfer: true,
-  amount: '16081.486043 TML',
-  to: DAPP_TRANSFER.destination,
-}
-const ALONE = { transfer: false, amount: '16071.486043 TML', to: null }
+// Expected per case: whether a visible transfer sits beside the escrow.
+// The Transfer keeps its own pair (10 TML beside its destination) and the
+// escrow keeps its own row (16071.486043 TML beside no address) — never a
+// combined amount one line could attribute to a single recipient.
+const WITH_TRANSFER = { transfer: true }
+const ALONE = { transfer: false }
 
 const escrowRequest = (escrowOutput, besideTransfer) => {
   const request = JSON.parse(JSON.stringify(honestRequest))
@@ -550,38 +572,128 @@ describe('SignTransactionPage — value-bearing outputs tagged with a wallet add
       renderSignPage(escrowRequest(escrowOutput, expected.transfer))
 
       const summary = screen.getByTestId('transaction-summary')
-      // 10 ML to the site + 16071.486043 ML escrowed in one combined row, or
-      // the escrowed amount alone
-      expect(within(summary).getByText(expected.amount)).toBeInTheDocument()
-
-      // the "To" line never shows the wallet's own address for the escrow:
-      // it is the Transfer's destination, or the neutral placeholder
-      expect(within(summary).getByText('To')).toBeInTheDocument()
-      expect(
-        within(summary).queryByText('To (your address)'),
-      ).not.toBeInTheDocument()
-      // the wallet address appears as From only
-      expect(within(summary).queryAllByText(shown(OWN_RECEIVING))).toHaveLength(
-        1,
-      )
-      if (expected.to) {
+      if (expected.transfer) {
+        // the Transfer's pair is its own 10 TML; the escrowed
+        // 16071.486043 TML stays on its own row beside no address
+        expect(within(summary).getByText('10 TML')).toBeInTheDocument()
         expect(
-          within(summary).getByText(shown(expected.to)),
+          within(summary).getByText('16071.486043 TML'),
+        ).toBeInTheDocument()
+        // the "To" line is the Transfer's destination alone, never the
+        // wallet's own address for the escrow
+        expect(within(summary).getByText('To')).toBeInTheDocument()
+        expect(
+          within(summary).queryByText('To (your address)'),
+        ).not.toBeInTheDocument()
+        expect(
+          within(summary).getByText(shown(DAPP_TRANSFER.destination)),
         ).toBeInTheDocument()
         // From and To each have a copy button
         expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
       } else {
-        // no output carries a destination the signer encodes: the neutral
-        // placeholder, and only From has a copy button
-        expect(within(summary).getByText('—')).toBeInTheDocument()
+        // no output carries a destination the signer encodes: no To line,
+        // and only From has a copy button
+        expect(
+          within(summary).getByText('16071.486043 TML'),
+        ).toBeInTheDocument()
+        expect(within(summary).queryByText('To')).not.toBeInTheDocument()
         expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
       }
+      // the wallet address appears as From only
+      expect(within(summary).queryAllByText(shown(OWN_RECEIVING))).toHaveLength(
+        1,
+      )
 
       // the payload is consistent and legitimate: nothing is blocked
       expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
       expect(screen.getByText('Approve and return to page')).toBeEnabled()
     },
   )
+})
+
+// One To and Amount pair per destination: naming one recipient beside a
+// summed amount would present other destinations' money as theirs — and a
+// zero-amount output to the expected payee would make a multi-destination
+// payload read exactly like the honest payment it imitates.
+describe('SignTransactionPage — one To and Amount pair per destination', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    Account.hasPasskey.mockResolvedValue(false)
+    Account.unlockAccount.mockResolvedValue({
+      mlPrivKeys: { mlTestnetPrivateKey: 'test-private-key' },
+    })
+  })
+
+  const PAYEE = 'tmt1qpayeedestination'
+  const multiOutputsRequest = (outputs) => {
+    const request = JSON.parse(JSON.stringify(honestRequest))
+    request.request.data.txData.JSONRepresentation.outputs = outputs
+    return request
+  }
+
+  // THE DECOY: a zero-amount transfer to the expected payee beside the real
+  // payment to another address. The payee is named beside 0 TML — never
+  // beside the summed 100 TML — and approval stays available, because the
+  // shown amounts all match the signed atoms.
+  it('shows a zero-amount transfer and the real payment as separate pairs', () => {
+    renderSignPage(
+      multiOutputsRequest([
+        { destination: PAYEE, type: 'Transfer', value: coinValue('0') },
+        {
+          destination: 'tmt1qattackerdestination',
+          type: 'Transfer',
+          value: coinValue('100'),
+        },
+      ]),
+    )
+
+    const summary = screen.getByTestId('transaction-summary')
+    const tos = within(summary).getAllByText('To')
+    expect(tos).toHaveLength(2)
+    expect(tos[0].nextElementSibling).toHaveTextContent(shown(PAYEE))
+    expect(tos[1].nextElementSibling).toHaveTextContent(
+      shown('tmt1qattackerdestination'),
+    )
+    const amounts = within(summary).getAllByText('Amount')
+    expect(amounts).toHaveLength(2)
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^0 TML$/)
+    expect(amounts[1].nextElementSibling).toHaveTextContent(/^100 TML$/)
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeEnabled()
+  })
+
+  // A lying leg blocks the whole approval, with the error on the row of the
+  // destination it lies about — the honest pair stays a plain amount.
+  it('blocks approval on a lying leg and shows the error on that pair', () => {
+    renderSignPage(
+      multiOutputsRequest([
+        { destination: PAYEE, type: 'Transfer', value: coinValue('1') },
+        {
+          destination: 'tmt1qattackerdestination',
+          type: 'Transfer',
+          // LIE: the site reports 99 while committing 1 atom
+          value: { type: 'Coin', amount: { decimal: '99', atoms: '1' } },
+        },
+      ]),
+    )
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    const amounts = within(summary).getAllByText('Amount')
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^1 TML$/)
+    expect(amounts[1].nextElementSibling).toHaveTextContent(/does not match/)
+    expect(amounts[1].nextElementSibling).toHaveTextContent(
+      'will sign 0.00000000001 TML',
+    )
+    const approve = screen.getByText('Approve and return to page')
+    expect(approve).toBeDisabled()
+
+    // a click on the disabled button opens nothing and reaches no signer
+    fireEvent.click(approve)
+    expect(screen.queryByText('Re-enter your Password')).not.toBeInTheDocument()
+    expect(SignTxHelpers.getTransactionBINrepresentation).not.toHaveBeenCalled()
+    expect(sendPopupResponse).not.toHaveBeenCalled()
+  })
 })
 
 // An object with an own non-callable `toString`: it throws wherever a
@@ -834,6 +946,32 @@ describe('SignTransactionPage — locked outputs returning to this wallet', () =
     expect(screen.getByText('Approve and return to page')).toBeEnabled()
   })
 
+  it('blocks a lying decimal on the payment leg and keeps the locked row', () => {
+    renderSignPage(
+      lockedRequest(
+        [
+          // LIE: the site reports 1 while committing 99
+          {
+            destination: PAYEE,
+            type: 'Transfer',
+            value: coinValue('1', toAtoms('99')),
+          },
+          lockedChange(UNTIL_2100),
+        ],
+        HUNDRED_IN,
+      ),
+    )
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    // the locked remainder is still named, with its lock
+    expect(lockedRowValue(summary)).toHaveTextContent(
+      `99 TML, ${UNTIL_2100_TEXT}`,
+    )
+    expect(screen.getByText(/Amount verification failed/)).toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeDisabled()
+  })
+
   it('blocks a lying decimal on the locked amount', () => {
     renderSignPage(
       lockedRequest(
@@ -867,10 +1005,10 @@ describe('SignTransactionPage — locked outputs returning to this wallet', () =
     expect(lockedRowValue(summary)).toHaveTextContent(
       `99 TML, ${UNTIL_2100_TEXT}`,
     )
-    // nothing is paid to others and no amount is hidden
+    // nothing is paid to others and no amount is hidden: no destination
+    // pair, the locked row alone
     expect(within(summary).queryByText('Amount')).not.toBeInTheDocument()
-    expect(within(summary).getByText('To')).toBeInTheDocument()
-    expect(within(summary).getByText('—')).toBeInTheDocument()
+    expect(within(summary).queryByText('To')).not.toBeInTheDocument()
     expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
     expect(screen.getByText('Approve and return to page')).toBeEnabled()
   })
@@ -1006,7 +1144,13 @@ describe('SignTransactionPage — locked outputs returning to this wallet', () =
       within(summary).queryByText(LOCKED_ROW_LABEL),
     ).not.toBeInTheDocument()
     expect(within(summary).queryByText('40 TML')).not.toBeInTheDocument()
-    expect(within(summary).getByText('60 TML')).toBeInTheDocument()
+    // the payment and the foreign locked output keep separate pairs, one
+    // per destination — never a summed row beside a single recipient
+    expect(within(summary).getByText('1 TML')).toBeInTheDocument()
+    expect(within(summary).getByText('59 TML')).toBeInTheDocument()
+    expect(
+      within(summary).getByText(shown('tmt1qotherlockeddestination')),
+    ).toBeInTheDocument()
     expect(within(summary).queryByText(/until /)).not.toBeInTheDocument()
     expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
     expect(screen.getByText('Approve and return to page')).toBeEnabled()
@@ -1078,9 +1222,13 @@ describe('SignTransactionPage — locked outputs returning to this wallet', () =
     expect(screen.getByText('Decline')).toBeInTheDocument()
 
     const summary = screen.getByTestId('transaction-summary')
-    expect(
-      within(summary).getByText(rowLabel).nextElementSibling,
-    ).toHaveTextContent(LOCK_UNREADABLE)
+    // the row that names the unreadable lock — beside a destination pair
+    // there can be more than one Amount-labelled row
+    const errorRow = within(summary)
+      .getAllByText(rowLabel)
+      .map((cell) => cell.nextElementSibling)
+      .find((cell) => cell.textContent.includes(LOCK_UNREADABLE))
+    expect(errorRow).toHaveTextContent(LOCK_UNREADABLE)
     expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
     expect(screen.getByText(/Amount verification failed/)).toBeInTheDocument()
     const approve = screen.getByText('Approve and return to page')
@@ -1193,6 +1341,28 @@ describe('SignTransactionPage — order fill amounts this wallet cannot display'
       }),
     )
     expect(SignTxHelpers.getTransactionHEX).toHaveBeenCalled()
+  })
+
+  // Where the acquired asset of a pure fill lands is signing-relevant: the
+  // fill's destination is named on its own row on the summary face, before
+  // any technical details are expanded. The fill still never becomes a To
+  // pair — no output pays it.
+  it('names the fill destination on the fill row of a pure fill', () => {
+    const request = fillOrderRequest('1000000000000')
+    request.request.data.txData.JSONRepresentation.outputs = []
+
+    renderSignPage(request)
+
+    const summary = screen.getByTestId('transaction-summary')
+    // technical details are collapsed: what is found here is on the face
+    expect(screen.queryByTestId('technical-details')).not.toBeInTheDocument()
+    expect(within(summary).getByText('Order fill')).toBeInTheDocument()
+    // the destination where the acquired asset lands is named on the fill's
+    // own row on the summary face
+    expect(
+      within(summary).getByText('Order fill').nextElementSibling,
+    ).toHaveTextContent(shown('tmt1qxrwc3gy2lgf4kvqwwfa388vn3cavgrqyyrgswe6'))
+    expect(within(summary).queryByText('To')).not.toBeInTheDocument()
   })
 
   // A ConcludeOrder leg carries no fill amount: no fill row, and approval

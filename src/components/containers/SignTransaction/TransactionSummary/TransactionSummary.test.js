@@ -288,7 +288,14 @@ describe('TransactionSummary', () => {
     // the fill leg's currency is not in the payload — fee is unknowable
     expect(screen.getByText('Unknown')).toBeInTheDocument()
     expect(screen.getByText('Order fill')).toBeInTheDocument()
-    expect(screen.getByText('1000000000000')).toBeInTheDocument()
+    // the fill size is shown verbatim beside the destination the signer
+    // encodes for the fill
+    expect(screen.getByText('Order fill').nextElementSibling).toHaveTextContent(
+      '1000000000000',
+    )
+    expect(screen.getByText('Order fill').nextElementSibling).toHaveTextContent(
+      truncated(DESTINATION),
+    )
   })
 
   it('blocks approval when the payload legs are not arrays', () => {
@@ -508,8 +515,8 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.queryByTestId('approval-blocked')).toBeInTheDocument()
-    // both offenders' signed truths are surfaced in the single asset row
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    // each destination pair surfaces its own offender's signed truth
     expect(screen.getByText(/will sign 10 ML/)).toBeInTheDocument()
     expect(screen.getByText(/will sign 20 ML/)).toBeInTheDocument()
   })
@@ -671,8 +678,12 @@ describe('TransactionSummary', () => {
     })
 
     expect(screen.getByText('Order fill')).toBeInTheDocument()
-    // bare atom string, no scale in the payload → shown verbatim
-    expect(screen.getByText('1000000000000')).toBeInTheDocument()
+    // bare atom string, no scale in the payload → shown verbatim, beside
+    // the destination the signer encodes for the fill
+    const fillRowValue = screen.getByText('Order fill').nextElementSibling
+    expect(fillRowValue).toHaveTextContent('1000000000000')
+    expect(fillRowValue).toHaveTextContent('proceeds to')
+    expect(fillRowValue).toHaveTextContent(truncated(DESTINATION))
     expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
   })
 
@@ -906,7 +917,9 @@ describe('TransactionSummary', () => {
     expect(screen.getByText('0.01 ML')).toBeInTheDocument()
   })
 
-  it('sums multiple approved outputs per asset', () => {
+  // Multiple destinations are never summed into one recipient's row: each
+  // destination shows the amount its own outputs pay, in declared order.
+  it('splits multiple approved outputs into one pair per destination', () => {
     renderSummary({
       jsonRepresentation: {
         inputs: [
@@ -928,7 +941,16 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.getByText('35 ML')).toBeInTheDocument()
+    const tos = screen.getAllByText('To')
+    expect(tos).toHaveLength(2)
+    expect(tos[0].nextElementSibling).toHaveTextContent(truncated(DESTINATION))
+    expect(tos[1].nextElementSibling).toHaveTextContent(
+      truncated('mtc1qsecondrecipient0abcdefgh'),
+    )
+    const amounts = screen.getAllByText('Amount')
+    expect(amounts).toHaveLength(2)
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^25 ML$/)
+    expect(amounts[1].nextElementSibling).toHaveTextContent(/^10 ML$/)
   })
 
   it('does not claim a self-transfer when only change addresses receive', () => {
@@ -952,17 +974,19 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.getByText('To')).toBeInTheDocument()
+    // the only output is change: nothing is paid anywhere, so no To line
+    // and no Amount row
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
     expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
-    // no Amount row: the only output is change, not a payment
     expect(screen.queryByText('Amount')).not.toBeInTheDocument()
   })
 
   // The signer encodes `destination` for Transfer, LockThenTransfer and
   // CreateDelegationId outputs only: an Htlc or staking output moves its
   // funds elsewhere whatever `destination`/`address` the payload attaches
-  // to it, so those fields must never become the "To" line.
-  it('derives the To line from the first relevant output whose type carries a destination', () => {
+  // to it, so those fields must never become a "To" line — the escrowed
+  // amount keeps a row of its own, attributed to no address.
+  it('never lets a decoy address on an escrow output name a destination', () => {
     const decoyEscrow = {
       type: 'Htlc',
       destination: OWN_RECEIVING,
@@ -988,16 +1012,20 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.getAllByText('To')).toHaveLength(1)
     expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
     // the wallet's own address appears as From only
     expect(screen.getAllByText(truncated(OWN_RECEIVING))).toHaveLength(1)
     expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
-    // both outputs leave the wallet: 16071.486043 + 10
-    expect(screen.getByText('16081.486043 ML')).toBeInTheDocument()
+    // declared order: the escrow keeps its own row first, attributed to no
+    // address; the Transfer's pair follows with its own 10 ML
+    const amounts = screen.getAllByText('Amount')
+    expect(amounts).toHaveLength(2)
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^16071.486043 ML$/)
+    expect(amounts[1].nextElementSibling).toHaveTextContent(/^10 ML$/)
   })
 
-  it('shows the neutral placeholder when no relevant output carries a signed destination', () => {
+  it('shows no To line when no output names a destination the signer encodes', () => {
     renderSummary({
       jsonRepresentation: {
         inputs: [
@@ -1027,13 +1055,17 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
     expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
-    expect(screen.getAllByText('—')).toHaveLength(1)
     expect(screen.getAllByText(truncated(OWN_RECEIVING))).toHaveLength(1)
-    // only From has a copy button: there is no To address to copy
+    // both escrowed amounts stay visible, summed per asset on the row form
+    // they already had, attributed to no address
+    const amounts = screen.getAllByText('Amount')
+    expect(amounts).toHaveLength(1)
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^16081.486043 ML$/)
+    // only From has a copy button: there is no destination to copy
     expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
-    expect(screen.getByText('16081.486043 ML')).toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
   })
 
   it('does not take the From address from a utxo injected on an account input', () => {
@@ -1121,7 +1153,7 @@ describe('TransactionSummary', () => {
     )
   })
 
-  it('shows the utxo source, not a FillOrder destination, when no leg is the wallet', () => {
+  it('shows the utxo source, never a fill destination, when no leg is the wallet', () => {
     renderSummary({
       ownAddresses: WITH_FILL_KEY,
       jsonRepresentation: {
@@ -1131,11 +1163,13 @@ describe('TransactionSummary', () => {
     })
 
     // the foreign utxo is where the funds come from; the fill's destination
-    // names only where the acquired asset goes
+    // names only where the acquired asset goes — on the fill's own row,
+    // never as a To pair
     expect(screen.getByText('From').nextElementSibling).toHaveTextContent(
       FOREIGN_UTXO,
     )
-    expect(screen.getByText(/^To/).nextElementSibling).toHaveTextContent(
+    expect(screen.queryByText(/^To/)).not.toBeInTheDocument()
+    expect(screen.getByText('Order fill').nextElementSibling).toHaveTextContent(
       truncated(FILL_PROCEEDS),
     )
   })
@@ -1174,8 +1208,9 @@ describe('TransactionSummary', () => {
       },
     })
 
-    // From and To both show the placeholder: nothing to copy
-    expect(screen.getAllByText('—')).toHaveLength(2)
+    // From shows the placeholder: nothing to copy, and there is no To line
+    // (no output names a destination the signer encodes)
+    expect(screen.getAllByText('—')).toHaveLength(1)
     expect(screen.queryByTestId('copy-btn')).not.toBeInTheDocument()
   })
 
@@ -1211,19 +1246,42 @@ describe('TransactionSummary', () => {
       expect(screen.getByText(truncated(OWN_RECEIVING))).toBeInTheDocument()
     } else {
       // neither key is the wallet's: the utxo is not its funds, so no
-      // source address is claimed (From and To both show the placeholder)
+      // source address is claimed (From shows the placeholder; there is
+      // no To line, the payload has no outputs)
       expect(
         screen.queryByText(truncated(OWN_RECEIVING)),
       ).not.toBeInTheDocument()
-      expect(screen.getAllByText('—')).toHaveLength(2)
+      expect(screen.getAllByText('—')).toHaveLength(1)
       expect(screen.queryByTestId('copy-btn')).not.toBeInTheDocument()
     }
   })
 
-  // The signer encodes `destination` on an account-command FillOrder input
-  // as well — where the acquired asset lands — so it may name the "To"
-  // line when no output carries a destination the signer encodes.
-  it('falls back to the FillOrder destination for the To line', () => {
+  // The fill's destination is where an order fill's acquired asset lands —
+  // the signer encodes it on the fill input, so it is signing-relevant and
+  // is named on the fill's own row on the summary face. The fill never
+  // becomes a To pair: no output pays it.
+  it('names the fill destination on its Order fill row', () => {
+    renderSummary({
+      ownAddresses: WITH_FILL_KEY,
+      jsonRepresentation: {
+        inputs: [
+          fillOrderInput(FILL_PROCEEDS),
+          utxoInput(OWN_RECEIVING, '100'),
+        ],
+        outputs: [],
+      },
+    })
+
+    const fillRowValue = screen.getByText('Order fill').nextElementSibling
+    expect(fillRowValue).toHaveTextContent('1000000000000')
+    expect(fillRowValue).toHaveTextContent('— proceeds to')
+    expect(fillRowValue).toHaveTextContent(truncated(FILL_PROCEEDS))
+    // the fill still never becomes a To pair
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
+    expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
+  })
+
+  it('shows no To line for a pure fill', () => {
     renderSummary({
       jsonRepresentation: {
         inputs: [fillOrderInput(DESTINATION), utxoInput(OWN_RECEIVING, '100')],
@@ -1231,9 +1289,14 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.getByText('To')).toBeInTheDocument()
-    expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
-    // one copy button each for From and To
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
+    expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
+    // the fill's destination is named on the fill's own row, never as a
+    // To pair
+    expect(screen.getByText('Order fill').nextElementSibling).toHaveTextContent(
+      truncated(DESTINATION),
+    )
+    // From and the fill destination each have a copy button
     expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
   })
 
@@ -1251,13 +1314,22 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
-    expect(screen.queryByText(truncated(FILL_PROCEEDS))).not.toBeInTheDocument()
+    // the To line is the output's destination; the fill's destination is
+    // named on the fill's own row, never as a To pair
+    expect(screen.getByText('To').nextElementSibling).toHaveTextContent(
+      truncated(DESTINATION),
+    )
+    expect(screen.getByText('Order fill').nextElementSibling).toHaveTextContent(
+      truncated(FILL_PROCEEDS),
+    )
+    expect(screen.getAllByText(truncated(FILL_PROCEEDS))).toHaveLength(1)
   })
 
   it('does not label a FillOrder destination as the wallet', () => {
     // every output returns to a change address while the fill sends the
-    // acquired asset elsewhere: not a transfer back to the wallet
+    // acquired asset elsewhere: no destination pair, and never a "your
+    // address" label from a fill — the fill destination stays on the
+    // fill's own row
     renderSummary({
       jsonRepresentation: {
         inputs: [fillOrderInput(DESTINATION), utxoInput(OWN_RECEIVING, '100')],
@@ -1267,14 +1339,21 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
     expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
-    expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
+    expect(screen.getAllByText(truncated(DESTINATION))).toHaveLength(1)
+    expect(screen.getByText('Order fill').nextElementSibling).toHaveTextContent(
+      truncated(DESTINATION),
+    )
   })
 
   it.each([
-    ['a non-string destination', fillOrderInput(42)],
-    ['an `address` field', fillOrderInput(undefined, { address: DESTINATION })],
+    ['a non-string destination', fillOrderInput(42), true],
+    [
+      'an `address` field',
+      fillOrderInput(undefined, { address: DESTINATION }),
+      true,
+    ],
     [
       'a UTXO leg injected with the command',
       {
@@ -1286,10 +1365,11 @@ describe('TransactionSummary', () => {
         },
         utxo: null,
       },
+      false,
     ],
   ])(
-    'keeps the neutral placeholder for %s on a FillOrder leg',
-    (_description, input) => {
+    'shows no To line when the only fill leg carries %s',
+    (_description, input, hasFillRow) => {
       renderSummary({
         jsonRepresentation: {
           inputs: [input, utxoInput(OWN_RECEIVING, '100')],
@@ -1297,18 +1377,29 @@ describe('TransactionSummary', () => {
         },
       })
 
-      expect(screen.getByText('To')).toBeInTheDocument()
-      expect(screen.getAllByText('—')).toHaveLength(1)
+      expect(screen.queryByText('To')).not.toBeInTheDocument()
+      if (hasFillRow) {
+        // the row renders without a destination: the signer reads
+        // `destination` only as a string on an account command — never
+        // `address`
+        const fillRowValue = screen.getByText('Order fill').nextElementSibling
+        expect(fillRowValue).toHaveTextContent('1000000000000')
+        expect(fillRowValue).not.toHaveTextContent('proceeds to')
+        expect(
+          screen.queryByText(truncated(DESTINATION)),
+        ).not.toBeInTheDocument()
+      } else {
+        // no account command the signer reads: no fill row at all
+        expect(screen.queryByText('Order fill')).not.toBeInTheDocument()
+      }
       // only From has a copy button
       expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
     },
   )
 
-  // Beside a relevant output that carries a signed amount, "To" must not
-  // name a fill destination: the Amount row would read as what goes to that
-  // address, while the funds of the Htlc/staking output go elsewhere. The
-  // fill destination is named only when no relevant output carries a
-  // signed amount at all.
+  // Beside a fill, the escrowed amount still keeps its destination-less
+  // row: it never reads as money that goes to the fill's destination. That
+  // destination is shown on the fill's own row in the technical breakdown.
   it.each([
     [
       'an Htlc output',
@@ -1327,7 +1418,7 @@ describe('TransactionSummary', () => {
       },
     ],
   ])(
-    'keeps the placeholder when the amount goes to %s beside a fill',
+    'keeps the escrow of %s on a destination-less row beside a fill',
     (_description, escrowOutput) => {
       renderSummary({
         jsonRepresentation: {
@@ -1348,11 +1439,13 @@ describe('TransactionSummary', () => {
       })
 
       // the Amount row is the 10 ML escrowed, which never reaches R
-      expect(screen.getByText('10 ML')).toBeInTheDocument()
-      expect(screen.getByText('To')).toBeInTheDocument()
-      expect(screen.getAllByText('—')).toHaveLength(1)
-      // only From has a copy button
-      expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+      expect(screen.getByText(/^10 ML$/)).toBeInTheDocument()
+      // no output names a destination the signer encodes: no To line; R
+      // appears as From and on the fill's own row
+      expect(screen.queryByText('To')).not.toBeInTheDocument()
+      expect(screen.getAllByText(truncated(OWN_RECEIVING))).toHaveLength(2)
+      // From and the fill destination each have a copy button
+      expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
     },
   )
 
@@ -1386,14 +1479,18 @@ describe('TransactionSummary', () => {
     ).toHaveTextContent(truncated(CHANGE_RECEIVING))
     // the Amount row is what that Transfer pays back
     expect(screen.getByText('99 ML')).toBeInTheDocument()
-    expect(screen.queryByText(truncated(DESTINATION))).not.toBeInTheDocument()
+    // the fill's destination is named on the fill's own row — it never
+    // takes over the change output's To pair
+    expect(screen.getByText('Order fill').nextElementSibling).toHaveTextContent(
+      truncated(DESTINATION),
+    )
+    expect(screen.getAllByText(truncated(DESTINATION))).toHaveLength(1)
   })
 
   // The same fill with its change returning to a CHANGE address: change is
-  // not a payment, so no relevant output remains and "To" names the fill's
-  // destination — where the acquired asset lands — with no Amount row beside
-  // it. Nothing on screen is attributed to an address it does not go to.
-  it('names the fill destination when a pure fill returns change to a change address', () => {
+  // not a payment, so no destination pair remains — the fill's destination
+  // is named only on its own row in the technical breakdown.
+  it('shows no To line when a pure fill returns change to a change address', () => {
     renderSummary({
       jsonRepresentation: {
         inputs: [fillOrderInput(DESTINATION), utxoInput(OWN_RECEIVING, '100')],
@@ -1403,8 +1500,11 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.getByText('To')).toBeInTheDocument()
-    expect(screen.getByText('To').nextElementSibling).toHaveTextContent(
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
+    // the fill's destination is named on its fill row; the change to the
+    // change address is still no payment
+    expect(screen.getByText(truncated(DESTINATION))).toBeInTheDocument()
+    expect(screen.getByText('Order fill').nextElementSibling).toHaveTextContent(
       truncated(DESTINATION),
     )
     expect(screen.queryByText('Amount')).not.toBeInTheDocument()
@@ -1414,9 +1514,9 @@ describe('TransactionSummary', () => {
   })
 
   // An order or a token issuance resolves no amount container but still
-  // shows signed amounts as extra rows. Beside those the fill destination
-  // must not be named either: the order's funds are escrowed to its conclude
-  // address and the supply belongs to the issuance, neither to R.
+  // shows signed amounts as extra rows. No output names a destination here:
+  // no To line, and the fill's destination stays on its own row in the
+  // technical breakdown.
   it.each([
     [
       'a CreateOrder output',
@@ -1449,7 +1549,7 @@ describe('TransactionSummary', () => {
       },
     ],
   ])(
-    'keeps the placeholder beside the signed rows of %s',
+    'keeps the signed rows of %s beside no To line',
     (_description, rowLabel, rowText, escrowOutput) => {
       renderSummary({
         jsonRepresentation: {
@@ -1466,18 +1566,21 @@ describe('TransactionSummary', () => {
       expect(screen.getByText(rowLabel).nextElementSibling).toHaveTextContent(
         rowText,
       )
-      // … and "To" names neither R nor the conclude address
-      expect(screen.getByText('To')).toBeInTheDocument()
-      expect(screen.getAllByText('—')).toHaveLength(1)
-      expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+      // … and no To line names R or the conclude address; R is on From and
+      // on the fill's own row only
+      expect(screen.queryByText('To')).not.toBeInTheDocument()
+      expect(screen.getAllByText(truncated(OWN_RECEIVING))).toHaveLength(2)
+      expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
     },
   )
 
-  // One "To" line cannot stand for several fills: it names their
-  // destination only when every fill carrying a string destination names
-  // the same one. Each fill's own destination is shown on its own row in
-  // the technical breakdown.
-  it('keeps the placeholder when fills go to different addresses', () => {
+  // One To line cannot stand for several fills — and no fill names its
+  // destination on the summary at all: each fill's own row in the technical
+  // breakdown shows where the acquired asset lands.
+  // A fill's destination is named on its own row — however many fills a
+  // transaction carries and wherever they go, none of them is ever a To
+  // pair: no output pays the fill's proceeds.
+  it('keeps fills off the To lines, naming each on its own row', () => {
     renderSummary({
       ownAddresses: WITH_FILL_KEY,
       jsonRepresentation: {
@@ -1494,46 +1597,234 @@ describe('TransactionSummary', () => {
       },
     })
 
-    // both fills are listed, each with its committed size
+    // both fills are listed, each with its committed size and destination
     expect(screen.getAllByText('Order fill')).toHaveLength(2)
-    // no single address receives them: no "To" address, no copy button
-    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.getAllByText(truncated(FILL_PROCEEDS))).toHaveLength(1)
+    // the second destination is short enough to render in full
+    expect(screen.getByText('mtc1qattackerproceeds')).toBeInTheDocument()
+    // no To line: the fill destinations are not output payments
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
     expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
-    expect(screen.getAllByText('—')).toHaveLength(1)
-    expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
-    // R appears nowhere on the summary
-    expect(screen.queryByText(truncated(FILL_PROCEEDS))).not.toBeInTheDocument()
+    // From plus each fill destination can be copied
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(3)
   })
 
-  it.each([
-    ['an address outside the wallet', DESTINATION, 'To'],
-    ['a receiving address of the wallet', FILL_PROCEEDS, 'To (your address)'],
-  ])(
-    'names the one destination two fills share when both go to %s',
-    (_which, destination, label) => {
-      renderSummary({
-        ownAddresses: WITH_FILL_KEY,
-        jsonRepresentation: {
-          inputs: [
-            utxoInput(OWN_RECEIVING, '100'),
-            fillOrderInput(destination),
-            fillOrderInput(destination),
-          ],
-          outputs: [
-            { type: 'Transfer', destination: OWN_CHANGE, value: coin('99') },
-          ],
-        },
-      })
+  it('names the shared destination on each fill row, off the To lines', () => {
+    renderSummary({
+      ownAddresses: WITH_FILL_KEY,
+      jsonRepresentation: {
+        inputs: [
+          utxoInput(OWN_RECEIVING, '100'),
+          fillOrderInput(FILL_PROCEEDS),
+          fillOrderInput(FILL_PROCEEDS),
+        ],
+        outputs: [
+          { type: 'Transfer', destination: OWN_CHANGE, value: coin('99') },
+        ],
+      },
+    })
 
-      expect(screen.getAllByText('Order fill')).toHaveLength(2)
-      expect(screen.getByText(label)).toBeInTheDocument()
-      expect(screen.getByText(label).nextElementSibling).toHaveTextContent(
-        truncated(destination),
-      )
-      // From and To each have a copy button
-      expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
-    },
-  )
+    const fillRows = screen
+      .getAllByText('Order fill')
+      .map((cell) => cell.nextElementSibling)
+    expect(fillRows).toHaveLength(2)
+    fillRows.forEach((row) => {
+      expect(row).toHaveTextContent('proceeds to')
+      expect(row).toHaveTextContent(truncated(FILL_PROCEEDS))
+    })
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(3)
+  })
+})
+
+// One To line and one Amount per distinct destination, in the order the
+// transaction declares its outputs: a payment named beside money that goes
+// elsewhere — or beside a zero-amount decoy — would misattribute where the
+// funds go.
+describe('TransactionSummary — one To and Amount pair per destination', () => {
+  const PAYEE = 'mtc1qpayeeaddress0123456789abcdefgh'
+  const ATTACKER = 'mtc1qattackeraddress0123456789abcdef'
+
+  const utxoIn = (decimal) => ({
+    input: { input_type: 'UTXO' },
+    input_type: 'UTXO',
+    utxo: { destination: OWN_RECEIVING, value: coin(decimal) },
+  })
+
+  // THE DECOY: a zero-amount transfer to the expected payee beside the real
+  // payment to another address. Naming the payee once beside a summed
+  // "100 ML" would present the decoy as the payment.
+  it('shows a zero-amount transfer and the real payment as separate pairs', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [utxoIn('100')],
+        outputs: [
+          { type: 'Transfer', destination: PAYEE, value: coin('0') },
+          { type: 'Transfer', destination: ATTACKER, value: coin('100') },
+        ],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    // one To line per destination, in the declared order
+    expect(screen.getAllByText('To')).toHaveLength(2)
+    expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
+    expect(screen.getAllByText('To')[0].nextElementSibling).toHaveTextContent(
+      truncated(PAYEE),
+    )
+    expect(screen.getAllByText('To')[1].nextElementSibling).toHaveTextContent(
+      truncated(ATTACKER),
+    )
+    // each destination shows its own amount: 0 for the payee, 100 for the rest
+    const amounts = screen.getAllByText('Amount')
+    expect(amounts).toHaveLength(2)
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^0 ML$/)
+    expect(amounts[1].nextElementSibling).toHaveTextContent(/^100 ML$/)
+    // From plus each To line can be copied
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(3)
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('shows one pair per destination with each amount beside its own recipient', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [utxoIn('100')],
+        outputs: [
+          { type: 'Transfer', destination: PAYEE, value: coin('1') },
+          { type: 'Transfer', destination: ATTACKER, value: coin('99') },
+        ],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    expect(screen.getAllByText('To')).toHaveLength(2)
+    expect(screen.getAllByText('To')[0].nextElementSibling).toHaveTextContent(
+      truncated(PAYEE),
+    )
+    expect(screen.getAllByText('To')[1].nextElementSibling).toHaveTextContent(
+      truncated(ATTACKER),
+    )
+    const amounts = screen.getAllByText('Amount')
+    expect(amounts).toHaveLength(2)
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^1 ML$/)
+    expect(amounts[1].nextElementSibling).toHaveTextContent(/^99 ML$/)
+    // the whole payout is still fee-relevant: 100 − 1 − 99
+    expect(screen.getByText(/^0 ML$/)).toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('sums the outputs of one destination into that single pair', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [utxoIn('100')],
+        outputs: [
+          { type: 'Transfer', destination: DESTINATION, value: coin('25') },
+          { type: 'Transfer', destination: DESTINATION, value: coin('10') },
+        ],
+        fee: { decimal: '0.01', atoms: toAtoms('0.01') },
+      },
+    })
+
+    // one destination, one pair: 25 + 10
+    expect(screen.getAllByText('To')).toHaveLength(1)
+    expect(screen.getAllByText('Amount')).toHaveLength(1)
+    expect(screen.getByText(/^35 ML$/)).toBeInTheDocument()
+  })
+
+  it('blocks approval and attaches the error to the lying destination row', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [utxoIn('100')],
+        outputs: [
+          { type: 'Transfer', destination: PAYEE, value: coin('1') },
+          // LIE: the site reports 99 while committing 1 atom
+          {
+            type: 'Transfer',
+            destination: ATTACKER,
+            value: {
+              type: 'Coin',
+              amount: { decimal: '99', atoms: '1' },
+            },
+          },
+        ],
+      },
+    })
+
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    // the honest pair stays a plain amount …
+    const amounts = screen.getAllByText('Amount')
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^1 ML$/)
+    // … and the lie shows on the destination it lies about
+    expect(amounts[1].nextElementSibling).toHaveTextContent(
+      /does not match the amount that will be signed/,
+    )
+    expect(amounts[1].nextElementSibling).toHaveTextContent(
+      'will sign 0.00000000001 ML',
+    )
+  })
+
+  it('blocks a lying payment leg beside a locked return and keeps the locked row', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [utxoIn('100')],
+        outputs: [
+          // LIE: the site reports 1 while committing 99
+          {
+            type: 'Transfer',
+            destination: DESTINATION,
+            value: coin('1', toAtoms('99')),
+          },
+          {
+            type: 'LockThenTransfer',
+            destination: OWN_CHANGE,
+            lock: { type: 'UntilTime', content: { timestamp: 4102444800 } },
+            value: coin('99'),
+          },
+        ],
+      },
+    })
+
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    expect(
+      screen.getByText(/does not match the amount that will be signed/),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/will sign 99 ML/)).toBeInTheDocument()
+    // the locked remainder is still named, with its lock
+    expect(screen.getByText('Locked at this wallet')).toBeInTheDocument()
+  })
+
+  // The signer reads `destination` on neither an Htlc nor a staking output:
+  // the funds they take from the wallet go to keys and delegations of the
+  // site's choosing. Their amounts keep their own rows and never join a
+  // destination pair.
+  it('keeps escrowed funds on destination-less amount rows, not in any pair', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [utxoIn('102')],
+        outputs: [
+          { type: 'Transfer', destination: PAYEE, value: coin('1') },
+          {
+            type: 'Htlc',
+            value: coin('99'),
+            htlc: {
+              spend_key: 'mtc1qdappspendkey',
+              refund_key: 'mtc1qdapprefund',
+            },
+          },
+          { type: 'Transfer', destination: ATTACKER, value: coin('2') },
+        ],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    expect(screen.getAllByText('To')).toHaveLength(2)
+    const amounts = screen.getAllByText('Amount')
+    expect(amounts).toHaveLength(3)
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^1 ML$/)
+    expect(amounts[1].nextElementSibling).toHaveTextContent(/^99 ML$/)
+    expect(amounts[2].nextElementSibling).toHaveTextContent(/^2 ML$/)
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
 })
 
 // A LockThenTransfer output addressed to one of the wallet's own addresses
@@ -1622,8 +1913,10 @@ describe('TransactionSummary — locked outputs returning to this wallet', () =>
     )
     // nothing is paid to others: no Amount row
     expect(screen.queryByText('Amount')).not.toBeInTheDocument()
-    // the "To" line rules are unchanged: the output goes to a receiving address
-    expect(screen.getByText('To (your address)')).toBeInTheDocument()
+    // the locked output is paid to no one: no destination pair labels it a
+    // send (to the wallet or anywhere else)
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
+    expect(screen.queryByText('To (your address)')).not.toBeInTheDocument()
     // 10 credited in − 8 locked back out
     expect(screen.getByText('2 ML')).toBeInTheDocument()
     expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
@@ -1642,8 +1935,8 @@ describe('TransactionSummary — locked outputs returning to this wallet', () =>
       `99 ML, ${untilText(4102444800)}`,
     )
     expect(screen.queryByText('Amount')).not.toBeInTheDocument()
-    expect(screen.getByText('To')).toBeInTheDocument()
-    expect(screen.getByText('—')).toBeInTheDocument()
+    // the locked funds are paid to no one: no destination pair at all
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
     expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
   })
 
