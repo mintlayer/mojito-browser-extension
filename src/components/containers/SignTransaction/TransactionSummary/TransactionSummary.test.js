@@ -708,12 +708,16 @@ describe('TransactionSummary', () => {
     })
 
     // a fill whose amount is not decimal digits can never encode: the row
-    // fails closed with the fill-specific reason
+    // fails closed with the fill-specific reason, and the destination the
+    // signer encodes for the fill stays named on that same row
     expect(
       screen.getByText(
         /order fill amount in a form this wallet cannot display/,
       ),
     ).toBeInTheDocument()
+    expect(screen.getByText('Order fill').nextElementSibling).toHaveTextContent(
+      'proceeds to',
+    )
     expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
   })
 
