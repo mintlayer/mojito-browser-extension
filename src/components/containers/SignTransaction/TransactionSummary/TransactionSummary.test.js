@@ -696,7 +696,13 @@ describe('TransactionSummary', () => {
       },
     })
 
-    expect(screen.getByText(/cannot be verified/)).toBeInTheDocument()
+    // a fill whose amount is not decimal digits can never encode: the row
+    // fails closed with the fill-specific reason
+    expect(
+      screen.getByText(
+        /order fill amount in a form this wallet cannot display/,
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
   })
 

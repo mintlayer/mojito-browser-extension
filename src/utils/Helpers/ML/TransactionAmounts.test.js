@@ -23,6 +23,7 @@ import {
   signerUtxoOwnerAddress,
   verifyAmountPair,
   verifyDeclaredFee,
+  ORDER_FILL_UNREADABLE_MESSAGE,
 } from './TransactionAmounts'
 
 const toAtoms = (decimal, decimals = 11) => {
@@ -2264,6 +2265,269 @@ describe('reconcileApprovalAmounts', () => {
       expect(blocked).toBe(true)
       expect(extraAmountRows[0].errors).toHaveLength(1)
     }
+  })
+
+  // negative safe-integer amounts keep their own diagnostic: the number
+  // path still reaches the amount verification, which refuses negatives
+  it('blocks a negative safe-integer fill amount as negative', () => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'FillOrder',
+              order_id: 'order-1',
+              fill_atoms: -5,
+              destination: 'wallet',
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'order:fill:0',
+        label: 'Order fill',
+        tokenId: null,
+        withTicker: false,
+        errors: [{ error: 'Amount cannot be negative', amount: null }],
+      },
+    ])
+  })
+
+  // The signer stringifies fill_atoms itself and the amount encoder accepts
+  // decimal digits only, so only a digit string or an integer amount can
+  // ever be part of a signed transaction: everything else is unmodelable
+  // and must block with its own row instead of leaving the fill size
+  // invisible or showing a size the signer would reject.
+  it.each([
+    ['an array', ['10000000000000']],
+    ['an empty object', {}],
+    ['a boolean', true],
+    ['null', null],
+    ['a plus-signed string', '+1000000000000'],
+    ['a space-padded string', ' 1000000000000 '],
+    ['a negative-signed string', '-0'],
+    [
+      'an atom count beyond the 128-bit amount width',
+      '340282366920938463463374607431768211456',
+    ],
+    ['a 40-digit atom count', '9999999999999999999999999999999999999999'],
+  ])('blocks an order fill amount that is %s', (_description, rawFill) => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'FillOrder',
+              order_id: 'order-1',
+              fill_atoms: rawFill,
+              destination: 'wallet',
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'order:fill:0',
+        label: 'Order fill',
+        tokenId: null,
+        withTicker: false,
+        errors: [{ error: ORDER_FILL_UNREADABLE_MESSAGE, amount: null }],
+      },
+    ])
+  })
+
+  it('blocks a FillOrder input without any fill amount field', () => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'FillOrder',
+              order_id: 'order-1',
+              destination: 'wallet',
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'order:fill:0',
+        label: 'Order fill',
+        tokenId: null,
+        withTicker: false,
+        errors: [{ error: ORDER_FILL_UNREADABLE_MESSAGE, amount: null }],
+      },
+    ])
+  })
+
+  it('shows a safe-integer fill amount verbatim like a string one', () => {
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'FillOrder',
+              order_id: 'order-1',
+              fill_atoms: 1000000000000,
+              destination: 'wallet',
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'order:fill:0',
+        label: 'Order fill',
+        tokenId: null,
+        withTicker: false,
+        amount: '1000000000000',
+      },
+    ])
+  })
+
+  it('shows width-boundary fill amounts verbatim like a smaller one', () => {
+    // the amount encoder parses unsigned 128-bit: the full width, and the
+    // whole range past the 64-bit lock counts, display and sign verbatim
+    for (const rawFill of [
+      '340282366920938463463374607431768211455',
+      '18446744073709551616',
+      '18446744073709551615',
+      '9999999999999999999',
+    ]) {
+      const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+        {
+          inputs: [
+            {
+              input_type: 'AccountCommand',
+              input: {
+                input_type: 'AccountCommand',
+                command: 'FillOrder',
+                order_id: 'order-1',
+                fill_atoms: rawFill,
+                destination: 'wallet',
+                nonce: '0',
+              },
+            },
+          ],
+          outputs: [],
+        },
+        { tokenDecimalsById: new Map(), ownAddresses },
+      )
+
+      expect(blocked).toBe(false)
+      expect(extraAmountRows).toEqual([
+        {
+          key: 'order:fill:0',
+          label: 'Order fill',
+          tokenId: null,
+          withTicker: false,
+          amount: rawFill,
+        },
+      ])
+    }
+  })
+
+  it('keeps the fill decimal-check error on an object-pair fill and blocks', () => {
+    // a fill has no known scale (it lives in chain order data), so the
+    // existing decimal-versus-atoms check fails closed on any attached
+    // decimal label — that diagnostic stays on the row
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'FillOrder',
+              order_id: 'order-1',
+              fill_atoms: { atoms: '10000000000000', decimal: '1' },
+              destination: 'wallet',
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows[0].errors).toContainEqual({
+      error:
+        'Token decimals are unknown to this wallet, so the site-reported amount cannot be verified',
+      amount: '10000000000000',
+    })
+  })
+
+  it('blocks an object-pair fill even when its decimal is consistent', () => {
+    // the signer stringifies fill_atoms itself — an object cannot encode, so
+    // no fill size may be displayed or approved from one
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [
+          {
+            input_type: 'AccountCommand',
+            input: {
+              input_type: 'AccountCommand',
+              command: 'FillOrder',
+              order_id: 'order-1',
+              fill_atoms: {
+                atoms: '1000000000000',
+                decimal: '1000000000000',
+              },
+              destination: 'wallet',
+              nonce: '0',
+            },
+          },
+        ],
+        outputs: [],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'order:fill:0',
+        label: 'Order fill',
+        tokenId: null,
+        withTicker: false,
+        errors: [{ error: ORDER_FILL_UNREADABLE_MESSAGE, amount: null }],
+      },
+    ])
   })
 
   it('ignores non-FillOrder inputs when collecting signed extras', () => {

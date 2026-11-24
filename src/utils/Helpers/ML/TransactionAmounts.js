@@ -440,11 +440,31 @@ const LOCKED_ROW_LABEL = 'Locked at this wallet'
 // The row that names a spent locked output whose lock cannot be read.
 const LOCKED_INPUT_ROW_LABEL = 'Locked input'
 
+// The fill amount of an account-command FillOrder input is signed through
+// fill_atoms.toString() → Amount.from_atoms, and the amount encoder accepts
+// decimal digits only, parsed as an unsigned 128-bit integer. Only a
+// decimal-digit string within that width (MAX_AMOUNT_COUNT below) or a safe
+// integer can be displayed; any other JSON shape (an array, an object, a
+// boolean, an absent field) — or any string containing anything but digits,
+// or digits beyond that width — throws in the encoder and can never be part
+// of a signed transaction. Such a leg is unmodelable: it fails closed with
+// this reason on its own row instead of showing a fill size nothing
+// commits to.
+export const ORDER_FILL_UNREADABLE_MESSAGE =
+  'The site supplied the order fill amount in a form this wallet cannot display, so this transaction cannot be approved'
+
 // The encoders take the count as an unsigned 64-bit integer — the wasm
 // glue hands the BigInt straight to a function that would silently keep
 // only the low 64 bits of anything wider, never the number displayed.
 const MAX_LOCK_COUNT = 2n ** 64n - 1n
 const MAX_LOCK_COUNT_DIGITS = MAX_LOCK_COUNT.toString().length
+
+// Amounts parse Rust-side as unsigned 128-bit integers (the 64-bit lock
+// counts above are the narrower exception): an atom count one past this
+// width throws in the input encoder, so a fill that carries more can never
+// be signed and may not be displayed either.
+const MAX_AMOUNT_COUNT = 2n ** 128n - 1n
+const MAX_AMOUNT_COUNT_DIGITS = MAX_AMOUNT_COUNT.toString().length
 
 const readLockCount = (value) => {
   let digits
@@ -769,6 +789,28 @@ const collectSignedExtras = (output, index, tokenDecimalsById) => {
   return extras
 }
 
+// The fill amount a FillOrder input commits is signed through
+// fill_atoms.toString() → Amount.from_atoms, and the encoder accepts decimal
+// digits only, parsed Rust-side as an unsigned 128-bit integer. Only a
+// decimal-digit string within that width or a safe integer can be displayed;
+// any other JSON shape (an array, an object, a boolean, an absent field) —
+// or any string that is not decimal digits ('+1', ' 1 ', '-0', '1e3') or
+// digits beyond that width — throws in the encoder where the lenient BigInt
+// parse would still show a number, so it can never be signed: the leg is
+// unmodelable and must block approval (ORDER_FILL_UNREADABLE_MESSAGE)
+// instead of showing a fill size.
+const isDisplayableFillAtoms = (rawFill) => {
+  if (typeof rawFill !== 'string') return Number.isSafeInteger(rawFill)
+  if (!/^\d+$/.test(rawFill)) return false
+  // the width is settled before BigInt runs, so a site-supplied string of
+  // any length costs a bounded amount of work during render
+  const digits = rawFill.replace(/^0+(?=\d)/, '')
+  return (
+    digits.length <= MAX_AMOUNT_COUNT_DIGITS &&
+    BigInt(digits) <= MAX_AMOUNT_COUNT
+  )
+}
+
 // The committed swap size of an order fill is signed from the account-command
 // input's `fill_atoms` — a bare atom string whose scale lives in chain order
 // data, not in the payload. Verify/display it verbatim (unknown scale): any
@@ -784,12 +826,12 @@ const collectSignedInputExtras = (input, index) => {
   if (
     isAccountCommandInput &&
     input?.input?.command === 'FillOrder' &&
-    rawFill != null
+    isDisplayableFillAtoms(rawFill)
   ) {
     extras.push({
       key: `order:fill:${index}`,
       label: 'Order fill',
-      container: typeof rawFill === 'object' ? rawFill : { atoms: rawFill },
+      container: { atoms: rawFill },
       decimals: null,
       tokenId: null,
       withTicker: false,
@@ -929,6 +971,40 @@ export const reconcileApprovalAmounts = (
   // block on a lying decimal, exactly like a payment row would.
   inputs.forEach((input, index) => {
     collectSignedInputExtras(input, index).forEach(pushExtra)
+    // An order fill the signer could not encode (the amount is not a
+    // decimal-digit string or a safe integer) can never be signed: the leg
+    // fails closed with the reason on its own row, like an unreadable lock.
+    // An object shape that carries an amount pair keeps the existing
+    // decimal-versus-atoms diagnostic ahead of the reason — it is computed
+    // exactly as the fill extra used to compute it (unknown scale).
+    if (
+      isAccountCommandShape(input?.input) &&
+      input?.input?.command === 'FillOrder' &&
+      !isDisplayableFillAtoms(input?.input?.fill_atoms)
+    ) {
+      const rawFill = input?.input?.fill_atoms
+      const pairError =
+        rawFill && typeof rawFill === 'object'
+          ? verifyAmountPair(rawFill, null)
+          : null
+      extraAmountRows.push({
+        key: `order:fill:${index}`,
+        label: 'Order fill',
+        tokenId: null,
+        withTicker: false,
+        errors: [
+          ...(pairError?.error
+            ? [
+                {
+                  error: pairError.error,
+                  amount: pairError.amount ?? null,
+                },
+              ]
+            : []),
+          { error: ORDER_FILL_UNREADABLE_MESSAGE, amount: null },
+        ],
+      })
+    }
     // A LockThenTransfer utxo is re-encoded by the signer through
     // getOutputs with the utxo's own lock (getTransactionHEX, optUtxos_),
     // so a lock it could not encode there can never be signed — exactly

@@ -11,6 +11,7 @@ import { format } from 'date-fns'
 import { sendPopupResponse } from '@Browser'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { Account } from '@Entities'
+import { ORDER_FILL_UNREADABLE_MESSAGE } from '../../utils/Helpers/ML/TransactionAmounts'
 
 import { MOCKS } from './mocks'
 
@@ -72,6 +73,20 @@ jest.mock('@Entities', () => ({
     getPasswordWithPasskey: jest.fn(),
   },
 }))
+
+// The submit flow fetches chain order data for a FillOrder/ConcludeOrder
+// input before reaching the signer; the sinks below stay mocked instead.
+jest.mock('@APIs', () => {
+  const actual = jest.requireActual('@APIs')
+  return {
+    __esModule: true,
+    ...actual,
+    Mintlayer: {
+      ...actual.Mintlayer,
+      getOrderById: jest.fn(),
+    },
+  }
+})
 
 // The signing flow is exercised through its three sinks only: every helper
 // stays real (amount reconciliation, type flags, summary rendering) and a
@@ -603,7 +618,7 @@ const isGeneratedSecretField = (path) =>
   path[path.length - 2] === 'secret_hash' &&
   ['hex', 'string'].includes(path[path.length - 1])
 
-// SECURITY REGRESSION (generative): the page fixtures cover every input
+// SECURITY REGRESSION: the page fixtures cover every input
 // and output type the approval handles. Replacing ANY leaf of the payload
 // with an object that cannot be converted to a primitive must never throw
 // during render or in the page effect; a leaf inside a leg entry is
@@ -1076,5 +1091,127 @@ describe('SignTransactionPage — locked outputs returning to this wallet', () =
     expect(screen.queryByText('Re-enter your Password')).not.toBeInTheDocument()
     expect(SignTxHelpers.getTransactionBINrepresentation).not.toHaveBeenCalled()
     expect(sendPopupResponse).not.toHaveBeenCalled()
+  })
+})
+
+// A FillOrder input commits the order fill size from `fill_atoms`, which the
+// signer stringifies and feeds to the amount encoder — decimal digits only.
+// A shape the wallet cannot display (an array, an object, a boolean, an
+// absent field) can never encode: approval must fail closed on a row naming
+// the fill leg, and the signer must never be reached.
+const fillOrderRequest = (fillAtoms) => {
+  const request = JSON.parse(JSON.stringify(MOCKS.fillorder))
+  // the submit flow checks the network the site was granted on
+  request.request.network = 'testnet'
+  const fillInput = request.request.data.txData.JSONRepresentation.inputs.find(
+    (input) => input.input?.command === 'FillOrder',
+  )
+  if (fillAtoms === undefined) {
+    delete fillInput.input.fill_atoms
+  } else {
+    fillInput.input.fill_atoms = fillAtoms
+  }
+  return request
+}
+
+// Required after the jest.mock hoisting block.
+// eslint-disable-next-line import/first
+const { Mintlayer } = require('@APIs')
+
+const fillRowValue = (summary) =>
+  within(summary).getByText('Order fill').nextElementSibling
+
+describe('SignTransactionPage — order fill amounts this wallet cannot display', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    Account.hasPasskey.mockResolvedValue(false)
+    Account.unlockAccount.mockResolvedValue({
+      mlPrivKeys: { mlTestnetPrivateKey: 'test-private-key' },
+    })
+  })
+
+  it.each([
+    ['an array', ['10000000000000']],
+    ['an object', {}],
+    ['a boolean', true],
+    ['null', null],
+    ['no field at all', undefined],
+  ])('blocks approval when fill_atoms is %s', (_description, fillAtoms) => {
+    renderSignPage(fillOrderRequest(fillAtoms))
+
+    // the fill leg is named and fails closed with the reason
+    const summary = screen.getByTestId('transaction-summary')
+    expect(fillRowValue(summary)).toHaveTextContent(
+      ORDER_FILL_UNREADABLE_MESSAGE,
+    )
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    expect(screen.getByText(/Amount verification failed/)).toBeInTheDocument()
+
+    // a click on the disabled button opens nothing and reaches no signer
+    const approve = screen.getByText('Approve and return to page')
+    expect(approve).toBeDisabled()
+    fireEvent.click(approve)
+    expect(screen.queryByText('Re-enter your Password')).not.toBeInTheDocument()
+    expect(SignTxHelpers.getTransactionBINrepresentation).not.toHaveBeenCalled()
+    expect(sendPopupResponse).not.toHaveBeenCalled()
+  })
+
+  // A well-formed fill (a plain atom string) is displayed verbatim and signs
+  // through the existing flow — the site receives the signed transaction.
+  it('shows the fill size and signs the request as before', async () => {
+    Mintlayer.getOrderById.mockResolvedValue(
+      JSON.stringify({
+        ask_currency: { type: 'Coin' },
+        give_currency: { type: 'Coin' },
+        initially_asked: { atoms: '1000000000000' },
+        initially_given: { atoms: '50000' },
+        ask_balance: { atoms: '900000000000' },
+        give_balance: { atoms: '40000' },
+      }),
+    )
+
+    renderSignPage(fillOrderRequest('1000000000000'))
+
+    const summary = screen.getByTestId('transaction-summary')
+    // bare atom string, no scale in the payload → shown verbatim
+    expect(fillRowValue(summary)).toHaveTextContent('1000000000000')
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeEnabled()
+
+    fireEvent.click(screen.getByText('Approve and return to page'))
+    fireEvent.change(screen.getByPlaceholderText('Enter your password'), {
+      target: { value: 'wallet-password' },
+    })
+    fireEvent.click(screen.getByText('Approve'))
+
+    await waitFor(() =>
+      expect(sendPopupResponse).toHaveBeenCalledWith({
+        method: 'signTransaction_approve',
+        requestId: 'wymzne7u81',
+        origin: 'http://localhost:8080',
+        result: 'aabbccdd',
+      }),
+    )
+    expect(SignTxHelpers.getTransactionHEX).toHaveBeenCalled()
+  })
+
+  // A ConcludeOrder leg carries no fill amount: no fill row, and approval
+  // stays reachable exactly as before. The mock's token output is dropped —
+  // the harness wallet holds no chain token metadata, so its scale cannot
+  // be verified and the payload would block for that unrelated reason.
+  it('keeps a ConcludeOrder request approvable with no fill row', () => {
+    const request = JSON.parse(JSON.stringify(MOCKS.concludeorder))
+    request.request.network = 'testnet'
+    request.request.data.txData.JSONRepresentation.outputs =
+      request.request.data.txData.JSONRepresentation.outputs.filter(
+        (output) => !output?.value?.token_id,
+      )
+
+    renderSignPage(request)
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(within(summary).queryByText('Order fill')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeEnabled()
   })
 })
