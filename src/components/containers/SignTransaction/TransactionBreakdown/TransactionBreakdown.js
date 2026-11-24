@@ -9,6 +9,8 @@ const {
   COIN_DECIMALS,
   atomsToDecimalString,
   buildTokenDecimalsIndex,
+  describeOutputLock,
+  isLockedSelfOutput,
   resolveAssetDecimals,
   signerAmountContainer,
   signerAmountScale,
@@ -71,16 +73,13 @@ const getExtraFields = (source) =>
     ([key, value]) => !DESCRIBED_FIELDS.includes(key) && value !== undefined,
   )
 
-const LOCK_LABELS = {
-  ForBlockCount: (content) => `for ${content} blocks`,
-  UntilTime: (content) => `until ${content}`,
-  ForSeconds: (content) => `for ${content} seconds`,
-  UntilHeight: (content) => `until ${content}`,
-}
-
-const formatLock = (lock) => {
-  const label = LOCK_LABELS[lock?.type]
-  return label ? label(lock.content) : null
+// The `lock` field of a LockThenTransfer leg, in the same plain words the
+// approval summary uses (shared describeOutputLock) — a lock the signer
+// could not encode is named as such instead of being dumped as JSON.
+const lockFieldText = (source) => {
+  if (source?.type !== 'LockThenTransfer') return null
+  const lock = describeOutputLock(source.lock)
+  return lock.text ?? lock.error
 }
 
 const FieldValue = ({ value, depth = 0 }) => {
@@ -126,7 +125,7 @@ const ExtraFields = ({ source }) => {
   return (
     <dl className={styles.fields}>
       {fields.map(([key, value]) => {
-        const lock = key === 'lock' ? formatLock(value) : null
+        const lock = key === 'lock' ? lockFieldText(source) : null
 
         return (
           <div
@@ -211,6 +210,10 @@ const Entry = ({ title, verified, asset, address, ownership, source }) => (
 // Net change of the wallet's OWN funds per asset, aggregated from the
 // verified signed atoms. Any owned amount that fails verification marks the
 // whole hero unverified — a fail-closed note replaces the numbers.
+// Locked outputs coming back to this wallet are part of that change (the
+// funds stay the wallet's) and are also listed on their own, with the same
+// verified amount and the same lock words as the summary, so the figure is
+// never read as freely spendable money.
 const getBalanceChanges = ({
   inputs,
   outputs,
@@ -220,6 +223,7 @@ const getBalanceChanges = ({
   tokenDecimalsById,
 }) => {
   const changes = new Map()
+  const lockedReturns = []
   let unverified = false
 
   const apply = (source, address, sign, legKind) => {
@@ -263,9 +267,24 @@ const getBalanceChanges = ({
     apply(output, signerOutputDestination(output), 1, 'output'),
   )
 
+  // The locked ones among them: an unreadable amount is left to the
+  // fail-closed hero and the row's own error; an unreadable lock is still
+  // named, since the transaction cannot be signed for it.
+  outputs.forEach((output) => {
+    if (!isLockedSelfOutput(output, ownAddresses)) return
+    const verified = verifiedAmountOf(output, tokenDecimalsById, 'output')
+    if (!verified || verified.error) return
+    lockedReturns.push({
+      amount: verified.amount,
+      label: assetOf(verified.tokenId, tokenMap, coinTicker).label,
+      lockText: describeOutputLock(output.lock).text ?? null,
+    })
+  })
+
   return {
     unverified,
     changes: [...changes.values()].filter(({ atoms }) => atoms !== 0n),
+    lockedReturns,
   }
 }
 
@@ -340,6 +359,21 @@ const TransactionBreakdown = ({
             This transaction does not move funds held by this wallet.
           </p>
         )}
+        {!balanceChanges.unverified &&
+          balanceChanges.lockedReturns.map(
+            ({ amount, label, lockText }, index) => (
+              <p
+                // keyed by position: locked returns carry no id of their own
+                key={`locked-return-${index}`}
+                className={styles.heroNote}
+                data-testid="locked-return"
+              >
+                {lockText
+                  ? `${amount} ${label} come back to this wallet locked (${lockText}) — not spendable until then.`
+                  : 'Funds come back to this wallet with a lock that cannot be read — this transaction cannot be signed.'}
+              </p>
+            ),
+          )}
       </section>
 
       <section className={styles.group}>

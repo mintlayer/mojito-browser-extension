@@ -1,5 +1,6 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import { format } from 'date-fns'
 
 import { AccountContext, MintlayerContext, SettingsContext } from '@Contexts'
 import ExternalTransactionPreview from './ExternalTransactionPreview'
@@ -521,5 +522,204 @@ describe('ExternalTransactionPreview amounts and fee', () => {
         .length,
     ).toBeGreaterThan(0)
     expect(screen.getAllByText(/will sign 500/).length).toBeGreaterThan(0)
+  })
+})
+
+// A LockThenTransfer output addressed to one of the wallet's own addresses
+// brings the funds back encumbered by the site's chosen lock. The preview
+// must agree with the approval summary: the same amount, the same lock
+// words, and the balance change never reads as freely spendable money.
+describe('ExternalTransactionPreview — locked outputs returning to this wallet', () => {
+  const OWN_RECEIVING = 'tmt1qownreceiving'
+  const OWN_CHANGE = 'tmt1qownchange'
+  const LOCK_UNREADABLE =
+    'The lock on these funds cannot be read, so this transaction cannot be signed'
+  const UNTIL_2100 = { type: 'UntilTime', content: { timestamp: 4102444800 } }
+  const FOR_7200_BLOCKS = { type: 'ForBlockCount', content: '7200' }
+  const untilText = `until ${format(new Date(4102444800 * 1000), 'dd/MM/yyyy HH:mm')}`
+
+  // Exact decimal string → atoms string at coin scale (11 decimals).
+  const toAtoms = (decimal) => {
+    const [whole, fraction = ''] = String(decimal).split('.')
+    const digits = (fraction + '0'.repeat(11)).slice(0, 11)
+    return `${whole}${digits}`.replace(/^0+(?=\d)/, '')
+  }
+  const ownInput = (decimal) => ({
+    input: {
+      index: 0,
+      input_type: 'UTXO',
+      source_id:
+        '3e0c04ce80dff7dfae5be22b9ada59f0338d2a6ad6204aa1320a2fa5d6ca7afa',
+      source_type: 'Transaction',
+    },
+    utxo: {
+      type: 'Transfer',
+      destination: OWN_RECEIVING,
+      value: coinValue(toAtoms(decimal), decimal),
+    },
+  })
+  const paymentTo = (destination, decimal) => ({
+    destination,
+    type: 'Transfer',
+    value: coinValue(toAtoms(decimal), decimal),
+  })
+  const lockedOutput = (destination, decimal, lock) => ({
+    destination,
+    type: 'LockThenTransfer',
+    lock,
+    value: coinValue(toAtoms(decimal), decimal),
+  })
+  const dataOf = (outputs, inputs) => ({
+    request: {
+      origin: 'https://app.example',
+      requestId: 'locked-1',
+      data: { txData: { JSONRepresentation: { inputs, outputs } } },
+    },
+  })
+  const renderAsOwn = (data) =>
+    render(
+      <AccountContext.Provider
+        value={{
+          addresses: {
+            mlAddresses: {
+              mlReceivingAddresses: [OWN_RECEIVING],
+              mlChangeAddresses: [OWN_CHANGE],
+            },
+          },
+        }}
+      >
+        <MintlayerContext.Provider value={{ tokenMap: {} }}>
+          <SettingsContext.Provider value={{ networkType: 'testnet' }}>
+            <ExternalTransactionPreview data={data} />
+          </SettingsContext.Provider>
+        </MintlayerContext.Provider>
+      </AccountContext.Provider>,
+    )
+  const lockedReturns = () => screen.queryAllByTestId('locked-return')
+  // the cell that follows a heading
+  const after = (heading) => screen.getByText(heading).nextElementSibling
+
+  it('names the lock of the locked change beside the payment, with the amounts the summary shows', () => {
+    renderAsOwn(
+      dataOf(
+        [
+          paymentTo(OUTPUT_ADDRESS, '1'),
+          lockedOutput(OWN_CHANGE, '99', UNTIL_2100),
+        ],
+        [ownInput('100')],
+      ),
+    )
+
+    // the panel describes the payment as before
+    expect(screen.getByText('Transfer coins')).toBeInTheDocument()
+    expect(after('Destination')).toHaveTextContent(OUTPUT_ADDRESS)
+    expect(after('Amount')).toHaveTextContent('1')
+    // the balance change is the fee alone: 100 in − 99 back …
+    expect(screen.getByTestId('balance-change')).toHaveTextContent(
+      '\u22121 TML',
+    )
+    // … and the 99 coming back are named as locked, with the summary's words
+    expect(lockedReturns()).toHaveLength(1)
+    expect(lockedReturns()[0]).toHaveTextContent(
+      `99 TML come back to this wallet locked (${untilText}) — not spendable until then.`,
+    )
+    const row = screen.getByText('lock').closest('li')
+    expect(within(row).getByText('lock').nextElementSibling).toHaveTextContent(
+      untilText,
+    )
+    expect(screen.queryByText(/\[object Object\]/)).not.toBeInTheDocument()
+  })
+
+  it('shows amount and lock of a locked output that is the only one, to a receiving address', () => {
+    renderAsOwn(
+      dataOf(
+        [lockedOutput(OWN_RECEIVING, '99', UNTIL_2100)],
+        [ownInput('100')],
+      ),
+    )
+
+    // the transfer panel names the output with its lock, not a bare self-send
+    expect(after('Destination')).toHaveTextContent(
+      `${OWN_RECEIVING} (your address)`,
+    )
+    expect(after('Amount')).toHaveTextContent('99')
+    expect(screen.getByText('Lock')).toBeInTheDocument()
+    expect(after('Lock')).toHaveTextContent(untilText)
+    expect(lockedReturns()[0]).toHaveTextContent(
+      `99 TML come back to this wallet locked (${untilText})`,
+    )
+  })
+
+  it('still names the lock in the breakdown when the locked output goes to a change address', () => {
+    renderAsOwn(
+      dataOf([lockedOutput(OWN_CHANGE, '99', UNTIL_2100)], [ownInput('100')]),
+    )
+
+    expect(screen.getByTestId('balance-change')).toHaveTextContent(
+      '\u22121 TML',
+    )
+    expect(lockedReturns()[0]).toHaveTextContent(
+      `99 TML come back to this wallet locked (${untilText})`,
+    )
+    const row = screen.getByText('lock').closest('li')
+    expect(within(row).getByText('lock').nextElementSibling).toHaveTextContent(
+      untilText,
+    )
+  })
+
+  // A delegation withdrawal as the SDK builds it: one DelegationBalance
+  // input and one LockThenTransfer coin output back to the wallet, locked
+  // for the staking maturity.
+  it('shows the block lock of a delegation withdrawal with the amount coming back', () => {
+    renderAsOwn(
+      dataOf(
+        [lockedOutput(OWN_RECEIVING, '8', FOR_7200_BLOCKS)],
+        [
+          {
+            input: {
+              input_type: 'Account',
+              account_type: 'DelegationBalance',
+              delegation_id:
+                'tdelg1mfust4vvrn3xy6slm9qvtf8kjlzw4ezspkqwenfnzryyeumgdahqp2upjz',
+              amount: { decimal: '10', atoms: toAtoms('10') },
+              nonce: 1,
+            },
+          },
+        ],
+      ),
+    )
+
+    expect(screen.getByText('Withdraw from delegation')).toBeInTheDocument()
+    expect(screen.getByText('Amount').nextElementSibling).toHaveTextContent(
+      '10',
+    )
+    expect(screen.getByTestId('balance-change')).toHaveTextContent('+8 TML')
+    expect(lockedReturns()[0]).toHaveTextContent(
+      '8 TML come back to this wallet locked (for 7200 blocks) — not spendable until then.',
+    )
+    const row = screen.getByText('lock').closest('li')
+    expect(within(row).getByText('lock').nextElementSibling).toHaveTextContent(
+      'for 7200 blocks',
+    )
+  })
+
+  it('names a lock that cannot be read instead of showing a number or a date', () => {
+    renderAsOwn(
+      dataOf(
+        [
+          lockedOutput(OWN_RECEIVING, '99', {
+            type: 'ForBlockCount',
+            content: 'soon',
+          }),
+        ],
+        [ownInput('100')],
+      ),
+    )
+
+    expect(screen.getByText('Lock')).toBeInTheDocument()
+    expect(after('Lock')).toHaveTextContent(LOCK_UNREADABLE)
+    expect(lockedReturns()[0]).toHaveTextContent(
+      'Funds come back to this wallet with a lock that cannot be read — this transaction cannot be signed.',
+    )
   })
 })

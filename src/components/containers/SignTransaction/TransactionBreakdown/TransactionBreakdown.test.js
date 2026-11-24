@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
+import { format } from 'date-fns'
 
 import { MOCKS } from '../../../../pages/SignExternalTransaction/mocks'
 import TransactionBreakdown from './TransactionBreakdown'
@@ -766,5 +767,123 @@ describe('TransactionBreakdown', () => {
     const row = screen.getByText('FillOrder').closest('li')
     expect(row.querySelector('.rowAddress')).toBeNull()
     expect(screen.queryByText('Your address')).not.toBeInTheDocument()
+  })
+})
+
+// A LockThenTransfer output addressed to one of the wallet's own addresses
+// brings the funds back encumbered by the site's chosen lock. The balance
+// change still counts them as the wallet's, so the encumbrance is spelled
+// out with the figure and on the row — the same lock words the approval
+// summary uses.
+describe('TransactionBreakdown — locked outputs returning to this wallet', () => {
+  const OWN = 'tmt1qown'
+  const LOCK_UNREADABLE =
+    'The lock on these funds cannot be read, so this transaction cannot be signed'
+  const UNTIL_2100 = { type: 'UntilTime', content: { timestamp: 4102444800 } }
+  const FOR_7200_BLOCKS = { type: 'ForBlockCount', content: '7200' }
+  const untilText = `until ${format(new Date(4102444800 * 1000), 'dd/MM/yyyy HH:mm')}`
+  const coin = (decimal) => ({
+    type: 'Coin',
+    amount: { decimal, atoms: `${decimal}00000000000` },
+  })
+  const ownUtxoInput = (decimal) => ({
+    input: { input_type: 'UTXO' },
+    utxo: { type: 'Transfer', destination: OWN, value: coin(decimal) },
+  })
+  const lockedOutput = (destination, decimal, lock) => ({
+    type: 'LockThenTransfer',
+    destination,
+    lock,
+    value: coin(decimal),
+  })
+  const renderOwn = (JSONRepresentation) =>
+    render(
+      <TransactionBreakdown
+        JSONRepresentation={JSONRepresentation}
+        ownAddresses={{ receiving: [OWN] }}
+        tokenMap={{}}
+        coinTicker="TML"
+      />,
+    )
+  const lockedReturns = () => screen.queryAllByTestId('locked-return')
+
+  it('spells out an UntilTime lock as a date in the wallet’s own format', () => {
+    renderOwn({
+      inputs: [ownUtxoInput('99')],
+      outputs: [lockedOutput(OWN, '99', UNTIL_2100)],
+    })
+
+    const row = screen.getByText('lock').closest('li')
+    expect(within(row).getByText('lock').nextElementSibling).toHaveTextContent(
+      untilText,
+    )
+    expect(screen.queryByText(/\[object Object\]/)).not.toBeInTheDocument()
+  })
+
+  it('states that the funds coming back locked are not spendable until then', () => {
+    // the delegation withdrawal as the SDK builds it: 8 TML come back
+    // locked for the staking maturity
+    renderBreakdown(MOCKS.delegationWithdraw, {
+      receiving: ['tmt1q9l0g4kd3s6x5rmesaznegz06pw9hxu6qvqu3pa7'],
+      change: [],
+    })
+
+    expect(screen.getByTestId('balance-change')).toHaveTextContent('+8 TML')
+    expect(lockedReturns()).toHaveLength(1)
+    expect(lockedReturns()[0]).toHaveTextContent(
+      '8 TML come back to this wallet locked (for 7200 blocks) — not spendable until then.',
+    )
+  })
+
+  it('names the locked return even when the net change is zero', () => {
+    renderOwn({
+      inputs: [ownUtxoInput('8')],
+      outputs: [lockedOutput(OWN, '8', FOR_7200_BLOCKS)],
+    })
+
+    expect(
+      screen.getByText(
+        'This transaction does not move funds held by this wallet.',
+      ),
+    ).toBeInTheDocument()
+    expect(lockedReturns()).toHaveLength(1)
+    expect(lockedReturns()[0]).toHaveTextContent(
+      '8 TML come back to this wallet locked (for 7200 blocks) — not spendable until then.',
+    )
+  })
+
+  it('names a lock that cannot be read on the row and under the balance change', () => {
+    renderOwn({
+      inputs: [ownUtxoInput('99')],
+      outputs: [
+        lockedOutput(OWN, '99', { type: 'ForBlockCount', content: 'soon' }),
+      ],
+    })
+
+    const row = screen.getByText('lock').closest('li')
+    expect(within(row).getByText('lock').nextElementSibling).toHaveTextContent(
+      LOCK_UNREADABLE,
+    )
+    expect(lockedReturns()).toHaveLength(1)
+    expect(lockedReturns()[0]).toHaveTextContent(
+      'Funds come back to this wallet with a lock that cannot be read — this transaction cannot be signed.',
+    )
+  })
+
+  it('names no locked return for a locked output paid to someone else', () => {
+    renderOwn({
+      inputs: [ownUtxoInput('99')],
+      outputs: [lockedOutput('tmt1qattacker', '99', UNTIL_2100)],
+    })
+
+    expect(screen.getByTestId('balance-change')).toHaveTextContent(
+      '\u221299 TML',
+    )
+    expect(lockedReturns()).toHaveLength(0)
+    // the recipient's lock is still readable on the row
+    const row = screen.getByText('lock').closest('li')
+    expect(within(row).getByText('lock').nextElementSibling).toHaveTextContent(
+      untilText,
+    )
   })
 })

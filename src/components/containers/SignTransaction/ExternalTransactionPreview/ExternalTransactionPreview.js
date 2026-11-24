@@ -13,6 +13,7 @@ const {
   COIN_DECIMALS,
   buildTokenDecimalsIndex,
   deriveApprovalFee,
+  describeOutputLock,
   findRelevantOutputs,
   isAccountCommandShape,
   isDelegationWithdrawInput,
@@ -162,6 +163,14 @@ const TransferDetails = ({ transactionData, ownAddresses }) => {
 
   const outputToUse = relevantOutput || fallbackOutput
   const destination = outputToUse ? signerOutputDestination(outputToUse) : null
+  // A locked output (LockThenTransfer) hands its funds over encumbered: the
+  // lock is spelled out here with the same words the approval summary uses,
+  // so a locked output coming back to this wallet never reads as a plain
+  // transfer to it.
+  const lock =
+    outputToUse?.type === 'LockThenTransfer'
+      ? describeOutputLock(outputToUse.lock)
+      : null
 
   if (!outputToUse) {
     return (
@@ -206,6 +215,14 @@ const TransferDetails = ({ transactionData, ownAddresses }) => {
           )}
           fallback="Unknown"
         />
+        {lock && (
+          <>
+            <h4>Lock</h4>
+            <p className={lock.error ? 'signTxAmountMismatch' : undefined}>
+              {lock.text ?? lock.error}
+            </p>
+          </>
+        )}
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
+import { format } from 'date-fns'
 
 import { MintlayerContext } from '@Contexts'
 import TransactionSummary from './TransactionSummary'
@@ -1527,4 +1528,232 @@ describe('TransactionSummary', () => {
       expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
     },
   )
+})
+
+// A LockThenTransfer output addressed to one of the wallet's own addresses
+// brings the funds back encumbered by the site's chosen lock. It is paid to
+// no one else (never the Amount row) and it is not plain change: its amount
+// and lock get their own visible row, and a lock the signer could not encode
+// blocks approval with the reason.
+describe('TransactionSummary — locked outputs returning to this wallet', () => {
+  const LOCKED_ROW_LABEL = 'Locked at this wallet'
+  const LOCK_UNREADABLE =
+    'The lock on these funds cannot be read, so this transaction cannot be signed'
+  const UNTIL_2100 = { type: 'UntilTime', content: { timestamp: 4102444800 } }
+  const FOR_7200_BLOCKS = { type: 'ForBlockCount', content: '7200' }
+  // the lock timestamp is rendered with the wallet's own date format
+  const untilText = (timestamp) =>
+    `until ${format(new Date(timestamp * 1000), 'dd/MM/yyyy HH:mm')}`
+  const lockedOutput = (
+    destination,
+    decimal,
+    lock,
+    atoms = toAtoms(decimal),
+  ) => ({
+    type: 'LockThenTransfer',
+    destination,
+    lock,
+    value: coin(decimal, atoms),
+  })
+  const ownUtxoInput = (decimal) => ({
+    input: { input_type: 'UTXO' },
+    utxo: { destination: OWN_RECEIVING, value: coin(decimal) },
+  })
+  // the value cell of a row, by its label
+  const rowValue = (label) => screen.getByText(label).nextElementSibling
+
+  const paymentAndLockedChange = {
+    inputs: [ownUtxoInput('100')],
+    outputs: [
+      { type: 'Transfer', destination: DESTINATION, value: coin('1') },
+      lockedOutput(OWN_CHANGE, '99', UNTIL_2100),
+    ],
+  }
+
+  it('shows the locked change with its amount and time lock beside the payment', () => {
+    renderSummary({ jsonRepresentation: paymentAndLockedChange })
+
+    expect(screen.getByText('Send')).toBeInTheDocument()
+    // the Amount row is the payment alone
+    expect(screen.getAllByText('Amount')).toHaveLength(1)
+    expect(screen.getByText('1 ML')).toBeInTheDocument()
+    // the locked remainder is its own row, on the summary itself
+    expect(screen.getByText(LOCKED_ROW_LABEL)).toBeInTheDocument()
+    expect(rowValue(LOCKED_ROW_LABEL)).toHaveTextContent(
+      `99 ML, ${untilText(4102444800)}`,
+    )
+    expect(screen.queryByTestId('technical-details')).not.toBeInTheDocument()
+    // the fee counts the locked output: 100 − 1 − 99
+    expect(screen.getByText('0 ML')).toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  // A delegation withdrawal as the SDK builds it: one DelegationBalance
+  // input and one LockThenTransfer coin output back to the wallet, locked
+  // for the staking maturity.
+  it('shows the block lock of a delegation withdrawal instead of a self-send', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: {
+              input_type: 'Account',
+              account_type: 'DelegationBalance',
+              delegation_id: 'd1',
+              amount: { decimal: '10', atoms: toAtoms('10') },
+              nonce: '1',
+            },
+          },
+        ],
+        outputs: [lockedOutput(OWN_RECEIVING, '8', FOR_7200_BLOCKS)],
+      },
+    })
+
+    expect(screen.getByText('Withdraw from delegation')).toBeInTheDocument()
+    expect(screen.getByText(LOCKED_ROW_LABEL)).toBeInTheDocument()
+    expect(rowValue(LOCKED_ROW_LABEL)).toHaveTextContent(
+      '8 ML, for 7200 blocks',
+    )
+    // nothing is paid to others: no Amount row
+    expect(screen.queryByText('Amount')).not.toBeInTheDocument()
+    // the "To" line rules are unchanged: the output goes to a receiving address
+    expect(screen.getByText('To (your address)')).toBeInTheDocument()
+    // 10 credited in − 8 locked back out
+    expect(screen.getByText('2 ML')).toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('shows amount and lock when the locked output is the only output', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [ownUtxoInput('99')],
+        outputs: [lockedOutput(OWN_CHANGE, '99', UNTIL_2100)],
+      },
+    })
+
+    expect(screen.getByText(LOCKED_ROW_LABEL)).toBeInTheDocument()
+    expect(rowValue(LOCKED_ROW_LABEL)).toHaveTextContent(
+      `99 ML, ${untilText(4102444800)}`,
+    )
+    expect(screen.queryByText('Amount')).not.toBeInTheDocument()
+    expect(screen.getByText('To')).toBeInTheDocument()
+    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('lists every locked output on its own row', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [ownUtxoInput('100')],
+        outputs: [
+          lockedOutput(OWN_CHANGE, '40', UNTIL_2100),
+          lockedOutput(OWN_RECEIVING, '59', FOR_7200_BLOCKS),
+        ],
+      },
+    })
+
+    const rows = screen.getAllByText(LOCKED_ROW_LABEL)
+    expect(rows).toHaveLength(2)
+    expect(rows[0].nextElementSibling).toHaveTextContent(
+      `40 ML, ${untilText(4102444800)}`,
+    )
+    expect(rows[1].nextElementSibling).toHaveTextContent(
+      '59 ML, for 7200 blocks',
+    )
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('uses the token ticker and chain decimals for a locked token output', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [],
+        outputs: [
+          {
+            type: 'LockThenTransfer',
+            destination: OWN_CHANGE,
+            lock: FOR_7200_BLOCKS,
+            value: token(TOKEN_ID, '25', '2500', 2),
+          },
+        ],
+      },
+      mintlayerValue: {
+        tokenMap: { [TOKEN_ID]: 'MLUSDC' },
+        allNetworkTokensData: [{ token_id: TOKEN_ID, number_of_decimals: 2 }],
+      },
+    })
+
+    expect(rowValue(LOCKED_ROW_LABEL)).toHaveTextContent(
+      '25 MLUSDC, for 7200 blocks',
+    )
+  })
+
+  it('blocks a lying decimal on the locked amount and still names the lock', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [ownUtxoInput('100')],
+        outputs: [
+          { type: 'Transfer', destination: DESTINATION, value: coin('1') },
+          // LIE: 99 ML in atoms, labelled as 1
+          lockedOutput(OWN_CHANGE, '1', UNTIL_2100, toAtoms('99')),
+        ],
+      },
+    })
+
+    expect(screen.getByText(LOCKED_ROW_LABEL)).toBeInTheDocument()
+    expect(rowValue(LOCKED_ROW_LABEL)).toHaveTextContent(
+      `will sign 99 ML, ${untilText(4102444800)}`,
+    )
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+  })
+
+  it.each([
+    ['a missing lock', undefined],
+    ['an unknown lock type', { type: 'ForSeconds', content: 30 }],
+    ['a non-numeric block count', { type: 'ForBlockCount', content: 'soon' }],
+    ['a negative block count', { type: 'ForBlockCount', content: -1 }],
+    [
+      'a non-numeric UntilTime timestamp',
+      {
+        type: 'UntilTime',
+        content: { timestamp: 'soon' },
+      },
+    ],
+  ])('blocks approval on %s', (_description, lock) => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [ownUtxoInput('100')],
+        outputs: [
+          { type: 'Transfer', destination: DESTINATION, value: coin('1') },
+          lockedOutput(OWN_CHANGE, '99', lock),
+        ],
+      },
+    })
+
+    expect(screen.getByText(LOCKED_ROW_LABEL)).toBeInTheDocument()
+    expect(rowValue(LOCKED_ROW_LABEL)).toHaveTextContent(LOCK_UNREADABLE)
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+  })
+
+  // Unchanged: a plain Transfer to one of the wallet's own addresses is
+  // change (no row), and a locked output to a foreign address is a payment
+  // row as today.
+  it('keeps a plain Transfer to the wallet as change and a foreign locked output as a payment', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [ownUtxoInput('100')],
+        outputs: [
+          { type: 'Transfer', destination: DESTINATION, value: coin('1') },
+          { type: 'Transfer', destination: OWN_CHANGE, value: coin('40') },
+          lockedOutput(DESTINATION, '59', UNTIL_2100),
+        ],
+      },
+    })
+
+    expect(screen.queryByText(LOCKED_ROW_LABEL)).not.toBeInTheDocument()
+    expect(screen.queryByText('40 ML')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Amount')).toHaveLength(1)
+    expect(screen.getByText('60 ML')).toBeInTheDocument()
+    expect(screen.queryByText(/until /)).not.toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
 })

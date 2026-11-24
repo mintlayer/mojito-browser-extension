@@ -1,3 +1,5 @@
+import { format } from 'date-fns'
+
 import {
   COIN_DECIMALS,
   TOKEN_DECIMALS_LIMIT,
@@ -6,7 +8,10 @@ import {
   computeCoinFeeAtoms,
   decimalMatchesAtoms,
   deriveApprovalFee,
+  describeOutputLock,
   findRelevantOutputs,
+  isLockedSelfOutput,
+  readOutputLock,
   reconcileApprovalAmounts,
   resolveAssetDecimals,
   resolveCurrencyDecimals,
@@ -2641,5 +2646,656 @@ describe('reconcileApprovalAmounts', () => {
         intent,
       }).blocked,
     ).toBe(false)
+  })
+})
+
+// A LockThenTransfer output addressed to one of the wallet's own addresses
+// brings the funds back ENCUMBERED: the signer encodes the dApp-chosen lock
+// next to the destination (getOutputs), so the funds are unspendable until
+// that time or block. Such an output is neither a payment to others (it
+// stays out of the Amount row) nor plain change: it gets its own row with
+// its verified amount and its lock, and a lock the signer could not encode
+// fails closed.
+const LOCKED_ROW_LABEL = 'Locked at this wallet'
+const LOCK_UNREADABLE =
+  'The lock on these funds cannot be read, so this transaction cannot be signed'
+const ownAddresses = { receiving: ['wallet'], change: ['change'] }
+// The lock timestamp is rendered with the wallet's own date format.
+const untilText = (timestamp) =>
+  `until ${format(new Date(Number(timestamp) * 1000), 'dd/MM/yyyy HH:mm')}`
+const lockedOutput = (
+  destination,
+  decimal,
+  lock,
+  atoms = toAtoms(decimal),
+) => ({
+  type: 'LockThenTransfer',
+  destination,
+  lock,
+  value: coin(decimal, atoms),
+})
+const UNTIL_2100 = { type: 'UntilTime', content: { timestamp: 4102444800 } }
+const FOR_7200_BLOCKS = { type: 'ForBlockCount', content: '7200' }
+
+describe('readOutputLock / describeOutputLock', () => {
+  it('reads an UntilTime lock from content.timestamp, as the signer does', () => {
+    expect(readOutputLock(UNTIL_2100)).toEqual({
+      type: 'UntilTime',
+      timestamp: '4102444800',
+    })
+    expect(
+      readOutputLock({ type: 'UntilTime', content: { timestamp: '1000' } }),
+    ).toEqual({ type: 'UntilTime', timestamp: '1000' })
+  })
+
+  it('reads a ForBlockCount lock from content, as the signer does', () => {
+    expect(readOutputLock(FOR_7200_BLOCKS)).toEqual({
+      type: 'ForBlockCount',
+      blockCount: '7200',
+    })
+    expect(readOutputLock({ type: 'ForBlockCount', content: 1 })).toEqual({
+      type: 'ForBlockCount',
+      blockCount: '1',
+    })
+  })
+
+  it.each([
+    ['a missing lock', undefined],
+    ['a null lock', null],
+    ['a non-object lock', '7200 blocks'],
+    ['an array lock', ['ForBlockCount', '7200']],
+    ['an unknown lock type', { type: 'ForSeconds', content: 30 }],
+    ['a lock without a type', { content: 30 }],
+    ['a non-string lock type', { type: 1, content: 30 }],
+    ['a ForBlockCount lock without content', { type: 'ForBlockCount' }],
+    ['a non-numeric block count', { type: 'ForBlockCount', content: 'soon' }],
+    ['a negative block count', { type: 'ForBlockCount', content: -1 }],
+    ['a fractional block count', { type: 'ForBlockCount', content: 1.5 }],
+    [
+      'a block count beyond safe precision',
+      { type: 'ForBlockCount', content: 1e21 },
+    ],
+    [
+      'a block count beyond the encoder’s 64-bit range',
+      { type: 'ForBlockCount', content: '18446744073709551616' },
+    ],
+    [
+      'a block count of a thousand digits',
+      { type: 'ForBlockCount', content: '9'.repeat(1000) },
+    ],
+    [
+      'a timestamp beyond the encoder’s 64-bit range',
+      { type: 'UntilTime', content: { timestamp: '1' + '0'.repeat(30) } },
+    ],
+    ['a boolean block count', { type: 'ForBlockCount', content: true }],
+    ['a hex block count', { type: 'ForBlockCount', content: '0x10' }],
+    ['an UntilTime lock without content', { type: 'UntilTime' }],
+    [
+      'an UntilTime lock without a timestamp',
+      { type: 'UntilTime', content: {} },
+    ],
+    [
+      'an UntilTime lock with a non-numeric timestamp',
+      {
+        type: 'UntilTime',
+        content: { timestamp: 'soon' },
+      },
+    ],
+    [
+      'an UntilTime lock with a negative timestamp',
+      {
+        type: 'UntilTime',
+        content: { timestamp: -1 },
+      },
+    ],
+    [
+      'an UntilTime lock with a fractional timestamp',
+      {
+        type: 'UntilTime',
+        content: { timestamp: 1.5 },
+      },
+    ],
+    [
+      'an UntilTime lock whose content is not an object',
+      {
+        type: 'UntilTime',
+        content: 4102444800,
+      },
+    ],
+  ])('fails closed on %s', (_description, lock) => {
+    expect(readOutputLock(lock)).toEqual({ error: LOCK_UNREADABLE })
+  })
+
+  it('describes both lock kinds in plain words', () => {
+    expect(describeOutputLock(UNTIL_2100)).toEqual({
+      text: untilText('4102444800'),
+    })
+    expect(describeOutputLock(FOR_7200_BLOCKS)).toEqual({
+      text: 'for 7200 blocks',
+    })
+    expect(describeOutputLock({ type: 'ForBlockCount', content: '1' })).toEqual(
+      { text: 'for 1 block' },
+    )
+  })
+
+  // 10^13 seconds fits the encoder (2^64 − 1 ≈ 1.8 × 10^19) but lies beyond
+  // any date a Date can hold (≈ 8.6 × 10^12 seconds)
+  const BEYOND_ANY_DATE = '10000000000000'
+
+  it('shows a timestamp no date can represent as the raw signed number', () => {
+    const farFuture = {
+      type: 'UntilTime',
+      content: { timestamp: BEYOND_ANY_DATE },
+    }
+    expect(describeOutputLock(farFuture).text).toBe(
+      `until timestamp ${BEYOND_ANY_DATE}`,
+    )
+  })
+
+  // The encoder's parameter is an unsigned 64-bit integer: the widest value
+  // it takes is readable, anything wider is not — it would be truncated to
+  // its low 64 bits there and never encoded as displayed.
+  it('reads up to the encoder’s 64-bit limit and refuses anything wider', () => {
+    const widest = '18446744073709551615'
+    expect(readOutputLock({ type: 'ForBlockCount', content: widest })).toEqual({
+      type: 'ForBlockCount',
+      blockCount: widest,
+    })
+    expect(
+      readOutputLock({
+        type: 'UntilTime',
+        content: { timestamp: `00${widest}` },
+      }),
+    ).toEqual({ type: 'UntilTime', timestamp: widest })
+    expect(
+      readOutputLock({
+        type: 'ForBlockCount',
+        content: '99999999999999999999',
+      }),
+    ).toEqual({
+      error: LOCK_UNREADABLE,
+    })
+  })
+
+  it('never throws on a lock that shadows primitive conversion', () => {
+    expect(readOutputLock({ type: { toString: 1 }, content: 1 })).toEqual({
+      error: LOCK_UNREADABLE,
+    })
+    expect(
+      readOutputLock({
+        type: 'UntilTime',
+        content: { timestamp: { valueOf: 1 } },
+      }),
+    ).toEqual({ error: LOCK_UNREADABLE })
+  })
+})
+
+describe('isLockedSelfOutput', () => {
+  it('is true only for a LockThenTransfer whose signed destination is one of the wallet addresses', () => {
+    expect(
+      isLockedSelfOutput(
+        lockedOutput('wallet', '1', FOR_7200_BLOCKS),
+        ownAddresses,
+      ),
+    ).toBe(true)
+    expect(
+      isLockedSelfOutput(
+        lockedOutput('change', '1', FOR_7200_BLOCKS),
+        ownAddresses,
+      ),
+    ).toBe(true)
+    // a plain Transfer to the wallet is change, not a locked output
+    expect(isLockedSelfOutput(coinOutput('wallet', '1'), ownAddresses)).toBe(
+      false,
+    )
+    // a locked output to someone else is a payment, with its own row
+    expect(
+      isLockedSelfOutput(
+        lockedOutput('attacker', '1', FOR_7200_BLOCKS),
+        ownAddresses,
+      ),
+    ).toBe(false)
+    // `address` is read by the signer nowhere
+    expect(
+      isLockedSelfOutput(
+        {
+          ...lockedOutput('attacker', '1', FOR_7200_BLOCKS),
+          address: 'wallet',
+        },
+        ownAddresses,
+      ),
+    ).toBe(false)
+    expect(isLockedSelfOutput(null, ownAddresses)).toBe(false)
+  })
+})
+
+describe('reconcileApprovalAmounts — locked outputs returning to the wallet', () => {
+  // a wallet-owned utxo input of `decimal` coin (coinInput takes atoms first)
+  const ownInput = (decimal) => coinInput('wallet', toAtoms(decimal), decimal)
+  const reconcile = (payload) =>
+    reconcileApprovalAmounts(payload, {
+      tokenDecimalsById: new Map(),
+      ownAddresses,
+    })
+  // A payment to the payee the user expects, next to the change coming
+  // back locked until 2100 by the site's choice.
+  const paymentAndLockedChange = {
+    inputs: [ownInput('100')],
+    outputs: [
+      coinOutput('payee', '1'),
+      lockedOutput('change', '99', UNTIL_2100),
+    ],
+  }
+
+  it('shows the locked change on its own row, outside the Amount row, without blocking', () => {
+    const { amountRows, extraAmountRows, fee, blocked } = reconcile(
+      paymentAndLockedChange,
+    )
+
+    // only the payment is an Amount
+    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '1' }])
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'locked:1',
+        label: LOCKED_ROW_LABEL,
+        tokenId: null,
+        withTicker: true,
+        amount: '99',
+        note: untilText('4102444800'),
+      },
+    ])
+    // the fee stays inputs minus EVERY output, the locked one included
+    expect(fee).toEqual({ amount: '0' })
+    expect(blocked).toBe(false)
+  })
+
+  it('blocks a lying decimal on the locked amount and still shows its lock', () => {
+    const { amountRows, extraAmountRows, fee, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [
+        coinOutput('payee', '1'),
+        // LIE: 99 TML in atoms, labelled as 1
+        lockedOutput('change', '1', UNTIL_2100, toAtoms('99')),
+      ],
+    })
+
+    expect(blocked).toBe(true)
+    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '1' }])
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'locked:1',
+        label: LOCKED_ROW_LABEL,
+        tokenId: null,
+        withTicker: true,
+        errors: [
+          {
+            error: expect.stringMatching(/does not match/),
+            amount: '99',
+          },
+        ],
+        note: untilText('4102444800'),
+      },
+    ])
+    expect(fee).toEqual({ amount: '0' })
+  })
+
+  it('shows amount and lock when the locked output is the only one', () => {
+    const { amountRows, extraAmountRows, fee, blocked } = reconcile({
+      inputs: [ownInput('99')],
+      outputs: [lockedOutput('change', '99', UNTIL_2100)],
+    })
+
+    expect(amountRows).toEqual([])
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'locked:0',
+        label: LOCKED_ROW_LABEL,
+        tokenId: null,
+        withTicker: true,
+        amount: '99',
+        note: untilText('4102444800'),
+      },
+    ])
+    expect(fee).toEqual({ amount: '0' })
+    expect(blocked).toBe(false)
+  })
+
+  // A delegation withdrawal as the SDK builds it: one DelegationBalance
+  // input and one LockThenTransfer coin output back to the wallet, locked
+  // for the staking maturity.
+  it('shows the amount and the block lock of a delegation withdrawal', () => {
+    const { amountRows, extraAmountRows, fee, blocked } = reconcile({
+      inputs: [
+        {
+          input: {
+            input_type: 'Account',
+            account_type: 'DelegationBalance',
+            delegation_id: 'd1',
+            amount: { atoms: '1000000000000', decimal: '10' },
+            nonce: '1',
+          },
+        },
+      ],
+      outputs: [lockedOutput('wallet', '8', FOR_7200_BLOCKS)],
+    })
+
+    expect(amountRows).toEqual([])
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'locked:0',
+        label: LOCKED_ROW_LABEL,
+        tokenId: null,
+        withTicker: true,
+        amount: '8',
+        note: 'for 7200 blocks',
+      },
+    ])
+    expect(fee).toEqual({ amount: '2' })
+    expect(blocked).toBe(false)
+  })
+
+  it('lists every locked output on its own row, hiding nothing', () => {
+    const { extraAmountRows, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [
+        coinOutput('payee', '1'),
+        lockedOutput('change', '40', UNTIL_2100),
+        lockedOutput('wallet', '59', FOR_7200_BLOCKS),
+      ],
+    })
+
+    expect(blocked).toBe(false)
+    expect(
+      extraAmountRows.map((row) => [row.key, row.amount, row.note]),
+    ).toEqual([
+      ['locked:1', '40', untilText('4102444800')],
+      ['locked:2', '59', 'for 7200 blocks'],
+    ])
+  })
+
+  it('scales a locked token output by its chain decimals', () => {
+    const tokenId = 'tmltk1locked'
+    const { extraAmountRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [],
+        outputs: [
+          {
+            type: 'LockThenTransfer',
+            destination: 'wallet',
+            lock: FOR_7200_BLOCKS,
+            value: {
+              type: 'TokenV1',
+              token_id: tokenId,
+              amount: { atoms: '2500', decimal: '25' },
+            },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map([[tokenId, 2]]), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'locked:0',
+        label: LOCKED_ROW_LABEL,
+        tokenId,
+        withTicker: true,
+        amount: '25',
+        note: 'for 7200 blocks',
+      },
+    ])
+  })
+
+  // The signer's getOutputs throws on a missing lock, an unknown lock type
+  // or a content BigInt cannot encode: the request can never be signed, so
+  // the approval fails closed and says why. The amount is still verified
+  // where it is readable, so a lying decimal next to a bad lock reports both.
+  it.each([
+    ['a missing lock', undefined],
+    ['an unknown lock type', { type: 'ForSeconds', content: 30 }],
+    ['a non-numeric block count', { type: 'ForBlockCount', content: 'soon' }],
+    ['a negative block count', { type: 'ForBlockCount', content: -1 }],
+    [
+      'a non-numeric UntilTime timestamp',
+      {
+        type: 'UntilTime',
+        content: { timestamp: 'soon' },
+      },
+    ],
+  ])('blocks on %s', (_description, lock) => {
+    const { amountRows, extraAmountRows, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [coinOutput('payee', '1'), lockedOutput('change', '99', lock)],
+    })
+
+    expect(blocked).toBe(true)
+    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '1' }])
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'locked:1',
+        label: LOCKED_ROW_LABEL,
+        tokenId: null,
+        withTicker: true,
+        errors: [{ error: LOCK_UNREADABLE, amount: null }],
+      },
+    ])
+  })
+
+  it('reports both a lying decimal and an unreadable lock on the same output', () => {
+    const { extraAmountRows, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [
+        coinOutput('payee', '1'),
+        // LIE: 99 TML in atoms, labelled as 1 — and a lock no signer encodes
+        lockedOutput('change', '1', { type: 'Nope' }, toAtoms('99')),
+      ],
+    })
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'locked:1',
+        label: LOCKED_ROW_LABEL,
+        tokenId: null,
+        withTicker: true,
+        // no lock words: none could be read
+        errors: [
+          { error: expect.stringMatching(/does not match/), amount: '99' },
+          { error: LOCK_UNREADABLE, amount: null },
+        ],
+      },
+    ])
+  })
+
+  it('blocks a locked output that carries no amount the signer could encode', () => {
+    const { extraAmountRows, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [
+        { type: 'LockThenTransfer', destination: 'change', lock: UNTIL_2100 },
+      ],
+    })
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows[0].label).toBe(LOCKED_ROW_LABEL)
+    expect(extraAmountRows[0].errors[0].error).toMatch(/cannot be verified/)
+  })
+
+  // A locked output paid to someone else is a payment, not this wallet's
+  // encumbrance: its lock yields no row of its own. The signer still has to
+  // encode that lock, though — one it could not encode can never be signed,
+  // so the payment row fails closed with the reason (as the technical
+  // preview already says on that row).
+  it('keeps a foreign locked output with a readable lock as a plain payment', () => {
+    const { amountRows, extraAmountRows, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [lockedOutput('attacker', '99', FOR_7200_BLOCKS)],
+    })
+
+    expect(blocked).toBe(false)
+    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '99' }])
+    expect(extraAmountRows).toEqual([])
+  })
+
+  it.each([
+    ['a missing lock', undefined],
+    ['an unknown lock type', { type: 'Nope' }],
+    ['a non-numeric block count', { type: 'ForBlockCount', content: 'soon' }],
+  ])('blocks a foreign locked output with %s', (_description, lock) => {
+    const { amountRows, extraAmountRows, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [coinOutput('payee', '1'), lockedOutput('attacker', '99', lock)],
+    })
+
+    expect(blocked).toBe(true)
+    expect(amountRows).toEqual([
+      {
+        key: 'Coin',
+        tokenId: null,
+        errors: [{ error: LOCK_UNREADABLE, amount: null }],
+      },
+    ])
+    // it is a payment, not this wallet's encumbrance: no locked row
+    expect(extraAmountRows).toEqual([])
+  })
+
+  it('reports a lying amount and an unreadable lock on the same foreign output', () => {
+    const { amountRows, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [lockedOutput('attacker', '1', { type: 'Nope' }, toAtoms('99'))],
+    })
+
+    expect(blocked).toBe(true)
+    expect(amountRows[0].errors).toEqual([
+      { error: LOCK_UNREADABLE, amount: null },
+      { error: expect.stringMatching(/does not match/), amount: '99' },
+    ])
+  })
+
+  it('blocks a foreign locked output without any amount when its lock is unreadable', () => {
+    const { amountRows, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [
+        { type: 'LockThenTransfer', destination: 'attacker', lock: undefined },
+      ],
+    })
+
+    expect(blocked).toBe(true)
+    expect(amountRows[0].errors).toEqual([
+      { error: LOCK_UNREADABLE, amount: null },
+    ])
+  })
+
+  // A LockThenTransfer utxo is re-encoded by the signer with its own lock
+  // (getTransactionHEX → getOutputs): one the signer could not encode can
+  // never be signed either. That holds for a real utxo leg…
+  const lockedUtxoInput = (lock, utxo = {}) => ({
+    input: { input_type: 'UTXO', source_id: 'src', index: 0 },
+    utxo: {
+      type: 'LockThenTransfer',
+      destination: 'wallet',
+      lock,
+      value: coin('40'),
+      ...utxo,
+    },
+  })
+
+  it('keeps a spent locked output with a readable lock unblocked and row-free', () => {
+    const { extraAmountRows, fee, blocked } = reconcile({
+      inputs: [lockedUtxoInput(FOR_7200_BLOCKS)],
+      outputs: [coinOutput('payee', '40')],
+    })
+
+    expect(blocked).toBe(false)
+    expect(extraAmountRows).toEqual([])
+    expect(fee).toEqual({ amount: '0' })
+  })
+
+  it.each([
+    ['a missing lock', undefined],
+    ['an unknown lock type', { type: 'UntilHeight', content: 100 }],
+    [
+      'a non-numeric timestamp',
+      { type: 'UntilTime', content: { timestamp: 'soon' } },
+    ],
+  ])('blocks a spent locked output with %s', (_description, lock) => {
+    const { extraAmountRows, blocked } = reconcile({
+      inputs: [lockedUtxoInput(lock)],
+      outputs: [coinOutput('payee', '40')],
+    })
+
+    expect(blocked).toBe(true)
+    expect(extraAmountRows).toEqual([
+      {
+        key: 'lock:input:0',
+        label: 'Locked input',
+        tokenId: null,
+        withTicker: false,
+        errors: [{ error: LOCK_UNREADABLE, amount: null }],
+      },
+    ])
+  })
+
+  // …and for an injected one alike: the signer's optUtxos_ map re-encodes
+  // EVERY input carrying a LockThenTransfer utxo through getOutputs and
+  // consults the input type only afterwards, to keep or discard the bytes.
+  // So an injected utxo with an unreadable lock throws at sign time (after
+  // the password) — it must block here as well — while a readable one
+  // signs nothing and stays unblocked.
+  const accountCommandWithInjectedUtxo = (lock) => ({
+    input: {
+      input_type: 'AccountCommand',
+      command: 'UnmintTokens',
+      nonce: '0',
+    },
+    utxo: lockedUtxoInput(lock).utxo,
+  })
+
+  it('keeps a readable injected lock on an account-command input unblocked', () => {
+    const { extraAmountRows, blocked } = reconcile({
+      inputs: [accountCommandWithInjectedUtxo(FOR_7200_BLOCKS)],
+      outputs: [],
+    })
+
+    expect(blocked).toBe(false)
+    expect(extraAmountRows).toEqual([])
+  })
+
+  it.each([
+    ['a missing lock', undefined],
+    ['an unknown lock type', { type: 'Nope' }],
+    ['a non-numeric block count', { type: 'ForBlockCount', content: 'soon' }],
+  ])(
+    'blocks an injected locked utxo with %s on an account-command input',
+    (_description, lock) => {
+      const { extraAmountRows, blocked } = reconcile({
+        inputs: [accountCommandWithInjectedUtxo(lock)],
+        outputs: [],
+      })
+
+      expect(blocked).toBe(true)
+      expect(extraAmountRows).toEqual([
+        {
+          key: 'lock:input:0',
+          label: 'Locked input',
+          tokenId: null,
+          withTicker: false,
+          errors: [{ error: LOCK_UNREADABLE, amount: null }],
+        },
+      ])
+    },
+  )
+
+  // Unchanged: a plain Transfer to one of the wallet's own addresses is
+  // change — no row at all.
+  it('keeps a plain Transfer to the wallet as change, with no row', () => {
+    const { amountRows, extraAmountRows, blocked } = reconcile({
+      inputs: [ownInput('100')],
+      outputs: [coinOutput('payee', '1'), coinOutput('change', '99')],
+    })
+
+    expect(blocked).toBe(false)
+    expect(amountRows).toEqual([{ key: 'Coin', tokenId: null, amount: '1' }])
+    expect(extraAmountRows).toEqual([])
   })
 })

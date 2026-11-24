@@ -5,6 +5,10 @@ import {
   getWalletPrivKeysList,
 } from './Mintlayer'
 import { batchRequestMintlayer } from '../../API/Mintlayer/Mintlayer'
+import {
+  LOCK_UNREADABLE_MESSAGE,
+  describeOutputLock,
+} from '../../../utils/Helpers/ML/TransactionAmounts'
 
 jest.mock('../../API/Mintlayer/Mintlayer', () => ({
   batchRequestMintlayer: jest.fn(),
@@ -31,6 +35,12 @@ jest.mock('./@mintlayerlib-js/wasm_wrappers.js', () => ({
         pubKey[0] === 1 ? 'r' : 'c'
       }${pubKey[1]}`,
   ),
+  // Lock encoding: each encoder returns its own marker bytes, so a test can
+  // tell which one getOutputs reached and with what.
+  Amount: { from_atoms: jest.fn((atoms) => ({ atoms: String(atoms) })) },
+  encode_lock_until_time: jest.fn(() => new Uint8Array([0x10, 0])),
+  encode_lock_for_block_count: jest.fn(() => new Uint8Array([0x20, 0])),
+  encode_output_lock_then_transfer: jest.fn(() => new Uint8Array([0x30])),
 }))
 
 const ML_PRIV_KEY = new Uint8Array([1, 2, 3, 4])
@@ -85,6 +95,97 @@ describe('Mintlayer argument validation', () => {
         type: 'Transfer',
       }),
     ).toThrow('Unknown Mintlayer network type: chaosnet')
+  })
+})
+
+// The approval reads a LockThenTransfer lock exactly where getOutputs
+// encodes it: every lock the approval calls readable encodes here, through
+// the encoder its kind selects and with the very number the approval shows;
+// every lock the approval calls unreadable makes the signer throw, which is
+// why such a request fails closed before a password is ever asked for.
+describe('getOutputs lock encoding', () => {
+  const wrappers = jest.requireMock('./@mintlayerlib-js/wasm_wrappers.js')
+  const ADDRESS = 'tmt1qlockeddestination'
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it.each([
+    [
+      'an UntilTime lock with a numeric timestamp',
+      { type: 'UntilTime', content: { timestamp: 4102444800 } },
+      'encode_lock_until_time',
+      4102444800n,
+    ],
+    [
+      'an UntilTime lock with a digit-string timestamp',
+      { type: 'UntilTime', content: { timestamp: '4102444800' } },
+      'encode_lock_until_time',
+      4102444800n,
+    ],
+    [
+      'a ForBlockCount lock with a numeric count',
+      { type: 'ForBlockCount', content: 7200 },
+      'encode_lock_for_block_count',
+      7200n,
+    ],
+    [
+      'a ForBlockCount lock with a digit-string count',
+      { type: 'ForBlockCount', content: '7200' },
+      'encode_lock_for_block_count',
+      7200n,
+    ],
+  ])(
+    'encodes %s as the approval describes it',
+    (_case, lock, encoder, count) => {
+      expect(describeOutputLock(lock).error).toBeUndefined()
+
+      const encoded = getOutputs({
+        amount: '1000',
+        address: ADDRESS,
+        networkType: 'testnet',
+        type: 'LockThenTransfer',
+        lock,
+      })
+
+      // the lock kind's own encoder got the number the approval displays …
+      expect(wrappers[encoder]).toHaveBeenCalledWith(count)
+      // … and its bytes are the lock of the output handed to the encoder
+      const lockBytes = wrappers[encoder].mock.results[0].value
+      expect(wrappers.encode_output_lock_then_transfer).toHaveBeenCalledWith(
+        { atoms: '1000' },
+        ADDRESS,
+        lockBytes,
+        1,
+      )
+      expect(encoded).toBe(
+        wrappers.encode_output_lock_then_transfer.mock.results[0].value,
+      )
+    },
+  )
+
+  it.each([
+    ['a missing lock', undefined],
+    ['an unknown lock type', { type: 'UntilHeight', content: 100 }],
+    ['a non-numeric block count', { type: 'ForBlockCount', content: 'soon' }],
+    [
+      'an UntilTime lock without a timestamp',
+      { type: 'UntilTime', content: {} },
+    ],
+  ])('throws on %s, which the approval calls unreadable too', (_case, lock) => {
+    expect(describeOutputLock(lock)).toEqual({ error: LOCK_UNREADABLE_MESSAGE })
+
+    expect(() =>
+      getOutputs({
+        amount: '1000',
+        address: ADDRESS,
+        networkType: 'testnet',
+        type: 'LockThenTransfer',
+        lock,
+      }),
+    ).toThrow()
+    expect(wrappers.encode_output_lock_then_transfer).not.toHaveBeenCalled()
   })
 })
 

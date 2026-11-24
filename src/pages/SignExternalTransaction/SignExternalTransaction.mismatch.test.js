@@ -1,6 +1,16 @@
 import React from 'react'
 import { MemoryRouter, Routes, Route } from 'react-router'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react'
+import { format } from 'date-fns'
+import { sendPopupResponse } from '@Browser'
+import { SignTransaction as SignTxHelpers } from '@Helpers'
+import { Account } from '@Entities'
 
 import { MOCKS } from './mocks'
 
@@ -62,6 +72,41 @@ jest.mock('@Entities', () => ({
     getPasswordWithPasskey: jest.fn(),
   },
 }))
+
+// The signing flow is exercised through its three sinks only: every helper
+// stays real (amount reconciliation, type flags, summary rendering) and a
+// request that must never reach the signer is observable as "sink never
+// called". Mocking the DEEP module keeps the @Helpers barrel's own circular
+// imports resolving exactly as in production.
+jest.mock('../../utils/Helpers/ML/SignTransaction', () => {
+  const actual = jest.requireActual('../../utils/Helpers/ML/SignTransaction')
+  return {
+    __esModule: true,
+    ...actual,
+    getTransactionBINrepresentation: jest.fn(() => ({
+      inputs: [new Uint8Array([1])],
+      outputs: [new Uint8Array([2])],
+      transactionsize: 10,
+      feeRate: '100000000',
+    })),
+    getTransactionHEX: jest.fn(() => 'aabbccdd'),
+    getTransactionIntent: jest.fn(() => 'eeff0011'),
+  }
+})
+
+// The mocked unlockAccount yields a fake private key; keep the wallet-key
+// derivation out of the test with the same deep-module strategy.
+jest.mock('../../services/Crypto/Mintlayer/Mintlayer', () => {
+  const actual = jest.requireActual('../../services/Crypto/Mintlayer/Mintlayer')
+  return {
+    __esModule: true,
+    ...actual,
+    getWalletPrivKeysList: jest.fn(() => ({
+      mlReceivingPrivKeys: {},
+      mlChangePrivKeys: {},
+    })),
+  }
+})
 
 // Plausible providers — real page, real child components, fake wallet state.
 jest.mock('@Contexts', () => {
@@ -667,4 +712,369 @@ describe('SignTransactionPage — every request field replaced by a non-string v
       })
     },
   )
+})
+
+// A LockThenTransfer output addressed to one of the wallet's own addresses
+// brings the funds back encumbered by the site's chosen lock: the summary
+// must say so in plain words — the amount and the lock on their own row —
+// instead of hiding the output like plain change. A lock the signer could
+// not encode fails closed before the signer is reached.
+const OWN_CHANGE = 'tmt1qwalletchange'
+const PAYEE = 'tmt1qpayeedestination'
+const LOCKED_ROW_LABEL = 'Locked at this wallet'
+const LOCK_UNREADABLE =
+  'The lock on these funds cannot be read, so this transaction cannot be signed'
+const UNTIL_2100 = { type: 'UntilTime', content: { timestamp: 4102444800 } }
+const FOR_7200_BLOCKS = { type: 'ForBlockCount', content: '7200' }
+// the lock timestamp is rendered with the wallet's own date format
+const UNTIL_2100_TEXT = `until ${format(
+  new Date(4102444800 * 1000),
+  'dd/MM/yyyy HH:mm',
+)}`
+
+// Exact decimal string → atoms string at coin scale (11 decimals).
+const toAtoms = (decimal) => {
+  const [whole, fraction = ''] = String(decimal).split('.')
+  const digits = (fraction + '0'.repeat(11)).slice(0, 11)
+  return `${whole}${digits}`.replace(/^0+(?=\d)/, '')
+}
+// A coin value whose label matches its atoms unless an override is given.
+const coinValue = (decimal, atoms = toAtoms(decimal)) => ({
+  type: 'Coin',
+  amount: { decimal, atoms },
+})
+const utxoInput = (destination, decimal, atoms) => ({
+  input: {
+    index: 0,
+    input_type: 'UTXO',
+    source_id:
+      '3e0c04ce80dff7dfae5be22b9ada59f0338d2a6ad6204aa1320a2fa5d6ca7afa',
+    source_type: 'Transaction',
+  },
+  utxo: { destination, value: coinValue(decimal, atoms) },
+})
+const paymentToPayee = {
+  destination: PAYEE,
+  type: 'Transfer',
+  value: coinValue('1'),
+}
+const lockedChange = (lock, decimal = '99', atoms) => ({
+  destination: OWN_CHANGE,
+  type: 'LockThenTransfer',
+  lock,
+  value: coinValue(decimal, atoms),
+})
+const lockedRequest = (outputs, inputs) => ({
+  request: {
+    origin: 'https://app.example',
+    requestId: 'locked-1',
+    network: 'testnet',
+    data: {
+      chain: 'mintlayer',
+      txData: { JSONRepresentation: { inputs, outputs } },
+    },
+  },
+})
+const HUNDRED_IN = [utxoInput(OWN_RECEIVING, '100')]
+
+// the value cell of the summary's locked row
+const lockedRowValue = (summary) =>
+  within(summary).getByText(LOCKED_ROW_LABEL).nextElementSibling
+
+describe('SignTransactionPage — locked outputs returning to this wallet', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    Account.hasPasskey.mockResolvedValue(false)
+    Account.unlockAccount.mockResolvedValue({
+      mlPrivKeys: { mlTestnetPrivateKey: 'test-private-key' },
+    })
+  })
+
+  // The payload as a site sends it: the payment the user expects, next to
+  // the whole remainder coming back locked until 2100.
+  const paymentAndLockedChange = lockedRequest(
+    [paymentToPayee, lockedChange(UNTIL_2100)],
+    HUNDRED_IN,
+  )
+
+  it('shows the locked change with its amount and lock, and stays approvable', () => {
+    renderSignPage(paymentAndLockedChange)
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(within(summary).getByText('Send')).toBeInTheDocument()
+    expect(within(summary).getByText(shown(PAYEE))).toBeInTheDocument()
+    // the Amount row is the payment alone
+    expect(within(summary).getByText('1 TML')).toBeInTheDocument()
+    expect(within(summary).getAllByText('Amount')).toHaveLength(1)
+    // the locked remainder is its own visible row, outside the technical details
+    expect(within(summary).getByText(LOCKED_ROW_LABEL)).toBeInTheDocument()
+    expect(lockedRowValue(summary)).toHaveTextContent(
+      `99 TML, ${UNTIL_2100_TEXT}`,
+    )
+    expect(screen.queryByTestId('technical-details')).not.toBeInTheDocument()
+    // the fee counts the locked output: 100 − 1 − 99
+    expect(within(summary).getByText('0 TML')).toBeInTheDocument()
+
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeEnabled()
+  })
+
+  it('blocks a lying decimal on the locked amount', () => {
+    renderSignPage(
+      lockedRequest(
+        [paymentToPayee, lockedChange(UNTIL_2100, '1', toAtoms('99'))],
+        HUNDRED_IN,
+      ),
+    )
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    expect(screen.getByText(/Amount verification failed/)).toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeDisabled()
+    expect(lockedRowValue(summary)).toHaveTextContent(
+      `will sign 99 TML, ${UNTIL_2100_TEXT}`,
+    )
+    // the site's "1" label is never shown as the locked amount: the row
+    // leads with the verification error, not with a number
+    expect(lockedRowValue(summary)).not.toHaveTextContent(/^1 TML/)
+  })
+
+  it('shows amount and lock when the locked output is the only one', () => {
+    renderSignPage(
+      lockedRequest(
+        [lockedChange(UNTIL_2100)],
+        [utxoInput(OWN_RECEIVING, '99')],
+      ),
+    )
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(within(summary).getByText(LOCKED_ROW_LABEL)).toBeInTheDocument()
+    expect(lockedRowValue(summary)).toHaveTextContent(
+      `99 TML, ${UNTIL_2100_TEXT}`,
+    )
+    // nothing is paid to others and no amount is hidden
+    expect(within(summary).queryByText('Amount')).not.toBeInTheDocument()
+    expect(within(summary).getByText('To')).toBeInTheDocument()
+    expect(within(summary).getByText('—')).toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeEnabled()
+  })
+
+  // A delegation withdrawal as the SDK builds it: one DelegationBalance
+  // input, one LockThenTransfer coin output back to the wallet locked for
+  // the staking maturity. Truthful on the summary, and it signs as before.
+  it('shows a delegation withdrawal with its block lock and signs it through the existing flow', async () => {
+    const delegationWithdrawal = lockedRequest(
+      [
+        {
+          destination: OWN_RECEIVING,
+          type: 'LockThenTransfer',
+          lock: FOR_7200_BLOCKS,
+          value: coinValue('8'),
+        },
+      ],
+      [
+        {
+          input: {
+            input_type: 'Account',
+            account_type: 'DelegationBalance',
+            delegation_id:
+              'tdelg1mfust4vvrn3xy6slm9qvtf8kjlzw4ezspkqwenfnzryyeumgdahqp2upjz',
+            // the signer reads input.amount.atoms directly on a withdrawal
+            amount: { decimal: '10', atoms: toAtoms('10') },
+            nonce: 1,
+          },
+        },
+      ],
+    )
+
+    renderSignPage(delegationWithdrawal)
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(
+      within(summary).getByText('Withdraw from delegation'),
+    ).toBeInTheDocument()
+    expect(within(summary).getByText(LOCKED_ROW_LABEL)).toBeInTheDocument()
+    expect(lockedRowValue(summary)).toHaveTextContent('8 TML, for 7200 blocks')
+    expect(within(summary).queryByText('Amount')).not.toBeInTheDocument()
+    // 10 credited in − 8 locked back out
+    expect(within(summary).getByText('2 TML')).toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+
+    // the password approval path reaches the signer and answers the site
+    fireEvent.click(screen.getByText('Approve and return to page'))
+    fireEvent.change(screen.getByPlaceholderText('Enter your password'), {
+      target: { value: 'wallet-password' },
+    })
+    fireEvent.click(screen.getByText('Approve'))
+
+    await waitFor(() =>
+      expect(sendPopupResponse).toHaveBeenCalledWith({
+        method: 'signTransaction_approve',
+        requestId: 'locked-1',
+        origin: 'https://app.example',
+        result: 'aabbccdd',
+      }),
+    )
+    // the signer received the withdrawal as the site built it, lock included
+    expect(SignTxHelpers.getTransactionBINrepresentation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputs:
+          delegationWithdrawal.request.data.txData.JSONRepresentation.inputs,
+        outputs: [
+          expect.objectContaining({
+            type: 'LockThenTransfer',
+            lock: FOR_7200_BLOCKS,
+          }),
+        ],
+      }),
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  // getOutputs throws on each of these: the request can never be signed,
+  // so approval fails closed with the reason and the signer is never reached.
+  it.each([
+    ['a missing lock', undefined],
+    ['an unknown lock type', { type: 'ForSeconds', content: 30 }],
+    ['a non-numeric block count', { type: 'ForBlockCount', content: 'soon' }],
+    ['a negative block count', { type: 'ForBlockCount', content: -7200 }],
+    [
+      'a non-numeric UntilTime timestamp',
+      {
+        type: 'UntilTime',
+        content: { timestamp: 'soon' },
+      },
+    ],
+  ])('blocks approval on %s', (_description, lock) => {
+    renderSignPage(
+      lockedRequest([paymentToPayee, lockedChange(lock)], HUNDRED_IN),
+    )
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(lockedRowValue(summary)).toHaveTextContent(LOCK_UNREADABLE)
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    expect(screen.getByText(/Amount verification failed/)).toBeInTheDocument()
+    const approve = screen.getByText('Approve and return to page')
+    expect(approve).toBeDisabled()
+
+    // a click on the disabled button opens nothing and reaches no signer
+    fireEvent.click(approve)
+    expect(screen.queryByText('Re-enter your Password')).not.toBeInTheDocument()
+    expect(SignTxHelpers.getTransactionBINrepresentation).not.toHaveBeenCalled()
+    expect(sendPopupResponse).not.toHaveBeenCalled()
+  })
+
+  // Unchanged behaviour: a plain Transfer to one of the wallet's own
+  // addresses is change (no row), and a locked output to a foreign address
+  // is a payment row as today.
+  it('keeps a plain Transfer to the wallet as change and a foreign locked output as a payment', () => {
+    renderSignPage(
+      lockedRequest(
+        [
+          paymentToPayee,
+          { destination: OWN_CHANGE, type: 'Transfer', value: coinValue('40') },
+          {
+            destination: 'tmt1qotherlockeddestination',
+            type: 'LockThenTransfer',
+            lock: UNTIL_2100,
+            value: coinValue('59'),
+          },
+        ],
+        HUNDRED_IN,
+      ),
+    )
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(
+      within(summary).queryByText(LOCKED_ROW_LABEL),
+    ).not.toBeInTheDocument()
+    expect(within(summary).queryByText('40 TML')).not.toBeInTheDocument()
+    expect(within(summary).getByText('60 TML')).toBeInTheDocument()
+    expect(within(summary).queryByText(/until /)).not.toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeEnabled()
+  })
+
+  // The signer has to encode every LockThenTransfer lock it meets — on an
+  // output paid to someone else, on a spent locked output, and even on a
+  // utxo object injected into an account-command input (getTransactionHEX
+  // re-encodes every such utxo through getOutputs before it decides, by
+  // input type, whether to keep the bytes). One it could not encode can
+  // never be signed: approval fails closed with the reason, in step with
+  // the technical preview, and nothing is left for the error boundary.
+  const foreignLocked = (lock) => ({
+    destination: 'tmt1qotherlockeddestination',
+    type: 'LockThenTransfer',
+    lock,
+    value: coinValue('59'),
+  })
+  const spentLockedInput = (lock) => ({
+    input: {
+      index: 0,
+      input_type: 'UTXO',
+      source_id:
+        '3e0c04ce80dff7dfae5be22b9ada59f0338d2a6ad6204aa1320a2fa5d6ca7afa',
+      source_type: 'Transaction',
+    },
+    utxo: {
+      type: 'LockThenTransfer',
+      destination: OWN_RECEIVING,
+      lock,
+      value: coinValue('100'),
+    },
+  })
+
+  it.each([
+    [
+      'a locked output paid to someone else with an unknown lock type',
+      lockedRequest(
+        [paymentToPayee, foreignLocked({ type: 'Nope' })],
+        HUNDRED_IN,
+      ),
+      'Amount',
+    ],
+    [
+      'a spent locked output with a missing lock',
+      lockedRequest([paymentToPayee], [spentLockedInput(undefined)]),
+      'Locked input',
+    ],
+    [
+      'a locked utxo injected into a FillOrder input with a missing lock',
+      lockedRequest(
+        [paymentToPayee],
+        [
+          {
+            input: {
+              input_type: 'AccountCommand',
+              command: 'FillOrder',
+              order_id: 'order-1',
+              nonce: '0',
+            },
+            utxo: spentLockedInput(undefined).utxo,
+          },
+        ],
+      ),
+      'Locked input',
+    ],
+  ])('blocks approval on %s', (_description, request, rowLabel) => {
+    expect(() => renderSignPage(request)).not.toThrow()
+    expect(screen.getByText('Decline')).toBeInTheDocument()
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(
+      within(summary).getByText(rowLabel).nextElementSibling,
+    ).toHaveTextContent(LOCK_UNREADABLE)
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    expect(screen.getByText(/Amount verification failed/)).toBeInTheDocument()
+    const approve = screen.getByText('Approve and return to page')
+    expect(approve).toBeDisabled()
+
+    // a click on the disabled button opens nothing and reaches no signer
+    fireEvent.click(approve)
+    expect(screen.queryByText('Re-enter your Password')).not.toBeInTheDocument()
+    expect(SignTxHelpers.getTransactionBINrepresentation).not.toHaveBeenCalled()
+    expect(sendPopupResponse).not.toHaveBeenCalled()
+  })
 })

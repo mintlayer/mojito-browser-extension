@@ -255,8 +255,11 @@ const TransactionSummary = ({
                 : `${amount} ${tickerOf(tokenId)}`}
             </span>,
           ]),
+          // note: the plain-words lock of funds coming back locked to this
+          // wallet — read out with the amount, verified or shown as the
+          // signed truth, so the encumbrance is never separated from it
           ...extraAmountRows.map(
-            ({ key, label, tokenId, amount, errors, withTicker }) => [
+            ({ key, label, tokenId, amount, errors, withTicker, note }) => [
               label,
               <span
                 key={rowKey('extra', key)}
@@ -268,13 +271,13 @@ const TransactionSummary = ({
                         signed != null
                           ? `${error} — will sign ${signed}${
                               withTicker ? ` ${tickerOf(tokenId)}` : ''
-                            }`
+                            }${note ? `, ${note}` : ''}`
                           : error,
                       )
                       .join('; ')
-                  : withTicker
-                    ? `${amount} ${tickerOf(tokenId)}`
-                    : amount}
+                  : `${withTicker ? `${amount} ${tickerOf(tokenId)}` : amount}${
+                      note ? `, ${note}` : ''
+                    }`}
               </span>,
             ],
           ),

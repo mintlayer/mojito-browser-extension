@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js'
+import { format as formatDate } from 'date-fns'
 
 // Tokens can exceed float precision; never fall back to exponents. Wide
 // precision keeps the decimal↔atoms equality checks exact for mintlayer
@@ -371,6 +372,12 @@ export const signerOutputDestination = (output) =>
     ? output.destination
     : null
 
+// Every address of this wallet, receiving and change alike.
+const ownAddressList = (ownAddresses) => [
+  ...(ownAddresses?.receiving || []),
+  ...(ownAddresses?.change || []),
+]
+
 // The outputs the user is actually approving: those that don't land straight
 // back on this wallet — "lands back" meaning the signer encodes one of the
 // wallet's own addresses as the destination (signerOutputDestination); an
@@ -382,7 +389,7 @@ export const signerOutputDestination = (output) =>
 // the unspent remainder coming back.
 export const findRelevantOutputs = (outputs, ownAddresses) => {
   const receiving = ownAddresses?.receiving || []
-  const ownList = [...receiving, ...(ownAddresses?.change || [])]
+  const ownList = ownAddressList(ownAddresses)
   const isOwn = (address) => address && ownList.includes(address)
   const isReceiving = (address) => address && receiving.includes(address)
 
@@ -397,6 +404,116 @@ export const findRelevantOutputs = (outputs, ownAddresses) => {
     ),
     toSelf: true,
   }
+}
+
+// A LockThenTransfer output whose signer-encoded destination is one of the
+// wallet's own addresses: the funds come back to this wallet, but LOCKED by
+// a lock the site chose — the signer encodes `output.lock` next to
+// `output.destination` (getOutputs) — so they are neither a payment to
+// others nor plain change. `address` is read nowhere.
+export const isLockedSelfOutput = (output, ownAddresses) => {
+  const destination = signerOutputDestination(output)
+  return (
+    output?.type === 'LockThenTransfer' &&
+    destination !== null &&
+    ownAddressList(ownAddresses).includes(destination)
+  )
+}
+
+// The lock of a LockThenTransfer output as the signer encodes it
+// (Mintlayer.getOutputs): UntilTime → BigInt(lock.content.timestamp) through
+// encode_lock_until_time; ForBlockCount → BigInt(lock.content) through
+// encode_lock_for_block_count. Any other lock type, a missing lock or a
+// content BigInt cannot encode throws there, so the request can never be
+// signed: it fails closed with the reason below. The two contents are read
+// more strictly than BigInt itself would accept (it would also take true,
+// '0x10', an imprecise float or a value wider than the encoder's 64-bit
+// parameter — none of which can be shown as the number that gets signed):
+// only a non-negative safe integer or a decimal-digit string up to
+// 2^64 − 1 is readable. Nothing here coerces a site-controlled value.
+export const LOCK_UNREADABLE_MESSAGE =
+  'The lock on these funds cannot be read, so this transaction cannot be signed'
+
+// The summary row that names such an output: its funds are the wallet's
+// again, only not spendable until the lock expires.
+const LOCKED_ROW_LABEL = 'Locked at this wallet'
+// The row that names a spent locked output whose lock cannot be read.
+const LOCKED_INPUT_ROW_LABEL = 'Locked input'
+
+// The encoders take the count as an unsigned 64-bit integer — the wasm
+// glue hands the BigInt straight to a function that would silently keep
+// only the low 64 bits of anything wider, never the number displayed.
+const MAX_LOCK_COUNT = 2n ** 64n - 1n
+const MAX_LOCK_COUNT_DIGITS = MAX_LOCK_COUNT.toString().length
+
+const readLockCount = (value) => {
+  let digits
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value) || value < 0) return null
+    digits = String(value)
+  } else if (typeof value === 'string' && /^\d+$/.test(value)) {
+    // the width is settled before BigInt runs, so a site-supplied string
+    // of any length costs a bounded amount of work during render
+    digits = value.replace(/^0+(?=\d)/, '')
+    if (digits.length > MAX_LOCK_COUNT_DIGITS) return null
+  } else {
+    return null
+  }
+  const count = BigInt(digits)
+  return count <= MAX_LOCK_COUNT ? count.toString() : null
+}
+
+//   { type: 'UntilTime', timestamp }       unix seconds, decimal string
+//   { type: 'ForBlockCount', blockCount }  decimal string
+//   { error }                              the signer could not encode it
+export const readOutputLock = (lock) => {
+  if (!lock || typeof lock !== 'object' || Array.isArray(lock)) {
+    return { error: LOCK_UNREADABLE_MESSAGE }
+  }
+  if (lock.type === 'UntilTime') {
+    const timestamp = readLockCount(lock.content?.timestamp)
+    return timestamp === null
+      ? { error: LOCK_UNREADABLE_MESSAGE }
+      : { type: 'UntilTime', timestamp }
+  }
+  if (lock.type === 'ForBlockCount') {
+    const blockCount = readLockCount(lock.content)
+    return blockCount === null
+      ? { error: LOCK_UNREADABLE_MESSAGE }
+      : { type: 'ForBlockCount', blockCount }
+  }
+  return { error: LOCK_UNREADABLE_MESSAGE }
+}
+
+// A lock timestamp is rendered with the wallet's own date format, in local
+// time like every other date it shows; a timestamp no Date can represent is
+// shown as the raw signed number rather than as nothing.
+const formatLockTimestamp = (timestamp) => {
+  const date = new Date(Number(timestamp) * 1000)
+  return Number.isNaN(date.getTime())
+    ? `timestamp ${timestamp}`
+    : formatDate(date, 'dd/MM/yyyy HH:mm')
+}
+
+// A readable lock in plain words: 'until <date>' or 'for N blocks'. Null
+// for anything else (the caller decides what to show).
+export const formatOutputLock = (readLock) => {
+  if (readLock?.type === 'UntilTime') {
+    return `until ${formatLockTimestamp(readLock.timestamp)}`
+  }
+  if (readLock?.type === 'ForBlockCount') {
+    return `for ${readLock.blockCount} block${
+      readLock.blockCount === '1' ? '' : 's'
+    }`
+  }
+  return null
+}
+
+// readOutputLock and formatOutputLock in one step, for every surface that
+// names a lock: { text } when the signer can encode it, { error } otherwise.
+export const describeOutputLock = (lock) => {
+  const read = readOutputLock(lock)
+  return read.error ? read : { text: formatOutputLock(read) }
 }
 
 // The signer reads exactly one numeric amount container per shape — and
@@ -688,7 +805,9 @@ const collectSignedInputExtras = (input, index) => {
 // predicate disagrees with. Resolved through the SAME container resolver
 // and the SAME extras collector that build those rows, so it cannot drift
 // from what is displayed; the index and the token scales only label and
-// scale an extra, never decide whether one exists. Shapes that resolve a
+// scale an extra, never decide whether one exists. A locked output coming
+// back to this wallet yields its own row the same way (its value
+// container), so it reads true here as well. Shapes that resolve a
 // container or an extra yet carry no numeric amount at all render no row
 // and still read true here — the safe direction.
 export const outputCarriesSignedAmount = (output) =>
@@ -810,6 +929,26 @@ export const reconcileApprovalAmounts = (
   // block on a lying decimal, exactly like a payment row would.
   inputs.forEach((input, index) => {
     collectSignedInputExtras(input, index).forEach(pushExtra)
+    // A LockThenTransfer utxo is re-encoded by the signer through
+    // getOutputs with the utxo's own lock (getTransactionHEX, optUtxos_),
+    // so a lock it could not encode there can never be signed — exactly
+    // like on an output. The signer does that for EVERY input carrying such
+    // a utxo and consults the input type only afterwards, to keep or discard
+    // the bytes: an injected utxo on an account-command input with an
+    // unreadable lock throws at sign time too, so it blocks here as well,
+    // while a readable one signs nothing and yields no row.
+    if (input?.utxo?.type === 'LockThenTransfer') {
+      const lockError = describeOutputLock(input.utxo.lock).error
+      if (lockError) {
+        extraAmountRows.push({
+          key: `lock:input:${index}`,
+          label: LOCKED_INPUT_ROW_LABEL,
+          tokenId: null,
+          withTicker: false,
+          errors: [{ error: lockError, amount: null }],
+        })
+      }
+    }
     // SECURITY: MintTokens mints and DelegationBalance withdrawals commit
     // input.amount.atoms — the same signed fields as output amounts. A
     // lying `.decimal` on them must block approval exactly like
@@ -875,12 +1014,53 @@ export const reconcileApprovalAmounts = (
     collectSignedExtras(output, index, tokenDecimalsById).forEach(pushExtra)
   })
 
+  // Locked outputs returning to this wallet (isLockedSelfOutput): the
+  // funds come back, but encumbered by the site's chosen lock until it
+  // expires. They are paid to no one else, so they never join the Amount
+  // rows below, and they are not plain change: each gets its own row with
+  // its verified amount (the same container, identity and scale as any
+  // output — a lying `.decimal` on it blocks approval like on a payment)
+  // and its lock in plain words. A lock the signer could not encode
+  // (readOutputLock) can never be signed: the row states it and approval
+  // fails closed. A locked output without any amount is the same kind of
+  // unusable leg — the signer's BigInt(undefined) throws.
+  outputs.forEach((output, index) => {
+    if (!isLockedSelfOutput(output, ownAddresses)) return
+    const container = signerAmountContainer(output, 'output')
+    const tokenId = signerAmountTokenId(output, container, 'output')
+    const verified = verifyAmountPair(
+      container,
+      signerAmountScale(output, container, tokenDecimalsById, 'output'),
+    )
+    const lock = describeOutputLock(output.lock)
+    const errors = []
+    if (!verified) {
+      errors.push({ error: UNVERIFIABLE_MESSAGE, amount: null })
+    } else if (verified.error) {
+      errors.push({ error: verified.error, amount: verified.amount ?? null })
+    }
+    if (lock.error) errors.push({ error: lock.error, amount: null })
+    extraAmountRows.push({
+      key: `locked:${index}`,
+      label: LOCKED_ROW_LABEL,
+      tokenId,
+      withTicker: true,
+      // the lock words travel with the amount, verified or shown as the
+      // signed truth — only an unreadable lock leaves them out
+      ...(lock.text && { note: lock.text }),
+      ...(errors.length > 0 ? { errors } : { amount: verified.amount }),
+    })
+  })
+
   // payment rows: only outputs that don't land back on this wallet — burns
-  // surface as their own 'Burned' row above and are never payment rows
-  // (BurnCoin-shaped outputs resolve to no container at all — the signer
-  // never encodes them)
+  // and the locked outputs coming back to this wallet surface as their own
+  // rows above and are never payment rows (BurnCoin-shaped outputs resolve
+  // to no container at all — the signer never encodes them). A locked
+  // output to a RECEIVING address is among the relevant outputs of a
+  // self-transfer (it names the "To" line), yet it is paid to no one else.
   relevantOutputs.forEach((output) => {
     if (output?.type === 'BurnToken') return
+    if (isLockedSelfOutput(output, ownAddresses)) return
 
     // SECURITY: the container matches the signer exactly via the shared
     // leg-kind-aware resolver ('output') — DelegateStaking signs
@@ -900,7 +1080,15 @@ export const reconcileApprovalAmounts = (
       'output',
     )
     const verified = verifyAmountPair(container, decimals)
-    if (!verified) return // output carries no numeric amount at all
+    // A locked payment's lock is the recipient's concern, not an
+    // encumbrance of this wallet — but the signer still has to encode it.
+    // One it could not encode (readOutputLock) can never be signed, so the
+    // payment fails closed with the reason, exactly like a lying amount.
+    const lockError =
+      output?.type === 'LockThenTransfer'
+        ? describeOutputLock(output.lock).error
+        : null
+    if (!verified && !lockError) return // carries nothing to verify
     const key = tokenId || 'Coin'
     const entry = totals.get(key) || {
       key,
@@ -909,6 +1097,9 @@ export const reconcileApprovalAmounts = (
       atoms: null,
       errors: [],
     }
+    if (lockError) entry.errors.push({ error: lockError, amount: null })
+    totals.set(key, entry)
+    if (!verified) return
     if (verified.error) {
       entry.errors.push({
         error: verified.error,
@@ -917,7 +1108,6 @@ export const reconcileApprovalAmounts = (
     } else {
       entry.atoms = (entry.atoms ?? 0n) + verified.atoms
     }
-    totals.set(key, entry)
   })
 
   const amountRows = [...totals.values()].map((entry) => ({
