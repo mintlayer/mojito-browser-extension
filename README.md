@@ -2,6 +2,8 @@
 
 ![branch status](https://github.com/mintlayer/mojito-browser-extension/actions/workflows/node.js.yml/badge.svg)
 
+> **Note:** The bug bounty program for this repository is currently on hold.
+
 ## Setup
 
 Just clone the project, install deps and you are good to go:

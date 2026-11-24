@@ -2,6 +2,7 @@ import {
   getLastBlockHash,
   getTransactionData,
   getTransactionStatus,
+  getOutspend,
   getAddressTransactions,
   getAddress,
   getAddressUtxo,
@@ -113,6 +114,41 @@ describe.skip('Integration tests (require network)', () => {
     const result = await getFeesEstimates()
     const fees = JSON.parse(result)
     expect(Object.keys(fees).length).toBe(28)
+  })
+})
+
+// A transaction id from the integration block below, reused offline.
+const FIRST_TX_ID =
+  'f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba'
+
+describe('getOutspend', () => {
+  const defaultFetch = global.fetch
+
+  afterEach(() => {
+    global.fetch = defaultFetch
+  })
+
+  test('asks the Esplora outspend endpoint of the transaction output', async () => {
+    const answer = '{"spent":false}'
+    global.fetch = jest.fn(() =>
+      Promise.resolve({ ok: true, text: async () => answer }),
+    )
+
+    await expect(getOutspend(FIRST_TX_ID, 3)).resolves.toBe(answer)
+
+    const [url] = global.fetch.mock.calls[0]
+    expect(url).toMatch(new RegExp(`/tx/${FIRST_TX_ID}/outspend/3$`))
+  })
+
+  test('encodes the output index it is given', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({ ok: true, text: async () => '{"spent":true}' }),
+    )
+
+    await getOutspend(FIRST_TX_ID, '0')
+
+    const [url] = global.fetch.mock.calls[0]
+    expect(url).toMatch(new RegExp(`/tx/${FIRST_TX_ID}/outspend/0$`))
   })
 })
 

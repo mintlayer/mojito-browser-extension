@@ -40,6 +40,9 @@ import {
   encode_witness_no_signature,
 } from '../../../services/Crypto/Mintlayer/@mintlayerlib-js/wasm_wrappers.js'
 import { getOutputs } from '../../../services/Crypto/Mintlayer/Mintlayer.js'
+// Shared signer-exact account-command input predicate (both input_type
+// spellings) — the same resolution the signer applies below.
+import { isAccountCommandShape } from './TransactionAmounts'
 
 export const handleTxError = (error, setTxErrorMessage, setPassword) => {
   const errorMsg =
@@ -71,7 +74,7 @@ export const handleTxError = (error, setTxErrorMessage, setPassword) => {
   }
 }
 
-function mergeUint8Arrays(arrays) {
+export function mergeUint8Arrays(arrays) {
   const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0)
 
   const result = new Uint8Array(totalLength)
@@ -679,46 +682,93 @@ const FLAG_NAMES = [
   'isUnknown',
 ]
 
+// Flag tables are read with own string keys only: `type`/`command` are
+// dApp-controlled, and a non-string never names an operation (an object
+// with a shadowing `toString`/`valueOf` would even throw when coerced to a
+// property key); nor may an inherited member name such as 'toString' or
+// 'constructor' select one.
+const flagFor = (table, key) =>
+  typeof key === 'string' && Object.prototype.hasOwnProperty.call(table, key)
+    ? table[key]
+    : undefined
+
 /**
  * Picks the single operation a transaction represents. The order matters:
  * an account command describes the transaction better than the outputs it
  * produces, and a burn or an issuance better than the transfer next to it.
  */
 export const getTransactionType = (JSONRepresentation, intent) => {
-  const inputs = JSONRepresentation?.inputs || []
-  const outputs = JSONRepresentation?.outputs || []
+  // The background forwards dApp params unvalidated: non-array legs, entries
+  // inside them that are not objects, and non-string types/commands must
+  // degrade to 'unknown operation', never crash the approval render.
+  const inputs = Array.isArray(JSONRepresentation?.inputs)
+    ? JSONRepresentation.inputs
+    : []
+  const outputs = Array.isArray(JSONRepresentation?.outputs)
+    ? JSONRepresentation.outputs
+    : []
 
-  const outputTypes = outputs.map((output) => output.type)
+  const outputTypes = outputs.map((output) =>
+    typeof output?.type === 'string' ? output.type : null,
+  )
   const hasOutput = (type) => outputTypes.includes(type)
 
-  if (intent) return 'isBridgeRequest'
+  // a bridge request carries an opaque string intent; anything else present
+  // is malformed (blocked by reconcileApprovalAmounts) and names no operation
+  if (typeof intent === 'string' && intent) return 'isBridgeRequest'
 
+  // account commands exist only on account-command inputs (input_type
+  // 'AccountCommand' or 'Account' — shared isAccountCommandShape) — injected
+  // commands on UTXO inputs are never encoded by the signer
   const command = inputs
-    .map((input) => input.input?.command)
-    .find((name) => ACCOUNT_COMMAND_FLAGS[name])
+    .filter((input) => isAccountCommandShape(input?.input))
+    .map((input) =>
+      typeof input.input?.command === 'string' ? input.input.command : null,
+    )
+    .find((name) => flagFor(ACCOUNT_COMMAND_FLAGS, name))
 
   if (command === 'MintTokens' && hasOutput('LockThenTransfer')) {
     return 'isTokenMintWithLock'
   }
-  if (command) return ACCOUNT_COMMAND_FLAGS[command]
+  if (command) return flagFor(ACCOUNT_COMMAND_FLAGS, command)
 
+  // the withdrawal flag mirrors the signer's inputCommands filter: account
+  // inputs only (shared isAccountCommandShape, both input_type spellings) —
+  // a UTXO input with an injected account_type encodes a plain utxo, not a
+  // withdrawal
   if (
-    inputs.some((input) => input.input?.account_type === 'DelegationBalance')
+    inputs.some(
+      (input) =>
+        isAccountCommandShape(input?.input) &&
+        input.input?.account_type === 'DelegationBalance',
+    )
   ) {
     return 'isDelegateWithdraw'
   }
 
-  if (inputs.some((input) => input.utxo?.type === 'Htlc')) return 'isSpendHtlc'
+  // the signer reads utxo legs (and their htlc witnesses) only for
+  // input_type 'UTXO' — an injected utxo object on an account-command input
+  // encodes nothing and must not flip the operation to an HTLC spend
+  if (
+    inputs.some(
+      (input) =>
+        input?.input?.input_type === 'UTXO' && input?.utxo?.type === 'Htlc',
+    )
+  ) {
+    return 'isSpendHtlc'
+  }
 
   // Coin burns arrive as BurnToken with a Coin value (never as a
   // 'BurnCoin' output type), so they need value-level discrimination.
-  const burnOutput = outputs.find((output) => output.type === 'BurnToken')
+  const burnOutput = outputs.find((output) => output?.type === 'BurnToken')
   if (burnOutput) {
-    return burnOutput.value?.type === 'Coin' ? 'isBurnCoin' : 'isBurnToken'
+    // coin-vs-token keys off token-id presence, matching the burn encoding
+    // (token burns carry value.token_id; coin burns do not)
+    return burnOutput.value?.token_id ? 'isBurnToken' : 'isBurnCoin'
   }
 
-  const outputType = outputTypes.find((type) => OUTPUT_FLAGS[type])
-  if (outputType) return OUTPUT_FLAGS[outputType]
+  const outputType = outputTypes.find((type) => flagFor(OUTPUT_FLAGS, type))
+  if (outputType) return flagFor(OUTPUT_FLAGS, outputType)
 
   if (
     outputs.length > 0 &&

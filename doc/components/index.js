@@ -1,7 +1,7 @@
 // Mojito BE design components — barrel.
 // Load order documents the composition hierarchy: basics first, composed on top.
 // Each file registers its components globally (Object.assign(window, ...)) to stay
-// drop-in compatible with the demo shell (doc/Mojito BE.html).
+// drop-in compatible with a build-free browser preview of the composition.
 
 // ─── Basic: brand & data display ─────────────────────────────
 import './basic/Icon.jsx'

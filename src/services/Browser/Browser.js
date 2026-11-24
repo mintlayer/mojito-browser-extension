@@ -65,6 +65,110 @@ export const sendPopupResponse = ({
   }
 }
 
+// Mirrors the wallet's lock clock into chrome.storage.local ('walletLockAt'):
+// the service worker cannot read the wallet pages' localStorage, so this is
+// the only way it can enforce the 30-minute auto-lock when no wallet page is
+// open to observe the expiry. `value` is the lock timestamp (stamped at
+// every registry write: unlock, throttled activity refresh, pagehide and
+// logout) or null (legacy/pre-fix writers only — the worker treats it as
+// 'no clock observed', i.e. never expired).
+export const stampWalletLock = (value) => {
+  if (!storage?.local) return
+  // One bounded rewrite on any failure signal (runtime.lastError from the
+  // set callback): a lost stamp is NOT self-healing at unlock — until the
+  // next pagehide/logout the mirror would keep the previous session's
+  // already-expired clock, which the worker sweeps against the new
+  // session's grants at its next boot. The rewrite is idempotent (same
+  // value); a persistently failing storage just stays at one retry.
+  let rewrote = false
+  const write = () => {
+    try {
+      storage.local.set(
+        { walletLockAt: typeof value === 'number' ? value : null },
+        () => {
+          // reading lastError here acknowledges it for Chrome
+          const failed = runtime?.lastError
+          if (failed && !rewrote) {
+            rewrote = true
+            write()
+          }
+        },
+      )
+    } catch {
+      /* storage unavailable — the next lock state change re-stamps */
+    }
+  }
+  write()
+}
+
+// Stamps the durable REVOCATION EPOCH ('grantsRevokedAt' in
+// chrome.storage.local, ms epoch) at every lock/logout. This is the
+// revocation witness, deliberately SPLIT from the liveness mirror
+// ('walletLockAt'): the mirror is re-stamped fresh by every unlock (before
+// the registry write), so in the lost-notify case (both walletLocked sends
+// fail — the worker stayed dead) a re-unlock would overwrite the
+// already-expired logout stamp before the worker ever observed it, and the
+// pre-logout grants would answer for a whole fresh mirror TTL. The epoch is
+// NEVER re-stamped by an unlock and is monotonic (Date.now() at lock time,
+// the same clock grant timestamps come from): grants approved at or before
+// it are dead regardless of how fresh the mirror reads, and grants approved
+// after it (post-re-unlock approvals) legitimately survive.
+export const stampGrantsRevoked = () => {
+  if (!storage?.local) return
+  // One bounded rewrite on any failure signal (same pattern as
+  // stampWalletLock): a lost epoch weakens revocation until the next lock
+  // re-epochs, and the idempotent rewrite (a new Date.now() is still a
+  // valid epoch for a witness written by THIS lock) keeps one retry.
+  let rewrote = false
+  const write = () => {
+    try {
+      storage.local.set({ grantsRevokedAt: Date.now() }, () => {
+        // reading lastError here acknowledges it for Chrome
+        const failed = runtime?.lastError
+        if (failed && !rewrote) {
+          rewrote = true
+          write()
+        }
+      })
+    } catch {
+      /* storage unavailable — walletLocked notify + lock mirror still sweep */
+    }
+  }
+  write()
+}
+
+// Tells the background the wallet was locked or logged out — via the manual
+// logout button or the 30-minute auto-lock expiry (AccountProvider is the
+// only place that can observe both; the service worker cannot read the
+// wallet pages' localStorage lock state). The background answers by
+// revoking EVERY dApp connection grant, exactly like a manual disconnect.
+export const notifyWalletLocked = () => {
+  if (!runtime) return
+  // One bounded re-send on any failure signal: an {error} reply from a live
+  // worker (persist failed) or runtime.lastError from a dead one (worker
+  // not yet restarted / context invalidated). A silently lost lock would
+  // otherwise let the dead grants answer until the persisted lock mirror
+  // expires them on the worker's next boot. The re-delivery is idempotent:
+  // revokeAllGrants answers duplicate sends from the durable snapshot.
+  let resent = false
+  const send = () => {
+    try {
+      runtime.sendMessage({ action: 'walletLocked' }, (response) => {
+        // reading lastError here acknowledges it for Chrome
+        const undelivered = runtime.lastError
+        if ((response?.error || undelivered) && !resent) {
+          resent = true
+          send()
+        }
+      })
+    } catch {
+      /* messaging unavailable — the persisted lock mirror still sweeps the
+         grants on the worker's next boot */
+    }
+  }
+  send()
+}
+
 // Tells the background the approval surface (side panel or popup) rendered
 // the request: it cancels the popup-fallback timer for that requestId.
 // Without this ack the background assumes the panel did not display the

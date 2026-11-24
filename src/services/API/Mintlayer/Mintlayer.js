@@ -378,7 +378,7 @@ const getNftsData = async (tokens) => {
 // Mintlayer tokens carry no on-chain icon: the token points at a metadata
 // document (metadata_uri, usually ipfs://) whose JSON holds the icon under
 // `tokenIcon` (also tolerate `icon_uri`/`icon`). The icon itself is often an
-// ipfs:// uri again.
+// ipfs:// uri again (or a gateway-hosted https spelling of one).
 // The raw ipfs:// scheme is never fetched or rendered: every uri is mapped
 // to one of these gateways. Public gateway availability varies per network
 // and providers have multi-hour outages (2026-09-09: ipfs.io hung,
@@ -393,20 +393,157 @@ const IPFS_GATEWAYS = [
   'https://ipfs.io/ipfs',
 ]
 // Token metadata is issuer-controlled: only ipfs:// metadata documents are
-// resolved (through the fixed gateway list) and only gateway-hosted icons
-// are returned. Arbitrary https/http metadata or icon urls would turn token
-// issuance into a request-forgery/tracking vector from the wallet UI.
+// resolved (through the fixed gateway list) and only first-party-resolved
+// icons are returned (explorer proxy first, fixed gateway race as fallback).
+// Arbitrary https/http metadata or icon urls would turn token issuance into
+// a request-forgery/tracking vector from the wallet UI.
 const isAllowedIpfsUri = (uri) =>
   typeof uri === 'string' && uri.startsWith('ipfs://')
 
+// The hosts above, for recognizing https:// spellings of ipfs content in
+// issuer-controlled icon fields.
+const IPFS_GATEWAY_HOSTS = new Set(
+  IPFS_GATEWAYS.map((gateway) => new URL(gateway).host),
+)
+
 const NEGATIVE_CACHE_TTL_MS = 5 * 60 * 1000
+// Client-side backstop applied to issuer image bytes on every leg (proxy
+// and public gateway race); both buffer fully before rejecting. The
+// explorer proxy contract itself serves PNG/JPEG/WebP ≤1MB — the wider 5MB
+// cap only bounds what the fallback gateway leg may buffer.
 const ICON_MAX_BYTES = 5 * 1024 * 1024
+// Issuer-controlled metadata documents are tiny JSON (name, ticker, icon
+// pointers) — real ones sit far below 256KB. The cap bounds ingest AND
+// retention of every raced leg: an over-cap document fails its gateway leg
+// exactly like a dead gateway (see readMetadataTextCapped: rejected on
+// content-length before download, cut off mid-stream when headerless), and
+// when every leg exceeds the cap the lookup is a failed lookup, which is
+// negative-cached with the TTL below. Measured on the decoded text (UTF-16
+// code units — the string actually retained in memory); the same budget is
+// applied to wire bytes via the content-length pre-check.
+const METADATA_MAX_BYTES = 256 * 1024
 // metadata uri -> { value: blobUrl, expires? } (negative entries carry a TTL)
 const tokenIconCache = new Map()
 // metadata uri -> parsed JSON. Ipfs content is content-addressed, so a
-// resolved metadata document never needs to be fetched again.
+// resolved metadata document never needs to be fetched again. The Map is
+// bounded (see setBounded/getCachedMetadata): a session-long unbounded Map
+// would let the wallet retain every issuer document it ever displayed.
 const metadataCache = new Map()
-const failedLookupsLogged = new Set()
+// metadata uri -> { value: null, expires } — failed (null) lookups, same
+// shape and TTL as the tokenIconCache negatives. Every leg having failed
+// (HTTP errors, timeouts, size cap) is futile to re-race: ipfs content is
+// content-addressed, a dead document stays dead for the TTL window.
+const failedMetadataCache = new Map()
+// Session bound shared by the metadata-uri-keyed Maps: 500 entries keeps
+// worst-case retention at ~500 × METADATA_MAX_BYTES and stops unbounded
+// growth across every token the wallet ever displays.
+const METADATA_CACHE_MAX_ENTRIES = 500
+
+// Bounded insert for insertion-ordered Maps: evict the oldest entry before
+// setting, so no collection can grow past maxEntries. delete-then-set also
+// moves an existing key to the newest slot.
+const setBounded = (map, key, value, maxEntries) => {
+  map.delete(key)
+  while (map.size >= maxEntries) {
+    map.delete(map.keys().next().value)
+  }
+  map.set(key, value)
+}
+
+// Metadata cache read with an LRU touch: re-inserting the entry moves it
+// to the newest slot, so eviction drops the least-RECENTLY-used document,
+// not a merely old-but-hot one.
+const getCachedMetadata = (metadataUri) => {
+  const cached = metadataCache.get(metadataUri)
+  if (cached !== undefined) {
+    metadataCache.delete(metadataUri)
+    metadataCache.set(metadataUri, cached)
+  }
+  return cached
+}
+
+// First failed lookup per uri is logged once (bounded Map, see setBounded)
+// so a dead gateway does not spam the console every refresh cycle.
+const failedLookupsLogged = new Map()
+const logFailedMetadataLookup = (metadataUri) => {
+  if (failedLookupsLogged.has(metadataUri)) return
+  setBounded(failedLookupsLogged, metadataUri, true, METADATA_CACHE_MAX_ENTRIES)
+  console.error(
+    `Failed to resolve usable token metadata from the gateways: ${metadataUri}`,
+  )
+}
+
+// fetchJsonWithGatewayFallback resolves Promise.any over parallel gateway
+// requests: ANY 200-with-parseable-JSON response wins — a captive portal or
+// a gateway error page can answer first. Only docs naming at least one
+// recognized metadata field count as content; junk is not cached (a
+// permanent metadataCache entry would poison icon resolution for the whole
+// session) and is retried on the next refresh. Every leg is byte-budgeted
+// (readMetadataTextCapped): an honestly-announced over-cap document is
+// rejected before its body is downloaded, a headerless one is cut off
+// mid-stream.
+const METADATA_FIELDS = [
+  'tokenIcon',
+  'icon_uri',
+  'icon',
+  'name',
+  'token_ticker',
+  'ticker',
+  'symbol',
+  'description',
+]
+const isPlausibleTokenMetadata = (metadata) =>
+  metadata !== null &&
+  typeof metadata === 'object' &&
+  !Array.isArray(metadata) &&
+  METADATA_FIELDS.some((field) => field in metadata)
+
+// Reads a metadata response body under a hard BYTE budget:
+// 1. The content-length header is bytes and is checked BEFORE any body
+//    transfer — an honestly-announced over-cap document costs a header
+//    round-trip, not a download. (Wire bytes ≥ decoded UTF-16 units, so
+//    the byte pre-check is the strict one; the unit backstop below can
+//    only re-confirm it.)
+// 2. Headerless responses stream through a cumulative byte budget: past
+//    the budget the reader is cancelled — the connection is dropped, not
+//    drained — and the leg fails like any dead gateway.
+// 3. The decoded text is re-checked in UTF-16 code units (the string
+//    actually retained) so a lying short header, or a runtime with no
+//    streaming body, cannot smuggle an oversized string through.
+const readMetadataTextCapped = async (response, maxBytes) => {
+  const contentLength = Number(response.headers?.get?.('content-length'))
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    throw new Error(`Metadata too large: content-length ${contentLength}`)
+  }
+  const reader = response.body?.getReader?.()
+  if (!reader) {
+    // No streaming body available (mocked/exotic responses): buffer fully
+    // and let the code-unit backstop below decide.
+    const buffered = await response.text()
+    if (buffered.length > maxBytes) {
+      throw new Error('Metadata too large')
+    }
+    return buffered
+  }
+  const decoder = new TextDecoder()
+  let received = 0
+  let text = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    received += value.byteLength
+    if (received > maxBytes) {
+      await reader.cancel?.()
+      throw new Error('Metadata too large')
+    }
+    text += decoder.decode(value, { stream: true })
+  }
+  text += decoder.decode()
+  if (text.length > maxBytes) {
+    throw new Error('Metadata too large')
+  }
+  return text
+}
 
 const fetchJsonWithGatewayFallback = async (metadataUri) => {
   const candidates = IPFS_GATEWAYS.map(
@@ -422,7 +559,8 @@ const fetchJsonWithGatewayFallback = async (metadataUri) => {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
     }
-    return response.json()
+    const text = await readMetadataTextCapped(response, METADATA_MAX_BYTES)
+    return JSON.parse(text)
   })
 
   try {
@@ -436,12 +574,13 @@ const fetchJsonWithGatewayFallback = async (metadataUri) => {
 // URL. Once fetched, the icon never touches a gateway again — it renders
 // from the blob, so the periodic refresh stops hammering public gateways
 // (they rate-limit aggressively).
+// Only ever called with ipfs:// uris (see toAllowedIconIpfsUri and
+// resolveNftImage's entry check): gateway hosts are wallet-fixed, so no
+// issuer input can choose the fetch target here.
 const fetchIconBlobUrl = async (iconUri) => {
-  const candidates = iconUri.startsWith('ipfs://')
-    ? IPFS_GATEWAYS.map(
-        (gateway) => `${gateway}/${iconUri.slice('ipfs://'.length)}`,
-      )
-    : [iconUri]
+  const candidates = IPFS_GATEWAYS.map(
+    (gateway) => `${gateway}/${iconUri.slice('ipfs://'.length)}`,
+  )
 
   const attempts = candidates.map(async (candidate) => {
     const response = await fetch(candidate, {
@@ -468,8 +607,35 @@ const fetchIconBlobUrl = async (iconUri) => {
   }
 }
 
-const resolveTokenIcon = async (metadataUri) => {
+// Issuer-supplied icon field → the ipfs:// uri the resolver may fetch, or
+// null. ipfs:// passes through; an https url on one of the wallet's own ipfs
+// gateways is a gateway spelling of ipfs content and is converted
+// (https://ipfs.io/ipfs/Qm… ⇔ ipfs://Qm…). Everything else — most
+// importantly an arbitrary https origin — is rejected without any network
+// request: displaying a token must never make the wallet fetch an
+// attacker-chosen url.
+const toAllowedIconIpfsUri = (raw) => {
+  if (isAllowedIpfsUri(raw)) return raw
+  if (typeof raw !== 'string' || !raw.startsWith('https://')) return null
+  let url
+  try {
+    url = new URL(raw)
+  } catch {
+    return null
+  }
+  if (!IPFS_GATEWAY_HOSTS.has(url.host)) return null
+  if (!url.pathname.startsWith('/ipfs/')) return null
+  const cidPath = url.pathname.slice('/ipfs/'.length)
+  return cidPath ? `ipfs://${cidPath}` : null
+}
+
+const resolveTokenIcon = async (metadataUri, networkType) => {
   if (!isAllowedIpfsUri(metadataUri)) return undefined
+  // Same invariant as the image legs: the issuer-controlled remainder of
+  // ipfs://... must be a safe cid path. '../' segments normalize at fetch
+  // resolution (ipfs://a/../../x reaches https://gateway/x), which would
+  // let the issuer shape arbitrary paths on the fixed gateway hosts.
+  if (!isSafeCidPath(metadataUri.slice('ipfs://'.length))) return undefined
 
   const cached = tokenIconCache.get(metadataUri)
   if (cached) {
@@ -481,32 +647,59 @@ const resolveTokenIcon = async (metadataUri) => {
     }
   }
 
-  const metadata =
-    metadataCache.get(metadataUri) ??
-    (await fetchJsonWithGatewayFallback(metadataUri))
-  if (metadata) {
-    // Ipfs content is content-addressed: cache the document permanently so
-    // the refresh loop never re-fetches it.
-    metadataCache.set(metadataUri, metadata)
-  } else {
-    // Every gateway failed: log once per uri, do NOT cache — the next
-    // refresh retries.
-    if (!failedLookupsLogged.has(metadataUri)) {
-      failedLookupsLogged.add(metadataUri)
-      console.error(
-        `Failed to resolve token metadata from every gateway: ${metadataUri}`,
-      )
+  const failedMetadata = failedMetadataCache.get(metadataUri)
+  if (failedMetadata) {
+    // Negative entries carry a TTL; expiry drops the entry so the gateways
+    // are re-raced instead of short-circuiting forever.
+    if (failedMetadata.expires && failedMetadata.expires < Date.now()) {
+      failedMetadataCache.delete(metadataUri)
+    } else {
+      return undefined
     }
-    return undefined
   }
 
+  const metadata =
+    getCachedMetadata(metadataUri) ??
+    (await fetchJsonWithGatewayFallback(metadataUri))
+  if (metadata === null) {
+    // Every gateway leg failed (HTTP error, timeout, size cap): the race
+    // is futile for the TTL window — ipfs content is content-addressed, a
+    // dead document stays dead — so the failure is negative-cached like a
+    // definitive no-icon answer instead of re-raced on every refresh.
+    setBounded(
+      failedMetadataCache,
+      metadataUri,
+      { value: null, expires: Date.now() + NEGATIVE_CACHE_TTL_MS },
+      METADATA_CACHE_MAX_ENTRIES,
+    )
+    logFailedMetadataLookup(metadataUri)
+    return undefined
+  }
+  if (!isPlausibleTokenMetadata(metadata)) {
+    // The race winner was junk JSON (captive portal / gateway error page
+    // answering 200): log once per uri, do NOT cache — a junk winner must
+    // be retried on the next refresh, not trusted for the TTL window.
+    logFailedMetadataLookup(metadataUri)
+    return undefined
+  }
+  // Ipfs content is content-addressed: cache the document for the session
+  // (bounded, LRU-touched, oldest-evicted) so the refresh loop never
+  // re-fetches it.
+  setBounded(metadataCache, metadataUri, metadata, METADATA_CACHE_MAX_ENTRIES)
+
   const raw = metadata.tokenIcon || metadata.icon_uri || metadata.icon
-  // Scheme allowlist: ipfs:// resolves through the gateway race, https://
-  // is fetched directly. http:// (cleartext/internal-network) and exotic
-  // schemes are rejected — token metadata is issuer-controlled.
-  if (!(raw && typeof raw === 'string' && /^(ipfs|https):\/\//.test(raw))) {
-    // Definitive "document has no icon": cache with a TTL so the gateways
-    // are not hammered on every refresh.
+  // Issuer-controlled icon field: resolve ONLY ipfs content — ipfs:// uris,
+  // plus gateway-hosted https spellings of ipfs content — through the
+  // explorer proxy first and the fixed gateway race as fallback (the same
+  // first-party path as NFT media). Every other https origin, http://
+  // (cleartext/internal-network) and exotic scheme is rejected WITHOUT any
+  // request: the issuer could otherwise aim the wallet's fetch at an
+  // arbitrary origin (request forgery + IP/timing disclosure from the
+  // wallet UI).
+  const iconIpfsUri = toAllowedIconIpfsUri(raw)
+  if (!iconIpfsUri) {
+    // Definitive "document has no usable icon": cache with a TTL so the
+    // gateways are not hammered on every refresh.
     tokenIconCache.set(metadataUri, {
       value: null,
       expires: Date.now() + NEGATIVE_CACHE_TTL_MS,
@@ -514,7 +707,7 @@ const resolveTokenIcon = async (metadataUri) => {
     return undefined
   }
 
-  const blobUrl = await fetchIconBlobUrl(raw)
+  const blobUrl = await fetchImageBlobUrl(iconIpfsUri, networkType)
   if (blobUrl) {
     tokenIconCache.set(metadataUri, { value: blobUrl })
     return blobUrl
@@ -527,10 +720,18 @@ const resolveTokenIcon = async (metadataUri) => {
 // ── NFT media ─────────────────────────────────────────────────────────────
 // NFT icon_uri/media_uri point at ipfs:// content. Images resolve through
 // the explorer's first-party proxy first (GET /api/ipfs-media/{cid}: the
-// explorer does the fetching, so gateway hosts never see the user's IP;
-// responses are PNG/JPEG/WebP ≤1MB, immutably cached), falling back to the
-// public gateway race the token icons use. Only ipfs:// uris are resolved —
-// issuer-controlled https urls stay a request-forgery vector.
+// explorer does the fetching; responses are PNG/JPEG/WebP ≤1MB, immutably
+// cached), falling back to the public gateway race token icons use. Only
+// ipfs:// uris are resolved — issuer-controlled https urls stay a
+// request-forgery vector.
+// The IP guarantee is browser-conditional: on Firefox the proxy hosts are
+// in host_permissions, so the proxy leg genuinely shields the user's IP
+// from the public gateways. On Chrome the host contract is locked (the
+// manifest deliberately excludes the explorer), making the proxy fetch
+// CORS-dependent under MV3 — if /api/ipfs-media lacks CORS headers the
+// proxy leg silently fails and the fallback race DOES expose the user's IP
+// to the fixed public gateways. Server-side CORS support for the endpoint
+// still needs verifying.
 const EXPLORER_IPFS_PROXY_HOSTS = {
   [AppInfo.NETWORK_TYPES.MAINNET]: 'https://explorer.mintlayer.org',
   [AppInfo.NETWORK_TYPES.TESTNET]: 'https://lovelace.explorer.mintlayer.org',
@@ -552,22 +753,21 @@ const explorerIpfsMediaUrl = (ipfsUri, networkType) => {
   return `${host}/api/ipfs-media/${cidPath}`
 }
 
-// uri+network -> { value: blobUrl | null, expires? } (negative entries TTL)
-const nftImageCache = new Map()
-
-const resolveNftImage = async (ipfsUri, networkType) => {
-  if (!isAllowedIpfsUri(ipfsUri)) return null
-
-  const cacheKey = `${networkType || AppInfo.NETWORK_TYPES.MAINNET}|${ipfsUri}`
-  const cached = nftImageCache.get(cacheKey)
-  if (cached) {
-    if (cached.value === null && cached.expires < Date.now()) {
-      nftImageCache.delete(cacheKey)
-    } else {
-      return cached.value
-    }
-  }
-
+// Issuer ipfs content is fetched FOR the wallet, never aimed at
+// issuer-chosen targets: the explorer's first-party proxy does the fetching
+// (GET /api/ipfs-media/{cid}), and the public gateway race is only the
+// fallback. Both NFT media and token icons resolve through this one path;
+// both legs enforce the image content-type and the ICON_MAX_BYTES cap.
+// The proxy's IP shielding is Firefox-conditional: proxy hosts are in the
+// Firefox host_permissions, but Chrome's locked host contract makes the
+// proxy fetch CORS-dependent — without CORS headers on /api/ipfs-media the
+// fallback race exposes the user's IP to the fixed gateways (see the NFT
+// media section above).
+const fetchImageBlobUrl = async (ipfsUri, networkType) => {
+  // One validation up front: the proxy allow-lists the cid path and the
+  // gateway-race fallback must be exactly as strict — a junk path must
+  // reach neither leg.
+  if (!isSafeCidPath(ipfsUri.slice('ipfs://'.length))) return null
   const proxyUrl = explorerIpfsMediaUrl(ipfsUri, networkType)
   const viaProxy = proxyUrl
     ? fetch(proxyUrl, { signal: AbortSignal.timeout(10000) }).then(
@@ -586,7 +786,26 @@ const resolveNftImage = async (ipfsUri, networkType) => {
       )
     : Promise.reject(new Error('no proxy url'))
 
-  const blobUrl = await viaProxy.catch(() => fetchIconBlobUrl(ipfsUri))
+  return viaProxy.catch(() => fetchIconBlobUrl(ipfsUri))
+}
+
+// uri+network -> { value: blobUrl | null, expires? } (negative entries TTL)
+const nftImageCache = new Map()
+
+const resolveNftImage = async (ipfsUri, networkType) => {
+  if (!isAllowedIpfsUri(ipfsUri)) return null
+
+  const cacheKey = `${networkType || AppInfo.NETWORK_TYPES.MAINNET}|${ipfsUri}`
+  const cached = nftImageCache.get(cacheKey)
+  if (cached) {
+    if (cached.value === null && cached.expires < Date.now()) {
+      nftImageCache.delete(cacheKey)
+    } else {
+      return cached.value
+    }
+  }
+
+  const blobUrl = await fetchImageBlobUrl(ipfsUri, networkType)
 
   if (blobUrl) {
     // Content-addressed: a resolved image never needs fetching again.
@@ -770,7 +989,6 @@ export {
   getTokenById,
   getTokensData,
   resolveTokenIcon,
-  explorerIpfsMediaUrl,
   resolveNftImage,
   getPoolsData,
   getNftsData,

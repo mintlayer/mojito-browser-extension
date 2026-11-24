@@ -57,10 +57,24 @@ Notes:
 ## Connection lifecycle / revocation (authoritative)
 
 - A grant is created only by explicit user approval and is stored per-origin.
+- The origin is the one the browser reports for the page. A page whose
+  origin is not a bare `http(s)://host[:port]` origin (an opaque-origin
+  document, an extension page) can never hold a grant: every request from
+  it is refused with `UNSUPPORTED_ORIGIN`, before any approval is opened,
+  and a grant an older build stored under such a key is removed when the
+  background starts.
 - Revoking it — from the wallet Settings, via `window.mojito.disconnect()`,
   or on wallet lock/logout — is **immediate and persistent**: the wallet
   deletes the session, and open tabs for that origin receive
   `MINTLAYER_EVENT: disconnect`.
+- A grant is scoped to the network it was approved on: switching the
+  wallet's active network (mainnet ↔ testnet) revokes it the same way, and
+  `checkConnection`/`getSession` report disconnected/no session until the
+  dApp calls `connect` again (fresh approval on the new network). Grants
+  created by older wallet builds (no network stamp) are revoked the same
+  way — with disconnect events to open tabs — the first time the wallet UI
+  opens after the update; sign attempts on such a grant fail with
+  `WRONG_NETWORK`.
 - Bridges MUST treat that event as authoritative: drop every cached
   session/address from the SDK client. Do not trust an in-memory client
   state that predates the revocation (this caused an incident where the
@@ -82,10 +96,11 @@ trigger that).
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `USER_REJECTED`       | user denied the approval                                                                                                |
 | `REQUEST_CANCELLED`   | approval window closed without a decision                                                                               |
-| `REQUEST_IN_PROGRESS` | an approval window is already open                                                                                      |
+| `REQUEST_IN_PROGRESS` | an approval is already pending for this window; complete or reject it first                                             |
 | `NOT_CONNECTED`       | sign/challenge without a prior connect grant                                                                            |
 | `WRONG_NETWORK`       | session granted on a different network than the wallet's active one                                                     |
 | `UNSUPPORTED_METHOD`  | method not implemented by the wallet                                                                                    |
+| `UNSUPPORTED_ORIGIN`  | the page's origin is not a bare http(s) origin (an opaque-origin page, an extension page); nothing from it is processed |
 | `TIMEOUT`             | no answer from the wallet within 5 minutes                                                                              |
 | `CONTEXT_INVALIDATED` | the extension was reloaded/updated/disabled while the page was open; the page must be reloaded and connect called again |
 | `EXTENSION_ERROR`     | content script could not reach the background                                                                           |
@@ -101,6 +116,10 @@ trigger that).
 | `signTransaction`            | `{ txData }`; `txData.intent` present ⇒ bridge intent flow | plain hex string, or `{ transactionHex, intentEncode }` when `intent` was present (no `0x` prefixes) |
 | `signChallenge`              | `{ message, address? }`                                    | `{ message, address, signature }`                                                                    |
 | `checkConnection`, `version` | —                                                          | diagnostics                                                                                          |
+
+- `signTransaction` with `chain: 'bitcoin'` is a Bitcoin HTLC request, routed to the Bitcoin approval. `txData.JSONRepresentation` must match exactly one of: a claim `{ type: 'spendHtlc', utxo, redeemScriptHex, to?, secret? }`, a refund `{ type: 'refundHtlc', utxo, redeemScriptHex, to? }`, or a new HTLC `{ secretHash, amount, timeoutBlocks, recipientPublicKey, refundPublicKey }`. For a claim or refund: `utxo` is `{ txid, vout, value }` with `value` in whole satoshis, above the wallet's fixed claim or refund fee (a claim may add `utxo.secretHash`, `{ secret_hash_hex }`, which must equal the hash in the script); `redeemScriptHex` is the HTLC script (`OP_IF OP_HASH160 <hash> OP_EQUALVERIFY <spend key> OP_ELSE <lock> OP_CHECKSEQUENCEVERIFY OP_DROP <refund key> OP_ENDIF OP_CHECKSIG`); `secret` is the 64-hex-character claim secret, optional: the wallet signs with its stored secret for the hash when it has one, else with the request's `secret`, and prompts the user whenever the request carries none. Before any secret is fetched or signed with, the wallet verifies that the spend-branch key is one of its own keys, that the transaction `utxo.txid` is confirmed, that its output at `utxo.vout` is locked to `p2wsh(redeemScriptHex)` with value `utxo.value` and is still unspent, and that the secret hashes (hash160) to the hash in the script (a chain lookup that fails, an unconfirmed transaction or a spent output refuses the request); the stored secret is looked up only by the hash in the script. A refund is verified against the chain the same way and is signed only with the refund-branch key; `to` is optional — when present it must be one of the wallet's own addresses, when absent the wallet pays its own receiving address. For a new HTLC: `amount` is in whole satoshis, `timeoutBlocks` is a decimal count of blocks, and `secretHash` only marks the request — the wallet generates the secret itself, replaces the value and returns `secretHashHex` in the result. `refundPublicKey` must be a valid public key (hex decoding to a compressed key — 33 bytes starting `02`/`03` — that is a point on secp256k1; an odd-length, non-hex, truncated, off-curve or 65-byte uncompressed value is refused, never cut down by the hex decode) that equals one of the wallet's own Bitcoin public keys (the receiving or change keys it holds, compared case-insensitively), because the wallet funds the escrow and must hold the key that recovers it after the lock time; `recipientPublicKey` must be a valid public key, so the claim branch is spendable at all. The approval shows both keys — the refund key named as a key of this wallet, or as not checked when the wallet's own public keys cannot be read — and a request whose refund key is not one of the wallet's, whose keys are invalid, or whose refund key cannot be checked against the wallet's keys is blocked and never signed — the same check runs again at signing, before the wallet is unlocked, and no escrow address is built from keys that fail it. The result is `{ signedTxHex }` for a claim or refund and `{ signedTxHex, transactionId, htlcAddress, secretHashHex, redeemScript }` for a new HTLC. Any other shape, no match, or a claim or refund type next to `secretHash` is shown as unrecognised or ambiguous and cannot be approved.
+- `signTransaction` with `chain: 'mintlayer'` that spends an HTLC output whose `utxo.htlc.spend_key` is one of the wallet's addresses is a Mintlayer HTLC claim: before any key or secret is used, the wallet requires through the node's batch endpoint (`/transaction/:txid` and `/address/:address/spendable-utxos`) that the funding transaction is confirmed (`confirmations > 0`), that the output at the input's index is an HTLC output with the same `spend_key`, `secret_hash` and value as the request states, and that the outpoint is still among the spend key's spendable UTXOs; the stored secret is looked up only by the on-chain hash and must hash (hash160) to it, a lookup that fails or disagrees refuses the request. Of the on-chain fields compared, `id`, `confirmations`, `outputs[].type`, `outputs[].value.token_id` and `outputs[].value.amount.decimal` of the transaction answer and the spendable-UTXO items' `outpoint`, `utxo.type` and `utxo.value` are read by the wallet's own production code, whereas `outputs[].htlc` (spend key and secret hash) and `outputs[].value.amount.atoms` of the transaction answer, and the `htlc` object inside the spendable-UTXO items, follow the shape of the wallet's request fixtures and have not been verified against a live node — which must be done before relying on this path.
+- `signChallenge`: `message` must be a non-empty string, otherwise the request cannot be approved (the approval shows why and offers only Decline); a non-string `address` falls back to the wallet's default address.
 
 ## SDK mapping (v1.0.38)
 

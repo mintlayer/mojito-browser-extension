@@ -30,6 +30,7 @@ describe('background service worker', () => {
   let storageData
   let createdWindows
   let windowRemovedListeners
+  let storageChangeListeners
 
   const loadBackground = () => {
     // The WXT entrypoint wraps the original IIFE body in a factory; each
@@ -59,6 +60,7 @@ describe('background service worker', () => {
     storageData = {}
     createdWindows = []
     windowRemovedListeners = []
+    storageChangeListeners = []
 
     global.browser = undefined
     global.chrome = {
@@ -96,6 +98,11 @@ describe('background service worker', () => {
             delete storageData[key]
             cb && cb()
           },
+        },
+        // the background tracks the wallet UI's active network through the
+        // 'networkType' key it persists to chrome.storage.local
+        onChanged: {
+          addListener: (fn) => storageChangeListeners.push(fn),
         },
       },
       windows: {
@@ -151,10 +158,6 @@ describe('background service worker', () => {
       expect(reply.current).toBeUndefined()
       expect(keptOpen).toBe(true)
       expect(createdWindows).toHaveLength(1)
-      console.log(
-        'DEBUG stored:',
-        JSON.stringify(storageData['pendingRequest:700']),
-      )
       // keyed by the window that will show the approval
       expect(storageData['pendingRequest:700']).toMatchObject({
         action: 'connect',
@@ -263,6 +266,72 @@ describe('background service worker', () => {
       )
 
       expect(reply.current).toBeUndefined()
+    })
+
+    // `permissions` is dApp-supplied and the approval page renders it:
+    // whatever shape arrives, the pending request carries ONLY an array of
+    // strings (non-array values become empty, non-string entries are
+    // dropped) on every approval surface.
+    describe('dApp-supplied permissions', () => {
+      const permissionCases = [
+        ['a number', 42, []],
+        ['an object', {}, []],
+        ['a string', 'bitcoin', []],
+        ['null', null, []],
+        ['a mixed array', [null, 42, 'bitcoin', {}], ['bitcoin']],
+        ['an array of strings', ['bitcoin'], ['bitcoin']],
+      ]
+
+      const connectWith = (permissions, sender) =>
+        dispatch(
+          { requestId: 'r1', method: 'connect', params: { permissions } },
+          sender,
+        )
+
+      it.each(permissionCases)(
+        'popup approval: permissions given as %s',
+        (_shape, permissions, expected) => {
+          connectWith(permissions, dappSender)
+
+          expect(storageData['pendingRequest:700'].permissions).toEqual(
+            expected,
+          )
+        },
+      )
+
+      // the panel path persists the request only after sidePanel.open settles
+      const flushMicrotasks = async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+        await Promise.resolve()
+      }
+
+      it.each(permissionCases)(
+        'side panel approval: permissions given as %s',
+        async (_shape, permissions, expected) => {
+          connectWith(permissions, tabDappSender)
+          await flushMicrotasks()
+
+          expect(storageData['pendingRequest:3'].permissions).toEqual(expected)
+        },
+      )
+
+      it.each(permissionCases)(
+        'popup fallback approval: permissions given as %s',
+        async (_shape, permissions, expected) => {
+          global.chrome.sidePanel.open.mockRejectedValue(
+            new Error('no gesture'),
+          )
+          connectWith(permissions, tabDappSender)
+          await flushMicrotasks()
+
+          // the fallback persists under ITS window id, never the panel's
+          expect(storageData['pendingRequest:3']).toBeUndefined()
+          expect(storageData['pendingRequest:700'].permissions).toEqual(
+            expected,
+          )
+        },
+      )
     })
   })
 
@@ -1023,6 +1092,318 @@ describe('background service worker', () => {
         }
       })
     })
+
+    // Regression for the same-window key clobber: panel requests are keyed
+    // by the dApp tab's WINDOW id and connect vs signing run in SEPARATE
+    // slots — two requests from two tabs of one window used to both pass
+    // their own slot's busy guard, and the second storage write under
+    // `pendingRequest:<windowId>` overwrote the first approval's record.
+    // The first dApp's promise hung until its timeout and its slot stayed
+    // busy until the worker restarts. One pending approval per window now:
+    // the second request is refused with the same structured code the
+    // same-slot busy guard already answers, the pending record survives,
+    // and the window frees up as soon as the first approval is answered.
+    describe('one pending approval per window (cross-slot clobber)', () => {
+      const grantedSender = {
+        ...tabDappSender,
+        origin: 'https://shop.example',
+        url: 'https://shop.example/page',
+      }
+      const otherTabSameWindow = {
+        id: 'other-site',
+        origin: 'https://other.example',
+        url: 'https://other.example/page',
+        tab: { id: 6, windowId: 3 },
+      }
+
+      const grantShopOrigin = async () => {
+        dispatch(
+          { requestId: 'pre', method: 'connect', params: {} },
+          grantedSender,
+        )
+        await flushMicrotasks()
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: internalIdFor(3),
+            origin: 'https://shop.example',
+            windowId: 3,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(
+          storageData['connectedSites']['https://shop.example'],
+        ).toBeTruthy()
+      }
+
+      // Grants the OTHER origin through its own approval flow in a DIFFERENT
+      // window (9) — a mid-test storage write would not reach the worker's
+      // in-memory map, and window 3 must stay free for the tests below.
+      const grantOtherOrigin = async () => {
+        dispatch(
+          { requestId: 'pre2', method: 'connect', params: {} },
+          { ...otherTabSameWindow, tab: { id: 7, windowId: 9 } },
+        )
+        await flushMicrotasks()
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: internalIdFor(9),
+            origin: 'https://other.example',
+            windowId: 9,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(
+          storageData['connectedSites']['https://other.example'],
+        ).toBeTruthy()
+      }
+
+      it('refuses a same-window second approval instead of clobbering the pending record, and frees the window when it answers', async () => {
+        await grantShopOrigin()
+
+        // the granted origin opens a SIGNING approval in window 3 (panel)
+        const sign = dispatch(
+          {
+            requestId: 's1',
+            method: 'signTransaction',
+            params: { txData: { JSONRepresentation: {} } },
+          },
+          grantedSender,
+        )
+        await flushMicrotasks()
+        expect(sign.keptOpen).toBe(true)
+        const signId = storageData['pendingRequest:3']?.requestId
+        expect(signId).toBeTruthy()
+
+        // another tab of the SAME window asks for a connect approval while
+        // the signing approval is pending
+        const connect = dispatch(
+          { requestId: 'c1', method: 'connect', params: {} },
+          otherTabSameWindow,
+        )
+
+        // refused immediately with the same structured code the same-slot
+        // busy guard answers — the dApp is never left hanging
+        expect(connect.reply.current).toMatchObject({
+          error: { code: 'REQUEST_IN_PROGRESS' },
+        })
+        expect(connect.keptOpen).toBe(false)
+        // no approval window was opened for the refused request
+        expect(createdWindows).toHaveLength(0)
+        // the signing record was NOT overwritten
+        expect(storageData['pendingRequest:3']?.requestId).toBe(signId)
+
+        // the pending request resolves CORRECTLY: the answer lands on the
+        // signing channel it was opened for
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'signTransaction_approve',
+            requestId: signId,
+            origin: 'https://shop.example',
+            windowId: 3,
+            result: { signedTxHex: 'deadbeef' },
+          },
+          extensionSender,
+        )
+        expect(sign.reply.current).toMatchObject({
+          result: { signedTxHex: 'deadbeef' },
+        })
+        expect(storageData['pendingRequest:3']).toBeUndefined()
+
+        // the window is free again: the refused connect can now proceed
+        // (no slot wedge) and opens its own panel approval
+        const retry = dispatch(
+          { requestId: 'c2', method: 'connect', params: {} },
+          otherTabSameWindow,
+        )
+        expect(retry.keptOpen).toBe(true)
+        await flushMicrotasks()
+        expect(storageData['pendingRequest:3']).toMatchObject({
+          action: 'connect',
+          origin: 'https://other.example',
+          requestId: expect.any(String),
+        })
+        const retryId = storageData['pendingRequest:3']?.requestId
+
+        // answer the retried connect too: an unanswered panel approval would
+        // leave its 8s popup-fallback timer live under real timers, and the
+        // stale closure could mutate later fixtures
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: retryId,
+            origin: 'https://other.example',
+            windowId: 3,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(retry.reply.current.result).toEqual(sessionData)
+        expect(storageData['pendingRequest:3']).toBeUndefined()
+      })
+
+      it('both a connect and a sign request for the same window eventually resolve', async () => {
+        await grantShopOrigin()
+
+        // signing approval pending in window 3
+        const sign = dispatch(
+          {
+            requestId: 's1',
+            method: 'signTransaction',
+            params: { txData: { JSONRepresentation: {} } },
+          },
+          grantedSender,
+        )
+        await flushMicrotasks()
+        const signId = storageData['pendingRequest:3']?.requestId
+
+        // the same window's connect request is refused while the signing
+        // approval is pending (its promise settles — with the busy error —
+        // instead of hanging)
+        const connect = dispatch(
+          { requestId: 'c1', method: 'connect', params: {} },
+          otherTabSameWindow,
+        )
+        expect(connect.reply.current).toMatchObject({
+          error: { code: 'REQUEST_IN_PROGRESS' },
+        })
+        expect(storageData['pendingRequest:3']?.requestId).toBe(signId)
+
+        // the signing approval answers first…
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'signTransaction_approve',
+            requestId: signId,
+            origin: 'https://shop.example',
+            windowId: 3,
+            result: { signedTxHex: 'feedface' },
+          },
+          extensionSender,
+        )
+        expect(sign.reply.current).toMatchObject({
+          result: { signedTxHex: 'feedface' },
+        })
+
+        // …and the connect request, retried once the window is free,
+        // resolves with its own approval and grant
+        const retry = dispatch(
+          { requestId: 'c2', method: 'connect', params: {} },
+          otherTabSameWindow,
+        )
+        expect(retry.keptOpen).toBe(true)
+        await flushMicrotasks()
+        const retryId = storageData['pendingRequest:3']?.requestId
+        expect(retryId).toBeTruthy()
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: retryId,
+            origin: 'https://other.example',
+            windowId: 3,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(retry.reply.current.result).toEqual(sessionData)
+        expect(
+          storageData['connectedSites']['https://other.example'],
+        ).toBeTruthy()
+      })
+
+      // The predicate is symmetric: the same-window refusal must also hold
+      // when the CONNECT slot owns the window and a signing request arrives.
+      it('refuses a signTransaction while a connect approval is pending in the same window', async () => {
+        await grantOtherOrigin()
+
+        // shop.example has NO grant yet: its connect reaches the approval
+        // path and opens a panel approval in window 3
+        const connect = dispatch(
+          { requestId: 'c1', method: 'connect', params: {} },
+          grantedSender,
+        )
+        await flushMicrotasks()
+        expect(connect.keptOpen).toBe(true)
+        const connectId = storageData['pendingRequest:3']?.requestId
+        expect(connectId).toBeTruthy()
+
+        // another tab of the SAME window (its origin IS granted) asks for a
+        // signing approval while the connect approval is pending
+        const sign = dispatch(
+          {
+            requestId: 's1',
+            method: 'signTransaction',
+            params: { txData: { JSONRepresentation: {} } },
+          },
+          otherTabSameWindow,
+        )
+
+        // refused with the same structured code; the connect record was NOT
+        // overwritten and no approval window was opened
+        expect(sign.reply.current).toMatchObject({
+          error: { code: 'REQUEST_IN_PROGRESS' },
+        })
+        expect(sign.keptOpen).toBe(false)
+        expect(createdWindows).toHaveLength(0)
+        expect(storageData['pendingRequest:3']?.requestId).toBe(connectId)
+
+        // the pending connect resolves CORRECTLY and frees the window
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: connectId,
+            origin: 'https://shop.example',
+            windowId: 3,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(connect.reply.current.result).toEqual(sessionData)
+        expect(storageData['pendingRequest:3']).toBeUndefined()
+
+        // the window is free again: the refused sign can now proceed
+        // (no slot wedge)
+        const retry = dispatch(
+          {
+            requestId: 's2',
+            method: 'signTransaction',
+            params: { txData: { JSONRepresentation: {} } },
+          },
+          otherTabSameWindow,
+        )
+        expect(retry.keptOpen).toBe(true)
+        await flushMicrotasks()
+        const retryId = storageData['pendingRequest:3']?.requestId
+        expect(retryId).toBeTruthy()
+
+        // answer the retried sign too so no popup-fallback timer outlives
+        // the test under real timers
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'signTransaction_approve',
+            requestId: retryId,
+            origin: 'https://other.example',
+            windowId: 3,
+            result: { signedTxHex: 'cafebabe' },
+          },
+          extensionSender,
+        )
+        expect(retry.reply.current).toMatchObject({
+          result: { signedTxHex: 'cafebabe' },
+        })
+        expect(storageData['pendingRequest:3']).toBeUndefined()
+      })
+    })
   })
 
   describe('revocation propagation (disconnectSite)', () => {
@@ -1096,6 +1477,1874 @@ describe('background service worker', () => {
         action: 'connect',
         origin: 'https://bridge.example',
         requestId: expect.any(String),
+      })
+    })
+  })
+
+  // ── lock/logout revocation (walletLocked) ──
+  // The revocation contract promises that wallet lock/logout revokes every
+  // grant, but the lock state lives in the wallet pages' localStorage —
+  // unreadable from the worker. AccountProvider announces both lifecycle
+  // events (manual logout and the 30-minute auto-lock expiry) with the
+  // `walletLocked` action; the worker must then revoke ALL grants with the
+  // same propagation as disconnectSite: durable deletion + tab broadcast.
+  describe('lock/logout revocation (walletLocked)', () => {
+    const otherDappSender = {
+      id: 'some-site',
+      origin: 'https://other.example',
+      url: 'https://other.example/page',
+    }
+
+    const connectOrigin = (sender, requestId) => {
+      dispatch({ requestId, method: 'connect', params: {} }, sender)
+      // the approval is keyed by the window the connect opened for it
+      const windowId = createdWindows[createdWindows.length - 1].id
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(windowId),
+          origin: sender.origin,
+          windowId,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+    }
+
+    it('revokes every grant and broadcasts MOJITO_SESSION_REVOKED for each origin', () => {
+      connectOrigin(dappSender, 'r1')
+      connectOrigin(otherDappSender, 'r2')
+      expect(Object.keys(storageData.connectedSites)).toHaveLength(2)
+
+      const { reply } = dispatch({ action: 'walletLocked' }, extensionSender)
+
+      expect(reply.current.result).toEqual({ revoked: 2 })
+      // durably gone, not just dropped from memory
+      expect(storageData.connectedSites).toEqual({})
+      // every tab is notified for EVERY revoked origin, so no page keeps
+      // acting on a dead grant after the user locked the wallet
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(4)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://other.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://other.example' },
+        expect.any(Function),
+      )
+    })
+
+    it('a locked wallet stops answering the dApp: checkConnection/getSession refuse and connect needs a fresh approval', () => {
+      connectOrigin(dappSender, 'r1')
+      dispatch({ action: 'walletLocked' }, extensionSender)
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalled()
+      global.chrome.tabs.sendMessage.mockClear()
+
+      const check = dispatch(
+        { requestId: 'c1', method: 'checkConnection', params: {} },
+        dappSender,
+      )
+      expect(check.reply.current).toEqual({
+        result: { isConnected: false },
+      })
+
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current).toEqual({ result: null })
+
+      // and a reconnect is NOT shortcut by the revoked grant: a fresh
+      // approval flow opens instead
+      global.chrome.tabs.sendMessage.mockClear()
+      const reconnect = dispatch(
+        { requestId: 'r3', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
+      expect(createdWindows).toHaveLength(2)
+      expect(storageData['pendingRequest:701']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+      })
+      // no revocation broadcast can be forged this way either
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('ignores walletLocked forged from a web page sender (extension-page gate)', () => {
+      connectOrigin(dappSender, 'r1')
+
+      const forged = dispatch({ action: 'walletLocked' }, dappSender)
+
+      // no answer, no revocation, no broadcast: a website must never be
+      // able to revoke other sites' grants
+      expect(forged.reply.current).toBeUndefined()
+      expect(forged.keptOpen).toBe(false)
+      expect(storageData.connectedSites['https://bridge.example']).toBeDefined()
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('answers revoked: 0 with no broadcast when nothing is connected', () => {
+      const { reply } = dispatch({ action: 'walletLocked' }, extensionSender)
+
+      expect(reply.current.result).toEqual({ revoked: 0 })
+      expect(global.chrome.tabs.query).not.toHaveBeenCalled()
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('answers failure only after the retried persist also fails', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        let setCalls = 0
+        global.chrome.storage.local.set = (obj, cb) => {
+          setCalls += 1
+          Object.assign(storageData, JSON.parse(JSON.stringify(obj)))
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+
+        const { reply } = dispatch({ action: 'walletLocked' }, extensionSender)
+
+        // first attempt failed: the answer waits for the retried write
+        expect(reply.current).toBeUndefined()
+        jest.advanceTimersByTime(250)
+        global.chrome.storage.local.set = originalSet
+
+        // failed persistence must NOT be answered with success and must not
+        // claim revocation to the sites' tabs
+        expect(setCalls).toBe(2)
+        expect(reply.current.error).toBe('quota exceeded')
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a retried persist that succeeds still revokes and broadcasts', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        let setCalls = 0
+        global.chrome.storage.local.set = (obj, cb) => {
+          setCalls += 1
+          Object.assign(storageData, JSON.parse(JSON.stringify(obj)))
+          if (setCalls === 1) {
+            global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+
+        const { reply } = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        global.chrome.storage.local.set = originalSet
+
+        expect(setCalls).toBe(2)
+        expect(reply.current.result).toEqual({ revoked: 1 })
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a re-send after total persist failure re-attempts against storage (success is never faked)', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        // both write attempts fail WITHOUT landing: storage keeps the grant,
+        // the memory map is emptied — exactly the state a lost revocation
+        // leaves behind
+        global.chrome.storage.local.set = (obj, cb) => {
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+
+        const first = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        expect(first.reply.current.error).toBe('quota exceeded')
+        // durable snapshot still holds the grant; the memory map does not
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toBeDefined()
+
+        // worker recovers; the wallet re-sends (its reply was an error)
+        global.chrome.storage.local.set = originalSet
+        const second = dispatch({ action: 'walletLocked' }, extensionSender)
+
+        // NOT {revoked: 0}: the re-send re-attempted persistence against the
+        // durable snapshot and actually deleted the grants
+        expect(second.reply.current).toEqual({ result: { revoked: 1 } })
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a re-send answers the error when the durable re-read itself fails', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        global.chrome.storage.local.set = (obj, cb) => {
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+        const first = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        expect(first.reply.current.error).toBe('quota exceeded')
+        global.chrome.storage.local.set = originalSet
+
+        const originalGet = global.chrome.storage.local.get
+        global.chrome.storage.local.get = (keys, cb) => {
+          if (
+            Array.isArray(keys) &&
+            keys.length === 1 &&
+            keys[0] === 'connectedSites'
+          ) {
+            // the re-read that would recover the durable snapshot fails too
+            global.chrome.runtime.lastError = { message: 'storage unavailable' }
+            cb({})
+            delete global.chrome.runtime.lastError
+            return
+          }
+          originalGet(keys, cb)
+        }
+
+        const second = dispatch({ action: 'walletLocked' }, extensionSender)
+        global.chrome.storage.local.get = originalGet
+
+        expect(second.reply.current.error).toBe('storage unavailable')
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a re-send clears the pending flag when the durable snapshot self-healed', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        global.chrome.storage.local.set = (obj, cb) => {
+          // fails WITHOUT landing; the durable copy is removed below by
+          // another writer (e.g. a network sweep persisting the same removal)
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+        const first = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        expect(first.reply.current.error).toBe('quota exceeded')
+        global.chrome.storage.local.set = originalSet
+
+        delete storageData.connectedSites
+
+        const second = dispatch({ action: 'walletLocked' }, extensionSender)
+        expect(second.reply.current).toEqual({ result: { revoked: 0 } })
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a re-send does not clobber a grant approved while the durable re-read was in flight', () => {
+      jest.useFakeTimers()
+      try {
+        connectOrigin(dappSender, 'r1')
+        const originalSet = global.chrome.storage.local.set
+        global.chrome.storage.local.set = (obj, cb) => {
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+        const first = dispatch({ action: 'walletLocked' }, extensionSender)
+        jest.advanceTimersByTime(250)
+        expect(first.reply.current.error).toBe('quota exceeded')
+        global.chrome.storage.local.set = originalSet
+
+        // defer the durable re-read: while it is in flight, a SECOND site
+        // completes a fresh connect approval (its grant lands in storage)
+        let resolveReRead
+        const realGet = global.chrome.storage.local.get
+        global.chrome.storage.local.get = (keys, cb) => {
+          if (
+            Array.isArray(keys) &&
+            keys.length === 1 &&
+            keys[0] === 'connectedSites'
+          ) {
+            resolveReRead = () =>
+              cb({
+                connectedSites: {
+                  // the STALE durable snapshot: only the pre-lock grant
+                  'https://bridge.example': { ...sessionData, timestamp: 1 },
+                },
+              })
+            return
+          }
+          realGet(keys, cb)
+        }
+        const second = dispatch({ action: 'walletLocked' }, extensionSender)
+        expect(second.reply.current).toBeUndefined()
+
+        const freshSender = {
+          id: 'some-site',
+          origin: 'https://fresh.example',
+          url: 'https://fresh.example/page',
+        }
+        dispatch(
+          { requestId: 'r2', method: 'connect', params: {} },
+          freshSender,
+        )
+        const freshWindowId = createdWindows.at(-1).id
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: internalIdFor(freshWindowId),
+            origin: 'https://fresh.example',
+            windowId: freshWindowId,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(
+          storageData.connectedSites['https://fresh.example'],
+        ).toBeDefined()
+
+        // the stale snapshot lands: the re-send must revoke the stale origin
+        // and persist the whole CURRENT map — the newer grant survives
+        // (rehydrating the snapshot used to erase it from memory AND storage)
+        resolveReRead()
+
+        expect(second.reply.current).toEqual({ result: { revoked: 1 } })
+        expect(
+          storageData.connectedSites['https://fresh.example'],
+        ).toBeDefined()
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toBeUndefined()
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+  })
+
+  // ── lock-mirror sweep (auto-lock with no wallet page open) ──
+  // The 30-minute auto-lock previously fired only when a LIVE wallet page
+  // re-checked its registry: with no page open, persisted grants kept
+  // answering checkConnection/getSession indefinitely — across worker AND
+  // browser restarts. The wallet now mirrors its lock clock to
+  // chrome.storage.local ('walletLockAt', stamped at every registry write:
+  // unlock, throttled activity refresh, pagehide, logout — never null while
+  // a session is live), and the worker sweeps grants whenever it observes
+  // an expired mirror: at boot, on the storage write, and on any inbound
+  // message.
+  describe('lock-mirror sweep (auto-lock with no wallet page open)', () => {
+    const expiredMirror = () => Date.now() - 31 * 60 * 1000
+    const freshMirror = () => Date.now() - 5 * 60 * 1000
+
+    const connectAndApprove = () => {
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin: 'https://bridge.example',
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+    }
+
+    // boots a fresh worker on top of pre-seeded storage (the boot snapshot
+    // path: mirror + epoch + grants land while the worker was dead)
+    const bootWithMirror = (
+      walletLockAt,
+      sites = {},
+      grantsRevokedAt = null,
+    ) => {
+      messageListeners.length = 0
+      storageChangeListeners.length = 0
+      windowRemovedListeners.length = 0
+      createdWindows.length = 0
+      global.chrome.tabs.query.mockClear()
+      global.chrome.tabs.sendMessage.mockClear()
+      storageData.networkType = 'testnet'
+      storageData.connectedSites = sites
+      if (walletLockAt == null) delete storageData.walletLockAt
+      else storageData.walletLockAt = walletLockAt
+      if (grantsRevokedAt == null) delete storageData.grantsRevokedAt
+      else storageData.grantsRevokedAt = grantsRevokedAt
+      loadBackground()
+    }
+
+    // Boots a worker whose boot get is held open: the callback only lands
+    // when the test resolves it, so a live mirror write can interleave —
+    // the exact interleaving the adoption guard must survive. `sites` seeds
+    // the persisted grants (the stale snapshot typically mirrors them).
+    const bootWithDeferredSnapshot = (staleSnapshot, sites = {}) => {
+      let resolveBootGet
+      const realGet = global.chrome.storage.local.get
+      global.chrome.storage.local.get = (keys, cb) => {
+        // defer ONLY the boot read (its key trio is unique to the boot)
+        if (Array.isArray(keys) && keys.includes('walletLockAt')) {
+          resolveBootGet = () => cb(staleSnapshot)
+          return
+        }
+        realGet(keys, cb)
+      }
+      bootWithMirror(null, sites)
+      global.chrome.storage.local.get = realGet
+      return resolveBootGet
+    }
+
+    // The boot read and a live mirror write can interleave: storage.onChanged
+    // adopts a write while the boot get is still in flight, then the boot
+    // callback lands with the OLDER snapshot. The snapshot must never revert
+    // the adopted value: a stale null would lose the pagehide stamp for this
+    // worker's lifetime (grants answer a locked wallet until restart), and a
+    // stale expired value would false-sweep an unlocked wallet's live grants
+    // at boot.
+    it('a boot snapshot landing after an adopted stamp cannot revert it to null', () => {
+      jest.useFakeTimers()
+      try {
+        jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+        const grant = {
+          'https://bridge.example': { ...sessionData, timestamp: 1 },
+        }
+        const resolveBootGet = bootWithDeferredSnapshot(
+          {
+            connectedSites: grant, // OLDER snapshot: read before the stamp
+            networkType: 'testnet',
+            walletLockAt: null,
+          },
+          grant,
+        )
+
+        // the pagehide stamp lands live while the boot get is in flight
+        const stampedAt = Date.now() - 5 * 60 * 1000
+        storageData.walletLockAt = stampedAt
+        for (const listener of storageChangeListeners) {
+          listener({ walletLockAt: { newValue: stampedAt } }, 'local')
+        }
+        // fresh mirror: nothing swept yet
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+
+        // 36 minutes pass with no wallet page open; then the stale (null)
+        // snapshot lands
+        jest.setSystemTime(new Date('2026-01-01T00:36:00Z'))
+        resolveBootGet()
+
+        // the ADOPTED stamp survives boot — it is expired by now, so the
+        // grants are swept exactly as if no boot read had been in flight
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        const check = dispatch(
+          { requestId: 'c1', method: 'checkConnection', params: {} },
+          dappSender,
+        )
+        expect(check.reply.current).toEqual({ result: { isConnected: false } })
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('a boot snapshot landing after an adopted clear cannot false-sweep an unlocked wallet', () => {
+      const grant = {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      }
+      const resolveBootGet = bootWithDeferredSnapshot(
+        {
+          connectedSites: grant, // OLDER snapshot: mirror stamped before the unlock
+          networkType: 'testnet',
+          walletLockAt: Date.now() - 40 * 60 * 1000,
+        },
+        grant,
+      )
+
+      // a legacy/pre-fix writer clears the mirror (the UI now stamps a
+      // NUMBER everywhere, but the worker must still adopt a null
+      // defensively) while the boot get is in flight
+      for (const listener of storageChangeListeners) {
+        listener({ walletLockAt: { newValue: null } }, 'local')
+      }
+      // adopted clear: nothing swept so far
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+
+      // then the stale (already-expired) snapshot lands
+      resolveBootGet()
+
+      // the adopted clear wins: the live grant keeps answering, no sweep
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+      expect(storageData.connectedSites).toEqual(grant)
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a worker that boots with an expired lock mirror sweeps the grants', () => {
+      bootWithMirror(expiredMirror(), {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      // durably gone before any queued message could be answered
+      expect(storageData.connectedSites).toEqual({})
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        2,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+    })
+
+    it('a fresh (unexpired) lock mirror never sweeps at boot', () => {
+      bootWithMirror(freshMirror(), {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('no mirror at all never sweeps (wallet unlocked or never locked)', () => {
+      bootWithMirror(null, {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a hard-killed session ages its unlock stamp into a boot sweep (no pagehide ever fired)', () => {
+      // The scenario: unlock stamped the mirror with the fresh
+      // registry clock, then the browser was killed without any pagehide
+      // (crash/OOM/power loss) — hours later the worker restarts with the
+      // grant still persisted and the aged stamp as the only witness.
+      bootWithMirror(Date.now() - 2 * 60 * 60 * 1000, {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      // swept durably before any queued message could be answered
+      expect(storageData.connectedSites).toEqual({})
+      const check = dispatch(
+        { requestId: 'c1', method: 'checkConnection', params: {} },
+        dappSender,
+      )
+      expect(check.reply.current).toEqual({ result: { isConnected: false } })
+    })
+
+    it('a mirror an active session keeps ≤60s stale never false-sweeps (boot + message path)', () => {
+      // What an actively used session leaves behind: every throttled
+      // activity persist re-stamps the mirror, so the worst case staleness
+      // is one persist interval (ACTIVITY_PERSIST_INTERVAL_MS = 60s).
+      bootWithMirror(Date.now() - 55 * 1000, {
+        'https://bridge.example': { ...sessionData, timestamp: 1 },
+      })
+
+      // no sweep at boot — the grant still answers
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+
+      // and no piggyback sweep on the message path either
+      const check = dispatch(
+        { requestId: 'c1', method: 'checkConnection', params: {} },
+        dappSender,
+      )
+      expect(check.reply.current).toEqual({ result: { isConnected: true } })
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a live worker sweeps when onChanged lands an expired lock mirror', () => {
+      bootWithMirror(null)
+      connectAndApprove()
+      expect(Object.keys(storageData.connectedSites)).toHaveLength(1)
+
+      const stale = expiredMirror()
+      storageData.walletLockAt = stale
+      for (const listener of storageChangeListeners) {
+        listener({ walletLockAt: { newValue: stale } }, 'local')
+      }
+
+      expect(storageData.connectedSites).toEqual({})
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+    })
+
+    it('a fresh mirror landing through onChanged does not sweep', () => {
+      bootWithMirror(null)
+      connectAndApprove()
+
+      const fresh = freshMirror()
+      storageData.walletLockAt = fresh
+      for (const listener of storageChangeListeners) {
+        listener({ walletLockAt: { newValue: fresh } }, 'local')
+      }
+
+      const session = dispatch(
+        { requestId: 'g1', method: 'getSession', params: {} },
+        dappSender,
+      )
+      expect(session.reply.current.result).toMatchObject({
+        network: 'testnet',
+      })
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a live worker sweeps an expiry observed on the message path (piggyback)', () => {
+      jest.useFakeTimers()
+      try {
+        jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+        bootWithMirror(Date.now() - 5 * 60 * 1000, {
+          'https://bridge.example': { ...sessionData, timestamp: 1 },
+        })
+
+        // still fresh: the session answers normally
+        const before = dispatch(
+          { requestId: 'g1', method: 'getSession', params: {} },
+          dappSender,
+        )
+        expect(before.reply.current.result).toMatchObject({
+          network: 'testnet',
+        })
+
+        // 31 minutes pass with no wallet page open; the next message is
+        // exactly the moment a stale grant could be used
+        jest.setSystemTime(new Date('2026-01-01T00:31:00Z'))
+        const check = dispatch(
+          { requestId: 'c1', method: 'checkConnection', params: {} },
+          dappSender,
+        )
+
+        expect(check.reply.current).toEqual({ result: { isConnected: false } })
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    // ── revocation epoch ('grantsRevokedAt') ──
+    // The lock mirror is re-stamped FRESH by every unlock — which in the
+    // lost-notify case (both walletLocked sends fail, the worker stays dead)
+    // erases the logout's already-expired stamp before the worker ever
+    // observes it: the worker then boots with a fresh mirror and the durable
+    // pre-logout grants, answering the session the logout destroyed for a
+    // whole fresh mirror TTL. Every lock therefore ALSO stamps a monotonic
+    // revocation epoch ('grantsRevokedAt') the unlock never touches, and the
+    // sweep (the same boot/write/piggyback paths as the mirror) deletes every
+    // grant approved at or before it: grant timestamps are set at approval
+    // time, so grants approved after the re-unlock legitimately survive, and
+    // absent epoch (legacy storage) means no epoch-based deletion at all —
+    // the mirror-expiry path keeps its pre-existing behavior.
+    describe('revocation epoch (grantsRevokedAt survives unlock re-stamps)', () => {
+      const epochAfterLogout = () => Date.now() - 10 * 60 * 1000
+      const freshUnlockMirror = () => Date.now() - 5 * 60 * 1000
+
+      const landEpochWrite = (revokedAt) => {
+        storageData.grantsRevokedAt = revokedAt
+        for (const listener of storageChangeListeners) {
+          listener({ grantsRevokedAt: { newValue: revokedAt } }, 'local')
+        }
+      }
+
+      const landMirrorWrite = (stampedAt) => {
+        storageData.walletLockAt = stampedAt
+        for (const listener of storageChangeListeners) {
+          listener({ walletLockAt: { newValue: stampedAt } }, 'local')
+        }
+      }
+
+      it('a lost-notify logout survives the re-unlock re-stamp: pre-logout grants swept at boot', () => {
+        // Timeline: grant approved 2h ago → logout 10 min ago stamped the
+        // epoch and an already-expired mirror, both walletLocked sends failed
+        // → re-unlock 5 min ago re-stamped the mirror FRESH (erasing the
+        // expired witness) → the worker only now wakes via an open dApp
+        // tab's checkConnection poll.
+        bootWithMirror(
+          freshUnlockMirror(),
+          {
+            'https://bridge.example': {
+              ...sessionData,
+              timestamp: Date.now() - 2 * 60 * 60 * 1000,
+            },
+          },
+          epochAfterLogout(),
+        )
+
+        // the epoch swept the pre-logout grant durably before any message
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        const check = dispatch({ method: 'checkConnection' }, dappSender)
+        expect(check.reply.current).toEqual({ result: { isConnected: false } })
+      })
+
+      it('a grant approved after the re-unlock (timestamp > epoch) survives the boot sweep', () => {
+        bootWithMirror(
+          freshUnlockMirror(),
+          {
+            'https://bridge.example': {
+              ...sessionData,
+              timestamp: Date.now() - 60 * 1000,
+            },
+          },
+          epochAfterLogout(),
+        )
+
+        const session = dispatch({ method: 'getSession' }, dappSender)
+        expect(session.reply.current.result).toMatchObject({
+          network: 'testnet',
+        })
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      })
+
+      it('only pre-epoch grants are swept when pre- and post-unlock grants coexist', () => {
+        bootWithMirror(
+          freshUnlockMirror(),
+          {
+            'https://bridge.example': {
+              ...sessionData,
+              timestamp: Date.now() - 2 * 60 * 60 * 1000,
+            },
+            'https://other.example': {
+              ...sessionData,
+              timestamp: Date.now() - 60 * 1000,
+            },
+          },
+          epochAfterLogout(),
+        )
+
+        // exactly the pre-logout grant is gone, durably and for its tabs
+        expect(storageData.connectedSites).toEqual({
+          'https://other.example': expect.objectContaining({
+            network: 'testnet',
+          }),
+        })
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://other.example' },
+          expect.any(Function),
+        )
+      })
+
+      it('a later sweep completes an epoch deletion whose persist failed twice (durable re-read)', () => {
+        // The sweep emptied the in-memory map but both storage writes failed
+        // while the worker lived: revocationPending stays set and the
+        // pre-epoch grant lingers in the durable snapshot. The NEXT sweep
+        // (here: the message-path piggyback) must re-read that snapshot and
+        // finish the deletion — not answer from the empty in-memory map.
+        jest.useFakeTimers()
+        try {
+          jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+          bootWithMirror(null)
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            dappSender,
+          )
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(700),
+              origin: 'https://bridge.example',
+              windowId: 700,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(connect.reply.current.result).toEqual(sessionData)
+
+          // logout at +1min stamps the epoch; the sweep's persist fails
+          // twice WITHOUT landing (the retry backoff runs on fake timers)
+          jest.setSystemTime(new Date('2026-01-01T00:01:00Z'))
+          const originalSet = global.chrome.storage.local.set
+          global.chrome.storage.local.set = (obj, cb) => {
+            global.chrome.runtime.lastError = { message: 'quota exceeded' }
+            cb()
+            delete global.chrome.runtime.lastError
+          }
+          landEpochWrite(Date.now())
+          jest.advanceTimersByTime(250)
+          expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+          // exactly the lost-revocation state: memory empty, durable copy
+          // still holding the grant
+          expect(
+            storageData.connectedSites['https://bridge.example'],
+          ).toBeDefined()
+
+          // worker recovers; the next piggyback sweep self-heals against
+          // the durable snapshot
+          global.chrome.storage.local.set = originalSet
+          const check = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(check.reply.current).toEqual({
+            result: { isConnected: false },
+          })
+          expect(storageData.connectedSites).toEqual({})
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://bridge.example',
+            },
+            expect.any(Function),
+          )
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2)
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('the epoch self-heal re-read revokes only pre-epoch durable grants', () => {
+        // The durable re-read must NOT become a whole-map revoke: a
+        // post-epoch grant that also sits in storage (its own persist may
+        // have landed while the sweep's write kept failing) legitimately
+        // survives — routing through revokeAllGrants wholesale would
+        // delete it.
+        jest.useFakeTimers()
+        try {
+          jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+          const originalSet = global.chrome.storage.local.set
+          global.chrome.storage.local.set = (obj, cb) => {
+            global.chrome.runtime.lastError = { message: 'quota exceeded' }
+            cb()
+            delete global.chrome.runtime.lastError
+          }
+          bootWithMirror(
+            freshUnlockMirror(),
+            {
+              'https://bridge.example': {
+                ...sessionData,
+                timestamp: Date.now() - 2 * 60 * 60 * 1000,
+              },
+              'https://other.example': {
+                ...sessionData,
+                timestamp: Date.now() - 60 * 1000,
+              },
+            },
+            epochAfterLogout(),
+          )
+          jest.advanceTimersByTime(250)
+
+          // the boot sweep failed to persist: both grants are still durable,
+          // only the pre-epoch one is gone from memory
+          expect(
+            storageData.connectedSites['https://bridge.example'],
+          ).toBeDefined()
+          expect(
+            storageData.connectedSites['https://other.example'],
+          ).toBeDefined()
+
+          global.chrome.storage.local.set = originalSet
+          const check = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(check.reply.current).toEqual({
+            result: { isConnected: false },
+          })
+
+          // only the pre-epoch grant was revoked, durably and for its tabs;
+          // the post-epoch grant keeps answering
+          expect(storageData.connectedSites).toEqual({
+            'https://other.example': expect.objectContaining({
+              network: 'testnet',
+            }),
+          })
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://bridge.example',
+            },
+            expect.any(Function),
+          )
+          expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://other.example',
+            },
+            expect.any(Function),
+          )
+          const other = dispatch(
+            { method: 'checkConnection' },
+            {
+              id: 'some-site',
+              origin: 'https://other.example',
+              url: 'https://other.example/page',
+            },
+          )
+          expect(other.reply.current).toEqual({
+            result: { isConnected: true },
+          })
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('a live worker sweeps the moment the logout epoch lands via onChanged (lost notify)', () => {
+        // Fake timers make every step's clock deterministic: the re-approval
+        // must land STRICTLY after the epoch (a same-millisecond approval
+        // compares equal and fails closed in production — never in a test).
+        jest.useFakeTimers()
+        try {
+          jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+          bootWithMirror(null)
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            dappSender,
+          )
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(700),
+              origin: 'https://bridge.example',
+              windowId: 700,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(connect.reply.current.result).toEqual(sessionData)
+          expect(Object.keys(storageData.connectedSites)).toHaveLength(1)
+
+          // logout at +1min stamps the epoch but both walletLocked sends
+          // fail: only the durable write lands, and the worker sweeps the
+          // grant the moment it observes it
+          jest.setSystemTime(new Date('2026-01-01T00:01:00Z'))
+          landEpochWrite(Date.now())
+
+          expect(storageData.connectedSites).toEqual({})
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://bridge.example',
+            },
+            expect.any(Function),
+          )
+          const check = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(check.reply.current).toEqual({
+            result: { isConnected: false },
+          })
+
+          // the re-unlock at +2min re-stamps the mirror fresh; the epoch
+          // stays put and must not sweep anything on its own — a NEW
+          // approval at +3min (timestamp > epoch) connects and answers
+          jest.setSystemTime(new Date('2026-01-01T00:02:00Z'))
+          landMirrorWrite(Date.now())
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2) // no new revocations
+
+          jest.setSystemTime(new Date('2026-01-01T00:03:00Z'))
+          const reconnect = dispatch(
+            { requestId: 'r2', method: 'connect', params: {} },
+            dappSender,
+          )
+          expect(reconnect.keptOpen).toBe(true)
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(701),
+              origin: 'https://bridge.example',
+              windowId: 701,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(reconnect.reply.current.result).toEqual(sessionData)
+          const recheck = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(recheck.reply.current).toEqual({
+            result: { isConnected: true },
+          })
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('a boot snapshot lacking the epoch cannot revert an adopted epoch (grants still swept)', () => {
+        // The epoch needs the same adoption latch as the mirror: the logout's
+        // epoch write can land live while the boot get is still in flight, and
+        // the stale snapshot (read before the logout — no epoch, and the
+        // mirror still carrying the logout's already-expired stamp) must not
+        // revert either adoption — a reverted epoch would let the pre-logout
+        // grants answer for this worker's whole lifetime.
+        const preEpochGrant = {
+          'https://bridge.example': {
+            ...sessionData,
+            timestamp: Date.now() - 2 * 60 * 60 * 1000,
+          },
+        }
+        const resolveBootGet = bootWithDeferredSnapshot(
+          {
+            connectedSites: preEpochGrant, // OLDER snapshot: pre-logout
+            networkType: 'testnet',
+            walletLockAt: Date.now() - 31 * 60 * 1000, // the logout's expired stamp
+          },
+          preEpochGrant,
+        )
+
+        // the logout's epoch write lands while the boot get is in flight
+        // (its sweep no-ops: the in-memory map is still empty pre-snapshot)…
+        landEpochWrite(Date.now())
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+
+        // …and so does the re-unlock's fresh mirror re-stamp
+        landMirrorWrite(Date.now())
+
+        // then the STALE snapshot lands: no epoch, expired mirror
+        resolveBootGet()
+
+        // both adoptions survived: the mirror stayed fresh (no full revoke
+        // from the snapshot's expired stamp) and the epoch swept the
+        // pre-logout grant exactly once, at snapshot adoption time
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledTimes(2) // both tabs, bridge.example only
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        const check = dispatch({ method: 'checkConnection' }, dappSender)
+        expect(check.reply.current).toEqual({ result: { isConnected: false } })
+      })
+
+      it('legacy storage without an epoch: even an ancient grant keeps answering on a fresh mirror', () => {
+        // Backwards compat: absent epoch → NO epoch-based deletion, whatever
+        // the grant timestamp. Only the pre-existing mirror-expiry path (its
+        // own tests above, which seed no epoch either) may sweep.
+        bootWithMirror(freshUnlockMirror(), {
+          'https://bridge.example': { ...sessionData, timestamp: 1 },
+        })
+
+        const session = dispatch({ method: 'getSession' }, dappSender)
+        expect(session.reply.current.result).toMatchObject({
+          network: 'testnet',
+        })
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+      })
+
+      it('a grant approved with a timestamp EXACTLY equal to the epoch is swept (<= boundary)', () => {
+        // Pins the sweep's fail-closed comparison: a grant survives only
+        // when timestamp > epoch, so an approval completing in the same
+        // millisecond as the logout's epoch write (timestamp === epoch) is
+        // dead. A `>` → `>=` mutation would flip the boundary to fail-open
+        // and this test fails on it.
+        jest.useFakeTimers()
+        try {
+          jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+          bootWithMirror(null)
+
+          // the logout's epoch write lands at T — nothing to sweep yet
+          landEpochWrite(Date.now())
+          expect(storageData.connectedSites).toEqual({})
+
+          // an approval completes IN THE SAME millisecond: its approval-time
+          // timestamp is exactly the epoch
+          const connect = dispatch(
+            { requestId: 'r1', method: 'connect', params: {} },
+            dappSender,
+          )
+          dispatch(
+            {
+              action: 'popupResponse',
+              method: 'connect',
+              requestId: internalIdFor(700),
+              origin: 'https://bridge.example',
+              windowId: 700,
+              result: sessionData,
+            },
+            extensionSender,
+          )
+          expect(connect.reply.current.result).toEqual(sessionData)
+          expect(storageData.connectedSites['https://bridge.example']).toEqual(
+            expect.objectContaining({ timestamp: Date.now() }),
+          )
+
+          // the next message's piggyback sweep observes timestamp === epoch
+          // and deletes the grant durably, propagating to the site's tabs
+          const check = dispatch({ method: 'checkConnection' }, dappSender)
+          expect(check.reply.current).toEqual({
+            result: { isConnected: false },
+          })
+          expect(storageData.connectedSites).toEqual({})
+          expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+            1,
+            {
+              type: 'MOJITO_SESSION_REVOKED',
+              origin: 'https://bridge.example',
+            },
+            expect.any(Function),
+          )
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it('a grant of unprovable age (no timestamp field) fails closed: swept and propagated', () => {
+        // Only handlePopupResponse creates grants (always timestamped), so a
+        // timestampless grant can only be ancient/foreign durable storage.
+        // With an epoch present its age cannot be proven to postdate the
+        // revocation — it fails closed exactly like a grant without a
+        // network stamp.
+        bootWithMirror(
+          freshUnlockMirror(),
+          {
+            'https://bridge.example': {
+              address: sessionData.address,
+              addressesByChain: sessionData.addressesByChain,
+              network: 'testnet',
+              // deliberately NO timestamp field
+            },
+          },
+          epochAfterLogout(),
+        )
+
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          {
+            type: 'MOJITO_SESSION_REVOKED',
+            origin: 'https://bridge.example',
+          },
+          expect.any(Function),
+        )
+        const check = dispatch({ method: 'checkConnection' }, dappSender)
+        expect(check.reply.current).toEqual({
+          result: { isConnected: false },
+        })
+      })
+    })
+  })
+
+  // ── network-switch regression: grants are network-scoped ──
+  // The wallet UI publishes its active network to chrome.storage.local
+  // ('networkType') — the worker cannot read the wallet pages' localStorage.
+  // A grant approved on one network must never answer after a switch:
+  // checkConnection says disconnected, connect opens a FRESH approval,
+  // getSession refuses, and the stale grant is revoked + propagated so open
+  // dApp tabs drop their cached addresses.
+  describe('network switch re-validation', () => {
+    const mainnetSession = {
+      address: { mainnet: { receiving: ['mtc1qabc'], change: ['mtc1qchg'] } },
+      addressesByChain: {
+        mintlayer: { receiving: ['mtc1qabc'], change: ['mtc1qchg'] },
+      },
+      network: 'mainnet',
+    }
+
+    // Simulates the wallet UI's switch write (SettingsProvider persists
+    // 'networkType' to chrome.storage.local on every toggle).
+    const publishNetwork = (network) => {
+      storageData.networkType = network
+      for (const listener of storageChangeListeners) {
+        listener({ networkType: { newValue: network } }, 'local')
+      }
+    }
+
+    // Boots a worker whose storage ALREADY holds a published network —
+    // e.g. the switch happened while the MV3 worker was dead. Only the
+    // fresh worker's listeners stay registered.
+    const bootWithNetwork = (network, sites = {}) => {
+      messageListeners.length = 0
+      storageChangeListeners.length = 0
+      windowRemovedListeners.length = 0
+      createdWindows.length = 0
+      global.chrome.tabs.query.mockClear()
+      global.chrome.tabs.sendMessage.mockClear()
+      storageData.networkType = network
+      storageData.connectedSites = sites
+      loadBackground()
+    }
+
+    const approve = (result, windowId = 700) => {
+      dispatch({ requestId: 'r1', method: 'connect', params: {} }, dappSender)
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(windowId),
+          origin: 'https://bridge.example',
+          windowId,
+          result,
+        },
+        extensionSender,
+      )
+    }
+
+    it('revokes a mainnet grant on switch to testnet and fails closed', () => {
+      bootWithNetwork('mainnet')
+      approve(mainnetSession)
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toMatchObject({ network: 'mainnet' })
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: true } })
+
+      // the wallet UI switches mainnet → testnet
+      publishNetwork('testnet')
+
+      // the stale grant was revoked proactively and the site's tabs told
+      // to drop their cached addresses
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toBeUndefined()
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+
+      // checkConnection fails closed on the new network
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+
+      // getSession refuses: no stale mainnet addresses disclosed
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+
+      // connect opens a FRESH approval instead of answering the stale grant
+      const reconnect = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
+      expect(createdWindows).toHaveLength(2) // the first approval was 700
+      expect(storageData['pendingRequest:701']).toMatchObject({
+        action: 'connect',
+        origin: 'https://bridge.example',
+      })
+
+      // re-approval ON THE NEW network answers with the NEW session
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(701),
+          origin: 'https://bridge.example',
+          windowId: 701,
+          result: sessionData, // testnet session
+        },
+        extensionSender,
+      )
+      expect(reconnect.reply.current.result).toEqual(sessionData)
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: true } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toMatchObject({ result: { network: 'testnet' } })
+    })
+
+    it('same-network grants keep answering normally (no false revocation)', () => {
+      bootWithNetwork('testnet')
+      approve(sessionData)
+
+      // re-publishing the SAME network must not revoke anything
+      publishNetwork('testnet')
+      expect(storageData.connectedSites['https://bridge.example']).toBeTruthy()
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: true } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toMatchObject({ result: { network: 'testnet' } })
+
+      // an already-connected site is still answered from the stored grant
+      const repeat = dispatch(
+        { requestId: 'r9', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(repeat.keptOpen).toBe(false)
+      expect(
+        repeat.reply.current.result.addressesByChain.mintlayer.receiving,
+      ).toEqual(['tmtc1qabc'])
+    })
+
+    it('a worker that boots after a switch sweeps stale grants before answering', () => {
+      // the switch happened while the worker was dead: storage holds the
+      // NEW network AND the stale mainnet grant
+      bootWithNetwork('testnet', {
+        'https://bridge.example': { ...mainnetSession, timestamp: 1 },
+      })
+
+      // revoked at load, before any queued message is answered
+      expect(storageData.connectedSites).toEqual({})
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+    })
+
+    it('a grant that lands on the old network after the switch never answers', () => {
+      // razor-edge race: the approval completes with a grant approved on
+      // mainnet AFTER the wallet already switched to testnet (the sweep
+      // already ran) — the read-side re-validation is the last line of
+      // defense and must treat the stale grant as absent.
+      bootWithNetwork('testnet')
+      approve(mainnetSession)
+      expect(
+        storageData.connectedSites['https://bridge.example'],
+      ).toMatchObject({ network: 'mainnet' })
+
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+      // connect does NOT return the stale grant: fresh approval instead
+      const reconnect = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
+    })
+
+    // The boot read and a live switch can interleave: storage.onChanged
+    // adopts the NEW network while the boot get is still in flight, then
+    // the boot callback lands with the OLDER (pre-switch) snapshot. The
+    // snapshot must never revert the adopted network — reverting would
+    // resurrect the very grants the adoption swept.
+    it('a boot snapshot landing after an adopted switch cannot revert the network', () => {
+      let resolveBootGet
+      const realGet = global.chrome.storage.local.get
+      // defer ONLY the boot read (['connectedSites', 'networkType',
+      // 'walletLockAt']): its callback resolves later, after the switch was
+      // adopted live
+      global.chrome.storage.local.get = (keys, cb) => {
+        if (Array.isArray(keys) && keys.includes('networkType')) {
+          resolveBootGet = () =>
+            cb({
+              // OLDER snapshot: read before the switch (mainnet grant)
+              connectedSites: {
+                'https://bridge.example': { ...mainnetSession, timestamp: 1 },
+              },
+              networkType: 'mainnet',
+            })
+          return
+        }
+        realGet(keys, cb)
+      }
+
+      bootWithNetwork('mainnet', {
+        'https://bridge.example': { ...mainnetSession, timestamp: 1 },
+      })
+      expect(resolveBootGet).toBeDefined()
+
+      // the wallet UI switches mainnet → testnet while the boot get is in
+      // flight: onChanged adopts testnet (its sweep no-ops — the map is
+      // still empty at this point)
+      publishNetwork('testnet')
+
+      // ...then the stale pre-switch snapshot lands
+      resolveBootGet()
+
+      // the adopted (testnet) network wins: the mainnet grant is swept and
+      // never answers
+      expect(storageData.connectedSites).toEqual({})
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+    })
+
+    // Pre-upgrade grants carry no network stamp: they cannot be proven
+    // current, so the first published network fails them closed — swept,
+    // tabs notified, and the dApp must reconnect with a fresh approval.
+    it('revokes pre-upgrade grants without a network stamp (fail closed)', () => {
+      bootWithNetwork('testnet', {
+        'https://bridge.example': {
+          address: {
+            testnet: { receiving: ['tmtc1qabc'], change: ['tmtc1qchg'] },
+          },
+          addressesByChain: {
+            mintlayer: { receiving: ['tmtc1qabc'], change: ['tmtc1qchg'] },
+          },
+          timestamp: 1,
+        },
+      })
+
+      // swept at boot, before any message is answered
+      expect(storageData.connectedSites).toEqual({})
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+        expect.any(Function),
+      )
+
+      expect(
+        dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+      ).toEqual({ result: { isConnected: false } })
+      expect(
+        dispatch({ method: 'getSession' }, dappSender).reply.current,
+      ).toEqual({ result: null })
+
+      // connect opens a FRESH approval instead of answering the unstamped grant
+      const reconnect = dispatch(
+        { requestId: 'r2', method: 'connect', params: {} },
+        dappSender,
+      )
+      expect(reconnect.reply.current).toBeUndefined()
+      expect(reconnect.keptOpen).toBe(true)
+    })
+
+    // The switch's durable deletion must survive a failing persist exactly
+    // like the lock/epoch revocations: both writes fail (initial + retry) →
+    // revocationPending stays set with the stale grant still durable → a
+    // later sweep's durable re-read finishes the deletion and notifies the
+    // tabs — the same self-heal a healthy persist would have produced.
+    it('a later sweep completes a network-switch revocation whose persist failed twice', () => {
+      jest.useFakeTimers()
+      try {
+        jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+        bootWithNetwork('mainnet')
+        approve(mainnetSession)
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toMatchObject({ network: 'mainnet' })
+
+        // the wallet switches mainnet → testnet while storage writes fail
+        jest.setSystemTime(new Date('2026-01-01T00:01:00Z'))
+        const originalSet = global.chrome.storage.local.set
+        global.chrome.storage.local.set = (obj, cb) => {
+          global.chrome.runtime.lastError = { message: 'quota exceeded' }
+          cb()
+          delete global.chrome.runtime.lastError
+        }
+        publishNetwork('testnet')
+        jest.advanceTimersByTime(250)
+
+        // the shared revocation path retried once, then gave up: memory
+        // clean (reads fail closed), NO tab notified, durable copy still
+        // holding the stale grant
+        expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toMatchObject({ network: 'mainnet' })
+        expect(
+          dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+        ).toEqual({ result: { isConnected: false } })
+        expect(
+          storageData.connectedSites['https://bridge.example'],
+        ).toBeDefined()
+
+        // worker recovers; a logout stamps the revocation epoch — the
+        // sweep's pending durable re-read completes the switch's deletion
+        global.chrome.storage.local.set = originalSet
+        const revokedAt = Date.now()
+        storageData.grantsRevokedAt = revokedAt
+        for (const listener of storageChangeListeners) {
+          listener({ grantsRevokedAt: { newValue: revokedAt } }, 'local')
+        }
+
+        // durable deletion landed and the site's tabs were told — exactly
+        // the propagation a healthy switch persist would have produced
+        expect(storageData.connectedSites).toEqual({})
+        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+          1,
+          { type: 'MOJITO_SESSION_REVOKED', origin: 'https://bridge.example' },
+          expect.any(Function),
+        )
+        expect(
+          dispatch({ method: 'checkConnection' }, dappSender).reply.current,
+        ).toEqual({ result: { isConnected: false } })
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+  })
+
+  describe('unsupported origins (an opaque-origin page shares no grant)', () => {
+    const unsupportedOriginError = {
+      error: {
+        code: 'UNSUPPORTED_ORIGIN',
+        message: 'This site cannot be identified.',
+      },
+    }
+
+    // The browser reports an opaque-origin document (a page served with a
+    // sandboxing CSP, a data: document...) as the literal string "null":
+    // every such page on every site is the SAME value to the worker.
+    const opaqueSenderA = {
+      ...tabDappSender,
+      origin: 'null',
+      url: 'https://sandbox-a.example/page',
+    }
+    const opaqueSenderB = {
+      ...tabDappSender,
+      origin: 'null',
+      url: 'https://sandbox-b.example/other',
+    }
+
+    const unsupportedSenders = [
+      ['the opaque origin "null"', opaqueSenderA],
+      ['the opaque origin "null" on an unrelated site', opaqueSenderB],
+      [
+        'the origin "unknown"',
+        { id: 'some-site', origin: 'unknown', tab: { id: 5, windowId: 3 } },
+      ],
+      [
+        'a sender with neither origin nor url',
+        { id: 'some-site', tab: { id: 5, windowId: 3 } },
+      ],
+      [
+        "the wallet's own page (chrome-extension://)",
+        { ...extensionSender, tab: { id: 5, windowId: 3 } },
+      ],
+      [
+        'a moz-extension:// origin',
+        {
+          id: 'moz-ext-id',
+          origin: 'moz-extension://moz-ext-id',
+          url: 'moz-extension://moz-ext-id/index.html',
+          tab: { id: 5, windowId: 3 },
+        },
+      ],
+    ]
+
+    // Every method a dApp can relay through request().
+    const dAppMessages = [
+      ['connect', { requestId: 'r1', method: 'connect', params: {} }],
+      ['disconnect', { method: 'disconnect' }],
+      ['checkConnection', { method: 'checkConnection' }],
+      ['getSession', { method: 'getSession' }],
+      [
+        'signTransaction',
+        { requestId: 's1', method: 'signTransaction', params: { txData: {} } },
+      ],
+      [
+        'signChallenge',
+        { requestId: 'c1', method: 'signChallenge', params: { message: 'hi' } },
+      ],
+      ['version', { method: 'version' }],
+    ]
+
+    const pendingRequestKeys = () =>
+      Object.keys(storageData).filter((key) =>
+        key.startsWith('pendingRequest:'),
+      )
+
+    // Boots a worker whose storage ALREADY holds the given grants — the
+    // way a snapshot persisted by a previous worker is loaded at startup.
+    // Only the fresh worker's listeners stay registered.
+    const bootWithSites = (sites) => {
+      messageListeners.length = 0
+      storageChangeListeners.length = 0
+      windowRemovedListeners.length = 0
+      createdWindows.length = 0
+      storageData.connectedSites = sites
+      loadBackground()
+    }
+
+    // Puts a grant under the given key into the LIVE map the way the wallet
+    // UI's approval response does. The boot sweep removes unsupported keys
+    // from the snapshot, so this is the only way such a key can exist in a
+    // running worker (the state an earlier build could leave behind).
+    const seedLiveGrantFor = (origin) => {
+      // from an origin that holds no grant, so a real approval is opened
+      dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        {
+          id: 'some-site',
+          origin: 'https://seed.example',
+          url: 'https://seed.example/',
+        },
+      )
+      dispatch(
+        {
+          action: 'popupResponse',
+          method: 'connect',
+          requestId: internalIdFor(700),
+          origin,
+          windowId: 700,
+          result: sessionData,
+        },
+        extensionSender,
+      )
+    }
+
+    const snapshotOf = (value) => JSON.parse(JSON.stringify(value))
+
+    it('connect from an opaque-origin page is refused: no approval target, no pending request, no grant', () => {
+      const { reply, keptOpen } = dispatch(
+        { requestId: 'r1', method: 'connect', params: {} },
+        opaqueSenderA,
+      )
+
+      expect(reply.current).toEqual(unsupportedOriginError)
+      expect(keptOpen).toBe(false)
+      expect(createdWindows).toHaveLength(0)
+      expect(global.chrome.sidePanel.open).not.toHaveBeenCalled()
+      expect(pendingRequestKeys()).toEqual([])
+      expect(storageData.connectedSites ?? {}).toEqual({})
+    })
+
+    it('an unrelated opaque-origin page never reads a grant stored under "null"', () => {
+      seedLiveGrantFor('null')
+      const before = snapshotOf(storageData.connectedSites)
+      expect(before.null).toMatchObject({
+        addressesByChain: sessionData.addressesByChain,
+      })
+
+      const session = dispatch({ method: 'getSession' }, opaqueSenderB)
+      expect(session.reply.current).toEqual(unsupportedOriginError)
+      expect(JSON.stringify(session.reply.current)).not.toContain('tmtc1qabc')
+
+      const check = dispatch({ method: 'checkConnection' }, opaqueSenderB)
+      expect(check.reply.current).toEqual(unsupportedOriginError)
+
+      // the grant under the shared key authorizes nothing: not even an
+      // approval surface
+      const sign = dispatch(
+        { requestId: 's1', method: 'signTransaction', params: {} },
+        opaqueSenderB,
+      )
+      expect(sign.reply.current).toEqual(unsupportedOriginError)
+      expect(global.chrome.sidePanel.open).not.toHaveBeenCalled()
+      expect(pendingRequestKeys()).toEqual([])
+      // ...and the refused requests neither rewrite nor remove it
+      expect(storageData.connectedSites).toEqual(before)
+    })
+
+    it('disconnect from an opaque-origin page is refused and leaves the grant store untouched', () => {
+      bootWithSites({
+        'https://bridge.example': { ...sessionData, timestamp: 2 },
+      })
+      seedLiveGrantFor('null')
+      const before = snapshotOf(storageData.connectedSites)
+      expect(Object.keys(before).sort()).toEqual([
+        'https://bridge.example',
+        'null',
+      ])
+
+      const { reply } = dispatch({ method: 'disconnect' }, opaqueSenderA)
+
+      expect(reply.current).toEqual(unsupportedOriginError)
+      // neither the shared-key grant nor a real site's grant was deleted
+      expect(storageData.connectedSites).toEqual(before)
+      // no revocation was broadcast to any tab
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalled()
+    })
+
+    it('a worker that boots with grants under unsupported keys removes them and keeps the rest', () => {
+      const supportedGrant = { ...sessionData, timestamp: 2 }
+      bootWithSites({
+        null: { ...sessionData, timestamp: 1 },
+        unknown: { ...sessionData, timestamp: 1 },
+        'https://dapp.example': supportedGrant,
+      })
+
+      // removed from the PERSISTED map, not only from memory
+      expect(storageData.connectedSites).toEqual({
+        'https://dapp.example': supportedGrant,
+      })
+      // the surviving grant is untouched and still answers
+      const survivor = dispatch(
+        { method: 'getSession' },
+        {
+          id: 'some-site',
+          origin: 'https://dapp.example',
+          url: 'https://dapp.example/',
+        },
+      )
+      expect(survivor.reply.current).toMatchObject({
+        result: { address: sessionData.address },
+      })
+      // the removals were propagated like any other revocation — and the
+      // surviving origin was NOT announced as revoked
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'null' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        1,
+        { type: 'MOJITO_SESSION_REVOKED', origin: 'unknown' },
+        expect.any(Function),
+      )
+      expect(global.chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ origin: 'https://dapp.example' }),
+        expect.anything(),
+      )
+    })
+
+    describe.each(unsupportedSenders)('%s', (_name, sender) => {
+      it.each(dAppMessages)(
+        '%s is refused before any state is touched',
+        (_method, message) => {
+          const { reply, keptOpen } = dispatch(message, sender)
+
+          expect(reply.current).toEqual(unsupportedOriginError)
+          expect(keptOpen).toBe(false)
+          expect(createdWindows).toHaveLength(0)
+          expect(global.chrome.sidePanel.open).not.toHaveBeenCalled()
+          expect(pendingRequestKeys()).toEqual([])
+          expect(storageData.connectedSites ?? {}).toEqual({})
+        },
+      )
+    })
+
+    describe.each([
+      [
+        'https://dapp.example',
+        {
+          id: 'some-site',
+          origin: 'https://dapp.example',
+          url: 'https://dapp.example/',
+        },
+      ],
+      [
+        'http://localhost:3000',
+        {
+          id: 'some-site',
+          origin: 'http://localhost:3000',
+          url: 'http://localhost:3000/',
+        },
+      ],
+      [
+        'http://127.0.0.1:5173',
+        {
+          id: 'some-site',
+          origin: 'http://127.0.0.1:5173',
+          url: 'http://127.0.0.1:5173/',
+        },
+      ],
+      [
+        'the url-derived fallback (no sender.origin)',
+        { id: 'some-site', url: 'https://dapp.example/page' },
+      ],
+    ])('%s stays supported', (_name, sender) => {
+      it('connect opens an approval keyed by the origin, and the approved grant answers', () => {
+        const origin = new URL(sender.url).origin
+        const connect = dispatch(
+          { requestId: 'r1', method: 'connect', params: {} },
+          sender,
+        )
+        expect(connect.reply.current).toBeUndefined()
+        expect(connect.keptOpen).toBe(true)
+        expect(createdWindows).toHaveLength(1)
+        expect(storageData['pendingRequest:700']).toMatchObject({
+          action: 'connect',
+          origin,
+        })
+
+        dispatch(
+          {
+            action: 'popupResponse',
+            method: 'connect',
+            requestId: internalIdFor(700),
+            origin,
+            windowId: 700,
+            result: sessionData,
+          },
+          extensionSender,
+        )
+        expect(connect.reply.current.result).toEqual(sessionData)
+        expect(
+          dispatch({ method: 'checkConnection' }, sender).reply.current,
+        ).toEqual({ result: { isConnected: true } })
+        expect(
+          dispatch({ method: 'getSession' }, sender).reply.current,
+        ).toMatchObject({ result: { address: sessionData.address } })
       })
     })
   })

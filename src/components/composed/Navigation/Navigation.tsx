@@ -36,11 +36,18 @@ const Navigation = ({ toggleMenu = true }: NavigationProps) => {
   const {
     isAccountUnlocked,
     logout,
+    addresses,
     isExtended,
     sliderMenuOpen,
     setSliderMenuOpen,
   } = useContext(AccountContext)
   const { setAllDataFetching } = useContext(MintlayerContext)
+
+  // `unlocked` is a route-change snapshot: an in-page auto-lock clears the
+  // session (addresses) BETWEEN route changes, so the menu must react to
+  // the live context state too — a locked wallet must not keep showing the
+  // logged-in nav list just because its route has not changed.
+  const sessionActive = unlocked && !!addresses
 
   useEffect(() => {
     const accountUnlocked = isAccountUnlocked()
@@ -163,7 +170,7 @@ const Navigation = ({ toggleMenu = true }: NavigationProps) => {
     return location.pathname.startsWith(item.link)
   }
 
-  const navList = unlocked ? loggedNavigationList : navigationList
+  const navList = sessionActive ? loggedNavigationList : navigationList
 
   return (
     <>
@@ -195,7 +202,7 @@ const Navigation = ({ toggleMenu = true }: NavigationProps) => {
             </div>
           </li>
         )}
-        {unlocked && (
+        {sessionActive && (
           <li
             className={styles.bottomMenuItem}
             onClick={logoutHandler}

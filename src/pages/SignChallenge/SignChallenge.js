@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router'
 import { SignTransaction as SignTxHelpers } from '@Helpers'
 import { MOCKS } from './mocks'
-import { Button, PageWrapper, SiteBadge } from '@BasicComponents'
+import { Button, Error, PageWrapper, SiteBadge } from '@BasicComponents'
 import { PopUp, TextField } from '@ComposedComponents'
 
 import './SignChallenge.css'
@@ -26,7 +26,20 @@ export const SignChallengePage = () => {
   const extraButtonStyles = ['buttonSignTransaction']
 
   const state = external_state || (isDevelopment ? MOCKS[selectedMock] : null)
-  const origin = state?.request?.origin
+  // Rendered as text (site badge): only a string is shown.
+  const rawOrigin = state?.request?.origin
+  const origin = typeof rawOrigin === 'string' ? rawOrigin : undefined
+
+  // dApp-supplied values: only a non-empty string is a signable message,
+  // and only a non-empty string is a usable address. Any other type (an
+  // object, an array, a number, null) is read as absent — an object cannot
+  // be rendered as text, and a non-string message cannot be encoded by the
+  // signer.
+  const rawMessage = state?.request?.data?.message
+  const rawAddress = state?.request?.data?.address
+  const message = typeof rawMessage === 'string' && rawMessage ? rawMessage : ''
+  const requestedAddress =
+    typeof rawAddress === 'string' && rawAddress ? rawAddress : ''
 
   const { addresses, accountID } = useContext(AccountContext)
   const { networkType } = useContext(SettingsContext)
@@ -62,11 +75,18 @@ export const SignChallengePage = () => {
       return
     }
 
+    // Defense in depth: Sign is already disabled, but the modal submit must
+    // never reach the signer without an encodable message.
+    if (!message) {
+      setIsSigning(false)
+      return
+    }
+
     try {
-      const message = state?.request?.data?.message
+      // Same values the page shows: a non-string address was read as
+      // absent, so the wallet default is used, never the dApp's value.
       const address =
-        state?.request?.data?.address ||
-        currentMlAddresses.mlReceivingAddresses[0]
+        requestedAddress || currentMlAddresses.mlReceivingAddresses[0]
 
       const pass = password
 
@@ -173,17 +193,19 @@ export const SignChallengePage = () => {
             <div className="challenge_details">
               <div className="challenge_message">
                 <div className="label">Message to sign:</div>
-                <div className="value">
-                  {state?.request?.data?.message || 'No message provided'}
-                </div>
+                <div className="value">{message || 'No message provided'}</div>
               </div>
               <div className="challenge_address">
                 <div className="label">Address to sign with:</div>
                 <div className="">
-                  {state?.request?.data?.address || 'No address provided'}
+                  {requestedAddress || 'No address provided'}
                 </div>
               </div>
             </div>
+          )}
+
+          {!message && (
+            <Error error="This site did not send a text message, so there is nothing that can be signed. Decline this request." />
           )}
         </div>
 
@@ -198,6 +220,7 @@ export const SignChallengePage = () => {
           <Button
             onClickHandle={handleApprove}
             extraStyleClasses={extraButtonStyles}
+            disabled={!message}
           >
             Sign and return to page
           </Button>

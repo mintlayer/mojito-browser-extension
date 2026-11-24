@@ -68,6 +68,12 @@ const SendBtcTransaction = ({
           fee,
           totalFeeFiat: fees.totalFeeFiat,
           totalFeeCrypto: fees.totalFeeCrypto,
+          // Approval binding: the confirm page broadcasts against this exact
+          // snapshot (the UTXO set the fee above was quoted from), never
+          // against the live BitcoinContext UTXO list.
+          totalFeeSatoshi: fees.totalFeeSatoshi,
+          approvedUtxos: fees.approvedUtxos,
+          btcWalletType: fees.btcWalletType,
           walletType,
           transactionAmount: amount,
         },

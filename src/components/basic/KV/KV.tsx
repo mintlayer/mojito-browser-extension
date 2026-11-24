@@ -12,10 +12,12 @@ const KV = ({ rows }: KVProps) => {
       className={styles.kvCard}
       data-testid="kv"
     >
-      {rows.map(([k, v]) => (
+      {rows.map(([k, v], index) => (
         <div
           className={styles.row}
-          key={k}
+          // label + index: labels repeat legitimately (e.g. one Amount row
+          // per asset), so the label alone is not a unique key
+          key={`${k}-${index}`}
         >
           <span className={styles.key}>{k}</span>
           <span className={styles.value}>{v}</span>

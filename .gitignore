@@ -29,12 +29,8 @@ yarn-error.log*
 /blob-report/
 /playwright/.cache/
 
-# llm
-.claude
-
 # local manifest key for unpacked builds
 /manifest-key.txt
-/HANDOFF.md
 .output/
 .wxt/
 releases/

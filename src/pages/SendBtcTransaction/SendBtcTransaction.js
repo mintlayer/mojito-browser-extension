@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useRef, useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { SendBtcTransaction } from '@ContainerComponents'
@@ -29,9 +29,14 @@ const SendBtcTransactionPage = () => {
     tokenId: ['Mintlayer', 'Bitcoin'].includes(coinType) ? null : coinType,
   }
 
-  const [totalFeeFiat, setTotalFeeFiat] = useState(0)
   const [totalFeeCrypto, setTotalFeeCrypto] = useState(0)
   const [feeError, setFeeError] = useState('')
+  // Monotonic id per fee quote: only the most recently started quote may
+  // write preview state, otherwise overlapping in-flight quotes (amount/
+  // fee edits racing the network round-trips) interleave setStates and the
+  // send page displays a stale fee. The confirm page is unaffected — it
+  // broadcasts the frozen approval record, not these preview figures.
+  const feeQuoteSeqRef = useRef(0)
   const navigate = useNavigate()
 
   const { balance } = useBtcWalletInfo()
@@ -59,6 +64,7 @@ const SendBtcTransactionPage = () => {
   }
 
   const calculateBtcTotalFee = async (transactionInfo) => {
+    const requestSeq = ++feeQuoteSeqRef.current
     try {
       const currentAccount = await Account.getAccount(accountID)
       const btcWalletType =
@@ -77,14 +83,34 @@ const SendBtcTransactionPage = () => {
       )
       const freshTotalFeeFiat = Format.fiatValue(formatedFee * exchangeRate)
 
-      setTotalFeeFiat(freshTotalFeeFiat)
+      // The confirmation page must broadcast what the user approved here.
+      // Freeze the exact UTXO set, raw satoshi fee and address type this
+      // quote was derived from, so the confirm step re-selects inputs from
+      // this snapshot instead of the poll-refreshed live UTXO list.
+      const quote = {
+        totalFeeFiat: freshTotalFeeFiat,
+        totalFeeCrypto: formatedFee,
+        totalFeeSatoshi: totalFee,
+        approvedUtxos: btcUtxos || [],
+        btcWalletType,
+      }
+
+      // A newer quote superseded this one while it was in flight — leave
+      // the fresher figures on screen (the returned record stays self-
+      // consistent for the confirmation route state).
+      if (requestSeq !== feeQuoteSeqRef.current) {
+        return quote
+      }
+
       setTotalFeeCrypto(formatedFee)
       setFeeError('')
 
-      return { totalFeeFiat: freshTotalFeeFiat, totalFeeCrypto: formatedFee }
+      return quote
     } catch (e) {
       console.error('Failed to calculate BTC transaction fee:', e)
-      setTotalFeeFiat(0)
+      if (requestSeq !== feeQuoteSeqRef.current) {
+        return null
+      }
       setTotalFeeCrypto(0)
       setFeeError(e?.message || 'Failed to calculate the transaction fee')
       return null
@@ -105,9 +131,7 @@ const SendBtcTransactionPage = () => {
         />
         <VerticalGroup smallGap>
           <SendBtcTransaction
-            totalFeeFiat={totalFeeFiat}
             totalFeeCrypto={totalFeeCrypto}
-            setTotalFeeCrypto={setTotalFeeCrypto}
             transactionData={transactionData}
             exchangeRate={exchangeRate}
             maxValueInToken={maxValueToken}

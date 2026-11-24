@@ -211,4 +211,71 @@ describe('RestoreAccountJson', () => {
     expect(screen.getByText('Wallet Name')).toBeInTheDocument()
     expect(screen.queryByText('Wallet restored!')).not.toBeInTheDocument()
   })
+
+  test('accepts legacy backup JSON without walletType', async () => {
+    // Records predating the walletType field export verbatim without it;
+    // the upload layer must not require the key (restore normalizes it).
+    const legacyJson = JSON.parse(validJson)
+    delete legacyJson.walletType
+
+    render(
+      <MemoryRouter future={memoryRouterFeature}>
+        <AccountProvider>
+          <SettingsProvider
+            value={{ networkType: 'testnet', toggleNetworkType }}
+          >
+            <RestoreAccountJson />
+          </SettingsProvider>
+        </AccountProvider>
+      </MemoryRouter>,
+    )
+
+    const fileInput = screen.getByTestId('file-input')
+    const file = new File([JSON.stringify(legacyJson)], 'legacy.json', {
+      type: 'application/json',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    await expect(screen.findByText('legacy.json')).resolves.toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        'The JSON file does not contain all required keys or has invalid values.',
+      ),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Next'))
+    expect(screen.getByText('Confirm wallet details')).toBeInTheDocument()
+    expect(screen.getByText('Test Wallet')).toBeInTheDocument()
+  })
+
+  test('rejects backup JSON with non-string walletType', async () => {
+    const numericTypeJson = JSON.parse(validJson)
+    numericTypeJson.walletType = 5
+
+    render(
+      <MemoryRouter future={memoryRouterFeature}>
+        <AccountProvider>
+          <SettingsProvider
+            value={{ networkType: 'testnet', toggleNetworkType }}
+          >
+            <RestoreAccountJson />
+          </SettingsProvider>
+        </AccountProvider>
+      </MemoryRouter>,
+    )
+
+    const fileInput = screen.getByTestId('file-input')
+    const file = new File([JSON.stringify(numericTypeJson)], 'bad.json', {
+      type: 'application/json',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    await expect(
+      screen.findByText(
+        'The JSON file does not contain all required keys or has invalid values.',
+      ),
+    ).resolves.toBeInTheDocument()
+  })
 })

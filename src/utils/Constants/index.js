@@ -4,3 +4,4 @@ import Expressions from './Expressions/Expressions'
 
 export { AppInfo, Expressions, EnvVars }
 export { INTEGER_PART, DECIMAL_PART } from './Expressions/Expressions'
+export { LOGIN_TIMEOUT_MINUTES } from './WalletLifecycle'

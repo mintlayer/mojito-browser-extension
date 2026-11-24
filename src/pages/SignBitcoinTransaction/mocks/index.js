@@ -1,6 +1,8 @@
 export const MOCKS = {
   createHtlc: {
     request: {
+      // Match the WRONG_NETWORK guard: dev-mode signing must pass it.
+      network: 'testnet',
       data: {
         txData: {
           JSONRepresentation: {
@@ -19,6 +21,8 @@ export const MOCKS = {
   },
   spendHtlc: {
     request: {
+      // Match the WRONG_NETWORK guard: dev-mode signing must pass it.
+      network: 'testnet',
       data: {
         txData: {
           JSONRepresentation: {
@@ -45,6 +49,8 @@ export const MOCKS = {
   },
   spendHtlc2: {
     request: {
+      // Match the WRONG_NETWORK guard: dev-mode signing must pass it.
+      network: 'testnet',
       data: {
         txData: {
           JSONRepresentation: {
@@ -69,6 +75,8 @@ export const MOCKS = {
   },
   refundHtlc: {
     request: {
+      // Match the WRONG_NETWORK guard: dev-mode signing must pass it.
+      network: 'testnet',
       data: {
         txData: {
           JSONRepresentation: {
@@ -94,3 +102,14 @@ export const MOCKS = {
     },
   },
 }
+
+// The two public keys of the createHtlc fixture, named for what they are
+// in it: the refund key is one of the test wallet's own keys, the recipient
+// key is a counterparty's. A test that renders the fixture as approvable
+// must list the refund key among the wallet's public keys.
+export const CREATE_HTLC_FIXTURE_KEYS = Object.freeze({
+  refundPublicKey:
+    MOCKS.createHtlc.request.data.txData.JSONRepresentation.refundPublicKey,
+  recipientPublicKey:
+    MOCKS.createHtlc.request.data.txData.JSONRepresentation.recipientPublicKey,
+})

@@ -1,6 +1,8 @@
 import * as BTC from './BTC/BTC'
 import * as ML from './ML/ML'
 import * as SignTransaction from './ML/SignTransaction'
+import * as TransactionAmounts from './ML/TransactionAmounts'
+import * as DelegationWithdrawBalance from './ML/DelegationWithdrawBalance'
 import * as NumbersHelper from './Number/Number'
 import * as Format from './Number/Format'
 import * as ArrayHelper from './Array/Array'
@@ -14,6 +16,8 @@ export {
   BTC,
   ML,
   SignTransaction,
+  TransactionAmounts,
+  DelegationWithdrawBalance,
   NumbersHelper,
   Format,
   ArrayHelper,

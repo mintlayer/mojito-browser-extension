@@ -38,15 +38,20 @@ const request = {
   permissions: ['bitcoin'],
 }
 
+// Both helpers mount the page inside the shipped ErrorBoundary, like the
+// panel and popup do, so a render crash shows up as the "Something went
+// wrong" fallback instead of going unnoticed by the assertions.
 const renderAt = (state) =>
   render(
     <MemoryRouter initialEntries={[{ pathname: '/connect', state }]}>
-      <Routes>
-        <Route
-          path="/connect"
-          element={<ConnectionPage />}
-        />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route
+            path="/connect"
+            element={<ConnectionPage />}
+          />
+        </Routes>
+      </ErrorBoundary>
     </MemoryRouter>,
   )
 
@@ -54,12 +59,14 @@ const renderWithAddresses = (addresses, state = { request }) =>
   render(
     <MemoryRouter initialEntries={[{ pathname: '/connect', state }]}>
       <AccountContext.Provider value={{ addresses }}>
-        <Routes>
-          <Route
-            path="/connect"
-            element={<ConnectionPage />}
-          />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route
+              path="/connect"
+              element={<ConnectionPage />}
+            />
+          </Routes>
+        </ErrorBoundary>
       </AccountContext.Provider>
     </MemoryRouter>,
   )
@@ -71,6 +78,8 @@ const ConnectionPage = require('./ConnectionPage').default
 const { AccountContext } = require('@Contexts')
 // eslint-disable-next-line import/first
 const { sendPopupResponse } = require('@Browser')
+// eslint-disable-next-line import/first
+const { ErrorBoundary } = require('@BasicComponents')
 
 describe('ConnectionPage', () => {
   beforeEach(() => {
@@ -232,5 +241,85 @@ describe('ConnectionPage', () => {
     expect(sendPopupResponse).toHaveBeenCalledWith(
       expect.objectContaining({ result: null }),
     )
+  })
+
+  // `permissions` is dApp-supplied: a value that is not an array is read
+  // as "no permissions asked", so the approval still renders and stays
+  // answerable instead of crashing into the error fallback.
+  it.each([
+    ['a number', 42],
+    ['an object', {}],
+    ['a string', 'bitcoin'],
+  ])(
+    'renders an answerable approval when permissions is %s',
+    (_shape, permissions) => {
+      const addresses = {
+        mlAddresses: { mlReceivingAddresses: ['mtc1qnew'] },
+      }
+
+      renderWithAddresses(addresses, {
+        request: { ...request, permissions },
+      })
+
+      expect(screen.queryByTestId('error-boundary')).not.toBeInTheDocument()
+      expect(screen.getByTestId('reject-button')).toBeInTheDocument()
+      expect(screen.getByTestId('connect-button')).toBeInTheDocument()
+      // no 'bitcoin' entry was asked for: no Bitcoin data toggle
+      expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+      expect(screen.queryByText('Provide Bitcoin data')).not.toBeInTheDocument()
+
+      fireEvent.click(screen.getByTestId('reject-button'))
+      expect(sendPopupResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: 'connect',
+          requestId: 'r1',
+          result: null,
+        }),
+      )
+    },
+  )
+
+  // The 'bitcoin' permission only OFFERS the toggle: the user's own choice
+  // on it is what decides whether Bitcoin addresses and keys are shared.
+  describe('Bitcoin data toggle', () => {
+    const addresses = {
+      mlAddresses: { mlReceivingAddresses: ['mtc1qnew'] },
+      btcAddresses: {
+        btcReceivingAddresses: ['bc1qnew'],
+        btcChangeAddresses: [],
+      },
+    }
+
+    const connectResult = () => sendPopupResponse.mock.calls[0][0].result
+
+    it('shows the toggle and shares Bitcoin data while it is left on', () => {
+      renderWithAddresses(addresses)
+
+      expect(screen.queryByTestId('error-boundary')).not.toBeInTheDocument()
+      expect(screen.getByText('Provide Bitcoin data')).toBeInTheDocument()
+      expect(screen.getByRole('switch')).toBeChecked()
+
+      fireEvent.click(screen.getByTestId('connect-button'))
+
+      expect(sendPopupResponse).toHaveBeenCalledTimes(1)
+      const { addressesByChain } = connectResult()
+      expect(addressesByChain).toHaveProperty('bitcoin')
+      expect(addressesByChain.bitcoin.receiving).toEqual(['bc1qnew'])
+    })
+
+    it('shares no Bitcoin data once the user switches it off', () => {
+      renderWithAddresses(addresses)
+
+      fireEvent.click(screen.getByRole('switch'))
+      expect(screen.getByRole('switch')).not.toBeChecked()
+
+      fireEvent.click(screen.getByTestId('connect-button'))
+
+      expect(sendPopupResponse).toHaveBeenCalledTimes(1)
+      const { addressesByChain } = connectResult()
+      expect(addressesByChain).not.toHaveProperty('bitcoin')
+      // the Mintlayer data does not depend on the toggle
+      expect(addressesByChain.mintlayer.receiving).toEqual(['mtc1qnew'])
+    })
   })
 })

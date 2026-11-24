@@ -55,6 +55,9 @@ describe('Navigation Component', () => {
         isExtended: false,
         sliderMenuOpen: false,
         setSliderMenuOpen: mockSetSliderMenuOpen,
+        // the chrome derives from the LIVE session state: an unlocked
+        // fixture must present a live session, not just the route snapshot
+        addresses: { mlAddresses: ['address'] },
       },
     }
 

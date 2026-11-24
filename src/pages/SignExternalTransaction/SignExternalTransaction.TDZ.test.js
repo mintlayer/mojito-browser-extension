@@ -1,6 +1,6 @@
 /**
- * DIAGNOSTIC SPEC — RED by design. DO NOT "fix" by changing this file's
- * expectations; the fix belongs in SignExternalTransaction.js production code.
+ * Regression guard for the approval-popup route (originally a RED-by-design
+ * diagnostic; the TDZ fix has shipped, so this suite is expected GREEN).
  *
  * Why this exists
  * ---------------
@@ -23,8 +23,7 @@
  *    route state (the production approval-popup path).
  * 2. Renders the real page with route state = undefined (no pending request).
  * If either render throws, the FULL error.stack is printed via console.error
- * (tagged [TDZ-DIAG] so it survives the console silencing) and then rethrown,
- * keeping the suite RED while making the stack visible.
+ * (tagged [TDZ-DIAG] so it survives the console silencing) and then rethrown.
  *
  * NOTE: no ErrorBoundary is mounted here on purpose — in production the app's
  * ErrorBoundary swallows the render-phase error and shows a fallback; here we
@@ -193,7 +192,7 @@ const renderSignPage = (state) =>
 // eslint-disable-next-line import/first
 const { SignTransactionPage } = require('./SignExternalTransaction')
 
-describe('SignTransactionPage — TDZ diagnostic (expected RED)', () => {
+describe('SignTransactionPage — TDZ regression (green guard)', () => {
   afterAll(() => {
     errorSpy.mockRestore()
   })
