@@ -424,6 +424,31 @@ export const isLockedSelfOutput = (output, ownAddresses) => {
   )
 }
 
+// The keys an Htlc OUTPUT commits, with their ownership of this wallet, for
+// the approval summary. The signer encodes exactly output.htlc.spend_key
+// (who can claim with the secret) and output.htlc.refund_key (who can
+// recover after the lock time) — encode_output_htlc reads nothing else, so
+// the `destination`/`address` fields a payload may attach to such an output
+// are ignored here too. Ownership is informational only: the spender-shaped
+// flow legitimately funds an escrow whose refund key is not this wallet's
+// while it holds the secret, so the rows these feed never block approval.
+// A key the payload does not carry as a string resolves to null. Returns
+// null for any output type the signer does not encode as an Htlc.
+export const htlcOutputKeyOwnership = (output, ownAddresses) => {
+  if (output?.type !== 'Htlc') return null
+  const ownList = ownAddressList(ownAddresses)
+  const spendKey =
+    typeof output?.htlc?.spend_key === 'string' ? output.htlc.spend_key : null
+  const refundKey =
+    typeof output?.htlc?.refund_key === 'string' ? output.htlc.refund_key : null
+  return {
+    spendKey,
+    refundKey,
+    spendOwn: spendKey !== null && ownList.includes(spendKey),
+    refundOwn: refundKey !== null && ownList.includes(refundKey),
+  }
+}
+
 // The lock of a LockThenTransfer output as the signer encodes it
 // (Mintlayer.getOutputs): UntilTime → BigInt(lock.content.timestamp) through
 // encode_lock_until_time; ForBlockCount → BigInt(lock.content) through
@@ -1158,7 +1183,7 @@ export const reconcileApprovalAmounts = (
     }
     return group
   }
-  relevantOutputs.forEach((output) => {
+  relevantOutputs.forEach((output, index) => {
     if (output?.type === 'BurnToken') return
     if (isLockedSelfOutput(output, ownAddresses)) return
 
@@ -1193,6 +1218,31 @@ export const reconcileApprovalAmounts = (
       return // no destination to name and nothing to verify
     }
     const group = groupOf(destination)
+    // An Htlc output pays keys, not an address: the ownership of both keys
+    // it commits travels on its group (htlcKeyRows), rendered right beside
+    // its destination-less amount row. Each entry also carries the output's
+    // own signed amount — the atoms-derived display, or the signed truth
+    // when the site-reported decimal lies — so its key pair stays tied to
+    // the amount it escrows even when several Htlc outputs of one asset sum
+    // into the single destination-less row (whose summed Amount row stands
+    // unchanged). A leg with no readable amount names no escrow text.
+    // Informational only — never an error and never a block
+    // (htlcOutputKeyOwnership).
+    if (output?.type === 'Htlc') {
+      const ownership = htlcOutputKeyOwnership(output, ownAddresses)
+      if (ownership) {
+        group.htlcKeyRows = [
+          ...(group.htlcKeyRows ?? []),
+          {
+            key: `htlc:${index}`,
+            ...ownership,
+            ...(verified?.amount != null
+              ? { amount: verified.amount, tokenId }
+              : {}),
+          },
+        ]
+      }
+    }
     if (!verified && !lockError) return // the destination pair stands alone
     const key = tokenId || 'Coin'
     const entry = group.totals.get(key) || {
@@ -1227,6 +1277,9 @@ export const reconcileApprovalAmounts = (
             amount: atomsToDecimalString(entry.atoms, entry.decimals ?? 0),
           }),
     })),
+    // carried only by a group whose outputs commit an Htlc escrow: the
+    // summary names those keys beside this group's amount rows
+    ...(group.htlcKeyRows ? { htlcKeyRows: group.htlcKeyRows } : {}),
   }))
 
   // SECURITY: the shared fee rule (deriveApprovalFee) — computed from the

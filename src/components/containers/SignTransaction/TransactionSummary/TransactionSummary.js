@@ -101,6 +101,16 @@ const OPERATION_LABELS = [
   ['isDelegateWithdraw', 'Withdraw from delegation'],
 ]
 
+// The two keys an Htlc OUTPUT commits (encode_output_htlc): whoever holds
+// the spend key can claim with the secret, whoever holds the refund key can
+// recover after the lock time. Each is labelled as this wallet's ("your
+// address", the same treatment as the To lines) or plainly not, so the user
+// sees who can do what before entering a password. The rows are
+// informational only: nothing here blocks approval — the wallet's own
+// spender-shaped flow legitimately funds an escrow refunded elsewhere.
+const HTLC_CLAIM_KEY_LABEL = 'Claim key (with the secret)'
+const HTLC_REFUND_KEY_LABEL = 'Refund key (after the lock)'
+
 /**
  * Compact, user-friendly recap for a transaction: action, counterparties,
  * amount, fee and network — with everything technical collapsed away.
@@ -202,42 +212,90 @@ const TransactionSummary = ({
           // outputs — they pay keys or delegations, not an address shown
           // here); the destination of an order account command's fill is
           // named on the fill's own row below, never as a To pair.
-          ...destinationRows.flatMap(({ destination, toSelf, amountRows }) => [
-            ...(destination
-              ? [
+          ...destinationRows.flatMap(
+            ({ destination, toSelf, amountRows, htlcKeyRows = [] }) => [
+              ...(destination
+                ? [
+                    [
+                      toSelf ? 'To (your address)' : 'To',
+                      <span
+                        key={rowKey('to', destination)}
+                        className={styles.valueLine}
+                      >
+                        {truncate(destination, 10, 8)}
+                        {destination && <CopyButton content={destination} />}
+                      </span>,
+                    ],
+                  ]
+                : []),
+              ...amountRows.map(({ key, tokenId, amount, errors }) => [
+                'Amount',
+                <span
+                  key={rowKey(
+                    'amount',
+                    `${asText(destination, 'unaddressed')}:${key}`,
+                  )}
+                  className={errors ? styles.amountError : styles.amount}
+                >
+                  {errors
+                    ? errors
+                        .map(({ error, amount: signed }) =>
+                          signed != null
+                            ? `${error} — will sign ${signed} ${tickerOf(tokenId)}`
+                            : error,
+                        )
+                        .join('; ')
+                    : `${amount} ${tickerOf(tokenId)}`}
+                </span>,
+              ]),
+              // The keys each Htlc output of this group commits, named right
+              // beside its amount row: a truncated key with its copy
+              // treatment, marked as this wallet's in the row label when the
+              // wallet holds it, and the amount that very output escrows —
+              // shown on its claim row, so each pair stays tied to its own
+              // escrow however many Htlc outputs sum into the group's single
+              // Amount row. A key the payload does not carry renders as the
+              // placeholder, with nothing to copy.
+              ...htlcKeyRows.flatMap(
+                ({
+                  key,
+                  spendKey,
+                  spendOwn,
+                  refundKey,
+                  refundOwn,
+                  amount,
+                  tokenId,
+                }) => [
                   [
-                    toSelf ? 'To (your address)' : 'To',
+                    spendOwn
+                      ? `${HTLC_CLAIM_KEY_LABEL} (your address)`
+                      : HTLC_CLAIM_KEY_LABEL,
                     <span
-                      key={rowKey('to', destination)}
+                      key={rowKey('htlc-claim', key)}
                       className={styles.valueLine}
                     >
-                      {truncate(destination, 10, 8)}
-                      {destination && <CopyButton content={destination} />}
+                      {truncate(spendKey, 10, 8)}
+                      {spendKey && <CopyButton content={spendKey} />}
+                      {amount != null &&
+                        ` — escrows ${amount} ${tickerOf(tokenId)}`}
                     </span>,
                   ],
-                ]
-              : []),
-            ...amountRows.map(({ key, tokenId, amount, errors }) => [
-              'Amount',
-              <span
-                key={rowKey(
-                  'amount',
-                  `${asText(destination, 'unaddressed')}:${key}`,
-                )}
-                className={errors ? styles.amountError : styles.amount}
-              >
-                {errors
-                  ? errors
-                      .map(({ error, amount: signed }) =>
-                        signed != null
-                          ? `${error} — will sign ${signed} ${tickerOf(tokenId)}`
-                          : error,
-                      )
-                      .join('; ')
-                  : `${amount} ${tickerOf(tokenId)}`}
-              </span>,
-            ]),
-          ]),
+                  [
+                    refundOwn
+                      ? `${HTLC_REFUND_KEY_LABEL} (your address)`
+                      : HTLC_REFUND_KEY_LABEL,
+                    <span
+                      key={rowKey('htlc-refund', key)}
+                      className={styles.valueLine}
+                    >
+                      {truncate(refundKey, 10, 8)}
+                      {refundKey && <CopyButton content={refundKey} />}
+                    </span>,
+                  ],
+                ],
+              ),
+            ],
+          ),
           // note: the plain-words lock of funds coming back locked to this
           // wallet — read out with the amount, verified or shown as the
           // signed truth, so the encumbrance is never separated from it.

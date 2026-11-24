@@ -534,6 +534,10 @@ const shown = (address) =>
 // combined amount one line could attribute to a single recipient.
 const WITH_TRANSFER = { transfer: true }
 const ALONE = { transfer: false }
+// The Htlc escrow additionally names the two keys it commits (both foreign
+// in these fixtures), each with its own copy button; the staking escrow
+// names no keys.
+const COPY_BUTTONS = { transfer: 4, alone: 3 }
 
 const escrowRequest = (escrowOutput, besideTransfer) => {
   const request = JSON.parse(JSON.stringify(honestRequest))
@@ -545,30 +549,39 @@ const escrowRequest = (escrowOutput, besideTransfer) => {
 
 describe('SignTransactionPage — value-bearing outputs tagged with a wallet address', () => {
   it.each([
-    ['Htlc without any address (control)', htlcEscrow(null), WITH_TRANSFER],
+    [
+      'Htlc without any address (control)',
+      htlcEscrow(null),
+      WITH_TRANSFER,
+      COPY_BUTTONS.transfer,
+    ],
     [
       'Htlc with destination = wallet address',
       htlcEscrow('destination'),
       WITH_TRANSFER,
+      COPY_BUTTONS.transfer,
     ],
     [
       'Htlc with address = wallet address',
       htlcEscrow('address'),
       WITH_TRANSFER,
+      COPY_BUTTONS.transfer,
     ],
     [
       'DelegateStaking with destination = wallet address',
       stakingEscrow('destination'),
       WITH_TRANSFER,
+      2,
     ],
     [
       'Htlc with destination = wallet address as the only output',
       htlcEscrow('destination'),
       ALONE,
+      COPY_BUTTONS.alone,
     ],
   ])(
     'shows the escrowed funds for %s',
-    (_description, escrowOutput, expected) => {
+    (_description, escrowOutput, expected, copyButtons) => {
       renderSignPage(escrowRequest(escrowOutput, expected.transfer))
 
       const summary = screen.getByTestId('transaction-summary')
@@ -588,16 +601,17 @@ describe('SignTransactionPage — value-bearing outputs tagged with a wallet add
         expect(
           within(summary).getByText(shown(DAPP_TRANSFER.destination)),
         ).toBeInTheDocument()
-        // From and To each have a copy button
-        expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
+        // From and To each have a copy button — plus the two keys an Htlc
+        // escrow commits
+        expect(screen.getAllByTestId('copy-btn')).toHaveLength(copyButtons)
       } else {
         // no output carries a destination the signer encodes: no To line,
-        // and only From has a copy button
+        // and From plus the two Htlc keys have copy buttons
         expect(
           within(summary).getByText('16071.486043 TML'),
         ).toBeInTheDocument()
         expect(within(summary).queryByText('To')).not.toBeInTheDocument()
-        expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+        expect(screen.getAllByTestId('copy-btn')).toHaveLength(copyButtons)
       }
       // the wallet address appears as From only
       expect(within(summary).queryAllByText(shown(OWN_RECEIVING))).toHaveLength(
@@ -609,6 +623,153 @@ describe('SignTransactionPage — value-bearing outputs tagged with a wallet add
       expect(screen.getByText('Approve and return to page')).toBeEnabled()
     },
   )
+})
+
+// An Htlc output pays keys, not an address: the approval states whose keys
+// can claim (with the secret) and refund (after the lock) beside its
+// destination-less amount row, before any password is entered. The rows are
+// informational only — the request stays approvable exactly where it is
+// approvable today, whatever the keys say.
+describe('SignTransactionPage — htlc output key ownership on the approval', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    Account.hasPasskey.mockResolvedValue(false)
+    Account.unlockAccount.mockResolvedValue({
+      mlPrivKeys: { mlTestnetPrivateKey: 'test-private-key' },
+    })
+  })
+
+  const DAPP_CLAIM_KEY = 'tmt1qdappspendkey000000000000'
+  const DAPP_REFUND_KEY = 'tmt1qdapprefundkey00000000000'
+  const CLAIM_ROW_LABEL = 'Claim key (with the secret)'
+  const REFUND_ROW_LABEL = 'Refund key (after the lock)'
+
+  const keyedEscrowRequest = (spendKey, refundKey, escrowed = ESCROWED) => {
+    const request = JSON.parse(JSON.stringify(honestRequest))
+    request.request.data.txData.JSONRepresentation.outputs = [
+      {
+        type: 'Htlc',
+        value: { type: 'Coin', amount: escrowed },
+        htlc: {
+          refund_key: refundKey,
+          refund_timelock: { content: 20, type: 'ForBlockCount' },
+          secret_hash: {
+            hex: 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3',
+            string: null,
+          },
+          spend_key: spendKey,
+        },
+      },
+    ]
+    return request
+  }
+
+  it('labels a wallet claim key as its own and a foreign refund key as not, before any password', () => {
+    renderSignPage(keyedEscrowRequest(OWN_RECEIVING, DAPP_REFUND_KEY))
+
+    // the rows are on the approval face, before any password is entered
+    const summary = screen.getByTestId('transaction-summary')
+    expect(
+      within(summary).getByText(`${CLAIM_ROW_LABEL} (your address)`),
+    ).toBeInTheDocument()
+    expect(within(summary).getByText(REFUND_ROW_LABEL)).toBeInTheDocument()
+    expect(
+      within(summary).queryByText(`${REFUND_ROW_LABEL} (your address)`),
+    ).not.toBeInTheDocument()
+    // the keys are shown truncated, as signed: the wallet key on the claim
+    // row (and as From), the foreign one plainly, and the claim row names
+    // the amount its output escrows
+    expect(within(summary).getAllByText(shown(OWN_RECEIVING))).toHaveLength(1)
+    const claimValue = within(summary).getByText(
+      `${CLAIM_ROW_LABEL} (your address)`,
+    ).nextElementSibling
+    expect(claimValue).toHaveTextContent(shown(OWN_RECEIVING))
+    expect(claimValue).toHaveTextContent('— escrows 16071.486043 TML')
+    expect(within(summary).getByText(shown(DAPP_REFUND_KEY))).toHaveTextContent(
+      shown(DAPP_REFUND_KEY),
+    )
+    // informational only: the request stays approvable
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeEnabled()
+  })
+
+  it('flips the labels when the claim key is foreign and the refund key is the wallet', () => {
+    renderSignPage(keyedEscrowRequest(DAPP_CLAIM_KEY, OWN_CHANGE))
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(within(summary).getByText(CLAIM_ROW_LABEL)).toBeInTheDocument()
+    expect(
+      within(summary).getByText(`${REFUND_ROW_LABEL} (your address)`),
+    ).toBeInTheDocument()
+    expect(
+      within(summary).queryByText(`${CLAIM_ROW_LABEL} (your address)`),
+    ).not.toBeInTheDocument()
+    expect(
+      within(summary).getByText(`${REFUND_ROW_LABEL} (your address)`),
+    ).toBeInTheDocument()
+    const foreignClaimValue =
+      within(summary).getByText(CLAIM_ROW_LABEL).nextElementSibling
+    expect(foreignClaimValue).toHaveTextContent(shown(DAPP_CLAIM_KEY))
+    expect(foreignClaimValue).toHaveTextContent('— escrows 16071.486043 TML')
+    expect(screen.getByText('Approve and return to page')).toBeEnabled()
+  })
+
+  it('labels both keys as not this wallet and still signs as before', async () => {
+    renderSignPage(keyedEscrowRequest(DAPP_CLAIM_KEY, DAPP_REFUND_KEY))
+
+    const summary = screen.getByTestId('transaction-summary')
+    expect(within(summary).getByText(CLAIM_ROW_LABEL)).toBeInTheDocument()
+    expect(within(summary).getByText(REFUND_ROW_LABEL)).toBeInTheDocument()
+    expect(
+      within(summary).queryByText(`${CLAIM_ROW_LABEL} (your address)`),
+    ).not.toBeInTheDocument()
+    expect(
+      within(summary).queryByText(`${REFUND_ROW_LABEL} (your address)`),
+    ).not.toBeInTheDocument()
+    // non-blocking by design: both keys foreign, approval stays reachable
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+    expect(screen.getByText('Approve and return to page')).toBeEnabled()
+
+    // the approval flow is unchanged: password, then the same signed answer
+    fireEvent.click(screen.getByText('Approve and return to page'))
+    fireEvent.change(screen.getByPlaceholderText('Enter your password'), {
+      target: { value: 'wallet-password' },
+    })
+    fireEvent.click(screen.getByText('Approve'))
+
+    await waitFor(() =>
+      expect(sendPopupResponse).toHaveBeenCalledWith({
+        method: 'signTransaction_approve',
+        requestId: 'mismatch-1',
+        origin: 'https://attacker.example',
+        result: 'aabbccdd',
+      }),
+    )
+  })
+
+  it('keeps the key rows on the blocked screen when the htlc amount lies', () => {
+    renderSignPage(
+      keyedEscrowRequest(OWN_RECEIVING, DAPP_REFUND_KEY, {
+        // LIE: the site reports 0.00000000001 while committing 16071.486043
+        atoms: '1607148604300000',
+        decimal: '0.00000000001',
+      }),
+    )
+
+    // blocked as ever — and the keys stay visible on the summary, with the
+    // signed truth as the amount the pair escrows
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    const summary = screen.getByTestId('transaction-summary')
+    expect(
+      within(summary).getByText(`${CLAIM_ROW_LABEL} (your address)`),
+    ).toBeInTheDocument()
+    expect(within(summary).getByText(REFUND_ROW_LABEL)).toBeInTheDocument()
+    expect(
+      within(summary).getByText(`${CLAIM_ROW_LABEL} (your address)`)
+        .nextElementSibling,
+    ).toHaveTextContent('— escrows 16071.486043 TML')
+    expect(screen.getByText('Approve and return to page')).toBeDisabled()
+  })
 })
 
 // One To and Amount pair per destination: naming one recipient beside a

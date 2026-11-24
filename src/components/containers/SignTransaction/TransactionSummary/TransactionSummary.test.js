@@ -1067,8 +1067,9 @@ describe('TransactionSummary', () => {
     const amounts = screen.getAllByText('Amount')
     expect(amounts).toHaveLength(1)
     expect(amounts[0].nextElementSibling).toHaveTextContent(/^16081.486043 ML$/)
-    // only From has a copy button: there is no destination to copy
-    expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+    // From plus the two keys the Htlc output commits can be copied (the
+    // staking escrow names no keys)
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(3)
     expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
   })
 
@@ -1404,6 +1405,8 @@ describe('TransactionSummary', () => {
   // Beside a fill, the escrowed amount still keeps its destination-less
   // row: it never reads as money that goes to the fill's destination. That
   // destination is shown on the fill's own row in the technical breakdown.
+  // The Htlc escrow additionally names the two keys it commits (both
+  // foreign here); the staking escrow names no keys.
   it.each([
     [
       'an Htlc output',
@@ -1412,6 +1415,7 @@ describe('TransactionSummary', () => {
         value: coin('10'),
         htlc: { spend_key: 'mtc1qdappspendkey', refund_key: 'mtc1qdapprefund' },
       },
+      4,
     ],
     [
       'a DelegateStaking output',
@@ -1420,10 +1424,11 @@ describe('TransactionSummary', () => {
         amount: coin('10').amount,
         delegation_id: 'd1',
       },
+      2,
     ],
   ])(
     'keeps the escrow of %s on a destination-less row beside a fill',
-    (_description, escrowOutput) => {
+    (_description, escrowOutput, copyButtons) => {
       renderSummary({
         jsonRepresentation: {
           // the fill's proceeds go to the wallet's receiving address R
@@ -1448,8 +1453,9 @@ describe('TransactionSummary', () => {
       // appears as From and on the fill's own row
       expect(screen.queryByText('To')).not.toBeInTheDocument()
       expect(screen.getAllByText(truncated(OWN_RECEIVING))).toHaveLength(2)
-      // From and the fill destination each have a copy button
-      expect(screen.getAllByTestId('copy-btn')).toHaveLength(2)
+      // From and the fill destination each have a copy button — plus the
+      // two keys an Htlc output commits
+      expect(screen.getAllByTestId('copy-btn')).toHaveLength(copyButtons)
     },
   )
 
@@ -2058,5 +2064,310 @@ describe('TransactionSummary — locked outputs returning to this wallet', () =>
     expect(screen.getByText('60 ML')).toBeInTheDocument()
     expect(screen.queryByText(/until /)).not.toBeInTheDocument()
     expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+})
+
+// An Htlc output pays keys, not an address: the approval names both keys it
+// commits beside its destination-less amount row, each labelled as this
+// wallet's ("your address", like the To lines) or plainly not. The rows are
+// informational only — nothing new blocks approval.
+describe('TransactionSummary — htlc output key ownership', () => {
+  const DAPP_CLAIM_KEY = 'mtc1qforeignspendkey0123456789abcdef'
+  const DAPP_REFUND_KEY = 'mtc1qforeignrefundkey0123456789abcde'
+  const CLAIM_ROW_LABEL = 'Claim key (with the secret)'
+  const REFUND_ROW_LABEL = 'Refund key (after the lock)'
+
+  const rowValue = (label) => screen.getByText(label).nextElementSibling
+  const htlcOutput = (spendKey, refundKey, extraFields = {}) => ({
+    type: 'Htlc',
+    value: coin('99'),
+    htlc: {
+      spend_key: spendKey,
+      refund_key: refundKey,
+      refund_timelock: { type: 'ForBlockCount', content: 20 },
+      secret_hash: {
+        hex: 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3',
+        string: null,
+      },
+    },
+    ...extraFields,
+  })
+
+  it('labels a wallet claim key as its own and a foreign refund key as not', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('102') },
+          },
+        ],
+        outputs: [htlcOutput(OWN_RECEIVING, DAPP_REFUND_KEY)],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    expect(
+      screen.getByText(`${CLAIM_ROW_LABEL} (your address)`),
+    ).toBeInTheDocument()
+    expect(screen.getByText(REFUND_ROW_LABEL)).toBeInTheDocument()
+    expect(
+      screen.queryByText(`${REFUND_ROW_LABEL} (your address)`),
+    ).not.toBeInTheDocument()
+    // both keys are shown truncated, each with its copy treatment, exactly
+    // like the To lines, and the claim row names the amount its output
+    // escrows
+    expect(rowValue(`${CLAIM_ROW_LABEL} (your address)`)).toHaveTextContent(
+      truncated(OWN_RECEIVING),
+    )
+    expect(rowValue(`${CLAIM_ROW_LABEL} (your address)`)).toHaveTextContent(
+      '— escrows 99 ML',
+    )
+    expect(rowValue(REFUND_ROW_LABEL)).toHaveTextContent(
+      truncated(DAPP_REFUND_KEY),
+    )
+    // From + claim key + refund key can each be copied
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(3)
+    // informational only: the destination-less amount row stays and nothing
+    // blocks
+    expect(screen.getAllByText('Amount')).toHaveLength(1)
+    expect(screen.getByText('99 ML')).toBeInTheDocument()
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('flips the labels when the claim key is foreign and the refund key is the wallet', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('102') },
+          },
+        ],
+        outputs: [htlcOutput(DAPP_CLAIM_KEY, OWN_CHANGE)],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    // a change address is this wallet's too
+    expect(screen.getByText(CLAIM_ROW_LABEL)).toBeInTheDocument()
+    expect(
+      screen.getByText(`${REFUND_ROW_LABEL} (your address)`),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(`${CLAIM_ROW_LABEL} (your address)`),
+    ).not.toBeInTheDocument()
+    expect(rowValue(CLAIM_ROW_LABEL)).toHaveTextContent(
+      truncated(DAPP_CLAIM_KEY),
+    )
+    expect(rowValue(CLAIM_ROW_LABEL)).toHaveTextContent('— escrows 99 ML')
+    expect(rowValue(`${REFUND_ROW_LABEL} (your address)`)).toHaveTextContent(
+      truncated(OWN_CHANGE),
+    )
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('labels both keys as not this wallet and still approvable, ignoring decoy address fields', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('102') },
+          },
+        ],
+        // the signer reads neither `destination` nor `address` on an Htlc
+        // output — they must not mark the keys as this wallet's either
+        outputs: [
+          htlcOutput(DAPP_CLAIM_KEY, DAPP_REFUND_KEY, {
+            destination: OWN_RECEIVING,
+            address: OWN_CHANGE,
+          }),
+        ],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    expect(screen.getByText(CLAIM_ROW_LABEL)).toBeInTheDocument()
+    expect(screen.getByText(REFUND_ROW_LABEL)).toBeInTheDocument()
+    expect(
+      screen.queryByText(`${CLAIM_ROW_LABEL} (your address)`),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(`${REFUND_ROW_LABEL} (your address)`),
+    ).not.toBeInTheDocument()
+    // the decoy fields name no destination either (unchanged behaviour),
+    // and the claim row still names the escrowed amount
+    expect(screen.queryByText('To')).not.toBeInTheDocument()
+    expect(rowValue(CLAIM_ROW_LABEL)).toHaveTextContent('— escrows 99 ML')
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('renders the key rows of a well-formed htlc output beside its amount row', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: {
+              destination: OWN_RECEIVING,
+              value: coin('16884.707043'),
+            },
+          },
+        ],
+        outputs: [
+          htlcOutput(DAPP_CLAIM_KEY, DAPP_REFUND_KEY, { value: coin('10') }),
+          {
+            type: 'Transfer',
+            destination: DESTINATION,
+            value: coin('16873.458043'),
+          },
+        ],
+        fee: { decimal: '1.249', atoms: toAtoms('1.249') },
+      },
+    })
+
+    // the htlc amount row stays destination-less; the transfer keeps its
+    // own pair
+    const amounts = screen.getAllByText('Amount')
+    expect(amounts).toHaveLength(2)
+    expect(amounts[0].nextElementSibling).toHaveTextContent(/^10 ML$/)
+    expect(amounts[1].nextElementSibling).toHaveTextContent(/^16873.458043 ML$/)
+    // the key rows sit right after the htlc amount row they belong to, the
+    // claim row naming the amount its output escrows
+    const claimRow = amounts[0].parentElement.nextElementSibling
+    expect(claimRow.textContent).toContain(CLAIM_ROW_LABEL)
+    expect(claimRow.textContent).toContain(truncated(DAPP_CLAIM_KEY))
+    expect(claimRow.textContent).toContain('— escrows 10 ML')
+    expect(claimRow.nextElementSibling.textContent).toContain(REFUND_ROW_LABEL)
+    expect(claimRow.nextElementSibling.textContent).toContain(
+      truncated(DAPP_REFUND_KEY),
+    )
+    // From + To + claim key + refund key can each be copied
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(4)
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('shows the placeholder for keys the output does not carry, without copy treatment', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('102') },
+          },
+        ],
+        outputs: [
+          {
+            type: 'Htlc',
+            value: coin('99'),
+            htlc: {
+              refund_timelock: { type: 'ForBlockCount', content: 20 },
+              secret_hash: {
+                hex: 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3',
+                string: null,
+              },
+            },
+          },
+        ],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    expect(screen.getByText(CLAIM_ROW_LABEL)).toBeInTheDocument()
+    expect(screen.getByText(REFUND_ROW_LABEL)).toBeInTheDocument()
+    expect(rowValue(CLAIM_ROW_LABEL)).toHaveTextContent('—')
+    expect(rowValue(REFUND_ROW_LABEL)).toHaveTextContent('—')
+    // the escrowed amount is still named: it is known even though the keys
+    // are not
+    expect(rowValue(CLAIM_ROW_LABEL)).toHaveTextContent('— escrows 99 ML')
+    // only From is copyable
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(1)
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('ties each claim row to its own escrowed amount when two htlc outputs sum into one row', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('102') },
+          },
+        ],
+        outputs: [
+          htlcOutput(DAPP_CLAIM_KEY, OWN_CHANGE, { value: coin('1') }),
+          htlcOutput(OWN_RECEIVING, DAPP_REFUND_KEY, { value: coin('2') }),
+        ],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    // both escrowed amounts still sum into the single destination-less
+    // Amount row
+    expect(screen.getAllByText('Amount')).toHaveLength(1)
+    expect(screen.getByText('3 ML')).toBeInTheDocument()
+    // one claim and refund pair per output, with the same ownership
+    // treatment as ever
+    expect(screen.getAllByText(CLAIM_ROW_LABEL)).toHaveLength(1)
+    expect(
+      screen.getAllByText(`${CLAIM_ROW_LABEL} (your address)`),
+    ).toHaveLength(1)
+    expect(screen.getAllByText(REFUND_ROW_LABEL)).toHaveLength(1)
+    expect(
+      screen.getAllByText(`${REFUND_ROW_LABEL} (your address)`),
+    ).toHaveLength(1)
+    // each claim row names the amount ITS OWN output escrows, so the pairs
+    // cannot be mixed up with the summed row
+    expect(rowValue(CLAIM_ROW_LABEL)).toHaveTextContent('— escrows 1 ML')
+    expect(rowValue(`${CLAIM_ROW_LABEL} (your address)`)).toHaveTextContent(
+      '— escrows 2 ML',
+    )
+    // From + both keys of both outputs
+    expect(screen.getAllByTestId('copy-btn')).toHaveLength(5)
+    expect(screen.queryByTestId('approval-blocked')).not.toBeInTheDocument()
+  })
+
+  it('keeps the key rows on the blocked screen when the htlc amount lies', () => {
+    renderSummary({
+      jsonRepresentation: {
+        inputs: [
+          {
+            input: { input_type: 'UTXO' },
+            input_type: 'UTXO',
+            utxo: { destination: OWN_RECEIVING, value: coin('102') },
+          },
+        ],
+        outputs: [
+          // LIE: the site reports 0.00000000001 while committing 99
+          htlcOutput(DAPP_CLAIM_KEY, DAPP_REFUND_KEY, {
+            value: {
+              type: 'Coin',
+              amount: { decimal: '0.00000000001', atoms: toAtoms('99') },
+            },
+          }),
+        ],
+        fee: { decimal: '0', atoms: '0' },
+      },
+    })
+
+    // blocked as ever — and the keys stay visible, with the signed truth as
+    // the escrowed amount
+    expect(screen.getByTestId('approval-blocked')).toBeInTheDocument()
+    expect(screen.getByText(CLAIM_ROW_LABEL)).toBeInTheDocument()
+    expect(screen.getByText(REFUND_ROW_LABEL)).toBeInTheDocument()
+    expect(rowValue(CLAIM_ROW_LABEL)).toHaveTextContent(
+      truncated(DAPP_CLAIM_KEY),
+    )
+    expect(rowValue(CLAIM_ROW_LABEL)).toHaveTextContent('— escrows 99 ML')
+    expect(rowValue(REFUND_ROW_LABEL)).toHaveTextContent(
+      truncated(DAPP_REFUND_KEY),
+    )
   })
 })

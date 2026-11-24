@@ -10,6 +10,7 @@ import {
   deriveApprovalFee,
   describeOutputLock,
   findRelevantOutputs,
+  htlcOutputKeyOwnership,
   isLockedSelfOutput,
   readOutputLock,
   reconcileApprovalAmounts,
@@ -1432,6 +1433,17 @@ describe('reconcileApprovalAmounts', () => {
         value: coin('16071.486043', '1607148604300000'),
         htlc: { spend_key: 'attacker', refund_key: 'attacker' },
       },
+      // the keys the output commits are named beside its amount row, both
+      // plainly not this wallet's
+      [
+        {
+          key: 'htlc:1',
+          spendKey: 'attacker',
+          spendOwn: false,
+          refundKey: 'attacker',
+          refundOwn: false,
+        },
+      ],
     ],
     [
       'DelegateStaking',
@@ -1440,10 +1452,11 @@ describe('reconcileApprovalAmounts', () => {
         amount: coin('16071.486043', '1607148604300000').amount,
         delegation_id: 'd1',
       },
+      undefined,
     ],
   ])(
     'sums a %s output tagged with own addresses into a destination-less row',
-    (_type, escrowOutput) => {
+    (_type, escrowOutput, htlcKeyRows) => {
       const { destinationRows, blocked } = reconcileApprovalAmounts(
         decoyEscrowPayload(escrowOutput),
         { tokenDecimalsById: new Map(), ownAddresses },
@@ -1453,7 +1466,20 @@ describe('reconcileApprovalAmounts', () => {
       // — never folded into the payment's amount
       expect(destinationRows).toEqual([
         pair('attacker', [{ key: 'Coin', tokenId: null, amount: '10' }]),
-        pair(null, [{ key: 'Coin', tokenId: null, amount: '16071.486043' }]),
+        {
+          ...pair(null, [
+            { key: 'Coin', tokenId: null, amount: '16071.486043' },
+          ]),
+          ...(htlcKeyRows
+            ? {
+                htlcKeyRows: htlcKeyRows.map((row) => ({
+                  amount: '16071.486043',
+                  tokenId: null,
+                  ...row,
+                })),
+              }
+            : {}),
+        },
       ])
     },
   )
@@ -1479,6 +1505,193 @@ describe('reconcileApprovalAmounts', () => {
         amount: '16071.486043',
       },
     ])
+    // blocked or not, the key rows stay on the summary: the user must see
+    // whose keys the escrow commits — with the signed truth as the amount
+    // it escrows
+    expect(unaddressed.htlcKeyRows).toEqual([
+      {
+        key: 'htlc:1',
+        spendKey: 'attacker',
+        spendOwn: false,
+        refundKey: 'attacker',
+        refundOwn: false,
+        amount: '16071.486043',
+        tokenId: null,
+      },
+    ])
+  })
+
+  // Atoms the signer cannot encode (unparseable or negative) leave the
+  // amount row with the failure reason alone: no signed amount exists to
+  // name, so the key rows carry NO escrow amount — the fields are absent,
+  // never a placeholder or the error text.
+  it('carries no escrow amount on the key rows when the htlc atoms are unreadable', () => {
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
+        outputs: [
+          {
+            type: 'Htlc',
+            value: {
+              type: 'Coin',
+              amount: { decimal: '1', atoms: '12x' },
+            },
+            htlc: { spend_key: 'attacker', refund_key: 'attacker' },
+          },
+          {
+            type: 'Htlc',
+            value: {
+              type: 'Coin',
+              amount: { decimal: '1', atoms: '-5' },
+            },
+            htlc: { spend_key: 'wallet', refund_key: 'attacker' },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(true)
+    // both failures surface on the destination-less amount row
+    const unaddressed = destinationRows.find(
+      (group) => group.destination === null,
+    )
+    expect(unaddressed.amountRows[0].errors).toHaveLength(2)
+    // the key rows stay on the blocked summary, but name no amount: exact
+    // shape (no extra properties at all) AND no amount/tokenId members,
+    // not even undefined-valued ones
+    expect(unaddressed.htlcKeyRows).toEqual([
+      {
+        key: 'htlc:0',
+        spendKey: 'attacker',
+        spendOwn: false,
+        refundKey: 'attacker',
+        refundOwn: false,
+      },
+      {
+        key: 'htlc:1',
+        spendKey: 'wallet',
+        spendOwn: true,
+        refundKey: 'attacker',
+        refundOwn: false,
+      },
+    ])
+    expect(
+      unaddressed.htlcKeyRows.every(
+        (row) =>
+          !Object.prototype.hasOwnProperty.call(row, 'amount') &&
+          !Object.prototype.hasOwnProperty.call(row, 'tokenId'),
+      ),
+    ).toBe(true)
+  })
+
+  // An Htlc output pays keys, not an address: the ownership of both keys it
+  // commits travels beside its destination-less amount row, derived only
+  // from the signer-encoded output.htlc.spend_key/refund_key, together with
+  // the output's own signed amount — information only, never a block.
+  it('carries the htlc key ownership beside its destination-less amount row', () => {
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
+        outputs: [
+          {
+            type: 'Htlc',
+            value: coin('10', '1000000000000'),
+            htlc: { spend_key: 'wallet', refund_key: 'attacker' },
+          },
+          coinOutput('attacker', '5', '500000000000'),
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(destinationRows).toEqual([
+      {
+        ...pair(null, [{ key: 'Coin', tokenId: null, amount: '10' }]),
+        htlcKeyRows: [
+          {
+            key: 'htlc:0',
+            spendKey: 'wallet',
+            spendOwn: true,
+            refundKey: 'attacker',
+            refundOwn: false,
+            amount: '10',
+            tokenId: null,
+          },
+        ],
+      },
+      pair('attacker', [{ key: 'Coin', tokenId: null, amount: '5' }]),
+    ])
+  })
+
+  it('lists every Htlc output on its own key rows, in declaration order', () => {
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
+        outputs: [
+          {
+            type: 'Htlc',
+            value: coin('1', '100000000000'),
+            htlc: { spend_key: 'attacker', refund_key: 'change' },
+          },
+          {
+            type: 'Htlc',
+            value: coin('2', '200000000000'),
+            htlc: { spend_key: 'wallet', refund_key: 'attacker' },
+          },
+        ],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    // the amounts still sum into the one destination-less row, but each key
+    // pair carries its own output's signed amount, so every pair stays tied
+    // to the amount it escrows
+    expect(destinationRows).toEqual([
+      {
+        ...pair(null, [{ key: 'Coin', tokenId: null, amount: '3' }]),
+        htlcKeyRows: [
+          {
+            key: 'htlc:0',
+            spendKey: 'attacker',
+            spendOwn: false,
+            refundKey: 'change',
+            refundOwn: true,
+            amount: '1',
+            tokenId: null,
+          },
+          {
+            key: 'htlc:1',
+            spendKey: 'wallet',
+            spendOwn: true,
+            refundKey: 'attacker',
+            refundOwn: false,
+            amount: '2',
+            tokenId: null,
+          },
+        ],
+      },
+    ])
+  })
+
+  it('attaches no htlc key rows without an Htlc output', () => {
+    const { destinationRows, blocked } = reconcileApprovalAmounts(
+      {
+        inputs: [coinInput('wallet', '1707148604300000', '17071.486043')],
+        outputs: [coinOutput('attacker', '10', '1000000000000')],
+      },
+      { tokenDecimalsById: new Map(), ownAddresses },
+    )
+
+    expect(blocked).toBe(false)
+    expect(destinationRows).toEqual([
+      pair('attacker', [{ key: 'Coin', tokenId: null, amount: '10' }]),
+    ])
+    expect(
+      Object.prototype.hasOwnProperty.call(destinationRows[0], 'htlcKeyRows'),
+    ).toBe(false)
   })
 
   it('surfaces a decoy-addressed BurnToken output as its signed Burned row', () => {
@@ -3598,5 +3811,86 @@ describe('reconcileApprovalAmounts — locked outputs returning to the wallet', 
       pair('payee', [{ key: 'Coin', tokenId: null, amount: '1' }]),
     ])
     expect(extraAmountRows).toEqual([])
+  })
+})
+
+// The keys an Htlc OUTPUT commits, with their ownership of this wallet, for
+// the approval summary: read only from the signer-encoded fields
+// (output.htlc.spend_key / output.htlc.refund_key), strings only, receiving
+// and change addresses alike.
+describe('htlcOutputKeyOwnership', () => {
+  const ownAddresses = { receiving: ['wallet'], change: ['change'] }
+
+  it('reads only the signer-encoded htlc keys of an Htlc output', () => {
+    expect(
+      htlcOutputKeyOwnership(
+        {
+          type: 'Htlc',
+          // decoys the signer ignores on an Htlc output
+          destination: 'wallet',
+          address: 'change',
+          spend_address: 'wallet',
+          refund_address: 'wallet',
+          htlc: {
+            spend_key: 'wallet',
+            refund_key: 'attacker',
+            refund_timelock: { type: 'ForBlockCount', content: 20 },
+            secret_hash: { hex: 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3' },
+          },
+        },
+        ownAddresses,
+      ),
+    ).toEqual({
+      spendKey: 'wallet',
+      spendOwn: true,
+      refundKey: 'attacker',
+      refundOwn: false,
+    })
+  })
+
+  it('is null for any output type other than Htlc', () => {
+    expect(
+      htlcOutputKeyOwnership(
+        { type: 'Transfer', destination: 'wallet', value: coin('1') },
+        ownAddresses,
+      ),
+    ).toBe(null)
+    expect(htlcOutputKeyOwnership(null, ownAddresses)).toBe(null)
+    expect(htlcOutputKeyOwnership(undefined, ownAddresses)).toBe(null)
+  })
+
+  it('marks ownership only for string keys this wallet holds', () => {
+    // a change address is this wallet's too; a non-string key is no key
+    expect(
+      htlcOutputKeyOwnership(
+        { type: 'Htlc', htlc: { spend_key: 'change', refund_key: 'other' } },
+        ownAddresses,
+      ),
+    ).toEqual({
+      spendKey: 'change',
+      spendOwn: true,
+      refundKey: 'other',
+      refundOwn: false,
+    })
+    expect(
+      htlcOutputKeyOwnership(
+        { type: 'Htlc', htlc: { spend_key: 42, refund_key: undefined } },
+        ownAddresses,
+      ),
+    ).toEqual({
+      spendKey: null,
+      spendOwn: false,
+      refundKey: null,
+      refundOwn: false,
+    })
+  })
+
+  it('tolerates a missing htlc object', () => {
+    expect(htlcOutputKeyOwnership({ type: 'Htlc' }, ownAddresses)).toEqual({
+      spendKey: null,
+      spendOwn: false,
+      refundKey: null,
+      refundOwn: false,
+    })
   })
 })
